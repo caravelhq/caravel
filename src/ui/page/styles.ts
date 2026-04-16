@@ -1446,6 +1446,239 @@ export const pageStyles = String.raw`    :root {
       animation: caret 2s step-end infinite;
     }
 
+    /* ── Files panel ── */
+    .files-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-width: min(680px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+    }
+    .files-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-bottom: 1px solid #ffffff12;
+      gap: 8px;
+    }
+    .files-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #a8b4c5;
+      overflow-x: auto;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .files-breadcrumb button {
+      border: none;
+      background: transparent;
+      color: #9be7ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background 0.12s;
+    }
+    .files-breadcrumb button:hover {
+      background: #ffffff10;
+    }
+    .files-breadcrumb span {
+      color: #5a6a7e;
+    }
+    .files-split {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .files-sidebar {
+      width: 280px;
+      min-width: 200px;
+      border-right: 1px solid #ffffff12;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .files-list {
+      padding: 4px;
+    }
+    .files-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #c8d4e5;
+      text-align: left;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      transition: background 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .files-item:hover {
+      background: #ffffff0d;
+    }
+    .files-item-active {
+      background: #ffffff08;
+      border-left: 2px solid #9be7ff;
+    }
+    .files-item-icon {
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .files-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .files-item-size {
+      margin-left: auto;
+      color: #5a6a7e;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .files-content {
+      flex: 1;
+      min-width: 0;
+      overflow: auto;
+      padding: 16px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .files-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #5a7a9a;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .files-loading {
+      padding: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #5a7a9a;
+    }
+    .files-md {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #e4eefb;
+    }
+    .files-md h1, .files-md h2, .files-md h3,
+    .files-md h4, .files-md h5, .files-md h6 {
+      color: #fff;
+      font-family: "Fraunces", serif;
+      margin: 20px 0 8px;
+      line-height: 1.3;
+    }
+    .files-md h1 { font-size: 1.6em; border-bottom: 1px solid #ffffff18; padding-bottom: 8px; }
+    .files-md h2 { font-size: 1.35em; border-bottom: 1px solid #ffffff12; padding-bottom: 6px; }
+    .files-md h3 { font-size: 1.15em; }
+    .files-md p { margin: 8px 0; }
+    .files-md ul, .files-md ol { margin: 8px 0; padding-left: 22px; }
+    .files-md li { margin: 3px 0; }
+    .files-md code {
+      background: #ffffff15;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    .files-md pre {
+      background: #00000040;
+      padding: 12px 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 10px 0;
+      border: 1px solid #ffffff10;
+    }
+    .files-md pre code {
+      background: none;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .files-md strong { color: #fff; }
+    .files-md em { color: #c8daf0; }
+    .files-md blockquote {
+      margin: 10px 0;
+      padding: 8px 14px;
+      border-left: 3px solid #9be7ff44;
+      background: #ffffff06;
+      border-radius: 0 6px 6px 0;
+      color: #c8daf0;
+    }
+    .files-md hr {
+      border: none;
+      border-top: 1px solid #ffffff18;
+      margin: 16px 0;
+    }
+    .files-md a {
+      color: #9be7ff;
+      text-decoration: none;
+    }
+    .files-md a:hover {
+      text-decoration: underline;
+    }
+    .files-md table {
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 13px;
+      width: 100%;
+    }
+    .files-md th, .files-md td {
+      border: 1px solid #ffffff1a;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .files-md th {
+      background: #ffffff0a;
+      color: #fff;
+      font-weight: 500;
+    }
+    .files-md img {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+    .files-md input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    .files-raw {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d7e3f5;
+    }
+
     @media (max-width: 640px) {
       .stage {
         padding: 38px 8px 80px;
@@ -1459,9 +1692,20 @@ export const pageStyles = String.raw`    :root {
         height: 30px;
         gap: 7px;
       }
-      .chat-panel {
+      .chat-panel,
+      .files-panel {
         min-width: 100%;
         border-radius: 12px 12px 0 0;
+      }
+      .files-split {
+        flex-direction: column;
+      }
+      .files-sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 180px;
+        border-right: none;
+        border-bottom: 1px solid #ffffff12;
       }
       .quick-job {
         margin-top: 14px;

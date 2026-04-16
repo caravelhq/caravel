@@ -1142,6 +1142,10 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
     function setActiveTab(tab) {
       const allBtns = [tabDashboardBtn, tabChatBtn];
       const allPanels = [dashboardPanel, chatPanel];
+      const filesBtn = $("tab-files");
+      const filesPnl = $("files-panel");
+      if (filesBtn) allBtns.push(filesBtn);
+      if (filesPnl) allPanels.push(filesPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
 
@@ -1149,15 +1153,17 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
         tabDashboardBtn && tabDashboardBtn.classList.add("tab-btn-active");
         tabDashboardBtn && tabDashboardBtn.setAttribute("aria-selected", "true");
         if (dashboardPanel) dashboardPanel.hidden = false;
-      } else {
+      } else if (tab === "chat") {
         tabChatBtn && tabChatBtn.classList.add("tab-btn-active");
         tabChatBtn && tabChatBtn.setAttribute("aria-selected", "true");
         if (chatPanel) chatPanel.hidden = false;
         if (chatInput) chatInput.focus();
-        // Scroll to bottom after panel becomes visible
         requestAnimationFrame(function() {
           if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
         });
+      } else if (tab === "files") {
+        if (filesBtn) { filesBtn.classList.add("tab-btn-active"); filesBtn.setAttribute("aria-selected", "true"); }
+        if (filesPnl) filesPnl.hidden = false;
       }
     }
 
@@ -1204,21 +1210,21 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
     function renderMarkdown(text) {
       if (!text) return "";
       var esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      esc = esc.replace(/```(\\w*)\\n([\\s\\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.replace(/\\n$/, '') + '</code></pre>';
+      esc = esc.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
       });
       esc = esc.replace(/`([^`]+)`/g, '<code>$1</code>');
-      esc = esc.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
-      esc = esc.replace(/(?:^|\\n)(#{1,3}) (.+)/g, function(_, hashes, content) {
+      esc = esc.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      esc = esc.replace(/(?:^|\n)(#{1,3}) (.+)/g, function(_, hashes, content) {
         var level = Math.min(hashes.length + 2, 6);
         return '<h' + level + '>' + content + '</h' + level + '>';
       });
-      var lines = esc.split("\\n");
+      var lines = esc.split("\n");
       var out = [];
       var inList = false;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        var listMatch = line.match(/^(\\s*)[\\-\\*] (.+)/);
+        var listMatch = line.match(/^(\s*)[\-\*] (.+)/);
         if (listMatch) {
           if (!inList) { out.push("<ul>"); inList = true; }
           out.push("<li>" + listMatch[2] + "</li>");
@@ -1228,7 +1234,7 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
         }
       }
       if (inList) out.push("</ul>");
-      return out.join("\\n").replace(/(?<!\\/pre>)\\n(?!<)/g, "<br>");
+      return out.join("\n").replace(/(?<!\/pre>)\n(?!<)/g, "<br>");
     }
 
     function createChatEmptyState() {
@@ -1381,8 +1387,8 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
               var ev = JSON.parse(line.slice(6));
               if (ev.type === "chunk") {
                 var prev = chatHistory[assistantIdx].text;
-                if (prev.length > 0 && !prev.endsWith("\\n") && !ev.text.startsWith("\\n")) {
-                  chatHistory[assistantIdx].text += "\\n";
+                if (prev.length > 0 && !prev.endsWith("\n") && !ev.text.startsWith("\n")) {
+                  chatHistory[assistantIdx].text += "\n";
                 }
                 chatHistory[assistantIdx].text += ev.text;
                 renderChatHistory();
@@ -1496,4 +1502,321 @@ export const pageScript = String.raw`    // Register service worker for PWA inst
         var elapsedEl = chatMessages.querySelector(".chat-msg-elapsed");
         if (elapsedEl) elapsedEl.textContent = fmtElapsed(Date.now() - chatStartedAt);
       }
-    }, 1000);`;
+    }, 1000);
+
+    // ── Files ──
+    const tabFilesBtn = $("tab-files");
+    const filesPanel = $("files-panel");
+    const filesList = $("files-list");
+    const filesContent = $("files-content");
+    const filesBreadcrumb = $("files-breadcrumb");
+    const filesBackBtn = $("files-back-btn");
+    let filesCurrentDir = ".";
+    let filesActiveFile = "";
+    let filesLoaded = false;
+
+    if (tabFilesBtn) {
+      tabFilesBtn.addEventListener("click", function() {
+        setActiveTab("files");
+        if (!filesLoaded) {
+          filesLoaded = true;
+          loadDirectory(".");
+        }
+      });
+    }
+
+    function fmtSize(bytes) {
+      if (bytes == null) return "";
+      if (bytes < 1024) return bytes + " B";
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+      return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+    }
+
+    function fileIcon(entry) {
+      if (entry.type === "directory") return "\ud83d\udcc1";
+      var ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
+      ext = ext.toLowerCase();
+      if (ext === "md" || ext === "markdown" || ext === "mdx") return "\ud83d\udcdd";
+      if (ext === "ts" || ext === "js" || ext === "mjs") return "\ud83d\udce6";
+      if (ext === "json") return "\ud83d\udccb";
+      if (ext === "sh" || ext === "bash") return "\u2699\ufe0f";
+      if (ext === "yml" || ext === "yaml") return "\ud83d\udcd1";
+      return "\ud83d\udcc4";
+    }
+
+    function renderBreadcrumb(dirPath) {
+      if (!filesBreadcrumb) return;
+      filesBreadcrumb.textContent = "";
+
+      var rootBtn = document.createElement("button");
+      rootBtn.textContent = "~";
+      rootBtn.addEventListener("click", function() { loadDirectory("."); });
+      filesBreadcrumb.appendChild(rootBtn);
+
+      if (dirPath && dirPath !== ".") {
+        var parts = dirPath.split("/");
+        for (var i = 0; i < parts.length; i++) {
+          var sep = document.createElement("span");
+          sep.textContent = " / ";
+          filesBreadcrumb.appendChild(sep);
+
+          var partBtn = document.createElement("button");
+          partBtn.textContent = parts[i];
+          var partPath = parts.slice(0, i + 1).join("/");
+          partBtn.addEventListener("click", (function(p) {
+            return function() { loadDirectory(p); };
+          })(partPath));
+          filesBreadcrumb.appendChild(partBtn);
+        }
+      }
+    }
+
+    async function loadDirectory(dirPath) {
+      filesCurrentDir = dirPath || ".";
+      filesActiveFile = "";
+      renderBreadcrumb(filesCurrentDir);
+
+      if (!filesList) return;
+      filesList.innerHTML = '<div class="files-loading">Loading...</div>';
+      if (filesContent) filesContent.innerHTML = '<div class="files-empty">Select a file to view</div>';
+
+      try {
+        var res = await fetch("/api/files/list?path=" + encodeURIComponent(dirPath));
+        var data = await res.json();
+        if (!data.ok) throw new Error(data.error || "failed");
+
+        if (!data.entries.length) {
+          filesList.innerHTML = '<div class="files-loading">Empty directory</div>';
+          return;
+        }
+
+        filesList.textContent = "";
+        for (var i = 0; i < data.entries.length; i++) {
+          var entry = data.entries[i];
+          var item = document.createElement("button");
+          item.className = "files-item";
+          item.dataset.path = entry.path;
+          item.dataset.type = entry.type;
+
+          var icon = document.createElement("span");
+          icon.className = "files-item-icon";
+          icon.textContent = fileIcon(entry);
+          item.appendChild(icon);
+
+          var name = document.createElement("span");
+          name.className = "files-item-name";
+          name.textContent = entry.name;
+          item.appendChild(name);
+
+          if (entry.type === "file" && entry.size != null) {
+            var size = document.createElement("span");
+            size.className = "files-item-size";
+            size.textContent = fmtSize(entry.size);
+            item.appendChild(size);
+          }
+
+          item.addEventListener("click", (function(e) {
+            return function() {
+              if (e.type === "directory") {
+                loadDirectory(e.path);
+              } else {
+                loadFile(e.path);
+              }
+            };
+          })(entry));
+
+          filesList.appendChild(item);
+        }
+      } catch (err) {
+        filesList.innerHTML = '<div class="files-loading">Error: ' + esc(String(err instanceof Error ? err.message : err)) + '</div>';
+      }
+    }
+
+    async function loadFile(filePath) {
+      filesActiveFile = filePath;
+
+      // Highlight active file in sidebar
+      if (filesList) {
+        var items = filesList.querySelectorAll(".files-item");
+        for (var i = 0; i < items.length; i++) {
+          items[i].classList.toggle("files-item-active", items[i].dataset.path === filePath);
+        }
+      }
+
+      if (!filesContent) return;
+      filesContent.innerHTML = '<div class="files-loading">Loading...</div>';
+
+      try {
+        var res = await fetch("/api/files/read?path=" + encodeURIComponent(filePath));
+        var data = await res.json();
+        if (!data.ok) throw new Error(data.error || "failed");
+
+        if (data.markdown) {
+          var div = document.createElement("div");
+          div.className = "files-md";
+          div.innerHTML = renderFullMarkdown(data.content);
+          filesContent.textContent = "";
+          filesContent.appendChild(div);
+        } else {
+          var pre = document.createElement("pre");
+          pre.className = "files-raw";
+          pre.textContent = data.content;
+          filesContent.textContent = "";
+          filesContent.appendChild(pre);
+        }
+      } catch (err) {
+        filesContent.innerHTML = '<div class="files-empty">Error: ' + esc(String(err instanceof Error ? err.message : err)) + '</div>';
+      }
+    }
+
+    function renderFullMarkdown(src) {
+      if (!src) return "";
+
+      // Escape HTML
+      var text = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+      // Fenced code blocks
+      text = text.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
+      });
+
+      // Horizontal rules (before heading processing)
+      text = text.replace(/^---+$/gm, '<hr>');
+
+      // Headings
+      text = text.replace(/^(#{1,6}) (.+)$/gm, function(_, hashes, content) {
+        var level = hashes.length;
+        return '<h' + level + '>' + content + '</h' + level + '>';
+      });
+
+      // Bold + italic
+      text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+      text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+      // Inline code (after code blocks)
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+      // Links
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+      // Images
+      text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
+
+      // Blockquotes
+      text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+      // Merge adjacent blockquotes
+      text = text.replace(/<\/blockquote>\n<blockquote>/g, '\n');
+
+      // Task lists
+      text = text.replace(/^(\s*)[-*] \[x\] (.+)$/gm, '$1<li><input type="checkbox" checked disabled> $2</li>');
+      text = text.replace(/^(\s*)[-*] \[ \] (.+)$/gm, '$1<li><input type="checkbox" disabled> $2</li>');
+
+      // Tables
+      text = text.replace(/((?:^\|.+\|$\n?)+)/gm, function(tableBlock) {
+        var rows = tableBlock.trim().split('\n');
+        if (rows.length < 2) return tableBlock;
+
+        var html = '<table>';
+        // Header
+        var headerCells = rows[0].split('|').filter(function(c) { return c.trim() !== ''; });
+        html += '<tr>';
+        for (var h = 0; h < headerCells.length; h++) {
+          html += '<th>' + headerCells[h].trim() + '</th>';
+        }
+        html += '</tr>';
+
+        // Skip separator row (row[1])
+        for (var r = 2; r < rows.length; r++) {
+          var cells = rows[r].split('|').filter(function(c) { return c.trim() !== ''; });
+          if (!cells.length) continue;
+          html += '<tr>';
+          for (var c = 0; c < cells.length; c++) {
+            html += '<td>' + cells[c].trim() + '</td>';
+          }
+          html += '</tr>';
+        }
+        html += '</table>';
+        return html;
+      });
+
+      // Process lines for lists and paragraphs
+      var lines = text.split('\n');
+      var out = [];
+      var inList = false;
+      var listType = '';
+
+      for (var i = 0; i < lines.length; i++) {
+        var line = lines[i];
+
+        // Skip if it's an HTML block element
+        if (line.match(/^<(h[1-6]|pre|blockquote|table|hr|\/)/)) {
+          if (inList) { out.push('</' + listType + '>'); inList = false; }
+          out.push(line);
+          continue;
+        }
+
+        // Unordered list
+        var ulMatch = line.match(/^(\s*)[-*] (.+)/);
+        if (ulMatch && !line.match(/^<li>/)) {
+          if (!inList || listType !== 'ul') {
+            if (inList) out.push('</' + listType + '>');
+            out.push('<ul>');
+            inList = true;
+            listType = 'ul';
+          }
+          out.push('<li>' + ulMatch[2] + '</li>');
+          continue;
+        }
+
+        // Ordered list
+        var olMatch = line.match(/^(\s*)\d+\. (.+)/);
+        if (olMatch) {
+          if (!inList || listType !== 'ol') {
+            if (inList) out.push('</' + listType + '>');
+            out.push('<ol>');
+            inList = true;
+            listType = 'ol';
+          }
+          out.push('<li>' + olMatch[2] + '</li>');
+          continue;
+        }
+
+        // Already a list item (from task list processing)
+        if (line.match(/^<li>/)) {
+          if (!inList) {
+            out.push('<ul>');
+            inList = true;
+            listType = 'ul';
+          }
+          out.push(line);
+          continue;
+        }
+
+        if (inList) { out.push('</' + listType + '>'); inList = false; }
+        out.push(line);
+      }
+      if (inList) out.push('</' + listType + '>');
+
+      // Join and convert remaining newlines to <br> (but not after block elements)
+      var result = out.join('\n');
+      result = result.replace(/(?<!\/(pre|blockquote|table|ul|ol|li|h[1-6]|hr)>)\n(?!<)/g, '<br>');
+
+      // Clean up double <br>
+      result = result.replace(/(<br>){3,}/g, '<br><br>');
+
+      return result;
+    }
+
+    if (filesBackBtn) {
+      filesBackBtn.addEventListener("click", function() {
+        if (filesCurrentDir === "." || filesCurrentDir === "") {
+          return;
+        }
+        var parts = filesCurrentDir.split("/");
+        parts.pop();
+        var parent = parts.length ? parts.join("/") : ".";
+        loadDirectory(parent);
+      });
+    }`;

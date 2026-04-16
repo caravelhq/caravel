@@ -6,6 +6,7 @@ import { readHeartbeatSettings, updateHeartbeatSettings } from "./services/setti
 import { createQuickJob, deleteJob } from "./services/jobs";
 import { readLogs } from "./services/logs";
 import { listChats, loadChat, saveChat, deleteChat } from "./services/chats";
+import { listDirectory, readFileContent, isMarkdown } from "./services/files";
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   const server = Bun.serve({
@@ -183,6 +184,28 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/logs") {
         const tail = clampInt(url.searchParams.get("tail"), 200, 20, 2000);
         return json(await readLogs(tail));
+      }
+
+      // File browser
+      if (url.pathname === "/api/files/list") {
+        try {
+          const dir = url.searchParams.get("path") || ".";
+          const result = await listDirectory(dir);
+          return json({ ok: true, ...result });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/files/read") {
+        try {
+          const file = url.searchParams.get("path");
+          if (!file) return json({ ok: false, error: "path param required" });
+          const result = await readFileContent(file);
+          return json({ ok: true, ...result, markdown: isMarkdown(file) });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
       }
 
       // Chat history persistence

@@ -129,6 +129,7 @@ ${pageStyles}
     <nav class="tab-nav" role="tablist" aria-label="Main navigation">
       <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Dashboard</button>
       <button class="tab-btn" id="tab-chat" type="button" role="tab" aria-selected="false" aria-controls="chat-panel">Chat</button>
+      <button class="tab-btn" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="files-panel">Files</button>
       <button class="tab-btn tab-btn-settings" id="settings-btn" type="button" title="Settings">&#x2699;</button>
     </nav>
     <div id="dashboard-panel">
@@ -225,6 +226,22 @@ ${pageStyles}
           <button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button>
           <button id="chat-send" class="chat-send" type="submit">Send</button>
         </form>
+      </div>
+    </div>
+    <div id="files-panel" class="files-panel" hidden>
+      <div class="files-toolbar">
+        <div class="files-breadcrumb" id="files-breadcrumb"></div>
+        <button id="files-back-btn" class="chat-toolbar-btn" type="button" title="Go up">↑ Up</button>
+      </div>
+      <div class="files-split">
+        <div class="files-sidebar" id="files-sidebar">
+          <div class="files-list" id="files-list">
+            <div class="files-loading">Loading...</div>
+          </div>
+        </div>
+        <div class="files-content" id="files-content">
+          <div class="files-empty">Select a file to view</div>
+        </div>
       </div>
     </div>
   </main>
