@@ -37,6 +37,13 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
         });
       }
 
+      if (url.pathname === "/client.js") {
+        const file = Bun.file(new URL("./page/client.js", import.meta.url));
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript; charset=utf-8" },
+        });
+      }
+
       if (url.pathname === "/sw.js") {
         const sw = `self.addEventListener('install', e => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));

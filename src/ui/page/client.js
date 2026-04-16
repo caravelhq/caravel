@@ -1,4 +1,4 @@
-export const pageScript = `    // Register service worker for PWA install
+    // Register service worker for PWA install
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/sw.js").catch(function() {});
     }
@@ -269,7 +269,7 @@ export const pageScript = `    // Register service worker for PWA install
     }
 
     function cronMatchesAt(schedule, date) {
-      const parts = String(schedule || "").trim().split(/\\s+/);
+      const parts = String(schedule || "").trim().split(/\s+/);
       if (parts.length !== 5) return false;
       const shifted = toOffsetDate(date);
       const d = {
@@ -301,7 +301,7 @@ export const pageScript = `    // Register service worker for PWA install
     }
 
     function clockFromSchedule(schedule) {
-      const parts = String(schedule || "").trim().split(/\\s+/);
+      const parts = String(schedule || "").trim().split(/\s+/);
       if (parts.length < 2) return schedule;
       const minute = Number(parts[0]);
       const hour = Number(parts[1]);
@@ -1060,7 +1060,7 @@ export const pageScript = `    // Register service worker for PWA install
         var meta = document.createElement("span");
         meta.className = "chat-history-meta";
         var d = new Date(chat.updatedAt);
-        meta.textContent = chat.messageCount + " msgs \\u00b7 " + d.toLocaleDateString();
+        meta.textContent = chat.messageCount + " msgs \u00b7 " + d.toLocaleDateString();
         item.appendChild(preview);
         item.appendChild(meta);
         item.addEventListener("click", (function(id) {
@@ -1114,7 +1114,7 @@ export const pageScript = `    // Register service worker for PWA install
       if (chatSyncing) return;
       chatSyncing = true;
       var syncBtn = $("chat-sync-btn");
-      if (syncBtn) { syncBtn.textContent = "\\u21bb"; syncBtn.style.opacity = "0.5"; }
+      if (syncBtn) { syncBtn.textContent = "\u21bb"; syncBtn.style.opacity = "0.5"; }
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
         var data = await res.json();
@@ -1128,7 +1128,7 @@ export const pageScript = `    // Register service worker for PWA install
         }
       } catch (_) {}
       chatSyncing = false;
-      if (syncBtn) { syncBtn.textContent = "\\u21bb"; syncBtn.style.opacity = "1"; }
+      if (syncBtn) { syncBtn.textContent = "\u21bb"; syncBtn.style.opacity = "1"; }
     }
 
     // Auto-poll every 10s when chat tab is visible
@@ -1210,21 +1210,21 @@ export const pageScript = `    // Register service worker for PWA install
     function renderMarkdown(text) {
       if (!text) return "";
       var esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      esc = esc.replace(/```(\\w*)\\n([\\s\\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.replace(/\\n$/, '') + '</code></pre>';
+      esc = esc.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
       });
       esc = esc.replace(/`([^`]+)`/g, '<code>$1</code>');
-      esc = esc.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
-      esc = esc.replace(/(?:^|\\n)(#{1,3}) (.+)/g, function(_, hashes, content) {
+      esc = esc.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      esc = esc.replace(/(?:^|\n)(#{1,3}) (.+)/g, function(_, hashes, content) {
         var level = Math.min(hashes.length + 2, 6);
         return '<h' + level + '>' + content + '</h' + level + '>';
       });
-      var lines = esc.split("\\n");
+      var lines = esc.split("\n");
       var out = [];
       var inList = false;
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
-        var listMatch = line.match(/^(\\s*)[\\-\\*] (.+)/);
+        var listMatch = line.match(/^(\s*)[\-\*] (.+)/);
         if (listMatch) {
           if (!inList) { out.push("<ul>"); inList = true; }
           out.push("<li>" + listMatch[2] + "</li>");
@@ -1234,7 +1234,7 @@ export const pageScript = `    // Register service worker for PWA install
         }
       }
       if (inList) out.push("</ul>");
-      return out.join("\\n").replace(/(?<!\\/pre>)\\n(?!<)/g, "<br>");
+      return out.join("\n").replace(/(?<!\/pre>)\n(?!<)/g, "<br>");
     }
 
     function createChatEmptyState() {
@@ -1378,7 +1378,7 @@ export const pageScript = `    // Register service worker for PWA install
           var read = await reader.read();
           if (read.done) break;
           buf += dec.decode(read.value, { stream: true });
-          var lines = buf.split("\\n");
+          var lines = buf.split("\n");
           buf = lines.pop() || "";
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
@@ -1387,8 +1387,8 @@ export const pageScript = `    // Register service worker for PWA install
               var ev = JSON.parse(line.slice(6));
               if (ev.type === "chunk") {
                 var prev = chatHistory[assistantIdx].text;
-                if (prev.length > 0 && !prev.endsWith("\\n") && !ev.text.startsWith("\\n")) {
-                  chatHistory[assistantIdx].text += "\\n";
+                if (prev.length > 0 && !prev.endsWith("\n") && !ev.text.startsWith("\n")) {
+                  chatHistory[assistantIdx].text += "\n";
                 }
                 chatHistory[assistantIdx].text += ev.text;
                 renderChatHistory();
@@ -1405,7 +1405,7 @@ export const pageScript = `    // Register service worker for PWA install
                 saveChatHistory();
               } else if (ev.type === "error") {
                 chatHistory[assistantIdx].text = chatHistory[assistantIdx].text
-                  ? chatHistory[assistantIdx].text + "\\n\\n[Error: " + ev.message + "]"
+                  ? chatHistory[assistantIdx].text + "\n\n[Error: " + ev.message + "]"
                   : "[Error: " + ev.message + "]";
                 chatHistory[assistantIdx].streaming = false;
                 chatHistory[assistantIdx].background = false;
@@ -1533,15 +1533,15 @@ export const pageScript = `    // Register service worker for PWA install
     }
 
     function fileIcon(entry) {
-      if (entry.type === "directory") return "\\ud83d\\udcc1";
-      var ext = (entry.name.match(/\\.([^.]+)$/) || [])[1] || "";
+      if (entry.type === "directory") return "\ud83d\udcc1";
+      var ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
       ext = ext.toLowerCase();
-      if (ext === "md" || ext === "markdown" || ext === "mdx") return "\\ud83d\\udcdd";
-      if (ext === "ts" || ext === "js" || ext === "mjs") return "\\ud83d\\udce6";
-      if (ext === "json") return "\\ud83d\\udccb";
-      if (ext === "sh" || ext === "bash") return "\\u2699\\ufe0f";
-      if (ext === "yml" || ext === "yaml") return "\\ud83d\\udcd1";
-      return "\\ud83d\\udcc4";
+      if (ext === "md" || ext === "markdown" || ext === "mdx") return "\ud83d\udcdd";
+      if (ext === "ts" || ext === "js" || ext === "mjs") return "\ud83d\udce6";
+      if (ext === "json") return "\ud83d\udccb";
+      if (ext === "sh" || ext === "bash") return "\u2699\ufe0f";
+      if (ext === "yml" || ext === "yaml") return "\ud83d\udcd1";
+      return "\ud83d\udcc4";
     }
 
     function renderBreadcrumb(dirPath) {
@@ -1676,8 +1676,8 @@ export const pageScript = `    // Register service worker for PWA install
       var text = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
       // Fenced code blocks
-      text = text.replace(/```(\\w*)\\n([\\s\\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.replace(/\\n$/, '') + '</code></pre>';
+      text = text.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
+        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
       });
 
       // Horizontal rules (before heading processing)
@@ -1690,32 +1690,32 @@ export const pageScript = `    // Register service worker for PWA install
       });
 
       // Bold + italic
-      text = text.replace(/\\*\\*\\*([^*]+)\\*\\*\\*/g, '<strong><em>$1</em></strong>');
-      text = text.replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>');
-      text = text.replace(/\\*([^*]+)\\*/g, '<em>$1</em>');
+      text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
+      text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+      text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
       text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
 
       // Inline code (after code blocks)
       text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
 
       // Links
-      text = text.replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
 
       // Images
-      text = text.replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g, '<img src="$2" alt="$1" />');
+      text = text.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />');
 
       // Blockquotes
       text = text.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
       // Merge adjacent blockquotes
-      text = text.replace(/<\\/blockquote>\\n<blockquote>/g, '\\n');
+      text = text.replace(/<\/blockquote>\n<blockquote>/g, '\n');
 
       // Task lists
-      text = text.replace(/^(\\s*)[-*] \\[x\\] (.+)$/gm, '$1<li><input type="checkbox" checked disabled> $2</li>');
-      text = text.replace(/^(\\s*)[-*] \\[ \\] (.+)$/gm, '$1<li><input type="checkbox" disabled> $2</li>');
+      text = text.replace(/^(\s*)[-*] \[x\] (.+)$/gm, '$1<li><input type="checkbox" checked disabled> $2</li>');
+      text = text.replace(/^(\s*)[-*] \[ \] (.+)$/gm, '$1<li><input type="checkbox" disabled> $2</li>');
 
       // Tables
-      text = text.replace(/((?:^\\|.+\\|$\\n?)+)/gm, function(tableBlock) {
-        var rows = tableBlock.trim().split('\\n');
+      text = text.replace(/((?:^\|.+\|$\n?)+)/gm, function(tableBlock) {
+        var rows = tableBlock.trim().split('\n');
         if (rows.length < 2) return tableBlock;
 
         var html = '<table>';
@@ -1742,7 +1742,7 @@ export const pageScript = `    // Register service worker for PWA install
       });
 
       // Process lines for lists and paragraphs
-      var lines = text.split('\\n');
+      var lines = text.split('\n');
       var out = [];
       var inList = false;
       var listType = '';
@@ -1751,14 +1751,14 @@ export const pageScript = `    // Register service worker for PWA install
         var line = lines[i];
 
         // Skip if it's an HTML block element
-        if (line.match(/^<(h[1-6]|pre|blockquote|table|hr|\\/)/)) {
+        if (line.match(/^<(h[1-6]|pre|blockquote|table|hr|\/)/)) {
           if (inList) { out.push('</' + listType + '>'); inList = false; }
           out.push(line);
           continue;
         }
 
         // Unordered list
-        var ulMatch = line.match(/^(\\s*)[-*] (.+)/);
+        var ulMatch = line.match(/^(\s*)[-*] (.+)/);
         if (ulMatch && !line.match(/^<li>/)) {
           if (!inList || listType !== 'ul') {
             if (inList) out.push('</' + listType + '>');
@@ -1771,7 +1771,7 @@ export const pageScript = `    // Register service worker for PWA install
         }
 
         // Ordered list
-        var olMatch = line.match(/^(\\s*)\\d+\\. (.+)/);
+        var olMatch = line.match(/^(\s*)\d+\. (.+)/);
         if (olMatch) {
           if (!inList || listType !== 'ol') {
             if (inList) out.push('</' + listType + '>');
@@ -1800,8 +1800,8 @@ export const pageScript = `    // Register service worker for PWA install
       if (inList) out.push('</' + listType + '>');
 
       // Join and convert remaining newlines to <br> (but not after block elements)
-      var result = out.join('\\n');
-      result = result.replace(/(?<!\\/(pre|blockquote|table|ul|ol|li|h[1-6]|hr)>)\\n(?!<)/g, '<br>');
+      var result = out.join('\n');
+      result = result.replace(/(?<!\/(pre|blockquote|table|ul|ol|li|h[1-6]|hr)>)\n(?!<)/g, '<br>');
 
       // Clean up double <br>
       result = result.replace(/(<br>){3,}/g, '<br><br>');
@@ -1819,4 +1819,4 @@ export const pageScript = `    // Register service worker for PWA install
         var parent = parts.length ? parts.join("/") : ".";
         loadDirectory(parent);
       });
-    }`;
+    }

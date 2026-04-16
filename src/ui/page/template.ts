@@ -1,5 +1,4 @@
 import { pageStyles } from "./styles";
-import { pageScript } from "./script";
 
 function decodeUnicodeEscapes(text: string): string {
   const decodedCodePoints = text.replace(/\\u\{([0-9a-fA-F]+)\}/g, (_, hex: string) => {
@@ -262,9 +261,7 @@ ${pageStyles}
     </aside>
   </div>
 
-  <script>
-${pageScript}
-  </script>
+  <script src="/client.js" defer></script>
 </body>
 </html>`;
   return decodeUnicodeEscapes(html);
