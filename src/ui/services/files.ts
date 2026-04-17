@@ -19,6 +19,7 @@ export interface FileEntry {
   type: "file" | "directory";
   size?: number;
   modified?: number;
+  isSymlink?: boolean;
 }
 
 export async function listDirectory(dirPath: string): Promise<{ entries: FileEntry[]; path: string }> {
@@ -34,6 +35,29 @@ export async function listDirectory(dirPath: string): Promise<{ entries: FileEnt
 
     const itemPath = join(full, item.name);
     const itemRel = relative(WORK_DIR, itemPath);
+    const isSymlink = item.isSymbolicLink();
+
+    // Resolve symlinks via stat() to classify their target; skip broken links.
+    if (isSymlink) {
+      try {
+        const st = await stat(itemPath);
+        if (st.isDirectory()) {
+          entries.push({ name: item.name, path: itemRel, type: "directory", isSymlink: true });
+        } else if (st.isFile()) {
+          entries.push({
+            name: item.name,
+            path: itemRel,
+            type: "file",
+            size: st.size,
+            modified: st.mtimeMs,
+            isSymlink: true,
+          });
+        }
+      } catch {
+        // broken symlink — drop
+      }
+      continue;
+    }
 
     if (item.isDirectory()) {
       entries.push({ name: item.name, path: itemRel, type: "directory" });

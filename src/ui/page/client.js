@@ -1605,7 +1605,8 @@
 
           var name = document.createElement("span");
           name.className = "files-item-name";
-          name.textContent = entry.name;
+          name.textContent = entry.name + (entry.isSymlink ? " \u2197" : "");
+          if (entry.isSymlink) name.title = "symlink";
           item.appendChild(name);
 
           if (entry.type === "file" && entry.size != null) {
