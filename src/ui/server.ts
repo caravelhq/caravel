@@ -285,6 +285,35 @@ self.addEventListener('fetch', e => {
           const onChat = opts.onChat;
           let responseText = "";
 
+          // Persist the assistant message incrementally so a daemon kill
+          // mid-stream can't lose the whole response. Idempotent: if the
+          // last message is already assistant, update its text in place
+          // instead of pushing a new one.
+          let persistBusy = false;
+          let persistLastAt = 0;
+          const PERSIST_THROTTLE_MS = 500;
+          const persistAssistant = async (opts: { finalize: boolean; suffix?: string }) => {
+            if (!chatId) return;
+            if (persistBusy && !opts.finalize) return;
+            const now = Date.now();
+            if (!opts.finalize && now - persistLastAt < PERSIST_THROTTLE_MS) return;
+            persistBusy = true;
+            persistLastAt = now;
+            try {
+              const chat = await loadChat(chatId);
+              const msgs = chat?.messages ?? [];
+              const text = responseText + (opts.suffix ?? "");
+              if (msgs.length && msgs[msgs.length - 1].role === "assistant") {
+                msgs[msgs.length - 1].text = text;
+              } else {
+                msgs.push({ role: "assistant", text });
+              }
+              await saveChat(chatId, msgs);
+            } finally {
+              persistBusy = false;
+            }
+          };
+
           const stream = new ReadableStream({
             async start(controller) {
               const send = (data: object) => {
@@ -296,25 +325,19 @@ self.addEventListener('fetch', e => {
                   (chunk) => {
                     responseText += chunk;
                     send({ type: "chunk", text: chunk });
+                    persistAssistant({ finalize: false }).catch(() => {});
                   },
                   () => send({ type: "unblock" })
                 );
                 send({ type: "done" });
-                // Save completed response server-side
-                if (chatId) {
-                  const chat = await loadChat(chatId);
-                  const msgs = chat?.messages ?? [];
-                  msgs.push({ role: "assistant", text: responseText });
-                  await saveChat(chatId, msgs);
-                }
+                await persistAssistant({ finalize: true });
               } catch (err) {
                 send({ type: "error", message: String(err) });
-                // Save error response server-side too
-                if (chatId && responseText) {
-                  const chat = await loadChat(chatId);
-                  const msgs = chat?.messages ?? [];
-                  msgs.push({ role: "assistant", text: responseText + "\n\n[Error: " + String(err) + "]" });
-                  await saveChat(chatId, msgs);
+                if (responseText) {
+                  await persistAssistant({
+                    finalize: true,
+                    suffix: "\n\n[Error: " + String(err) + "]",
+                  });
                 }
               } finally {
                 controller.close();
