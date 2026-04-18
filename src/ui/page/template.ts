@@ -202,7 +202,6 @@ ${pageStyles}
     <div id="chat-panel" class="chat-panel" hidden>
       <div class="chat-toolbar">
         <div class="chat-toolbar-left">
-          <button id="chat-sync-btn" class="chat-toolbar-btn chat-sync-icon" type="button" title="Sync from server">↻</button>
           <button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chat history">History</button>
           <button id="chat-new-btn" class="chat-toolbar-btn" type="button" title="New chat">+ New</button>
         </div>

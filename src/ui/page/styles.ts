@@ -1170,11 +1170,6 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
-    .chat-sync-icon {
-      font-size: 23px;
-      padding: 2px 8px;
-      line-height: 1;
-    }
     .chat-history-dropdown {
       position: absolute;
       top: 100%;
@@ -1200,11 +1195,22 @@ export const pageStyles = String.raw`    :root {
     .chat-history-list {
       padding: 4px;
     }
+    .chat-history-row {
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
+      border-radius: 6px;
+    }
+    .chat-history-row-active {
+      background: #ffffff08;
+      border-left: 2px solid #6e8efb;
+    }
     .chat-history-item {
+      flex: 1;
       display: flex;
       flex-direction: column;
       gap: 2px;
-      width: 100%;
+      min-width: 0;
       padding: 8px 10px;
       border: none;
       border-radius: 6px;
@@ -1219,9 +1225,38 @@ export const pageStyles = String.raw`    :root {
     .chat-history-item:hover {
       background: #ffffff0d;
     }
+    .chat-history-row-active .chat-history-item {
+      background: transparent;
+    }
     .chat-history-active {
-      background: #ffffff08;
-      border-left: 2px solid #6e8efb;
+      background: transparent;
+    }
+    .chat-history-sync-btn {
+      flex: 0 0 auto;
+      align-self: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 4px;
+      padding: 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: #ffffff05;
+      color: #c8d4e5;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      transition: background 0.12s, transform 0.12s;
+    }
+    .chat-history-sync-btn:hover {
+      background: #ffffff12;
+    }
+    .chat-history-sync-btn.is-syncing {
+      opacity: 0.6;
+      animation: chat-history-sync-spin 0.8s linear infinite;
+    }
+    @keyframes chat-history-sync-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
     .chat-history-preview {
       overflow: hidden;

@@ -977,6 +977,7 @@
     let chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
     let chatSavePending = false;
     let chatListCache = [];
+    let chatServerUpdatedAt = null;
 
     function generateChatId() {
       var id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -997,10 +998,13 @@
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
         var data = await res.json();
-        if (data.ok && data.chat && data.chat.messages.length) {
-          chatHistory = cleanHistory(data.chat.messages);
-          renderChatHistory();
-          return;
+        if (data.ok && data.chat) {
+          chatServerUpdatedAt = data.chat.updatedAt || null;
+          if (data.chat.messages && data.chat.messages.length) {
+            chatHistory = cleanHistory(data.chat.messages);
+            renderChatHistory();
+            return;
+          }
         }
       } catch (_) {}
       // Fallback to localStorage
@@ -1018,11 +1022,15 @@
       chatSavePending = true;
       try {
         var toSave = chatHistory.filter(function(m) { return !m.streaming; });
-        await fetch("/api/chats/" + encodeURIComponent(chatSessionId), {
+        var res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: toSave }),
         });
+        var data = await res.json();
+        if (data && data.ok && data.chat && data.chat.updatedAt) {
+          chatServerUpdatedAt = data.chat.updatedAt;
+        }
       } catch (_) {}
       chatSavePending = false;
     }
@@ -1051,8 +1059,14 @@
       }
       for (var i = 0; i < chatListCache.length; i++) {
         var chat = chatListCache[i];
+        var isActive = chat.id === chatSessionId;
+        var row = document.createElement("div");
+        row.className = "chat-history-row" + (isActive ? " chat-history-row-active" : "");
+        row.dataset.chatId = chat.id;
+
         var item = document.createElement("button");
-        item.className = "chat-history-item" + (chat.id === chatSessionId ? " chat-history-active" : "");
+        item.className = "chat-history-item" + (isActive ? " chat-history-active" : "");
+        item.type = "button";
         item.dataset.chatId = chat.id;
         var preview = document.createElement("span");
         preview.className = "chat-history-preview";
@@ -1066,18 +1080,36 @@
         item.addEventListener("click", (function(id) {
           return function() { switchToChat(id); };
         })(chat.id));
-        listEl.appendChild(item);
+        row.appendChild(item);
+
+        if (isActive) {
+          var syncBtn = document.createElement("button");
+          syncBtn.className = "chat-history-sync-btn";
+          syncBtn.type = "button";
+          syncBtn.title = "Force resync from server";
+          syncBtn.setAttribute("aria-label", "Force resync from server");
+          syncBtn.textContent = "\u21bb";
+          syncBtn.addEventListener("click", function(ev) {
+            ev.stopPropagation();
+            syncFromServer({ force: true });
+          });
+          row.appendChild(syncBtn);
+        }
+
+        listEl.appendChild(row);
       }
     }
 
     async function switchToChat(id) {
       chatSessionId = id;
       localStorage.setItem(CHAT_ID_KEY, id);
+      chatServerUpdatedAt = null;
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(id));
         var data = await res.json();
         if (data.ok && data.chat) {
           chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || null;
         } else {
           chatHistory = [];
         }
@@ -1093,6 +1125,7 @@
     function startNewChat() {
       chatSessionId = generateChatId();
       chatHistory = [];
+      chatServerUpdatedAt = null;
       renderChatHistory();
       var dropdown = $("chat-history-dropdown");
       if (dropdown) dropdown.hidden = true;
@@ -1110,25 +1143,31 @@
     });
 
     var chatSyncing = false;
-    async function syncFromServer() {
+    async function syncFromServer(opts) {
       if (chatSyncing) return;
       chatSyncing = true;
-      var syncBtn = $("chat-sync-btn");
-      if (syncBtn) { syncBtn.textContent = "\u21bb"; syncBtn.style.opacity = "0.5"; }
+      var force = opts && opts.force;
+      var activeSyncBtn = document.querySelector(".chat-history-sync-btn");
+      if (activeSyncBtn) activeSyncBtn.classList.add("is-syncing");
       try {
-        var res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
+        var url = "/api/chats/" + encodeURIComponent(chatSessionId);
+        if (!force && chatServerUpdatedAt) {
+          url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
+        }
+        var res = await fetch(url);
         var data = await res.json();
-        if (data.ok && data.chat && data.chat.messages) {
-          var serverMsgs = data.chat.messages;
-          var localNonStreaming = chatHistory.filter(function(m) { return !m.streaming; }).length;
-          if (serverMsgs.length > localNonStreaming) {
-            chatHistory = cleanHistory(serverMsgs);
+        if (data && data.ok) {
+          if (data.unchanged) {
+            if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
+          } else if (data.chat && data.chat.messages) {
+            chatHistory = cleanHistory(data.chat.messages);
+            chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
             renderChatHistory();
           }
         }
       } catch (_) {}
       chatSyncing = false;
-      if (syncBtn) { syncBtn.textContent = "\u21bb"; syncBtn.style.opacity = "1"; }
+      if (activeSyncBtn) activeSyncBtn.classList.remove("is-syncing");
     }
 
     // Auto-poll every 10s when chat tab is visible
@@ -1469,13 +1508,6 @@
         if (!chatHistoryDropdown.hidden && !chatHistoryBtn.contains(e.target) && !chatHistoryDropdown.contains(e.target)) {
           chatHistoryDropdown.hidden = true;
         }
-      });
-    }
-
-    var chatSyncBtn = $("chat-sync-btn");
-    if (chatSyncBtn) {
-      chatSyncBtn.addEventListener("click", function() {
-        syncFromServer();
       });
     }
 

@@ -5,7 +5,7 @@ import { buildState, buildTechnicalInfo, sanitizeSettings } from "./services/sta
 import { readHeartbeatSettings, updateHeartbeatSettings } from "./services/settings";
 import { createQuickJob, deleteJob } from "./services/jobs";
 import { readLogs } from "./services/logs";
-import { listChats, loadChat, saveChat, deleteChat } from "./services/chats";
+import { listChats, loadChat, saveChat, deleteChat, getChatMeta } from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown } from "./services/files";
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
@@ -227,6 +227,14 @@ self.addEventListener('fetch', e => {
       if (url.pathname.startsWith("/api/chats/") && req.method === "GET") {
         try {
           const id = decodeURIComponent(url.pathname.slice("/api/chats/".length));
+          const since = url.searchParams.get("since");
+          if (since) {
+            const meta = await getChatMeta(id);
+            if (!meta) return json({ ok: false, error: "not found" });
+            if (since >= meta.updatedAt) {
+              return json({ ok: true, chat: null, updatedAt: meta.updatedAt, unchanged: true });
+            }
+          }
           const chat = await loadChat(id);
           if (!chat) return json({ ok: false, error: "not found" });
           return json({ ok: true, chat });

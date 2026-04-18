@@ -75,6 +75,23 @@ export async function listChats(): Promise<ChatListEntry[]> {
     .slice(0, 50);
 }
 
+export async function getChatMeta(
+  id: string
+): Promise<{ id: string; updatedAt: string; messageCount: number } | null> {
+  const path = chatPath(id);
+  try {
+    const s = await stat(path);
+    const data = JSON.parse(await readFile(path, "utf-8"));
+    return {
+      id: data.id || id,
+      updatedAt: data.updatedAt || s.mtime.toISOString(),
+      messageCount: Array.isArray(data.messages) ? data.messages.length : 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function loadChat(id: string): Promise<ChatSession | null> {
   const path = chatPath(id);
   try {
