@@ -1089,14 +1089,6 @@ export const pageStyles = String.raw`    :root {
       padding: 4px;
       width: fit-content;
     }
-    .tab-btn-settings {
-      font-size: 22px;
-      padding: 0 12px;
-      line-height: 32px;
-      border-left: 1px solid #ffffff12;
-      margin-left: 2px;
-      border-radius: 0 999px 999px 0;
-    }
     .tab-btn {
       height: 32px;
       padding: 0 18px;
@@ -1119,6 +1111,16 @@ export const pageStyles = String.raw`    :root {
       background: #0e2040cc;
       border-color: #ffffff22;
       color: #eef4ff;
+    }
+    /* Must come AFTER .tab-btn / .tab-btn-active so the settings cog
+       overrides the shared sizing rather than being clobbered by it. */
+    .tab-btn-settings {
+      font-size: 22px;
+      padding: 0 12px;
+      line-height: 32px;
+      border-left: 1px solid #ffffff12;
+      margin-left: 2px;
+      border-radius: 0 999px 999px 0;
     }
 
     /* ── Chat panel ── */
@@ -1169,7 +1171,7 @@ export const pageStyles = String.raw`    :root {
       color: #eef4ff;
     }
     .chat-sync-icon {
-      font-size: 14px;
+      font-size: 23px;
       padding: 2px 8px;
       line-height: 1;
     }
