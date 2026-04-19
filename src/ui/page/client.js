@@ -1631,12 +1631,39 @@
     const filesBackBtn = $("files-back-btn");
     const filesBranchSelect = $("files-branch-select");
     const filesBranchBadge = $("files-branch-badge");
+    const filesPickerToggle = $("files-picker-toggle");
+    const filesPickerToggleLabel = $("files-picker-toggle-label");
+    const filesSidebar = $("files-sidebar");
     let filesCurrentDir = ".";
     let filesActiveFile = "";
     let filesLoaded = false;
     let filesActiveRepoRoot = ".";
     let filesHeadBranch = "";
     let filesSelectedBranch = "";
+
+    function isMobileFiles() {
+      return typeof window.matchMedia === "function"
+        && window.matchMedia("(max-width: 640px)").matches;
+    }
+
+    function setPickerCollapsed(collapsed) {
+      if (!filesSidebar || !filesPickerToggle) return;
+      filesSidebar.classList.toggle("files-sidebar-collapsed", collapsed);
+      filesPickerToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+
+    function updatePickerToggleLabel() {
+      if (!filesPickerToggleLabel) return;
+      if (filesActiveFile) {
+        var parts = filesActiveFile.split("/");
+        filesPickerToggleLabel.textContent = parts[parts.length - 1] || "Browse files";
+      } else if (filesCurrentDir && filesCurrentDir !== ".") {
+        var dParts = filesCurrentDir.split("/");
+        filesPickerToggleLabel.textContent = "Browse: " + (dParts[dParts.length - 1] || filesCurrentDir);
+      } else {
+        filesPickerToggleLabel.textContent = "Browse files";
+      }
+    }
 
     if (tabFilesBtn) {
       tabFilesBtn.addEventListener("click", function() {
@@ -1750,6 +1777,8 @@
       filesCurrentDir = dirPath || ".";
       filesActiveFile = "";
       renderBreadcrumb(filesCurrentDir);
+      updatePickerToggleLabel();
+      setPickerCollapsed(false);
 
       if (!filesList) return;
       filesList.innerHTML = '<div class="files-loading">Loading...</div>';
@@ -1823,6 +1852,8 @@
 
     async function loadFile(filePath) {
       filesActiveFile = filePath;
+      updatePickerToggleLabel();
+      if (isMobileFiles()) setPickerCollapsed(true);
 
       // Highlight active file in sidebar
       if (filesList) {
@@ -2010,5 +2041,13 @@
         parts.pop();
         var parent = parts.length ? parts.join("/") : ".";
         loadDirectory(parent);
+      });
+    }
+
+    if (filesPickerToggle) {
+      filesPickerToggle.addEventListener("click", function() {
+        if (!filesSidebar) return;
+        var collapsed = filesSidebar.classList.contains("files-sidebar-collapsed");
+        setPickerCollapsed(!collapsed);
       });
     }

@@ -229,13 +229,16 @@ ${pageStyles}
     <div id="files-panel" class="files-panel" hidden>
       <div class="files-toolbar">
         <div class="files-breadcrumb" id="files-breadcrumb"></div>
-        <div class="files-branch-wrap">
-          <label class="files-branch-label" for="files-branch-select">Branch:</label>
-          <select id="files-branch-select" class="files-branch-select"></select>
+        <div class="files-toolbar-actions">
+          <select id="files-branch-select" class="files-branch-select" title="Branch"></select>
           <span id="files-branch-badge" class="files-branch-badge" hidden>read-only</span>
+          <button id="files-back-btn" class="chat-toolbar-btn files-up-btn" type="button" title="Go up">↑</button>
         </div>
-        <button id="files-back-btn" class="chat-toolbar-btn" type="button" title="Go up">↑ Up</button>
       </div>
+      <button id="files-picker-toggle" class="files-picker-toggle" type="button" aria-expanded="true" hidden>
+        <span class="files-picker-toggle-label" id="files-picker-toggle-label">Browse files</span>
+        <span class="files-picker-toggle-caret" aria-hidden="true">▾</span>
+      </button>
       <div class="files-split">
         <div class="files-sidebar" id="files-sidebar">
           <div class="files-list" id="files-list">

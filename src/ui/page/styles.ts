@@ -1588,7 +1588,7 @@ export const pageStyles = String.raw`    :root {
     .files-breadcrumb span {
       color: #5a6a7e;
     }
-    .files-branch-wrap {
+    .files-toolbar-actions {
       display: flex;
       align-items: center;
       gap: 6px;
@@ -1597,18 +1597,16 @@ export const pageStyles = String.raw`    :root {
       font-size: 11px;
       color: #a8b4c5;
     }
-    .files-branch-label {
-      color: #7a8798;
-    }
     .files-branch-select {
       background: #0d1117;
       color: #e5eaf3;
       border: 1px solid #ffffff1a;
       border-radius: 6px;
-      padding: 4px 6px;
+      padding: 3px 6px;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
-      max-width: 220px;
+      max-width: 140px;
+      min-width: 90px;
     }
     .files-branch-select:focus {
       outline: 1px solid var(--accent, #7bd88f);
@@ -1621,6 +1619,37 @@ export const pageStyles = String.raw`    :root {
       color: #ffb86b;
       font-size: 10px;
       letter-spacing: 0.02em;
+    }
+    .files-up-btn {
+      padding: 3px 8px;
+      font-size: 12px;
+      line-height: 1;
+    }
+    .files-picker-toggle {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      border-bottom: 1px solid #ffffff12;
+      background: #0b121c;
+      color: #c8d4e5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+    }
+    .files-picker-toggle:hover {
+      background: #111a26;
+    }
+    .files-picker-toggle-caret {
+      font-size: 12px;
+      color: #9be7ff;
+      transition: transform 0.2s ease;
+    }
+    .files-picker-toggle[aria-expanded="false"] .files-picker-toggle-caret {
+      transform: rotate(-90deg);
     }
     .files-split {
       display: flex;
@@ -1823,9 +1852,25 @@ export const pageStyles = String.raw`    :root {
       .files-sidebar {
         width: 100%;
         min-width: 100%;
-        max-height: 180px;
+        max-height: 55vh;
         border-right: none;
         border-bottom: 1px solid #ffffff12;
+      }
+      .files-picker-toggle {
+        display: flex;
+      }
+      .files-sidebar.files-sidebar-collapsed {
+        display: none;
+      }
+      .files-content {
+        min-height: 60vh;
+      }
+      .files-breadcrumb {
+        font-size: 10px;
+      }
+      .files-branch-select {
+        max-width: 110px;
+        min-width: 80px;
       }
       .quick-job {
         margin-top: 14px;
