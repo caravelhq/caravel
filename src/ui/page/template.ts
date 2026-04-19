@@ -228,11 +228,12 @@ ${pageStyles}
     </div>
     <div id="files-panel" class="files-panel" hidden>
       <div class="files-toolbar">
-        <div class="files-breadcrumb" id="files-breadcrumb"></div>
-        <div class="files-toolbar-actions">
+        <div class="files-toolbar-row files-toolbar-row-branch">
           <select id="files-branch-select" class="files-branch-select" title="Branch"></select>
           <span id="files-branch-badge" class="files-branch-badge" hidden>read-only</span>
-          <button id="files-back-btn" class="chat-toolbar-btn files-up-btn" type="button" title="Go up">↑</button>
+        </div>
+        <div class="files-toolbar-row files-toolbar-row-crumb">
+          <div class="files-breadcrumb" id="files-breadcrumb"></div>
         </div>
       </div>
       <button id="files-picker-toggle" class="files-picker-toggle" type="button" aria-expanded="true" hidden>

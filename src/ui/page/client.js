@@ -1628,7 +1628,6 @@
     const filesList = $("files-list");
     const filesContent = $("files-content");
     const filesBreadcrumb = $("files-breadcrumb");
-    const filesBackBtn = $("files-back-btn");
     const filesBranchSelect = $("files-branch-select");
     const filesBranchBadge = $("files-branch-badge");
     const filesPickerToggle = $("files-picker-toggle");
@@ -2030,18 +2029,6 @@
       result = result.replace(/(<br>){3,}/g, '<br><br>');
 
       return result;
-    }
-
-    if (filesBackBtn) {
-      filesBackBtn.addEventListener("click", function() {
-        if (filesCurrentDir === "." || filesCurrentDir === "") {
-          return;
-        }
-        var parts = filesCurrentDir.split("/");
-        parts.pop();
-        var parent = parts.length ? parts.join("/") : ".";
-        loadDirectory(parent);
-      });
     }
 
     if (filesPickerToggle) {

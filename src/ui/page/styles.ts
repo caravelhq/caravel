@@ -1553,11 +1553,22 @@ export const pageStyles = String.raw`    :root {
     }
     .files-toolbar {
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
       padding: 8px 12px;
       border-bottom: 1px solid #ffffff12;
+      gap: 6px;
+    }
+    .files-toolbar-row {
+      display: flex;
+      align-items: center;
       gap: 8px;
+      min-width: 0;
+    }
+    .files-toolbar-row-branch {
+      justify-content: flex-end;
+    }
+    .files-toolbar-row-crumb {
+      justify-content: flex-start;
     }
     .files-breadcrumb {
       display: flex;
@@ -1588,15 +1599,6 @@ export const pageStyles = String.raw`    :root {
     .files-breadcrumb span {
       color: #5a6a7e;
     }
-    .files-toolbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex: 0 0 auto;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      color: #a8b4c5;
-    }
     .files-branch-select {
       background: #0d1117;
       color: #e5eaf3;
@@ -1619,11 +1621,6 @@ export const pageStyles = String.raw`    :root {
       color: #ffb86b;
       font-size: 10px;
       letter-spacing: 0.02em;
-    }
-    .files-up-btn {
-      padding: 3px 8px;
-      font-size: 12px;
-      line-height: 1;
     }
     .files-picker-toggle {
       display: none;
@@ -1852,7 +1849,7 @@ export const pageStyles = String.raw`    :root {
       .files-sidebar {
         width: 100%;
         min-width: 100%;
-        max-height: 55vh;
+        max-height: 75vh;
         border-right: none;
         border-bottom: 1px solid #ffffff12;
       }
@@ -1863,14 +1860,14 @@ export const pageStyles = String.raw`    :root {
         display: none;
       }
       .files-content {
-        min-height: 60vh;
+        min-height: 55vh;
       }
       .files-breadcrumb {
         font-size: 10px;
       }
       .files-branch-select {
-        max-width: 110px;
-        min-width: 80px;
+        max-width: 160px;
+        min-width: 110px;
       }
       .quick-job {
         margin-top: 14px;
