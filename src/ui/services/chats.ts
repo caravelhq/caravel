@@ -13,6 +13,7 @@ export interface ChatSession {
   createdAt: string;
   updatedAt: string;
   preview: string;
+  name?: string;
 }
 
 export interface ChatListEntry {
@@ -21,6 +22,15 @@ export interface ChatListEntry {
   messageCount: number;
   createdAt: string;
   updatedAt: string;
+  name?: string;
+}
+
+const MAX_CHAT_NAME_LENGTH = 80;
+
+function sanitizeName(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  const trimmed = raw.trim().replace(/[\r\n\t]+/g, " ");
+  return trimmed.slice(0, MAX_CHAT_NAME_LENGTH);
 }
 
 function sanitizeId(id: string): string {
@@ -54,12 +64,14 @@ export async function listChats(): Promise<ChatListEntry[]> {
         try {
           const s = await stat(path);
           const data = JSON.parse(await readFile(path, "utf-8"));
+          const customName = sanitizeName(data.name);
           return {
             id: data.id || name.replace(".json", ""),
             preview: data.preview || "(empty)",
             messageCount: Array.isArray(data.messages) ? data.messages.length : 0,
             createdAt: data.createdAt || s.birthtime.toISOString(),
             updatedAt: data.updatedAt || s.mtime.toISOString(),
+            ...(customName ? { name: customName } : {}),
             mtime: s.mtimeMs,
           };
         } catch {
@@ -96,12 +108,14 @@ export async function loadChat(id: string): Promise<ChatSession | null> {
   const path = chatPath(id);
   try {
     const data = JSON.parse(await readFile(path, "utf-8"));
+    const customName = sanitizeName(data.name);
     return {
       id: data.id || id,
       messages: Array.isArray(data.messages) ? data.messages : [],
       createdAt: data.createdAt || "",
       updatedAt: data.updatedAt || "",
       preview: data.preview || "",
+      ...(customName ? { name: customName } : {}),
     };
   } catch {
     return null;
@@ -117,9 +131,11 @@ export async function saveChat(
   const path = chatPath(safeId);
 
   let createdAt: string;
+  let preservedName = "";
   try {
     const existing = JSON.parse(await readFile(path, "utf-8"));
     createdAt = existing.createdAt || new Date().toISOString();
+    preservedName = sanitizeName(existing.name);
   } catch {
     createdAt = new Date().toISOString();
   }
@@ -130,6 +146,34 @@ export async function saveChat(
     createdAt,
     updatedAt: new Date().toISOString(),
     preview: buildPreview(messages),
+    ...(preservedName ? { name: preservedName } : {}),
+  };
+
+  await writeFile(path, JSON.stringify(session, null, 2), "utf-8");
+  return session;
+}
+
+export async function renameChat(
+  id: string,
+  nameInput: unknown
+): Promise<ChatSession | null> {
+  const safeId = sanitizeId(id);
+  const path = chatPath(safeId);
+  let existing: Record<string, unknown>;
+  try {
+    existing = JSON.parse(await readFile(path, "utf-8")) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+
+  const name = sanitizeName(nameInput);
+  const session: ChatSession = {
+    id: safeId,
+    messages: Array.isArray(existing.messages) ? (existing.messages as ChatMessage[]) : [],
+    createdAt: String(existing.createdAt || new Date().toISOString()),
+    updatedAt: new Date().toISOString(),
+    preview: String(existing.preview || ""),
+    ...(name ? { name } : {}),
   };
 
   await writeFile(path, JSON.stringify(session, null, 2), "utf-8");

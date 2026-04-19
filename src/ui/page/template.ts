@@ -229,6 +229,11 @@ ${pageStyles}
     <div id="files-panel" class="files-panel" hidden>
       <div class="files-toolbar">
         <div class="files-breadcrumb" id="files-breadcrumb"></div>
+        <div class="files-branch-wrap">
+          <label class="files-branch-label" for="files-branch-select">Branch:</label>
+          <select id="files-branch-select" class="files-branch-select"></select>
+          <span id="files-branch-badge" class="files-branch-badge" hidden>read-only</span>
+        </div>
         <button id="files-back-btn" class="chat-toolbar-btn" type="button" title="Go up">↑ Up</button>
       </div>
       <div class="files-split">

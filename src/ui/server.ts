@@ -5,8 +5,8 @@ import { buildState, buildTechnicalInfo, sanitizeSettings } from "./services/sta
 import { readHeartbeatSettings, updateHeartbeatSettings } from "./services/settings";
 import { createQuickJob, deleteJob } from "./services/jobs";
 import { readLogs } from "./services/logs";
-import { listChats, loadChat, saveChat, deleteChat, getChatMeta } from "./services/chats";
-import { listDirectory, readFileContent, isMarkdown } from "./services/files";
+import { listChats, loadChat, saveChat, deleteChat, getChatMeta, renameChat } from "./services/chats";
+import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   const server = Bun.serve({
@@ -197,7 +197,8 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/files/list") {
         try {
           const dir = url.searchParams.get("path") || ".";
-          const result = await listDirectory(dir);
+          const branch = url.searchParams.get("branch") || undefined;
+          const result = await listDirectory(dir, branch);
           return json({ ok: true, ...result });
         } catch (err) {
           return json({ ok: false, error: String(err) });
@@ -208,8 +209,19 @@ self.addEventListener('fetch', e => {
         try {
           const file = url.searchParams.get("path");
           if (!file) return json({ ok: false, error: "path param required" });
-          const result = await readFileContent(file);
+          const branch = url.searchParams.get("branch") || undefined;
+          const result = await readFileContent(file, branch);
           return json({ ok: true, ...result, markdown: isMarkdown(file) });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/git/branches") {
+        try {
+          const p = url.searchParams.get("path") || ".";
+          const result = await listBranchesForPath(p);
+          return json({ ok: true, ...result });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
@@ -249,6 +261,18 @@ self.addEventListener('fetch', e => {
           const body = await req.json();
           const messages = Array.isArray(body?.messages) ? body.messages : [];
           const chat = await saveChat(id, messages);
+          return json({ ok: true, chat });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname.startsWith("/api/chats/") && req.method === "PATCH") {
+        try {
+          const id = decodeURIComponent(url.pathname.slice("/api/chats/".length));
+          const body = await req.json();
+          const chat = await renameChat(id, body?.name);
+          if (!chat) return json({ ok: false, error: "not found" });
           return json({ ok: true, chat });
         } catch (err) {
           return json({ ok: false, error: String(err) });

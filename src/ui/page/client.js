@@ -201,23 +201,23 @@
         });
       }
 
-      pills.push({
-        cls: state.telegram.configured ? "ok" : "warn",
-        icon: "✈️",
-        label: "Telegram",
-        value: state.telegram.configured
-          ? (state.telegram.allowedUserCount + " user" + (state.telegram.allowedUserCount !== 1 ? "s" : ""))
-          : "Not configured",
-      });
+      if (state.telegram && state.telegram.configured) {
+        pills.push({
+          cls: "ok",
+          icon: "✈️",
+          label: "Telegram",
+          value: state.telegram.allowedUserCount + " user" + (state.telegram.allowedUserCount !== 1 ? "s" : ""),
+        });
+      }
 
-      pills.push({
-        cls: state.discord && state.discord.configured ? "ok" : "warn",
-        icon: "🎮",
-        label: "Discord",
-        value: state.discord && state.discord.configured
-          ? (state.discord.allowedUserCount + " user" + (state.discord.allowedUserCount !== 1 ? "s" : ""))
-          : "Not configured",
-      });
+      if (state.discord && state.discord.configured) {
+        pills.push({
+          cls: "ok",
+          icon: "🎮",
+          label: "Discord",
+          value: state.discord.allowedUserCount + " user" + (state.discord.allowedUserCount !== 1 ? "s" : ""),
+        });
+      }
 
       return pills;
     }
@@ -1070,7 +1070,7 @@
         item.dataset.chatId = chat.id;
         var preview = document.createElement("span");
         preview.className = "chat-history-preview";
-        preview.textContent = chat.preview || "(empty)";
+        preview.textContent = chat.name || chat.preview || "(empty)";
         var meta = document.createElement("span");
         meta.className = "chat-history-meta";
         var d = new Date(chat.updatedAt);
@@ -1081,6 +1081,20 @@
           return function() { switchToChat(id); };
         })(chat.id));
         row.appendChild(item);
+
+        var renameBtn = document.createElement("button");
+        renameBtn.className = "chat-history-rename-btn";
+        renameBtn.type = "button";
+        renameBtn.title = chat.name ? "Rename chat" : "Name this chat";
+        renameBtn.setAttribute("aria-label", renameBtn.title);
+        renameBtn.textContent = "\u270f\ufe0f";
+        renameBtn.addEventListener("click", (function(c) {
+          return function(ev) {
+            ev.stopPropagation();
+            beginInlineRename(c);
+          };
+        })(chat));
+        row.appendChild(renameBtn);
 
         if (isActive) {
           var syncBtn = document.createElement("button");
@@ -1098,6 +1112,56 @@
 
         listEl.appendChild(row);
       }
+    }
+
+    function beginInlineRename(chat) {
+      var listEl = $("chat-history-list");
+      if (!listEl) return;
+      var row = listEl.querySelector('.chat-history-row[data-chat-id="' + chat.id + '"]');
+      if (!row || row.querySelector(".chat-history-rename-input")) return;
+
+      var item = row.querySelector(".chat-history-item");
+      if (!item) return;
+      item.style.display = "none";
+
+      var input = document.createElement("input");
+      input.type = "text";
+      input.className = "chat-history-rename-input";
+      input.value = chat.name || "";
+      input.placeholder = chat.preview || "Chat name";
+      input.maxLength = 80;
+
+      var commit = function(save) {
+        if (!input.parentNode) return;
+        input.disabled = true;
+        if (save) {
+          var name = input.value.trim();
+          submitChatRename(chat.id, name).then(function() { loadChatList(); });
+        } else {
+          input.remove();
+          item.style.display = "";
+        }
+      };
+
+      input.addEventListener("keydown", function(ev) {
+        if (ev.key === "Enter") { ev.preventDefault(); commit(true); }
+        else if (ev.key === "Escape") { ev.preventDefault(); commit(false); }
+      });
+      input.addEventListener("blur", function() { commit(true); });
+
+      row.insertBefore(input, row.firstChild);
+      input.focus();
+      input.select();
+    }
+
+    async function submitChatRename(id, name) {
+      try {
+        await fetch("/api/chats/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name }),
+        });
+      } catch (_) {}
     }
 
     async function switchToChat(id) {
@@ -1246,6 +1310,23 @@
       if (chatAbortController) chatAbortController.abort();
     }
 
+    // Render an assistant message body. The streaming pipeline delimits each
+    // text block from Claude with a blank line, so we treat \n\n-separated
+    // chunks as individual thoughts and render them as bullets for
+    // scannability. Chunks that are already markdown lists or fenced code
+    // render as-is through renderMarkdown.
+    function renderAssistantBody(text) {
+      if (!text) return "";
+      var chunks = text.split(/\n{2,}/).map(function(c) { return c.trim(); }).filter(Boolean);
+      if (chunks.length < 2) return renderMarkdown(text);
+      var looksLikeListOrBlock = /^(?:[-*]\s|\d+\.\s|```|#{1,3}\s|>\s)/;
+      var items = chunks.map(function(c) {
+        if (looksLikeListOrBlock.test(c)) return '<li class="chat-msg-bullet-raw">' + renderMarkdown(c) + '</li>';
+        return '<li>' + renderMarkdown(c) + '</li>';
+      });
+      return '<ul class="chat-msg-bullets">' + items.join("") + '</ul>';
+    }
+
     function renderMarkdown(text) {
       if (!text) return "";
       var esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -1311,7 +1392,9 @@
       if (msg.streaming) cls += " chat-msg-streaming";
       msgEl.className = cls;
       roleEl.textContent = msg.role === "user" ? "You" : "Claude";
-      textEl.innerHTML = renderMarkdown(msg.text);
+      textEl.innerHTML = msg.role === "assistant"
+        ? renderAssistantBody(msg.text)
+        : renderMarkdown(msg.text);
 
       var metaEl = msgEl.querySelector(".chat-msg-elapsed, .chat-msg-background");
       if (msg.streaming && chatBusy) {
@@ -1426,8 +1509,11 @@
               var ev = JSON.parse(line.slice(6));
               if (ev.type === "chunk") {
                 var prev = chatHistory[assistantIdx].text;
-                if (prev.length > 0 && !prev.endsWith("\n") && !ev.text.startsWith("\n")) {
-                  chatHistory[assistantIdx].text += "\n";
+                if (prev.length > 0) {
+                  var needsSep = !prev.endsWith("\n\n") && !ev.text.startsWith("\n");
+                  if (needsSep) {
+                    chatHistory[assistantIdx].text += prev.endsWith("\n") ? "\n" : "\n\n";
+                  }
                 }
                 chatHistory[assistantIdx].text += ev.text;
                 renderChatHistory();
@@ -1543,16 +1629,23 @@
     const filesContent = $("files-content");
     const filesBreadcrumb = $("files-breadcrumb");
     const filesBackBtn = $("files-back-btn");
+    const filesBranchSelect = $("files-branch-select");
+    const filesBranchBadge = $("files-branch-badge");
     let filesCurrentDir = ".";
     let filesActiveFile = "";
     let filesLoaded = false;
+    let filesActiveRepoRoot = ".";
+    let filesHeadBranch = "";
+    let filesSelectedBranch = "";
 
     if (tabFilesBtn) {
       tabFilesBtn.addEventListener("click", function() {
         setActiveTab("files");
         if (!filesLoaded) {
           filesLoaded = true;
-          loadDirectory(".");
+          refreshBranchSelector().then(function() {
+            loadDirectory(".");
+          });
         }
       });
     }
@@ -1574,6 +1667,56 @@
       if (ext === "sh" || ext === "bash") return "\u2699\ufe0f";
       if (ext === "yml" || ext === "yaml") return "\ud83d\udcd1";
       return "\ud83d\udcc4";
+    }
+
+    async function refreshBranchSelector() {
+      if (!filesBranchSelect) return;
+      try {
+        var res = await fetch("/api/git/branches?path=" + encodeURIComponent(filesCurrentDir || "."));
+        var data = await res.json();
+        if (!data.ok) {
+          filesBranchSelect.innerHTML = "";
+          return;
+        }
+        filesActiveRepoRoot = data.root || ".";
+        filesHeadBranch = data.current || "";
+        if (!filesSelectedBranch) filesSelectedBranch = filesHeadBranch;
+
+        var opts = [];
+        var hasSelected = false;
+        for (var i = 0; i < data.branches.length; i++) {
+          var b = data.branches[i];
+          var label = b === filesHeadBranch ? b + " (current)" : b;
+          var sel = (b === filesSelectedBranch) ? ' selected' : '';
+          if (b === filesSelectedBranch) hasSelected = true;
+          opts.push('<option value="' + esc(b) + '"' + sel + '>' + esc(label) + '</option>');
+        }
+        if (!hasSelected && filesSelectedBranch) {
+          opts.unshift('<option value="' + esc(filesSelectedBranch) + '" selected>' + esc(filesSelectedBranch) + '</option>');
+        }
+        filesBranchSelect.innerHTML = opts.join("");
+        filesBranchSelect.title = "Repo: " + (data.rootLabel || data.root || "~");
+      } catch (_) {
+        filesBranchSelect.innerHTML = "";
+      }
+    }
+
+    function updateBranchBadge(readOnly, activeBranch) {
+      if (!filesBranchBadge) return;
+      if (readOnly) {
+        filesBranchBadge.hidden = false;
+        filesBranchBadge.textContent = "read-only · " + (activeBranch || "");
+      } else {
+        filesBranchBadge.hidden = true;
+        filesBranchBadge.textContent = "";
+      }
+    }
+
+    if (filesBranchSelect) {
+      filesBranchSelect.addEventListener("change", function() {
+        filesSelectedBranch = filesBranchSelect.value || "";
+        loadDirectory(filesCurrentDir);
+      });
     }
 
     function renderBreadcrumb(dirPath) {
@@ -1613,9 +1756,22 @@
       if (filesContent) filesContent.innerHTML = '<div class="files-empty">Select a file to view</div>';
 
       try {
-        var res = await fetch("/api/files/list?path=" + encodeURIComponent(dirPath));
+        var url = "/api/files/list?path=" + encodeURIComponent(filesCurrentDir);
+        if (filesSelectedBranch) url += "&branch=" + encodeURIComponent(filesSelectedBranch);
+        var res = await fetch(url);
         var data = await res.json();
         if (!data.ok) throw new Error(data.error || "failed");
+
+        if (data.root && data.root !== filesActiveRepoRoot) {
+          filesActiveRepoRoot = data.root;
+          filesSelectedBranch = "";
+          await refreshBranchSelector();
+        } else if (!filesActiveRepoRoot) {
+          filesActiveRepoRoot = data.root || ".";
+          await refreshBranchSelector();
+        }
+        filesHeadBranch = data.current || "";
+        updateBranchBadge(data.readOnly, data.activeBranch);
 
         if (!data.entries.length) {
           filesList.innerHTML = '<div class="files-loading">Empty directory</div>';
@@ -1680,9 +1836,12 @@
       filesContent.innerHTML = '<div class="files-loading">Loading...</div>';
 
       try {
-        var res = await fetch("/api/files/read?path=" + encodeURIComponent(filePath));
+        var url = "/api/files/read?path=" + encodeURIComponent(filePath);
+        if (filesSelectedBranch) url += "&branch=" + encodeURIComponent(filesSelectedBranch);
+        var res = await fetch(url);
         var data = await res.json();
         if (!data.ok) throw new Error(data.error || "failed");
+        updateBranchBadge(data.readOnly, data.activeBranch);
 
         if (data.markdown) {
           var div = document.createElement("div");

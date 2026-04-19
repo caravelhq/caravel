@@ -1254,6 +1254,42 @@ export const pageStyles = String.raw`    :root {
       opacity: 0.6;
       animation: chat-history-sync-spin 0.8s linear infinite;
     }
+    .chat-history-rename-btn {
+      flex: 0 0 auto;
+      align-self: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 4px;
+      padding: 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: #ffffff05;
+      color: #c8d4e5;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.12s, background 0.12s;
+    }
+    .chat-history-row:hover .chat-history-rename-btn,
+    .chat-history-row-active .chat-history-rename-btn {
+      opacity: 1;
+    }
+    .chat-history-rename-btn:hover {
+      background: #ffffff12;
+    }
+    .chat-history-rename-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 4px 4px 4px 10px;
+      padding: 6px 8px;
+      border: 1px solid var(--accent, #7bd88f);
+      border-radius: 6px;
+      background: #0d1117;
+      color: #e5eaf3;
+      font: inherit;
+      outline: none;
+    }
     @keyframes chat-history-sync-spin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -1375,6 +1411,19 @@ export const pageStyles = String.raw`    :root {
       padding-left: 18px;
     }
     .chat-msg-text li { margin: 2px 0; }
+    .chat-msg-text ul.chat-msg-bullets {
+      margin: 2px 0;
+      padding-left: 20px;
+      list-style: disc;
+    }
+    .chat-msg-text ul.chat-msg-bullets > li {
+      margin: 6px 0;
+      line-height: 1.45;
+    }
+    .chat-msg-text ul.chat-msg-bullets > li.chat-msg-bullet-raw {
+      list-style: none;
+      margin-left: -20px;
+    }
     .chat-msg-streaming .chat-msg-text::after {
       content: "▋";
       display: inline-block;
@@ -1538,6 +1587,40 @@ export const pageStyles = String.raw`    :root {
     }
     .files-breadcrumb span {
       color: #5a6a7e;
+    }
+    .files-branch-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #a8b4c5;
+    }
+    .files-branch-label {
+      color: #7a8798;
+    }
+    .files-branch-select {
+      background: #0d1117;
+      color: #e5eaf3;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      max-width: 220px;
+    }
+    .files-branch-select:focus {
+      outline: 1px solid var(--accent, #7bd88f);
+      border-color: transparent;
+    }
+    .files-branch-badge {
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #ffb86b22;
+      color: #ffb86b;
+      font-size: 10px;
+      letter-spacing: 0.02em;
     }
     .files-split {
       display: flex;
