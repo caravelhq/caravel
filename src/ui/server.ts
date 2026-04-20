@@ -63,24 +63,42 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
       const userText = chat.messages[pendingIdx].text;
       let responseText = "";
       let currentState: ChatMessageState = "thinking";
-      let persistBusy = false;
-      let persistLastAt = 0;
 
-      const persist = async (finalize: boolean): Promise<void> => {
-        if (persistBusy && !finalize) return;
-        const t = Date.now();
-        if (!finalize && t - persistLastAt < PERSIST_THROTTLE_MS) return;
-        persistBusy = true;
-        persistLastAt = t;
-        try {
-          await patchLastMessage(
+      // Serialise writes so chunk-level updates can never land after the final
+      // "done" state. Each persist() enqueues the latest snapshot; the chain
+      // flushes one at a time, in order. Finalize always waits for the whole
+      // chain so it observes the committed state.
+      let persistChain: Promise<void> = Promise.resolve();
+      let pendingSnapshot: { text: string; state: ChatMessageState } | null = null;
+      let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+      const flushPersist = (): Promise<void> => {
+        if (!pendingSnapshot) return persistChain;
+        const snap = pendingSnapshot;
+        pendingSnapshot = null;
+        persistChain = persistChain.then(() =>
+          patchLastMessage(
             chatId,
             (m) => m.role === "assistant",
-            { text: responseText, state: currentState }
-          );
-        } finally {
-          persistBusy = false;
+            { text: snap.text, state: snap.state }
+          ).then(() => undefined)
+        ).catch(() => {});
+        return persistChain;
+      };
+
+      const persist = (finalize: boolean): Promise<void> => {
+        pendingSnapshot = { text: responseText, state: currentState };
+        if (finalize) {
+          if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; }
+          return flushPersist();
         }
+        if (!persistTimer) {
+          persistTimer = setTimeout(() => {
+            persistTimer = null;
+            flushPersist().catch(() => {});
+          }, PERSIST_THROTTLE_MS);
+        }
+        return persistChain;
       };
 
       const controller = new AbortController();
