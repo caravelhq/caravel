@@ -461,8 +461,8 @@ export async function start(args: string[] = []) {
             updateState();
             console.log(`[${ts()}] Jobs reloaded from Web UI`);
           },
-          onChat: async (message, onChunk, onUnblock) => {
-            await streamUserMessage("chat", message, onChunk, onUnblock);
+          onChat: async (message, onChunk, onUnblock, abortSignal) => {
+            await streamUserMessage("chat", message, onChunk, onUnblock, abortSignal);
           },
         });
       } catch (err) {

@@ -1487,8 +1487,16 @@ export const pageStyles = String.raw`    :root {
     .chat-input:focus {
       outline: none;
     }
+    .chat-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+      align-items: stretch;
+    }
     .chat-send,
-    .chat-cancel {
+    .chat-cancel,
+    .chat-interrupt {
       flex-shrink: 0;
       height: 34px;
       padding: 0 14px;
@@ -1503,6 +1511,21 @@ export const pageStyles = String.raw`    :root {
       align-items: center;
       justify-content: center;
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-interrupt {
+      border: 1px solid #ffb36655;
+      background: #3a220055;
+      color: #ffcf99;
+    }
+    .chat-interrupt:hover {
+      transform: translateY(-1px);
+      background: #4a2a0070;
+      border-color: #ffcf9966;
+    }
+    .chat-interrupt:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
     }
     .chat-send {
       border: 1px solid #3cb87980;

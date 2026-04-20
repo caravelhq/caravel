@@ -26,6 +26,11 @@ type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 // globally serialised by the runner queue.
 const chatProcessors = new Set<string>();
 
+// Active abort controller per chatId — lets /api/chat/interrupt kill the
+// in-flight onChat call. Populated while a single onChat is running and
+// cleared after it returns or aborts.
+const chatAborts = new Map<string, AbortController>();
+
 const PERSIST_THROTTLE_MS = 300;
 
 async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<void> {
@@ -78,6 +83,8 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
         }
       };
 
+      const controller = new AbortController();
+      chatAborts.set(chatId, controller);
       try {
         await onChat(
           userText,
@@ -98,15 +105,33 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
               currentState = "background";
             }
             persist(false).catch(() => {});
-          }
+          },
+          controller.signal
         );
-        currentState = "done";
+        if (controller.signal.aborted) {
+          responseText = responseText
+            ? responseText + "\n\n[Interrupted]"
+            : "[Interrupted]";
+          currentState = "done";
+        } else {
+          currentState = "done";
+        }
         await persist(true);
       } catch (err) {
-        const suffix = responseText ? "\n\n[Error: " + String(err) + "]" : "[Error: " + String(err) + "]";
-        responseText = responseText ? responseText + "\n\n[Error: " + String(err) + "]" : suffix;
-        currentState = "error";
+        if (controller.signal.aborted) {
+          responseText = responseText
+            ? responseText + "\n\n[Interrupted]"
+            : "[Interrupted]";
+          currentState = "done";
+        } else {
+          responseText = responseText
+            ? responseText + "\n\n[Error: " + String(err) + "]"
+            : "[Error: " + String(err) + "]";
+          currentState = "error";
+        }
         await persist(true);
+      } finally {
+        chatAborts.delete(chatId);
       }
     }
   } finally {
@@ -390,6 +415,20 @@ self.addEventListener('fetch', e => {
           const id = decodeURIComponent(url.pathname.slice("/api/chats/".length));
           await deleteChat(id);
           return json({ ok: true });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/chat/interrupt" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const chatId = String(body?.chatId ?? "").trim();
+          if (!chatId) return json({ ok: false, error: "chatId required" });
+          const ctl = chatAborts.get(chatId);
+          if (!ctl) return json({ ok: true, interrupted: false });
+          ctl.abort();
+          return json({ ok: true, interrupted: true });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

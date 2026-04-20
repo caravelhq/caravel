@@ -30,6 +30,7 @@ export interface StartWebUiOptions {
   onChat?: (
     message: string,
     onChunk: (text: string) => void,
-    onUnblock: () => void
+    onUnblock: () => void,
+    abortSignal?: AbortSignal
   ) => Promise<void>;
 }

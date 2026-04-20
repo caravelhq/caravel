@@ -1382,9 +1382,19 @@
         chatMessages.removeChild(chatMessages.lastElementChild);
       }
 
+      updateInterruptBtn();
+
       requestAnimationFrame(function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
       });
+    }
+
+    function updateInterruptBtn() {
+      var btn = $("chat-interrupt");
+      if (!btn) return;
+      var active = hasActiveWork();
+      btn.hidden = !active;
+      if (active) btn.disabled = false;
     }
 
     function autoResizeChatInput() {
@@ -1461,6 +1471,21 @@
 
     var chatCancelBtn = $("chat-cancel");
     if (chatCancelBtn) chatCancelBtn.hidden = true;
+
+    var chatInterruptBtn = $("chat-interrupt");
+    if (chatInterruptBtn) {
+      chatInterruptBtn.addEventListener("click", async function() {
+        chatInterruptBtn.disabled = true;
+        try {
+          await fetch("/api/chat/interrupt", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chatId: chatSessionId }),
+          });
+        } catch (_) {}
+        pollChat().finally(schedulePoll);
+      });
+    }
 
     // ── Files ──
     const tabFilesBtn = $("tab-files");

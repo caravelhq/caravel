@@ -549,7 +549,8 @@ async function streamClaude(
   name: string,
   prompt: string,
   onChunk: (text: string) => void,
-  onUnblock: () => void
+  onUnblock: () => void,
+  abortSignal?: AbortSignal
 ): Promise<void> {
   await mkdir(LOGS_DIR, { recursive: true });
 
@@ -593,6 +594,16 @@ async function streamClaude(
     stderr: "pipe",
     env: childEnv,
   });
+
+  let aborted = false;
+  const onAbort = () => {
+    aborted = true;
+    try { proc.kill(); } catch {}
+  };
+  if (abortSignal) {
+    if (abortSignal.aborted) onAbort();
+    else abortSignal.addEventListener("abort", onAbort, { once: true });
+  }
 
   const reader = proc.stdout.getReader();
   const decoder = new TextDecoder();
@@ -661,19 +672,25 @@ async function streamClaude(
   }
 
   await proc.exited;
+  if (abortSignal) abortSignal.removeEventListener("abort", onAbort);
   // Ensure unblock fires even if something unexpected happened
   maybeUnblock();
 
-  console.log(`[${new Date().toLocaleTimeString()}] Done: ${name}`);
+  if (aborted) {
+    console.log(`[${new Date().toLocaleTimeString()}] Interrupted: ${name}`);
+  } else {
+    console.log(`[${new Date().toLocaleTimeString()}] Done: ${name}`);
+  }
 }
 
 export async function streamUserMessage(
   name: string,
   prompt: string,
   onChunk: (text: string) => void,
-  onUnblock: () => void
+  onUnblock: () => void,
+  abortSignal?: AbortSignal
 ): Promise<void> {
-  return enqueue(() => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock));
+  return enqueue(() => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal));
 }
 
 function prefixUserMessageWithClock(prompt: string): string {
