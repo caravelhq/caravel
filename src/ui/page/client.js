@@ -1364,7 +1364,7 @@
       btn.hidden = true;
       btn.addEventListener("click", function() {
         btn.disabled = true;
-        interruptCurrent();
+        interruptCurrent({ sendAfter: true });
       });
       chatMessages.appendChild(btn);
       return btn;
@@ -1517,7 +1517,8 @@
     var chatCancelBtn = $("chat-cancel");
     if (chatCancelBtn) chatCancelBtn.hidden = true;
 
-    async function interruptCurrent() {
+    async function interruptCurrent(opts) {
+      var sendAfter = !!(opts && opts.sendAfter);
       try {
         await fetch("/api/chat/interrupt", {
           method: "POST",
@@ -1525,14 +1526,19 @@
           body: JSON.stringify({ chatId: chatSessionId }),
         });
       } catch (_) {}
-      pollChat().finally(schedulePoll);
+      if (sendAfter && chatInput && (chatInput.value || "").trim()) {
+        await sendChat();
+      } else {
+        await pollChat();
+      }
+      schedulePoll();
     }
 
     var chatInterruptBtn = $("chat-interrupt");
     if (chatInterruptBtn) {
       chatInterruptBtn.addEventListener("click", function() {
         chatInterruptBtn.disabled = true;
-        interruptCurrent();
+        interruptCurrent({ sendAfter: true });
       });
     }
 

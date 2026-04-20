@@ -197,6 +197,48 @@ export async function deleteChat(id: string): Promise<void> {
   await Bun.file(path).delete();
 }
 
+// Sweep every chat file and close any assistant message stuck in a
+// non-terminal state (thinking/streaming/background). Called at daemon boot —
+// without it, a restart mid-run leaves the UI showing a permanent thinking
+// spinner because nothing else patches the state back to "done".
+// Returns the number of messages finalised.
+export async function recoverStuckChats(): Promise<number> {
+  await mkdir(CHATS_DIR, { recursive: true });
+  let files: string[];
+  try {
+    files = await readdir(CHATS_DIR);
+  } catch {
+    return 0;
+  }
+  const nonTerminal = new Set(["thinking", "streaming", "background"]);
+  let fixed = 0;
+  for (const name of files) {
+    if (!name.endsWith(".json")) continue;
+    const id = name.replace(/\.json$/, "");
+    const chat = await loadChat(id);
+    if (!chat) continue;
+    let changed = false;
+    for (let i = 0; i < chat.messages.length; i++) {
+      const m = chat.messages[i];
+      if (m.role !== "assistant") continue;
+      if (!m.state || !nonTerminal.has(m.state)) continue;
+      const base = m.text || "";
+      chat.messages[i] = {
+        ...m,
+        text: base
+          ? base + "\n\n[Interrupted — server restarted]"
+          : "[Interrupted — server restarted]",
+        state: "done",
+        updatedAt: Date.now(),
+      };
+      fixed += 1;
+      changed = true;
+    }
+    if (changed) await saveChat(id, chat.messages);
+  }
+  return fixed;
+}
+
 // Append a single message, returning the new session. Used when the server
 // persists user messages immediately (rather than waiting on a full saveChat
 // round-trip from the client).

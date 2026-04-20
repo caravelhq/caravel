@@ -14,6 +14,7 @@ import {
   renameChat,
   appendMessage,
   patchLastMessage,
+  recoverStuckChats,
   type ChatMessageState,
 } from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
@@ -158,6 +159,15 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
 }
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
+  // Recover any chat messages left in a non-terminal state by a previous
+  // daemon instance that was killed mid-run. Non-blocking — the sweep reads
+  // the chats dir, so we let it run in parallel with server startup.
+  recoverStuckChats()
+    .then((n) => {
+      if (n > 0) console.log(`[chat] recovered ${n} stuck message${n === 1 ? "" : "s"}`);
+    })
+    .catch((err) => console.error("[chat] recovery sweep failed:", err));
+
   const server = Bun.serve({
     hostname: opts.host,
     port: opts.port,
@@ -444,9 +454,35 @@ self.addEventListener('fetch', e => {
           const chatId = String(body?.chatId ?? "").trim();
           if (!chatId) return json({ ok: false, error: "chatId required" });
           const ctl = chatAborts.get(chatId);
-          if (!ctl) return json({ ok: true, interrupted: false });
-          ctl.abort();
-          return json({ ok: true, interrupted: true });
+          if (ctl) {
+            ctl.abort();
+            return json({ ok: true, interrupted: true });
+          }
+          // No live onChat for this chat — but the last assistant message may
+          // be stuck in a non-terminal state from a previous daemon instance.
+          // Finalise it so the UI unfreezes.
+          const chat = await loadChat(chatId);
+          if (chat) {
+            const nonTerminal = new Set(["thinking", "streaming", "background"]);
+            for (let i = chat.messages.length - 1; i >= 0; i--) {
+              const m = chat.messages[i];
+              if (m.role !== "assistant") continue;
+              if (m.state && nonTerminal.has(m.state)) {
+                const base = m.text || "";
+                await patchLastMessage(
+                  chatId,
+                  (mm) => mm === m || (mm.role === "assistant" && mm.state === m.state),
+                  {
+                    text: base ? base + "\n\n[Interrupted]" : "[Interrupted]",
+                    state: "done",
+                  }
+                );
+                return json({ ok: true, interrupted: true, recovered: true });
+              }
+              break;
+            }
+          }
+          return json({ ok: true, interrupted: false });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
