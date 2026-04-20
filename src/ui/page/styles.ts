@@ -1614,14 +1614,57 @@ export const pageStyles = String.raw`    :root {
       outline: 1px solid var(--accent, #7bd88f);
       border-color: transparent;
     }
-    .files-branch-badge {
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #ffb86b22;
-      color: #ffb86b;
-      font-size: 10px;
-      letter-spacing: 0.02em;
+    .files-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
+    .files-nav-btn {
+      background: #0d1117;
+      color: #c8d4e5;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      padding: 0;
+    }
+    .files-nav-btn:hover:not(:disabled) {
+      background: #ffffff0d;
+      color: #9be7ff;
+    }
+    .files-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .files-code {
+      margin: 0;
+      padding: 0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #d7e3f5;
+      white-space: pre;
+      tab-size: 2;
+    }
+    .files-code code { font-family: inherit; font-size: inherit; }
+    .syn-key { color: #9be7ff; }
+    .syn-str { color: #a7e4a1; }
+    .syn-num { color: #f4b678; }
+    .syn-bool { color: #c792ea; }
+    .syn-null { color: #c792ea; }
+    .syn-kw { color: #c792ea; font-weight: 500; }
+    .syn-builtin { color: #9be7ff; }
+    .syn-fn { color: #f7c173; }
+    .syn-comment { color: #6a7f94; font-style: italic; }
+    .syn-punct { color: #8ca0b8; }
+    .syn-decor { color: #f4a6c8; }
     .files-picker-toggle {
       display: none;
       align-items: center;

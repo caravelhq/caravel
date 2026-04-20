@@ -229,8 +229,11 @@ ${pageStyles}
     <div id="files-panel" class="files-panel" hidden>
       <div class="files-toolbar">
         <div class="files-toolbar-row files-toolbar-row-branch">
-          <select id="files-branch-select" class="files-branch-select" title="Branch"></select>
-          <span id="files-branch-badge" class="files-branch-badge" hidden>read-only</span>
+          <select id="files-branch-select" class="files-branch-select" title="Branch" hidden></select>
+          <div class="files-nav-group">
+            <button id="files-nav-back" class="files-nav-btn" type="button" title="Back" aria-label="Back" disabled>←</button>
+            <button id="files-nav-forward" class="files-nav-btn" type="button" title="Forward" aria-label="Forward" disabled>→</button>
+          </div>
         </div>
         <div class="files-toolbar-row files-toolbar-row-crumb">
           <div class="files-breadcrumb" id="files-breadcrumb"></div>

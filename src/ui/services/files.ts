@@ -1,5 +1,5 @@
 import { readFile, readdir, stat } from "fs/promises";
-import { existsSync, statSync } from "fs";
+import { existsSync, statSync, realpathSync } from "fs";
 import { join, resolve, relative, extname, dirname } from "path";
 
 const WORK_DIR = process.cwd();
@@ -28,29 +28,50 @@ export interface RepoRoot {
   absPath: string;
   relPath: string;
   label: string;
+  hasRepo: boolean;
 }
 
 // Walk up from absPath until we find a directory containing .git (a regular
-// .git directory OR a .git file for worktrees/submodules) or we hit WORK_DIR.
+// .git directory OR a .git file for worktrees/submodules). If the walk hits
+// the filesystem root without finding one, fall back to WORK_DIR and report
+// hasRepo=false so callers can hide branch UI.
 function resolveRepoRoot(absPath: string): RepoRoot {
+  // Dereference symlinks so a symlinked folder pointing at a non-repo target
+  // is correctly detected as not-in-a-repo.
   let current = absPath;
+  try {
+    current = realpathSync(current);
+  } catch {
+    // path may not exist yet — fall through and walk up the logical path
+  }
   try {
     const st = statSync(current);
     if (!st.isDirectory()) current = dirname(current);
   } catch {
     current = dirname(current);
   }
+  let found = false;
   while (true) {
-    if (existsSync(join(current, ".git"))) break;
-    if (current === WORK_DIR || current === "/" || current === dirname(current)) {
-      current = WORK_DIR;
+    if (existsSync(join(current, ".git"))) {
+      found = true;
       break;
     }
+    if (current === "/" || current === dirname(current)) break;
     current = dirname(current);
   }
+  if (!found) current = WORK_DIR;
   const rel = relative(WORK_DIR, current) || ".";
-  const label = rel === "." ? "~/work" : rel;
-  return { absPath: current, relPath: rel, label };
+  // If the resolved repo root is outside WORK_DIR, surface it as an absolute label
+  const insideWork = !rel.startsWith("..");
+  const label = insideWork
+    ? (rel === "." ? "~/work" : rel)
+    : current;
+  return {
+    absPath: current,
+    relPath: insideWork ? rel : current,
+    label,
+    hasRepo: found,
+  };
 }
 
 async function runGit(root: string, args: string[]): Promise<{ code: number; stdout: string; stderr: string }> {
@@ -92,9 +113,19 @@ export async function listBranchesForPath(requestedPath: string): Promise<{
   rootLabel: string;
   current: string;
   branches: string[];
+  hasRepo: boolean;
 }> {
   const absPath = safePath(requestedPath || ".");
   const root = resolveRepoRoot(absPath);
+  if (!root.hasRepo) {
+    return {
+      root: root.relPath,
+      rootLabel: root.label,
+      current: "",
+      branches: [],
+      hasRepo: false,
+    };
+  }
   const current = await currentBranch(root.absPath);
   const res = await runGit(root.absPath, ["branch", "--format=%(refname:short)", "--all"]);
   const seen = new Set<string>();
@@ -113,6 +144,7 @@ export async function listBranchesForPath(requestedPath: string): Promise<{
     rootLabel: root.label,
     current,
     branches,
+    hasRepo: true,
   };
 }
 
@@ -232,19 +264,22 @@ export interface DirListing {
   current: string;
   activeBranch: string;
   readOnly: boolean;
+  hasRepo: boolean;
 }
 
 export async function listDirectory(dirPath: string, branch?: string): Promise<DirListing> {
   const full = safePath(dirPath || ".");
   const rel = relative(WORK_DIR, full) || ".";
   const root = resolveRepoRoot(full);
-  const current = await currentBranch(root.absPath);
+  const current = root.hasRepo ? await currentBranch(root.absPath) : "";
   const requestedBranch = (branch || "").trim();
-  const useGit = Boolean(requestedBranch) && requestedBranch !== current;
+  const useGit = root.hasRepo && Boolean(requestedBranch) && requestedBranch !== current;
 
   let entries: FileEntry[];
   if (useGit) {
-    const relToRoot = relative(root.absPath, full) || ".";
+    let realFull = full;
+    try { realFull = realpathSync(full); } catch {}
+    const relToRoot = relative(root.absPath, realFull) || ".";
     entries = await listDirectoryFromGit(root, relToRoot, requestedBranch, rel);
   } else {
     entries = await listDirectoryFromFs(full);
@@ -257,6 +292,7 @@ export async function listDirectory(dirPath: string, branch?: string): Promise<D
     current,
     activeBranch: useGit ? requestedBranch : current,
     readOnly: useGit,
+    hasRepo: root.hasRepo,
   };
 }
 
@@ -277,15 +313,16 @@ export interface FileRead {
   current: string;
   activeBranch: string;
   readOnly: boolean;
+  hasRepo: boolean;
 }
 
 export async function readFileContent(filePath: string, branch?: string): Promise<FileRead> {
   const full = safePath(filePath);
   const rel = relative(WORK_DIR, full);
   const root = resolveRepoRoot(full);
-  const current = await currentBranch(root.absPath);
+  const current = root.hasRepo ? await currentBranch(root.absPath) : "";
   const requestedBranch = (branch || "").trim();
-  const useGit = Boolean(requestedBranch) && requestedBranch !== current;
+  const useGit = root.hasRepo && Boolean(requestedBranch) && requestedBranch !== current;
 
   if (!useGit) {
     const st = await stat(full);
@@ -303,10 +340,13 @@ export async function readFileContent(filePath: string, branch?: string): Promis
       current,
       activeBranch: current,
       readOnly: false,
+      hasRepo: root.hasRepo,
     };
   }
 
-  const relToRoot = relative(root.absPath, full);
+  let realFull = full;
+  try { realFull = realpathSync(full); } catch {}
+  const relToRoot = relative(root.absPath, realFull);
   if (!relToRoot || relToRoot.startsWith("..")) {
     throw new Error("File outside resolved repo root");
   }
@@ -336,6 +376,7 @@ export async function readFileContent(filePath: string, branch?: string): Promis
     current,
     activeBranch: requestedBranch,
     readOnly: true,
+    hasRepo: root.hasRepo,
   };
 }
 

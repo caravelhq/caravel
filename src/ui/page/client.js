@@ -1629,7 +1629,8 @@
     const filesContent = $("files-content");
     const filesBreadcrumb = $("files-breadcrumb");
     const filesBranchSelect = $("files-branch-select");
-    const filesBranchBadge = $("files-branch-badge");
+    const filesNavBack = $("files-nav-back");
+    const filesNavForward = $("files-nav-forward");
     const filesPickerToggle = $("files-picker-toggle");
     const filesPickerToggleLabel = $("files-picker-toggle-label");
     const filesSidebar = $("files-sidebar");
@@ -1639,6 +1640,10 @@
     let filesActiveRepoRoot = ".";
     let filesHeadBranch = "";
     let filesSelectedBranch = "";
+    let filesHasRepo = false;
+    var filesHistory = [];
+    var filesHistoryIdx = -1;
+    var filesSkipHistoryPush = false;
 
     function isMobileFiles() {
       return typeof window.matchMedia === "function"
@@ -1695,12 +1700,27 @@
       return "\ud83d\udcc4";
     }
 
+    function applyRepoVisibility(hasRepo) {
+      filesHasRepo = !!hasRepo;
+      if (filesBranchSelect) filesBranchSelect.hidden = !filesHasRepo;
+      if (!filesHasRepo) {
+        filesSelectedBranch = "";
+        filesHeadBranch = "";
+      }
+    }
+
     async function refreshBranchSelector() {
       if (!filesBranchSelect) return;
       try {
         var res = await fetch("/api/git/branches?path=" + encodeURIComponent(filesCurrentDir || "."));
         var data = await res.json();
         if (!data.ok) {
+          filesBranchSelect.innerHTML = "";
+          applyRepoVisibility(false);
+          return;
+        }
+        applyRepoVisibility(data.hasRepo !== false && (data.branches || []).length > 0);
+        if (!filesHasRepo) {
           filesBranchSelect.innerHTML = "";
           return;
         }
@@ -1724,19 +1744,42 @@
         filesBranchSelect.title = "Repo: " + (data.rootLabel || data.root || "~");
       } catch (_) {
         filesBranchSelect.innerHTML = "";
+        applyRepoVisibility(false);
       }
     }
 
-    function updateBranchBadge(readOnly, activeBranch) {
-      if (!filesBranchBadge) return;
-      if (readOnly) {
-        filesBranchBadge.hidden = false;
-        filesBranchBadge.textContent = "read-only · " + (activeBranch || "");
-      } else {
-        filesBranchBadge.hidden = true;
-        filesBranchBadge.textContent = "";
-      }
+    function pushHistory(dir, file) {
+      if (filesSkipHistoryPush) return;
+      var last = filesHistory[filesHistoryIdx];
+      if (last && last.dir === dir && last.file === file) return;
+      filesHistory = filesHistory.slice(0, filesHistoryIdx + 1);
+      filesHistory.push({ dir: dir, file: file });
+      filesHistoryIdx = filesHistory.length - 1;
+      updateNavButtons();
     }
+
+    function updateNavButtons() {
+      if (filesNavBack) filesNavBack.disabled = filesHistoryIdx <= 0;
+      if (filesNavForward) filesNavForward.disabled = filesHistoryIdx < 0 || filesHistoryIdx >= filesHistory.length - 1;
+    }
+
+    async function goToHistory(delta) {
+      var next = filesHistoryIdx + delta;
+      if (next < 0 || next >= filesHistory.length) return;
+      filesHistoryIdx = next;
+      var entry = filesHistory[next];
+      filesSkipHistoryPush = true;
+      try {
+        await loadDirectory(entry.dir);
+        if (entry.file) await loadFile(entry.file);
+      } finally {
+        filesSkipHistoryPush = false;
+      }
+      updateNavButtons();
+    }
+
+    if (filesNavBack) filesNavBack.addEventListener("click", function() { goToHistory(-1); });
+    if (filesNavForward) filesNavForward.addEventListener("click", function() { goToHistory(1); });
 
     if (filesBranchSelect) {
       filesBranchSelect.addEventListener("change", function() {
@@ -1775,6 +1818,7 @@
     async function loadDirectory(dirPath) {
       filesCurrentDir = dirPath || ".";
       filesActiveFile = "";
+      pushHistory(filesCurrentDir, "");
       renderBreadcrumb(filesCurrentDir);
       updatePickerToggleLabel();
       setPickerCollapsed(false);
@@ -1790,16 +1834,16 @@
         var data = await res.json();
         if (!data.ok) throw new Error(data.error || "failed");
 
+        applyRepoVisibility(data.hasRepo);
         if (data.root && data.root !== filesActiveRepoRoot) {
           filesActiveRepoRoot = data.root;
           filesSelectedBranch = "";
-          await refreshBranchSelector();
+          if (filesHasRepo) await refreshBranchSelector();
         } else if (!filesActiveRepoRoot) {
           filesActiveRepoRoot = data.root || ".";
-          await refreshBranchSelector();
+          if (filesHasRepo) await refreshBranchSelector();
         }
         filesHeadBranch = data.current || "";
-        updateBranchBadge(data.readOnly, data.activeBranch);
 
         if (!data.entries.length) {
           filesList.innerHTML = '<div class="files-loading">Empty directory</div>';
@@ -1851,6 +1895,7 @@
 
     async function loadFile(filePath) {
       filesActiveFile = filePath;
+      pushHistory(filesCurrentDir, filePath);
       updatePickerToggleLabel();
       if (isMobileFiles()) setPickerCollapsed(true);
 
@@ -1871,24 +1916,261 @@
         var res = await fetch(url);
         var data = await res.json();
         if (!data.ok) throw new Error(data.error || "failed");
-        updateBranchBadge(data.readOnly, data.activeBranch);
 
+        filesContent.textContent = "";
         if (data.markdown) {
           var div = document.createElement("div");
           div.className = "files-md";
           div.innerHTML = renderFullMarkdown(data.content);
-          filesContent.textContent = "";
           filesContent.appendChild(div);
         } else {
-          var pre = document.createElement("pre");
-          pre.className = "files-raw";
-          pre.textContent = data.content;
-          filesContent.textContent = "";
-          filesContent.appendChild(pre);
+          var lang = detectLang(filePath);
+          if (lang) {
+            var pre = document.createElement("pre");
+            pre.className = "files-code";
+            var code = document.createElement("code");
+            code.innerHTML = highlightCode(data.content, lang);
+            pre.appendChild(code);
+            filesContent.appendChild(pre);
+          } else {
+            var raw = document.createElement("pre");
+            raw.className = "files-raw";
+            raw.textContent = data.content;
+            filesContent.appendChild(raw);
+          }
         }
       } catch (err) {
         filesContent.innerHTML = '<div class="files-empty">Error: ' + esc(String(err instanceof Error ? err.message : err)) + '</div>';
       }
+    }
+
+    function detectLang(filePath) {
+      var ext = (filePath.match(/\.([^./]+)$/) || [])[1] || "";
+      ext = ext.toLowerCase();
+      if (ext === "json") return "json";
+      if (ext === "js" || ext === "mjs" || ext === "cjs" || ext === "ts" || ext === "tsx" || ext === "jsx") return "js";
+      if (ext === "py") return "py";
+      return "";
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function highlightCode(src, lang) {
+      if (lang === "json") return highlightJson(src);
+      if (lang === "js") return highlightJs(src);
+      if (lang === "py") return highlightPy(src);
+      return escHtml(src);
+    }
+
+    function highlightJson(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      while (i < len) {
+        var ch = src[i];
+        if (ch === '"') {
+          var start = i;
+          i++;
+          while (i < len) {
+            if (src[i] === "\\" && i + 1 < len) { i += 2; continue; }
+            if (src[i] === '"') { i++; break; }
+            i++;
+          }
+          var str = src.slice(start, i);
+          var j = i;
+          while (j < len && /\s/.test(src[j])) j++;
+          if (src[j] === ":") {
+            out += '<span class="syn-key">' + escHtml(str) + '</span>';
+          } else {
+            out += '<span class="syn-str">' + escHtml(str) + '</span>';
+          }
+          continue;
+        }
+        if (ch === "-" || (ch >= "0" && ch <= "9")) {
+          var nStart = i;
+          if (ch === "-") i++;
+          while (i < len && /[0-9.eE+\-]/.test(src[i])) i++;
+          out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + '</span>';
+          continue;
+        }
+        if (src.slice(i, i + 4) === "true" || src.slice(i, i + 5) === "false") {
+          var kw = src.slice(i, i + 4) === "true" ? "true" : "false";
+          out += '<span class="syn-bool">' + kw + '</span>';
+          i += kw.length;
+          continue;
+        }
+        if (src.slice(i, i + 4) === "null") {
+          out += '<span class="syn-null">null</span>';
+          i += 4;
+          continue;
+        }
+        if ("{}[],:".indexOf(ch) >= 0) {
+          out += '<span class="syn-punct">' + escHtml(ch) + '</span>';
+          i++;
+          continue;
+        }
+        out += escHtml(ch);
+        i++;
+      }
+      return out;
+    }
+
+    var JS_KEYWORDS = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|as|interface|type|enum|implements|public|private|protected|readonly|abstract)$/;
+    var JS_BUILTINS = /^(true|false|null|undefined|NaN|Infinity|console|Math|JSON|Object|Array|String|Number|Boolean|Promise|Date|RegExp|Error|window|document|globalThis)$/;
+
+    function highlightJs(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      while (i < len) {
+        var ch = src[i];
+        // Line comment
+        if (ch === "/" && src[i + 1] === "/") {
+          var end = src.indexOf("\n", i);
+          if (end === -1) end = len;
+          out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + '</span>';
+          i = end;
+          continue;
+        }
+        // Block comment
+        if (ch === "/" && src[i + 1] === "*") {
+          var bend = src.indexOf("*/", i + 2);
+          if (bend === -1) bend = len; else bend += 2;
+          out += '<span class="syn-comment">' + escHtml(src.slice(i, bend)) + '</span>';
+          i = bend;
+          continue;
+        }
+        // Strings
+        if (ch === '"' || ch === "'" || ch === "`") {
+          var quote = ch;
+          var sStart = i;
+          i++;
+          while (i < len) {
+            if (src[i] === "\\" && i + 1 < len) { i += 2; continue; }
+            if (src[i] === quote) { i++; break; }
+            if (quote === "`" && src[i] === "$" && src[i + 1] === "{") {
+              var depth = 1;
+              i += 2;
+              while (i < len && depth > 0) {
+                if (src[i] === "{") depth++;
+                else if (src[i] === "}") depth--;
+                i++;
+              }
+              continue;
+            }
+            i++;
+          }
+          out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + '</span>';
+          continue;
+        }
+        // Number
+        if (ch >= "0" && ch <= "9") {
+          var nStart = i;
+          while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+          out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + '</span>';
+          continue;
+        }
+        // Identifier / keyword
+        if (/[A-Za-z_$]/.test(ch)) {
+          var idStart = i;
+          while (i < len && /[A-Za-z0-9_$]/.test(src[i])) i++;
+          var word = src.slice(idStart, i);
+          if (JS_KEYWORDS.test(word)) {
+            out += '<span class="syn-kw">' + word + '</span>';
+          } else if (JS_BUILTINS.test(word)) {
+            out += '<span class="syn-builtin">' + word + '</span>';
+          } else if (src[i] === "(") {
+            out += '<span class="syn-fn">' + word + '</span>';
+          } else {
+            out += escHtml(word);
+          }
+          continue;
+        }
+        out += escHtml(ch);
+        i++;
+      }
+      return out;
+    }
+
+    var PY_KEYWORDS = /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|match|case)$/;
+    var PY_BUILTINS = /^(abs|all|any|bool|bytes|callable|chr|dict|dir|enumerate|filter|float|format|frozenset|getattr|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|map|max|min|next|object|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|str|sum|super|tuple|type|vars|zip|self|cls)$/;
+
+    function highlightPy(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      while (i < len) {
+        var ch = src[i];
+        // Decorator
+        if (ch === "@" && /[A-Za-z_]/.test(src[i + 1] || "")) {
+          var dStart = i;
+          i++;
+          while (i < len && /[A-Za-z0-9_.]/.test(src[i])) i++;
+          out += '<span class="syn-decor">' + escHtml(src.slice(dStart, i)) + '</span>';
+          continue;
+        }
+        // Comment
+        if (ch === "#") {
+          var end = src.indexOf("\n", i);
+          if (end === -1) end = len;
+          out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + '</span>';
+          i = end;
+          continue;
+        }
+        // Triple-quoted strings (treat as comments/strings)
+        if ((ch === '"' || ch === "'") && src[i + 1] === ch && src[i + 2] === ch) {
+          var tq = ch + ch + ch;
+          var tStart = i;
+          i += 3;
+          var tEnd = src.indexOf(tq, i);
+          if (tEnd === -1) { i = len; }
+          else { i = tEnd + 3; }
+          out += '<span class="syn-str">' + escHtml(src.slice(tStart, i)) + '</span>';
+          continue;
+        }
+        // Simple string (handles r"" / b"" prefix too)
+        if (ch === '"' || ch === "'") {
+          var quote = ch;
+          var sStart = i;
+          i++;
+          while (i < len) {
+            if (src[i] === "\\" && i + 1 < len) { i += 2; continue; }
+            if (src[i] === quote) { i++; break; }
+            if (src[i] === "\n") break;
+            i++;
+          }
+          out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + '</span>';
+          continue;
+        }
+        // Number
+        if (ch >= "0" && ch <= "9") {
+          var nStart = i;
+          while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+          out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + '</span>';
+          continue;
+        }
+        // Identifier / keyword
+        if (/[A-Za-z_]/.test(ch)) {
+          var idStart = i;
+          while (i < len && /[A-Za-z0-9_]/.test(src[i])) i++;
+          var word = src.slice(idStart, i);
+          if (PY_KEYWORDS.test(word)) {
+            out += '<span class="syn-kw">' + word + '</span>';
+          } else if (PY_BUILTINS.test(word)) {
+            out += '<span class="syn-builtin">' + word + '</span>';
+          } else if (src[i] === "(") {
+            out += '<span class="syn-fn">' + word + '</span>';
+          } else {
+            out += escHtml(word);
+          }
+          continue;
+        }
+        out += escHtml(ch);
+        i++;
+      }
+      return out;
     }
 
     function renderFullMarkdown(src) {
