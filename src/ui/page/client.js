@@ -1337,7 +1337,7 @@
         if (state === "thinking") {
           meta = document.createElement("div");
           meta.className = "chat-msg-meta chat-msg-thinking";
-          meta.textContent = "\u{1F319} thinking\u2026";
+          meta.textContent = "thinking\u2026";
         } else if (state === "background") {
           meta = document.createElement("div");
           meta.className = "chat-msg-meta chat-msg-background";
