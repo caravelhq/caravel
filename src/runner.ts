@@ -681,15 +681,32 @@ async function streamClaude(
     }
   }
 
-  await proc.exited;
+  const exitCode = await proc.exited;
   if (abortSignal) abortSignal.removeEventListener("abort", onAbort);
   // Ensure unblock fires even if something unexpected happened
   maybeUnblock();
 
   if (aborted) {
     console.log(`[${new Date().toLocaleTimeString()}] Interrupted: ${name}`);
-  } else {
-    console.log(`[${new Date().toLocaleTimeString()}] Done: ${name}`);
+    return;
+  }
+
+  console.log(`[${new Date().toLocaleTimeString()}] Done: ${name}`);
+
+  // Mirror execClaude's turn tracking + compact warning. Only count turns that
+  // resumed an existing session — a brand-new session's first turn is implicit.
+  if (exitCode === 0 && existing) {
+    const turnCount = threadId ? await incrementThreadTurn(threadId) : await incrementTurn();
+    console.log(`[${new Date().toLocaleTimeString()}] Turn count: ${turnCount}${threadId ? ` (thread ${threadId.slice(0, 8)})` : ""}`);
+
+    if (turnCount >= COMPACT_WARN_THRESHOLD && !existing.compactWarned) {
+      if (threadId) {
+        await markThreadCompactWarned(threadId);
+      } else {
+        await markCompactWarned();
+      }
+      emitCompactEvent({ type: "warn", turnCount });
+    }
   }
 }
 
