@@ -11,6 +11,7 @@ import {
 import { getSettings, type ModelConfig, type SecurityConfig } from "./config";
 import { buildClockPromptPrefix } from "./timezone";
 import { selectModel } from "./model-router";
+import { loadAgent } from "./agents";
 
 const LOGS_DIR = join(process.cwd(), ".claude/claudeclaw/logs");
 // Resolve prompts relative to the claudeclaw installation, not the project dir
@@ -551,7 +552,8 @@ async function streamClaude(
   onChunk: (text: string) => void,
   onUnblock: () => void,
   abortSignal?: AbortSignal,
-  threadId?: string
+  threadId?: string,
+  agentId?: string
 ): Promise<void> {
   await mkdir(LOGS_DIR, { recursive: true });
 
@@ -562,6 +564,9 @@ async function streamClaude(
     : await getSession();
   const { security, model, api } = getSettings();
   const securityArgs = buildSecurityArgs(security);
+
+  // Load agent profile if one is selected for this chat.
+  const agent = agentId ? await loadAgent(agentId) : null;
 
   // stream-json gives us events as they happen — text before tool calls,
   // so we can unblock the UI as soon as Claude acknowledges, not after sub-agents finish.
@@ -574,11 +579,29 @@ async function streamClaude(
   const appendParts: string[] = ["You are running inside ClaudeClaw."];
   if (promptContent) appendParts.push(promptContent);
 
-  if (existsSync(PROJECT_CLAUDE_MD)) {
+  // CLAUDE.md selection:
+  //   - Agent selected + agent CLAUDE.md non-empty: use agent's only.
+  //   - Agent selected + agent CLAUDE.md empty (marker file like vesper/):
+  //     fall back to project CLAUDE.md.
+  //   - No agent: use project CLAUDE.md as before.
+  const useAgentClaudeMd = agent && agent.claudeMd.length > 0;
+  if (useAgentClaudeMd) {
+    appendParts.push(agent.claudeMd);
+  } else if (existsSync(PROJECT_CLAUDE_MD)) {
     try {
       const claudeMd = await Bun.file(PROJECT_CLAUDE_MD).text();
       if (claudeMd.trim()) appendParts.push(claudeMd.trim());
     } catch {}
+  }
+
+  // Agent rules replace the default rules aggregation. Project .claude/rules/
+  // is already loaded via --append-system-prompt indirectly (it's part of the
+  // project CLAUDE.md flow that Claude Code itself resolves). We only need to
+  // inject agent-specific rules here when an agent is active with its own
+  // CLAUDE.md. When falling back to project CLAUDE.md, skip agent rules too —
+  // full Vesper mode.
+  if (useAgentClaudeMd && agent.rules) {
+    appendParts.push(agent.rules);
   }
 
   if (security.level !== "unrestricted") appendParts.push(DIR_SCOPE_PROMPT);
@@ -586,14 +609,17 @@ async function streamClaude(
     args.push("--append-system-prompt", appendParts.join("\n\n"));
   }
 
-  const normalizedModel = model.trim().toLowerCase();
-  if (model.trim() && normalizedModel !== "glm") args.push("--model", model.trim());
+  // Agent manifest may override the model.
+  const effectiveModel = agent?.manifest.model ?? model;
+  const normalizedModel = effectiveModel.trim().toLowerCase();
+  if (effectiveModel.trim() && normalizedModel !== "glm") args.push("--model", effectiveModel.trim());
 
   const { CLAUDECODE: _, ...cleanEnv } = process.env;
-  const childEnv = buildChildEnv(cleanEnv as Record<string, string>, model, api);
+  const childEnv = buildChildEnv(cleanEnv as Record<string, string>, effectiveModel, api);
 
   const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
-  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json,${threadTag} session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
+  const agentTag = agent ? ` agent: ${agent.manifest.name},` : "";
+  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json,${threadTag}${agentTag} session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
 
   const proc = Bun.spawn(args, {
     stdout: "pipe",
@@ -717,12 +743,13 @@ export async function streamUserMessage(
   onChunk: (text: string) => void,
   onUnblock: () => void,
   abortSignal?: AbortSignal,
-  threadId?: string
+  threadId?: string,
+  agentId?: string
 ): Promise<void> {
   // Per-thread queue when threadId is set (web chats run in parallel, matches
   // Discord). Falls back to the global queue for heartbeat/CLI calls.
   return enqueue(
-    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId),
+    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId, agentId),
     threadId
   );
 }

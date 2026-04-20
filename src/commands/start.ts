@@ -461,10 +461,11 @@ export async function start(args: string[] = []) {
             updateState();
             console.log(`[${ts()}] Jobs reloaded from Web UI`);
           },
-          onChat: async (chatId, message, onChunk, onUnblock, abortSignal) => {
+          onChat: async (chatId, message, onChunk, onUnblock, abortSignal, agentId) => {
             // Pass chatId as threadId so each web chat gets its own Claude
-            // session (aligns with Discord's per-thread model).
-            await streamUserMessage("chat", message, onChunk, onUnblock, abortSignal, chatId);
+            // session (aligns with Discord's per-thread model). agentId, when
+            // present, selects the CLAUDE.md + rules profile from agents/.
+            await streamUserMessage("chat", message, onChunk, onUnblock, abortSignal, chatId, agentId);
           },
         });
       } catch (err) {

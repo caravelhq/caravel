@@ -998,6 +998,16 @@
     var CHAT_POLL_FAST_MS = 500;
     var CHAT_POLL_IDLE_MS = 10000;
 
+    // Agents: per-chat identity. agentsCache is the catalog from /api/agents.
+    // chatAgentLocked is the agentId already persisted server-side (set once,
+    // on the first user message of a new chat — immutable after that).
+    // pendingAgentId is the user's picker selection for a brand-new chat that
+    // hasn't been locked in yet; it's sent with the first message.
+    var agentsCache = [];
+    var chatAgentLocked = null;
+    var pendingAgentId = null;
+    var agentsFetched = false;
+
     function generateChatId() {
       var id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
       localStorage.setItem(CHAT_ID_KEY, id);
@@ -1049,6 +1059,11 @@
         if (data.chat && data.chat.messages) {
           chatHistory = cleanHistory(data.chat.messages);
           chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
+          if (data.chat.agentId && chatAgentLocked !== data.chat.agentId) {
+            chatAgentLocked = data.chat.agentId;
+            updateAgentBadge();
+            updateSendDisabled();
+          }
           renderChatHistory();
         }
       } catch (_) {}
@@ -1061,7 +1076,10 @@
         if (data.ok && data.chat) {
           chatServerUpdatedAt = data.chat.updatedAt || null;
           chatHistory = cleanHistory(data.chat.messages || []);
+          chatAgentLocked = data.chat.agentId || null;
           renderChatHistory();
+          updateAgentBadge();
+          updateSendDisabled();
         }
         if (data && data.ok) updateSessionBadge(data.session);
       } catch (_) {}
@@ -1091,6 +1109,67 @@
       el.textContent = "thread " + chatFp + " → " + sidFp + " · " + turns + " turn" + (turns === 1 ? "" : "s");
       el.title = "thread: " + chatSessionId + "\nsession: " + session.sessionId + "\n(click to copy session id)";
       el.dataset.sessionId = session.sessionId;
+    }
+
+    async function loadAgents() {
+      try {
+        var res = await fetch("/api/agents");
+        var data = await res.json();
+        if (data && data.ok && Array.isArray(data.agents)) {
+          agentsCache = data.agents;
+        }
+      } catch (_) {}
+      agentsFetched = true;
+      // Default pendingAgentId to vesper when nothing's picked yet and the
+      // chat hasn't locked one in — matches "Vesper by default" behaviour.
+      if (!pendingAgentId && !chatAgentLocked) {
+        var vesper = agentsCache.find(function(a) { return a.name === "vesper"; });
+        if (vesper) pendingAgentId = vesper.name;
+        else if (agentsCache.length > 0) pendingAgentId = agentsCache[0].name;
+      }
+      renderChatHistory();
+      updateAgentBadge();
+    }
+
+    function findAgent(id) {
+      if (!id) return null;
+      for (var i = 0; i < agentsCache.length; i++) {
+        if (agentsCache[i].name === id) return agentsCache[i];
+      }
+      return null;
+    }
+
+    function effectiveAgentId() {
+      return chatAgentLocked || pendingAgentId || null;
+    }
+
+    function agentPicked() {
+      // True once an agent is either locked in on the server or selected in
+      // the picker. Send button is blocked until this is true.
+      return !!(chatAgentLocked || pendingAgentId);
+    }
+
+    function updateAgentBadge() {
+      var el = $("chat-agent-badge");
+      if (!el) return;
+      var id = effectiveAgentId();
+      var agent = findAgent(id);
+      if (!agent) {
+        el.hidden = true;
+        el.textContent = "";
+        el.title = "";
+        el.dataset.locked = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
+      el.title = agent.description + (chatAgentLocked ? " (locked for this chat)" : " (not yet locked — send first message to confirm)");
+      el.dataset.locked = chatAgentLocked ? "1" : "0";
+    }
+
+    function updateSendDisabled() {
+      if (!chatSend) return;
+      chatSend.disabled = !agentPicked();
     }
 
     async function loadChatList() {
@@ -1128,7 +1207,9 @@
         item.dataset.chatId = chat.id;
         var preview = document.createElement("span");
         preview.className = "chat-history-preview";
-        preview.textContent = chat.name || chat.preview || "(empty)";
+        var agentForRow = findAgent(chat.agentId);
+        var prefix = agentForRow && agentForRow.emoji ? agentForRow.emoji + " " : "";
+        preview.textContent = prefix + (chat.name || chat.preview || "(empty)");
         var meta = document.createElement("span");
         meta.className = "chat-history-meta";
         var d = new Date(chat.updatedAt);
@@ -1226,18 +1307,28 @@
       chatSessionId = id;
       localStorage.setItem(CHAT_ID_KEY, id);
       chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(id));
         var data = await res.json();
         if (data.ok && data.chat) {
           chatHistory = cleanHistory(data.chat.messages);
           chatServerUpdatedAt = data.chat.updatedAt || null;
+          chatAgentLocked = data.chat.agentId || null;
         } else {
           chatHistory = [];
         }
       } catch (_) {
         chatHistory = [];
       }
+      // Freshly-opened chat with no lock-in: default the picker to Vesper.
+      if (!chatAgentLocked && !pendingAgentId && agentsCache.length > 0) {
+        var v = agentsCache.find(function(a) { return a.name === "vesper"; });
+        pendingAgentId = (v ? v.name : agentsCache[0].name);
+      }
+      updateAgentBadge();
+      updateSendDisabled();
       renderChatHistory();
       schedulePoll();
       var dropdown = $("chat-history-dropdown");
@@ -1249,6 +1340,14 @@
       chatSessionId = generateChatId();
       chatHistory = [];
       chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
+      if (agentsCache.length > 0) {
+        var v = agentsCache.find(function(a) { return a.name === "vesper"; });
+        pendingAgentId = (v ? v.name : agentsCache[0].name);
+      }
+      updateAgentBadge();
+      updateSendDisabled();
       renderChatHistory();
       schedulePoll();
       var dropdown = $("chat-history-dropdown");
@@ -1256,7 +1355,11 @@
       loadChatList();
     }
 
-    loadChatFromServer().finally(schedulePoll);
+    // Load agents first so the picker has data when the empty state renders,
+    // then pull chat state from the server.
+    loadAgents().then(function() {
+      return loadChatFromServer();
+    }).finally(schedulePoll);
 
     document.addEventListener("visibilitychange", function() {
       if (document.visibilityState === "visible") pollChat();
@@ -1328,7 +1431,58 @@
     function createChatEmptyState() {
       var empty = document.createElement("div");
       empty.className = "chat-empty";
-      empty.textContent = "Send a message to start chatting with the daemon.";
+
+      if (!agentsFetched) {
+        empty.textContent = "Loading agents…";
+        return empty;
+      }
+      if (agentsCache.length === 0) {
+        empty.textContent = "No agent profiles found. Add one under agents/<name>/agent.json.";
+        return empty;
+      }
+
+      var head = document.createElement("div");
+      head.className = "chat-picker-head";
+      head.textContent = "Pick an agent to start this chat";
+      empty.appendChild(head);
+
+      var sub = document.createElement("div");
+      sub.className = "chat-picker-sub";
+      sub.textContent = "Agent is locked once you send the first message.";
+      empty.appendChild(sub);
+
+      var list = document.createElement("div");
+      list.className = "chat-picker-list";
+      for (var i = 0; i < agentsCache.length; i++) {
+        (function(agent) {
+          var item = document.createElement("button");
+          item.type = "button";
+          item.className = "chat-picker-item";
+          if (pendingAgentId === agent.name) item.classList.add("chat-picker-item-active");
+
+          var title = document.createElement("div");
+          title.className = "chat-picker-item-title";
+          title.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
+          item.appendChild(title);
+
+          var desc = document.createElement("div");
+          desc.className = "chat-picker-item-desc";
+          desc.textContent = agent.description;
+          item.appendChild(desc);
+
+          item.addEventListener("click", function() {
+            pendingAgentId = agent.name;
+            updateAgentBadge();
+            updateSendDisabled();
+            // Re-render so only the picked item shows -active styling.
+            renderChatHistory();
+          });
+
+          list.appendChild(item);
+        })(agentsCache[i]);
+      }
+      empty.appendChild(list);
+
       return empty;
     }
 
@@ -1488,18 +1642,34 @@
       if (!chatInput) return;
       var message = (chatInput.value || "").trim();
       if (!message) return;
+      // Guard: block send until an agent is picked. With the picker rendered
+      // as empty state, this should only bite if the user pastes into the
+      // textarea before clicking an agent.
+      if (!agentPicked()) return;
 
       chatInput.value = "";
       autoResizeChatInput();
 
       chatHistory.push({ role: "user", text: message, state: "pending" });
+      // Optimistically lock the agent client-side so the picker disappears
+      // before the server round-trip completes.
+      if (!chatAgentLocked && pendingAgentId) {
+        chatAgentLocked = pendingAgentId;
+        updateAgentBadge();
+        updateSendDisabled();
+      }
       renderChatHistory();
+
+      var payload = { message: message, chatId: chatSessionId };
+      if (!chatAgentLocked && pendingAgentId) payload.agentId = pendingAgentId;
+      else if (chatAgentLocked) payload.agentId = chatAgentLocked;
+      else if (pendingAgentId) payload.agentId = pendingAgentId;
 
       try {
         await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: message, chatId: chatSessionId }),
+          body: JSON.stringify(payload),
         });
       } catch (_) {
         // Network failed — the server-side processor is still the source of truth.

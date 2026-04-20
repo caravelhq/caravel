@@ -1364,6 +1364,88 @@ export const pageStyles = String.raw`    :root {
       color: #5a7a9a;
       padding: 40px 20px;
     }
+    .chat-picker-head {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: #c7d1e0;
+      margin-bottom: 4px;
+    }
+    .chat-picker-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: #6a7c91;
+      margin-bottom: 16px;
+    }
+    .chat-picker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .chat-picker-item {
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      background: #ffffff06;
+      color: #c7d1e0;
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      text-transform: none;
+      letter-spacing: 0;
+      transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+    }
+    .chat-picker-item:hover {
+      background: #ffffff0e;
+      border-color: #ffffff26;
+    }
+    .chat-picker-item-active {
+      background: #2b4870;
+      border-color: #4a7abd;
+      color: #eef4ff;
+    }
+    .chat-picker-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .chat-picker-item-desc {
+      font-size: 11px;
+      color: #8892a4;
+      line-height: 1.4;
+    }
+    .chat-picker-item-active .chat-picker-item-desc { color: #b8c7dc; }
+    .chat-agent-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      background: #ffffff06;
+      color: #a8b4c5;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .chat-agent-badge[data-locked="0"] {
+      color: #7a8698;
+      border-style: dashed;
+    }
+    @media (max-width: 600px) {
+      .chat-agent-badge { max-width: 120px; font-size: 10px; }
+    }
+    .chat-send:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
     .chat-msg {
       display: flex;
       flex-direction: column;

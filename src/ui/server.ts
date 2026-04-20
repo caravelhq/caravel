@@ -19,6 +19,7 @@ import {
 } from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
+import { listAgents } from "../agents";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -42,6 +43,7 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
     while (true) {
       const chat = await loadChat(chatId);
       if (!chat) break;
+      const agentId = chat.agentId;
       const firstPendingIdx = chat.messages.findIndex(
         (m) => m.role === "user" && m.state === "pending"
       );
@@ -126,6 +128,7 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
         await onChat(
           chatId,
           userText,
+          // onChunk
           (chunk) => {
             // Each chunk is a separate assistant text block from Claude. Insert
             // a blank line between blocks so markdown paragraphs/lists render
@@ -144,7 +147,8 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
             }
             persist(false).catch(() => {});
           },
-          controller.signal
+          controller.signal,
+          agentId
         );
         if (controller.signal.aborted) {
           responseText = responseText
@@ -454,6 +458,14 @@ self.addEventListener('fetch', e => {
         }
       }
 
+      if (url.pathname === "/api/agents" && req.method === "GET") {
+        try {
+          return json({ ok: true, agents: await listAgents() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
       // Debug: list all thread sessions (used to verify per-chat isolation).
       if (url.pathname === "/api/sessions" && req.method === "GET") {
         try {
@@ -543,17 +555,24 @@ self.addEventListener('fetch', e => {
           const body = await req.json();
           const message = String(body?.message ?? "").trim();
           const chatId = String(body?.chatId ?? "").trim();
+          const agentId = typeof body?.agentId === "string" ? body.agentId.trim() : "";
           if (!message) return json({ ok: false, error: "message required" });
           if (!chatId) return json({ ok: false, error: "chatId required" });
 
           // Persist user msg as pending; queue processor picks it up.
-          await appendMessage(chatId, {
-            role: "user",
-            text: message,
-            state: "pending",
-            startedAt: Date.now(),
-            updatedAt: Date.now(),
-          });
+          // agentId is only applied if the chat doesn't have one yet
+          // (immutable once set on the first message).
+          await appendMessage(
+            chatId,
+            {
+              role: "user",
+              text: message,
+              state: "pending",
+              startedAt: Date.now(),
+              updatedAt: Date.now(),
+            },
+            agentId || undefined
+          );
 
           // Kick off processing in the background. If there's already a
           // processor running for this chat, it will pick up the new pending

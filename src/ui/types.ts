@@ -32,6 +32,7 @@ export interface StartWebUiOptions {
     message: string,
     onChunk: (text: string) => void,
     onUnblock: () => void,
-    abortSignal?: AbortSignal
+    abortSignal?: AbortSignal,
+    agentId?: string
   ) => Promise<void>;
 }

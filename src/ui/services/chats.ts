@@ -26,6 +26,7 @@ export interface ChatSession {
   updatedAt: string;
   preview: string;
   name?: string;
+  agentId?: string;
 }
 
 export interface ChatListEntry {
@@ -35,14 +36,21 @@ export interface ChatListEntry {
   createdAt: string;
   updatedAt: string;
   name?: string;
+  agentId?: string;
 }
 
 const MAX_CHAT_NAME_LENGTH = 80;
+const MAX_AGENT_ID_LENGTH = 64;
 
 function sanitizeName(raw: unknown): string {
   if (typeof raw !== "string") return "";
   const trimmed = raw.trim().replace(/[\r\n\t]+/g, " ");
   return trimmed.slice(0, MAX_CHAT_NAME_LENGTH);
+}
+
+function sanitizeAgentId(raw: unknown): string {
+  if (typeof raw !== "string") return "";
+  return raw.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, MAX_AGENT_ID_LENGTH);
 }
 
 function sanitizeId(id: string): string {
@@ -77,6 +85,7 @@ export async function listChats(): Promise<ChatListEntry[]> {
           const s = await stat(path);
           const data = JSON.parse(await readFile(path, "utf-8"));
           const customName = sanitizeName(data.name);
+          const agentId = sanitizeAgentId(data.agentId);
           return {
             id: data.id || name.replace(".json", ""),
             preview: data.preview || "(empty)",
@@ -84,6 +93,7 @@ export async function listChats(): Promise<ChatListEntry[]> {
             createdAt: data.createdAt || s.birthtime.toISOString(),
             updatedAt: data.updatedAt || s.mtime.toISOString(),
             ...(customName ? { name: customName } : {}),
+            ...(agentId ? { agentId } : {}),
             mtime: s.mtimeMs,
           };
         } catch {
@@ -121,6 +131,7 @@ export async function loadChat(id: string): Promise<ChatSession | null> {
   try {
     const data = JSON.parse(await readFile(path, "utf-8"));
     const customName = sanitizeName(data.name);
+    const agentId = sanitizeAgentId(data.agentId);
     return {
       id: data.id || id,
       messages: Array.isArray(data.messages) ? data.messages : [],
@@ -128,6 +139,7 @@ export async function loadChat(id: string): Promise<ChatSession | null> {
       updatedAt: data.updatedAt || "",
       preview: data.preview || "",
       ...(customName ? { name: customName } : {}),
+      ...(agentId ? { agentId } : {}),
     };
   } catch {
     return null;
@@ -144,10 +156,12 @@ export async function saveChat(
 
   let createdAt: string;
   let preservedName = "";
+  let preservedAgentId = "";
   try {
     const existing = JSON.parse(await readFile(path, "utf-8"));
     createdAt = existing.createdAt || new Date().toISOString();
     preservedName = sanitizeName(existing.name);
+    preservedAgentId = sanitizeAgentId(existing.agentId);
   } catch {
     createdAt = new Date().toISOString();
   }
@@ -159,6 +173,7 @@ export async function saveChat(
     updatedAt: new Date().toISOString(),
     preview: buildPreview(messages),
     ...(preservedName ? { name: preservedName } : {}),
+    ...(preservedAgentId ? { agentId: preservedAgentId } : {}),
   };
 
   await writeFile(path, JSON.stringify(session, null, 2), "utf-8");
@@ -179,6 +194,7 @@ export async function renameChat(
   }
 
   const name = sanitizeName(nameInput);
+  const preservedAgentId = sanitizeAgentId(existing.agentId);
   const session: ChatSession = {
     id: safeId,
     messages: Array.isArray(existing.messages) ? (existing.messages as ChatMessage[]) : [],
@@ -186,6 +202,7 @@ export async function renameChat(
     updatedAt: new Date().toISOString(),
     preview: String(existing.preview || ""),
     ...(name ? { name } : {}),
+    ...(preservedAgentId ? { agentId: preservedAgentId } : {}),
   };
 
   await writeFile(path, JSON.stringify(session, null, 2), "utf-8");
@@ -242,12 +259,35 @@ export async function recoverStuckChats(): Promise<number> {
 // Append a single message, returning the new session. Used when the server
 // persists user messages immediately (rather than waiting on a full saveChat
 // round-trip from the client).
+// If agentId is provided AND the chat has no agentId yet, it's set here — this
+// locks in the agent identity on the first user message of a new chat.
 export async function appendMessage(
   id: string,
-  message: ChatMessage
+  message: ChatMessage,
+  agentId?: string
 ): Promise<ChatSession> {
   const current = await loadChat(id);
   const messages = current ? [...current.messages, message] : [message];
+
+  const incoming = sanitizeAgentId(agentId);
+  if (incoming && !current?.agentId) {
+    await mkdir(CHATS_DIR, { recursive: true });
+    const safeId = sanitizeId(id);
+    const path = chatPath(safeId);
+    const createdAt = current?.createdAt || new Date().toISOString();
+    const session: ChatSession = {
+      id: safeId,
+      messages,
+      createdAt,
+      updatedAt: new Date().toISOString(),
+      preview: buildPreview(messages),
+      ...(current?.name ? { name: current.name } : {}),
+      agentId: incoming,
+    };
+    await writeFile(path, JSON.stringify(session, null, 2), "utf-8");
+    return session;
+  }
+
   return saveChat(id, messages);
 }
 

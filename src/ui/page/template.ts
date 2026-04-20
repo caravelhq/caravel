@@ -211,6 +211,7 @@ ${pageStyles}
         <div class="chat-toolbar-left">
           <button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chat history">History</button>
           <button id="chat-new-btn" class="chat-toolbar-btn" type="button" title="New chat">+ New</button>
+          <span id="chat-agent-badge" class="chat-agent-badge" hidden></span>
         </div>
         <button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button>
         <button id="chat-clear" class="chat-toolbar-btn" type="button" title="Clear current chat">🗑 Clear</button>
