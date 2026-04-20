@@ -778,6 +778,28 @@
       });
     }
 
+    var debugToggle = $("debug-toggle");
+    var debugEnabled = localStorage.getItem("debug.enabled") === "1";
+
+    function renderDebugToggle() {
+      if (!debugToggle) return;
+      debugToggle.textContent = debugEnabled ? "On" : "Off";
+      debugToggle.className = "hb-toggle " + (debugEnabled ? "on" : "off");
+    }
+    renderDebugToggle();
+
+    function isDebugEnabled() { return debugEnabled; }
+
+    if (debugToggle) {
+      debugToggle.addEventListener("click", function() {
+        debugEnabled = !debugEnabled;
+        localStorage.setItem("debug.enabled", debugEnabled ? "1" : "0");
+        renderDebugToggle();
+        updateSessionBadge(lastSessionInfo);
+        if (debugEnabled) { try { pollChat({ force: true }); } catch (_) {} }
+      });
+    }
+
     if (quickJobOffset && !quickJobOffset.value) {
       quickJobOffset.value = "10";
     }
@@ -1045,9 +1067,16 @@
       } catch (_) {}
     }
 
+    var lastSessionInfo = null;
+
     function updateSessionBadge(session) {
+      lastSessionInfo = session || null;
       var el = $("chat-session-badge");
       if (!el) return;
+      if (typeof debugEnabled !== "undefined" && !debugEnabled) {
+        el.hidden = true;
+        return;
+      }
       var chatFp = chatSessionId ? chatSessionId.slice(0, 8) : "";
       if (!session || !session.sessionId) {
         el.hidden = false;

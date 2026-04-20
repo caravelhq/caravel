@@ -78,6 +78,13 @@ ${pageStyles}
       </div>
       <div class="setting-item">
         <div class="setting-main">
+          <div class="settings-label">🐞 Debug</div>
+          <div class="settings-meta">Show chat thread/session ids</div>
+        </div>
+        <button class="hb-toggle off" id="debug-toggle" type="button">Off</button>
+      </div>
+      <div class="setting-item">
+        <div class="setting-main">
           <div class="settings-label">🧾 Advanced</div>
           <div class="settings-meta">Technical runtime and JSON files</div>
         </div>
