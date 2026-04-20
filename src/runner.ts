@@ -592,7 +592,8 @@ async function streamClaude(
   const { CLAUDECODE: _, ...cleanEnv } = process.env;
   const childEnv = buildChildEnv(cleanEnv as Record<string, string>, model, api);
 
-  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json, session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
+  const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
+  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json,${threadTag} session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
 
   const proc = Bun.spawn(args, {
     stdout: "pipe",

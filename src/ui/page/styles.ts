@@ -1170,6 +1170,30 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
+    .chat-session-badge {
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      background: transparent;
+      color: #7a8698;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.02em;
+      padding: 3px 8px;
+      margin-left: auto;
+      margin-right: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .chat-session-badge:hover {
+      background: #ffffff10;
+      color: #a8b4c5;
+    }
+    @media (max-width: 600px) {
+      .chat-session-badge { max-width: 140px; font-size: 9px; }
+    }
     .chat-history-dropdown {
       position: absolute;
       top: 100%;

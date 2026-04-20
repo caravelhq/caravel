@@ -1019,6 +1019,7 @@
         var res = await fetch(url);
         var data = await res.json();
         if (!data || !data.ok) return;
+        updateSessionBadge(data.session);
         if (data.unchanged) {
           if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
           return;
@@ -1040,7 +1041,27 @@
           chatHistory = cleanHistory(data.chat.messages || []);
           renderChatHistory();
         }
+        if (data && data.ok) updateSessionBadge(data.session);
       } catch (_) {}
+    }
+
+    function updateSessionBadge(session) {
+      var el = $("chat-session-badge");
+      if (!el) return;
+      var chatFp = chatSessionId ? chatSessionId.slice(0, 8) : "";
+      if (!session || !session.sessionId) {
+        el.hidden = false;
+        el.textContent = "thread " + chatFp + " · no session yet";
+        el.title = "No Claude session has been created for this chat yet. Send a message to spawn one.";
+        el.dataset.sessionId = "";
+        return;
+      }
+      var sidFp = session.sessionId.slice(0, 8);
+      var turns = typeof session.turnCount === "number" ? session.turnCount : 0;
+      el.hidden = false;
+      el.textContent = "thread " + chatFp + " → " + sidFp + " · " + turns + " turn" + (turns === 1 ? "" : "s");
+      el.title = "thread: " + chatSessionId + "\nsession: " + session.sessionId + "\n(click to copy session id)";
+      el.dataset.sessionId = session.sessionId;
     }
 
     async function loadChatList() {
@@ -1470,6 +1491,18 @@
     if (chatClearBtn) {
       chatClearBtn.addEventListener("click", function() {
         startNewChat();
+      });
+    }
+
+    var chatSessionBadge = $("chat-session-badge");
+    if (chatSessionBadge) {
+      chatSessionBadge.addEventListener("click", function() {
+        var sid = chatSessionBadge.dataset.sessionId || "";
+        if (!sid) return;
+        try { navigator.clipboard.writeText(sid); } catch (_) {}
+        var original = chatSessionBadge.textContent;
+        chatSessionBadge.textContent = "copied";
+        setTimeout(function() { chatSessionBadge.textContent = original; }, 900);
       });
     }
 

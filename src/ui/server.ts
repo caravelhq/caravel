@@ -18,6 +18,7 @@ import {
   type ChatMessageState,
 } from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
+import { peekThreadSession, listThreadSessions } from "../sessionManager";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -437,16 +438,26 @@ self.addEventListener('fetch', e => {
         try {
           const id = decodeURIComponent(url.pathname.slice("/api/chats/".length));
           const since = url.searchParams.get("since");
+          const session = await peekThreadSession(id);
           if (since) {
             const meta = await getChatMeta(id);
             if (!meta) return json({ ok: false, error: "not found" });
             if (since >= meta.updatedAt) {
-              return json({ ok: true, chat: null, updatedAt: meta.updatedAt, unchanged: true });
+              return json({ ok: true, chat: null, updatedAt: meta.updatedAt, unchanged: true, session });
             }
           }
           const chat = await loadChat(id);
           if (!chat) return json({ ok: false, error: "not found" });
-          return json({ ok: true, chat });
+          return json({ ok: true, chat, session });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Debug: list all thread sessions (used to verify per-chat isolation).
+      if (url.pathname === "/api/sessions" && req.method === "GET") {
+        try {
+          return json({ ok: true, sessions: await listThreadSessions() });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
