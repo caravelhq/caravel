@@ -550,11 +550,16 @@ async function streamClaude(
   prompt: string,
   onChunk: (text: string) => void,
   onUnblock: () => void,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  threadId?: string
 ): Promise<void> {
   await mkdir(LOGS_DIR, { recursive: true });
 
-  const existing = await getSession();
+  // Mirror execClaude's threadId handling: per-thread sessions when a threadId
+  // is supplied (web chat, Discord), global session otherwise (heartbeat, CLI).
+  const existing = threadId
+    ? await getThreadSession(threadId)
+    : await getSession();
   const { security, model, api } = getSettings();
   const securityArgs = buildSecurityArgs(security);
 
@@ -637,8 +642,13 @@ async function streamClaude(
           // Capture session ID for new sessions
           const sid = event.session_id as string | undefined;
           if (sid && !existing) {
-            await createSession(sid);
-            console.log(`[${new Date().toLocaleTimeString()}] Session created (stream-json): ${sid}`);
+            if (threadId) {
+              await createThreadSession(threadId, sid);
+              console.log(`[${new Date().toLocaleTimeString()}] Thread session created (stream-json): ${threadId.slice(0, 8)} → ${sid.slice(0, 8)}`);
+            } else {
+              await createSession(sid);
+              console.log(`[${new Date().toLocaleTimeString()}] Session created (stream-json): ${sid}`);
+            }
           }
         } else if (event.type === "assistant") {
           // Text and tool_use blocks from the assistant
@@ -688,9 +698,15 @@ export async function streamUserMessage(
   prompt: string,
   onChunk: (text: string) => void,
   onUnblock: () => void,
-  abortSignal?: AbortSignal
+  abortSignal?: AbortSignal,
+  threadId?: string
 ): Promise<void> {
-  return enqueue(() => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal));
+  // Per-thread queue when threadId is set (web chats run in parallel, matches
+  // Discord). Falls back to the global queue for heartbeat/CLI calls.
+  return enqueue(
+    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId),
+    threadId
+  );
 }
 
 function prefixUserMessageWithClock(prompt: string): string {

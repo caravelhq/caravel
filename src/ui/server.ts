@@ -123,6 +123,7 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
       chatAborts.set(chatId, controller);
       try {
         await onChat(
+          chatId,
           userText,
           (chunk) => {
             // Each chunk is a separate assistant text block from Claude. Insert

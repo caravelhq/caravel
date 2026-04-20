@@ -28,6 +28,7 @@ export interface StartWebUiOptions {
   }) => void | Promise<void>;
   onJobsChanged?: () => void | Promise<void>;
   onChat?: (
+    chatId: string,
     message: string,
     onChunk: (text: string) => void,
     onUnblock: () => void,
