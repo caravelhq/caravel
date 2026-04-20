@@ -1573,6 +1573,35 @@ export const pageStyles = String.raw`    :root {
       background: #2b141466;
       color: #ffc2c2;
     }
+    .chat-msg-assistant { position: relative; }
+    .chat-msg-stop {
+      position: absolute;
+      top: 22px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid #ff4d4d88;
+      background: #3a121266;
+      color: #ff8a8a;
+      font-size: 12px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+    }
+    .chat-msg-stop:hover {
+      background: #5a1a1a90;
+      border-color: #ff4d4d;
+      transform: scale(1.08);
+    }
+    .chat-msg-stop:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
 
     /* ── Files panel ── */
     .files-panel {

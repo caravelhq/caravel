@@ -1329,7 +1329,7 @@
 
       textEl.innerHTML = renderMarkdown(msg.text || "");
 
-      var existingMeta = msgEl.querySelectorAll(".chat-msg-meta");
+      var existingMeta = msgEl.querySelectorAll(".chat-msg-meta, .chat-msg-stop");
       for (var k = 0; k < existingMeta.length; k++) existingMeta[k].remove();
 
       if (!isUser) {
@@ -1344,6 +1344,20 @@
           meta.textContent = "\u2699 working in background\u2026";
         }
         if (meta) msgEl.appendChild(meta);
+
+        if (state === "thinking" || state === "streaming" || state === "background") {
+          var stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "chat-msg-stop";
+          stopBtn.title = "Stop this response";
+          stopBtn.setAttribute("aria-label", "Stop this response");
+          stopBtn.textContent = "\u270b";
+          stopBtn.addEventListener("click", function() {
+            stopBtn.disabled = true;
+            interruptCurrent();
+          });
+          msgEl.appendChild(stopBtn);
+        }
       }
     }
 
@@ -1472,18 +1486,22 @@
     var chatCancelBtn = $("chat-cancel");
     if (chatCancelBtn) chatCancelBtn.hidden = true;
 
+    async function interruptCurrent() {
+      try {
+        await fetch("/api/chat/interrupt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId: chatSessionId }),
+        });
+      } catch (_) {}
+      pollChat().finally(schedulePoll);
+    }
+
     var chatInterruptBtn = $("chat-interrupt");
     if (chatInterruptBtn) {
-      chatInterruptBtn.addEventListener("click", async function() {
+      chatInterruptBtn.addEventListener("click", function() {
         chatInterruptBtn.disabled = true;
-        try {
-          await fetch("/api/chat/interrupt", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chatId: chatSessionId }),
-          });
-        } catch (_) {}
-        pollChat().finally(schedulePoll);
+        interruptCurrent();
       });
     }
 
