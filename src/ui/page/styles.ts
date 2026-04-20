@@ -1361,6 +1361,22 @@ export const pageStyles = String.raw`    :root {
       text-transform: uppercase;
       opacity: 0.55;
       padding: 0 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-msg-pill {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #ffffff14;
+      border: 1px solid #ffffff22;
+      color: #9ab6d6;
+      opacity: 0.9;
+    }
+    .chat-msg-user-pending .chat-msg-text {
+      opacity: 0.6;
     }
     .chat-msg-text {
       padding: 10px 14px;
@@ -1514,22 +1530,25 @@ export const pageStyles = String.raw`    :root {
       background: #4d191970;
       border-color: #ff9b9b66;
     }
-    .chat-msg-elapsed {
-      font-family: "JetBrains Mono", monospace;
-      font-size: 10px;
-      letter-spacing: 0.04em;
-      color: #5a8aaa;
-      padding: 2px 4px;
-      margin-top: 2px;
-    }
-    .chat-msg-background {
+    .chat-msg-meta {
       font-family: "JetBrains Mono", monospace;
       font-size: 10px;
       letter-spacing: 0.04em;
       color: #7a9aba;
       padding: 2px 4px;
       margin-top: 4px;
+    }
+    .chat-msg-thinking {
+      color: #9ab6d6;
+      animation: caret 1.4s step-end infinite;
+    }
+    .chat-msg-background {
       animation: caret 2s step-end infinite;
+    }
+    .chat-msg-error .chat-msg-text {
+      border-color: #ff7f7f55;
+      background: #2b141466;
+      color: #ffc2c2;
     }
 
     /* ── Files panel ── */

@@ -967,17 +967,14 @@
     const chatInput = $("chat-input");
     const chatSend = $("chat-send");
 
-    var CHAT_STORAGE_KEY = "claudeclaw.chat.history";
     var CHAT_ID_KEY = "claudeclaw.chat.id";
-    let chatBusy = false;
-    let chatAbortController = null;
-    let chatElapsedTimer = null;
-    let chatStartedAt = 0;
     let chatHistory = [];
     let chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
-    let chatSavePending = false;
     let chatListCache = [];
     let chatServerUpdatedAt = null;
+    let chatPollTimer = null;
+    var CHAT_POLL_FAST_MS = 500;
+    var CHAT_POLL_IDLE_MS = 10000;
 
     function generateChatId() {
       var id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -987,11 +984,51 @@
 
     function cleanHistory(arr) {
       if (!Array.isArray(arr)) return [];
+      // Server is source of truth; render whatever it sends. We only filter
+      // out old-format placeholders left behind by previous builds.
       return arr.filter(function(m) {
-        if (m.streaming) return false;
         if (m.role === "assistant" && m.text && m.text.startsWith("[Failed:")) return false;
         return true;
       });
+    }
+
+    function hasActiveWork() {
+      for (var i = 0; i < chatHistory.length; i++) {
+        var s = chatHistory[i].state;
+        if (s === "pending" || s === "sent" || s === "thinking" || s === "streaming" || s === "background") {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function schedulePoll() {
+      if (chatPollTimer) clearTimeout(chatPollTimer);
+      var delay = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
+      chatPollTimer = setTimeout(function() {
+        pollChat().finally(schedulePoll);
+      }, delay);
+    }
+
+    async function pollChat(opts) {
+      if (document.visibilityState !== "visible") return;
+      try {
+        var force = opts && opts.force;
+        var url = "/api/chats/" + encodeURIComponent(chatSessionId);
+        if (chatServerUpdatedAt && !force) url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
+        var res = await fetch(url);
+        var data = await res.json();
+        if (!data || !data.ok) return;
+        if (data.unchanged) {
+          if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
+          return;
+        }
+        if (data.chat && data.chat.messages) {
+          chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
+          renderChatHistory();
+        }
+      } catch (_) {}
     }
 
     async function loadChatFromServer() {
@@ -1000,39 +1037,10 @@
         var data = await res.json();
         if (data.ok && data.chat) {
           chatServerUpdatedAt = data.chat.updatedAt || null;
-          if (data.chat.messages && data.chat.messages.length) {
-            chatHistory = cleanHistory(data.chat.messages);
-            renderChatHistory();
-            return;
-          }
-        }
-      } catch (_) {}
-      // Fallback to localStorage
-      try {
-        var saved = localStorage.getItem(CHAT_STORAGE_KEY);
-        if (saved) {
-          chatHistory = cleanHistory(JSON.parse(saved));
+          chatHistory = cleanHistory(data.chat.messages || []);
           renderChatHistory();
         }
       } catch (_) {}
-    }
-
-    async function saveChatToServer() {
-      if (chatSavePending) return;
-      chatSavePending = true;
-      try {
-        var toSave = chatHistory.filter(function(m) { return !m.streaming; });
-        var res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: toSave }),
-        });
-        var data = await res.json();
-        if (data && data.ok && data.chat && data.chat.updatedAt) {
-          chatServerUpdatedAt = data.chat.updatedAt;
-        }
-      } catch (_) {}
-      chatSavePending = false;
     }
 
     async function loadChatList() {
@@ -1105,7 +1113,7 @@
           syncBtn.textContent = "\u21bb";
           syncBtn.addEventListener("click", function(ev) {
             ev.stopPropagation();
-            syncFromServer({ force: true });
+            pollChat({ force: true });
           });
           row.appendChild(syncBtn);
         }
@@ -1181,6 +1189,7 @@
         chatHistory = [];
       }
       renderChatHistory();
+      schedulePoll();
       var dropdown = $("chat-history-dropdown");
       if (dropdown) dropdown.hidden = true;
       loadChatList();
@@ -1191,56 +1200,17 @@
       chatHistory = [];
       chatServerUpdatedAt = null;
       renderChatHistory();
+      schedulePoll();
       var dropdown = $("chat-history-dropdown");
       if (dropdown) dropdown.hidden = true;
       loadChatList();
     }
 
-    // Initial load from server
-    loadChatFromServer();
+    loadChatFromServer().finally(schedulePoll);
 
-    // Sync from server when tab becomes visible (handles mobile reconnect)
     document.addEventListener("visibilitychange", function() {
-      if (document.visibilityState === "visible" && !chatBusy) {
-        syncFromServer();
-      }
+      if (document.visibilityState === "visible") pollChat();
     });
-
-    var chatSyncing = false;
-    async function syncFromServer(opts) {
-      if (chatSyncing) return;
-      chatSyncing = true;
-      var force = opts && opts.force;
-      var activeSyncBtn = document.querySelector(".chat-history-sync-btn");
-      if (activeSyncBtn) activeSyncBtn.classList.add("is-syncing");
-      try {
-        var url = "/api/chats/" + encodeURIComponent(chatSessionId);
-        if (!force && chatServerUpdatedAt) {
-          url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
-        }
-        var res = await fetch(url);
-        var data = await res.json();
-        if (data && data.ok) {
-          if (data.unchanged) {
-            if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
-          } else if (data.chat && data.chat.messages) {
-            chatHistory = cleanHistory(data.chat.messages);
-            chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
-            renderChatHistory();
-          }
-        }
-      } catch (_) {}
-      chatSyncing = false;
-      if (activeSyncBtn) activeSyncBtn.classList.remove("is-syncing");
-    }
-
-    // Auto-poll every 10s when chat tab is visible
-    setInterval(function() {
-      if (document.visibilityState === "visible" && !chatBusy) {
-        var chatTabActive = tabChatBtn && tabChatBtn.classList.contains("tab-btn-active");
-        if (chatTabActive) syncFromServer();
-      }
-    }, 10000);
 
     function setActiveTab(tab) {
       const allBtns = [tabDashboardBtn, tabChatBtn];
@@ -1274,58 +1244,6 @@
     if (tabChatBtn) tabChatBtn.addEventListener("click", () => setActiveTab("chat"));
 
     renderChatHistory();
-
-    function saveChatHistory() {
-      try {
-        var toSave = chatHistory.filter(function(m) { return !m.streaming; });
-        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(toSave));
-      } catch (_) {}
-      saveChatToServer();
-    }
-
-    function fmtElapsed(ms) {
-      var s = Math.floor(ms / 1000);
-      if (s < 60) return s + "s";
-      return Math.floor(s / 60) + "m " + (s % 60) + "s";
-    }
-
-    function setChatBusy(busy) {
-      chatBusy = busy;
-      var cancelBtn = $("chat-cancel");
-      if (chatSend) chatSend.disabled = busy;
-      if (cancelBtn) cancelBtn.hidden = !busy;
-      if (busy) {
-        chatStartedAt = Date.now();
-        chatElapsedTimer = setInterval(function() {
-          var el = document.querySelector(".chat-msg-elapsed");
-          if (el) el.textContent = fmtElapsed(Date.now() - chatStartedAt);
-        }, 1000);
-      } else {
-        if (chatElapsedTimer) { clearInterval(chatElapsedTimer); chatElapsedTimer = null; }
-        chatAbortController = null;
-      }
-    }
-
-    function cancelChat() {
-      if (chatAbortController) chatAbortController.abort();
-    }
-
-    // Render an assistant message body. The streaming pipeline delimits each
-    // text block from Claude with a blank line, so we treat \n\n-separated
-    // chunks as individual thoughts and render them as bullets for
-    // scannability. Chunks that are already markdown lists or fenced code
-    // render as-is through renderMarkdown.
-    function renderAssistantBody(text) {
-      if (!text) return "";
-      var chunks = text.split(/\n{2,}/).map(function(c) { return c.trim(); }).filter(Boolean);
-      if (chunks.length < 2) return renderMarkdown(text);
-      var looksLikeListOrBlock = /^(?:[-*]\s|\d+\.\s|```|#{1,3}\s|>\s)/;
-      var items = chunks.map(function(c) {
-        if (looksLikeListOrBlock.test(c)) return '<li class="chat-msg-bullet-raw">' + renderMarkdown(c) + '</li>';
-        return '<li>' + renderMarkdown(c) + '</li>';
-      });
-      return '<ul class="chat-msg-bullets">' + items.join("") + '</ul>';
-    }
 
     function renderMarkdown(text) {
       if (!text) return "";
@@ -1375,7 +1293,7 @@
       return msgEl;
     }
 
-    function syncChatMessageEl(msgEl, msg, elapsedMs) {
+    function syncChatMessageEl(msgEl, msg) {
       var roleEl = msgEl.querySelector(".chat-msg-role");
       var textEl = msgEl.querySelector(".chat-msg-text");
       if (!roleEl || !textEl) {
@@ -1388,33 +1306,44 @@
         msgEl.appendChild(textEl);
       }
 
-      var cls = "chat-msg " + (msg.role === "user" ? "chat-msg-user" : "chat-msg-assistant");
-      if (msg.streaming) cls += " chat-msg-streaming";
-      msgEl.className = cls;
-      roleEl.textContent = msg.role === "user" ? "You" : "Claude";
-      textEl.innerHTML = msg.role === "assistant"
-        ? renderAssistantBody(msg.text)
-        : renderMarkdown(msg.text);
+      var isUser = msg.role === "user";
+      var state = msg.state || (isUser ? "sent" : "done");
 
-      var metaEl = msgEl.querySelector(".chat-msg-elapsed, .chat-msg-background");
-      if (msg.streaming && chatBusy) {
-        if (!metaEl || !metaEl.classList.contains("chat-msg-elapsed")) {
-          if (metaEl) metaEl.remove();
-          metaEl = document.createElement("div");
-          metaEl.className = "chat-msg-elapsed";
-          msgEl.appendChild(metaEl);
+      var cls = "chat-msg " + (isUser ? "chat-msg-user" : "chat-msg-assistant");
+      if (state === "streaming") cls += " chat-msg-streaming";
+      if (state === "error") cls += " chat-msg-error";
+      if (isUser && state === "pending") cls += " chat-msg-user-pending";
+      msgEl.className = cls;
+
+      roleEl.textContent = "";
+      var roleText = document.createElement("span");
+      roleText.className = "chat-msg-role-label";
+      roleText.textContent = isUser ? "You" : "Claude";
+      roleEl.appendChild(roleText);
+      if (isUser && state === "pending") {
+        var pill = document.createElement("span");
+        pill.className = "chat-msg-pill";
+        pill.textContent = "queued";
+        roleEl.appendChild(pill);
+      }
+
+      textEl.innerHTML = renderMarkdown(msg.text || "");
+
+      var existingMeta = msgEl.querySelectorAll(".chat-msg-meta");
+      for (var k = 0; k < existingMeta.length; k++) existingMeta[k].remove();
+
+      if (!isUser) {
+        var meta = null;
+        if (state === "thinking") {
+          meta = document.createElement("div");
+          meta.className = "chat-msg-meta chat-msg-thinking";
+          meta.textContent = "\u{1F319} thinking\u2026";
+        } else if (state === "background") {
+          meta = document.createElement("div");
+          meta.className = "chat-msg-meta chat-msg-background";
+          meta.textContent = "\u2699 working in background\u2026";
         }
-        metaEl.textContent = fmtElapsed(elapsedMs);
-      } else if (msg.background) {
-        if (!metaEl || !metaEl.classList.contains("chat-msg-background")) {
-          if (metaEl) metaEl.remove();
-          metaEl = document.createElement("div");
-          metaEl.className = "chat-msg-background";
-          msgEl.appendChild(metaEl);
-        }
-        metaEl.textContent = "⚙ working in background...";
-      } else if (metaEl) {
-        metaEl.remove();
+        if (meta) msgEl.appendChild(meta);
       }
     }
 
@@ -1436,8 +1365,6 @@
         chatMessages.textContent = "";
       }
 
-      var elapsedMs = Date.now() - chatStartedAt;
-
       for (var i = 0; i < chatHistory.length; i++) {
         var msgEl = chatMessages.children[i];
         if (!msgEl || !msgEl.classList.contains("chat-msg")) {
@@ -1448,7 +1375,7 @@
             chatMessages.insertBefore(msgEl, chatMessages.children[i]);
           }
         }
-        syncChatMessageEl(msgEl, chatHistory[i], elapsedMs);
+        syncChatMessageEl(msgEl, chatHistory[i]);
       }
 
       while (chatMessages.children.length > chatHistory.length) {
@@ -1467,103 +1394,28 @@
     }
 
     async function sendChat() {
-      if (chatBusy || !chatInput) return;
+      if (!chatInput) return;
       var message = (chatInput.value || "").trim();
       if (!message) return;
 
       chatInput.value = "";
       autoResizeChatInput();
-      setChatBusy(true);
 
-      chatHistory.push({ role: "user", text: message });
-      var assistantIdx = chatHistory.length;
-      chatHistory.push({ role: "assistant", text: "", streaming: true });
+      chatHistory.push({ role: "user", text: message, state: "pending" });
       renderChatHistory();
 
-      chatAbortController = new AbortController();
-
       try {
-        var res = await fetch("/api/chat", {
+        await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: message, chatId: chatSessionId }),
-          signal: chatAbortController.signal,
         });
-
-        if (!res.body) throw new Error("No response body");
-
-        var reader = res.body.getReader();
-        var dec = new TextDecoder();
-        var buf = "";
-
-        while (true) {
-          var read = await reader.read();
-          if (read.done) break;
-          buf += dec.decode(read.value, { stream: true });
-          var lines = buf.split("\n");
-          buf = lines.pop() || "";
-          for (var i = 0; i < lines.length; i++) {
-            var line = lines[i];
-            if (!line.startsWith("data: ")) continue;
-            try {
-              var ev = JSON.parse(line.slice(6));
-              if (ev.type === "chunk") {
-                var prev = chatHistory[assistantIdx].text;
-                if (prev.length > 0) {
-                  var needsSep = !prev.endsWith("\n\n") && !ev.text.startsWith("\n");
-                  if (needsSep) {
-                    chatHistory[assistantIdx].text += prev.endsWith("\n") ? "\n" : "\n\n";
-                  }
-                }
-                chatHistory[assistantIdx].text += ev.text;
-                renderChatHistory();
-              } else if (ev.type === "unblock") {
-                // Claude has acknowledged — unblock the input so user can send more messages
-                // while the background task continues running
-                setChatBusy(false);
-                chatHistory[assistantIdx].background = true;
-                renderChatHistory();
-              } else if (ev.type === "done") {
-                chatHistory[assistantIdx].streaming = false;
-                chatHistory[assistantIdx].background = false;
-                renderChatHistory();
-                saveChatHistory();
-              } else if (ev.type === "error") {
-                chatHistory[assistantIdx].text = chatHistory[assistantIdx].text
-                  ? chatHistory[assistantIdx].text + "\n\n[Error: " + ev.message + "]"
-                  : "[Error: " + ev.message + "]";
-                chatHistory[assistantIdx].streaming = false;
-                chatHistory[assistantIdx].background = false;
-                renderChatHistory();
-                saveChatHistory();
-              }
-            } catch (_) {}
-          }
-        }
-        chatHistory[assistantIdx].streaming = false;
-        renderChatHistory();
-        saveChatHistory();
-      } catch (err) {
-        var cancelled = err && err.name === "AbortError";
-        if (cancelled) {
-          chatHistory[assistantIdx].text = chatHistory[assistantIdx].text || "[Cancelled]";
-          chatHistory[assistantIdx].streaming = false;
-          renderChatHistory();
-          saveChatHistory();
-        } else {
-          // Stream broke — don't save failure, sync from server after a short delay
-          // (the server may still be processing and will save the response)
-          chatHistory[assistantIdx].text = chatHistory[assistantIdx].text || "(reconnecting...)";
-          chatHistory[assistantIdx].streaming = false;
-          renderChatHistory();
-          setTimeout(function() { syncFromServer(); }, 3000);
-          setTimeout(function() { syncFromServer(); }, 10000);
-          setTimeout(function() { syncFromServer(); }, 30000);
-        }
-      } finally {
-        setChatBusy(false);
-        if (chatInput) chatInput.focus();
+      } catch (_) {
+        // Network failed — the server-side processor is still the source of truth.
+        // The next poll will reconcile whatever state actually exists.
       }
+      pollChat().finally(schedulePoll);
+      if (chatInput) chatInput.focus();
     }
 
     if (chatForm) {
@@ -1577,7 +1429,6 @@
     if (chatClearBtn) {
       chatClearBtn.addEventListener("click", function() {
         startNewChat();
-        saveChatHistory();
       });
     }
 
@@ -1601,7 +1452,6 @@
     if (chatNewBtn) {
       chatNewBtn.addEventListener("click", function() {
         startNewChat();
-        saveChatHistory();
       });
     }
 
@@ -1610,17 +1460,7 @@
     }
 
     var chatCancelBtn = $("chat-cancel");
-    if (chatCancelBtn) {
-      chatCancelBtn.addEventListener("click", cancelChat);
-    }
-
-    // Update elapsed timer in-place every second (no full re-render = no blink).
-    setInterval(function() {
-      if (chatBusy && chatMessages) {
-        var elapsedEl = chatMessages.querySelector(".chat-msg-elapsed");
-        if (elapsedEl) elapsedEl.textContent = fmtElapsed(Date.now() - chatStartedAt);
-      }
-    }, 1000);
+    if (chatCancelBtn) chatCancelBtn.hidden = true;
 
     // ── Files ──
     const tabFilesBtn = $("tab-files");

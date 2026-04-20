@@ -5,8 +5,114 @@ import { buildState, buildTechnicalInfo, sanitizeSettings } from "./services/sta
 import { readHeartbeatSettings, updateHeartbeatSettings } from "./services/settings";
 import { createQuickJob, deleteJob } from "./services/jobs";
 import { readLogs } from "./services/logs";
-import { listChats, loadChat, saveChat, deleteChat, getChatMeta, renameChat } from "./services/chats";
+import {
+  listChats,
+  loadChat,
+  saveChat,
+  deleteChat,
+  getChatMeta,
+  renameChat,
+  appendMessage,
+  patchLastMessage,
+  type ChatMessageState,
+} from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
+
+type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
+
+// One processor per chatId — prevents concurrent assistant writes to the same
+// chat file when a second /api/chat POST arrives mid-stream. The processor
+// loops through all "pending" user messages in order; onChat itself is already
+// globally serialised by the runner queue.
+const chatProcessors = new Set<string>();
+
+const PERSIST_THROTTLE_MS = 300;
+
+async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<void> {
+  if (chatProcessors.has(chatId)) return;
+  chatProcessors.add(chatId);
+  try {
+    while (true) {
+      const chat = await loadChat(chatId);
+      if (!chat) break;
+      const pendingIdx = chat.messages.findIndex(
+        (m) => m.role === "user" && m.state === "pending"
+      );
+      if (pendingIdx === -1) break;
+
+      const now = Date.now();
+      chat.messages[pendingIdx] = {
+        ...chat.messages[pendingIdx],
+        state: "sent",
+        updatedAt: now,
+      };
+      chat.messages.push({
+        role: "assistant",
+        text: "",
+        state: "thinking",
+        startedAt: now,
+        updatedAt: now,
+      });
+      await saveChat(chatId, chat.messages);
+
+      const userText = chat.messages[pendingIdx].text;
+      let responseText = "";
+      let currentState: ChatMessageState = "thinking";
+      let persistBusy = false;
+      let persistLastAt = 0;
+
+      const persist = async (finalize: boolean): Promise<void> => {
+        if (persistBusy && !finalize) return;
+        const t = Date.now();
+        if (!finalize && t - persistLastAt < PERSIST_THROTTLE_MS) return;
+        persistBusy = true;
+        persistLastAt = t;
+        try {
+          await patchLastMessage(
+            chatId,
+            (m) => m.role === "assistant",
+            { text: responseText, state: currentState }
+          );
+        } finally {
+          persistBusy = false;
+        }
+      };
+
+      try {
+        await onChat(
+          userText,
+          (chunk) => {
+            // Each chunk is a separate assistant text block from Claude. Insert
+            // a blank line between blocks so markdown paragraphs/lists render
+            // correctly — otherwise consecutive blocks glue together into one
+            // unformatted blob.
+            if (responseText && !responseText.endsWith("\n\n") && !chunk.startsWith("\n")) {
+              responseText += responseText.endsWith("\n") ? "\n" : "\n\n";
+            }
+            responseText += chunk;
+            if (currentState === "thinking") currentState = "streaming";
+            persist(false).catch(() => {});
+          },
+          () => {
+            if (currentState === "thinking" || currentState === "streaming") {
+              currentState = "background";
+            }
+            persist(false).catch(() => {});
+          }
+        );
+        currentState = "done";
+        await persist(true);
+      } catch (err) {
+        const suffix = responseText ? "\n\n[Error: " + String(err) + "]" : "[Error: " + String(err) + "]";
+        responseText = responseText ? responseText + "\n\n[Error: " + String(err) + "]" : suffix;
+        currentState = "error";
+        await persist(true);
+      }
+    }
+  } finally {
+    chatProcessors.delete(chatId);
+  }
+}
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   const server = Bun.serve({
@@ -296,87 +402,23 @@ self.addEventListener('fetch', e => {
           const message = String(body?.message ?? "").trim();
           const chatId = String(body?.chatId ?? "").trim();
           if (!message) return json({ ok: false, error: "message required" });
+          if (!chatId) return json({ ok: false, error: "chatId required" });
 
-          // Save user message server-side immediately
-          if (chatId) {
-            const existing = await loadChat(chatId);
-            const msgs = existing?.messages ?? [];
-            msgs.push({ role: "user", text: message });
-            await saveChat(chatId, msgs);
-          }
-
-          const encoder = new TextEncoder();
-          const onChat = opts.onChat;
-          let responseText = "";
-
-          // Persist the assistant message incrementally so a daemon kill
-          // mid-stream can't lose the whole response. Idempotent: if the
-          // last message is already assistant, update its text in place
-          // instead of pushing a new one.
-          let persistBusy = false;
-          let persistLastAt = 0;
-          const PERSIST_THROTTLE_MS = 500;
-          const persistAssistant = async (opts: { finalize: boolean; suffix?: string }) => {
-            if (!chatId) return;
-            if (persistBusy && !opts.finalize) return;
-            const now = Date.now();
-            if (!opts.finalize && now - persistLastAt < PERSIST_THROTTLE_MS) return;
-            persistBusy = true;
-            persistLastAt = now;
-            try {
-              const chat = await loadChat(chatId);
-              const msgs = chat?.messages ?? [];
-              const text = responseText + (opts.suffix ?? "");
-              if (msgs.length && msgs[msgs.length - 1].role === "assistant") {
-                msgs[msgs.length - 1].text = text;
-              } else {
-                msgs.push({ role: "assistant", text });
-              }
-              await saveChat(chatId, msgs);
-            } finally {
-              persistBusy = false;
-            }
-          };
-
-          const stream = new ReadableStream({
-            async start(controller) {
-              const send = (data: object) => {
-                try { controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`)); } catch {}
-              };
-              try {
-                await onChat(
-                  message,
-                  (chunk) => {
-                    responseText += chunk;
-                    send({ type: "chunk", text: chunk });
-                    persistAssistant({ finalize: false }).catch(() => {});
-                  },
-                  () => send({ type: "unblock" })
-                );
-                send({ type: "done" });
-                await persistAssistant({ finalize: true });
-              } catch (err) {
-                send({ type: "error", message: String(err) });
-                if (responseText) {
-                  await persistAssistant({
-                    finalize: true,
-                    suffix: "\n\n[Error: " + String(err) + "]",
-                  });
-                }
-              } finally {
-                controller.close();
-              }
-            },
+          // Persist user msg as pending; queue processor picks it up.
+          await appendMessage(chatId, {
+            role: "user",
+            text: message,
+            state: "pending",
+            startedAt: Date.now(),
+            updatedAt: Date.now(),
           });
 
-          return new Response(stream, {
-            headers: {
-              "Content-Type": "text/event-stream",
-              "Cache-Control": "no-cache",
-              "Connection": "keep-alive",
-              "X-Accel-Buffering": "no",
-            },
-          });
+          // Kick off processing in the background. If there's already a
+          // processor running for this chat, it will pick up the new pending
+          // message on its next loop iteration.
+          ensureChatProcessor(chatId, opts.onChat).catch(() => {});
+
+          return json({ ok: true });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

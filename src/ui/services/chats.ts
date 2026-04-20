@@ -2,9 +2,21 @@ import { mkdir, readFile, writeFile, readdir, stat } from "fs/promises";
 import { join } from "path";
 import { CHATS_DIR } from "../constants";
 
+export type ChatMessageState =
+  | "pending"    // user msg queued, not yet picked up by Claude
+  | "sent"       // user msg has been consumed by onChat
+  | "thinking"   // assistant msg — Claude running, no text yet
+  | "streaming"  // assistant msg — text flowing
+  | "background" // assistant msg — unblock fired, still running
+  | "done"       // assistant msg — complete
+  | "error";     // assistant msg — failed
+
 export interface ChatMessage {
   role: string;
   text: string;
+  state?: ChatMessageState;
+  startedAt?: number;
+  updatedAt?: number;
 }
 
 export interface ChatSession {
@@ -183,4 +195,38 @@ export async function renameChat(
 export async function deleteChat(id: string): Promise<void> {
   const path = chatPath(id);
   await Bun.file(path).delete();
+}
+
+// Append a single message, returning the new session. Used when the server
+// persists user messages immediately (rather than waiting on a full saveChat
+// round-trip from the client).
+export async function appendMessage(
+  id: string,
+  message: ChatMessage
+): Promise<ChatSession> {
+  const current = await loadChat(id);
+  const messages = current ? [...current.messages, message] : [message];
+  return saveChat(id, messages);
+}
+
+// Mutate the last message matching a predicate. If no match, append a new
+// message built by builder(). The chat is saved and returned.
+export async function patchLastMessage(
+  id: string,
+  predicate: (m: ChatMessage) => boolean,
+  patch: Partial<ChatMessage>
+): Promise<ChatSession | null> {
+  const current = await loadChat(id);
+  if (!current) return null;
+  for (let i = current.messages.length - 1; i >= 0; i--) {
+    if (predicate(current.messages[i])) {
+      current.messages[i] = {
+        ...current.messages[i],
+        ...patch,
+        updatedAt: Date.now(),
+      };
+      return saveChat(id, current.messages);
+    }
+  }
+  return null;
 }
