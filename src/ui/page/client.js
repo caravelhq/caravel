@@ -1345,20 +1345,46 @@
         }
         if (meta) msgEl.appendChild(meta);
 
-        if (state === "thinking" || state === "streaming" || state === "background") {
-          var stopBtn = document.createElement("button");
-          stopBtn.type = "button";
-          stopBtn.className = "chat-msg-stop";
-          stopBtn.title = "Stop this response";
-          stopBtn.setAttribute("aria-label", "Stop this response");
-          stopBtn.textContent = "\u270b";
-          stopBtn.addEventListener("click", function() {
-            stopBtn.disabled = true;
-            interruptCurrent();
-          });
-          msgEl.appendChild(stopBtn);
-        }
+        var isActive =
+          state === "thinking" || state === "streaming" || state === "background";
+        msgEl.dataset.active = isActive ? "1" : "0";
       }
+    }
+
+    function ensureFloatStopBtn() {
+      if (!chatMessages) return null;
+      var btn = chatMessages.querySelector(".chat-msg-stop");
+      if (btn) return btn;
+      btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "chat-msg-stop";
+      btn.title = "Stop this response";
+      btn.setAttribute("aria-label", "Stop this response");
+      btn.textContent = "\u270b";
+      btn.hidden = true;
+      btn.addEventListener("click", function() {
+        btn.disabled = true;
+        interruptCurrent();
+      });
+      chatMessages.appendChild(btn);
+      return btn;
+    }
+
+    function updateFloatStopBtn() {
+      if (!chatMessages) return;
+      var btn = ensureFloatStopBtn();
+      if (!btn) return;
+      var activeMsg = chatMessages.querySelector(
+        '.chat-msg-assistant[data-active="1"]'
+      );
+      if (!activeMsg) {
+        btn.hidden = true;
+        btn.disabled = false;
+        return;
+      }
+      btn.hidden = false;
+      btn.disabled = false;
+      btn.style.top = activeMsg.offsetTop + "px";
     }
 
     function renderChatHistory() {
@@ -1379,27 +1405,32 @@
         chatMessages.textContent = "";
       }
 
+      var msgEls = chatMessages.querySelectorAll(".chat-msg");
       for (var i = 0; i < chatHistory.length; i++) {
-        var msgEl = chatMessages.children[i];
-        if (!msgEl || !msgEl.classList.contains("chat-msg")) {
+        var msgEl = msgEls[i];
+        if (!msgEl) {
           msgEl = createChatMessageEl();
-          if (i >= chatMessages.children.length) {
-            chatMessages.appendChild(msgEl);
+          var anchor = chatMessages.querySelector(".chat-msg-stop");
+          if (anchor) {
+            chatMessages.insertBefore(msgEl, anchor);
           } else {
-            chatMessages.insertBefore(msgEl, chatMessages.children[i]);
+            chatMessages.appendChild(msgEl);
           }
         }
         syncChatMessageEl(msgEl, chatHistory[i]);
       }
 
-      while (chatMessages.children.length > chatHistory.length) {
-        chatMessages.removeChild(chatMessages.lastElementChild);
+      var allMsgEls = chatMessages.querySelectorAll(".chat-msg");
+      for (var j = allMsgEls.length - 1; j >= chatHistory.length; j--) {
+        allMsgEls[j].remove();
       }
 
       updateInterruptBtn();
+      updateFloatStopBtn();
 
       requestAnimationFrame(function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        updateFloatStopBtn();
       });
     }
 

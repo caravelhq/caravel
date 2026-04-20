@@ -1318,6 +1318,7 @@ export const pageStyles = String.raw`    :root {
       padding: 16px;
       scrollbar-width: thin;
       scrollbar-color: #7fa6d5 #091222;
+      position: relative;
     }
     .chat-messages::-webkit-scrollbar {
       width: 6px;
@@ -1498,11 +1499,11 @@ export const pageStyles = String.raw`    :root {
     .chat-cancel,
     .chat-interrupt {
       flex-shrink: 0;
-      height: 34px;
-      padding: 0 14px;
+      height: 26px;
+      padding: 0 10px;
       border-radius: 999px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: 0.03em;
       line-height: 1;
       white-space: nowrap;
@@ -1511,6 +1512,11 @@ export const pageStyles = String.raw`    :root {
       align-items: center;
       justify-content: center;
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-send[hidden],
+    .chat-cancel[hidden],
+    .chat-interrupt[hidden] {
+      display: none;
     }
     .chat-interrupt {
       border: 1px solid #ffb36655;
@@ -1573,25 +1579,26 @@ export const pageStyles = String.raw`    :root {
       background: #2b141466;
       color: #ffc2c2;
     }
-    .chat-msg-assistant { position: relative; }
     .chat-msg-stop {
       position: absolute;
-      top: 22px;
-      right: 8px;
-      width: 26px;
-      height: 26px;
+      top: 0;
+      right: 12px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 1px solid #ff4d4d88;
       background: #3a121266;
       color: #ff8a8a;
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+      z-index: 2;
     }
+    .chat-msg-stop[hidden] { display: none; }
     .chat-msg-stop:hover {
       background: #5a1a1a90;
       border-color: #ff4d4d;
