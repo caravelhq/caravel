@@ -1412,9 +1412,20 @@
     function updateInterruptBtn() {
       var btn = $("chat-interrupt");
       if (!btn) return;
-      var active = hasActiveWork();
-      btn.hidden = !active;
-      if (active) btn.disabled = false;
+      // Only show interrupt when there's a live assistant run to interrupt.
+      // Pending/sent user messages aren't interruptible — they haven't started.
+      var live = false;
+      for (var i = 0; i < chatHistory.length; i++) {
+        var m = chatHistory[i];
+        if (m.role !== "assistant") continue;
+        var s = m.state;
+        if (s === "thinking" || s === "streaming" || s === "background") {
+          live = true;
+          break;
+        }
+      }
+      btn.hidden = !live;
+      if (live) btn.disabled = false;
     }
 
     function autoResizeChatInput() {

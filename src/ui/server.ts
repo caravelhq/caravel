@@ -41,17 +41,32 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
     while (true) {
       const chat = await loadChat(chatId);
       if (!chat) break;
-      const pendingIdx = chat.messages.findIndex(
+      const firstPendingIdx = chat.messages.findIndex(
         (m) => m.role === "user" && m.state === "pending"
       );
-      if (pendingIdx === -1) break;
+      if (firstPendingIdx === -1) break;
+
+      // Batch consecutive pending user messages into one onChat call so a
+      // user who fires 3 messages rapid-fire gets one coherent response that
+      // addresses the lot, instead of three separate replies.
+      const pendingIndices: number[] = [];
+      for (let i = firstPendingIdx; i < chat.messages.length; i++) {
+        const m = chat.messages[i];
+        if (m.role === "user" && m.state === "pending") {
+          pendingIndices.push(i);
+        } else {
+          break;
+        }
+      }
 
       const now = Date.now();
-      chat.messages[pendingIdx] = {
-        ...chat.messages[pendingIdx],
-        state: "sent",
-        updatedAt: now,
-      };
+      for (const idx of pendingIndices) {
+        chat.messages[idx] = {
+          ...chat.messages[idx],
+          state: "sent",
+          updatedAt: now,
+        };
+      }
       chat.messages.push({
         role: "assistant",
         text: "",
@@ -61,7 +76,9 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
       });
       await saveChat(chatId, chat.messages);
 
-      const userText = chat.messages[pendingIdx].text;
+      const userText = pendingIndices
+        .map((i) => chat.messages[i].text)
+        .join("\n\n");
       let responseText = "";
       let currentState: ChatMessageState = "thinking";
 
@@ -162,9 +179,29 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   // Recover any chat messages left in a non-terminal state by a previous
   // daemon instance that was killed mid-run. Non-blocking — the sweep reads
   // the chats dir, so we let it run in parallel with server startup.
+  // Then scan for any chats with pending user messages and kick a processor,
+  // so messages queued during a restart actually get picked up rather than
+  // sitting forever in the "pending" state.
   recoverStuckChats()
-    .then((n) => {
+    .then(async (n) => {
       if (n > 0) console.log(`[chat] recovered ${n} stuck message${n === 1 ? "" : "s"}`);
+      if (!opts.onChat) return;
+      const chats = await listChats();
+      let resumed = 0;
+      for (const c of chats) {
+        const full = await loadChat(c.id);
+        if (!full) continue;
+        const hasPending = full.messages.some(
+          (m) => m.role === "user" && m.state === "pending"
+        );
+        if (hasPending) {
+          resumed += 1;
+          ensureChatProcessor(c.id, opts.onChat).catch((err) =>
+            console.error(`[chat] resume processor failed for ${c.id}:`, err)
+          );
+        }
+      }
+      if (resumed > 0) console.log(`[chat] resumed ${resumed} chat${resumed === 1 ? "" : "s"} with pending messages`);
     })
     .catch((err) => console.error("[chat] recovery sweep failed:", err));
 
