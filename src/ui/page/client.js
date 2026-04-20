@@ -1329,62 +1329,44 @@
 
       textEl.innerHTML = renderMarkdown(msg.text || "");
 
-      var existingMeta = msgEl.querySelectorAll(".chat-msg-meta, .chat-msg-stop");
+      var existingMeta = msgEl.querySelectorAll(".chat-msg-meta");
       for (var k = 0; k < existingMeta.length; k++) existingMeta[k].remove();
 
       if (!isUser) {
-        var meta = null;
+        var metaLabel = null;
+        var metaClass = "";
         if (state === "thinking") {
-          meta = document.createElement("div");
-          meta.className = "chat-msg-meta chat-msg-thinking";
-          meta.textContent = "thinking\u2026";
+          metaClass = "chat-msg-thinking";
+          metaLabel = "thinking\u2026";
         } else if (state === "background") {
-          meta = document.createElement("div");
-          meta.className = "chat-msg-meta chat-msg-background";
-          meta.textContent = "\u2699 working in background\u2026";
+          metaClass = "chat-msg-background";
+          metaLabel = "\u2699 working in background\u2026";
         }
-        if (meta) msgEl.appendChild(meta);
+        if (metaLabel) {
+          var meta = document.createElement("div");
+          meta.className = "chat-msg-meta " + metaClass;
+          var stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "chat-msg-stop-inline";
+          stopBtn.title = "Stop this response";
+          stopBtn.setAttribute("aria-label", "Stop this response");
+          stopBtn.textContent = "\u270b";
+          stopBtn.addEventListener("click", function() {
+            stopBtn.disabled = true;
+            interruptCurrent({ sendAfter: true });
+          });
+          meta.appendChild(stopBtn);
+          var labelSpan = document.createElement("span");
+          labelSpan.className = "chat-msg-meta-label";
+          labelSpan.textContent = metaLabel;
+          meta.appendChild(labelSpan);
+          msgEl.appendChild(meta);
+        }
 
         var isActive =
           state === "thinking" || state === "streaming" || state === "background";
         msgEl.dataset.active = isActive ? "1" : "0";
       }
-    }
-
-    function ensureFloatStopBtn() {
-      if (!chatMessages) return null;
-      var btn = chatMessages.querySelector(".chat-msg-stop");
-      if (btn) return btn;
-      btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "chat-msg-stop";
-      btn.title = "Stop this response";
-      btn.setAttribute("aria-label", "Stop this response");
-      btn.textContent = "\u270b";
-      btn.hidden = true;
-      btn.addEventListener("click", function() {
-        btn.disabled = true;
-        interruptCurrent({ sendAfter: true });
-      });
-      chatMessages.appendChild(btn);
-      return btn;
-    }
-
-    function updateFloatStopBtn() {
-      if (!chatMessages) return;
-      var btn = ensureFloatStopBtn();
-      if (!btn) return;
-      var activeMsg = chatMessages.querySelector(
-        '.chat-msg-assistant[data-active="1"]'
-      );
-      if (!activeMsg) {
-        btn.hidden = true;
-        btn.disabled = false;
-        return;
-      }
-      btn.hidden = false;
-      btn.disabled = false;
-      btn.style.top = activeMsg.offsetTop + "px";
     }
 
     function renderChatHistory() {
@@ -1410,12 +1392,7 @@
         var msgEl = msgEls[i];
         if (!msgEl) {
           msgEl = createChatMessageEl();
-          var anchor = chatMessages.querySelector(".chat-msg-stop");
-          if (anchor) {
-            chatMessages.insertBefore(msgEl, anchor);
-          } else {
-            chatMessages.appendChild(msgEl);
-          }
+          chatMessages.appendChild(msgEl);
         }
         syncChatMessageEl(msgEl, chatHistory[i]);
       }
@@ -1426,11 +1403,9 @@
       }
 
       updateInterruptBtn();
-      updateFloatStopBtn();
 
       requestAnimationFrame(function() {
         chatMessages.scrollTop = chatMessages.scrollHeight;
-        updateFloatStopBtn();
       });
     }
 

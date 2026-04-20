@@ -1566,45 +1566,50 @@ export const pageStyles = String.raw`    :root {
       color: #7a9aba;
       padding: 2px 4px;
       margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
-    .chat-msg-thinking {
-      color: #9ab6d6;
+    .chat-msg-meta-label {
+      display: inline-flex;
+      align-items: center;
+    }
+    .chat-msg-thinking .chat-msg-meta-label {
       animation: caret 1.4s step-end infinite;
     }
-    .chat-msg-background {
+    .chat-msg-background .chat-msg-meta-label {
       animation: caret 2s step-end infinite;
     }
+    .chat-msg-thinking { color: #9ab6d6; }
     .chat-msg-error .chat-msg-text {
       border-color: #ff7f7f55;
       background: #2b141466;
       color: #ffc2c2;
     }
-    .chat-msg-stop {
-      position: absolute;
-      top: 0;
-      right: 12px;
-      width: 22px;
-      height: 22px;
+    .chat-msg-stop-inline {
+      appearance: none;
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      border: 1px solid #ff4d4d88;
       background: #3a121266;
       color: #ff8a8a;
-      font-size: 11px;
+      border: 1px solid #ff4d4d88;
+      font-size: 10px;
       line-height: 1;
-      cursor: pointer;
+      padding: 0;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+      flex: none;
       transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
-      z-index: 2;
     }
-    .chat-msg-stop[hidden] { display: none; }
-    .chat-msg-stop:hover {
+    .chat-msg-stop-inline:hover {
       background: #5a1a1a90;
       border-color: #ff4d4d;
       transform: scale(1.08);
     }
-    .chat-msg-stop:disabled {
+    .chat-msg-stop-inline:disabled {
       opacity: 0.5;
       cursor: not-allowed;
       transform: none;
