@@ -1208,13 +1208,34 @@ export const pageStyles = String.raw`    :root {
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
     .chat-history-head {
-      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px 8px 12px;
       font-family: "JetBrains Mono", monospace;
       font-size: 10px;
       color: #6b7a90;
       text-transform: uppercase;
       letter-spacing: 0.06em;
       border-bottom: 1px solid #ffffff0d;
+    }
+    .chat-history-new {
+      border: 1px solid #ffffff1f;
+      background: #ffffff08;
+      color: #c8d4e5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      text-transform: none;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .chat-history-new:hover {
+      background: #ffffff14;
+      border-color: #ffffff33;
     }
     .chat-history-list {
       padding: 4px;
@@ -1605,7 +1626,8 @@ export const pageStyles = String.raw`    :root {
     .chat-cancel,
     .chat-interrupt {
       flex-shrink: 0;
-      height: 26px;
+      flex-grow: 0;
+      height: 28px;
       padding: 0 10px;
       border-radius: 999px;
       font-family: "JetBrains Mono", monospace;
@@ -1618,6 +1640,15 @@ export const pageStyles = String.raw`    :root {
       align-items: center;
       justify-content: center;
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-send {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 15px;
+      line-height: 1;
+      font-weight: 700;
     }
     .chat-send[hidden],
     .chat-cancel[hidden],

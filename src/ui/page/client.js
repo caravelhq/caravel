@@ -1154,9 +1154,12 @@
 
     function updateAgentBadge() {
       var el = $("chat-agent-badge");
-      if (!el) return;
       var id = effectiveAgentId();
       var agent = findAgent(id);
+      if (chatInput) {
+        chatInput.placeholder = agent ? "Message " + agent.displayName + "..." : "Message...";
+      }
+      if (!el) return;
       if (!agent) {
         el.hidden = true;
         el.textContent = "";
