@@ -1691,9 +1691,26 @@
       });
     }
 
-    var chatClearBtn = $("chat-clear");
-    if (chatClearBtn) {
-      chatClearBtn.addEventListener("click", function() {
+    var chatDeleteBtn = $("chat-delete");
+    if (chatDeleteBtn) {
+      chatDeleteBtn.addEventListener("click", async function() {
+        // Empty chat (no messages yet) — no server file to delete, just reset.
+        if (!chatSessionId || chatHistory.length === 0) {
+          startNewChat();
+          return;
+        }
+        var n = chatHistory.length;
+        var suffix = n === 1 ? " message" : " messages";
+        if (!window.confirm("Delete this chat? " + n + suffix + " will be permanently removed.")) {
+          return;
+        }
+        var idToDelete = chatSessionId;
+        try {
+          await fetch("/api/chats/" + encodeURIComponent(idToDelete), { method: "DELETE" });
+        } catch (_) {
+          // Server error is non-fatal — still clear client state so the user
+          // isn't stuck staring at a chat they just tried to delete.
+        }
         startNewChat();
       });
     }
