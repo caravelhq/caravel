@@ -233,7 +233,7 @@ ${pageStyles}
             autocomplete="off"
           ></textarea>
           <div class="chat-actions">
-            <button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run; if the composer has text, send it as a new prompt">Interrupt</button>
+            <button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run; if the composer has text, send it as a new prompt" aria-label="Interrupt">✋</button>
             <button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button>
           </div>
           <button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button>

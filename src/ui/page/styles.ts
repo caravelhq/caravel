@@ -1471,8 +1471,11 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      max-width: 88%;
+      width: 100%;
       animation: rise 200ms ease-out both;
+    }
+    .chat-msg-text {
+      max-width: 88%;
     }
     .chat-msg-user {
       align-self: flex-end;
@@ -1656,6 +1659,12 @@ export const pageStyles = String.raw`    :root {
       display: none;
     }
     .chat-interrupt {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
       border: 1px solid #ffb36655;
       background: #3a220055;
       color: #ffcf99;
@@ -1706,6 +1715,8 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       align-items: center;
       gap: 6px;
+      width: 100%;
+      justify-content: space-between;
     }
     .chat-msg-meta-label {
       display: inline-flex;
@@ -1726,15 +1737,17 @@ export const pageStyles = String.raw`    :root {
     .chat-msg-stop-inline {
       appearance: none;
       cursor: pointer;
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
+      padding: 2px 10px;
+      border-radius: 4px;
       background: #3a121266;
       color: #ff8a8a;
       border: 1px solid #ff4d4d88;
+      font-family: "JetBrains Mono", monospace;
       font-size: 10px;
-      line-height: 1;
-      padding: 0;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      line-height: 1.4;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1744,7 +1757,7 @@ export const pageStyles = String.raw`    :root {
     .chat-msg-stop-inline:hover {
       background: #5a1a1a90;
       border-color: #ff4d4d;
-      transform: scale(1.08);
+      transform: translateY(-1px);
     }
     .chat-msg-stop-inline:disabled {
       opacity: 0.5;

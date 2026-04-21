@@ -1557,21 +1557,21 @@
         if (metaLabel) {
           var meta = document.createElement("div");
           meta.className = "chat-msg-meta " + metaClass;
+          var labelSpan = document.createElement("span");
+          labelSpan.className = "chat-msg-meta-label";
+          labelSpan.textContent = metaLabel;
+          meta.appendChild(labelSpan);
           var stopBtn = document.createElement("button");
           stopBtn.type = "button";
           stopBtn.className = "chat-msg-stop-inline";
           stopBtn.title = "Stop this response";
           stopBtn.setAttribute("aria-label", "Stop this response");
-          stopBtn.textContent = "\u270b";
+          stopBtn.textContent = "stop";
           stopBtn.addEventListener("click", function() {
             stopBtn.disabled = true;
             interruptCurrent({ sendAfter: true });
           });
           meta.appendChild(stopBtn);
-          var labelSpan = document.createElement("span");
-          labelSpan.className = "chat-msg-meta-label";
-          labelSpan.textContent = metaLabel;
-          meta.appendChild(labelSpan);
           msgEl.appendChild(meta);
         }
 
