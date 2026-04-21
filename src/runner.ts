@@ -184,6 +184,9 @@ const DIR_SCOPE_PROMPT = [
 export async function ensureProjectClaudeMd(): Promise<void> {
   // Preflight-only initialization: never rewrite an existing project CLAUDE.md.
   if (existsSync(PROJECT_CLAUDE_MD)) return;
+  // When the project uses agent profiles (./agents/), identity lives per-agent
+  // and there is intentionally no root CLAUDE.md. Don't regenerate one.
+  if (existsSync(join(process.cwd(), "agents"))) return;
 
   const promptContent = (await loadPrompts()).trim();
   const managedBlock = [
@@ -580,28 +583,17 @@ async function streamClaude(
   if (promptContent) appendParts.push(promptContent);
 
   // CLAUDE.md selection:
-  //   - Agent selected + agent CLAUDE.md non-empty: use agent's only.
-  //   - Agent selected + agent CLAUDE.md empty (marker file like vesper/):
-  //     fall back to project CLAUDE.md.
-  //   - No agent: use project CLAUDE.md as before.
-  const useAgentClaudeMd = agent && agent.claudeMd.length > 0;
-  if (useAgentClaudeMd) {
-    appendParts.push(agent.claudeMd);
+  //   - Agent selected: use the agent's CLAUDE.md + agent rules.
+  //   - No agent: fall back to the project CLAUDE.md (upstream single-agent
+  //     projects that don't have an agents/ directory).
+  if (agent) {
+    if (agent.claudeMd) appendParts.push(agent.claudeMd);
+    if (agent.rules) appendParts.push(agent.rules);
   } else if (existsSync(PROJECT_CLAUDE_MD)) {
     try {
       const claudeMd = await Bun.file(PROJECT_CLAUDE_MD).text();
       if (claudeMd.trim()) appendParts.push(claudeMd.trim());
     } catch {}
-  }
-
-  // Agent rules replace the default rules aggregation. Project .claude/rules/
-  // is already loaded via --append-system-prompt indirectly (it's part of the
-  // project CLAUDE.md flow that Claude Code itself resolves). We only need to
-  // inject agent-specific rules here when an agent is active with its own
-  // CLAUDE.md. When falling back to project CLAUDE.md, skip agent rules too —
-  // full Vesper mode.
-  if (useAgentClaudeMd && agent.rules) {
-    appendParts.push(agent.rules);
   }
 
   if (security.level !== "unrestricted") appendParts.push(DIR_SCOPE_PROMPT);

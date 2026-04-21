@@ -5,9 +5,9 @@ import { existsSync } from "fs";
 // Agent profiles live at <projectRoot>/agents/<name>/.
 // Each profile contains:
 //   - agent.json       (manifest; required)
-//   - CLAUDE.md        (identity prompt; may be empty — empty means "fall back
-//                       to project CLAUDE.md")
+//   - CLAUDE.md        (identity prompt; required)
 //   - rules/*.md       (optional; replaces .claude/rules/* when agent is active)
+//   - memory/          (optional; agent's persistent memory, scoped per agent)
 const AGENTS_DIR = join(process.cwd(), "agents");
 
 export interface AgentManifest {
@@ -145,15 +145,11 @@ export async function loadAgent(name: string): Promise<LoadedAgent | null> {
   }
   if (!manifest) return null;
 
-  // Strip HTML comments from CLAUDE.md so the marker-only vesper file loads as
-  // "empty" and triggers the fallback-to-project path.
   let claudeMd = "";
   const claudeMdPath = join(dir, "CLAUDE.md");
   if (existsSync(claudeMdPath)) {
     try {
-      const raw = await readFile(claudeMdPath, "utf-8");
-      const stripped = raw.replace(/<!--[\s\S]*?-->/g, "").trim();
-      claudeMd = stripped;
+      claudeMd = (await readFile(claudeMdPath, "utf-8")).trim();
     } catch {}
   }
 
