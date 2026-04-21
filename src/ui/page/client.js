@@ -1145,7 +1145,10 @@
 
     function agentPicked() {
       // True once an agent is either locked in on the server or selected in
-      // the picker. Send button is blocked until this is true.
+      // the picker. Send button is blocked until this is true. If no agent
+      // profiles exist in this project, the picker is skipped entirely and
+      // the chat runs as a single default agent (old behaviour).
+      if (agentsFetched && agentsCache.length === 0) return true;
       return !!(chatAgentLocked || pendingAgentId);
     }
 
@@ -1437,7 +1440,9 @@
         return empty;
       }
       if (agentsCache.length === 0) {
-        empty.textContent = "No agent profiles found. Add one under agents/<name>/agent.json.";
+        // No agents/ directory in this project — fall back to the pre-multi-agent
+        // empty state. Runner will use the project CLAUDE.md as before.
+        empty.textContent = "Send a message to start chatting with the daemon.";
         return empty;
       }
 
