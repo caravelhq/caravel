@@ -1426,9 +1426,10 @@ export const pageStyles = String.raw`    :root {
       border-color: #ffffff26;
     }
     .chat-picker-item-active {
-      background: #2b4870;
-      border-color: #4a7abd;
+      background: linear-gradient(180deg, #2f5486, #24406a);
+      border-color: #7fb1f0;
       color: #eef4ff;
+      box-shadow: 0 0 0 1px #7fb1f055, 0 6px 20px #1a3b6a55;
     }
     .chat-picker-item-title {
       font-size: 13px;

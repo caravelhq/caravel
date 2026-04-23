@@ -1482,8 +1482,13 @@
             pendingAgentId = agent.name;
             updateAgentBadge();
             updateSendDisabled();
-            // Re-render so only the picked item shows -active styling.
-            renderChatHistory();
+            // Toggle the active class directly — renderChatHistory skips
+            // rebuilding the empty state when one already exists, so re-
+            // rendering wouldn't paint the picked item's -active styling.
+            var items = list.querySelectorAll(".chat-picker-item");
+            for (var j = 0; j < items.length; j++) {
+              items[j].classList.toggle("chat-picker-item-active", items[j] === item);
+            }
           });
 
           list.appendChild(item);
