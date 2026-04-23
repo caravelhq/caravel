@@ -1898,6 +1898,9 @@ export const pageStyles = String.raw`    :root {
     .syn-comment { color: #6a7f94; font-style: italic; }
     .syn-punct { color: #8ca0b8; }
     .syn-decor { color: #f4a6c8; }
+    .syn-tag { color: #7fc2ff; }
+    .syn-attr { color: #c8a3ff; }
+    .syn-interp { color: #f4b678; }
     .files-picker-toggle {
       display: none;
       align-items: center;
@@ -2125,7 +2128,9 @@ export const pageStyles = String.raw`    :root {
       .files-sidebar {
         width: 100%;
         min-width: 100%;
-        max-height: 75vh;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
         border-right: none;
         border-bottom: 1px solid #ffffff12;
       }
@@ -2135,8 +2140,12 @@ export const pageStyles = String.raw`    :root {
       .files-sidebar.files-sidebar-collapsed {
         display: none;
       }
+      .files-sidebar:not(.files-sidebar-collapsed) ~ .files-content {
+        display: none;
+      }
       .files-content {
-        min-height: 55vh;
+        flex: 1;
+        min-height: 0;
       }
       .files-breadcrumb {
         font-size: 10px;

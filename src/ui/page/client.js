@@ -2113,6 +2113,9 @@
       if (ext === "json") return "json";
       if (ext === "js" || ext === "mjs" || ext === "cjs" || ext === "ts" || ext === "tsx" || ext === "jsx") return "js";
       if (ext === "py") return "py";
+      if (ext === "vue") return "vue";
+      if (ext === "html" || ext === "htm") return "html";
+      if (ext === "css" || ext === "scss" || ext === "sass" || ext === "less") return "css";
       return "";
     }
 
@@ -2124,6 +2127,9 @@
       if (lang === "json") return highlightJson(src);
       if (lang === "js") return highlightJs(src);
       if (lang === "py") return highlightPy(src);
+      if (lang === "vue") return highlightVue(src);
+      if (lang === "html") return highlightHtml(src);
+      if (lang === "css") return highlightCss(src);
       return escHtml(src);
     }
 
@@ -2334,6 +2340,187 @@
         i++;
       }
       return out;
+    }
+
+    function highlightHtmlTag(tag) {
+      // Input is a single tag token like "<div id=\"x\">", "</script>", "<img/>".
+      var out = "";
+      var len = tag.length;
+      if (len < 2) return escHtml(tag);
+      out += '<span class="syn-punct">&lt;</span>';
+      var i = 1;
+      if (tag[i] === "/") { out += '<span class="syn-punct">/</span>'; i++; }
+      var nameStart = i;
+      while (i < len && /[a-zA-Z0-9\-]/.test(tag[i])) i++;
+      if (i > nameStart) {
+        out += '<span class="syn-tag">' + escHtml(tag.slice(nameStart, i)) + '</span>';
+      }
+      while (i < len && tag[i] !== ">") {
+        if (/\s/.test(tag[i])) { out += tag[i]; i++; continue; }
+        if (tag[i] === "/") { out += '<span class="syn-punct">/</span>'; i++; continue; }
+        var aStart = i;
+        while (i < len && /[a-zA-Z0-9:@\-._]/.test(tag[i])) i++;
+        if (i > aStart) {
+          out += '<span class="syn-attr">' + escHtml(tag.slice(aStart, i)) + '</span>';
+        } else {
+          out += escHtml(tag[i]); i++; continue;
+        }
+        if (tag[i] === "=") {
+          out += '<span class="syn-punct">=</span>';
+          i++;
+          if (tag[i] === '"' || tag[i] === "'") {
+            var quote = tag[i];
+            var vStart = i;
+            i++;
+            while (i < len && tag[i] !== quote) i++;
+            if (i < len) i++;
+            out += '<span class="syn-str">' + escHtml(tag.slice(vStart, i)) + '</span>';
+          } else {
+            var uStart = i;
+            while (i < len && !/[\s>]/.test(tag[i])) i++;
+            out += '<span class="syn-str">' + escHtml(tag.slice(uStart, i)) + '</span>';
+          }
+        }
+      }
+      if (i < len && tag[i] === ">") out += '<span class="syn-punct">&gt;</span>';
+      return out;
+    }
+
+    function highlightHtml(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      while (i < len) {
+        if (src.slice(i, i + 4) === "<!--") {
+          var end = src.indexOf("-->", i + 4);
+          end = end === -1 ? len : end + 3;
+          out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + '</span>';
+          i = end;
+          continue;
+        }
+        if (src[i] === "<") {
+          var tagEnd = src.indexOf(">", i);
+          if (tagEnd === -1) { out += escHtml(src.slice(i)); break; }
+          out += highlightHtmlTag(src.slice(i, tagEnd + 1));
+          i = tagEnd + 1;
+          continue;
+        }
+        if (src[i] === "{" && src[i + 1] === "{") {
+          var iend = src.indexOf("}}", i + 2);
+          if (iend === -1) { out += escHtml(src.slice(i)); break; }
+          iend += 2;
+          out += '<span class="syn-interp">' + escHtml(src.slice(i, iend)) + '</span>';
+          i = iend;
+          continue;
+        }
+        out += escHtml(src[i]);
+        i++;
+      }
+      return out;
+    }
+
+    function highlightCss(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      var depth = 0;
+      while (i < len) {
+        var ch = src[i];
+        if (ch === "/" && src[i + 1] === "*") {
+          var end = src.indexOf("*/", i + 2);
+          end = end === -1 ? len : end + 2;
+          out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + '</span>';
+          i = end;
+          continue;
+        }
+        if (ch === '"' || ch === "'") {
+          var quote = ch;
+          var sStart = i;
+          i++;
+          while (i < len && src[i] !== quote) {
+            if (src[i] === "\\" && i + 1 < len) i++;
+            i++;
+          }
+          if (i < len) i++;
+          out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + '</span>';
+          continue;
+        }
+        if (ch === "{") { depth++; out += '<span class="syn-punct">{</span>'; i++; continue; }
+        if (ch === "}") { if (depth > 0) depth--; out += '<span class="syn-punct">}</span>'; i++; continue; }
+        if (ch === "@" && /[a-zA-Z]/.test(src[i + 1] || "")) {
+          var aStart = i;
+          i++;
+          while (i < len && /[a-zA-Z\-]/.test(src[i])) i++;
+          out += '<span class="syn-kw">' + escHtml(src.slice(aStart, i)) + '</span>';
+          continue;
+        }
+        if (depth > 0 && /[a-zA-Z\-]/.test(ch)) {
+          var pStart = i;
+          while (i < len && /[a-zA-Z0-9\-]/.test(src[i])) i++;
+          var j = i;
+          while (j < len && /\s/.test(src[j])) j++;
+          if (src[j] === ":") {
+            out += '<span class="syn-key">' + escHtml(src.slice(pStart, i)) + '</span>';
+          } else {
+            out += escHtml(src.slice(pStart, i));
+          }
+          continue;
+        }
+        if (depth > 0 && (ch >= "0" && ch <= "9")) {
+          var nStart = i;
+          while (i < len && /[0-9.]/.test(src[i])) i++;
+          while (i < len && /[a-zA-Z%]/.test(src[i])) i++;
+          out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + '</span>';
+          continue;
+        }
+        if (ch === "#" && /[0-9a-fA-F]/.test(src[i + 1] || "")) {
+          var hStart = i;
+          i++;
+          while (i < len && /[0-9a-fA-F]/.test(src[i])) i++;
+          out += '<span class="syn-num">' + escHtml(src.slice(hStart, i)) + '</span>';
+          continue;
+        }
+        out += escHtml(ch);
+        i++;
+      }
+      return out;
+    }
+
+    function highlightVue(src) {
+      var out = "";
+      var i = 0;
+      var len = src.length;
+      // Match top-level SFC blocks: template, script (+ setup), style (+ scoped / lang="…").
+      var blockRe = /<(template|script|style)(\s[^>]*?)?>/i;
+      while (i < len) {
+        var rest = src.slice(i);
+        var m = blockRe.exec(rest);
+        if (!m) { out += escHtml(rest); break; }
+        out += escHtml(rest.slice(0, m.index));
+        var blockName = m[1].toLowerCase();
+        var openTag = m[0];
+        out += highlightHtmlTag(openTag);
+        var contentStart = m.index + openTag.length;
+        var closeRe = new RegExp("</" + blockName + "\\s*>", "i");
+        var close = closeRe.exec(rest.slice(contentStart));
+        if (!close) {
+          var tailContent = rest.slice(contentStart);
+          out += highlightVueBlockContent(tailContent, blockName);
+          break;
+        }
+        var content = rest.slice(contentStart, contentStart + close.index);
+        out += highlightVueBlockContent(content, blockName);
+        var closeTag = close[0];
+        out += highlightHtmlTag(closeTag);
+        i += contentStart + close.index + closeTag.length;
+      }
+      return out;
+    }
+
+    function highlightVueBlockContent(content, blockName) {
+      if (blockName === "script") return highlightJs(content);
+      if (blockName === "style") return highlightCss(content);
+      return highlightHtml(content);
     }
 
     function renderFullMarkdown(src) {
