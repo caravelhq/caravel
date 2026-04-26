@@ -12,6 +12,14 @@ import { getSettings, type ModelConfig, type SecurityConfig } from "./config";
 import { buildClockPromptPrefix } from "./timezone";
 import { selectModel } from "./model-router";
 import { loadAgent } from "./agents";
+import {
+  appendEntry,
+  formatEntriesForPrompt,
+  JournalFilter,
+  loadRecentEntriesForChat,
+  setCursor,
+  rotateIfLarge,
+} from "./journal";
 
 const LOGS_DIR = join(process.cwd(), ".claude/claudeclaw/logs");
 // Resolve prompts relative to the claudeclaw installation, not the project dir
@@ -596,6 +604,19 @@ async function streamClaude(
     } catch {}
   }
 
+  // Inject recent shared learnings from other chats with the same agent.
+  // No-op when no agent or no chat thread (heartbeat / one-shot CLI runs).
+  let injectedJournalEntries = 0;
+  let latestInjectedTs: string | null = null;
+  if (agent && threadId) {
+    const recent = await loadRecentEntriesForChat(agent.manifest.name, threadId);
+    if (recent.length > 0) {
+      appendParts.push(formatEntriesForPrompt(recent));
+      injectedJournalEntries = recent.length;
+      latestInjectedTs = recent[recent.length - 1]?.ts ?? null;
+    }
+  }
+
   if (security.level !== "unrestricted") appendParts.push(DIR_SCOPE_PROMPT);
   if (appendParts.length > 0) {
     args.push("--append-system-prompt", appendParts.join("\n\n"));
@@ -611,7 +632,8 @@ async function streamClaude(
 
   const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
   const agentTag = agent ? ` agent: ${agent.manifest.name},` : "";
-  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json,${threadTag}${agentTag} session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
+  const journalTag = injectedJournalEntries > 0 ? ` shared-notes: ${injectedJournalEntries},` : "";
+  console.log(`[${new Date().toLocaleTimeString()}] Running: ${name} (stream-json,${threadTag}${agentTag}${journalTag} session: ${existing?.sessionId?.slice(0, 8) ?? "new"})`);
 
   const proc = Bun.spawn(args, {
     stdout: "pipe",
@@ -634,6 +656,17 @@ async function streamClaude(
   let buf = "";
   let unblocked = false;
   let textEmitted = false;
+
+  // Journal filter — strips <journal …>…</journal> directives from any text
+  // emitted to the UI and collects the matched entries for persistence after
+  // the response completes. Only active for agent-tagged chats.
+  const journalActive = !!(agent && threadId);
+  const filter = journalActive ? new JournalFilter() : null;
+  const emit = (text: string) => {
+    if (!text) return;
+    const cleaned = filter ? filter.feed(text) : text;
+    if (cleaned) onChunk(cleaned);
+  };
 
   const maybeUnblock = () => {
     if (!unblocked) {
@@ -677,7 +710,7 @@ async function streamClaude(
           let hasActivity = false;
           for (const block of blocks) {
             if (block.type === "text" && block.text) {
-              onChunk(block.text);
+              emit(block.text);
               textEmitted = true;
               hasActivity = true;
             } else if (block.type === "tool_use") {
@@ -692,7 +725,7 @@ async function streamClaude(
           // Final result event — emit text as fallback if no assistant text was seen
           const resultText = (event as Record<string, unknown>).result as string | undefined;
           if (resultText && !textEmitted) {
-            onChunk(resultText);
+            emit(resultText);
           }
           maybeUnblock();
         }
@@ -702,6 +735,13 @@ async function streamClaude(
 
   const exitCode = await proc.exited;
   if (abortSignal) abortSignal.removeEventListener("abort", onAbort);
+  // Flush any held-back text from the journal filter (e.g. trailing chars
+  // we conservatively buffered while watching for a `<journal` tag that
+  // never materialised).
+  if (filter) {
+    const tail = filter.flush();
+    if (tail) onChunk(tail);
+  }
   // Ensure unblock fires even if something unexpected happened
   maybeUnblock();
 
@@ -711,6 +751,30 @@ async function streamClaude(
   }
 
   console.log(`[${new Date().toLocaleTimeString()}] Done: ${name}`);
+
+  // Persist any journal entries the agent emitted in this turn, then advance
+  // this chat's read cursor past whatever we injected so we don't show the
+  // same shared notes again.
+  if (filter && agent && threadId) {
+    const drafts = filter.drainEntries();
+    if (drafts.length > 0) {
+      const ts = new Date().toISOString();
+      for (const d of drafts) {
+        await appendEntry(agent.manifest.name, {
+          ts,
+          chatId: threadId,
+          kind: d.kind,
+          text: d.text,
+          ...(d.tags ? { tags: d.tags } : {}),
+        });
+      }
+      console.log(`[${new Date().toLocaleTimeString()}] Journal: ${drafts.length} entr${drafts.length === 1 ? "y" : "ies"} appended (${agent.manifest.name})`);
+      try { await rotateIfLarge(agent.manifest.name); } catch {}
+    }
+    if (latestInjectedTs) {
+      try { await setCursor(threadId, latestInjectedTs); } catch {}
+    }
+  }
 
   // Mirror execClaude's turn tracking + compact warning. Only count turns that
   // resumed an existing session — a brand-new session's first turn is implicit.
