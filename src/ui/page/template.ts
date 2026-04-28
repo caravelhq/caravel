@@ -83,6 +83,13 @@ ${pageStyles}
         </div>
         <button class="hb-toggle off" id="debug-toggle" type="button">Off</button>
       </div>
+      <div class="setting-item" id="split-toggle-row">
+        <div class="setting-main">
+          <div class="settings-label">⫴ Split view</div>
+          <div class="settings-meta">Side-by-side panes (≥1200px)</div>
+        </div>
+        <button class="hb-toggle off" id="split-toggle" type="button">Off</button>
+      </div>
       <div class="setting-item">
         <div class="setting-main">
           <div class="settings-label">🧾 Advanced</div>
@@ -269,6 +276,11 @@ ${pageStyles}
       </div>
     </div>
   </main>
+
+  <aside class="split-pane" id="split-pane" hidden aria-label="Split view second pane">
+    <button class="split-pane-close" id="split-pane-close" type="button" title="Close split view" aria-label="Close split view">×</button>
+    <iframe class="split-iframe" id="split-iframe" title="ClaudeClaw second pane" loading="lazy"></iframe>
+  </aside>
 
   <div class="dock-shell">
     <aside class="side-bubble" id="jobs-bubble" aria-live="polite">

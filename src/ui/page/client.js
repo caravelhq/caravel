@@ -800,6 +800,59 @@
       });
     }
 
+    // Split view (WAL-side: side-by-side panes via iframe). Hidden inside the
+    // iframe itself to avoid recursive splits.
+    var splitToggle = $("split-toggle");
+    var splitToggleRow = $("split-toggle-row");
+    var splitPane = $("split-pane");
+    var splitIframe = $("split-iframe");
+    var splitPaneClose = $("split-pane-close");
+    var inIframe = false;
+    try { inIframe = window.self !== window.top; } catch (_) { inIframe = true; }
+    if (inIframe && splitToggleRow) splitToggleRow.style.display = "none";
+
+    var splitEnabled = !inIframe && localStorage.getItem("split.enabled") === "1";
+
+    function applySplitMode() {
+      if (inIframe) return;
+      document.body.classList.toggle("split-mode", splitEnabled);
+      if (splitPane) splitPane.hidden = !splitEnabled;
+      if (splitIframe) {
+        if (splitEnabled) {
+          if (!splitIframe.src) splitIframe.src = "/";
+        } else {
+          // Release the second SSE connection / chat state when toggled off.
+          splitIframe.src = "about:blank";
+        }
+      }
+    }
+
+    function renderSplitToggle() {
+      if (!splitToggle) return;
+      splitToggle.textContent = splitEnabled ? "On" : "Off";
+      splitToggle.className = "hb-toggle " + (splitEnabled ? "on" : "off");
+    }
+    renderSplitToggle();
+    applySplitMode();
+
+    if (splitToggle) {
+      splitToggle.addEventListener("click", function() {
+        splitEnabled = !splitEnabled;
+        localStorage.setItem("split.enabled", splitEnabled ? "1" : "0");
+        renderSplitToggle();
+        applySplitMode();
+      });
+    }
+
+    if (splitPaneClose) {
+      splitPaneClose.addEventListener("click", function() {
+        splitEnabled = false;
+        localStorage.setItem("split.enabled", "0");
+        renderSplitToggle();
+        applySplitMode();
+      });
+    }
+
     if (quickJobOffset && !quickJobOffset.value) {
       quickJobOffset.value = "10";
     }

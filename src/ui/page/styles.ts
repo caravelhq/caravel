@@ -82,9 +82,59 @@ export const pageStyles = String.raw`    :root {
       position: relative;
       z-index: 1;
       overflow: hidden;
+      transition: width 180ms ease;
     }
     body.hide-header .repo-cta { display: none; }
     body.hide-header .stage { padding-top: 12px; }
+
+    .split-pane {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 50vw;
+      background: #0d1117;
+      border-left: 1px solid #1f2630;
+      box-shadow: -8px 0 24px #00000040;
+      z-index: 5;
+      display: none;
+    }
+    .split-iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: #0d1117;
+      display: block;
+    }
+    .split-pane-close {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 1px solid #2a3442;
+      background: #11161e;
+      color: #d7e3f5;
+      font-size: 16px;
+      line-height: 1;
+      cursor: pointer;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .split-pane-close:hover { background: #1a232f; border-color: #3a4756; }
+    body.split-mode .stage { width: 50vw; align-self: flex-start; }
+    body.split-mode .split-pane { display: block; }
+    body.split-mode .dock-shell { width: calc(50vw - 24px); }
+
+    @media (max-width: 1199px) {
+      body.split-mode .stage { width: 100%; align-self: stretch; }
+      body.split-mode .split-pane { display: none; }
+      body.split-mode .dock-shell { width: calc(100% - 24px); }
+      #split-toggle-row { display: none; }
+    }
 
     .hero {
       text-align: center;
