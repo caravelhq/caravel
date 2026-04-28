@@ -28,10 +28,10 @@ created: 2026-04-28T22:30:00+12    # required ISO-8601 with offset
 updated: 2026-04-28T22:30:00+12    # touched on every transition
 
 # === routing ===
-from: kelly                         # required; "kelly" or an agent name
-to: researcher                      # required; target agent name
+from: kelly                         # required; "kelly" or an agent name (alice, ray, sam, bob, cliff, mark, adam)
+to: ray                             # required; target agent name
 parent: null                        # task id this is a sub-task / reply of, or null
-reply_to: vesper                    # where the result lands (default: from)
+reply_to: alice                     # where the result lands (default: from)
 
 # === nature ===
 kind: research                      # research | code | review | summarise | decide | other
@@ -88,7 +88,7 @@ report: ""                          # full result (for done state); referenced f
 | `waiting:agent:<name>` | blocked on another agent's task | `tasks/open/` |
 | `waiting:time:<iso>` | blocked until a wall-clock time | `tasks/open/` |
 | `done` | completed; report written | `tasks/done/` |
-| `failed:<reason>` | terminal failure; see Vesper's failure-rule table | `tasks/failed/` |
+| `failed:<reason>` | terminal failure; see Alice's failure-rule table | `tasks/failed/` |
 | `escalated` | sent to Kelly with a structured decision request | `tasks/failed/` |
 
 `<reason>` for `failed:` — one of: `budget`, `tool`, `refusal`, `context`, `dependency`, `crash`, `timeout`, `other`.
@@ -98,7 +98,7 @@ report: ""                          # full result (for done state); referenced f
 `agents/<name>/tasks/journal.ndjson` is one JSON object per line, append-only:
 
 ```json
-{"ts":"2026-04-28T22:30:00+12","id":"TSK-2026-04-28-0042","status":"open","kind":"research","from":"kelly","to":"researcher","parent":null,"summary":""}
+{"ts":"2026-04-28T22:30:00+12","id":"TSK-2026-04-28-0042","status":"open","kind":"research","from":"kelly","to":"ray","parent":null,"summary":""}
 {"ts":"2026-04-28T22:35:12+12","id":"TSK-2026-04-28-0042","status":"claimed","by":"chat-1234abcd","summary":"Survey BT plugins for Capacitor coverage tracking"}
 {"ts":"2026-04-28T23:42:08+12","id":"TSK-2026-04-28-0042","status":"done","summary":"Survey BT plugins for Capacitor coverage tracking","response":"5 candidates; only @capacitor-community/bluetooth-le has active maintainers and BLE central support. Recommend that one."}
 ```
@@ -139,6 +139,6 @@ Required fields: `id`, `created`, `updated`, `from`, `to`, `kind`, `priority`, `
 See `agents/_shared/task-envelope-examples/` for canonical examples of:
 
 - `simple-research.yaml` — a one-shot research task
-- `coordinator-delegation.yaml` — Vesper delegating to a specialist
-- `escalation-back.yaml` — a worker escalating to Vesper for a decision
+- `coordinator-delegation.yaml` — Alice delegating to a specialist
+- `escalation-back.yaml` — a worker escalating to Alice for a decision
 - `waiting-on-user.yaml` — a task parked waiting for Kelly's input

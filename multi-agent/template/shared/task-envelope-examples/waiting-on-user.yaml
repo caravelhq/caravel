@@ -2,10 +2,10 @@ id: TSK-2026-04-28-0004
 created: 2026-04-28T23:30:00+12
 updated: 2026-04-28T23:35:00+12
 
-from: vesper
-to: vesper                        # held by coordinator until Kelly responds
+from: alice
+to: alice                         # held by coordinator until Kelly responds
 parent: TSK-2026-04-28-0003
-reply_to: vesper
+reply_to: alice
 
 kind: decide
 priority: P0                      # blocking Kelly directly
@@ -20,30 +20,30 @@ brief: |
   Kelly's decision needed on BT plugin licence/platform tradeoff
   (see escalation TSK-2026-04-28-0003). Until Kelly answers, this
   task is parked and the parent task TSK-2026-04-28-0001 stays
-  in waiting:agent:vesper.
+  in waiting:agent:alice.
 
 output_format: |
   Kelly's answer (A / B / alternative + reasoning) is folded into
   the resolution and the dependent tasks resume.
 
 context:
-  - agents/researcher/tasks/open/TSK-2026-04-28-0001.yaml
-  - agents/vesper/tasks/open/TSK-2026-04-28-0003.yaml
+  - agents/ray/tasks/open/TSK-2026-04-28-0001.yaml
+  - agents/alice/tasks/open/TSK-2026-04-28-0003.yaml
 
 status: waiting:user
 lease:
-  holder: chat-vesper-main
+  holder: chat-alice-main
   expires: null                    # waiting:* doesn't time out the way claimed does
 history:
   - ts: 2026-04-28T23:30:00+12
     from: null
     to: open
-    by: vesper
+    by: alice
     note: ""
   - ts: 2026-04-28T23:35:00+12
     from: open
     to: waiting:user
-    by: vesper
+    by: alice
     note: posted decision summary to dashboard, awaiting Kelly response
 
 summary:

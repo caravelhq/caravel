@@ -1,21 +1,21 @@
 #!/usr/bin/env node
-// Vesper's task-formulation helper (WAL-63).
+// Alice's task-formulation helper (WAL-63).
 //
 // Mechanical operations only — the agent does the formulation, this script
 // handles ID allocation, file placement, and journal append so the agent
 // doesn't have to reason about race conditions or counter math.
 //
-//   node agents/vesper/skills/task/script/task.mjs new --target researcher --yaml /path/to/draft.yaml
+//   node .claude/skills/task/script/task.mjs new --target ray --yaml /path/to/draft.yaml
 //     Validate, assign next ID for today, write to the target's tasks/open/,
 //     append to the target's journal. Prints the assigned ID on stdout.
 //
-//   node agents/vesper/skills/task/script/task.mjs next-id --target researcher
+//   node .claude/skills/task/script/task.mjs next-id --target ray
 //     Print the next available task ID for today (no file written).
 //
-//   node agents/vesper/skills/task/script/task.mjs list --agent <name> [--status open|done|failed]
+//   node .claude/skills/task/script/task.mjs list --agent <name> [--status open|done|failed]
 //     List tasks for an agent as JSON.
 //
-//   node agents/vesper/skills/task/script/task.mjs summary
+//   node .claude/skills/task/script/task.mjs summary
 //     Print a JSON summary across all agents — counts per status, recent
 //     escalations, waiting:user list. Used by the dashboard widget.
 
@@ -33,7 +33,7 @@ function flag(name, fallback = null) {
 }
 
 const ROOT = process.cwd();
-const AGENTS = ["vesper", "researcher", "advisor", "strategist", "builder", "marketing", "reviewer"];
+const AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
 
 function tasksDir(agent) {
   return join(ROOT, "agents", agent, "tasks");

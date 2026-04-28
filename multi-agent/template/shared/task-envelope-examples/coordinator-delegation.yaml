@@ -2,10 +2,10 @@ id: TSK-2026-04-28-0002
 created: 2026-04-28T22:10:00+12
 updated: 2026-04-28T22:10:00+12
 
-from: vesper
-to: strategist
-parent: TSK-2026-04-28-0001       # delegating after researcher's report came back
-reply_to: vesper                  # results route back to Vesper, not Kelly
+from: alice
+to: sam
+parent: TSK-2026-04-28-0001       # delegating after Ray's report came back
+reply_to: alice                   # results route back to Alice, not Kelly
 
 kind: summarise
 priority: P2
@@ -17,7 +17,7 @@ budget:
   max_usd: null
 
 brief: |
-  Researcher's report on BT plugins is in agents/researcher/tasks/done/
+  Ray's report on BT plugins is in agents/ray/tasks/done/
   TSK-2026-04-28-0001.yaml. Synthesise into a one-page recommendation
   Kelly can act on: which plugin, what risks, what we'd do if it
   underperforms in field testing. Frame as a decision memo, not a survey.
@@ -25,10 +25,10 @@ brief: |
 output_format: |
   One markdown page, sections: Recommendation (1 para), Risks (3 bullets),
   Fallback (1 para), Implementation note (3-5 bullets). Cite specific
-  rows from the researcher's table.
+  rows from Ray's table.
 
 context:
-  - agents/researcher/tasks/done/TSK-2026-04-28-0001.yaml
+  - agents/ray/tasks/done/TSK-2026-04-28-0001.yaml
 
 status: open
 lease:
@@ -38,8 +38,8 @@ history:
   - ts: 2026-04-28T22:10:00+12
     from: null
     to: open
-    by: vesper
-    note: delegated after researcher report
+    by: alice
+    note: delegated after Ray's report
 
 summary:
   brief: ""

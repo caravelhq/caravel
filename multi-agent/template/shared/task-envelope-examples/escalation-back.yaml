@@ -2,10 +2,10 @@ id: TSK-2026-04-28-0003
 created: 2026-04-28T23:00:00+12
 updated: 2026-04-28T23:15:00+12
 
-from: researcher
-to: vesper                        # escalating to coordinator
+from: ray
+to: alice                         # escalating to coordinator
 parent: TSK-2026-04-28-0001
-reply_to: researcher              # researcher resumes work after Kelly decides
+reply_to: ray                     # Ray resumes work after Kelly decides
 
 kind: decide
 priority: P1                      # blocking the parent task
@@ -22,14 +22,14 @@ brief: |
     grant (which Kelly previously flagged as "check before adopting").
   - Plugin B: MIT licensed, weaker iOS background story (relies on
     location-permission workaround that Apple has tightened in iOS 18+).
-  This is a Kelly decision, not a researcher one.
+  This is a Kelly decision, not a Ray one.
 
 output_format: |
   Decision: A or B (or "neither, propose alternative path").
-  Reasoning: 2-3 sentences. The researcher will resume with this answer.
+  Reasoning: 2-3 sentences. Ray will resume with this answer.
 
 context:
-  - agents/researcher/tasks/open/TSK-2026-04-28-0001.yaml
+  - agents/ray/tasks/open/TSK-2026-04-28-0001.yaml
 
 status: open
 lease:
@@ -39,8 +39,8 @@ history:
   - ts: 2026-04-28T23:00:00+12
     from: null
     to: open
-    by: researcher
-    note: escalated to vesper for Kelly decision (licence vs platform tradeoff)
+    by: ray
+    note: escalated to alice for Kelly decision (licence vs platform tradeoff)
 
 summary:
   brief: "BT plugin choice: Apache+patent vs MIT+iOS-permission risk"
