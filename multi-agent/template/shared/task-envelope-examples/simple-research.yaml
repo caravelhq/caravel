@@ -1,0 +1,52 @@
+id: TSK-2026-04-28-0001
+created: 2026-04-28T22:00:00+12
+updated: 2026-04-28T22:00:00+12
+
+from: kelly
+to: researcher
+parent: null
+reply_to: kelly
+
+kind: research
+priority: P2
+deadline: 2026-04-30T17:00:00+12
+
+budget:
+  max_turns: 30
+  max_subagents: 0
+  max_usd: null
+
+brief: |
+  Survey current Capacitor / Cordova plugins for Bluetooth Low Energy
+  central-mode use on iOS and Android. We need to receive advertisements
+  from a fleet of GPS pucks during a coverage survey. Constraints:
+  - active maintenance in the last 12 months
+  - permissive licence (MIT / Apache / BSD)
+  - works in background mode on iOS
+  Reject anything ble-peripheral-only.
+
+output_format: |
+  Markdown table with columns: name, repo URL, last commit, licence,
+  iOS background support (yes/no/unknown), maintenance signal (1-5),
+  notable caveats. Append a one-paragraph recommendation naming the
+  preferred plugin and why.
+
+context:
+  - Notes/Projects/Trakk_Collector/BT_Plugin_Research_Brief.md
+  - jira:TPD-189
+
+status: open
+lease:
+  holder: null
+  expires: null
+history:
+  - ts: 2026-04-28T22:00:00+12
+    from: null
+    to: open
+    by: kelly
+    note: created via /task
+
+summary:
+  brief: ""
+  response: ""
+report: ""

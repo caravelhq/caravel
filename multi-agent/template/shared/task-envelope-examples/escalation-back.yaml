@@ -1,0 +1,48 @@
+id: TSK-2026-04-28-0003
+created: 2026-04-28T23:00:00+12
+updated: 2026-04-28T23:15:00+12
+
+from: researcher
+to: vesper                        # escalating to coordinator
+parent: TSK-2026-04-28-0001
+reply_to: researcher              # researcher resumes work after Kelly decides
+
+kind: decide
+priority: P1                      # blocking the parent task
+deadline: 2026-04-29T17:00:00+12
+
+budget:
+  max_turns: 5                    # decision tasks are short
+  max_subagents: 0
+  max_usd: null
+
+brief: |
+  Two BT plugins meet all criteria but disagree on a key tradeoff:
+  - Plugin A: better iOS background support, but Apache 2.0 with patent
+    grant (which Kelly previously flagged as "check before adopting").
+  - Plugin B: MIT licensed, weaker iOS background story (relies on
+    location-permission workaround that Apple has tightened in iOS 18+).
+  This is a Kelly decision, not a researcher one.
+
+output_format: |
+  Decision: A or B (or "neither, propose alternative path").
+  Reasoning: 2-3 sentences. The researcher will resume with this answer.
+
+context:
+  - agents/researcher/tasks/open/TSK-2026-04-28-0001.yaml
+
+status: open
+lease:
+  holder: null
+  expires: null
+history:
+  - ts: 2026-04-28T23:00:00+12
+    from: null
+    to: open
+    by: researcher
+    note: escalated to vesper for Kelly decision (licence vs platform tradeoff)
+
+summary:
+  brief: "BT plugin choice: Apache+patent vs MIT+iOS-permission risk"
+  response: ""
+report: ""

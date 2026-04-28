@@ -1,0 +1,52 @@
+id: TSK-2026-04-28-0004
+created: 2026-04-28T23:30:00+12
+updated: 2026-04-28T23:35:00+12
+
+from: vesper
+to: vesper                        # held by coordinator until Kelly responds
+parent: TSK-2026-04-28-0003
+reply_to: vesper
+
+kind: decide
+priority: P0                      # blocking Kelly directly
+deadline: 2026-04-29T09:00:00+12
+
+budget:
+  max_turns: 0                    # no work; just parked
+  max_subagents: 0
+  max_usd: null
+
+brief: |
+  Kelly's decision needed on BT plugin licence/platform tradeoff
+  (see escalation TSK-2026-04-28-0003). Until Kelly answers, this
+  task is parked and the parent task TSK-2026-04-28-0001 stays
+  in waiting:agent:vesper.
+
+output_format: |
+  Kelly's answer (A / B / alternative + reasoning) is folded into
+  the resolution and the dependent tasks resume.
+
+context:
+  - agents/researcher/tasks/open/TSK-2026-04-28-0001.yaml
+  - agents/vesper/tasks/open/TSK-2026-04-28-0003.yaml
+
+status: waiting:user
+lease:
+  holder: chat-vesper-main
+  expires: null                    # waiting:* doesn't time out the way claimed does
+history:
+  - ts: 2026-04-28T23:30:00+12
+    from: null
+    to: open
+    by: vesper
+    note: ""
+  - ts: 2026-04-28T23:35:00+12
+    from: open
+    to: waiting:user
+    by: vesper
+    note: posted decision summary to dashboard, awaiting Kelly response
+
+summary:
+  brief: "Awaiting Kelly: BT plugin Apache+patent vs MIT+iOS-permission tradeoff"
+  response: ""
+report: ""
