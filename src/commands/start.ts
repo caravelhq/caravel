@@ -2,6 +2,7 @@ import { writeFile, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { fileURLToPath } from "url";
 import { run, runUserMessage, streamUserMessage, bootstrap, ensureProjectClaudeMd, loadHeartbeatPromptTemplate } from "../runner";
+import { isMultiAgentEnabled, startMultiAgentRunner } from "../multiAgent";
 import { writeState, type StateData } from "../statusline";
 import { cronMatches, nextCronMatch } from "../cron";
 import { clearJobSchedule, loadJobs } from "../jobs";
@@ -318,9 +319,11 @@ export async function start(args: string[] = []) {
   await writePidFile();
   let web: WebServerHandle | null = null;
   let discordStopGateway: (() => void) | null = null;
+  let multiAgentHandle: ReturnType<typeof startMultiAgentRunner> | null = null;
 
   async function shutdown() {
     if (discordStopGateway) discordStopGateway();
+    if (multiAgentHandle) multiAgentHandle.stop();
     if (web) web.stop();
     await teardownStatusline();
     await cleanupPidFile();
@@ -341,6 +344,14 @@ export async function start(args: string[] = []) {
   if (debugFlag) console.log("  Debug: enabled");
   console.log(`  Jobs loaded: ${jobs.length}`);
   jobs.forEach((j) => console.log(`    - ${j.name} [${j.schedule}]`));
+
+  // WAL-63 phase 2: multi-agent task runner. Off by default; opt-in via env.
+  // Rollback: unset CLAUDECLAW_MULTI_AGENT_RUNNER (or set to 0) and restart.
+  if (isMultiAgentEnabled()) {
+    multiAgentHandle = startMultiAgentRunner();
+  } else {
+    console.log("  Multi-agent runner: disabled (set CLAUDECLAW_MULTI_AGENT_RUNNER=1 to enable)");
+  }
 
   // --- Mutable state ---
   let currentSettings: Settings = settings;

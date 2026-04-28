@@ -20,6 +20,7 @@ import {
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
+import { getMultiAgentSummary } from "./services/multiAgent";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -461,6 +462,15 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/agents" && req.method === "GET") {
         try {
           return json({ ok: true, agents: await listAgents() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // WAL-63 phase 4: multi-agent task summary (read-only).
+      if (url.pathname === "/api/multi-agent/summary" && req.method === "GET") {
+        try {
+          return json({ ok: true, summary: await getMultiAgentSummary() });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

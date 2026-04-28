@@ -618,6 +618,101 @@ export const pageStyles = String.raw`    :root {
     .quick-view-hidden {
       display: none;
     }
+    .multi-agent-panel {
+      margin: 16px auto 0;
+      width: min(720px, 100%);
+      padding: 14px;
+      border: 1px solid #ffffff22;
+      border-radius: 16px;
+      background:
+        radial-gradient(120% 100% at 0% 0%, #ffd07a18, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      display: grid;
+      gap: 12px;
+      text-align: left;
+    }
+    .multi-agent-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+    .multi-agent-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: #f4f8ff;
+      letter-spacing: 0.01em;
+    }
+    .multi-agent-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c9daef;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+    .multi-agent-refresh {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 10px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 120ms;
+    }
+    .multi-agent-refresh:hover {
+      background: #14223680;
+    }
+    .multi-agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .multi-agent-cell {
+      border: 1px solid #ffffff1c;
+      border-radius: 10px;
+      background: #0c1624a6;
+      padding: 8px 10px;
+      display: grid;
+      gap: 4px;
+    }
+    .multi-agent-cell-name {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #d6e6ff;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .multi-agent-cell-counts {
+      display: flex;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    .multi-agent-count-open { color: #9be7ff; }
+    .multi-agent-count-done { color: #93e0a8; }
+    .multi-agent-count-failed { color: #ff9a9a; }
+    .multi-agent-count-zero { color: #5a6b85; }
+    .multi-agent-extras {
+      display: grid;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #b8cae3;
+    }
+    .multi-agent-extras-line {
+      padding: 4px 8px;
+      border-left: 2px solid #ffd07a99;
+      background: #0c162466;
+      border-radius: 4px;
+    }
+    .multi-agent-extras-line.escalated {
+      border-left-color: #ff9a9a;
+    }
     .settings-btn {
       /* now rendered inside .tab-nav as gear icon — keep for ID reference */
       display: none;

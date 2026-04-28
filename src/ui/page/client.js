@@ -2728,3 +2728,92 @@
         setPickerCollapsed(!collapsed);
       });
     }
+
+    // === Multi-agent task summary widget (WAL-63 phase 4) ===================
+    (function () {
+      var panel = document.getElementById("multi-agent-panel");
+      var grid = document.getElementById("multi-agent-grid");
+      var sub = document.getElementById("multi-agent-sub");
+      var extras = document.getElementById("multi-agent-extras");
+      var refresh = document.getElementById("multi-agent-refresh");
+      if (!panel || !grid || !sub) return;
+
+      function renderCell(name, counts) {
+        var open = counts.open || 0;
+        var done = counts.done || 0;
+        var failed = counts.failed || 0;
+        var openCls = open > 0 ? "multi-agent-count-open" : "multi-agent-count-zero";
+        var doneCls = done > 0 ? "multi-agent-count-done" : "multi-agent-count-zero";
+        var failedCls = failed > 0 ? "multi-agent-count-failed" : "multi-agent-count-zero";
+        return (
+          '<div class="multi-agent-cell">' +
+          '<div class="multi-agent-cell-name">' + escapeHtml(name) + '</div>' +
+          '<div class="multi-agent-cell-counts">' +
+          '<span class="' + openCls + '" title="open">○ ' + open + '</span>' +
+          '<span class="' + doneCls + '" title="done">✓ ' + done + '</span>' +
+          '<span class="' + failedCls + '" title="failed">✗ ' + failed + '</span>' +
+          '</div></div>'
+        );
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+        });
+      }
+
+      async function fetchSummary() {
+        try {
+          var res = await fetch("/api/multi-agent/summary", { cache: "no-store" });
+          var data = await res.json();
+          if (!data.ok || !data.summary) {
+            sub.textContent = "Unavailable";
+            grid.innerHTML = "";
+            extras.innerHTML = "";
+            panel.removeAttribute("hidden");
+            return;
+          }
+          var s = data.summary;
+          if (!s.enabled) {
+            // No agents/ directory — keep widget hidden so upstream users don't see clutter.
+            panel.setAttribute("hidden", "");
+            return;
+          }
+          panel.removeAttribute("hidden");
+          var totalOpen = s.totals && s.totals.open || 0;
+          var totalDone = s.totals && s.totals.done || 0;
+          var totalFailed = s.totals && s.totals.failed || 0;
+          sub.textContent = totalOpen + " open · " + totalDone + " done · " + totalFailed + " failed";
+
+          var rows = [];
+          var byAgent = s.byAgent || {};
+          var names = Object.keys(byAgent).sort();
+          for (var i = 0; i < names.length; i++) {
+            rows.push(renderCell(names[i], byAgent[names[i]]));
+          }
+          grid.innerHTML = rows.join("");
+
+          var extraLines = [];
+          var waiting = s.waitingUser || [];
+          for (var w = 0; w < waiting.length; w++) {
+            var item = waiting[w];
+            extraLines.push(
+              '<div class="multi-agent-extras-line">⏳ ' + escapeHtml(item.agent) + ': ' + escapeHtml(item.summary || item.file) + '</div>'
+            );
+          }
+          var esc = s.escalated || [];
+          for (var e = 0; e < esc.length; e++) {
+            extraLines.push(
+              '<div class="multi-agent-extras-line escalated">↑ ' + escapeHtml(esc[e].agent) + ': ' + escapeHtml(esc[e].file) + '</div>'
+            );
+          }
+          extras.innerHTML = extraLines.join("");
+        } catch (err) {
+          sub.textContent = "Error: " + (err && err.message || err);
+        }
+      }
+
+      if (refresh) refresh.addEventListener("click", fetchSummary);
+      fetchSummary();
+      setInterval(fetchSummary, 30000);
+    })();

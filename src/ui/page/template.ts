@@ -211,6 +211,17 @@ ${pageStyles}
           <button class="quick-back-jobs" id="quick-back-jobs" type="button">Back to Jobs List</button>
         </div>
       </form>
+      <section class="multi-agent-panel" id="multi-agent-panel" hidden>
+        <div class="multi-agent-head">
+          <div>
+            <div class="multi-agent-title">Multi-Agent Tasks</div>
+            <div class="multi-agent-sub" id="multi-agent-sub">Loading...</div>
+          </div>
+          <button class="multi-agent-refresh" id="multi-agent-refresh" type="button" title="Refresh">↻</button>
+        </div>
+        <div class="multi-agent-grid" id="multi-agent-grid"></div>
+        <div class="multi-agent-extras" id="multi-agent-extras"></div>
+      </section>
     </section>
     </div>
     <div id="chat-panel" class="chat-panel" hidden>
