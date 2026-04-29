@@ -800,27 +800,34 @@
       });
     }
 
-    // Split view (WAL-side: side-by-side panes via iframe). Hidden inside the
-    // iframe itself to avoid recursive splits.
+    // Split view: parent renders a stage on the left; an iframe of /?embed=1
+    // renders a stripped stage on the right. Embed mode hides chrome
+    // (repo banner, dock, settings, split toggle) so the dock + repo banner
+    // appear only once and the right pane is purely content. The right
+    // pane defaults to the chat tab.
     var splitToggle = $("split-toggle");
     var splitToggleRow = $("split-toggle-row");
+    var splitNavToggle = $("split-nav-toggle");
     var splitPane = $("split-pane");
     var splitIframe = $("split-iframe");
     var splitPaneClose = $("split-pane-close");
     var inIframe = false;
     try { inIframe = window.self !== window.top; } catch (_) { inIframe = true; }
-    if (inIframe && splitToggleRow) splitToggleRow.style.display = "none";
+    var embedQuery = /[?&]embed=1\b/.test(location.search);
+    var embedMode = inIframe || embedQuery;
+    if (embedMode) document.body.classList.add("embed");
+    if (embedMode && splitToggleRow) splitToggleRow.style.display = "none";
 
-    var splitEnabled = !inIframe && localStorage.getItem("split.enabled") === "1";
+    var splitEnabled = !embedMode && localStorage.getItem("split.enabled") === "1";
 
     function applySplitMode() {
-      if (inIframe) return;
+      if (embedMode) return;
       document.body.classList.toggle("split-mode", splitEnabled);
       if (splitPane) splitPane.hidden = !splitEnabled;
       if (splitIframe) {
         if (splitEnabled) {
           var cur = splitIframe.src;
-          if (!cur || cur === "about:blank") splitIframe.src = "/";
+          if (!cur || cur === "about:blank") splitIframe.src = "/?embed=1";
         } else {
           // Release the second SSE connection / chat state when toggled off.
           splitIframe.src = "about:blank";
@@ -829,21 +836,26 @@
     }
 
     function renderSplitToggle() {
-      if (!splitToggle) return;
-      splitToggle.textContent = splitEnabled ? "On" : "Off";
-      splitToggle.className = "hb-toggle " + (splitEnabled ? "on" : "off");
+      if (splitToggle) {
+        splitToggle.textContent = splitEnabled ? "On" : "Off";
+        splitToggle.className = "hb-toggle " + (splitEnabled ? "on" : "off");
+      }
+      if (splitNavToggle) {
+        splitNavToggle.setAttribute("aria-pressed", splitEnabled ? "true" : "false");
+      }
     }
     renderSplitToggle();
     applySplitMode();
 
-    if (splitToggle) {
-      splitToggle.addEventListener("click", function() {
-        splitEnabled = !splitEnabled;
-        localStorage.setItem("split.enabled", splitEnabled ? "1" : "0");
-        renderSplitToggle();
-        applySplitMode();
-      });
+    function toggleSplit() {
+      splitEnabled = !splitEnabled;
+      localStorage.setItem("split.enabled", splitEnabled ? "1" : "0");
+      renderSplitToggle();
+      applySplitMode();
     }
+
+    if (splitToggle) splitToggle.addEventListener("click", toggleSplit);
+    if (splitNavToggle) splitNavToggle.addEventListener("click", toggleSplit);
 
     if (splitPaneClose) {
       splitPaneClose.addEventListener("click", function() {
@@ -1455,6 +1467,10 @@
 
     if (tabDashboardBtn) tabDashboardBtn.addEventListener("click", () => setActiveTab("dashboard"));
     if (tabChatBtn) tabChatBtn.addEventListener("click", () => setActiveTab("chat"));
+
+    // Right-pane (embed) defaults to the chat tab so split view opens
+    // straight into a second chat instead of a duplicate dashboard.
+    if (embedMode) setActiveTab("chat");
 
     renderChatHistory();
 

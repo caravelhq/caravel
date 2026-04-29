@@ -127,13 +127,32 @@ export const pageStyles = String.raw`    :root {
     .split-pane-close:hover { background: #1a232f; border-color: #3a4756; }
     body.split-mode .stage { width: 50vw; align-self: flex-start; }
     body.split-mode .split-pane { display: block; }
-    body.split-mode .dock-shell { width: calc(50vw - 24px); }
+    /* In split mode the parent dock represents the whole app — anchor it
+       over the left pane (where the parent stage lives) and hide the
+       iframe's duplicate dock via body.embed. */
+    body.split-mode .dock-shell {
+      left: 25vw;
+      width: min(calc(50vw - 24px), 1140px);
+    }
+
+    /* Embed mode = page rendered inside the split-pane iframe. Hide all
+       global chrome so only the stage shows; the parent owns the dock,
+       repo banner, settings, and split toggle. */
+    body.embed .repo-cta,
+    body.embed .dock-shell,
+    body.embed #split-nav-toggle,
+    body.embed #settings-btn { display: none !important; }
+    body.embed .stage { padding-bottom: 16px; }
 
     @media (max-width: 1199px) {
       body.split-mode .stage { width: 100%; align-self: stretch; }
       body.split-mode .split-pane { display: none; }
-      body.split-mode .dock-shell { width: calc(100% - 24px); }
-      #split-toggle-row { display: none; }
+      body.split-mode .dock-shell {
+        left: 50%;
+        width: min(calc(100% - 24px), 1140px);
+      }
+      #split-toggle-row,
+      #split-nav-toggle { display: none; }
     }
 
     .hero {
@@ -1266,6 +1285,17 @@ export const pageStyles = String.raw`    :root {
       border-left: 1px solid #ffffff12;
       margin-left: 2px;
       border-radius: 0 999px 999px 0;
+    }
+    .tab-btn-split {
+      font-size: 18px;
+      padding: 0 12px;
+      line-height: 32px;
+      border-left: 1px solid #ffffff12;
+    }
+    .tab-btn-split[aria-pressed="true"] {
+      color: #7dc5ff;
+      background: #0e2040cc;
+      border-color: #ffffff22;
     }
 
     /* ── Chat panel ── */
