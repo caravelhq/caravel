@@ -92,12 +92,12 @@ async function runGitBuffer(root: string, args: string[]): Promise<{ code: numbe
     stdout: "pipe",
     stderr: "pipe",
   });
-  const [stdout, stderr] = await Promise.all([
-    new Response(proc.stdout).bytes(),
+  const [stdoutBuf, stderr] = await Promise.all([
+    new Response(proc.stdout).arrayBuffer(),
     new Response(proc.stderr).text(),
   ]);
   const code = await proc.exited;
-  return { code, stdout, stderr };
+  return { code, stdout: new Uint8Array(stdoutBuf), stderr };
 }
 
 async function currentBranch(root: string): Promise<string> {
