@@ -819,7 +819,8 @@
       if (splitPane) splitPane.hidden = !splitEnabled;
       if (splitIframe) {
         if (splitEnabled) {
-          if (!splitIframe.src) splitIframe.src = "/";
+          var cur = splitIframe.src;
+          if (!cur || cur === "about:blank") splitIframe.src = "/";
         } else {
           // Release the second SSE connection / chat state when toggled off.
           splitIframe.src = "about:blank";
