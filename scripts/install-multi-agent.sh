@@ -102,6 +102,16 @@ for f in "$SRC_DIR"/shared/task-envelope-examples/*.yaml; do
   run cp "$f" "$DEST_SHARED/task-envelope-examples/$(basename "$f")"
 done
 
+# Shared rules — agents/_shared/rules/
+if [[ -d "$SRC_DIR/shared/rules" ]]; then
+  echo "Installing shared rules → ${DEST_SHARED#$PROJECT_DIR/}/rules"
+  run mkdir -p "$DEST_SHARED/rules"
+  for f in "$SRC_DIR"/shared/rules/*.md; do
+    [[ -e "$f" ]] || continue
+    run cp "$f" "$DEST_SHARED/rules/$(basename "$f")"
+  done
+fi
+
 # Per-agent task directories
 echo "Ensuring per-agent task directories..."
 for agent in "${AGENTS[@]}"; do
