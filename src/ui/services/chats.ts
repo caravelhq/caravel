@@ -42,6 +42,21 @@ export interface ChatListEntry {
 const MAX_CHAT_NAME_LENGTH = 80;
 const MAX_AGENT_ID_LENGTH = 64;
 
+// Legacy → current agent-name aliases. Older chats persisted role-style names
+// (vesper/researcher/strategist/...) before the 2026-04-28 rename to character
+// names. Aliasing on read lets old chats render with the right badge/emoji
+// without a one-shot migration.
+const LEGACY_AGENT_ALIASES: Record<string, string> = {
+  vesper: "alice",
+  researcher: "ray",
+  strategist: "sam",
+  builder: "bob",
+  reviewer: "cliff",
+  marketing: "mark",
+  marketer: "mark",
+  advisor: "adam",
+};
+
 function sanitizeName(raw: unknown): string {
   if (typeof raw !== "string") return "";
   const trimmed = raw.trim().replace(/[\r\n\t]+/g, " ");
@@ -50,7 +65,8 @@ function sanitizeName(raw: unknown): string {
 
 function sanitizeAgentId(raw: unknown): string {
   if (typeof raw !== "string") return "";
-  return raw.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, MAX_AGENT_ID_LENGTH);
+  const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "").slice(0, MAX_AGENT_ID_LENGTH);
+  return LEGACY_AGENT_ALIASES[cleaned] || cleaned;
 }
 
 function sanitizeId(id: string): string {
