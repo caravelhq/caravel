@@ -1,15 +1,16 @@
 # Task Envelope — schema and conventions (WAL-63)
 
-A task envelope is a YAML file that lives in `agents/<name>/tasks/{open,done,failed}/<id>.yaml`. It is the unit of orchestration for the multi-agent system: created by Kelly or by another agent, claimed by the target agent, transitioned through statuses, and ultimately archived or escalated.
+A task envelope is a YAML file that lives in `agents/<name>/tasks/{open,done,failed,waiting}/<id>.yaml`. It is the unit of orchestration for the multi-agent system: created by Kelly or by another agent, claimed by the target agent, transitioned through statuses, and ultimately archived, parked while waiting on a dependency, or escalated.
 
 ## File location
 
 ```
 agents/<target-agent>/tasks/
-  open/    TSK-2026-04-28-0042.yaml         # waiting to be claimed
-           TSK-2026-04-28-0043.yaml         # claimed, in_progress, or waiting:*
-  done/    TSK-2026-04-28-0040.yaml         # completed
-  failed/  TSK-2026-04-28-0039.yaml         # failed:* or escalated
+  open/      TSK-2026-04-28-0042.yaml       # waiting to be claimed
+             TSK-2026-04-28-0043.yaml       # claimed, in_progress
+  waiting/   TSK-2026-04-28-0044.yaml       # parked on a dependency (auto-resumed when satisfied)
+  done/      TSK-2026-04-28-0040.yaml       # completed
+  failed/    TSK-2026-04-28-0039.yaml       # failed:* or escalated
   journal.ndjson                             # append-only state-transition log
 ```
 
@@ -84,14 +85,14 @@ report: ""                          # full result (for done state); referenced f
 | `open` | created, awaiting claim | `tasks/open/` |
 | `claimed` | a worker has claimed it; not yet started | `tasks/open/` (lease set) |
 | `in_progress` | worker actively running | `tasks/open/` |
-| `waiting:user` | blocked on Kelly | `tasks/open/` |
-| `waiting:agent:<name>` | blocked on another agent's task | `tasks/open/` |
-| `waiting:time:<iso>` | blocked until a wall-clock time | `tasks/open/` |
+| `waiting:on:user` | blocked on Kelly | `tasks/waiting/` |
+| `waiting:on:task:<id>` | blocked until that task is in any agent's `done/` | `tasks/waiting/` |
+| `waiting:on:agent:<name>` | blocked until that agent has any `done/` task (heuristic) | `tasks/waiting/` |
 | `done` | completed; report written | `tasks/done/` |
 | `failed:<reason>` | terminal failure; see Alice's failure-rule table | `tasks/failed/` |
 | `escalated` | sent to Kelly with a structured decision request | `tasks/failed/` |
 
-`<reason>` for `failed:` — one of: `budget`, `tool`, `refusal`, `context`, `dependency`, `crash`, `timeout`, `other`.
+`<reason>` for `failed:` — one of: `budget`, `tool`, `refusal`, `context`, `crash`, `timeout`, `other`. **`failed:dependency` is no longer a valid reason** — workers blocked on a dependency must use `<task-waiting on="...">` so the runner can park and auto-resume the envelope.
 
 ## Journal format
 
@@ -127,6 +128,28 @@ When an agent picks up a task:
 4. If the lease expires without a transition, the runner reverts to `open`, clears the lease, and increments a `retry_count` (max 1 before failing as `failed:timeout`).
 
 Two heartbeats can never both claim the same task because the file move is atomic.
+
+## Worker directives
+
+Workers signal completion or blocking by emitting a single directive at the end of their final response. The runner parses the captured stream and acts on the directive.
+
+```
+<task-done summary="≤2 lines">…optional report body…</task-done>
+<task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>
+<task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>
+```
+
+- `<task-done>` → file moves to `tasks/done/`, status `done`. Report body persisted on the envelope.
+- `<task-failed>` → file moves to `tasks/failed/`, status `failed:<reason>`. See the failure-handling rule for next steps.
+- `<task-waiting>` → file moves to `tasks/waiting/`, status `waiting:on:<spec>`. The lease is released. The runner sweeps `tasks/waiting/` each tick and moves the envelope back to `tasks/open/` for re-claim once the dependency resolves.
+
+`<task-waiting on="...">` spec types:
+
+- `task:<id>` — resolved when `<id>.yaml` exists in any agent's `done/`
+- `agent:<name>` — resolved when `<name>` has at least one task in their `done/` (heuristic — refine to "newer than this task's claim time" if needed)
+- `user` — never auto-resolves; only Kelly (or Alice on his behalf) moves it back
+
+If a worker emits no directive at all, the envelope stays `claimed` in `tasks/open/` and a human/coordinator must intervene.
 
 ## Validation
 

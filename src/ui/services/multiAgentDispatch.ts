@@ -1,0 +1,181 @@
+// Form-based task dispatch — used by the dashboard's "new task" UI to create
+// a task envelope without going through Alice in chat. Same effect as
+// `node .claude/skills/task/script/task.mjs new` but in-process so the daemon
+// can react immediately and surface validation errors back to the form.
+
+import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { existsSync } from "fs";
+import { join } from "path";
+
+const PROJECT_DIR = process.cwd();
+const AGENTS_DIR = join(PROJECT_DIR, "agents");
+
+const KNOWN_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const KNOWN_KINDS = ["research", "code", "review", "summarise", "decide", "other"];
+const KNOWN_PRIORITIES = ["P0", "P1", "P2", "P3"];
+
+interface CreateTaskInput {
+  to?: string;
+  from?: string;
+  parent?: string | null;
+  reply_to?: string;
+  kind?: string;
+  priority?: string;
+  brief?: string;
+  output_format?: string;
+  context?: string[];
+  budget?: { max_turns?: number; max_subagents?: number; max_usd?: number | null };
+  chat_id?: string | null;
+  auto_resume?: boolean;
+}
+
+export type CreateTaskResult =
+  | { ok: true; id: string; path: string }
+  | { ok: false; error: string };
+
+function todayPrefix(): string {
+  const d = new Date();
+  return `TSK-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-`;
+}
+
+async function nextTaskId(): Promise<string> {
+  const prefix = todayPrefix();
+  let maxN = 0;
+  for (const a of KNOWN_AGENTS) {
+    for (const sub of ["open", "waiting", "done", "failed"]) {
+      const dir = join(AGENTS_DIR, a, "tasks", sub);
+      if (!existsSync(dir)) continue;
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const e of entries) {
+        if (!e.startsWith(prefix) || !e.endsWith(".yaml")) continue;
+        const tail = e.slice(prefix.length, -5);
+        const n = Number.parseInt(tail, 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+  }
+  return prefix + String(maxN + 1).padStart(4, "0");
+}
+
+function indent(text: string, prefix: string): string {
+  return text
+    .split("\n")
+    .map((line) => (line.length > 0 ? prefix + line : line))
+    .join("\n");
+}
+
+function yamlEscape(value: string): string {
+  return JSON.stringify(value);
+}
+
+async function appendJournal(agent: string, entry: Record<string, unknown>): Promise<void> {
+  const path = join(AGENTS_DIR, agent, "tasks", "journal.ndjson");
+  await mkdir(join(AGENTS_DIR, agent, "tasks"), { recursive: true });
+  await writeFile(path, JSON.stringify(entry) + "\n", { flag: "a" });
+}
+
+export async function createTask(input: CreateTaskInput): Promise<CreateTaskResult> {
+  const to = (input.to ?? "").trim();
+  const from = (input.from ?? "kelly").trim() || "kelly";
+  const kind = (input.kind ?? "other").trim();
+  const priority = (input.priority ?? "P2").trim();
+  const brief = (input.brief ?? "").trim();
+  const outputFormat = (input.output_format ?? "").trim();
+  const replyTo = (input.reply_to ?? from).trim() || from;
+  const parent = input.parent && input.parent !== "null" ? String(input.parent).trim() : null;
+  const context = Array.isArray(input.context) ? input.context.map((c) => String(c).trim()).filter(Boolean) : [];
+
+  if (!KNOWN_AGENTS.includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
+  if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
+  if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
+  if (!brief) return { ok: false, error: "brief is required" };
+  if ((kind === "code" || kind === "review" || kind === "summarise") && !outputFormat) {
+    return { ok: false, error: `output_format is required for kind=${kind}` };
+  }
+
+  const id = await nextTaskId();
+  const now = new Date().toISOString();
+
+  const budget = {
+    max_turns: input.budget?.max_turns ?? (kind === "code" ? 50 : kind === "decide" ? 10 : 30),
+    max_subagents: input.budget?.max_subagents ?? 0,
+    max_usd: input.budget?.max_usd ?? null,
+  };
+
+  const dispatchLines: string[] = [];
+  if (input.chat_id) {
+    dispatchLines.push(`dispatch:`);
+    dispatchLines.push(`  chat_id: ${input.chat_id}`);
+    dispatchLines.push(`  chat_ts: ${now}`);
+    if (input.auto_resume === false) dispatchLines.push(`  auto_resume: false`);
+  }
+
+  const contextBlock = context.length === 0
+    ? `context: []`
+    : `context:\n${context.map((c) => `  - ${c}`).join("\n")}`;
+
+  const yaml = [
+    `id: ${id}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    ``,
+    `from: ${from}`,
+    `to: ${to}`,
+    `parent: ${parent ?? "null"}`,
+    `reply_to: ${replyTo}`,
+    ``,
+    `kind: ${kind}`,
+    `priority: ${priority}`,
+    `deadline: null`,
+    ``,
+    `budget:`,
+    `  max_turns: ${budget.max_turns}`,
+    `  max_subagents: ${budget.max_subagents}`,
+    `  max_usd: ${budget.max_usd ?? "null"}`,
+    ``,
+    `brief: |`,
+    indent(brief, "  "),
+    ``,
+    outputFormat
+      ? `output_format: |\n${indent(outputFormat, "  ")}\n`
+      : `output_format: ""`,
+    ``,
+    contextBlock,
+    ``,
+    `status: open`,
+    `lease:`,
+    `  holder: null`,
+    `  expires: null`,
+    `history:`,
+    `  - ts: ${now}`,
+    `    from: null`,
+    `    to: open`,
+    `    by: ${from}`,
+    `    note: ${yamlEscape("created via dashboard /api/tasks/new")}`,
+    ``,
+    `summary:`,
+    `  brief: ""`,
+    `  response: ""`,
+    `report: ""`,
+    ...(dispatchLines.length > 0 ? ["", ...dispatchLines] : []),
+    ``,
+  ].join("\n");
+
+  const openDir = join(AGENTS_DIR, to, "tasks", "open");
+  await mkdir(openDir, { recursive: true });
+  const outPath = join(openDir, `${id}.yaml`);
+  await writeFile(outPath, yaml);
+
+  await appendJournal(to, {
+    ts: now,
+    id,
+    status: "open",
+    kind,
+    from,
+    to,
+    parent,
+    summary: "",
+  });
+
+  return { ok: true, id, path: outPath };
+}

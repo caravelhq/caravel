@@ -218,10 +218,79 @@ ${pageStyles}
             <div class="multi-agent-title">Multi-Agent Tasks</div>
             <div class="multi-agent-sub" id="multi-agent-sub">Loading...</div>
           </div>
-          <button class="multi-agent-refresh" id="multi-agent-refresh" type="button" title="Refresh">↻</button>
+          <div class="multi-agent-head-actions">
+            <button class="multi-agent-action" id="multi-agent-new-btn" type="button" title="Create a new task">+ New</button>
+            <button class="multi-agent-action" id="multi-agent-list-toggle" type="button" title="Show recent tasks">Tasks</button>
+            <button class="multi-agent-refresh" id="multi-agent-refresh" type="button" title="Refresh">↻</button>
+          </div>
         </div>
         <div class="multi-agent-grid" id="multi-agent-grid"></div>
         <div class="multi-agent-extras" id="multi-agent-extras"></div>
+        <div class="multi-agent-tasks" id="multi-agent-tasks" hidden>
+          <div class="multi-agent-tasks-head">
+            <span>Recent tasks</span>
+            <span class="multi-agent-tasks-meta" id="multi-agent-tasks-meta"></span>
+          </div>
+          <div class="multi-agent-tasks-list" id="multi-agent-tasks-list"></div>
+        </div>
+        <form class="multi-agent-new" id="multi-agent-new" hidden>
+          <div class="multi-agent-new-head">Create task</div>
+          <div class="multi-agent-new-grid">
+            <label class="multi-agent-new-field">
+              <span>Target</span>
+              <select id="multi-agent-new-to">
+                <option value="ray">ray (research)</option>
+                <option value="adam">adam (advisor)</option>
+                <option value="sam">sam (strategist)</option>
+                <option value="bob">bob (builder)</option>
+                <option value="cliff">cliff (review)</option>
+                <option value="mark">mark (marketing)</option>
+                <option value="alice">alice (coordinator)</option>
+              </select>
+            </label>
+            <label class="multi-agent-new-field">
+              <span>Kind</span>
+              <select id="multi-agent-new-kind">
+                <option value="research">research</option>
+                <option value="code">code</option>
+                <option value="review">review</option>
+                <option value="summarise">summarise</option>
+                <option value="decide">decide</option>
+                <option value="other">other</option>
+              </select>
+            </label>
+            <label class="multi-agent-new-field">
+              <span>Priority</span>
+              <select id="multi-agent-new-priority">
+                <option value="P0">P0</option>
+                <option value="P1">P1</option>
+                <option value="P2" selected>P2</option>
+                <option value="P3">P3</option>
+              </select>
+            </label>
+            <label class="multi-agent-new-field">
+              <span>From</span>
+              <input id="multi-agent-new-from" type="text" value="kelly" />
+            </label>
+          </div>
+          <label class="multi-agent-new-block">
+            <span>Brief</span>
+            <textarea id="multi-agent-new-brief" rows="4" placeholder="Why and what — specific enough that two workers wouldn't duplicate effort." required></textarea>
+          </label>
+          <label class="multi-agent-new-block">
+            <span>Output format</span>
+            <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like. Required for code/review/summarise."></textarea>
+          </label>
+          <label class="multi-agent-new-block">
+            <span>Context (one per line — file path, jira:KEY, or URL)</span>
+            <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
+          </label>
+          <div class="multi-agent-new-actions">
+            <span class="multi-agent-new-status" id="multi-agent-new-status"></span>
+            <button class="multi-agent-new-cancel" id="multi-agent-new-cancel" type="button">Cancel</button>
+            <button class="multi-agent-new-submit" id="multi-agent-new-submit" type="submit">Dispatch</button>
+          </div>
+        </form>
       </section>
     </section>
     </div>

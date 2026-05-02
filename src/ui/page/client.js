@@ -2833,4 +2833,290 @@
       if (refresh) refresh.addEventListener("click", fetchSummary);
       fetchSummary();
       setInterval(fetchSummary, 30000);
+
+      // === Phase 5/6: task list, chain expansion, new-task form ============
+      var listToggleBtn = document.getElementById("multi-agent-list-toggle");
+      var newBtn = document.getElementById("multi-agent-new-btn");
+      var tasksWrap = document.getElementById("multi-agent-tasks");
+      var tasksList = document.getElementById("multi-agent-tasks-list");
+      var tasksMeta = document.getElementById("multi-agent-tasks-meta");
+      var newForm = document.getElementById("multi-agent-new");
+      var newCancelBtn = document.getElementById("multi-agent-new-cancel");
+      var newStatus = document.getElementById("multi-agent-new-status");
+
+      function timeAgo(iso) {
+        if (!iso) return "";
+        var t = Date.parse(iso);
+        if (!Number.isFinite(t)) return "";
+        var diff = Math.max(0, Date.now() - t);
+        var mins = Math.floor(diff / 60000);
+        if (mins < 1) return "just now";
+        if (mins < 60) return mins + "m ago";
+        var hrs = Math.floor(mins / 60);
+        if (hrs < 24) return hrs + "h ago";
+        var days = Math.floor(hrs / 24);
+        return days + "d ago";
+      }
+
+      function statusClass(status) {
+        if (!status) return "is-open";
+        if (status === "open" || status === "claimed") return "is-open";
+        if (status.indexOf("waiting:") === 0) return "is-waiting";
+        if (status === "done") return "is-done";
+        if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
+        return "is-open";
+      }
+
+      function shorten(s, n) {
+        s = String(s || "");
+        if (s.length <= n) return s;
+        return s.slice(0, n - 1) + "…";
+      }
+
+      function renderTaskRow(t) {
+        var brief = t.summary && t.summary.brief ? t.summary.brief : t.brief || "";
+        var meta = [t.from || "?", "→", t.to || "?", "·", t.kind || "?"].join(" ");
+        return (
+          '<div class="multi-agent-task-row" data-task-id="' + escapeHtml(t.id) + '">' +
+          '<div class="multi-agent-task-row-head">' +
+          '<span class="multi-agent-task-id">' + escapeHtml(t.id) + '</span>' +
+          '<span class="multi-agent-task-status ' + statusClass(t.status) + '">' + escapeHtml(t.status || "?") + '</span>' +
+          '<span class="multi-agent-task-meta">' + escapeHtml(meta) + '</span>' +
+          '<span class="multi-agent-task-time">' + escapeHtml(timeAgo(t.updated)) + '</span>' +
+          '</div>' +
+          '<div class="multi-agent-task-brief">' + escapeHtml(shorten(brief, 200)) + '</div>' +
+          '<div class="multi-agent-chain" hidden></div>' +
+          '</div>'
+        );
+      }
+
+      async function fetchTasks() {
+        if (!tasksList) return;
+        tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Loading…</div></div>';
+        try {
+          var res = await fetch("/api/tasks?limit=50", { cache: "no-store" });
+          var data = await res.json();
+          if (!data.ok || !Array.isArray(data.tasks)) {
+            tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Unable to load tasks.</div></div>';
+            return;
+          }
+          if (data.tasks.length === 0) {
+            tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">No tasks yet.</div></div>';
+            if (tasksMeta) tasksMeta.textContent = "0 tasks";
+            return;
+          }
+          tasksList.innerHTML = data.tasks.map(renderTaskRow).join("");
+          if (tasksMeta) tasksMeta.textContent = data.tasks.length + " task" + (data.tasks.length === 1 ? "" : "s");
+        } catch (err) {
+          tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Error: ' + escapeHtml(String(err && err.message || err)) + '</div></div>';
+        }
+      }
+
+      function renderChainCard(card, label, isCurrent) {
+        if (!card) return "";
+        var brief = card.summary && card.summary.brief ? card.summary.brief : card.brief || "";
+        var ctxLines = (card.context || []).map(function (c) {
+          var safe = escapeHtml(c);
+          if (/^(https?:|\/api\/|\/static\/)/.test(c)) {
+            return '<a class="multi-agent-chain-context" href="' + safe + '" target="_blank" rel="noopener">' + safe + '</a>';
+          }
+          if (/^jira:/i.test(c)) {
+            return '<span class="multi-agent-chain-context">' + safe + '</span>';
+          }
+          return '<button class="multi-agent-chain-context" data-open-file="' + safe + '" type="button">' + safe + '</button>';
+        }).join("");
+        var actions = [];
+        var envelopePath = "agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml";
+        actions.push('<button class="multi-agent-chain-action" data-open-file="' + escapeHtml(envelopePath) + '" type="button">Envelope</button>');
+        if (card.bucket === "done" || card.reportPath) {
+          var rp = card.reportPath || envelopePath;
+          actions.push('<button class="multi-agent-chain-action" data-open-file="' + escapeHtml(rp) + '" type="button">Report</button>');
+        }
+        actions.push('<button class="multi-agent-chain-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">Spawn chat</button>');
+
+        var meta = [card.from || "?", "→", card.to || "?", "·", card.kind || "?", "·", card.priority || "?"].join(" ");
+        return (
+          '<div class="multi-agent-chain-card' + (isCurrent ? " is-current" : "") + '">' +
+          '<div class="multi-agent-chain-card-head">' +
+          '<span class="multi-agent-chain-card-label">' + escapeHtml(label) + '</span>' +
+          '<span class="multi-agent-task-id">' + escapeHtml(card.id) + '</span>' +
+          '<span class="multi-agent-task-status ' + statusClass(card.status) + '">' + escapeHtml(card.status || "?") + '</span>' +
+          '</div>' +
+          '<div class="multi-agent-chain-card-meta">' + escapeHtml(meta) + '</div>' +
+          (brief ? '<div class="multi-agent-chain-card-brief">' + escapeHtml(shorten(brief, 320)) + '</div>' : "") +
+          (ctxLines ? '<div class="multi-agent-chain-card-context">' + ctxLines + '</div>' : "") +
+          '<div class="multi-agent-chain-card-actions">' + actions.join("") + '</div>' +
+          '</div>'
+        );
+      }
+
+      async function loadChain(taskId, chainEl) {
+        chainEl.innerHTML = '<div class="multi-agent-chain-loading">Loading chain…</div>';
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
+          var data = await res.json();
+          if (!data.ok || !data.chain) {
+            chainEl.innerHTML = '<div class="multi-agent-chain-loading">Unable to load chain.</div>';
+            return;
+          }
+          var c = data.chain;
+          var parts = [];
+          var ancestors = c.ancestors || [];
+          for (var i = 0; i < ancestors.length; i++) {
+            var label = i === ancestors.length - 1 ? "Parent" : "Ancestor";
+            parts.push(renderChainCard(ancestors[i], label, false));
+          }
+          if (c.task) parts.push(renderChainCard(c.task, "Current", true));
+          var children = c.children || [];
+          for (var j = 0; j < children.length; j++) {
+            parts.push(renderChainCard(children[j], "Child", false));
+          }
+          if (parts.length === 0) {
+            chainEl.innerHTML = '<div class="multi-agent-chain-loading">No chain data.</div>';
+          } else {
+            chainEl.innerHTML = parts.join("");
+          }
+        } catch (err) {
+          chainEl.innerHTML = '<div class="multi-agent-chain-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+        }
+      }
+
+      if (tasksList) {
+        tasksList.addEventListener("click", function (ev) {
+          var openFileBtn = ev.target.closest("[data-open-file]");
+          if (openFileBtn) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var filePath = openFileBtn.getAttribute("data-open-file");
+            try {
+              if (typeof setActiveTab === "function") setActiveTab("files");
+              if (typeof loadFile === "function" && filePath) loadFile(filePath);
+            } catch (_) {}
+            return;
+          }
+          var spawnBtn = ev.target.closest("[data-spawn-agent]");
+          if (spawnBtn) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var agentName = spawnBtn.getAttribute("data-spawn-agent");
+            var taskId = spawnBtn.getAttribute("data-spawn-task");
+            try {
+              if (typeof startNewChat === "function") startNewChat();
+              if (agentName && Array.isArray(agentsCache)) {
+                var match = agentsCache.find(function (a) { return a.name === agentName; });
+                if (match) pendingAgentId = match.name;
+              }
+              if (typeof setActiveTab === "function") setActiveTab("chat");
+              if (chatInput && taskId) {
+                chatInput.value = "Let's discuss task " + taskId + ". Please read the envelope and tell me your read.";
+                chatInput.focus();
+              }
+            } catch (_) {}
+            return;
+          }
+          // Don't intercept clicks on links/buttons inside the chain
+          if (ev.target.closest("a") || ev.target.closest("button")) return;
+          var row = ev.target.closest(".multi-agent-task-row");
+          if (!row) return;
+          var taskId2 = row.getAttribute("data-task-id");
+          if (!taskId2) return;
+          var chainEl = row.querySelector(".multi-agent-chain");
+          if (!chainEl) return;
+          var isExpanded = row.classList.contains("is-expanded");
+          if (isExpanded) {
+            row.classList.remove("is-expanded");
+            chainEl.hidden = true;
+          } else {
+            row.classList.add("is-expanded");
+            chainEl.hidden = false;
+            loadChain(taskId2, chainEl);
+          }
+        });
+      }
+
+      if (listToggleBtn && tasksWrap) {
+        listToggleBtn.addEventListener("click", function () {
+          var hidden = tasksWrap.hasAttribute("hidden");
+          if (hidden) {
+            tasksWrap.removeAttribute("hidden");
+            listToggleBtn.classList.add("is-active");
+            fetchTasks();
+          } else {
+            tasksWrap.setAttribute("hidden", "");
+            listToggleBtn.classList.remove("is-active");
+          }
+        });
+      }
+
+      if (newBtn && newForm) {
+        newBtn.addEventListener("click", function () {
+          var hidden = newForm.hasAttribute("hidden");
+          if (hidden) {
+            newForm.removeAttribute("hidden");
+            newBtn.classList.add("is-active");
+            var briefEl = document.getElementById("multi-agent-new-brief");
+            if (briefEl) briefEl.focus();
+          } else {
+            newForm.setAttribute("hidden", "");
+            newBtn.classList.remove("is-active");
+          }
+        });
+      }
+
+      if (newCancelBtn && newForm) {
+        newCancelBtn.addEventListener("click", function () {
+          newForm.setAttribute("hidden", "");
+          if (newBtn) newBtn.classList.remove("is-active");
+          if (newStatus) newStatus.textContent = "";
+        });
+      }
+
+      if (newForm) {
+        newForm.addEventListener("submit", async function (ev) {
+          ev.preventDefault();
+          var to = (document.getElementById("multi-agent-new-to") || {}).value || "";
+          var kind = (document.getElementById("multi-agent-new-kind") || {}).value || "";
+          var priority = (document.getElementById("multi-agent-new-priority") || {}).value || "";
+          var from = ((document.getElementById("multi-agent-new-from") || {}).value || "kelly").trim() || "kelly";
+          var brief = ((document.getElementById("multi-agent-new-brief") || {}).value || "").trim();
+          var output = ((document.getElementById("multi-agent-new-output") || {}).value || "").trim();
+          var contextRaw = ((document.getElementById("multi-agent-new-context") || {}).value || "").trim();
+          var context = contextRaw ? contextRaw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+
+          if (!brief) {
+            if (newStatus) newStatus.textContent = "Brief is required.";
+            return;
+          }
+          if (newStatus) newStatus.textContent = "Dispatching…";
+          try {
+            var res = await fetch("/api/tasks/new", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context }),
+            });
+            var data = await res.json();
+            if (!data.ok) {
+              if (newStatus) newStatus.textContent = "Error: " + (data.error || "unknown");
+              return;
+            }
+            if (newStatus) newStatus.textContent = "Dispatched " + data.id;
+            // Reset the form fields but keep the kind/target so the user can fire another quickly.
+            var briefEl = document.getElementById("multi-agent-new-brief");
+            var outputEl = document.getElementById("multi-agent-new-output");
+            var ctxEl = document.getElementById("multi-agent-new-context");
+            if (briefEl) briefEl.value = "";
+            if (outputEl) outputEl.value = "";
+            if (ctxEl) ctxEl.value = "";
+            // Show the task list with the new entry on top.
+            if (tasksWrap && tasksWrap.hasAttribute("hidden")) {
+              tasksWrap.removeAttribute("hidden");
+              if (listToggleBtn) listToggleBtn.classList.add("is-active");
+            }
+            fetchTasks();
+            fetchSummary();
+          } catch (err) {
+            if (newStatus) newStatus.textContent = "Error: " + (err && err.message || err);
+          }
+        });
+      }
     })();

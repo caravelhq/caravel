@@ -732,6 +732,233 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-extras-line.escalated {
       border-left-color: #ff9a9a;
     }
+    .multi-agent-head-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .multi-agent-action {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 10px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 120ms;
+    }
+    .multi-agent-action:hover {
+      background: #14223680;
+    }
+    .multi-agent-action.is-active {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .multi-agent-tasks {
+      display: grid;
+      gap: 6px;
+    }
+    .multi-agent-tasks-head {
+      display: flex;
+      justify-content: space-between;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9daef;
+      padding: 0 4px;
+    }
+    .multi-agent-tasks-list {
+      display: grid;
+      gap: 4px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .multi-agent-task-row {
+      border: 1px solid #ffffff1c;
+      border-radius: 8px;
+      background: #0c1624a6;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: grid;
+      gap: 2px;
+      transition: background 120ms;
+    }
+    .multi-agent-task-row:hover {
+      background: #14223680;
+    }
+    .multi-agent-task-row-head {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .multi-agent-task-id { color: #d6e6ff; }
+    .multi-agent-task-agent { color: #ffd07a; }
+    .multi-agent-task-status {
+      margin-left: auto;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .multi-agent-task-status.is-open { color: #9be7ff; }
+    .multi-agent-task-status.is-waiting { color: #f0c674; }
+    .multi-agent-task-status.is-done { color: #93e0a8; }
+    .multi-agent-task-status.is-failed { color: #ff9a9a; }
+    .multi-agent-task-summary {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.4;
+    }
+    .multi-agent-task-row.is-expanded {
+      background: #14223680;
+      border-color: #ffd07a55;
+    }
+    .multi-agent-chain {
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px dashed #ffffff1c;
+      display: grid;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c9daef;
+    }
+    .multi-agent-chain-card {
+      background: #0a1220a8;
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: grid;
+      gap: 3px;
+    }
+    .multi-agent-chain-card.is-current {
+      border-color: #ffd07a99;
+      background: #1a2a44a8;
+    }
+    .multi-agent-chain-card-head {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .multi-agent-chain-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .multi-agent-chain-card-actions a,
+    .multi-agent-chain-card-actions button {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: background 120ms;
+    }
+    .multi-agent-chain-card-actions a:hover,
+    .multi-agent-chain-card-actions button:hover {
+      background: #14223680;
+    }
+    .multi-agent-chain-section-label {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      margin-top: 4px;
+    }
+    .multi-agent-new {
+      display: grid;
+      gap: 8px;
+      padding: 10px;
+      border: 1px dashed #ffd07a55;
+      border-radius: 10px;
+      background: #0c162466;
+    }
+    .multi-agent-new-head {
+      font-family: "Fraunces", serif;
+      color: #f4f8ff;
+      font-size: 14px;
+    }
+    .multi-agent-new-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .multi-agent-new-field,
+    .multi-agent-new-block {
+      display: grid;
+      gap: 3px;
+    }
+    .multi-agent-new-field span,
+    .multi-agent-new-block span {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9daef;
+    }
+    .multi-agent-new-field input,
+    .multi-agent-new-field select,
+    .multi-agent-new-block textarea {
+      border: 1px solid #ffffff2a;
+      background: #0a1220a8;
+      color: #f4f8ff;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .multi-agent-new-block textarea {
+      resize: vertical;
+      min-height: 36px;
+    }
+    .multi-agent-new-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .multi-agent-new-status {
+      flex: 1;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9be7ff;
+    }
+    .multi-agent-new-status.is-error { color: #ff9a9a; }
+    .multi-agent-new-cancel,
+    .multi-agent-new-submit {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 120ms;
+    }
+    .multi-agent-new-submit {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .multi-agent-new-cancel:hover { background: #14223680; }
+    .multi-agent-new-submit:hover { background: #355a8a; }
     .settings-btn {
       /* now rendered inside .tab-nav as gear icon — keep for ID reference */
       display: none;

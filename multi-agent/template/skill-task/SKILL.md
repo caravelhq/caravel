@@ -143,5 +143,17 @@ node .claude/skills/task/script/task.mjs summary
 ## Notes for Alice
 
 - This skill creates the envelope. The runner picks it up on a heartbeat and the worker agent claims it. Kelly may or may not see the result land back in his inbox depending on `reply_to`.
-- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or escalate to Kelly via a `waiting:user` task.
+- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or escalate to Kelly via a `<task-waiting on="user">` directive.
 - Always restate the brief tightly in your confirmation message. If you can't restate it, you didn't understand it well enough to dispatch — go back to step 1.
+
+## Worker directives — what your tasks should produce
+
+Whatever workflow you brief the worker, the runner expects exactly one of these at the end of the worker's final turn:
+
+```
+<task-done summary="…">…optional report…</task-done>
+<task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>
+<task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…</task-waiting>
+```
+
+When dispatching a task whose worker is *expected* to depend on another task's output (e.g. Mark needs Ray's survey), include that explicitly in the brief: "If `<file>` doesn't exist or is incomplete, end your response with `<task-waiting on=\"task:TSK-...\">`. Do NOT use `<task-failed reason=\"dependency\">`." The runner parks waiting envelopes and re-emits them automatically when the dependency clears.

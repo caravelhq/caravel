@@ -116,7 +116,7 @@ fi
 echo "Ensuring per-agent task directories..."
 for agent in "${AGENTS[@]}"; do
   agent_dir="${PROJECT_DIR}/agents/${agent}/tasks"
-  for sub in open done failed; do
+  for sub in open done failed waiting; do
     if [[ ! -d "$agent_dir/$sub" ]]; then
       run mkdir -p "$agent_dir/$sub"
       echo "  created agents/${agent}/tasks/${sub}/"

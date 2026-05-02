@@ -46,7 +46,7 @@ function todayPrefix() {
 
 async function listIdsForDay(agent, prefix) {
   const out = new Set();
-  for (const sub of ["open", "done", "failed"]) {
+  for (const sub of ["open", "done", "failed", "waiting"]) {
     const dir = join(tasksDir(agent), sub);
     if (!existsSync(dir)) continue;
     const entries = await readdir(dir);
@@ -118,6 +118,16 @@ async function newTask() {
   // Force status to open and clear lease.
   body = body.replace(/^status:\s*.*$/m, "status: open");
 
+  // Stamp originating chat thread (if any) so the runner can post the
+  // result back to the chat that spawned the task. CLI override via --chat
+  // wins over the env var so dashboard / scripted dispatchers can supply
+  // their own context.
+  const chatId = flag("chat") ?? process.env.CLAUDECLAW_CHAT_ID ?? null;
+  if (chatId && !/^dispatch:/m.test(body)) {
+    const dispatchBlock = `\ndispatch:\n  chat_id: ${chatId}\n  chat_ts: ${now}\n`;
+    body = body.trimEnd() + "\n" + dispatchBlock;
+  }
+
   const openDir = join(tasksDir(target), "open");
   await mkdir(openDir, { recursive: true });
   const outPath = join(openDir, `${id}.yaml`);
@@ -147,7 +157,7 @@ async function listTasks() {
     console.error("usage: task.mjs list --agent <name> [--status open|done|failed]");
     process.exit(2);
   }
-  const buckets = status ? [status] : ["open", "done", "failed"];
+  const buckets = status ? [status] : ["open", "waiting", "done", "failed"];
   const out = [];
   for (const b of buckets) {
     const dir = join(tasksDir(agent), b);
@@ -161,21 +171,26 @@ async function listTasks() {
 }
 
 async function summary() {
-  const out = { byAgent: {}, escalated: [], waitingUser: [], totals: { open: 0, done: 0, failed: 0 } };
+  const out = {
+    byAgent: {},
+    escalated: [],
+    waitingUser: [],
+    totals: { open: 0, waiting: 0, done: 0, failed: 0 },
+  };
   for (const a of AGENTS) {
-    const counts = { open: 0, done: 0, failed: 0 };
-    for (const b of ["open", "done", "failed"]) {
+    const counts = { open: 0, waiting: 0, done: 0, failed: 0 };
+    for (const b of ["open", "waiting", "done", "failed"]) {
       const dir = join(tasksDir(a), b);
       if (!existsSync(dir)) continue;
       const files = (await readdir(dir)).filter((x) => x.endsWith(".yaml"));
       counts[b] = files.length;
       out.totals[b] += files.length;
-      if (b === "open") {
+      if (b === "waiting") {
         for (const f of files) {
           const yaml = await readYaml(join(dir, f));
-          const status = extractField(yaml, "status") ?? "open";
+          const status = extractField(yaml, "status") ?? "";
           const summaryBrief = extractField(yaml, "  brief") ?? extractField(yaml, "brief") ?? "";
-          if (status === "waiting:user") {
+          if (status === "waiting:on:user") {
             out.waitingUser.push({ agent: a, file: f, summary: summaryBrief });
           }
         }

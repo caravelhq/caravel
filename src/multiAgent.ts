@@ -29,6 +29,8 @@ import { readdir, readFile, writeFile, rename, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
+import { appendMessage } from "./ui/services/chats";
+import { triggerChatProcessor } from "./ui/server";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -118,6 +120,20 @@ function parseFields(yaml: string, idFallback: string): TaskFields {
   return { id, status, to, from, kind, parent };
 }
 
+// Read `<parent>:` block's `<key>:` value. Returns null if either is absent or
+// the value is the literal `null`.
+function readNestedField(yaml: string, parent: string, key: string): string | null {
+  const blockRe = new RegExp(`^${parent}:\\s*\\n((?:[ \\t]+.*\\n?)*)`, "m");
+  const blockMatch = blockRe.exec(yaml);
+  if (!blockMatch) return null;
+  const lineRe = new RegExp(`^[ \\t]+${key}:\\s*(.*)$`, "m");
+  const lineMatch = lineRe.exec(blockMatch[1] ?? "");
+  if (!lineMatch) return null;
+  const raw = lineMatch[1].trim();
+  if (!raw || raw === "null") return null;
+  return raw;
+}
+
 // === Journal append ========================================================
 
 async function appendJournal(
@@ -142,7 +158,7 @@ async function appendJournal(
 // from any UI-visible output and persist it on the envelope.
 
 interface TaskDirective {
-  kind: "done" | "failed";
+  kind: "done" | "failed" | "waiting";
   reason: string | null;
   summary: string;
   body: string;
@@ -167,6 +183,15 @@ function parseDirective(text: string): TaskDirective | null {
       body: (failMatch[3] ?? "").trim(),
     };
   }
+  const waitMatch = /<task-waiting\s+on="([^"]*)"(?:\s+summary="([^"]*)")?\s*>([\s\S]*?)<\/task-waiting>/.exec(text);
+  if (waitMatch) {
+    return {
+      kind: "waiting",
+      reason: waitMatch[1] ?? "user",
+      summary: (waitMatch[2] ?? "").trim(),
+      body: (waitMatch[3] ?? "").trim(),
+    };
+  }
   return null;
 }
 
@@ -183,11 +208,13 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "Brief:",
     brief.trim() || "(see envelope)",
     "",
-    "When you finish (or cannot finish), end your response with a single directive:",
+    "When you finish (or cannot finish), end your response with one of these directives:",
     `  <task-done summary="one or two line restatement of the result">…optional report body…</task-done>`,
-    `  <task-failed reason="budget|tool|refusal|context|dependency|crash|timeout|other" summary="…">…</task-failed>`,
+    `  <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>`,
+    `  <task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>`,
     "",
-    "Do not emit the directive until you are truly finished. The runner will move your envelope to done/ or failed/ and append the journal entry.",
+    "Use <task-waiting> when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks the envelope and re-emits it back to your open queue when the dependency clears. Do NOT use <task-failed reason=\"dependency\"> for this — that is reserved for genuine failures.",
+    "Do not emit a directive until you are truly finished or genuinely blocked. The runner moves your envelope to done/, failed/, or waiting/ and appends the journal entry.",
   ].join("\n");
 }
 
@@ -236,6 +263,228 @@ async function claimTask(
     summary: "auto-claimed",
   });
   return fields;
+}
+
+// Post a system-style notification to the chat that originally spawned this
+// task (if any), then optionally append a synthetic user prompt that resumes
+// the chat with Alice. The chat_id is stamped on the envelope at /task
+// dispatch time. No-ops cleanly when the chat doesn't exist (e.g.
+// dashboard-spawned tasks without a chat thread).
+//
+// Auto-resume default: ON when a chat_id is present. Disable by setting
+// `dispatch.auto_resume: false` on the envelope.
+async function notifyDispatchChat(
+  yaml: string,
+  agent: string,
+  taskId: string,
+  finalStatus: string,
+  directive: TaskDirective
+): Promise<void> {
+  const chatId = readNestedField(yaml, "dispatch", "chat_id");
+  if (!chatId) return;
+
+  const verb = directive.kind === "done"
+    ? "completed"
+    : directive.kind === "waiting"
+    ? "is waiting"
+    : "failed";
+  const headline = `**Task ${taskId}** (${agent}) ${verb}.`;
+  const status = `Status: \`${finalStatus}\``;
+  const summary = directive.summary ? `\nSummary: ${directive.summary}` : "";
+
+  const subdir = directive.kind === "waiting"
+    ? "waiting"
+    : directive.kind === "done"
+    ? "done"
+    : "failed";
+  const filePath = `agents/${agent}/tasks/${subdir}/${taskId}.yaml`;
+  const reportLine = directive.kind === "done"
+    ? `\nReport: \`${filePath}\``
+    : `\nEnvelope: \`${filePath}\``;
+
+  const notificationText = `${headline}\n${status}${summary}${reportLine}`;
+
+  try {
+    await appendMessage(chatId, {
+      role: "assistant",
+      text: notificationText,
+      state: "done",
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+  } catch (err) {
+    console.error(`[multi-agent] failed to notify chat ${chatId}:`, err);
+    return;
+  }
+
+  const autoResumeRaw = readNestedField(yaml, "dispatch", "auto_resume");
+  const autoResume = autoResumeRaw !== "false" && autoResumeRaw !== "no";
+  if (!autoResume) return;
+
+  // Synthetic user prompt — Alice picks this up as if Kelly typed it. The
+  // [task-update] prefix is the cue to her that this is an automated resume,
+  // not a fresh user request, so she can summarise + recommend next steps
+  // rather than starting a new line of work.
+  const promptText =
+    `[task-update] ${headline} ${status}.${summary}` +
+    `\n\nFile: \`${filePath}\`. Read the envelope and the report (if present), then tell Kelly what was found and what the next step should be.`;
+
+  try {
+    await appendMessage(chatId, {
+      role: "user",
+      text: promptText,
+      state: "pending",
+      startedAt: Date.now(),
+      updatedAt: Date.now(),
+    });
+    triggerChatProcessor(chatId);
+  } catch (err) {
+    console.error(`[multi-agent] failed to auto-resume chat ${chatId}:`, err);
+  }
+}
+
+async function transitionToWaiting(
+  agent: string,
+  taskId: string,
+  openPath: string,
+  directive: TaskDirective
+): Promise<void> {
+  const targetDir = join(AGENTS_DIR, agent, "tasks", "waiting");
+  await mkdir(targetDir, { recursive: true });
+  const targetPath = join(targetDir, `${taskId}.yaml`);
+
+  let yaml: string;
+  try {
+    yaml = await readFile(openPath, "utf-8");
+  } catch {
+    return;
+  }
+  const fields = parseFields(yaml, taskId);
+  const now = new Date().toISOString();
+  const onSpec = (directive.reason ?? "user").trim() || "user";
+  const finalStatus = `waiting:on:${onSpec}`;
+
+  let next = setField(yaml, "status", finalStatus);
+  next = setField(next, "updated", now);
+  // Release the lease so a stale claim-holder doesn't block re-claim.
+  next = setNestedField(next, "lease", "holder", "null");
+  next = setNestedField(next, "lease", "expires", "null");
+  if (directive.summary) {
+    next = setNestedField(next, "summary", "response", JSON.stringify(directive.summary));
+  }
+  next = appendHistory(next, {
+    ts: now,
+    from: "claimed",
+    to: finalStatus,
+    by: `runner-${process.pid}`,
+    note: `worker waiting on ${onSpec}`,
+  });
+
+  await writeFile(openPath, next);
+  await rename(openPath, targetPath);
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: finalStatus,
+    kind: fields.kind,
+    from: fields.from,
+    to: agent,
+    parent: fields.parent,
+    summary: directive.summary || `waiting on ${onSpec}`,
+  });
+
+  await notifyDispatchChat(next, agent, taskId, finalStatus, directive);
+}
+
+// Resolve a `waiting:on:<spec>` dependency. Returns true when the task can be
+// moved back to `tasks/open/` for re-claim. Spec types:
+//   task:<id>      → resolved iff that exact task id is in any agent's done/
+//   agent:<name>   → resolved iff <name> has any task in their done/ (heuristic;
+//                    refined later by claim-time filter if needed)
+//   user           → never auto-resolves; only Kelly (or Alice acting on his
+//                    behalf) can move it back
+async function checkDependencyResolved(
+  spec: string,
+  knownAgents: string[]
+): Promise<boolean> {
+  if (spec === "user") return false;
+  const colon = spec.indexOf(":");
+  if (colon === -1) return false;
+  const type = spec.slice(0, colon);
+  const value = spec.slice(colon + 1);
+  if (!type || !value) return false;
+
+  if (type === "task") {
+    for (const a of knownAgents) {
+      if (existsSync(join(AGENTS_DIR, a, "tasks", "done", `${value}.yaml`))) return true;
+    }
+    return false;
+  }
+  if (type === "agent") {
+    const path = join(AGENTS_DIR, value, "tasks", "done");
+    if (!existsSync(path)) return false;
+    const entries = await readdir(path).catch(() => [] as string[]);
+    return entries.some((e) => e.endsWith(".yaml"));
+  }
+  return false;
+}
+
+async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
+  for (const agent of opts.agents) {
+    const waitDir = join(AGENTS_DIR, agent, "tasks", "waiting");
+    if (!existsSync(waitDir)) continue;
+
+    const entries = await readdir(waitDir).catch(() => [] as string[]);
+    for (const fname of entries.filter((e) => e.endsWith(".yaml")).sort()) {
+      const taskId = fname.replace(/\.yaml$/, "");
+      const filePath = join(waitDir, fname);
+
+      let yaml: string;
+      try {
+        yaml = await readFile(filePath, "utf-8");
+      } catch { continue; }
+
+      const status = readField(yaml, "status") ?? "";
+      if (!status.startsWith("waiting:on:")) continue;
+      const spec = status.slice("waiting:on:".length);
+
+      const unblocked = await checkDependencyResolved(spec, opts.agents);
+      if (!unblocked) continue;
+
+      const fields = parseFields(yaml, taskId);
+      const now = new Date().toISOString();
+      let next = setField(yaml, "status", "open");
+      next = setField(next, "updated", now);
+      next = appendHistory(next, {
+        ts: now,
+        from: status,
+        to: "open",
+        by: `runner-${process.pid}`,
+        note: `dependency resolved (${spec})`,
+      });
+
+      const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+      await mkdir(openDir, { recursive: true });
+      const targetPath = join(openDir, fname);
+
+      await writeFile(filePath, next);
+      await rename(filePath, targetPath);
+
+      await appendJournal(agent, {
+        ts: now,
+        id: taskId,
+        status: "open",
+        kind: fields.kind,
+        from: fields.from,
+        to: agent,
+        parent: fields.parent,
+        summary: `unblocked from ${spec}`,
+      });
+
+      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} unblocked (${spec})`);
+    }
+  }
 }
 
 async function transitionToTerminal(
@@ -290,6 +539,8 @@ async function transitionToTerminal(
     parent: fields.parent,
     summary: directive.summary,
   });
+
+  await notifyDispatchChat(next, agent, taskId, finalStatus, directive);
 }
 
 // === Worker invocation =====================================================
@@ -321,6 +572,10 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
 
 async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string, number>): Promise<void> {
   if (!existsSync(AGENTS_DIR)) return;
+
+  // Sweep waiting tasks first — any unblock will land them in tasks/open/ in
+  // time for the same tick's claim pass.
+  await sweepWaiting(opts);
 
   for (const agent of opts.agents) {
     const openDir = join(AGENTS_DIR, agent, "tasks", "open");
@@ -358,8 +613,13 @@ async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string,
             console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — leaving claimed`);
             return;
           }
-          await transitionToTerminal(agent, taskId, filePath, directive);
-          console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${directive.kind === "done" ? "done" : `failed:${directive.reason}`}`);
+          if (directive.kind === "waiting") {
+            await transitionToWaiting(agent, taskId, filePath, directive);
+            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${directive.reason}`);
+          } else {
+            await transitionToTerminal(agent, taskId, filePath, directive);
+            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${directive.kind === "done" ? "done" : `failed:${directive.reason}`}`);
+          }
         })
         .catch((err) => {
           console.error(`[multi-agent] ${agent}/${taskId} transition failed:`, err);
@@ -419,6 +679,8 @@ export const __testing = {
   parseFields,
   setField,
   setNestedField,
+  readNestedField,
   appendHistory,
   buildWorkerPrompt,
+  checkDependencyResolved,
 };

@@ -2,7 +2,7 @@
 // Mirrors `node .claude/skills/task/script/task.mjs summary` output, but in
 // the daemon process so the dashboard can render without shelling out.
 
-import { readdir, readFile } from "fs/promises";
+import { readdir, readFile, stat } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 
@@ -10,13 +10,41 @@ const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
 const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const BUCKETS = ["open", "waiting", "done", "failed"] as const;
+type Bucket = (typeof BUCKETS)[number];
 
 export interface MultiAgentSummary {
   enabled: boolean;
-  byAgent: Record<string, { open: number; done: number; failed: number }>;
-  totals: { open: number; done: number; failed: number };
+  byAgent: Record<string, { open: number; waiting: number; done: number; failed: number }>;
+  totals: { open: number; waiting: number; done: number; failed: number };
   waitingUser: { agent: string; file: string; summary: string }[];
   escalated: { agent: string; file: string }[];
+}
+
+export interface TaskRow {
+  id: string;
+  agent: string;
+  bucket: Bucket;
+  status: string;
+  kind: string;
+  from: string;
+  to: string;
+  parent: string | null;
+  priority: string | null;
+  brief: string;
+  summary: { brief: string; response: string };
+  context: string[];
+  dispatch: { chat_id: string | null; auto_resume: string | null };
+  created: string | null;
+  updated: string | null;
+  reportPath: string | null;
+}
+
+export interface TaskChain {
+  task: TaskRow | null;
+  parent: TaskRow | null;
+  children: TaskRow[];
+  ancestors: TaskRow[];
 }
 
 function readField(yaml: string, key: string): string | null {
@@ -33,6 +61,30 @@ function readNestedField(yaml: string, parent: string, key: string): string | nu
   return m ? m[1].trim() : null;
 }
 
+function readBlockScalar(yaml: string, key: string): string {
+  // Parse a block scalar like `brief: |\n  line1\n  line2\n`.
+  const re = new RegExp(`^${key}:\\s*\\|[+-]?\\s*\\n((?:[ \\t]+.*\\n?)+)`, "m");
+  const m = re.exec(yaml);
+  if (!m) return "";
+  const lines = (m[1] ?? "").split("\n");
+  // Strip the common leading indent (2 spaces by convention; tolerate 4).
+  const indent = lines.find((l) => l.length > 0)?.match(/^[ \t]+/)?.[0] ?? "";
+  return lines.map((l) => (l.startsWith(indent) ? l.slice(indent.length) : l)).join("\n").trimEnd();
+}
+
+function readListField(yaml: string, key: string): string[] {
+  // Parse `key:\n  - item\n  - item\n`. Skips empty / non-list values.
+  const re = new RegExp(`^${key}:\\s*\\n((?:[ \\t]+-\\s+.*\\n?)+)`, "m");
+  const m = re.exec(yaml);
+  if (!m) return [];
+  const out: string[] = [];
+  for (const line of (m[1] ?? "").split("\n")) {
+    const item = line.match(/^[ \t]+-\s+(.*)$/);
+    if (item) out.push(item[1].trim());
+  }
+  return out;
+}
+
 function envAgents(): string[] {
   const raw = process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
   if (!raw) return DEFAULT_AGENTS;
@@ -44,7 +96,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   const summary: MultiAgentSummary = {
     enabled: existsSync(AGENTS_DIR),
     byAgent: {},
-    totals: { open: 0, done: 0, failed: 0 },
+    totals: { open: 0, waiting: 0, done: 0, failed: 0 },
     waitingUser: [],
     escalated: [],
   };
@@ -52,8 +104,8 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   if (!summary.enabled) return summary;
 
   for (const agent of envAgents()) {
-    const counts = { open: 0, done: 0, failed: 0 };
-    for (const bucket of ["open", "done", "failed"] as const) {
+    const counts = { open: 0, waiting: 0, done: 0, failed: 0 };
+    for (const bucket of BUCKETS) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
       const entries = await readdir(dir).catch(() => [] as string[]);
@@ -61,13 +113,13 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
       counts[bucket] = yamls.length;
       summary.totals[bucket] += yamls.length;
 
-      if (bucket === "open") {
+      if (bucket === "waiting") {
         for (const f of yamls) {
           try {
             const yaml = await readFile(join(dir, f), "utf-8");
-            const status = readField(yaml, "status") ?? "open";
-            const brief = readNestedField(yaml, "summary", "brief") ?? readField(yaml, "brief") ?? "";
-            if (status === "waiting:user") {
+            const status = readField(yaml, "status") ?? "";
+            const brief = readNestedField(yaml, "summary", "brief") ?? readBlockScalar(yaml, "brief") ?? "";
+            if (status === "waiting:on:user") {
               summary.waitingUser.push({ agent, file: f, summary: brief.slice(0, 200) });
             }
           } catch {}
@@ -89,4 +141,98 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   }
 
   return summary;
+}
+
+async function readTaskFile(agent: string, bucket: Bucket, file: string): Promise<TaskRow | null> {
+  const path = join(AGENTS_DIR, agent, "tasks", bucket, file);
+  let yaml: string;
+  try {
+    yaml = await readFile(path, "utf-8");
+  } catch {
+    return null;
+  }
+  const id = readField(yaml, "id") ?? file.replace(/\.yaml$/, "");
+  const status = readField(yaml, "status") ?? "";
+  const kind = readField(yaml, "kind") ?? "other";
+  const from = readField(yaml, "from") ?? "";
+  const to = readField(yaml, "to") ?? agent;
+  const parentRaw = readField(yaml, "parent");
+  const parent = parentRaw && parentRaw !== "null" ? parentRaw : null;
+  const priority = readField(yaml, "priority");
+  const brief = readBlockScalar(yaml, "brief");
+  const summaryBrief = readNestedField(yaml, "summary", "brief") ?? "";
+  const summaryResponse = readNestedField(yaml, "summary", "response") ?? "";
+  const context = readListField(yaml, "context");
+  const dispatchChat = readNestedField(yaml, "dispatch", "chat_id");
+  const dispatchAutoResume = readNestedField(yaml, "dispatch", "auto_resume");
+  const created = readField(yaml, "created");
+  const updated = readField(yaml, "updated");
+  const reportPath = bucket === "done" ? `agents/${agent}/tasks/done/${file}` : null;
+
+  return {
+    id,
+    agent,
+    bucket,
+    status,
+    kind,
+    from,
+    to,
+    parent,
+    priority,
+    brief,
+    summary: { brief: summaryBrief, response: summaryResponse },
+    context,
+    dispatch: { chat_id: dispatchChat, auto_resume: dispatchAutoResume },
+    created,
+    updated,
+    reportPath,
+  };
+}
+
+async function listAllTasks(): Promise<TaskRow[]> {
+  if (!existsSync(AGENTS_DIR)) return [];
+  const out: TaskRow[] = [];
+  for (const agent of envAgents()) {
+    for (const bucket of BUCKETS) {
+      const dir = join(AGENTS_DIR, agent, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const files = (await readdir(dir).catch(() => [] as string[]))
+        .filter((e) => e.endsWith(".yaml"));
+      for (const f of files) {
+        const row = await readTaskFile(agent, bucket, f);
+        if (row) out.push(row);
+      }
+    }
+  }
+  // Sort by `updated` desc so the most-recently-touched tasks float to the top.
+  out.sort((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""));
+  return out;
+}
+
+export async function listTasks(opts?: { since?: string; limit?: number }): Promise<TaskRow[]> {
+  const all = await listAllTasks();
+  const filtered = opts?.since ? all.filter((t) => (t.updated ?? "") >= opts.since!) : all;
+  return opts?.limit ? filtered.slice(0, opts.limit) : filtered;
+}
+
+export async function getTaskChain(taskId: string): Promise<TaskChain> {
+  const all = await listAllTasks();
+  const byId = new Map(all.map((t) => [t.id, t]));
+  const task = byId.get(taskId) ?? null;
+
+  // Build ancestors chain (root → ... → parent).
+  const ancestors: TaskRow[] = [];
+  let cur = task?.parent ?? null;
+  const seen = new Set<string>();
+  while (cur && !seen.has(cur)) {
+    seen.add(cur);
+    const p = byId.get(cur);
+    if (!p) break;
+    ancestors.unshift(p);
+    cur = p.parent;
+  }
+  const parent = ancestors.length > 0 ? ancestors[ancestors.length - 1] : null;
+
+  const children = all.filter((t) => t.parent === taskId);
+  return { task, parent, children, ancestors };
 }

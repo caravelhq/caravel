@@ -111,7 +111,12 @@ function isNotFoundError(error: unknown): boolean {
   return /enoent|no such file or directory/i.test(message);
 }
 
-function buildChildEnv(baseEnv: Record<string, string>, model: string, api: string): Record<string, string> {
+function buildChildEnv(
+  baseEnv: Record<string, string>,
+  model: string,
+  api: string,
+  threadId?: string,
+): Record<string, string> {
   const childEnv: Record<string, string> = { ...baseEnv };
   const normalizedModel = model.trim().toLowerCase();
 
@@ -121,6 +126,8 @@ function buildChildEnv(baseEnv: Record<string, string>, model: string, api: stri
     childEnv.ANTHROPIC_BASE_URL = "https://api.z.ai/api/anthropic";
     childEnv.API_TIMEOUT_MS = "3000000";
   }
+
+  if (threadId) childEnv.CLAUDECLAW_CHAT_ID = threadId;
 
   return childEnv;
 }
@@ -628,7 +635,7 @@ async function streamClaude(
   if (effectiveModel.trim() && normalizedModel !== "glm") args.push("--model", effectiveModel.trim());
 
   const { CLAUDECODE: _, ...cleanEnv } = process.env;
-  const childEnv = buildChildEnv(cleanEnv as Record<string, string>, effectiveModel, api);
+  const childEnv = buildChildEnv(cleanEnv as Record<string, string>, effectiveModel, api, threadId);
 
   const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
   const agentTag = agent ? ` agent: ${agent.manifest.name},` : "";

@@ -20,7 +20,8 @@ import {
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
-import { getMultiAgentSummary } from "./services/multiAgent";
+import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
+import { createTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -34,6 +35,22 @@ const chatProcessors = new Set<string>();
 // in-flight onChat call. Populated while a single onChat is running and
 // cleared after it returns or aborts.
 const chatAborts = new Map<string, AbortController>();
+
+// Module-level reference to the daemon's onChat callback, set when startWebUi
+// is called. Lets non-HTTP callers (e.g. the multi-agent runner) inject a
+// pending user message and kick the processor so an automated chat-resume
+// works the same way as a real /api/chat POST.
+let registeredOnChat: OnChatFn | null = null;
+
+// Public hook for the multi-agent runner: given a chatId that already has a
+// pending user message, ensure a processor is running. No-op if the web server
+// hasn't registered an onChat yet (e.g. web disabled, or daemon still booting).
+export function triggerChatProcessor(chatId: string): void {
+  if (!registeredOnChat) return;
+  ensureChatProcessor(chatId, registeredOnChat).catch((err) =>
+    console.error(`[chat] processor trigger failed for ${chatId}:`, err)
+  );
+}
 
 const PERSIST_THROTTLE_MS = 300;
 
@@ -183,6 +200,7 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
 }
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
+  if (opts.onChat) registeredOnChat = opts.onChat;
   // Recover any chat messages left in a non-terminal state by a previous
   // daemon instance that was killed mid-run. Non-blocking — the sweep reads
   // the chats dir, so we let it run in parallel with server startup.
@@ -471,6 +489,41 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/multi-agent/summary" && req.method === "GET") {
         try {
           return json({ ok: true, summary: await getMultiAgentSummary() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/tasks" && req.method === "GET") {
+        try {
+          const since = url.searchParams.get("since") ?? undefined;
+          const limitRaw = url.searchParams.get("limit");
+          const limit = limitRaw ? Number.parseInt(limitRaw, 10) : undefined;
+          return json({
+            ok: true,
+            tasks: await listTasks({ since, limit: Number.isFinite(limit) ? limit : undefined }),
+          });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname.startsWith("/api/tasks/") && req.method === "GET") {
+        try {
+          const id = decodeURIComponent(url.pathname.slice("/api/tasks/".length));
+          if (!/^TSK-/.test(id)) return json({ ok: false, error: "invalid task id" });
+          return json({ ok: true, chain: await getTaskChain(id) });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/tasks/new" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const result = await createTask(body);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
