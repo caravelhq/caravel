@@ -25,6 +25,7 @@ The runner moves files between directories on status transitions; the path is th
 ```yaml
 # === identity ===
 id: TSK-2026-04-28-0042            # required; assigned at creation
+headline: BLE plugin survey         # required; ≤10 words. The label everyone sees in lists and notifications.
 created: 2026-04-28T22:30:00+12    # required ISO-8601 with offset
 updated: 2026-04-28T22:30:00+12    # touched on every transition
 
@@ -75,7 +76,8 @@ history:                            # append-only state log; runner writes
 summary:
   brief: ""                         # ≤2 lines; worker fills on claim — restates the goal in their own words
   response: ""                      # ≤2 lines; worker fills on done/failed — restates the result
-report: ""                          # full result (for done state); referenced from done/<id>.yaml
+report: ""                          # path to the produced output file (set by worker via <task-done report="..."/>),
+                                    # OR a block-scalar with the inline report body. Empty until the worker finishes.
 ```
 
 ## Status values
@@ -108,6 +110,7 @@ The journal is the dashboard widget's data source. The full YAML is the click-th
 
 ## Field rules
 
+- **`headline`** — required, non-empty, **≤10 words**. The short label that appears in dashboards, notifications, and chat prompts. Should read like a Jira summary, not a sentence — *"BLE plugin survey"* not *"Please survey BLE plugins for the capacitor app"*.
 - **`brief`** — required, non-empty. Free-form prose. The worker's primary instruction.
 - **`output_format`** — empty allowed only for `kind: research` exploratory work. For `code` / `review` tasks, this is mandatory.
 - **`context`** — list of file paths (relative to repo root), Jira keys (`jira:KEY`), or URLs. The worker reads these on claim. Inline content is not allowed — keep envelopes small.
@@ -134,12 +137,12 @@ Two heartbeats can never both claim the same task because the file move is atomi
 Workers signal completion or blocking by emitting a single directive at the end of their final response. The runner parses the captured stream and acts on the directive.
 
 ```
-<task-done summary="≤2 lines">…optional report body…</task-done>
+<task-done summary="≤2 lines" report="path/to/produced/file.md">…optional inline report body…</task-done>
 <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>
 <task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>
 ```
 
-- `<task-done>` → file moves to `tasks/done/`, status `done`. Report body persisted on the envelope.
+- `<task-done>` → file moves to `tasks/done/`, status `done`. The optional `report` attribute is the **path to a file you produced** (e.g. `Notes/Projects/X/recommendation.md`); persisted as the `report:` field on the envelope so the dashboard can link straight to your output. If you didn't produce a file, omit the attribute and put a short inline body instead.
 - `<task-failed>` → file moves to `tasks/failed/`, status `failed:<reason>`. See the failure-handling rule for next steps.
 - `<task-waiting>` → file moves to `tasks/waiting/`, status `waiting:on:<spec>`. The lease is released. The runner sweeps `tasks/waiting/` each tick and moves the envelope back to `tasks/open/` for re-claim once the dependency resolves.
 
@@ -155,7 +158,7 @@ If a worker emits no directive at all, the envelope stays `claimed` in `tasks/op
 
 Tasks are validated by the runner on creation and on every transition. Invalid envelopes are rejected and logged but not auto-corrected.
 
-Required fields: `id`, `created`, `updated`, `from`, `to`, `kind`, `priority`, `budget`, `brief`, `status`, `history`, `summary`.
+Required fields: `id`, `headline`, `created`, `updated`, `from`, `to`, `kind`, `priority`, `budget`, `brief`, `status`, `history`, `summary`. The `headline` field is rejected if longer than 10 words.
 
 ## Examples
 

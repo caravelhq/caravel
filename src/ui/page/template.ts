@@ -143,6 +143,7 @@ ${pageStyles}
       <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Dashboard</button>
       <button class="tab-btn" id="tab-chat" type="button" role="tab" aria-selected="false" aria-controls="chat-panel">Chat</button>
       <button class="tab-btn" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="files-panel">Files</button>
+      <button class="tab-btn" id="tab-task" type="button" role="tab" aria-selected="false" aria-controls="task-panel" hidden>Task</button>
       <button class="tab-btn tab-btn-split" id="split-nav-toggle" type="button" title="Toggle split view" aria-label="Toggle split view" aria-pressed="false">&#x2AFD;</button>
       <button class="tab-btn tab-btn-settings" id="settings-btn" type="button" title="Settings">&#x2699;</button>
     </nav>
@@ -235,6 +236,11 @@ ${pageStyles}
         </div>
         <form class="multi-agent-new" id="multi-agent-new" hidden>
           <div class="multi-agent-new-head">Create task</div>
+          <label class="multi-agent-new-block">
+            <span>Headline <em class="multi-agent-new-hint">(required, ≤10 words — appears in lists & notifications)</em></span>
+            <input id="multi-agent-new-headline" type="text" maxlength="120" placeholder="BLE plugin survey" required />
+            <span class="multi-agent-new-counter" id="multi-agent-new-headline-count">0 / 10 words</span>
+          </label>
           <div class="multi-agent-new-grid">
             <label class="multi-agent-new-field">
               <span>Target</span>
@@ -354,6 +360,21 @@ ${pageStyles}
         <div class="files-content" id="files-content">
           <div class="files-empty">Select a file to view</div>
         </div>
+      </div>
+    </div>
+    <div id="task-panel" class="task-panel" hidden>
+      <div class="task-panel-toolbar">
+        <button id="task-panel-back" class="task-panel-back" type="button" title="Back to dashboard" aria-label="Back to dashboard">←</button>
+        <div class="task-panel-headline-wrap">
+          <div class="task-panel-id" id="task-panel-id"></div>
+          <div class="task-panel-headline" id="task-panel-headline">Task</div>
+        </div>
+        <div class="task-panel-status-wrap">
+          <span class="task-panel-status" id="task-panel-status"></span>
+        </div>
+      </div>
+      <div class="task-panel-body" id="task-panel-body">
+        <div class="task-panel-loading">Loading task...</div>
       </div>
     </div>
   </main>

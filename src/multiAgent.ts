@@ -162,34 +162,49 @@ interface TaskDirective {
   reason: string | null;
   summary: string;
   body: string;
+  report: string | null;
+}
+
+function parseAttrs(s: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const re = /(\w+)="([^"]*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(s))) out[m[1]] = m[2];
+  return out;
 }
 
 function parseDirective(text: string): TaskDirective | null {
-  const doneMatch = /<task-done(?:\s+summary="([^"]*)")?\s*>([\s\S]*?)<\/task-done>/.exec(text);
+  const doneMatch = /<task-done([^>]*)>([\s\S]*?)<\/task-done>/.exec(text);
   if (doneMatch) {
+    const attrs = parseAttrs(doneMatch[1] ?? "");
     return {
       kind: "done",
       reason: null,
-      summary: (doneMatch[1] ?? "").trim(),
+      summary: (attrs.summary ?? "").trim(),
       body: (doneMatch[2] ?? "").trim(),
+      report: attrs.report ? attrs.report.trim() : null,
     };
   }
-  const failMatch = /<task-failed\s+reason="([^"]*)"(?:\s+summary="([^"]*)")?\s*>([\s\S]*?)<\/task-failed>/.exec(text);
+  const failMatch = /<task-failed([^>]*)>([\s\S]*?)<\/task-failed>/.exec(text);
   if (failMatch) {
+    const attrs = parseAttrs(failMatch[1] ?? "");
     return {
       kind: "failed",
-      reason: failMatch[1] ?? "other",
-      summary: (failMatch[2] ?? "").trim(),
-      body: (failMatch[3] ?? "").trim(),
+      reason: attrs.reason ?? "other",
+      summary: (attrs.summary ?? "").trim(),
+      body: (failMatch[2] ?? "").trim(),
+      report: null,
     };
   }
-  const waitMatch = /<task-waiting\s+on="([^"]*)"(?:\s+summary="([^"]*)")?\s*>([\s\S]*?)<\/task-waiting>/.exec(text);
+  const waitMatch = /<task-waiting([^>]*)>([\s\S]*?)<\/task-waiting>/.exec(text);
   if (waitMatch) {
+    const attrs = parseAttrs(waitMatch[1] ?? "");
     return {
       kind: "waiting",
-      reason: waitMatch[1] ?? "user",
-      summary: (waitMatch[2] ?? "").trim(),
-      body: (waitMatch[3] ?? "").trim(),
+      reason: attrs.on ?? "user",
+      summary: (attrs.summary ?? "").trim(),
+      body: (waitMatch[2] ?? "").trim(),
+      report: null,
     };
   }
   return null;
@@ -209,9 +224,11 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     brief.trim() || "(see envelope)",
     "",
     "When you finish (or cannot finish), end your response with one of these directives:",
-    `  <task-done summary="one or two line restatement of the result">…optional report body…</task-done>`,
+    `  <task-done summary="one or two line restatement of the result" report="path/to/produced/file.md">…optional inline body…</task-done>`,
     `  <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>`,
     `  <task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>`,
+    "",
+    "If you produced a file (report, recommendation memo, code patch, etc.) put its path (relative to the repo root) in the `report` attribute of <task-done> so Kelly can open it directly from the dashboard. Omit the attribute if there is no produced file.",
     "",
     "Use <task-waiting> when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks the envelope and re-emits it back to your open queue when the dependency clears. Do NOT use <task-failed reason=\"dependency\"> for this — that is reserved for genuine failures.",
     "Do not emit a directive until you are truly finished or genuinely blocked. The runner moves your envelope to done/, failed/, or waiting/ and appends the journal entry.",
@@ -297,10 +314,10 @@ async function notifyDispatchChat(
     : directive.kind === "done"
     ? "done"
     : "failed";
-  const filePath = `agents/${agent}/tasks/${subdir}/${taskId}.yaml`;
-  const reportLine = directive.kind === "done"
-    ? `\nReport: \`${filePath}\``
-    : `\nEnvelope: \`${filePath}\``;
+  const envelopePath = `agents/${agent}/tasks/${subdir}/${taskId}.yaml`;
+  const reportLine = directive.kind === "done" && directive.report
+    ? `\nReport: \`${directive.report}\`\nEnvelope: \`${envelopePath}\``
+    : `\nEnvelope: \`${envelopePath}\``;
 
   const notificationText = `${headline}\n${status}${summary}${reportLine}`;
 
@@ -327,7 +344,7 @@ async function notifyDispatchChat(
   // rather than starting a new line of work.
   const promptText =
     `[task-update] ${headline} ${status}.${summary}` +
-    `\n\nFile: \`${filePath}\`. Read the envelope and the report (if present), then tell Kelly what was found and what the next step should be.`;
+    `\n\nFile: \`${envelopePath}\`. Read the envelope and the report (if present), then tell Kelly what was found and what the next step should be.`;
 
   try {
     await appendMessage(chatId, {
@@ -513,10 +530,17 @@ async function transitionToTerminal(
   if (directive.summary) {
     next = setNestedField(next, "summary", "response", JSON.stringify(directive.summary));
   }
-  if (directive.body && directive.kind === "done") {
-    // Append report to the bottom — keep the YAML lean.
-    next = next.replace(/^report:\s*.*$/m, (m) => m); // no-op if already there
-    if (!/^report:/m.test(next)) next += `\nreport: |\n  ${directive.body.replace(/\n/g, "\n  ")}\n`;
+  if (directive.kind === "done" && directive.report) {
+    // Worker produced a file — persist its path as a top-level scalar so the
+    // dashboard can link directly to it. Strip any pre-existing `report:` block.
+    next = next.replace(/^report:[\s\S]*?(?=^\S|\Z)/m, "");
+    next = next.trimEnd() + `\nreport: ${JSON.stringify(directive.report)}\n`;
+  } else if (directive.body && directive.kind === "done") {
+    // No produced file — fall back to the inline body so we don't lose the
+    // worker's writeup. Block scalar form.
+    if (!/^report:/m.test(next)) {
+      next += `\nreport: |\n  ${directive.body.replace(/\n/g, "\n  ")}\n`;
+    }
   }
   next = appendHistory(next, {
     ts: now,
@@ -562,7 +586,7 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     );
   } catch (err) {
     console.error(`[multi-agent] worker ${agent}/${taskId} threw:`, err);
-    return { kind: "failed", reason: "crash", summary: String(err), body: "" };
+    return { kind: "failed", reason: "crash", summary: String(err), body: "", report: null };
   }
 
   return parseDirective(captured);

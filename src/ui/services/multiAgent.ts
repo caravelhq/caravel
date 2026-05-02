@@ -23,6 +23,7 @@ export interface MultiAgentSummary {
 
 export interface TaskRow {
   id: string;
+  headline: string;
   agent: string;
   bucket: Bucket;
   status: string;
@@ -37,6 +38,7 @@ export interface TaskRow {
   dispatch: { chat_id: string | null; auto_resume: string | null };
   created: string | null;
   updated: string | null;
+  envelopePath: string;
   reportPath: string | null;
 }
 
@@ -152,6 +154,7 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     return null;
   }
   const id = readField(yaml, "id") ?? file.replace(/\.yaml$/, "");
+  const headline = readField(yaml, "headline") ?? "";
   const status = readField(yaml, "status") ?? "";
   const kind = readField(yaml, "kind") ?? "other";
   const from = readField(yaml, "from") ?? "";
@@ -167,10 +170,16 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   const dispatchAutoResume = readNestedField(yaml, "dispatch", "auto_resume");
   const created = readField(yaml, "created");
   const updated = readField(yaml, "updated");
-  const reportPath = bucket === "done" ? `agents/${agent}/tasks/done/${file}` : null;
+  const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
+  // `report:` is a top-level field — the worker sets it via
+  // <task-done report="path/to/produced/file.md"/>. If empty / unset, no
+  // produced report exists and the dashboard hides the Report button.
+  const reportRaw = readField(yaml, "report");
+  const reportPath = reportRaw && reportRaw !== '""' && reportRaw !== "''" ? reportRaw.replace(/^["']|["']$/g, "") : null;
 
   return {
     id,
+    headline,
     agent,
     bucket,
     status,
@@ -185,6 +194,7 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     dispatch: { chat_id: dispatchChat, auto_resume: dispatchAutoResume },
     created,
     updated,
+    envelopePath,
     reportPath,
   };
 }

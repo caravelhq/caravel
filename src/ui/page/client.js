@@ -1442,8 +1442,12 @@
       const allPanels = [dashboardPanel, chatPanel];
       const filesBtn = $("tab-files");
       const filesPnl = $("files-panel");
+      const taskBtn = $("tab-task");
+      const taskPnl = $("task-panel");
       if (filesBtn) allBtns.push(filesBtn);
       if (filesPnl) allPanels.push(filesPnl);
+      if (taskBtn) allBtns.push(taskBtn);
+      if (taskPnl) allPanels.push(taskPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
 
@@ -1462,10 +1466,17 @@
       } else if (tab === "files") {
         if (filesBtn) { filesBtn.classList.add("tab-btn-active"); filesBtn.setAttribute("aria-selected", "true"); }
         if (filesPnl) filesPnl.hidden = false;
+      } else if (tab === "task") {
+        if (taskBtn) { taskBtn.classList.add("tab-btn-active"); taskBtn.setAttribute("aria-selected", "true"); taskBtn.hidden = false; }
+        if (taskPnl) taskPnl.hidden = false;
       }
     }
 
-    if (tabDashboardBtn) tabDashboardBtn.addEventListener("click", () => setActiveTab("dashboard"));
+    if (tabDashboardBtn) tabDashboardBtn.addEventListener("click", () => {
+      window.__taskBackContext = null;
+      if (typeof window.__renderFilesBackButton === "function") window.__renderFilesBackButton();
+      setActiveTab("dashboard");
+    });
     if (tabChatBtn) tabChatBtn.addEventListener("click", () => setActiveTab("chat"));
 
     // Right-pane (embed) defaults to the chat tab so split view opens
@@ -2874,18 +2885,17 @@
       }
 
       function renderTaskRow(t) {
-        var brief = t.summary && t.summary.brief ? t.summary.brief : t.brief || "";
+        var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
         var meta = [t.from || "?", "→", t.to || "?", "·", t.kind || "?"].join(" ");
         return (
-          '<div class="multi-agent-task-row" data-task-id="' + escapeHtml(t.id) + '">' +
+          '<div class="multi-agent-task-row" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
           '<div class="multi-agent-task-row-head">' +
           '<span class="multi-agent-task-id">' + escapeHtml(t.id) + '</span>' +
           '<span class="multi-agent-task-status ' + statusClass(t.status) + '">' + escapeHtml(t.status || "?") + '</span>' +
-          '<span class="multi-agent-task-meta">' + escapeHtml(meta) + '</span>' +
           '<span class="multi-agent-task-time">' + escapeHtml(timeAgo(t.updated)) + '</span>' +
           '</div>' +
-          '<div class="multi-agent-task-brief">' + escapeHtml(shorten(brief, 200)) + '</div>' +
-          '<div class="multi-agent-chain" hidden></div>' +
+          '<div class="multi-agent-task-headline">' + escapeHtml(shorten(headline, 140)) + '</div>' +
+          '<div class="multi-agent-task-meta">' + escapeHtml(meta) + '</div>' +
           '</div>'
         );
       }
@@ -2912,94 +2922,141 @@
         }
       }
 
-      function renderChainCard(card, label, isCurrent) {
+      // === Full-screen task panel ============================================
+      var taskPanelBody = document.getElementById("task-panel-body");
+      var taskPanelHeadline = document.getElementById("task-panel-headline");
+      var taskPanelId = document.getElementById("task-panel-id");
+      var taskPanelStatus = document.getElementById("task-panel-status");
+      var taskPanelBack = document.getElementById("task-panel-back");
+      var currentTaskId = null;
+
+      function renderPanelCard(card, label, isCurrent) {
         if (!card) return "";
-        var brief = card.summary && card.summary.brief ? card.summary.brief : card.brief || "";
-        var ctxLines = (card.context || []).map(function (c) {
+        var brief = card.brief || "";
+        var summaryBrief = card.summary && card.summary.brief ? card.summary.brief : "";
+        var summaryResponse = card.summary && card.summary.response ? card.summary.response : "";
+        var ctx = card.context || [];
+        var ctxLines = ctx.map(function (c) {
           var safe = escapeHtml(c);
-          if (/^(https?:|\/api\/|\/static\/)/.test(c)) {
-            return '<a class="multi-agent-chain-context" href="' + safe + '" target="_blank" rel="noopener">' + safe + '</a>';
+          if (/^(https?:)/.test(c)) {
+            return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + '</a></div>';
           }
           if (/^jira:/i.test(c)) {
-            return '<span class="multi-agent-chain-context">' + safe + '</span>';
+            return '<div class="task-panel-context-item">' + safe + '</div>';
           }
-          return '<button class="multi-agent-chain-context" data-open-file="' + safe + '" type="button">' + safe + '</button>';
+          return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + '</button></div>';
         }).join("");
-        var actions = [];
-        var envelopePath = "agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml";
-        actions.push('<button class="multi-agent-chain-action" data-open-file="' + escapeHtml(envelopePath) + '" type="button">Envelope</button>');
-        if (card.bucket === "done" || card.reportPath) {
-          var rp = card.reportPath || envelopePath;
-          actions.push('<button class="multi-agent-chain-action" data-open-file="' + escapeHtml(rp) + '" type="button">Report</button>');
-        }
-        actions.push('<button class="multi-agent-chain-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">Spawn chat</button>');
 
-        var meta = [card.from || "?", "→", card.to || "?", "·", card.kind || "?", "·", card.priority || "?"].join(" ");
+        var actions = [];
+        var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
+        actions.push('<button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Envelope</button>');
+        if (card.reportPath) {
+          actions.push('<button class="is-primary" data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">📄 Report</button>');
+        }
+        actions.push('<button data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Spawn chat</button>');
+        if (!isCurrent) {
+          actions.push('<button data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
+        }
+
+        var meta = [card.from || "?", "→", card.to || "?", "·", card.kind || "?", card.priority ? "· " + card.priority : ""].filter(Boolean).join(" ");
+
         return (
-          '<div class="multi-agent-chain-card' + (isCurrent ? " is-current" : "") + '">' +
-          '<div class="multi-agent-chain-card-head">' +
-          '<span class="multi-agent-chain-card-label">' + escapeHtml(label) + '</span>' +
-          '<span class="multi-agent-task-id">' + escapeHtml(card.id) + '</span>' +
-          '<span class="multi-agent-task-status ' + statusClass(card.status) + '">' + escapeHtml(card.status || "?") + '</span>' +
+          '<div class="task-panel-card' + (isCurrent ? " is-current" : "") + '">' +
+          '<div class="task-panel-section-label">' + escapeHtml(label) + '</div>' +
+          '<div class="task-panel-card-head">' +
+          '<span class="task-panel-card-id">' + escapeHtml(card.id) + '</span>' +
+          '<span class="task-panel-card-agent">' + escapeHtml(card.agent || card.to || "?") + '</span>' +
+          '<span class="task-panel-card-status ' + statusClass(card.status) + '">' + escapeHtml(card.status || "?") + '</span>' +
           '</div>' +
-          '<div class="multi-agent-chain-card-meta">' + escapeHtml(meta) + '</div>' +
-          (brief ? '<div class="multi-agent-chain-card-brief">' + escapeHtml(shorten(brief, 320)) + '</div>' : "") +
-          (ctxLines ? '<div class="multi-agent-chain-card-context">' + ctxLines + '</div>' : "") +
-          '<div class="multi-agent-chain-card-actions">' + actions.join("") + '</div>' +
+          (card.headline ? '<div class="task-panel-card-headline">' + escapeHtml(card.headline) + '</div>' : "") +
+          '<div class="task-panel-card-meta">' + escapeHtml(meta) + (card.updated ? " · " + escapeHtml(timeAgo(card.updated)) : "") + '</div>' +
+          (summaryBrief ? '<div class="task-panel-card-summary"><strong>Worker brief:</strong> ' + escapeHtml(summaryBrief) + '</div>' : "") +
+          (summaryResponse ? '<div class="task-panel-card-summary"><strong>Worker result:</strong> ' + escapeHtml(summaryResponse) + '</div>' : "") +
+          (brief ? '<div class="task-panel-card-summary"><strong>Brief:</strong> ' + escapeHtml(shorten(brief, 600)) + '</div>' : "") +
+          (ctxLines ? '<div class="task-panel-context-list">' + ctxLines + '</div>' : "") +
+          '<div class="task-panel-card-actions">' + actions.join("") + '</div>' +
           '</div>'
         );
       }
 
-      async function loadChain(taskId, chainEl) {
-        chainEl.innerHTML = '<div class="multi-agent-chain-loading">Loading chain…</div>';
+      async function openTaskPanel(taskId) {
+        if (!taskId || !taskPanelBody) return;
+        currentTaskId = taskId;
+        if (typeof setActiveTab === "function") setActiveTab("task");
+        if (taskPanelId) taskPanelId.textContent = taskId;
+        if (taskPanelHeadline) taskPanelHeadline.textContent = "Loading…";
+        if (taskPanelStatus) { taskPanelStatus.textContent = ""; taskPanelStatus.className = "task-panel-status"; }
+        taskPanelBody.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
         try {
           var res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
           var data = await res.json();
           if (!data.ok || !data.chain) {
-            chainEl.innerHTML = '<div class="multi-agent-chain-loading">Unable to load chain.</div>';
+            taskPanelBody.innerHTML = '<div class="task-panel-loading">Unable to load task.</div>';
             return;
           }
           var c = data.chain;
+          var task = c.task;
+          if (task) {
+            if (taskPanelHeadline) taskPanelHeadline.textContent = task.headline || task.brief || "Task " + taskId;
+            if (taskPanelStatus) {
+              taskPanelStatus.textContent = task.status || "?";
+              taskPanelStatus.className = "task-panel-status " + statusClass(task.status);
+            }
+          }
           var parts = [];
           var ancestors = c.ancestors || [];
           for (var i = 0; i < ancestors.length; i++) {
             var label = i === ancestors.length - 1 ? "Parent" : "Ancestor";
-            parts.push(renderChainCard(ancestors[i], label, false));
+            parts.push(renderPanelCard(ancestors[i], label, false));
           }
-          if (c.task) parts.push(renderChainCard(c.task, "Current", true));
+          if (task) parts.push(renderPanelCard(task, "Current task", true));
           var children = c.children || [];
           for (var j = 0; j < children.length; j++) {
-            parts.push(renderChainCard(children[j], "Child", false));
+            parts.push(renderPanelCard(children[j], "Sub-task", false));
           }
-          if (parts.length === 0) {
-            chainEl.innerHTML = '<div class="multi-agent-chain-loading">No chain data.</div>';
-          } else {
-            chainEl.innerHTML = parts.join("");
-          }
+          taskPanelBody.innerHTML = parts.length > 0 ? parts.join("") : '<div class="task-panel-loading">No chain data.</div>';
         } catch (err) {
-          chainEl.innerHTML = '<div class="multi-agent-chain-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+          taskPanelBody.innerHTML = '<div class="task-panel-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
         }
       }
 
-      if (tasksList) {
-        tasksList.addEventListener("click", function (ev) {
+      // Back button: return to the dashboard panel where the row was clicked.
+      if (taskPanelBack) {
+        taskPanelBack.addEventListener("click", function () {
+          currentTaskId = null;
+          if (typeof setActiveTab === "function") setActiveTab("dashboard");
+          var taskTabBtn = document.getElementById("tab-task");
+          if (taskTabBtn) taskTabBtn.hidden = true;
+        });
+      }
+
+      // Delegate clicks inside the task panel for action buttons.
+      if (taskPanelBody) {
+        taskPanelBody.addEventListener("click", function (ev) {
+          var openTaskBtn = ev.target.closest("[data-open-task]");
+          if (openTaskBtn) {
+            ev.preventDefault();
+            openTaskPanel(openTaskBtn.getAttribute("data-open-task"));
+            return;
+          }
           var openFileBtn = ev.target.closest("[data-open-file]");
           if (openFileBtn) {
             ev.preventDefault();
-            ev.stopPropagation();
             var filePath = openFileBtn.getAttribute("data-open-file");
+            var fromTask = openFileBtn.getAttribute("data-from-task") || currentTaskId;
             try {
               if (typeof setActiveTab === "function") setActiveTab("files");
               if (typeof loadFile === "function" && filePath) loadFile(filePath);
+              if (fromTask) window.__taskBackContext = fromTask;
+              renderFilesBackButton();
             } catch (_) {}
             return;
           }
           var spawnBtn = ev.target.closest("[data-spawn-agent]");
           if (spawnBtn) {
             ev.preventDefault();
-            ev.stopPropagation();
             var agentName = spawnBtn.getAttribute("data-spawn-agent");
-            var taskId = spawnBtn.getAttribute("data-spawn-task");
+            var taskId2 = spawnBtn.getAttribute("data-spawn-task");
             try {
               if (typeof startNewChat === "function") startNewChat();
               if (agentName && Array.isArray(agentsCache)) {
@@ -3007,30 +3064,60 @@
                 if (match) pendingAgentId = match.name;
               }
               if (typeof setActiveTab === "function") setActiveTab("chat");
-              if (chatInput && taskId) {
-                chatInput.value = "Let's discuss task " + taskId + ". Please read the envelope and tell me your read.";
+              if (chatInput && taskId2) {
+                chatInput.value = "Let's discuss task " + taskId2 + ". Please read the envelope and tell me your read.";
                 chatInput.focus();
               }
             } catch (_) {}
-            return;
           }
-          // Don't intercept clicks on links/buttons inside the chain
-          if (ev.target.closest("a") || ev.target.closest("button")) return;
+        });
+      }
+
+      // Render a "← Back to TSK-…" button inside the files toolbar when the
+      // user navigated to a file from a task. Clicking it returns to that task.
+      function renderFilesBackButton() {
+        var fromTask = window.__taskBackContext;
+        var navGroup = document.querySelector(".files-nav-group");
+        var existing = document.getElementById("files-back-to-task");
+        if (!fromTask) {
+          if (existing) existing.remove();
+          return;
+        }
+        if (!navGroup) return;
+        if (existing) existing.remove();
+        var btn = document.createElement("button");
+        btn.id = "files-back-to-task";
+        btn.type = "button";
+        btn.className = "files-nav-btn files-back-to-task";
+        btn.title = "Back to " + fromTask;
+        btn.textContent = "← " + fromTask;
+        btn.addEventListener("click", function () {
+          var t = window.__taskBackContext;
+          window.__taskBackContext = null;
+          renderFilesBackButton();
+          if (t) openTaskPanel(t);
+        });
+        navGroup.appendChild(btn);
+      }
+      // Expose so other modules can clear it when navigating away from files.
+      window.__renderFilesBackButton = renderFilesBackButton;
+
+      if (tasksList) {
+        tasksList.addEventListener("click", function (ev) {
           var row = ev.target.closest(".multi-agent-task-row");
           if (!row) return;
-          var taskId2 = row.getAttribute("data-task-id");
-          if (!taskId2) return;
-          var chainEl = row.querySelector(".multi-agent-chain");
-          if (!chainEl) return;
-          var isExpanded = row.classList.contains("is-expanded");
-          if (isExpanded) {
-            row.classList.remove("is-expanded");
-            chainEl.hidden = true;
-          } else {
-            row.classList.add("is-expanded");
-            chainEl.hidden = false;
-            loadChain(taskId2, chainEl);
-          }
+          var taskId = row.getAttribute("data-task-id");
+          if (!taskId) return;
+          openTaskPanel(taskId);
+        });
+        tasksList.addEventListener("keydown", function (ev) {
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          var row = ev.target.closest(".multi-agent-task-row");
+          if (!row) return;
+          var taskId = row.getAttribute("data-task-id");
+          if (!taskId) return;
+          ev.preventDefault();
+          openTaskPanel(taskId);
         });
       }
 
@@ -3054,14 +3141,27 @@
           if (hidden) {
             newForm.removeAttribute("hidden");
             newBtn.classList.add("is-active");
-            var briefEl = document.getElementById("multi-agent-new-brief");
-            if (briefEl) briefEl.focus();
+            var headlineEl = document.getElementById("multi-agent-new-headline");
+            if (headlineEl) headlineEl.focus();
           } else {
             newForm.setAttribute("hidden", "");
             newBtn.classList.remove("is-active");
           }
         });
       }
+
+      // Live word counter for the headline field — flips red over 10 words.
+      var headlineInput = document.getElementById("multi-agent-new-headline");
+      var headlineCounter = document.getElementById("multi-agent-new-headline-count");
+      function updateHeadlineCount() {
+        if (!headlineInput || !headlineCounter) return;
+        var v = (headlineInput.value || "").trim();
+        var words = v ? v.split(/\s+/).filter(Boolean).length : 0;
+        headlineCounter.textContent = words + " / 10 words";
+        headlineCounter.classList.toggle("is-over", words > 10);
+      }
+      if (headlineInput) headlineInput.addEventListener("input", updateHeadlineCount);
+      updateHeadlineCount();
 
       if (newCancelBtn && newForm) {
         newCancelBtn.addEventListener("click", function () {
@@ -3074,6 +3174,7 @@
       if (newForm) {
         newForm.addEventListener("submit", async function (ev) {
           ev.preventDefault();
+          var headline = ((document.getElementById("multi-agent-new-headline") || {}).value || "").trim();
           var to = (document.getElementById("multi-agent-new-to") || {}).value || "";
           var kind = (document.getElementById("multi-agent-new-kind") || {}).value || "";
           var priority = (document.getElementById("multi-agent-new-priority") || {}).value || "";
@@ -3083,30 +3184,42 @@
           var contextRaw = ((document.getElementById("multi-agent-new-context") || {}).value || "").trim();
           var context = contextRaw ? contextRaw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
 
-          if (!brief) {
-            if (newStatus) newStatus.textContent = "Brief is required.";
+          var headlineWords = headline ? headline.split(/\s+/).filter(Boolean).length : 0;
+          if (!headline) {
+            if (newStatus) { newStatus.textContent = "Headline is required (≤10 words)."; newStatus.classList.add("is-error"); }
             return;
           }
-          if (newStatus) newStatus.textContent = "Dispatching…";
+          if (headlineWords > 10) {
+            if (newStatus) { newStatus.textContent = "Headline too long (" + headlineWords + " words; max 10)."; newStatus.classList.add("is-error"); }
+            return;
+          }
+          if (!brief) {
+            if (newStatus) { newStatus.textContent = "Brief is required."; newStatus.classList.add("is-error"); }
+            return;
+          }
+          if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
           try {
             var res = await fetch("/api/tasks/new", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context }),
+              body: JSON.stringify({ headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context }),
             });
             var data = await res.json();
             if (!data.ok) {
-              if (newStatus) newStatus.textContent = "Error: " + (data.error || "unknown");
+              if (newStatus) { newStatus.textContent = "Error: " + (data.error || "unknown"); newStatus.classList.add("is-error"); }
               return;
             }
-            if (newStatus) newStatus.textContent = "Dispatched " + data.id;
+            if (newStatus) { newStatus.textContent = "Dispatched " + data.id; newStatus.classList.remove("is-error"); }
             // Reset the form fields but keep the kind/target so the user can fire another quickly.
+            var headlineEl = document.getElementById("multi-agent-new-headline");
             var briefEl = document.getElementById("multi-agent-new-brief");
             var outputEl = document.getElementById("multi-agent-new-output");
             var ctxEl = document.getElementById("multi-agent-new-context");
+            if (headlineEl) headlineEl.value = "";
             if (briefEl) briefEl.value = "";
             if (outputEl) outputEl.value = "";
             if (ctxEl) ctxEl.value = "";
+            updateHeadlineCount();
             // Show the task list with the new entry on top.
             if (tasksWrap && tasksWrap.hasAttribute("hidden")) {
               tasksWrap.removeAttribute("hidden");

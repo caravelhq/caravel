@@ -801,7 +801,6 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-task-id { color: #d6e6ff; }
     .multi-agent-task-agent { color: #ffd07a; }
     .multi-agent-task-status {
-      margin-left: auto;
       font-size: 10px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
@@ -814,6 +813,25 @@ export const pageStyles = String.raw`    :root {
       font-size: 12px;
       color: #b8cae3;
       line-height: 1.4;
+    }
+    .multi-agent-task-headline {
+      font-family: "Fraunces", serif;
+      font-size: 13px;
+      color: #f4f8ff;
+      line-height: 1.35;
+    }
+    .multi-agent-task-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .multi-agent-task-time {
+      margin-left: auto;
+      color: #6a7e9b;
+    }
+    .multi-agent-task-row[role="button"]:focus-visible {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
     }
     .multi-agent-task-row.is-expanded {
       background: #14223680;
@@ -921,9 +939,38 @@ export const pageStyles = String.raw`    :root {
       width: 100%;
       box-sizing: border-box;
     }
+    .multi-agent-new-block textarea,
+    .multi-agent-new-block input {
+      border: 1px solid #ffffff2a;
+      background: #0a1220a8;
+      color: #f4f8ff;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
     .multi-agent-new-block textarea {
       resize: vertical;
       min-height: 36px;
+    }
+    .multi-agent-new-hint {
+      text-transform: none;
+      letter-spacing: 0;
+      font-style: italic;
+      color: #6a7e9b;
+      margin-left: 4px;
+    }
+    .multi-agent-new-counter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+      align-self: flex-end;
+      margin-top: 2px;
+    }
+    .multi-agent-new-counter.is-over {
+      color: #ff9a9a;
     }
     .multi-agent-new-actions {
       display: flex;
@@ -2186,6 +2233,242 @@ export const pageStyles = String.raw`    :root {
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
+    }
+    .task-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-width: min(320px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+    }
+    .task-panel-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #ffffff12;
+      flex-wrap: wrap;
+    }
+    .task-panel-back {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .task-panel-back:hover { background: #14223680; }
+    .task-panel-headline-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .task-panel-id {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .task-panel-headline {
+      font-family: "Fraunces", serif;
+      font-size: 18px;
+      color: #f4f8ff;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .task-panel-status-wrap {
+      flex: 0 0 auto;
+    }
+    .task-panel-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0c1624a6;
+      border: 1px solid #ffffff22;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .task-panel-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .task-panel-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .task-panel-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .task-panel-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .task-panel-body {
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .task-panel-loading {
+      color: #6a7e9b;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-align: center;
+      padding: 40px;
+    }
+    .task-panel-section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      margin-bottom: 4px;
+    }
+    .task-panel-card {
+      background: #0a1220a8;
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+    .task-panel-card.is-current {
+      border-color: #ffd07a99;
+      background: #1a2a44a8;
+    }
+    .task-panel-card-head {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .task-panel-card-id {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #d6e6ff;
+    }
+    .task-panel-card-agent {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #ffd07a;
+    }
+    .task-panel-card-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9be7ff;
+    }
+    .task-panel-card-status.is-waiting { color: #f0c674; }
+    .task-panel-card-status.is-done { color: #93e0a8; }
+    .task-panel-card-status.is-failed { color: #ff9a9a; }
+    .task-panel-card-headline {
+      font-family: "Fraunces", serif;
+      font-size: 14px;
+      color: #f4f8ff;
+      line-height: 1.3;
+    }
+    .task-panel-card-summary {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .task-panel-card-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .task-panel-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .task-panel-card-actions button {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms;
+    }
+    .task-panel-card-actions button:hover {
+      background: #14223680;
+    }
+    .task-panel-card-actions button.is-primary {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .task-panel-card-actions button.is-primary:hover {
+      background: #355a8a;
+    }
+    .task-panel-context-list {
+      display: grid;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .task-panel-context-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-context-item button {
+      border: none;
+      background: none;
+      color: #9be7ff;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      font-size: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .task-panel-context-item button:hover {
+      color: #cfe3ff;
+    }
+    @media (max-width: 640px) {
+      .task-panel-toolbar {
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .task-panel-headline {
+        font-size: 16px;
+      }
+      .task-panel-status {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+      .task-panel-body {
+        padding: 10px;
+      }
+      .task-panel-card {
+        padding: 10px;
+      }
     }
     .files-toolbar {
       display: flex;

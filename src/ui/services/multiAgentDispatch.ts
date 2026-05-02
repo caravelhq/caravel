@@ -21,6 +21,7 @@ interface CreateTaskInput {
   reply_to?: string;
   kind?: string;
   priority?: string;
+  headline?: string;
   brief?: string;
   output_format?: string;
   context?: string[];
@@ -85,9 +86,14 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   const parent = input.parent && input.parent !== "null" ? String(input.parent).trim() : null;
   const context = Array.isArray(input.context) ? input.context.map((c) => String(c).trim()).filter(Boolean) : [];
 
+  const headline = (input.headline ?? "").trim();
+
   if (!KNOWN_AGENTS.includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
   if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
   if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
+  if (!headline) return { ok: false, error: "headline is required (≤10 words)" };
+  const headlineWords = headline.split(/\s+/).filter(Boolean).length;
+  if (headlineWords > 10) return { ok: false, error: `headline too long (${headlineWords} words; max 10)` };
   if (!brief) return { ok: false, error: "brief is required" };
   if ((kind === "code" || kind === "review" || kind === "summarise") && !outputFormat) {
     return { ok: false, error: `output_format is required for kind=${kind}` };
@@ -116,6 +122,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 
   const yaml = [
     `id: ${id}`,
+    `headline: ${headline}`,
     `created: ${now}`,
     `updated: ${now}`,
     ``,

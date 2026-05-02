@@ -29,6 +29,7 @@ Read what Kelly asked. If it's vague (`/task` with no body, or "ask Ray about X"
 
 The fields you need:
 
+- **headline** — ≤10 words, required. The label that appears in dashboards, notifications, and chat prompts. Read like a Jira summary, not a sentence. *"BLE plugin survey"* not *"Please survey BLE plugins for the capacitor app"*. The CLI rejects empty or over-length headlines.
 - **target agent** — one of `ray` (Researcher), `sam` (Strategist), `bob` (Builder), `mark` (Marketing), `cliff` (Reviewer), `adam` (Advisor), or `alice` (Coordinator — i.e. self). If Kelly named one, use it. Otherwise infer from the work:
   - factual / web research → `ray`
   - synthesis, recommendations, decision memos → `sam`
@@ -57,6 +58,7 @@ Skeleton:
 
 ```yaml
 id: PLACEHOLDER
+headline: <≤10-word summary>       # required; appears in lists, notifications, chat prompts
 created: PLACEHOLDER
 updated: PLACEHOLDER
 

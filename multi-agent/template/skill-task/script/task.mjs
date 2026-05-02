@@ -107,14 +107,32 @@ async function newTask() {
     process.exit(2);
   }
   const draft = await readYaml(draftPath);
+
+  // Headline is required, ≤10 words. CLI flag wins over the YAML field so
+  // dispatchers can supply it without rewriting the draft.
+  const headlineFromFlag = flag("headline");
+  const headlineFromYaml = extractField(draft, "headline");
+  const headline = (headlineFromFlag ?? headlineFromYaml ?? "").trim();
+  if (!headline) {
+    console.error('headline is required (≤10 words). Pass --headline "…" or add `headline:` to the YAML.');
+    process.exit(2);
+  }
+  const wordCount = headline.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 10) {
+    console.error(`headline is too long (${wordCount} words; max 10). Tighten it.`);
+    process.exit(2);
+  }
+
   const id = await nextIdForAgent(target);
   const now = new Date().toISOString();
-  // Replace the id/created/updated fields if present, else prepend.
+  // Replace the id/headline/created/updated fields if present, else prepend.
   let body = draft;
   body = body.replace(/^id:\s*.*$/m, `id: ${id}`);
+  body = body.replace(/^headline:\s*.*$/m, `headline: ${headline}`);
   body = body.replace(/^created:\s*.*$/m, `created: ${now}`);
   body = body.replace(/^updated:\s*.*$/m, `updated: ${now}`);
-  if (!/^id:\s/m.test(body)) body = `id: ${id}\ncreated: ${now}\nupdated: ${now}\n` + body;
+  if (!/^id:\s/m.test(body)) body = `id: ${id}\nheadline: ${headline}\ncreated: ${now}\nupdated: ${now}\n` + body;
+  if (!/^headline:\s/m.test(body)) body = body.replace(/^id:\s.*$/m, (m) => `${m}\nheadline: ${headline}`);
   // Force status to open and clear lease.
   body = body.replace(/^status:\s*.*$/m, "status: open");
 
