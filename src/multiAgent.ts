@@ -231,6 +231,9 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "If you produced a file (report, recommendation memo, code patch, etc.) put its path (relative to the repo root) in the `report` attribute of <task-done> so Kelly can open it directly from the dashboard. Omit the attribute if there is no produced file.",
     "",
     "Use <task-waiting> when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks the envelope and re-emits it back to your open queue when the dependency clears. Do NOT use <task-failed reason=\"dependency\"> for this — that is reserved for genuine failures.",
+    "",
+    "Delegation: if your brief requires inputs you don't have (deeper sourced research, a positioning rewrite, a code review, an operational reality check), you can dispatch sub-tasks to other agents using the `/task` skill. After dispatching, emit `<task-waiting on=\"task:TSK-...\">` so the runner parks your envelope. The runner re-emits it back to your queue once the dependency lands in the other agent's `tasks/done/` — at that point you read the report and continue. Whether `/task` is appropriate for your role is documented in your own CLAUDE.md; default to using it when the upstream input would itself be a non-trivial chunk of work, default to inline lookup when it's a small fact-check.",
+    "",
     "Do not emit a directive until you are truly finished or genuinely blocked. The runner moves your envelope to done/, failed/, or waiting/ and appends the journal entry.",
   ].join("\n");
 }
