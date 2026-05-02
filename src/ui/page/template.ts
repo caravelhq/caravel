@@ -143,7 +143,6 @@ ${pageStyles}
       <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Dashboard</button>
       <button class="tab-btn" id="tab-chat" type="button" role="tab" aria-selected="false" aria-controls="chat-panel">Chat</button>
       <button class="tab-btn" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="files-panel">Files</button>
-      <button class="tab-btn" id="tab-task" type="button" role="tab" aria-selected="false" aria-controls="task-panel" hidden>Task</button>
       <button class="tab-btn tab-btn-split" id="split-nav-toggle" type="button" title="Toggle split view" aria-label="Toggle split view" aria-pressed="false">&#x2AFD;</button>
       <button class="tab-btn tab-btn-settings" id="settings-btn" type="button" title="Settings">&#x2699;</button>
     </nav>

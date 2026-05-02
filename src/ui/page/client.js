@@ -1442,11 +1442,9 @@
       const allPanels = [dashboardPanel, chatPanel];
       const filesBtn = $("tab-files");
       const filesPnl = $("files-panel");
-      const taskBtn = $("tab-task");
       const taskPnl = $("task-panel");
       if (filesBtn) allBtns.push(filesBtn);
       if (filesPnl) allPanels.push(filesPnl);
-      if (taskBtn) allBtns.push(taskBtn);
       if (taskPnl) allPanels.push(taskPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
@@ -1467,7 +1465,6 @@
         if (filesBtn) { filesBtn.classList.add("tab-btn-active"); filesBtn.setAttribute("aria-selected", "true"); }
         if (filesPnl) filesPnl.hidden = false;
       } else if (tab === "task") {
-        if (taskBtn) { taskBtn.classList.add("tab-btn-active"); taskBtn.setAttribute("aria-selected", "true"); taskBtn.hidden = false; }
         if (taskPnl) taskPnl.hidden = false;
       }
     }
@@ -3025,8 +3022,6 @@
         taskPanelBack.addEventListener("click", function () {
           currentTaskId = null;
           if (typeof setActiveTab === "function") setActiveTab("dashboard");
-          var taskTabBtn = document.getElementById("tab-task");
-          if (taskTabBtn) taskTabBtn.hidden = true;
         });
       }
 
