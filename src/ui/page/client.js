@@ -1482,36 +1482,6 @@
 
     renderChatHistory();
 
-    function renderMarkdown(text) {
-      if (!text) return "";
-      var esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-      esc = esc.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
-      });
-      esc = esc.replace(/`([^`]+)`/g, '<code>$1</code>');
-      esc = esc.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-      esc = esc.replace(/(?:^|\n)(#{1,3}) (.+)/g, function(_, hashes, content) {
-        var level = Math.min(hashes.length + 2, 6);
-        return '<h' + level + '>' + content + '</h' + level + '>';
-      });
-      var lines = esc.split("\n");
-      var out = [];
-      var inList = false;
-      for (var i = 0; i < lines.length; i++) {
-        var line = lines[i];
-        var listMatch = line.match(/^(\s*)[\-\*] (.+)/);
-        if (listMatch) {
-          if (!inList) { out.push("<ul>"); inList = true; }
-          out.push("<li>" + listMatch[2] + "</li>");
-        } else {
-          if (inList) { out.push("</ul>"); inList = false; }
-          out.push(line);
-        }
-      }
-      if (inList) out.push("</ul>");
-      return out.join("\n").replace(/(?<!\/pre>)\n(?!<)/g, "<br>");
-    }
-
     function createChatEmptyState() {
       var empty = document.createElement("div");
       empty.className = "chat-empty";
@@ -2167,7 +2137,7 @@
         if (data.markdown) {
           var div = document.createElement("div");
           div.className = "files-md";
-          div.innerHTML = renderFullMarkdown(data.content);
+          div.innerHTML = renderMarkdown(data.content);
           filesContent.appendChild(div);
         } else {
           var lang = detectLang(filePath);
@@ -2606,15 +2576,29 @@
       return highlightHtml(content);
     }
 
-    function renderFullMarkdown(src) {
+    function renderMarkdown(src) {
       if (!src) return "";
 
       // Escape HTML
       var text = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-      // Fenced code blocks
+      // === Stash code blocks BEFORE any other processing ====================
+      // Replacing code-block content with placeholders shields it from every
+      // later regex pass — otherwise a line starting with `> ` inside a
+      // fenced block becomes a blockquote, `# ` becomes a heading, `_x_`
+      // becomes emphasis, etc. We restore at the very end.
+      var codeBlocks = [];
       text = text.replace(/```(\w*)\n([\s\S]*?)```/g, function(_, lang, code) {
-        return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
+        var id = codeBlocks.length;
+        codeBlocks.push('<pre><code>' + code.replace(/\n$/, '') + '</code></pre>');
+        return '\u0000FENCE' + id + '\u0000';
+      });
+      var inlineCodes = [];
+      // Single-line only — a stray backtick shouldn't span paragraphs.
+      text = text.replace(/`([^`\n]+)`/g, function(_, code) {
+        var id = inlineCodes.length;
+        inlineCodes.push('<code>' + code + '</code>');
+        return '\u0000INLINE' + id + '\u0000';
       });
 
       // Horizontal rules (before heading processing)
@@ -2625,10 +2609,6 @@
         var level = hashes.length;
         return '<h' + level + '>' + content + '</h' + level + '>';
       });
-
-      // Inline code FIRST so backtick-wrapped content (filenames with
-      // underscores, code identifiers) is shielded from emphasis processing.
-      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
 
       // Bold + italic
       text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
@@ -2768,6 +2748,15 @@
 
       // Clean up double <br>
       result = result.replace(/(<br>){3,}/g, '<br><br>');
+
+      // Restore stashed code (fenced + inline) — placeholders are unique
+      // per render call and survive every regex pass above.
+      result = result.replace(/\u0000FENCE(\d+)\u0000/g, function(_, id) {
+        return codeBlocks[parseInt(id, 10)] || '';
+      });
+      result = result.replace(/\u0000INLINE(\d+)\u0000/g, function(_, id) {
+        return inlineCodes[parseInt(id, 10)] || '';
+      });
 
       return result;
     }
