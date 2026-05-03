@@ -30,7 +30,6 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
 import { appendMessage } from "./ui/services/chats";
-import { triggerChatProcessor } from "./ui/server";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -285,14 +284,24 @@ async function claimTask(
   return fields;
 }
 
-// Post a system-style notification to the chat that originally spawned this
-// task (if any), then optionally append a synthetic user prompt that resumes
-// the chat with Alice. The chat_id is stamped on the envelope at /task
-// dispatch time. No-ops cleanly when the chat doesn't exist (e.g.
-// dashboard-spawned tasks without a chat thread).
+// Post a passive status notification to the chat that originally spawned this
+// task (if any), and — if Alice was the dispatcher — enqueue a continuation
+// envelope in her own queue so the runner wakes her out-of-band rather than
+// impersonating Kelly with a synthetic user message. The chat_id is stamped on
+// the envelope at /task dispatch time. No-ops cleanly when the chat doesn't
+// exist (e.g. dashboard-spawned tasks without a chat thread).
 //
-// Auto-resume default: ON when a chat_id is present. Disable by setting
-// `dispatch.auto_resume: false` on the envelope.
+// Behaviour:
+//   - assistant-role status message ALWAYS posts (visible to Kelly,
+//     non-interrupting).
+//   - If `from: alice` AND `to: <not alice>` AND directive is `done` or
+//     `failed`, write a continuation envelope to agents/alice/tasks/open/
+//     so Alice's normal worker tick processes the result and decides next
+//     step. She surfaces back to chat by completing her continuation with
+//     a `<task-done>` summary, which posts as the next assistant status.
+//   - `<task-waiting on="user">` from Alice's continuation is the only
+//     channel that should ask Kelly for input; the status message says so
+//     and Kelly's next chat turn naturally fires the chat processor.
 async function notifyDispatchChat(
   yaml: string,
   agent: string,
@@ -337,30 +346,164 @@ async function notifyDispatchChat(
     return;
   }
 
-  const autoResumeRaw = readNestedField(yaml, "dispatch", "auto_resume");
-  const autoResume = autoResumeRaw !== "false" && autoResumeRaw !== "no";
-  if (!autoResume) return;
-
-  // Synthetic user prompt — Alice picks this up as if Kelly typed it. The
-  // [task-update] prefix is the cue to her that this is an automated resume,
-  // not a fresh user request, so she can summarise + recommend next steps
-  // rather than starting a new line of work.
-  const promptText =
-    `[task-update] ${headline} ${status}.${summary}` +
-    `\n\nFile: \`${envelopePath}\`. Read the envelope and the report (if present), then tell Kelly what was found and what the next step should be.`;
-
-  try {
-    await appendMessage(chatId, {
-      role: "user",
-      text: promptText,
-      state: "pending",
-      startedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-    triggerChatProcessor(chatId);
-  } catch (err) {
-    console.error(`[multi-agent] failed to auto-resume chat ${chatId}:`, err);
+  // Continuation: if Alice dispatched this sub-task, enqueue a follow-up in
+  // her own queue. The runner ticks alice/tasks/open/ on the normal cadence,
+  // so she wakes there — never via a synthetic user prompt in Kelly's chat.
+  // Skip when Alice was the worker herself (her own completion IS the chat
+  // surface — the assistant status message above already conveys it).
+  const from = readField(yaml, "from");
+  const to = readField(yaml, "to");
+  if (
+    from === "alice" &&
+    to !== "alice" &&
+    (directive.kind === "done" || directive.kind === "failed")
+  ) {
+    try {
+      await enqueueAliceContinuation({
+        chatId,
+        completedTaskId: taskId,
+        completedAgent: agent,
+        completedSubdir: subdir,
+        directive,
+      });
+    } catch (err) {
+      console.error(`[multi-agent] failed to enqueue alice continuation for ${taskId}:`, err);
+    }
   }
+}
+
+// Generate a short task id for Alice's queue. Mirrors the convention used by
+// the /task skill (TSK-YYYY-MM-DD-NNNN) but writes directly without shelling
+// out — keeps the runner self-contained.
+async function nextAliceTaskId(): Promise<string> {
+  const d = new Date();
+  const datePart =
+    `${d.getFullYear()}-` +
+    `${String(d.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(d.getDate()).padStart(2, "0")}`;
+  const prefix = `TSK-${datePart}-`;
+  const dirs = ["open", "waiting", "done", "failed"];
+  let max = 0;
+  for (const sub of dirs) {
+    const dir = join(AGENTS_DIR, "alice", "tasks", sub);
+    const entries = await readdir(dir).catch(() => [] as string[]);
+    for (const fname of entries) {
+      if (!fname.startsWith(prefix)) continue;
+      const n = parseInt(fname.slice(prefix.length).replace(/\.yaml$/, ""), 10);
+      if (Number.isFinite(n) && n > max) max = n;
+    }
+  }
+  return `${prefix}${String(max + 1).padStart(4, "0")}`;
+}
+
+async function enqueueAliceContinuation(opts: {
+  chatId: string;
+  completedTaskId: string;
+  completedAgent: string;
+  completedSubdir: string;
+  directive: TaskDirective;
+}): Promise<void> {
+  const { chatId, completedTaskId, completedAgent, completedSubdir, directive } = opts;
+  const id = await nextAliceTaskId();
+  const now = new Date().toISOString();
+  const subEnvelope = `agents/${completedAgent}/tasks/${completedSubdir}/${completedTaskId}.yaml`;
+  const reportLine = directive.report
+    ? `\n  - ${directive.report}`
+    : "";
+  const briefSummary = directive.summary || "(no summary)";
+  const verb = directive.kind === "done" ? "completed" : "failed";
+
+  const body = [
+    `id: ${id}`,
+    `headline: Continue chat after ${completedTaskId}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    "",
+    "from: runner",
+    "to: alice",
+    `parent: ${completedTaskId}`,
+    "reply_to: null",
+    "",
+    "kind: continuation",
+    "priority: P2",
+    "deadline: null",
+    "",
+    "budget:",
+    "  max_turns: 6",
+    "  max_subagents: 0",
+    "  max_usd: null",
+    "",
+    "brief: |",
+    `  Sub-task ${completedTaskId} (${completedAgent}) ${verb}.`,
+    `  Summary: ${briefSummary}`,
+    "",
+    `  Envelope: ${subEnvelope}`,
+    directive.report ? `  Report: ${directive.report}` : "",
+    "",
+    `  You're orchestrating chat ${chatId}. Decide the next step:`,
+    "    - To continue the orchestration: dispatch another /task and emit",
+    "      <task-waiting on=\"task:TSK-...\"> so this continuation parks.",
+    "    - To surface the outcome to Kelly: emit <task-done summary=\"...\">.",
+    "      The summary is what Kelly will see in the chat.",
+    "    - To request Kelly's input: emit <task-waiting on=\"user\" summary=\"...\">.",
+    "      The summary will surface as a status message in the chat; Kelly's",
+    "      next typed reply naturally re-engages this orchestration.",
+    "",
+    `output_format: ""`,
+    "",
+    "context:",
+    `  - ${subEnvelope}`,
+    directive.report ? `  - ${directive.report}` : "",
+    "",
+    "status: open",
+    "lease:",
+    "  holder: null",
+    "  expires: null",
+    "history:",
+    `  - ts: ${now}`,
+    "    from: null",
+    "    to: open",
+    "    by: runner",
+    `    note: \"continuation enqueued after ${completedTaskId}\"`,
+    "",
+    "summary:",
+    "  brief: \"\"",
+    "  response: \"\"",
+    "report: \"\"",
+    "",
+    "dispatch:",
+    `  chat_id: ${chatId}`,
+    `  chat_ts: ${now}`,
+    "",
+  ]
+    .filter((line) => line !== "" || true) // preserve blanks
+    .join("\n");
+
+  // Drop empty placeholder lines (from optional report fields).
+  const cleanedBody = body
+    .split("\n")
+    .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
+    .join("\n");
+
+  const openDir = join(AGENTS_DIR, "alice", "tasks", "open");
+  await mkdir(openDir, { recursive: true });
+  const outPath = join(openDir, `${id}.yaml`);
+  await writeFile(outPath, cleanedBody);
+
+  await appendJournal("alice", {
+    ts: now,
+    id,
+    status: "open",
+    kind: "continuation",
+    from: "runner",
+    to: "alice",
+    parent: completedTaskId,
+    summary: `enqueued after ${completedTaskId} ${verb}`,
+  });
+
+  console.log(
+    `[multi-agent] enqueued alice continuation ${id} (parent ${completedTaskId} ${verb})`
+  );
 }
 
 async function transitionToWaiting(
