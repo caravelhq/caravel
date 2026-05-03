@@ -779,16 +779,28 @@ async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string,
       // Fire-and-forget the worker; record completion when it returns.
       runWorker(agent, taskId, claimedYaml)
         .then(async (directive) => {
+          // No directive emitted is a worker bug: the response either dropped
+          // the closing tag or the worker ended without one entirely. We must
+          // not leave the envelope in `claimed` forever — that strands the
+          // orchestration with no recovery path. Transition to `failed:other`
+          // so Alice's continuation queue (or Kelly via the dashboard) can
+          // notice and re-dispatch with a stronger reminder.
+          const effective: TaskDirective = directive ?? {
+            kind: "failed",
+            reason: "other",
+            summary: "worker completed but emitted no directive — likely forgot the closing <task-done>/<task-failed>/<task-waiting> tag. The deliverable (if any) may still be on disk; check the worker's output destination before re-dispatching.",
+            body: "",
+            report: null,
+          };
           if (!directive) {
-            console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — leaving claimed`);
-            return;
+            console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — synthesising failed:other`);
           }
-          if (directive.kind === "waiting") {
-            await transitionToWaiting(agent, taskId, filePath, directive);
-            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${directive.reason}`);
+          if (effective.kind === "waiting") {
+            await transitionToWaiting(agent, taskId, filePath, effective);
+            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${effective.reason}`);
           } else {
-            await transitionToTerminal(agent, taskId, filePath, directive);
-            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${directive.kind === "done" ? "done" : `failed:${directive.reason}`}`);
+            await transitionToTerminal(agent, taskId, filePath, effective);
+            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
           }
         })
         .catch((err) => {
