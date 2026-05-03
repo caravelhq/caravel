@@ -399,6 +399,7 @@ ${pageStyles}
     </aside>
   </div>
 
+  <script src="/marked.js" defer></script>
   <script src="/client.js" defer></script>
 </body>
 </html>`;

@@ -25,6 +25,27 @@ import { createTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
+// Bundled `marked` JS, lazily built on first request and cached for the
+// lifetime of the process. Keeps the rendered markdown in one CommonMark-
+// compliant library instead of hand-rolled regex passes in client.js.
+let markedBundle: string | null = null;
+async function getMarkedBundle(): Promise<string | null> {
+  if (markedBundle !== null) return markedBundle;
+  const entry = new URL("./page/marked-entry.ts", import.meta.url).pathname;
+  const result = await Bun.build({
+    entrypoints: [entry],
+    target: "browser",
+    minify: true,
+    format: "iife",
+  });
+  if (!result.success || result.outputs.length === 0) {
+    console.error("[ui] marked bundle build failed", result.logs);
+    return null;
+  }
+  markedBundle = await result.outputs[0]!.text();
+  return markedBundle;
+}
+
 // One processor per chatId — prevents concurrent assistant writes to the same
 // chat file when a second /api/chat POST arrives mid-stream. The processor
 // loops through all "pending" user messages in order; onChat itself is already
@@ -261,6 +282,19 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
       if (url.pathname === "/client.js") {
         const file = Bun.file(new URL("./page/client.js", import.meta.url));
         return new Response(file, {
+          headers: { "Content-Type": "application/javascript; charset=utf-8" },
+        });
+      }
+
+      if (url.pathname === "/marked.js") {
+        const bundled = await getMarkedBundle();
+        if (bundled) {
+          return new Response(bundled, {
+            headers: { "Content-Type": "application/javascript; charset=utf-8" },
+          });
+        }
+        return new Response("// marked bundle unavailable", {
+          status: 500,
           headers: { "Content-Type": "application/javascript; charset=utf-8" },
         });
       }
