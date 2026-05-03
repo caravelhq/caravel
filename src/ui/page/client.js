@@ -2626,14 +2626,18 @@
         return '<h' + level + '>' + content + '</h' + level + '>';
       });
 
+      // Inline code FIRST so backtick-wrapped content (filenames with
+      // underscores, code identifiers) is shielded from emphasis processing.
+      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
       // Bold + italic
       text = text.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong><em>$1</em></strong>');
       text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
       text = text.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-      text = text.replace(/_([^_]+)_/g, '<em>$1</em>');
-
-      // Inline code (after code blocks)
-      text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+      // Underscore emphasis — only at word boundaries (CommonMark: intra-word
+      // underscores like `Project_Plan.md` or `2026-05-03_mark_review.md` are
+      // NOT emphasis). Lookbehind/lookahead reject alphanumerics + `_`.
+      text = text.replace(/(?<![A-Za-z0-9_])_([^_\n]+?)_(?![A-Za-z0-9_])/g, '<em>$1</em>');
 
       // Links
       text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
@@ -2684,6 +2688,20 @@
       var inList = false;
       var listType = '';
 
+      // Peek ahead from index `from` to see if the next non-blank line is a
+      // list item of the given type. Used to keep an open list alive across
+      // blank lines (so numbering doesn't restart).
+      function nextNonBlankIsListType(from, type) {
+        for (var j = from; j < lines.length; j++) {
+          var s = lines[j];
+          if (s.trim() === '') continue;
+          if (type === 'ol' && s.match(/^(\s*)\d+\. /)) return true;
+          if (type === 'ul' && s.match(/^(\s*)[-*] /)) return true;
+          return false;
+        }
+        return false;
+      }
+
       for (var i = 0; i < lines.length; i++) {
         var line = lines[i];
 
@@ -2691,6 +2709,12 @@
         if (line.match(/^<(h[1-6]|pre|blockquote|table|hr|\/)/)) {
           if (inList) { out.push('</' + listType + '>'); inList = false; }
           out.push(line);
+          continue;
+        }
+
+        // Blank line inside a list — keep list open if the next non-blank
+        // line is the same list type. Otherwise fall through and close.
+        if (inList && line.trim() === '' && nextNonBlankIsListType(i + 1, listType)) {
           continue;
         }
 
@@ -2707,16 +2731,18 @@
           continue;
         }
 
-        // Ordered list
-        var olMatch = line.match(/^(\s*)\d+\. (.+)/);
+        // Ordered list — honour the explicit start number on the first item
+        // so that a sequence like "5. foo / 6. bar" renders as 5,6 not 1,2.
+        var olMatch = line.match(/^(\s*)(\d+)\. (.+)/);
         if (olMatch) {
           if (!inList || listType !== 'ol') {
             if (inList) out.push('</' + listType + '>');
-            out.push('<ol>');
+            var startNum = parseInt(olMatch[2], 10);
+            out.push(startNum > 1 ? '<ol start="' + startNum + '">' : '<ol>');
             inList = true;
             listType = 'ol';
           }
-          out.push('<li>' + olMatch[2] + '</li>');
+          out.push('<li>' + olMatch[3] + '</li>');
           continue;
         }
 
