@@ -6,6 +6,7 @@
 import { mkdir, readdir, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import { loadChat } from "./chats";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -143,11 +144,25 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
     max_usd: input.budget?.max_usd ?? null,
   };
 
+  // Stamp the originating chat's metadata onto the envelope so the dashboard
+  // can show "from chat <name> · <preview>" without an extra fetch round-trip
+  // and so the runner has enough info to post status updates with full
+  // context. Best-effort: if the chat lookup fails we still record chat_id.
   const dispatchLines: string[] = [];
   if (input.chat_id) {
     dispatchLines.push(`dispatch:`);
     dispatchLines.push(`  chat_id: ${input.chat_id}`);
     dispatchLines.push(`  chat_ts: ${now}`);
+    try {
+      const chat = await loadChat(input.chat_id);
+      if (chat) {
+        if (chat.name) dispatchLines.push(`  chat_name: ${yamlEscape(chat.name)}`);
+        if (chat.preview) dispatchLines.push(`  chat_preview: ${yamlEscape(chat.preview)}`);
+        if (chat.agentId) dispatchLines.push(`  chat_agent: ${yamlEscape(chat.agentId)}`);
+      }
+    } catch {
+      // Lookup failure is non-fatal — proceed with chat_id only.
+    }
     if (input.auto_resume === false) dispatchLines.push(`  auto_resume: false`);
   }
 

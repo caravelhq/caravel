@@ -364,8 +364,17 @@ async function notifyDispatchChat(
     (directive.kind === "done" || directive.kind === "failed")
   ) {
     try {
+      // Carry the chat metadata stamped on the parent through to the
+      // continuation envelope so the dashboard / runner has full context
+      // without a re-fetch.
+      const chatName = readNestedField(yaml, "dispatch", "chat_name");
+      const chatPreview = readNestedField(yaml, "dispatch", "chat_preview");
+      const chatAgent = readNestedField(yaml, "dispatch", "chat_agent");
       await enqueueAliceContinuation({
         chatId,
+        chatName,
+        chatPreview,
+        chatAgent,
         completedTaskId: taskId,
         completedAgent: agent,
         completedSubdir: subdir,
@@ -436,12 +445,24 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
 
 async function enqueueAliceContinuation(opts: {
   chatId: string;
+  chatName?: string | null;
+  chatPreview?: string | null;
+  chatAgent?: string | null;
   completedTaskId: string;
   completedAgent: string;
   completedSubdir: string;
   directive: TaskDirective;
 }): Promise<void> {
-  const { chatId, completedTaskId, completedAgent, completedSubdir, directive } = opts;
+  const {
+    chatId,
+    chatName,
+    chatPreview,
+    chatAgent,
+    completedTaskId,
+    completedAgent,
+    completedSubdir,
+    directive,
+  } = opts;
   const id = await nextAliceTaskId(completedTaskId);
   const now = new Date().toISOString();
   const subEnvelope = `agents/${completedAgent}/tasks/${completedSubdir}/${completedTaskId}.yaml`;
@@ -512,6 +533,9 @@ async function enqueueAliceContinuation(opts: {
     "dispatch:",
     `  chat_id: ${chatId}`,
     `  chat_ts: ${now}`,
+    chatName ? `  chat_name: ${JSON.stringify(chatName)}` : "",
+    chatPreview ? `  chat_preview: ${JSON.stringify(chatPreview)}` : "",
+    chatAgent ? `  chat_agent: ${JSON.stringify(chatAgent)}` : "",
     "",
   ]
     .filter((line) => line !== "" || true) // preserve blanks

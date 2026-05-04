@@ -37,7 +37,13 @@ export interface TaskRow {
   brief: string;
   summary: { brief: string; response: string };
   context: string[];
-  dispatch: { chat_id: string | null; auto_resume: string | null };
+  dispatch: {
+    chat_id: string | null;
+    chat_name: string | null;
+    chat_preview: string | null;
+    chat_agent: string | null;
+    auto_resume: string | null;
+  };
   created: string | null;
   updated: string | null;
   envelopePath: string;
@@ -49,6 +55,23 @@ export interface TaskChain {
   parent: TaskRow | null;
   children: TaskRow[];
   ancestors: TaskRow[];
+}
+
+// Strip surrounding double-quotes from a YAML scalar (chat_name etc. are
+// written via JSON.stringify so they're always quoted). Returns null when
+// the value is null/empty.
+function unquote(raw: string | null): string | null {
+  if (!raw) return null;
+  const t = raw.trim();
+  if (!t || t === "null") return null;
+  if (t.startsWith('"') && t.endsWith('"')) {
+    try {
+      return JSON.parse(t);
+    } catch {
+      return t.slice(1, -1);
+    }
+  }
+  return t;
 }
 
 function readField(yaml: string, key: string): string | null {
@@ -170,6 +193,9 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   const context = readListField(yaml, "context");
   const dispatchChat = readNestedField(yaml, "dispatch", "chat_id");
   const dispatchAutoResume = readNestedField(yaml, "dispatch", "auto_resume");
+  const dispatchChatName = unquote(readNestedField(yaml, "dispatch", "chat_name"));
+  const dispatchChatPreview = unquote(readNestedField(yaml, "dispatch", "chat_preview"));
+  const dispatchChatAgent = unquote(readNestedField(yaml, "dispatch", "chat_agent"));
   const created = readField(yaml, "created");
   const updated = readField(yaml, "updated");
   const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
@@ -193,7 +219,13 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     brief,
     summary: { brief: summaryBrief, response: summaryResponse },
     context,
-    dispatch: { chat_id: dispatchChat, auto_resume: dispatchAutoResume },
+    dispatch: {
+      chat_id: dispatchChat,
+      chat_name: dispatchChatName,
+      chat_preview: dispatchChatPreview,
+      chat_agent: dispatchChatAgent,
+      auto_resume: dispatchAutoResume,
+    },
     created,
     updated,
     envelopePath,

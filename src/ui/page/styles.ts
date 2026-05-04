@@ -827,6 +827,14 @@ export const pageStyles = String.raw`    :root {
       font-size: 10px;
       color: #6a7e9b;
     }
+    .multi-agent-task-chat {
+      font-size: 11px;
+      color: #9bb1d0;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
     .multi-agent-task-time {
       margin-left: auto;
       color: #6a7e9b;

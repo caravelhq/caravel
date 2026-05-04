@@ -2748,6 +2748,17 @@
       function renderTaskRow(t) {
         var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
         var meta = [t.from || "?", "→", t.to || "?", "·", t.kind || "?"].join(" ");
+        var chatLine = "";
+        var d = t.dispatch || {};
+        if (d.chat_id) {
+          var chatLabel = d.chat_name || d.chat_preview || d.chat_id;
+          var chatTitle = d.chat_preview || d.chat_name || d.chat_id;
+          chatLine =
+            '<div class="multi-agent-task-chat" title="' + escapeHtml(chatTitle) + '">' +
+            '💬 ' + escapeHtml(shorten(chatLabel, 60)) +
+            (d.chat_agent ? ' · ' + escapeHtml(d.chat_agent) : "") +
+            '</div>';
+        }
         return (
           '<div class="multi-agent-task-row" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
           '<div class="multi-agent-task-row-head">' +
@@ -2757,6 +2768,7 @@
           '</div>' +
           '<div class="multi-agent-task-headline">' + escapeHtml(shorten(headline, 140)) + '</div>' +
           '<div class="multi-agent-task-meta">' + escapeHtml(meta) + '</div>' +
+          chatLine +
           '</div>'
         );
       }
