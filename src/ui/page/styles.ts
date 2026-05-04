@@ -2572,6 +2572,78 @@ export const pageStyles = String.raw`    :root {
       white-space: pre;
       tab-size: 2;
     }
+
+    /* === YAML rendered view (file viewer + task view) ==================== */
+    .files-yaml { font-size: 13px; line-height: 1.5; color: #d7e3f5; }
+    .yaml-doc { display: flex; flex-direction: column; gap: 6px; }
+    .yaml-object { display: flex; flex-direction: column; gap: 4px; }
+    .yaml-row { padding: 2px 0; }
+    .yaml-row-simple { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .yaml-row-complex { display: flex; flex-direction: column; gap: 4px; }
+    .yaml-key-line { display: flex; align-items: baseline; }
+    .yaml-key { color: #9be7ff; font-weight: 500; }
+    .yaml-colon { color: #6a7f94; margin-right: 0; }
+    .yaml-str { color: #d7e3f5; }
+    .yaml-num { color: #f4b678; }
+    .yaml-bool { color: #c792ea; }
+    .yaml-null { color: #c792ea; font-style: italic; }
+    .yaml-empty { color: #6a7f94; font-style: italic; }
+    .yaml-error {
+      background: #3a1a1a;
+      border: 1px solid #6e2828;
+      color: #ffb3b3;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .yaml-raw {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #6a7f94;
+      white-space: pre-wrap;
+    }
+    .yaml-block {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #c8d6e8;
+      background: #0f1620;
+      border-left: 2px solid #2a3950;
+      padding: 8px 12px;
+      margin: 4px 0 4px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 0 4px 4px 0;
+    }
+    .yaml-array {
+      list-style: none;
+      margin: 4px 0 4px 14px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .yaml-item {
+      position: relative;
+      padding-left: 14px;
+    }
+    .yaml-item::before {
+      content: "·";
+      position: absolute;
+      left: 0;
+      color: #6a7f94;
+    }
+    .yaml-value-block {
+      margin-left: 14px;
+    }
+    /* Status pill (applied by yaml-entry when key === "status") */
+    .yaml-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: lowercase; }
+    .yaml-status-done { background: #1f3a26; color: #a7e4a1; }
+    .yaml-status-failed { background: #3a1a1a; color: #ffb3b3; }
+    .yaml-status-waiting { background: #3a2f17; color: #f4c97e; }
+    .yaml-status-claimed { background: #1f2a3a; color: #9be7ff; }
+    .yaml-status-open { background: #2a2a3a; color: #c8d6e8; }
+
     .files-code code { font-family: inherit; font-size: inherit; }
     .syn-key { color: #9be7ff; }
     .syn-str { color: #a7e4a1; }

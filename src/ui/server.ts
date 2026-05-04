@@ -31,7 +31,17 @@ type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 let markedBundle: string | null = null;
 async function getMarkedBundle(): Promise<string | null> {
   if (markedBundle !== null) return markedBundle;
-  const entry = new URL("./page/marked-entry.ts", import.meta.url).pathname;
+  return (markedBundle = await buildBundle("./page/marked-entry.ts", "marked"));
+}
+
+let yamlBundle: string | null = null;
+async function getYamlBundle(): Promise<string | null> {
+  if (yamlBundle !== null) return yamlBundle;
+  return (yamlBundle = await buildBundle("./page/yaml-entry.ts", "yaml"));
+}
+
+async function buildBundle(entryRel: string, label: string): Promise<string> {
+  const entry = new URL(entryRel, import.meta.url).pathname;
   const result = await Bun.build({
     entrypoints: [entry],
     target: "browser",
@@ -39,11 +49,10 @@ async function getMarkedBundle(): Promise<string | null> {
     format: "iife",
   });
   if (!result.success || result.outputs.length === 0) {
-    console.error("[ui] marked bundle build failed", result.logs);
-    return null;
+    console.error(`[ui] ${label} bundle build failed`, result.logs);
+    return "";
   }
-  markedBundle = await result.outputs[0]!.text();
-  return markedBundle;
+  return await result.outputs[0]!.text();
 }
 
 // One processor per chatId — prevents concurrent assistant writes to the same
@@ -294,6 +303,19 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
           });
         }
         return new Response("// marked bundle unavailable", {
+          status: 500,
+          headers: { "Content-Type": "application/javascript; charset=utf-8" },
+        });
+      }
+
+      if (url.pathname === "/yaml.js") {
+        const bundled = await getYamlBundle();
+        if (bundled) {
+          return new Response(bundled, {
+            headers: { "Content-Type": "application/javascript; charset=utf-8" },
+          });
+        }
+        return new Response("// yaml bundle unavailable", {
           status: 500,
           headers: { "Content-Type": "application/javascript; charset=utf-8" },
         });

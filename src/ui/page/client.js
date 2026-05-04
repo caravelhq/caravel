@@ -2139,6 +2139,11 @@
           div.className = "files-md";
           div.innerHTML = renderMarkdown(data.content);
           filesContent.appendChild(div);
+        } else if (isYaml(filePath) && typeof globalThis.yamlRender === 'function') {
+          var ydiv = document.createElement("div");
+          ydiv.className = "files-yaml";
+          ydiv.innerHTML = globalThis.yamlRender(data.content);
+          filesContent.appendChild(ydiv);
         } else {
           var lang = detectLang(filePath);
           if (lang) {
@@ -2170,6 +2175,12 @@
       if (ext === "html" || ext === "htm") return "html";
       if (ext === "css" || ext === "scss" || ext === "sass" || ext === "less") return "css";
       return "";
+    }
+
+    function isYaml(filePath) {
+      var ext = (filePath.match(/\.([^./]+)$/) || [])[1] || "";
+      ext = ext.toLowerCase();
+      return ext === "yaml" || ext === "yml";
     }
 
     function escHtml(s) {
