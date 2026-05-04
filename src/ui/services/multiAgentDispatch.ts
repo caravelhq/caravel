@@ -39,7 +39,35 @@ function todayPrefix(): string {
   return `TSK-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-`;
 }
 
-async function nextTaskId(): Promise<string> {
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Decimal sub-task scheme: a task with a parent gets `{parent}.N` where N is
+// the next unused integer suffix among existing siblings (children of the same
+// parent). This lets reviewers trace orchestration trees from the id alone:
+// TSK-2026-05-04-0001 → TSK-2026-05-04-0001.1 → TSK-2026-05-04-0001.1.2 etc.
+// Top-level tasks (no parent) keep the flat date-prefixed counter.
+async function nextTaskId(parent: string | null): Promise<string> {
+  if (parent) {
+    const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
+    let maxN = 0;
+    for (const a of KNOWN_AGENTS) {
+      for (const sub of ["open", "waiting", "done", "failed"]) {
+        const dir = join(AGENTS_DIR, a, "tasks", sub);
+        if (!existsSync(dir)) continue;
+        const entries = await readdir(dir).catch(() => [] as string[]);
+        for (const e of entries) {
+          const m = childRe.exec(e);
+          if (!m) continue;
+          const n = Number.parseInt(m[1] ?? "", 10);
+          if (Number.isFinite(n) && n > maxN) maxN = n;
+        }
+      }
+    }
+    return `${parent}.${maxN + 1}`;
+  }
+
   const prefix = todayPrefix();
   let maxN = 0;
   for (const a of KNOWN_AGENTS) {
@@ -50,6 +78,9 @@ async function nextTaskId(): Promise<string> {
       for (const e of entries) {
         if (!e.startsWith(prefix) || !e.endsWith(".yaml")) continue;
         const tail = e.slice(prefix.length, -5);
+        // Skip child ids (contain a dot before .yaml) — those belong to the
+        // sub-task counter, not the top-level one.
+        if (tail.includes(".")) continue;
         const n = Number.parseInt(tail, 10);
         if (Number.isFinite(n) && n > maxN) maxN = n;
       }
@@ -99,7 +130,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
     return { ok: false, error: `output_format is required for kind=${kind}` };
   }
 
-  const id = await nextTaskId();
+  const id = await nextTaskId(parent);
   const now = new Date().toISOString();
 
   const budget = {

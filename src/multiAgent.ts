@@ -372,10 +372,39 @@ async function notifyDispatchChat(
   }
 }
 
-// Generate a short task id for Alice's queue. Mirrors the convention used by
-// the /task skill (TSK-YYYY-MM-DD-NNNN) but writes directly without shelling
-// out — keeps the runner self-contained.
-async function nextAliceTaskId(): Promise<string> {
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Generate a task id for Alice's continuation queue.
+//
+// Decimal sub-task scheme (mirrors the dispatch service):
+//   - When `parent` is provided (the normal continuation path), the new id is
+//     `{parent}.N` where N is the next unused integer suffix among existing
+//     children of that parent. Scans every agent's task dirs because children
+//     of an Alice-dispatched task may live anywhere.
+//   - When `parent` is null (defensive fallback), use the flat
+//     TSK-YYYY-MM-DD-NNNN counter scoped to Alice's own dirs.
+async function nextAliceTaskId(parent: string | null): Promise<string> {
+  if (parent) {
+    const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
+    let maxN = 0;
+    const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
+    for (const a of knownAgents) {
+      for (const sub of ["open", "waiting", "done", "failed"]) {
+        const dir = join(AGENTS_DIR, a, "tasks", sub);
+        const entries = await readdir(dir).catch(() => [] as string[]);
+        for (const fname of entries) {
+          const m = childRe.exec(fname);
+          if (!m) continue;
+          const n = Number.parseInt(m[1] ?? "", 10);
+          if (Number.isFinite(n) && n > maxN) maxN = n;
+        }
+      }
+    }
+    return `${parent}.${maxN + 1}`;
+  }
+
   const d = new Date();
   const datePart =
     `${d.getFullYear()}-` +
@@ -389,7 +418,9 @@ async function nextAliceTaskId(): Promise<string> {
     const entries = await readdir(dir).catch(() => [] as string[]);
     for (const fname of entries) {
       if (!fname.startsWith(prefix)) continue;
-      const n = parseInt(fname.slice(prefix.length).replace(/\.yaml$/, ""), 10);
+      const tail = fname.slice(prefix.length).replace(/\.yaml$/, "");
+      if (tail.includes(".")) continue;
+      const n = parseInt(tail, 10);
       if (Number.isFinite(n) && n > max) max = n;
     }
   }
@@ -404,7 +435,7 @@ async function enqueueAliceContinuation(opts: {
   directive: TaskDirective;
 }): Promise<void> {
   const { chatId, completedTaskId, completedAgent, completedSubdir, directive } = opts;
-  const id = await nextAliceTaskId();
+  const id = await nextAliceTaskId(completedTaskId);
   const now = new Date().toISOString();
   const subEnvelope = `agents/${completedAgent}/tasks/${completedSubdir}/${completedTaskId}.yaml`;
   const reportLine = directive.report
