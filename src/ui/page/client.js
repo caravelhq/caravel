@@ -2803,6 +2803,17 @@
       var taskPanelBack = document.getElementById("task-panel-back");
       var currentTaskId = null;
 
+      function renderSection(title, bodyHtml, openByDefault) {
+        if (!bodyHtml) return "";
+        var openAttr = openByDefault ? ' open' : '';
+        return (
+          '<details class="task-panel-section"' + openAttr + '>' +
+          '<summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary>' +
+          '<div class="task-panel-section-body">' + bodyHtml + '</div>' +
+          '</details>'
+        );
+      }
+
       function renderPanelCard(card, label, isCurrent) {
         if (!card) return "";
         var brief = card.brief || "";
@@ -2833,6 +2844,28 @@
 
         var meta = [card.from || "?", "→", card.to || "?", "·", card.kind || "?", card.priority ? "· " + card.priority : ""].filter(Boolean).join(" ");
 
+        // Decide which section gets the "primary" auto-open treatment based
+        // on task status. Done/failed → worker result is the payload. Open
+        // or waiting → the brief is what the user wants to see first.
+        var status = (card.status || "").toLowerCase();
+        var isTerminal = status.indexOf("done") === 0 || status.indexOf("failed") === 0 || status === "escalated";
+        var openResult = isTerminal && !!summaryResponse;
+        var openBrief = !isTerminal && !!brief;
+
+        var sections = "";
+        if (summaryResponse) {
+          sections += renderSection("Worker result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', openResult);
+        }
+        if (brief) {
+          sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + '</div>', openBrief);
+        }
+        if (summaryBrief) {
+          sections += renderSection("Worker brief", '<div class="task-panel-card-summary">' + escapeHtml(summaryBrief) + '</div>', false);
+        }
+        if (ctxLines) {
+          sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + '</div>', false);
+        }
+
         return (
           '<div class="task-panel-card' + (isCurrent ? " is-current" : "") + '">' +
           '<div class="task-panel-section-label">' + escapeHtml(label) + '</div>' +
@@ -2843,10 +2876,7 @@
           '</div>' +
           (card.headline ? '<div class="task-panel-card-headline">' + escapeHtml(card.headline) + '</div>' : "") +
           '<div class="task-panel-card-meta">' + escapeHtml(meta) + (card.updated ? " · " + escapeHtml(timeAgo(card.updated)) : "") + '</div>' +
-          (summaryBrief ? '<div class="task-panel-card-summary"><strong>Worker brief:</strong> ' + escapeHtml(summaryBrief) + '</div>' : "") +
-          (summaryResponse ? '<div class="task-panel-card-summary"><strong>Worker result:</strong> ' + escapeHtml(summaryResponse) + '</div>' : "") +
-          (brief ? '<div class="task-panel-card-summary"><strong>Brief:</strong> ' + escapeHtml(shorten(brief, 600)) + '</div>' : "") +
-          (ctxLines ? '<div class="task-panel-context-list">' + ctxLines + '</div>' : "") +
+          sections +
           '<div class="task-panel-card-actions">' + actions.join("") + '</div>' +
           '</div>'
         );

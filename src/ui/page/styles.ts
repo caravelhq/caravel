@@ -2528,6 +2528,49 @@ export const pageStyles = String.raw`    :root {
     .task-panel-card-actions button.is-primary:hover {
       background: #355a8a;
     }
+    .task-panel-section {
+      border: 1px solid #ffffff10;
+      border-radius: 8px;
+      background: #07101da6;
+      padding: 0;
+      overflow: hidden;
+    }
+    .task-panel-section[open] {
+      background: #0a1424b8;
+      border-color: #ffffff1e;
+    }
+    .task-panel-section-summary {
+      cursor: pointer;
+      padding: 7px 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a8b8cf;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .task-panel-section-summary::-webkit-details-marker { display: none; }
+    .task-panel-section-summary::before {
+      content: "▸";
+      font-size: 10px;
+      color: #6a7e9b;
+      transition: transform 120ms;
+      display: inline-block;
+    }
+    .task-panel-section[open] > .task-panel-section-summary::before {
+      transform: rotate(90deg);
+    }
+    .task-panel-section-summary:hover {
+      color: #d6e6ff;
+      background: #14223644;
+    }
+    .task-panel-section-body {
+      padding: 4px 12px 10px;
+    }
     .task-panel-context-list {
       display: grid;
       gap: 4px;
