@@ -1901,6 +1901,42 @@ export const pageStyles = String.raw`    :root {
       line-height: 1.4;
     }
     .chat-picker-item-active .chat-picker-item-desc { color: #b8c7dc; }
+    .chat-picker-actions {
+      max-width: 480px;
+      margin: 18px auto 0;
+      padding-top: 14px;
+      border-top: 1px dashed #ffffff14;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .chat-picker-actions-hint {
+      font-size: 12px;
+      color: #6a7c91;
+      font-family: "Space Grotesk", sans-serif;
+    }
+    .chat-picker-task-btn {
+      padding: 8px 14px;
+      border: 1px solid #ffffff1f;
+      border-radius: 8px;
+      background: #ffffff0a;
+      color: #c7d1e0;
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+    .chat-picker-task-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #2f5486, #24406a);
+      border-color: #7fb1f0;
+      color: #eef4ff;
+    }
+    .chat-picker-task-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
     .chat-agent-badge {
       display: inline-block;
       padding: 3px 8px;

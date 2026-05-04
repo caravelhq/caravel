@@ -1537,12 +1537,43 @@
             for (var j = 0; j < items.length; j++) {
               items[j].classList.toggle("chat-picker-item-active", items[j] === item);
             }
+            // Refresh the picker actions (enable the "Set a task" button now
+            // that an agent is selected).
+            updatePickerActions();
           });
 
           list.appendChild(item);
         })(agentsCache[i]);
       }
       empty.appendChild(list);
+
+      // Parallel paths after picking: chat (type below) or set a task.
+      var actions = document.createElement("div");
+      actions.className = "chat-picker-actions";
+
+      var hint = document.createElement("div");
+      hint.className = "chat-picker-actions-hint";
+      hint.textContent = "Then either type a message below, or:";
+      actions.appendChild(hint);
+
+      var taskBtn = document.createElement("button");
+      taskBtn.type = "button";
+      taskBtn.className = "chat-picker-task-btn";
+      taskBtn.textContent = "Set a task →";
+      taskBtn.disabled = !pendingAgentId;
+      taskBtn.addEventListener("click", function () {
+        if (!pendingAgentId) return;
+        if (typeof window.__openTaskFormInChat === "function") {
+          window.__openTaskFormInChat();
+        }
+      });
+      actions.appendChild(taskBtn);
+
+      function updatePickerActions() {
+        taskBtn.disabled = !pendingAgentId;
+      }
+
+      empty.appendChild(actions);
 
       return empty;
     }
@@ -1634,7 +1665,19 @@
       }
     }
 
+    function updateChatTaskBtnVisibility() {
+      var btn = $("chat-new-task-btn");
+      if (!btn) return;
+      // Only show "+ Task" once the chat has at least one message —
+      // dispatching a task before the chat is established gives the runner
+      // nothing useful to link back to.
+      var active = chatHistory.length > 0;
+      if (active) btn.removeAttribute("hidden");
+      else btn.setAttribute("hidden", "");
+    }
+
     function renderChatHistory() {
+      updateChatTaskBtnVisibility();
       if (!chatMessages) return;
       if (!chatHistory.length) {
         if (
@@ -3069,18 +3112,13 @@
         });
       }
 
-      if (newBtn && newForm) {
+      if (newBtn) {
+        // Redirect dashboard "+ New" to the chat-tab "start chat with task"
+        // flow: a fresh chat with the agent picker + "Set a task" CTA.
+        // Keeps task creation funnelling through one entry point.
         newBtn.addEventListener("click", function () {
-          var hidden = newForm.hasAttribute("hidden");
-          if (hidden) {
-            newForm.removeAttribute("hidden");
-            newBtn.classList.add("is-active");
-            var headlineEl = document.getElementById("multi-agent-new-headline");
-            if (headlineEl) headlineEl.focus();
-          } else {
-            newForm.setAttribute("hidden", "");
-            newBtn.classList.remove("is-active");
-          }
+          if (typeof startNewChat === "function") startNewChat();
+          if (typeof setActiveTab === "function") setActiveTab("chat");
         });
       }
 
@@ -3152,6 +3190,12 @@
           }
         });
       }
+
+      // Expose openFormInChat so the empty-state "Set a task →" button and
+      // the dashboard "+ New" redirect can reuse it without duplicating
+      // chat-context wiring.
+      window.__openTaskFormInChat = openFormInChat;
+      window.__returnTaskFormToDashboard = returnFormToDashboard;
 
       // Live word counter for the headline field — flips red over 10 words.
       var headlineInput = document.getElementById("multi-agent-new-headline");
