@@ -177,6 +177,97 @@ function parseAttrs(s: string): Record<string, string> {
   return out;
 }
 
+// File-as-output rendezvous: workers are now contracted to write
+// `agents/<agent>/tasks/<status>/<id>.md` with frontmatter as their primary
+// completion signal. This survives output truncation in a way the XML
+// directive does not. The runner checks for the file after the worker's
+// session ends; if found, it synthesises a TaskDirective from the frontmatter.
+//
+// Looked-for paths (in order): done/<id>.md, failed/<id>.md, waiting/<id>.md.
+// The first one that exists wins. Multiple is a worker bug — log and use done.
+async function readReportFile(agent: string, taskId: string): Promise<TaskDirective | null> {
+  const buckets: Array<"done" | "failed" | "waiting"> = ["done", "failed", "waiting"];
+  for (const bucket of buckets) {
+    const path = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.md`);
+    if (!existsSync(path)) continue;
+
+    let content: string;
+    try {
+      content = await readFile(path, "utf-8");
+    } catch {
+      continue;
+    }
+
+    const fm = extractFrontmatter(content);
+    if (!fm) {
+      console.warn(`[multi-agent] ${agent}/${taskId}: report file at ${path} has no frontmatter — skipping`);
+      continue;
+    }
+
+    const status = (fm.status ?? bucket).toLowerCase().trim();
+    const summary = (fm.summary ?? "").trim();
+    const body = stripFrontmatter(content).trim();
+
+    if (status === "done" || bucket === "done") {
+      const reportPath = (fm.report_path ?? "").trim();
+      // If the worker pointed report_path at a sibling deliverable, link to
+      // that. Otherwise the report IS this .md file — link there so the
+      // dashboard can open it directly.
+      const report = reportPath || `agents/${agent}/tasks/${bucket}/${taskId}.md`;
+      return {
+        kind: "done",
+        reason: null,
+        summary: summary || "(no summary)",
+        body,
+        report,
+      };
+    }
+    if (status === "failed" || bucket === "failed") {
+      const reason = (fm.reason ?? "other").toLowerCase().trim();
+      return {
+        kind: "failed",
+        reason,
+        summary: summary || `failed:${reason}`,
+        body,
+        report: null,
+      };
+    }
+    if (status === "waiting" || bucket === "waiting") {
+      const on = (fm.waiting_on ?? fm.on ?? "user").trim();
+      return {
+        kind: "waiting",
+        reason: on,
+        summary: summary || `waiting on ${on}`,
+        body,
+        report: null,
+      };
+    }
+  }
+  return null;
+}
+
+// Lightweight YAML frontmatter parser. Pulls top-level scalar key:value pairs
+// from a `---`-fenced block at the start of a markdown file. Quotes are
+// stripped; nested structures are ignored (return null for the key).
+function extractFrontmatter(content: string): Record<string, string> | null {
+  const m = content.match(/^---\s*\n([\s\S]*?)\n---\s*(\n|$)/);
+  if (!m) return null;
+  const out: Record<string, string> = {};
+  for (const line of m[1].split("\n")) {
+    const kv = line.match(/^([A-Za-z_][\w-]*)\s*:\s*(.*)$/);
+    if (!kv) continue;
+    let value = kv[2].trim();
+    if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
+    else if (value.startsWith("'") && value.endsWith("'")) value = value.slice(1, -1);
+    out[kv[1]] = value;
+  }
+  return out;
+}
+
+function stripFrontmatter(content: string): string {
+  return content.replace(/^---\s*\n[\s\S]*?\n---\s*(\n|$)/, "");
+}
+
 function parseDirective(text: string): TaskDirective | null {
   const doneMatch = /<task-done([^>]*)>([\s\S]*?)<\/task-done>/.exec(text);
   if (doneMatch) {
@@ -218,27 +309,71 @@ function parseDirective(text: string): TaskDirective | null {
 
 function buildWorkerPrompt(yaml: string, taskId: string): string {
   // The worker has its own CLAUDE.md and rules already loaded by the runner.
-  // The prompt is the brief itself plus a contract reminder.
+  // The prompt is the brief itself plus the file-as-output contract.
   const brief = readField(yaml, "brief") ?? "";
+  const agent = readField(yaml, "to") ?? "<self>";
   return [
     `You have been delegated task ${taskId}. The full envelope is at:`,
-    `  agents/${readField(yaml, "to") ?? "<self>"}/tasks/open/${taskId}.yaml`,
+    `  agents/${agent}/tasks/open/${taskId}.yaml`,
     "",
     "Brief:",
     brief.trim() || "(see envelope)",
     "",
-    "When you finish (or cannot finish), end your response with one of these directives:",
-    `  <task-done summary="one or two line restatement of the result" report="path/to/produced/file.md">…optional inline body…</task-done>`,
+    "## How to return your result (primary contract)",
+    "",
+    `Your final action MUST be a Write call that creates this file:`,
+    "",
+    `  agents/${agent}/tasks/<status>/${taskId}.md`,
+    "",
+    "where <status> is one of `done`, `failed`, or `waiting`. The file is your deliverable AND your closing signal — the runner reads its frontmatter to decide what happened.",
+    "",
+    "Frontmatter shapes:",
+    "",
+    "Done:",
+    "```",
+    "---",
+    "status: done",
+    "summary: One-line restatement of what you produced and where it landed.",
+    "report_path: optional/path/to/separate/deliverable.md  # omit if the body IS the deliverable",
+    "---",
+    "(your full writeup; this file IS the report unless report_path points elsewhere)",
+    "```",
+    "",
+    "Failed:",
+    "```",
+    "---",
+    "status: failed",
+    "reason: budget | tool | refusal | context | crash | timeout | other",
+    "summary: One-line explanation of what blocked you.",
+    "---",
+    "(optional: longer explanation)",
+    "```",
+    "",
+    "Waiting:",
+    "```",
+    "---",
+    "status: waiting",
+    "waiting_on: task:TSK-... | agent:<name> | user",
+    "summary: One-line statement of what you're waiting on.",
+    "---",
+    "(optional notes)",
+    "```",
+    "",
+    "Write this file with the Write tool, AS THE LAST THING IN YOUR TURN. Don't print the contents to chat — write the file.",
+    "",
+    "Use `waiting` when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks your envelope and re-claims when the dependency clears. NEVER use `failed: dependency` — that's a worker bug; use `waiting` instead.",
+    "",
+    "Delegation: if your brief requires inputs you don't have (deeper research, code review, etc.) you can dispatch sub-tasks via the `/task` skill. After dispatching, write a `waiting` file with `waiting_on: task:TSK-...`. The runner re-claims your envelope when the sub-task lands in `done/`.",
+    "",
+    "## Fallback (legacy)",
+    "",
+    "If for some reason you cannot write the file, you MAY end your response with one of these XML directives instead. The runner uses them only when the file is missing:",
+    "",
+    `  <task-done summary="..." report="path/to/produced/file.md">…optional inline body…</task-done>`,
     `  <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>`,
     `  <task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>`,
     "",
-    "If you produced a file (report, recommendation memo, code patch, etc.) put its path (relative to the repo root) in the `report` attribute of <task-done> so Kelly can open it directly from the dashboard. Omit the attribute if there is no produced file.",
-    "",
-    "Use <task-waiting> when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks the envelope and re-emits it back to your open queue when the dependency clears. Do NOT use <task-failed reason=\"dependency\"> for this — that is reserved for genuine failures.",
-    "",
-    "Delegation: if your brief requires inputs you don't have (deeper sourced research, a positioning rewrite, a code review, an operational reality check), you can dispatch sub-tasks to other agents using the `/task` skill. After dispatching, emit `<task-waiting on=\"task:TSK-...\">` so the runner parks your envelope. The runner re-emits it back to your queue once the dependency lands in the other agent's `tasks/done/` — at that point you read the report and continue. Whether `/task` is appropriate for your role is documented in your own CLAUDE.md; default to using it when the upstream input would itself be a non-trivial chunk of work, default to inline lookup when it's a small fact-check.",
-    "",
-    "Do not emit a directive until you are truly finished or genuinely blocked. The runner moves your envelope to done/, failed/, or waiting/ and appends the journal entry.",
+    "The file is preferred because it survives output-truncation; a directive at the end of a long response can get cut off and lost.",
   ].join("\n");
 }
 
@@ -795,6 +930,14 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   } catch (err) {
     console.error(`[multi-agent] worker ${agent}/${taskId} threw:`, err);
     return { kind: "failed", reason: "crash", summary: String(err), body: "", report: null };
+  }
+
+  // Primary contract: a report file at agents/<agent>/tasks/<status>/<id>.md.
+  // Survives output truncation; the file is what the runner trusts first.
+  const fromFile = await readReportFile(agent, taskId);
+  if (fromFile) {
+    console.log(`[multi-agent] ${agent}/${taskId}: read result from report file (status=${fromFile.kind})`);
+    return fromFile;
   }
 
   return parseDirective(captured);
