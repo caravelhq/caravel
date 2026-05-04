@@ -2044,6 +2044,18 @@ export const pageStyles = String.raw`    :root {
       border-top: 1px solid #ffffff12;
       background: #080f1c66;
     }
+    .chat-task-host {
+      flex-shrink: 0;
+      max-height: 50%;
+      overflow-y: auto;
+      padding: 8px 12px;
+      border-top: 1px solid #ffffff12;
+      background: #050b16;
+    }
+    .chat-task-host .multi-agent-new.is-in-chat {
+      margin: 0;
+      border: 1px solid #ffffff14;
+    }
     .chat-form {
       display: flex;
       align-items: flex-end;

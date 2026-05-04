@@ -306,6 +306,7 @@ ${pageStyles}
           <span id="chat-agent-badge" class="chat-agent-badge" hidden></span>
         </div>
         <button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button>
+        <button id="chat-new-task-btn" class="chat-toolbar-btn" type="button" title="Dispatch a task linked to this chat">+ Task</button>
         <button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat (asks to confirm)" aria-label="Delete chat">🗑</button>
         <div id="chat-history-dropdown" class="chat-history-dropdown" hidden>
           <div class="chat-history-head">
@@ -316,6 +317,7 @@ ${pageStyles}
         </div>
       </div>
       <div id="chat-messages" class="chat-messages"></div>
+      <div id="chat-task-host" class="chat-task-host" hidden></div>
       <div class="chat-input-area">
         <form id="chat-form" class="chat-form">
           <textarea

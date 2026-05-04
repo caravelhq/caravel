@@ -3021,6 +3021,75 @@
         });
       }
 
+      // === Chat-panel "+ Task" integration =================================
+      // When the user hits "+ Task" in the chat toolbar we re-parent the
+      // existing new-task form into the chat panel so it can be dispatched
+      // without leaving the chat. The form remembers the chat_id and the
+      // current chat's agent so the runner can post status updates back here
+      // and so `to` defaults to the right specialist.
+      var chatTaskBtn = document.getElementById("chat-new-task-btn");
+      var chatTaskHost = document.getElementById("chat-task-host");
+      var formOriginalParent = newForm ? newForm.parentElement : null;
+      var pendingChatContext = null; // { chatId, agentId }
+
+      function returnFormToDashboard() {
+        if (!newForm) return;
+        if (formOriginalParent && newForm.parentElement !== formOriginalParent) {
+          formOriginalParent.appendChild(newForm);
+        }
+        if (chatTaskHost) chatTaskHost.setAttribute("hidden", "");
+        newForm.classList.remove("is-in-chat");
+        if (newStatus) newStatus.textContent = "";
+        pendingChatContext = null;
+      }
+
+      function openFormInChat() {
+        if (!newForm || !chatTaskHost) return;
+        if (typeof chatSessionId === "undefined" || !chatSessionId) {
+          if (newStatus) {
+            newStatus.textContent = "Open or start a chat first.";
+            newStatus.classList.add("is-error");
+          }
+          return;
+        }
+        var agentId = (typeof effectiveAgentId === "function") ? effectiveAgentId() : null;
+        pendingChatContext = { chatId: chatSessionId, agentId: agentId || null };
+
+        // Move form into chat host and unhide.
+        chatTaskHost.appendChild(newForm);
+        chatTaskHost.removeAttribute("hidden");
+        newForm.removeAttribute("hidden");
+        newForm.classList.add("is-in-chat");
+
+        // Pre-fill target with the current chat's agent if it's a known
+        // dispatchable agent. From defaults to "kelly" — leave it.
+        if (agentId) {
+          var toEl = document.getElementById("multi-agent-new-to");
+          if (toEl) {
+            for (var i = 0; i < toEl.options.length; i++) {
+              if (toEl.options[i].value === agentId) {
+                toEl.value = agentId;
+                break;
+              }
+            }
+          }
+        }
+        var headlineEl = document.getElementById("multi-agent-new-headline");
+        if (headlineEl) headlineEl.focus();
+      }
+
+      if (chatTaskBtn) {
+        chatTaskBtn.addEventListener("click", function () {
+          if (!newForm) return;
+          // Toggle: if form is already in chat host, close it.
+          if (newForm.parentElement === chatTaskHost && !newForm.hasAttribute("hidden")) {
+            returnFormToDashboard();
+          } else {
+            openFormInChat();
+          }
+        });
+      }
+
       // Live word counter for the headline field — flips red over 10 words.
       var headlineInput = document.getElementById("multi-agent-new-headline");
       var headlineCounter = document.getElementById("multi-agent-new-headline-count");
@@ -3036,9 +3105,13 @@
 
       if (newCancelBtn && newForm) {
         newCancelBtn.addEventListener("click", function () {
-          newForm.setAttribute("hidden", "");
-          if (newBtn) newBtn.classList.remove("is-active");
-          if (newStatus) newStatus.textContent = "";
+          if (newForm.parentElement === chatTaskHost) {
+            returnFormToDashboard();
+          } else {
+            newForm.setAttribute("hidden", "");
+            if (newBtn) newBtn.classList.remove("is-active");
+            if (newStatus) newStatus.textContent = "";
+          }
         });
       }
 
@@ -3070,10 +3143,16 @@
           }
           if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
           try {
+            var payload = { headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context };
+            // If the form is hosted in the chat panel, link the new task to
+            // this chat so the runner posts status updates back here.
+            if (pendingChatContext && pendingChatContext.chatId) {
+              payload.chat_id = pendingChatContext.chatId;
+            }
             var res = await fetch("/api/tasks/new", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context }),
+              body: JSON.stringify(payload),
             });
             var data = await res.json();
             if (!data.ok) {
@@ -3091,10 +3170,16 @@
             if (outputEl) outputEl.value = "";
             if (ctxEl) ctxEl.value = "";
             updateHeadlineCount();
-            // Show the task list with the new entry on top.
-            if (tasksWrap && tasksWrap.hasAttribute("hidden")) {
-              tasksWrap.removeAttribute("hidden");
-              if (listToggleBtn) listToggleBtn.classList.add("is-active");
+            // If the form was hosted in the chat panel, return it to the
+            // dashboard now — the dispatched-id confirmation already showed.
+            if (newForm.parentElement === chatTaskHost) {
+              setTimeout(returnFormToDashboard, 1500);
+            } else {
+              // Dashboard mode: show the task list with the new entry on top.
+              if (tasksWrap && tasksWrap.hasAttribute("hidden")) {
+                tasksWrap.removeAttribute("hidden");
+                if (listToggleBtn) listToggleBtn.classList.add("is-active");
+              }
             }
             fetchTasks();
             fetchSummary();
