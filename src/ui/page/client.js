@@ -2852,6 +2852,43 @@
         );
       }
 
+      function renderTreeNode(node, depth, marker, isCurrent) {
+        if (!node) return "";
+        var pad = depth * 14;
+        var indent = '<span class="task-tree-indent" style="width:' + pad + 'px"></span>';
+        var dot = '<span class="task-tree-marker">' + marker + '</span>';
+        var id = '<span class="task-tree-id">' + escapeHtml(node.id) + '</span>';
+        var agent = '<span class="task-tree-agent">' + escapeHtml(node.agent || node.to || "?") + '</span>';
+        var status = '<span class="task-tree-status ' + statusClass(node.status) + '">' + escapeHtml(node.status || "?") + '</span>';
+        var headline = node.headline || node.brief || "";
+        var headlineHtml = '<span class="task-tree-headline">' + escapeHtml(shorten(headline, 120)) + '</span>';
+        var attr = isCurrent ? '' : ' data-open-task="' + escapeHtml(node.id) + '"';
+        return '<div class="task-tree-node' + (isCurrent ? ' is-current' : '') + '"' + attr + '>' +
+          indent + dot + id + agent + status + headlineHtml + '</div>';
+      }
+
+      function renderTaskTree(chain) {
+        var ancestors = chain.ancestors || [];
+        var children = chain.children || [];
+        var task = chain.task;
+        var rows = [];
+        for (var i = 0; i < ancestors.length; i++) {
+          var marker = i === 0 ? '◆' : '└';
+          rows.push(renderTreeNode(ancestors[i], i, marker, false));
+        }
+        var curDepth = ancestors.length;
+        if (task) {
+          var curMarker = curDepth === 0 ? '●' : '└';
+          rows.push(renderTreeNode(task, curDepth, curMarker, true));
+        }
+        for (var j = 0; j < children.length; j++) {
+          var cmark = j === children.length - 1 ? '└' : '├';
+          rows.push(renderTreeNode(children[j], curDepth + 1, cmark, false));
+        }
+        if (rows.length === 0) return '';
+        return '<div class="task-tree">' + rows.join("") + '</div>';
+      }
+
       async function openTaskPanel(taskId) {
         if (!taskId || !taskPanelBody) return;
         currentTaskId = taskId;
@@ -2877,16 +2914,12 @@
             }
           }
           var parts = [];
-          var ancestors = c.ancestors || [];
-          for (var i = 0; i < ancestors.length; i++) {
-            var label = i === ancestors.length - 1 ? "Parent" : "Ancestor";
-            parts.push(renderPanelCard(ancestors[i], label, false));
+          var hasChain = (c.ancestors && c.ancestors.length > 0) || (c.children && c.children.length > 0);
+          if (hasChain) {
+            parts.push('<div class="task-panel-section-label">Dependency tree</div>');
+            parts.push(renderTaskTree(c));
           }
           if (task) parts.push(renderPanelCard(task, "Current task", true));
-          var children = c.children || [];
-          for (var j = 0; j < children.length; j++) {
-            parts.push(renderPanelCard(children[j], "Sub-task", false));
-          }
           taskPanelBody.innerHTML = parts.length > 0 ? parts.join("") : '<div class="task-panel-loading">No chain data.</div>';
         } catch (err) {
           taskPanelBody.innerHTML = '<div class="task-panel-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';

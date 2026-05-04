@@ -2360,6 +2360,87 @@ export const pageStyles = String.raw`    :root {
       color: #6a7e9b;
       margin-bottom: 4px;
     }
+    .task-tree {
+      background: #07101da6;
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .task-tree-node {
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 120ms;
+      font-size: 11px;
+      color: #cfe3ff;
+    }
+    .task-tree-node:hover {
+      background: #14223666;
+    }
+    .task-tree-node.is-current {
+      background: #1a2a44a8;
+      border: 1px solid #ffd07a99;
+      cursor: default;
+      padding: 4px 7px;
+    }
+    .task-tree-node.is-current:hover {
+      background: #1a2a44a8;
+    }
+    .task-tree-indent {
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .task-tree-marker {
+      color: #6a7e9b;
+      font-size: 11px;
+      width: 14px;
+      display: inline-block;
+      text-align: center;
+    }
+    .task-tree-node.is-current .task-tree-marker {
+      color: #ffd07a;
+    }
+    .task-tree-id {
+      color: #d6e6ff;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .task-tree-agent {
+      color: #ffd07a;
+      font-size: 10px;
+    }
+    .task-tree-status {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9be7ff;
+    }
+    .task-tree-status.is-waiting { color: #f0c674; }
+    .task-tree-status.is-done { color: #93e0a8; }
+    .task-tree-status.is-failed { color: #ff9a9a; }
+    .task-tree-headline {
+      color: #b8cae3;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .task-tree-node {
+        grid-template-columns: auto auto auto 1fr;
+        gap: 6px;
+      }
+      .task-tree-agent { display: none; }
+    }
     .task-panel-card {
       background: #0a1220a8;
       border: 1px solid #ffffff14;
