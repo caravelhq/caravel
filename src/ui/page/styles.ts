@@ -718,6 +718,19 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-count-failed { color: #ff9a9a; }
     .multi-agent-count-archived { color: #b8a8d8; }
     .multi-agent-count-zero { color: #5a6b85; }
+    .multi-agent-count-link {
+      cursor: pointer;
+      padding: 1px 4px;
+      margin: -1px -4px;
+      border-radius: 4px;
+      transition: background 100ms ease, filter 100ms ease;
+    }
+    .multi-agent-count-link:hover,
+    .multi-agent-count-link:focus-visible {
+      background: #ffffff10;
+      filter: brightness(1.15);
+      outline: none;
+    }
     .multi-agent-extras {
       display: grid;
       gap: 6px;

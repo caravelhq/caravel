@@ -2663,20 +2663,26 @@
         var done = counts.done || 0;
         var failed = counts.failed || 0;
         var archived = counts.archived || 0;
-        var openCls = open > 0 ? "multi-agent-count-open" : "multi-agent-count-zero";
-        var waitingCls = waiting > 0 ? "multi-agent-count-waiting" : "multi-agent-count-zero";
-        var doneCls = done > 0 ? "multi-agent-count-done" : "multi-agent-count-zero";
-        var failedCls = failed > 0 ? "multi-agent-count-failed" : "multi-agent-count-zero";
-        var archivedCls = archived > 0 ? "multi-agent-count-archived" : "multi-agent-count-zero";
+        function countSpan(value, status, icon, label) {
+          var clsBase = value > 0 ? "multi-agent-count-" + status : "multi-agent-count-zero";
+          var clsLink = value > 0 ? " multi-agent-count-link" : "";
+          var dataAttrs = value > 0
+            ? ' data-agent="' + escapeHtml(name) + '" data-status="' + status + '" role="button" tabindex="0"'
+            : "";
+          return (
+            '<span class="' + clsBase + clsLink + '" title="' + label + '"' + dataAttrs + '>' +
+            icon + ' ' + value + '</span>'
+          );
+        }
         return (
           '<div class="multi-agent-cell">' +
           '<div class="multi-agent-cell-name">' + escapeHtml(name) + '</div>' +
           '<div class="multi-agent-cell-counts">' +
-          '<span class="' + openCls + '" title="open">○ ' + open + '</span>' +
-          '<span class="' + waitingCls + '" title="waiting">⏳ ' + waiting + '</span>' +
-          '<span class="' + doneCls + '" title="done">✓ ' + done + '</span>' +
-          '<span class="' + failedCls + '" title="failed">✗ ' + failed + '</span>' +
-          '<span class="' + archivedCls + '" title="archived">📦 ' + archived + '</span>' +
+          countSpan(open, "open", "○", "open") +
+          countSpan(waiting, "waiting", "⏳", "waiting") +
+          countSpan(done, "done", "✓", "done") +
+          countSpan(failed, "failed", "✗", "failed") +
+          countSpan(archived, "archived", "📦", "archived") +
           '</div></div>'
         );
       }
@@ -2748,6 +2754,33 @@
       if (refresh) refresh.addEventListener("click", fetchSummary);
       fetchSummary();
       setInterval(fetchSummary, 30000);
+
+      // Click a count badge → switch to files tab and open
+      // agents/<agent>/tasks/<status>/. Status `open` and `waiting` map to
+      // the same-named directories; `done`/`failed`/`archived` likewise.
+      function navigateToTasksDir(agent, status) {
+        if (!agent || !status) return;
+        var dir = "agents/" + agent + "/tasks/" + status;
+        try {
+          if (typeof setActiveTab === "function") setActiveTab("files");
+          if (typeof loadDirectory === "function") loadDirectory(dir);
+        } catch (_) {}
+      }
+      if (grid) {
+        grid.addEventListener("click", function (ev) {
+          var link = ev.target.closest(".multi-agent-count-link");
+          if (!link) return;
+          ev.preventDefault();
+          navigateToTasksDir(link.getAttribute("data-agent"), link.getAttribute("data-status"));
+        });
+        grid.addEventListener("keydown", function (ev) {
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          var link = ev.target.closest(".multi-agent-count-link");
+          if (!link) return;
+          ev.preventDefault();
+          navigateToTasksDir(link.getAttribute("data-agent"), link.getAttribute("data-status"));
+        });
+      }
 
       // === Phase 5/6: task list, chain expansion, new-task form ============
       var listToggleBtn = document.getElementById("multi-agent-list-toggle");
@@ -3102,12 +3135,21 @@
         listToggleBtn.addEventListener("click", function () {
           var hidden = tasksWrap.hasAttribute("hidden");
           if (hidden) {
+            // Show task list — hide the summary grid + extras so the pane
+            // toggles between the two views instead of stacking them.
             tasksWrap.removeAttribute("hidden");
+            if (grid) grid.setAttribute("hidden", "");
+            if (extras) extras.setAttribute("hidden", "");
             listToggleBtn.classList.add("is-active");
+            listToggleBtn.textContent = "Summary";
             fetchTasks();
           } else {
+            // Back to summary view.
             tasksWrap.setAttribute("hidden", "");
+            if (grid) grid.removeAttribute("hidden");
+            if (extras) extras.removeAttribute("hidden");
             listToggleBtn.classList.remove("is-active");
+            listToggleBtn.textContent = "Tasks";
           }
         });
       }

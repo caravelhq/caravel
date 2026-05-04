@@ -104,11 +104,15 @@ function appendHistory(yaml: string, entry: { ts: string; from: string; to: stri
     `    to: ${entry.to}\n` +
     `    by: ${entry.by}\n` +
     `    note: ${JSON.stringify(entry.note)}\n`;
+  // Block-form header already present (`history:` alone or `history:\n`).
   if (/^history:\s*$/m.test(yaml) || /^history:\s*\n/m.test(yaml)) {
     return yaml.replace(/^history:\s*\n?/m, (m) => m + block);
   }
-  if (/^history:/m.test(yaml)) {
-    return yaml.replace(/^history:.*$/m, (m) => `${m}\n${block.trimEnd()}`);
+  // Inline value (`history: []`, `history: null`, etc.) — replace with block
+  // form. Appending list items below an inline value produces invalid YAML
+  // (the inline `[]` declared an empty array; siblings can't follow).
+  if (/^history:.*$/m.test(yaml)) {
+    return yaml.replace(/^history:.*$/m, () => `history:\n${block.trimEnd()}`);
   }
   return yaml + `\nhistory:\n${block}`;
 }
