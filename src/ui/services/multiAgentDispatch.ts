@@ -49,11 +49,15 @@ function escapeRegex(s: string): string {
 // TSK-2026-05-04-0001 → TSK-2026-05-04-0001.1 → TSK-2026-05-04-0001.1.2 etc.
 // Top-level tasks (no parent) keep the flat date-prefixed counter.
 async function nextTaskId(parent: string | null): Promise<string> {
+  // Include `archived` so ids that were swept off the active dirs are still
+  // reserved and never reissued.
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
+
   if (parent) {
     const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
     for (const a of KNOWN_AGENTS) {
-      for (const sub of ["open", "waiting", "done", "failed"]) {
+      for (const sub of SCAN_DIRS) {
         const dir = join(AGENTS_DIR, a, "tasks", sub);
         if (!existsSync(dir)) continue;
         const entries = await readdir(dir).catch(() => [] as string[]);
@@ -71,7 +75,7 @@ async function nextTaskId(parent: string | null): Promise<string> {
   const prefix = todayPrefix();
   let maxN = 0;
   for (const a of KNOWN_AGENTS) {
-    for (const sub of ["open", "waiting", "done", "failed"]) {
+    for (const sub of SCAN_DIRS) {
       const dir = join(AGENTS_DIR, a, "tasks", sub);
       if (!existsSync(dir)) continue;
       const entries = await readdir(dir).catch(() => [] as string[]);

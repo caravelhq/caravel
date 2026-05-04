@@ -2616,18 +2616,24 @@
 
       function renderCell(name, counts) {
         var open = counts.open || 0;
+        var waiting = counts.waiting || 0;
         var done = counts.done || 0;
         var failed = counts.failed || 0;
+        var archived = counts.archived || 0;
         var openCls = open > 0 ? "multi-agent-count-open" : "multi-agent-count-zero";
+        var waitingCls = waiting > 0 ? "multi-agent-count-waiting" : "multi-agent-count-zero";
         var doneCls = done > 0 ? "multi-agent-count-done" : "multi-agent-count-zero";
         var failedCls = failed > 0 ? "multi-agent-count-failed" : "multi-agent-count-zero";
+        var archivedCls = archived > 0 ? "multi-agent-count-archived" : "multi-agent-count-zero";
         return (
           '<div class="multi-agent-cell">' +
           '<div class="multi-agent-cell-name">' + escapeHtml(name) + '</div>' +
           '<div class="multi-agent-cell-counts">' +
           '<span class="' + openCls + '" title="open">○ ' + open + '</span>' +
+          '<span class="' + waitingCls + '" title="waiting">⏳ ' + waiting + '</span>' +
           '<span class="' + doneCls + '" title="done">✓ ' + done + '</span>' +
           '<span class="' + failedCls + '" title="failed">✗ ' + failed + '</span>' +
+          '<span class="' + archivedCls + '" title="archived">📦 ' + archived + '</span>' +
           '</div></div>'
         );
       }
@@ -2657,9 +2663,16 @@
           }
           panel.removeAttribute("hidden");
           var totalOpen = s.totals && s.totals.open || 0;
+          var totalWaiting = s.totals && s.totals.waiting || 0;
           var totalDone = s.totals && s.totals.done || 0;
           var totalFailed = s.totals && s.totals.failed || 0;
-          sub.textContent = totalOpen + " open · " + totalDone + " done · " + totalFailed + " failed";
+          var totalArchived = s.totals && s.totals.archived || 0;
+          sub.textContent =
+            totalOpen + " open · " +
+            totalWaiting + " waiting · " +
+            totalDone + " done · " +
+            totalFailed + " failed · " +
+            totalArchived + " archived";
 
           var rows = [];
           var byAgent = s.byAgent || {};

@@ -713,8 +713,10 @@ export const pageStyles = String.raw`    :root {
       font-size: 12px;
     }
     .multi-agent-count-open { color: #9be7ff; }
+    .multi-agent-count-waiting { color: #ffd58a; }
     .multi-agent-count-done { color: #93e0a8; }
     .multi-agent-count-failed { color: #ff9a9a; }
+    .multi-agent-count-archived { color: #b8a8d8; }
     .multi-agent-count-zero { color: #5a6b85; }
     .multi-agent-extras {
       display: grid;

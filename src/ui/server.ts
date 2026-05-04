@@ -555,9 +555,14 @@ self.addEventListener('fetch', e => {
           const since = url.searchParams.get("since") ?? undefined;
           const limitRaw = url.searchParams.get("limit");
           const limit = limitRaw ? Number.parseInt(limitRaw, 10) : undefined;
+          const includeArchived = url.searchParams.get("archived") === "1";
           return json({
             ok: true,
-            tasks: await listTasks({ since, limit: Number.isFinite(limit) ? limit : undefined }),
+            tasks: await listTasks({
+              since,
+              limit: Number.isFinite(limit) ? limit : undefined,
+              includeArchived,
+            }),
           });
         } catch (err) {
           return json({ ok: false, error: String(err) });

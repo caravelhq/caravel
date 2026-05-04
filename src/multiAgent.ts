@@ -25,7 +25,7 @@
 //   - Direct Alice escalation tooling (phase 3).
 //   - Dashboard wiring (phase 4).
 
-import { readdir, readFile, writeFile, rename, mkdir } from "fs/promises";
+import { readdir, readFile, writeFile, rename, mkdir, stat } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
@@ -41,6 +41,11 @@ const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
 const DEFAULT_TICK_MS = 30 * 1000;
 const DEFAULT_LEASE_MS = 10 * 60 * 1000;
 const DEFAULT_PER_AGENT_CONCURRENCY = 1;
+// How long a terminal/waiting task lives in its bucket before being moved
+// to tasks/archived/<bucket>/. Keeps the working directories small without
+// losing history. Override via CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS.
+const DEFAULT_ARCHIVE_DAYS = 7;
+const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting"] as const;
 
 interface MultiAgentOptions {
   agents?: string[];
@@ -386,12 +391,15 @@ function escapeRegex(s: string): string {
 //   - When `parent` is null (defensive fallback), use the flat
 //     TSK-YYYY-MM-DD-NNNN counter scoped to Alice's own dirs.
 async function nextAliceTaskId(parent: string | null): Promise<string> {
+  // Include `archived` so ids swept off the active dirs are still reserved.
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
+
   if (parent) {
     const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
     const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
     for (const a of knownAgents) {
-      for (const sub of ["open", "waiting", "done", "failed"]) {
+      for (const sub of SCAN_DIRS) {
         const dir = join(AGENTS_DIR, a, "tasks", sub);
         const entries = await readdir(dir).catch(() => [] as string[]);
         for (const fname of entries) {
@@ -411,9 +419,8 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
     `${String(d.getMonth() + 1).padStart(2, "0")}-` +
     `${String(d.getDate()).padStart(2, "0")}`;
   const prefix = `TSK-${datePart}-`;
-  const dirs = ["open", "waiting", "done", "failed"];
   let max = 0;
-  for (const sub of dirs) {
+  for (const sub of SCAN_DIRS) {
     const dir = join(AGENTS_DIR, "alice", "tasks", sub);
     const entries = await readdir(dir).catch(() => [] as string[]);
     for (const fname of entries) {
@@ -771,12 +778,75 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
 
 // === Tick ==================================================================
 
+async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
+  const days = readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS);
+  if (!Number.isFinite(days) || days <= 0) return;
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+
+  for (const agent of opts.agents) {
+    for (const bucket of ARCHIVABLE_BUCKETS) {
+      const srcDir = join(AGENTS_DIR, agent, "tasks", bucket);
+      if (!existsSync(srcDir)) continue;
+      const entries = await readdir(srcDir).catch(() => [] as string[]);
+      for (const fname of entries.filter((e) => e.endsWith(".yaml"))) {
+        const srcPath = join(srcDir, fname);
+        let yaml: string;
+        try {
+          yaml = await readFile(srcPath, "utf-8");
+        } catch { continue; }
+
+        // Prefer the envelope's `updated:` timestamp (set on every transition);
+        // fall back to file mtime if missing.
+        const updatedRaw = readField(yaml, "updated");
+        let stamp = NaN;
+        if (updatedRaw) {
+          const parsed = Date.parse(updatedRaw);
+          if (Number.isFinite(parsed)) stamp = parsed;
+        }
+        if (!Number.isFinite(stamp)) {
+          try {
+            const st = await stat(srcPath);
+            stamp = st.mtimeMs;
+          } catch { continue; }
+        }
+        if (stamp > cutoff) continue;
+
+        // Archive flat into tasks/archived/. The envelope's `status:` field
+        // already records the original bucket (`done`, `failed:*`,
+        // `waiting:on:*`), so the source dir info isn't lost.
+        const archiveDir = join(AGENTS_DIR, agent, "tasks", "archived");
+        await mkdir(archiveDir, { recursive: true });
+        const targetPath = join(archiveDir, fname);
+        try {
+          await rename(srcPath, targetPath);
+          console.log(
+            `[${new Date().toLocaleTimeString()}] multi-agent: archived ${agent}/${bucket}/${fname}`
+          );
+        } catch (err) {
+          console.error(`[multi-agent] archive failed for ${srcPath}:`, err);
+        }
+      }
+    }
+  }
+}
+
+function readEnvNumber(key: string, fallback: number): number {
+  const raw = process.env[key];
+  if (!raw) return fallback;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string, number>): Promise<void> {
   if (!existsSync(AGENTS_DIR)) return;
 
   // Sweep waiting tasks first — any unblock will land them in tasks/open/ in
   // time for the same tick's claim pass.
   await sweepWaiting(opts);
+
+  // Archive old terminal tasks (done/failed/waiting older than the threshold)
+  // into tasks/archived/<bucket>/. Keeps the working dirs lean.
+  await sweepArchive(opts);
 
   for (const agent of opts.agents) {
     const openDir = join(AGENTS_DIR, agent, "tasks", "open");

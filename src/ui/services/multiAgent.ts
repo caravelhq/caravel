@@ -10,13 +10,15 @@ const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
 const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
-const BUCKETS = ["open", "waiting", "done", "failed"] as const;
+const BUCKETS = ["open", "waiting", "done", "failed", "archived"] as const;
 type Bucket = (typeof BUCKETS)[number];
+
+type Counts = { open: number; waiting: number; done: number; failed: number; archived: number };
 
 export interface MultiAgentSummary {
   enabled: boolean;
-  byAgent: Record<string, { open: number; waiting: number; done: number; failed: number }>;
-  totals: { open: number; waiting: number; done: number; failed: number };
+  byAgent: Record<string, Counts>;
+  totals: Counts;
   waitingUser: { agent: string; file: string; summary: string }[];
   escalated: { agent: string; file: string }[];
 }
@@ -98,7 +100,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   const summary: MultiAgentSummary = {
     enabled: existsSync(AGENTS_DIR),
     byAgent: {},
-    totals: { open: 0, waiting: 0, done: 0, failed: 0 },
+    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 },
     waitingUser: [],
     escalated: [],
   };
@@ -106,7 +108,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   if (!summary.enabled) return summary;
 
   for (const agent of envAgents()) {
-    const counts = { open: 0, waiting: 0, done: 0, failed: 0 };
+    const counts: Counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 };
     for (const bucket of BUCKETS) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
@@ -199,11 +201,12 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   };
 }
 
-async function listAllTasks(): Promise<TaskRow[]> {
+async function listAllTasks(includeArchived = false): Promise<TaskRow[]> {
   if (!existsSync(AGENTS_DIR)) return [];
   const out: TaskRow[] = [];
+  const buckets = includeArchived ? BUCKETS : BUCKETS.filter((b) => b !== "archived");
   for (const agent of envAgents()) {
-    for (const bucket of BUCKETS) {
+    for (const bucket of buckets) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
       const files = (await readdir(dir).catch(() => [] as string[]))
@@ -219,14 +222,19 @@ async function listAllTasks(): Promise<TaskRow[]> {
   return out;
 }
 
-export async function listTasks(opts?: { since?: string; limit?: number }): Promise<TaskRow[]> {
-  const all = await listAllTasks();
+export async function listTasks(opts?: {
+  since?: string;
+  limit?: number;
+  includeArchived?: boolean;
+}): Promise<TaskRow[]> {
+  const all = await listAllTasks(opts?.includeArchived ?? false);
   const filtered = opts?.since ? all.filter((t) => (t.updated ?? "") >= opts.since!) : all;
   return opts?.limit ? filtered.slice(0, opts.limit) : filtered;
 }
 
 export async function getTaskChain(taskId: string): Promise<TaskChain> {
-  const all = await listAllTasks();
+  // Include archived so links to older tasks (parent/children) still resolve.
+  const all = await listAllTasks(true);
   const byId = new Map(all.map((t) => [t.id, t]));
   const task = byId.get(taskId) ?? null;
 
