@@ -365,6 +365,8 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "",
     "Write this file with the Write tool, AS THE LAST THING IN YOUR TURN. Don't print the contents to chat — write the file.",
     "",
+    `**DO NOT touch the YAML envelope** at \`agents/${agent}/tasks/open/${taskId}.yaml\`. The runner owns it — it will update the status field, append the history entry, and move the file to the matching bucket once it sees your .md report. If you move, rename, or rewrite the .yaml yourself, the runner's transition silently fails: no chat notification, no journal entry, no Alice continuation. Just write the .md and stop.`,
+    "",
     "Use `waiting` when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks your envelope and re-claims when the dependency clears. NEVER use `failed: dependency` — that's a worker bug; use `waiting` instead.",
     "",
     "Delegation: if your brief requires inputs you don't have (deeper research, code review, etc.) you can dispatch sub-tasks via the `/task` skill. After dispatching, write a `waiting` file with `waiting_on: task:TSK-...`. The runner re-claims your envelope when the sub-task lands in `done/`.",
@@ -707,6 +709,37 @@ async function enqueueAliceContinuation(opts: {
   );
 }
 
+// Locate a task envelope, tolerating worker contract violations. Workers are
+// supposed to leave the .yaml alone (the runner owns it), but defensive lookup
+// across all buckets means the transition still completes — chat notification,
+// journal entry, continuation enqueue and all — if the worker happened to move
+// it. Logs at WARN when the envelope wasn't where it was expected so the slip
+// is visible in the daemon log instead of being silently swallowed.
+async function locateEnvelope(
+  agent: string,
+  taskId: string,
+  preferredPath: string
+): Promise<{ path: string; yaml: string } | null> {
+  try {
+    const yaml = await readFile(preferredPath, "utf-8");
+    return { path: preferredPath, yaml };
+  } catch {}
+
+  const buckets = ["open", "done", "failed", "waiting", "archived"];
+  for (const bucket of buckets) {
+    const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.yaml`);
+    if (candidate === preferredPath) continue;
+    try {
+      const yaml = await readFile(candidate, "utf-8");
+      console.warn(
+        `[multi-agent] ${agent}/${taskId}: envelope not at expected ${preferredPath}, found at ${candidate} — likely worker contract violation (worker moved/renamed the YAML). Continuing transition from actual location.`
+      );
+      return { path: candidate, yaml };
+    } catch {}
+  }
+  return null;
+}
+
 async function transitionToWaiting(
   agent: string,
   taskId: string,
@@ -717,12 +750,14 @@ async function transitionToWaiting(
   await mkdir(targetDir, { recursive: true });
   const targetPath = join(targetDir, `${taskId}.yaml`);
 
-  let yaml: string;
-  try {
-    yaml = await readFile(openPath, "utf-8");
-  } catch {
+  const located = await locateEnvelope(agent, taskId, openPath);
+  if (!located) {
+    console.error(
+      `[multi-agent] ${agent}/${taskId}: cannot locate envelope in any bucket — transitionToWaiting aborted. Chat notification skipped.`
+    );
     return;
   }
+  const { path: sourcePath, yaml } = located;
   const fields = parseFields(yaml, taskId);
   const now = new Date().toISOString();
   const onSpec = (directive.reason ?? "user").trim() || "user";
@@ -744,8 +779,10 @@ async function transitionToWaiting(
     note: `worker waiting on ${onSpec}`,
   });
 
-  await writeFile(openPath, next);
-  await rename(openPath, targetPath);
+  await writeFile(sourcePath, next);
+  if (sourcePath !== targetPath) {
+    await rename(sourcePath, targetPath);
+  }
 
   await appendJournal(agent, {
     ts: now,
@@ -863,12 +900,14 @@ async function transitionToTerminal(
   await mkdir(targetDir, { recursive: true });
   const targetPath = join(targetDir, `${taskId}.yaml`);
 
-  let yaml: string;
-  try {
-    yaml = await readFile(openPath, "utf-8");
-  } catch {
+  const located = await locateEnvelope(agent, taskId, openPath);
+  if (!located) {
+    console.error(
+      `[multi-agent] ${agent}/${taskId}: cannot locate envelope in any bucket — transitionToTerminal aborted. Chat notification skipped.`
+    );
     return;
   }
+  const { path: sourcePath, yaml } = located;
   const fields = parseFields(yaml, taskId);
   const now = new Date().toISOString();
 
@@ -897,8 +936,10 @@ async function transitionToTerminal(
     note: directive.kind === "done" ? "worker completed" : `worker reported ${finalStatus}`,
   });
 
-  await writeFile(openPath, next);
-  await rename(openPath, targetPath);
+  await writeFile(sourcePath, next);
+  if (sourcePath !== targetPath) {
+    await rename(sourcePath, targetPath);
+  }
 
   await appendJournal(agent, {
     ts: now,
