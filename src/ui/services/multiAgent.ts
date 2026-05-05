@@ -203,7 +203,17 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   // <task-done report="path/to/produced/file.md"/>. If empty / unset, no
   // produced report exists and the dashboard hides the Report button.
   const reportRaw = readField(yaml, "report");
-  const reportPath = reportRaw && reportRaw !== '""' && reportRaw !== "''" ? reportRaw.replace(/^["']|["']$/g, "") : null;
+  let reportPath = reportRaw && reportRaw !== '""' && reportRaw !== "''" ? reportRaw.replace(/^["']|["']$/g, "") : null;
+  // v1.2 file-rendezvous contract: workers write `tasks/<bucket>/<id>.md`
+  // as the canonical deliverable. Auto-discover it when the YAML's `report:`
+  // field is empty so the dashboard surfaces the worker's writeup without a
+  // manual frontmatter step.
+  if (!reportPath) {
+    const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${file.replace(/\.yaml$/, "")}.md`);
+    if (existsSync(candidate)) {
+      reportPath = `agents/${agent}/tasks/${bucket}/${file.replace(/\.yaml$/, "")}.md`;
+    }
+  }
 
   return {
     id,

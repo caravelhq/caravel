@@ -105,8 +105,15 @@ function appendHistory(yaml: string, entry: { ts: string; from: string; to: stri
     `    by: ${entry.by}\n` +
     `    note: ${JSON.stringify(entry.note)}\n`;
   // Block-form header already present (`history:` alone or `history:\n`).
-  if (/^history:\s*$/m.test(yaml) || /^history:\s*\n/m.test(yaml)) {
-    return yaml.replace(/^history:\s*\n?/m, (m) => m + block);
+  // Use [ \t]* — strictly same-line whitespace — so the replace doesn't
+  // greedily eat into the next list item's leading indent. The previous
+  // `\s*\n?` would consume `\n  ` (newline + 2-space indent), then the
+  // replacement re-prefixed two spaces, accumulating one indent level per
+  // transition and stripping the next item's. Result: `      - ts: NEW`
+  // (6 spaces) above `- ts: OLD` (0 spaces) — broken YAML that survived
+  // because the runner's parsers are line-oriented.
+  if (/^history:[ \t]*\n/m.test(yaml) || /^history:[ \t]*$/m.test(yaml)) {
+    return yaml.replace(/^history:[ \t]*\n?/m, (m) => m + block);
   }
   // Inline value (`history: []`, `history: null`, etc.) — replace with block
   // form. Appending list items below an inline value produces invalid YAML

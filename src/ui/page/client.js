@@ -2982,6 +2982,17 @@
         if (ctxLines) {
           sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + '</div>', false);
         }
+        // Inline report viewer — lazy-loads the worker's .md when opened so
+        // Kelly doesn't have to switch to the Files tab. Auto-discovered when
+        // `tasks/<bucket>/<id>.md` exists; the YAML's `report:` field still
+        // wins when set explicitly.
+        if (card.reportPath) {
+          var reportInner =
+            '<div class="task-panel-report" data-report-path="' + escapeHtml(card.reportPath) + '" data-loaded="false">' +
+            '<div class="task-panel-report-loading">Click to load report…</div>' +
+            '</div>';
+          sections += renderSection("Report (" + card.reportPath.split("/").pop() + ")", reportInner, false);
+        }
 
         return (
           '<div class="task-panel-card' + (isCurrent ? " is-current" : "") + '">' +
@@ -3068,6 +3079,43 @@
           }
           if (task) parts.push(renderPanelCard(task, "Current task", true));
           taskPanelBody.innerHTML = parts.length > 0 ? parts.join("") : '<div class="task-panel-loading">No chain data.</div>';
+          // Wire lazy-load for any inline report dropdowns. The `<details>`
+          // toggle event doesn't bubble, so attach per element. First open
+          // fetches the .md and renders it through the markdown pipeline;
+          // subsequent toggles are no-ops.
+          var reportNodes = taskPanelBody.querySelectorAll(".task-panel-report");
+          for (var rn = 0; rn < reportNodes.length; rn++) {
+            (function (node) {
+              var details = node.closest("details");
+              if (!details) return;
+              details.addEventListener("toggle", function () {
+                if (!details.open) return;
+                if (node.getAttribute("data-loaded") !== "false") return;
+                node.setAttribute("data-loaded", "loading");
+                node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
+                var path = node.getAttribute("data-report-path");
+                fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" })
+                  .then(function (res) { return res.json(); })
+                  .then(function (data) {
+                    if (!data.ok) throw new Error(data.error || "failed");
+                    node.setAttribute("data-loaded", "true");
+                    if (data.markdown) {
+                      node.innerHTML = '<div class="task-panel-report-md files-md">' + renderMarkdown(data.content) + '</div>';
+                    } else {
+                      var pre = document.createElement("pre");
+                      pre.className = "task-panel-report-raw";
+                      pre.textContent = data.content;
+                      node.innerHTML = "";
+                      node.appendChild(pre);
+                    }
+                  })
+                  .catch(function (err) {
+                    node.setAttribute("data-loaded", "false");
+                    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+                  });
+              });
+            })(reportNodes[rn]);
+          }
         } catch (err) {
           taskPanelBody.innerHTML = '<div class="task-panel-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
         }

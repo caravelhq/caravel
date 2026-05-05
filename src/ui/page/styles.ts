@@ -2721,6 +2721,48 @@ export const pageStyles = String.raw`    :root {
     .task-panel-context-item button:hover {
       color: #cfe3ff;
     }
+    .task-panel-report {
+      max-height: 480px;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .task-panel-report-md {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .task-panel-report-md p,
+    .task-panel-report-md ul,
+    .task-panel-report-md ol,
+    .task-panel-report-md pre {
+      margin: 0 0 8px;
+    }
+    .task-panel-report-md h1,
+    .task-panel-report-md h2,
+    .task-panel-report-md h3 {
+      margin: 14px 0 6px;
+    }
+    .task-panel-report-md pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 8px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .task-panel-report-raw {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+    .task-panel-report-loading {
+      font-size: 12px;
+      color: #8a96a8;
+      font-style: italic;
+    }
+    .task-panel-report-loading.is-error { color: #ff9a9a; }
     @media (max-width: 640px) {
       .task-panel-toolbar {
         padding: 8px 10px;
