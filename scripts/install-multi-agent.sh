@@ -6,7 +6,7 @@
 #
 # What it does:
 #   1. (optional) Pulls latest from the claudeclaw repo on the configured branch.
-#   2. Copies template/skill-task/ → <project>/.claude/skills/task/
+#   2. Copies template/skills/task/ → <project>/.claude/skills/task/
 #   3. Copies template/shared/    → <project>/agents/_shared/
 #   4. Ensures <project>/agents/<each>/tasks/{open,done,failed}/ + journal.ndjson
 #
@@ -90,8 +90,8 @@ fi
 # Skill — .claude/skills/task/
 echo "Installing /task skill → ${DEST_SKILL#$PROJECT_DIR/}"
 run mkdir -p "$DEST_SKILL/script"
-run cp "$SRC_DIR/skill-task/SKILL.md" "$DEST_SKILL/SKILL.md"
-run cp "$SRC_DIR/skill-task/script/task.mjs" "$DEST_SKILL/script/task.mjs"
+run cp "$SRC_DIR/skills/task/SKILL.md" "$DEST_SKILL/SKILL.md"
+run cp "$SRC_DIR/skills/task/script/task.mjs" "$DEST_SKILL/script/task.mjs"
 run chmod +x "$DEST_SKILL/script/task.mjs"
 
 # Shared schema + examples — agents/_shared/

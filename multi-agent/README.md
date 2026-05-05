@@ -10,10 +10,11 @@ This directory is the *source of truth*. The live instance is populated by `setu
 multi-agent/
   README.md                              # this file
   template/
-    skill-task/                          # → .claude/skills/task/
-      SKILL.md                           #   procedure Alice follows for /task
-      script/
-        task.mjs                         #   ID allocator + dispatcher (also serves list/summary)
+    skills/                              # → .claude/skills/
+      task/                              # → .claude/skills/task/
+        SKILL.md                         #   procedure Alice follows for /task
+        script/
+          task.mjs                       #   ID allocator + dispatcher (also serves list/summary)
     shared/                              # → agents/_shared/
       task-envelope.md                   #   canonical schema spec
       task-envelope-examples/
@@ -43,7 +44,7 @@ bash setup/install-multi-agent.sh
 
 The install script:
 1. Pulls latest from `repos/claudeclaw/local`.
-2. Copies `template/skill-task/` → `.claude/skills/task/`.
+2. Copies `template/skills/task/` → `.claude/skills/task/`.
 3. Copies `template/shared/` → `agents/_shared/`.
 4. For each known agent, ensures `agents/<name>/tasks/{open,done,failed}/` exists and creates an empty `journal.ndjson` if missing.
 5. Reports what changed.

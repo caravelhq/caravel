@@ -9,8 +9,9 @@
 //     Validate, assign next ID for today, write to the target's tasks/open/,
 //     append to the target's journal. Prints the assigned ID on stdout.
 //
-//   node .claude/skills/task/script/task.mjs next-id --target ray
-//     Print the next available task ID for today (no file written).
+//   node .claude/skills/task/script/task.mjs next-id --target ray [--parent TSK-...]
+//     Print the next available task ID for today (no file written). When
+//     --parent is provided, returns a decimal sub-id like `<parent>.N`.
 //
 //   node .claude/skills/task/script/task.mjs list --agent <name> [--status open|done|failed]
 //     List tasks for an agent as JSON.
@@ -34,6 +35,9 @@ function flag(name, fallback = null) {
 
 const ROOT = process.cwd();
 const AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+// Buckets scanned for ID-collision avoidance. `archived` is included so
+// retired IDs are never reused by the next-id allocator.
+const SCAN_BUCKETS = ["open", "waiting", "done", "failed", "archived"];
 
 function tasksDir(agent) {
   return join(ROOT, "agents", agent, "tasks");
@@ -44,30 +48,54 @@ function todayPrefix() {
   return `TSK-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-`;
 }
 
-async function listIdsForDay(agent, prefix) {
+function escapeRegex(s) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+async function listAllIds(agent) {
   const out = new Set();
-  for (const sub of ["open", "done", "failed", "waiting"]) {
+  for (const sub of SCAN_BUCKETS) {
     const dir = join(tasksDir(agent), sub);
     if (!existsSync(dir)) continue;
     const entries = await readdir(dir);
     for (const e of entries) {
-      if (e.startsWith(prefix) && e.endsWith(".yaml")) {
-        out.add(e.replace(/\.yaml$/, ""));
-      }
+      if (e.endsWith(".yaml")) out.add(e.replace(/\.yaml$/, ""));
     }
   }
   return out;
 }
 
-async function nextIdForAgent(agent) {
+// Decimal-aware allocator. Mirrors the daemon's nextAliceTaskId logic so
+// the runtime and the CLI never disagree on what the next id should be.
+//   - parent === null  → next free top-level `<prefix>NNNN` (skips dotted ids)
+//   - parent !== null  → next free integer suffix `<parent>.M` across all agents
+async function nextIdForAgent(_agent, parent = null) {
+  if (parent) {
+    const re = new RegExp("^" + escapeRegex(parent) + "\\.(\\d+)(?:\\.|$)");
+    let maxN = 0;
+    for (const a of AGENTS) {
+      const ids = await listAllIds(a);
+      for (const id of ids) {
+        const m = re.exec(id);
+        if (!m) continue;
+        const n = Number.parseInt(m[1], 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+    return `${parent}.${maxN + 1}`;
+  }
+
   const prefix = todayPrefix();
-  // Scan all agents — IDs are globally unique per day, not per agent.
+  // Top-level ids are exactly `<prefix>NNNN` with no dots in the suffix —
+  // dotted ids are descendants and don't compete for the top counter.
+  const re = new RegExp("^" + escapeRegex(prefix) + "(\\d+)$");
   let maxN = 0;
   for (const a of AGENTS) {
-    const ids = await listIdsForDay(a, prefix);
+    const ids = await listAllIds(a);
     for (const id of ids) {
-      const tail = id.slice(prefix.length);
-      const n = Number.parseInt(tail, 10);
+      const m = re.exec(id);
+      if (!m) continue;
+      const n = Number.parseInt(m[1], 10);
       if (Number.isFinite(n) && n > maxN) maxN = n;
     }
   }
@@ -123,7 +151,14 @@ async function newTask() {
     process.exit(2);
   }
 
-  const id = await nextIdForAgent(target);
+  // Parent is taken from --parent flag or the YAML's `parent:` field.
+  // Drives decimal sub-id allocation. `null`/empty means top-level.
+  const parentFlag = flag("parent");
+  const parentFromYaml = extractField(draft, "parent");
+  const parentRaw = parentFlag ?? parentFromYaml;
+  const parent = parentRaw && parentRaw !== "null" && parentRaw !== "" ? parentRaw.trim() : null;
+
+  const id = await nextIdForAgent(target, parent);
   const now = new Date().toISOString();
   // Replace the id/headline/created/updated fields if present, else prepend.
   let body = draft;
@@ -153,7 +188,7 @@ async function newTask() {
 
   const from = extractField(body, "from") ?? "unknown";
   const kind = extractField(body, "kind") ?? "other";
-  const parent = extractField(body, "parent");
+  const journalParent = extractField(body, "parent");
   await appendJournal(target, {
     ts: now,
     id,
@@ -161,7 +196,7 @@ async function newTask() {
     kind,
     from,
     to: target,
-    parent: parent === "null" || parent === null ? null : parent,
+    parent: journalParent === "null" || journalParent === null ? null : journalParent,
     summary: "",
   });
 
@@ -193,11 +228,11 @@ async function summary() {
     byAgent: {},
     escalated: [],
     waitingUser: [],
-    totals: { open: 0, waiting: 0, done: 0, failed: 0 },
+    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 },
   };
   for (const a of AGENTS) {
-    const counts = { open: 0, waiting: 0, done: 0, failed: 0 };
-    for (const b of ["open", "waiting", "done", "failed"]) {
+    const counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 };
+    for (const b of ["open", "waiting", "done", "failed", "archived"]) {
       const dir = join(tasksDir(a), b);
       if (!existsSync(dir)) continue;
       const files = (await readdir(dir)).filter((x) => x.endsWith(".yaml"));
@@ -233,10 +268,11 @@ async function summary() {
   if (cmd === "next-id") {
     const target = flag("target");
     if (!target || !AGENTS.includes(target)) {
-      console.error(`usage: task.mjs next-id --target <agent>. known: ${AGENTS.join(", ")}`);
+      console.error(`usage: task.mjs next-id --target <agent> [--parent TSK-...]. known: ${AGENTS.join(", ")}`);
       process.exit(2);
     }
-    console.log(await nextIdForAgent(target));
+    const parent = flag("parent");
+    console.log(await nextIdForAgent(target, parent || null));
     return;
   }
   if (cmd === "list") return listTasks();

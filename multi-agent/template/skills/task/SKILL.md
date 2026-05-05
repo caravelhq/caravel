@@ -45,7 +45,7 @@ The fields you need:
 - **priority** — P0 (Kelly blocked) → P3 (idle). Default P2.
 - **deadline** — optional ISO-8601. Add when there's a real constraint.
 - **budget** — `max_turns` (default 30 for research, 50 for code, 10 for decide), `max_subagents` (default 0 — sequential), `max_usd` (default null).
-- **parent** — set if this is a sub-task of an existing task envelope. Otherwise null.
+- **parent** — set if this is a sub-task of an existing task envelope. Otherwise null. **Setting `parent` triggers decimal sub-task IDs** — the dispatched envelope gets `<parent>.N` (e.g. `TSK-2026-05-04-0042.1`) instead of a fresh top-level id. Recursive: a sub-of-sub becomes `<parent>.M.K`.
 - **reply_to** — where the result lands. Default to `from`. Override when Alice is delegating and wants results back to herself, not to Kelly.
 
 If Kelly's `/task` body already includes everything (a long, specific brief), skip the clarifying question and go straight to draft.
@@ -64,7 +64,7 @@ updated: PLACEHOLDER
 
 from: alice                        # or "kelly" if Kelly is the source
 to: <target>
-parent: null                       # or parent task id
+parent: null                       # or parent task id (triggers decimal sub-id)
 reply_to: kelly                    # or "alice"
 
 kind: <research|code|review|summarise|decide|other>
@@ -100,13 +100,19 @@ report: ""
 
 ### 3. Dispatch
 
-Call the helper script. It assigns the next ID for today, writes to the target's `tasks/open/<id>.yaml`, and appends to that agent's `tasks/journal.ndjson`.
+Call the helper script. It assigns the next ID for today (decimal sub-id if `parent:` is set, top-level otherwise), writes to the target's `tasks/open/<id>.yaml`, and appends to that agent's `tasks/journal.ndjson`.
 
 ```
 node .claude/skills/task/script/task.mjs new --target <target> --yaml /tmp/task-draft.yaml
 ```
 
 The script prints the assigned task ID to stdout. Capture it.
+
+You can also override the parent on the CLI without rewriting the YAML:
+
+```
+node .claude/skills/task/script/task.mjs new --target ray --yaml /tmp/draft.yaml --parent TSK-2026-05-04-0042
+```
 
 ### 4. Confirm to Kelly
 
@@ -118,9 +124,13 @@ Reply with:
 
 Format: short. One paragraph or a tight bulleted line. No ceremony.
 
-Example:
+Example (top-level):
 
 > Queued **TSK-2026-04-28-0042** for Ray — survey of BLE central plugins for Capacitor, output as a markdown table with maintenance signals. Should pick up on next heartbeat.
+
+Example (sub-task of an existing envelope):
+
+> Queued **TSK-2026-05-04-0042.1** for Bob — implement the routing rule Sam recommended in 0042. Parent stays open until this returns.
 
 ## Failure modes
 
@@ -132,8 +142,11 @@ Example:
 ## Helpful commands
 
 ```
-# what's the next ID for an agent?
+# what's the next top-level ID for an agent?
 node .claude/skills/task/script/task.mjs next-id --target ray
+
+# what's the next sub-task ID under a given parent?
+node .claude/skills/task/script/task.mjs next-id --target ray --parent TSK-2026-05-04-0042
 
 # list a single agent's tasks
 node .claude/skills/task/script/task.mjs list --agent ray --status open
@@ -141,6 +154,8 @@ node .claude/skills/task/script/task.mjs list --agent ray --status open
 # cross-agent summary (counts + escalations + waiting:user)
 node .claude/skills/task/script/task.mjs summary
 ```
+
+The summary now reports five buckets: `open`, `waiting`, `done`, `failed`, `archived`. Tasks older than the daemon's archive threshold (default 7 days, configurable via `CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS`) get swept from done/failed/waiting into `tasks/archived/` flat. Archived envelopes still count for ID-collision avoidance, so retired IDs are never reused.
 
 ## Notes for Alice
 
