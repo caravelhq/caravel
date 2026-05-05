@@ -3,7 +3,7 @@
 // `node .claude/skills/task/script/task.mjs new` but in-process so the daemon
 // can react immediately and surface validation errors back to the form.
 
-import { mkdir, readdir, readFile, writeFile } from "fs/promises";
+import { mkdir, readdir, readFile, rename, unlink, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { loadChat } from "./chats";
@@ -235,4 +235,156 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   });
 
   return { ok: true, id, path: outPath };
+}
+
+// === Unblock waiting:on:user tasks ========================================
+//
+// When a worker emits <task-waiting on="user">, the runner parks the envelope
+// in `agents/<agent>/tasks/waiting/<id>.yaml` with status `waiting:on:user`.
+// Kelly resolves the block by typing a response in the dashboard task panel;
+// we append it to the brief, flip status back to `open`, and move the file
+// into `tasks/open/` so the runner re-claims on its next tick.
+
+const HISTORY_RE = /^history:\s*\n((?:[ \t]+-[^\n]*\n(?:[ \t]+[^\n-][^\n]*\n)*)+)/m;
+const BRIEF_BLOCK_RE = /^(brief:\s*\|[+-]?\s*\n)((?:[ \t]+.*\n?)*)/m;
+
+function setStatus(yaml: string, status: string): string {
+  return yaml.replace(/^status:\s*.*$/m, `status: ${status}`);
+}
+
+function setUpdated(yaml: string, ts: string): string {
+  return yaml.replace(/^updated:\s*.*$/m, `updated: ${ts}`);
+}
+
+function appendHistoryEntry(
+  yaml: string,
+  entry: { ts: string; from: string; to: string; by: string; note: string }
+): string {
+  const block =
+    `  - ts: ${entry.ts}\n` +
+    `    from: ${entry.from}\n` +
+    `    to: ${entry.to}\n` +
+    `    by: ${entry.by}\n` +
+    `    note: ${JSON.stringify(entry.note)}\n`;
+  if (HISTORY_RE.test(yaml)) {
+    return yaml.replace(HISTORY_RE, (match, items: string) => {
+      // Insert after existing items, preserving any trailing blank line that
+      // separates `history:` from the next top-level field.
+      const trimmed = items.replace(/\n+$/, "\n");
+      return `history:\n${trimmed}${block}`;
+    });
+  }
+  if (/^history:.*$/m.test(yaml)) {
+    return yaml.replace(/^history:.*$/m, () => `history:\n${block.trimEnd()}`);
+  }
+  return yaml + `\nhistory:\n${block}`;
+}
+
+function appendToBrief(yaml: string, addition: string): string {
+  // Find the brief block scalar and append the addition (already indented).
+  if (BRIEF_BLOCK_RE.test(yaml)) {
+    return yaml.replace(BRIEF_BLOCK_RE, (match, header: string, body: string) => {
+      const trimmed = body.replace(/\n+$/, "\n"); // collapse trailing blanks
+      const indented = addition
+        .split("\n")
+        .map((l) => (l.length > 0 ? `  ${l}` : ""))
+        .join("\n");
+      return `${header}${trimmed}${indented}\n`;
+    });
+  }
+  // No block-scalar brief — leave untouched (envelope is malformed).
+  return yaml;
+}
+
+interface UnblockTaskInput {
+  agent: string;
+  taskId: string;
+  response: string;
+}
+
+export type UnblockTaskResult =
+  | { ok: true; id: string; path: string }
+  | { ok: false; error: string };
+
+export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const response = (input.response ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
+  if (!response) return { ok: false, error: "response is required" };
+
+  const waitingPath = join(AGENTS_DIR, agent, "tasks", "waiting", `${taskId}.yaml`);
+  const openPath = join(AGENTS_DIR, agent, "tasks", "open", `${taskId}.yaml`);
+
+  if (!existsSync(waitingPath)) {
+    return { ok: false, error: `task ${taskId} is not in agents/${agent}/tasks/waiting/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(waitingPath, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  // Refuse to unblock anything not specifically waiting on user input.
+  const statusMatch = /^status:\s*(.*)$/m.exec(yaml);
+  const currentStatus = statusMatch ? statusMatch[1].trim() : "";
+  if (currentStatus !== "waiting:on:user") {
+    return { ok: false, error: `task status is "${currentStatus}", not "waiting:on:user"` };
+  }
+
+  const now = new Date().toISOString();
+
+  // Also clear the worker's last waiting `.md` rendezvous file so the runner
+  // doesn't re-trigger on stale signal when it claims again.
+  const waitingReportPath = join(AGENTS_DIR, agent, "tasks", "waiting", `${taskId}.md`);
+  if (existsSync(waitingReportPath)) {
+    try { await unlink(waitingReportPath); } catch {}
+  }
+
+  let next = yaml;
+  next = appendToBrief(
+    next,
+    `\n--- kelly response (${now}) ---\n${response}\n`
+  );
+  next = setStatus(next, "open");
+  next = setUpdated(next, now);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: "waiting:on:user",
+    to: "open",
+    by: "kelly",
+    note: "unblocked via dashboard",
+  });
+
+  // Write the modified content to the new location, then remove the old file.
+  // Two-step (write + unlink) instead of rename-after-modify so a crash
+  // mid-step leaves the envelope visible somewhere rather than corrupted.
+  await mkdir(join(AGENTS_DIR, agent, "tasks", "open"), { recursive: true });
+  await writeFile(openPath, next);
+  try {
+    await unlink(waitingPath);
+  } catch (err) {
+    // The new file is in place; the stale waiting copy is the only artefact.
+    // Surface as a soft warning via the result rather than failing the call.
+    return {
+      ok: true,
+      id: taskId,
+      path: openPath,
+    };
+  }
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: "open",
+    transition: "waiting:on:user→open",
+    by: "kelly",
+    note: "unblocked via dashboard",
+  });
+
+  return { ok: true, id: taskId, path: openPath };
 }

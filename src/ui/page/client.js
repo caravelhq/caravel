@@ -2835,8 +2835,9 @@
             (d.chat_agent ? ' · ' + escapeHtml(d.chat_agent) : "") +
             '</div>';
         }
+        var rowExtra = t.status === "waiting:on:user" ? " is-waiting-user" : "";
         return (
-          '<div class="multi-agent-task-row" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
+          '<div class="multi-agent-task-row' + rowExtra + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
           '<div class="multi-agent-task-row-head">' +
           '<span class="multi-agent-task-id">' + escapeHtml(t.id) + '</span>' +
           '<span class="multi-agent-task-status ' + statusClass(t.status) + '">' + escapeHtml(t.status || "?") + '</span>' +
@@ -2864,8 +2865,32 @@
             if (tasksMeta) tasksMeta.textContent = "0 tasks";
             return;
           }
-          tasksList.innerHTML = data.tasks.map(renderTaskRow).join("");
-          if (tasksMeta) tasksMeta.textContent = data.tasks.length + " task" + (data.tasks.length === 1 ? "" : "s");
+          // Float `waiting:on:user` rows to the top so Kelly sees parked tasks
+          // before everything else. Within each group, the API's `updated`-desc
+          // ordering is preserved.
+          var blocked = [];
+          var rest = [];
+          for (var ti = 0; ti < data.tasks.length; ti++) {
+            var tt = data.tasks[ti];
+            if (tt && tt.status === "waiting:on:user") blocked.push(tt);
+            else rest.push(tt);
+          }
+          var html = "";
+          if (blocked.length > 0) {
+            html += '<div class="multi-agent-tasks-section-label">⏳ Waiting on you (' + blocked.length + ')</div>';
+            html += blocked.map(renderTaskRow).join("");
+            if (rest.length > 0) {
+              html += '<div class="multi-agent-tasks-section-label">Other tasks</div>';
+            }
+          }
+          html += rest.map(renderTaskRow).join("");
+          tasksList.innerHTML = html;
+          if (tasksMeta) {
+            var n = data.tasks.length;
+            var label = n + " task" + (n === 1 ? "" : "s");
+            if (blocked.length > 0) label += " · " + blocked.length + " waiting on you";
+            tasksMeta.textContent = label;
+          }
         } catch (err) {
           tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Error: ' + escapeHtml(String(err && err.message || err)) + '</div></div>';
         }
@@ -2929,6 +2954,22 @@
         var openBrief = !isTerminal && !!brief;
 
         var sections = "";
+        // When the worker has parked the task on `waiting:on:user`, surface
+        // the unblock UI as the first thing Kelly sees — response textarea +
+        // "Send & return to queue" button. The handler reads the agent + id
+        // from the wrapper's data attributes.
+        if (isCurrent && card.status === "waiting:on:user") {
+          var unblockHtml =
+            '<div class="task-panel-unblock" data-unblock-agent="' + escapeHtml(card.agent || "") + '" data-unblock-id="' + escapeHtml(card.id) + '">' +
+            '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type a response and it will be appended to the brief, then the task moves back to the open queue.</div>' +
+            '<textarea class="task-panel-unblock-input" rows="4" placeholder="Type your response or additional instruction…"></textarea>' +
+            '<div class="task-panel-unblock-actions">' +
+            '<button type="button" class="is-primary task-panel-unblock-submit">Send &amp; return to queue</button>' +
+            '<span class="task-panel-unblock-status"></span>' +
+            '</div>' +
+            '</div>';
+          sections += renderSection("⏳ Unblock — your response", unblockHtml, true);
+        }
         if (summaryResponse) {
           sections += renderSection("Worker result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', openResult);
         }
@@ -3040,9 +3081,70 @@
         });
       }
 
+      async function submitUnblock(wrapper) {
+        if (!wrapper) return;
+        var agent = wrapper.getAttribute("data-unblock-agent");
+        var taskId = wrapper.getAttribute("data-unblock-id");
+        var input = wrapper.querySelector(".task-panel-unblock-input");
+        var btn = wrapper.querySelector(".task-panel-unblock-submit");
+        var statusEl = wrapper.querySelector(".task-panel-unblock-status");
+        if (!agent || !taskId || !input) return;
+        var response = (input.value || "").trim();
+        if (!response) {
+          if (statusEl) {
+            statusEl.textContent = "Type a response first.";
+            statusEl.className = "task-panel-unblock-status is-error";
+          }
+          return;
+        }
+        if (btn) btn.disabled = true;
+        if (statusEl) {
+          statusEl.textContent = "Sending…";
+          statusEl.className = "task-panel-unblock-status";
+        }
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/unblock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent, response: response }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            if (statusEl) {
+              statusEl.textContent = "Error: " + (data.error || "unknown");
+              statusEl.className = "task-panel-unblock-status is-error";
+            }
+            if (btn) btn.disabled = false;
+            return;
+          }
+          if (statusEl) {
+            statusEl.textContent = "Returned to open queue.";
+            statusEl.className = "task-panel-unblock-status is-ok";
+          }
+          // Refresh the task panel + dashboard widgets so the status flips
+          // to `open` (or `claimed` once the runner picks it up) without a
+          // page reload.
+          openTaskPanel(taskId);
+          fetchTasks();
+          fetchSummary();
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (err && err.message || err);
+            statusEl.className = "task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+        }
+      }
+
       // Delegate clicks inside the task panel for action buttons.
       if (taskPanelBody) {
         taskPanelBody.addEventListener("click", function (ev) {
+          var unblockBtn = ev.target.closest(".task-panel-unblock-submit");
+          if (unblockBtn) {
+            ev.preventDefault();
+            submitUnblock(unblockBtn.closest(".task-panel-unblock"));
+            return;
+          }
           var openTaskBtn = ev.target.closest("[data-open-task]");
           if (openTaskBtn) {
             ev.preventDefault();

@@ -860,6 +860,26 @@ export const pageStyles = String.raw`    :root {
       background: #14223680;
       border-color: #ffd07a55;
     }
+    .multi-agent-task-row.is-waiting-user {
+      border-left: 3px solid #f0c674;
+      background: #1c1d10b3;
+    }
+    .multi-agent-task-row.is-waiting-user:hover {
+      background: #25260fb3;
+    }
+    .multi-agent-tasks-section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f0c674;
+      padding: 6px 4px 2px;
+    }
+    .multi-agent-tasks-section-label + .multi-agent-tasks-section-label,
+    .multi-agent-task-row + .multi-agent-tasks-section-label {
+      color: #6a7e9b;
+      margin-top: 4px;
+    }
     .multi-agent-chain {
       margin-top: 6px;
       padding-top: 8px;
@@ -2577,6 +2597,61 @@ export const pageStyles = String.raw`    :root {
     .task-panel-card-actions button.is-primary:hover {
       background: #355a8a;
     }
+    .task-panel-unblock {
+      display: grid;
+      gap: 8px;
+    }
+    .task-panel-unblock-hint {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.45;
+    }
+    .task-panel-unblock-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0a1220;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #f4f8ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+    .task-panel-unblock-input:focus {
+      outline: none;
+      border-color: #ffd07a99;
+    }
+    .task-panel-unblock-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .task-panel-unblock-submit {
+      border: 1px solid #ffd07a99;
+      background: #2a4972;
+      color: #ffe7b8;
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms;
+    }
+    .task-panel-unblock-submit:hover { background: #355a8a; }
+    .task-panel-unblock-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .task-panel-unblock-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9bb1d0;
+    }
+    .task-panel-unblock-status.is-error { color: #ff9a9a; }
+    .task-panel-unblock-status.is-ok { color: #93e0a8; }
     .task-panel-section {
       border: 1px solid #ffffff10;
       border-radius: 8px;

@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -583,6 +583,26 @@ self.addEventListener('fetch', e => {
         try {
           const body = await req.json();
           const result = await createTask(body);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Unblock a `waiting:on:user` task: append Kelly's response to the brief
+      // and move the envelope back to `tasks/open/` so the runner re-claims.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/unblock") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/unblock".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await unblockTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            response: String(body?.response ?? ""),
+          });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id });
         } catch (err) {
