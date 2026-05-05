@@ -2721,6 +2721,15 @@ export const pageStyles = String.raw`    :root {
     .task-panel-context-item button:hover {
       color: #cfe3ff;
     }
+    .task-panel-report-card {
+      margin-top: 12px;
+    }
+    .task-panel-report-card .task-panel-report {
+      max-height: none;
+      border: none;
+      background: transparent;
+      padding: 0;
+    }
     .task-panel-report {
       max-height: 480px;
       overflow: auto;
