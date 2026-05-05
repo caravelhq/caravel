@@ -5,6 +5,7 @@
 import { readdir, readFile, stat } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import { load as yamlLoad } from "js-yaml";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -57,59 +58,37 @@ export interface TaskChain {
   ancestors: TaskRow[];
 }
 
-// Strip surrounding double-quotes from a YAML scalar (chat_name etc. are
-// written via JSON.stringify so they're always quoted). Returns null when
-// the value is null/empty.
-function unquote(raw: string | null): string | null {
-  if (!raw) return null;
-  const t = raw.trim();
-  if (!t || t === "null") return null;
-  if (t.startsWith('"') && t.endsWith('"')) {
-    try {
-      return JSON.parse(t);
-    } catch {
-      return t.slice(1, -1);
-    }
-  }
-  return t;
+// js-yaml is the source of truth for parsing. Some legacy envelopes have
+// corrupt `history:` blocks (the runner's pre-fix appendHistory left mangled
+// indentation). Since the dashboard never displays history, we strip that
+// section before parsing so display stays robust against past corruption.
+// The hand-rolled regex helpers above are still used as a last-resort fallback
+// when js-yaml gives up entirely.
+function parseEnvelope(content: string): Record<string, any> | null {
+  const sanitized = content.replace(/^history:[\s\S]*?(?=^[a-z][a-z_]*:)/m, "history: []\n");
+  try {
+    const doc = yamlLoad(sanitized);
+    if (doc && typeof doc === "object") return doc as Record<string, any>;
+  } catch {}
+  // Fallback: try the original (unsanitized) content in case sanitisation
+  // ate something it shouldn't have.
+  try {
+    const doc = yamlLoad(content);
+    if (doc && typeof doc === "object") return doc as Record<string, any>;
+  } catch {}
+  return null;
 }
 
-function readField(yaml: string, key: string): string | null {
-  const re = new RegExp(`^${key}:\\s*(.*)$`, "m");
-  const m = re.exec(yaml);
-  return m ? m[1].trim() : null;
+function asString(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  return String(value);
 }
 
-function readNestedField(yaml: string, parent: string, key: string): string | null {
-  // very small parser: find `<parent>:` line, then look at the next 2-space
-  // indented block for `<key>:`.
-  const re = new RegExp(`^${parent}:[\\s\\S]*?^ {2}${key}:\\s*(.*)$`, "m");
-  const m = re.exec(yaml);
-  return m ? m[1].trim() : null;
-}
-
-function readBlockScalar(yaml: string, key: string): string {
-  // Parse a block scalar like `brief: |\n  line1\n  line2\n`.
-  const re = new RegExp(`^${key}:\\s*\\|[+-]?\\s*\\n((?:[ \\t]+.*\\n?)+)`, "m");
-  const m = re.exec(yaml);
-  if (!m) return "";
-  const lines = (m[1] ?? "").split("\n");
-  // Strip the common leading indent (2 spaces by convention; tolerate 4).
-  const indent = lines.find((l) => l.length > 0)?.match(/^[ \t]+/)?.[0] ?? "";
-  return lines.map((l) => (l.startsWith(indent) ? l.slice(indent.length) : l)).join("\n").trimEnd();
-}
-
-function readListField(yaml: string, key: string): string[] {
-  // Parse `key:\n  - item\n  - item\n`. Skips empty / non-list values.
-  const re = new RegExp(`^${key}:\\s*\\n((?:[ \\t]+-\\s+.*\\n?)+)`, "m");
-  const m = re.exec(yaml);
-  if (!m) return [];
-  const out: string[] = [];
-  for (const line of (m[1] ?? "").split("\n")) {
-    const item = line.match(/^[ \t]+-\s+(.*)$/);
-    if (item) out.push(item[1].trim());
-  }
-  return out;
+function asNullableString(value: unknown): string | null {
+  if (value == null) return null;
+  if (typeof value === "string") return value === "" ? null : value;
+  return String(value);
 }
 
 function envAgents(): string[] {
@@ -143,9 +122,11 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
       if (bucket === "waiting") {
         for (const f of yamls) {
           try {
-            const yaml = await readFile(join(dir, f), "utf-8");
-            const status = readField(yaml, "status") ?? "";
-            const brief = readNestedField(yaml, "summary", "brief") ?? readBlockScalar(yaml, "brief") ?? "";
+            const content = await readFile(join(dir, f), "utf-8");
+            const doc = parseEnvelope(content);
+            if (!doc) continue;
+            const status = asString(doc.status);
+            const brief = asString(doc.summary?.brief) || asString(doc.brief);
             if (status === "waiting:on:user") {
               summary.waitingUser.push({ agent, file: f, summary: brief.slice(0, 200) });
             }
@@ -155,9 +136,10 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
       if (bucket === "failed") {
         for (const f of yamls) {
           try {
-            const yaml = await readFile(join(dir, f), "utf-8");
-            const status = readField(yaml, "status") ?? "";
-            if (status === "escalated") {
+            const content = await readFile(join(dir, f), "utf-8");
+            const doc = parseEnvelope(content);
+            if (!doc) continue;
+            if (asString(doc.status) === "escalated") {
               summary.escalated.push({ agent, file: f });
             }
           } catch {}
@@ -172,42 +154,31 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
 
 async function readTaskFile(agent: string, bucket: Bucket, file: string): Promise<TaskRow | null> {
   const path = join(AGENTS_DIR, agent, "tasks", bucket, file);
-  let yaml: string;
+  let content: string;
   try {
-    yaml = await readFile(path, "utf-8");
+    content = await readFile(path, "utf-8");
   } catch {
     return null;
   }
-  const id = readField(yaml, "id") ?? file.replace(/\.yaml$/, "");
-  const headline = readField(yaml, "headline") ?? "";
-  const status = readField(yaml, "status") ?? "";
-  const kind = readField(yaml, "kind") ?? "other";
-  const from = readField(yaml, "from") ?? "";
-  const to = readField(yaml, "to") ?? agent;
-  const parentRaw = readField(yaml, "parent");
-  const parent = parentRaw && parentRaw !== "null" ? parentRaw : null;
-  const priority = readField(yaml, "priority");
-  const brief = readBlockScalar(yaml, "brief");
-  const summaryBrief = readNestedField(yaml, "summary", "brief") ?? "";
-  const summaryResponse = readNestedField(yaml, "summary", "response") ?? "";
-  const context = readListField(yaml, "context");
-  const dispatchChat = readNestedField(yaml, "dispatch", "chat_id");
-  const dispatchAutoResume = readNestedField(yaml, "dispatch", "auto_resume");
-  const dispatchChatName = unquote(readNestedField(yaml, "dispatch", "chat_name"));
-  const dispatchChatPreview = unquote(readNestedField(yaml, "dispatch", "chat_preview"));
-  const dispatchChatAgent = unquote(readNestedField(yaml, "dispatch", "chat_agent"));
-  const created = readField(yaml, "created");
-  const updated = readField(yaml, "updated");
+  const doc = parseEnvelope(content);
+  if (!doc) return null;
+
+  const id = asString(doc.id) || file.replace(/\.yaml$/, "");
+  const parentVal = doc.parent;
+  const parent =
+    parentVal == null || parentVal === "null" || parentVal === "" ? null : String(parentVal);
+
+  const ctxRaw = Array.isArray(doc.context) ? doc.context : [];
+  const context = ctxRaw.map((c) => asString(c)).filter(Boolean);
+
+  const dispatch = (doc.dispatch && typeof doc.dispatch === "object" ? doc.dispatch : {}) as Record<string, any>;
+  const summary = (doc.summary && typeof doc.summary === "object" ? doc.summary : {}) as Record<string, any>;
+
   const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
   // `report:` is a top-level field — the worker sets it via
-  // <task-done report="path/to/produced/file.md"/>. If empty / unset, no
-  // produced report exists and the dashboard hides the Report button.
-  const reportRaw = readField(yaml, "report");
-  let reportPath = reportRaw && reportRaw !== '""' && reportRaw !== "''" ? reportRaw.replace(/^["']|["']$/g, "") : null;
-  // v1.2 file-rendezvous contract: workers write `tasks/<bucket>/<id>.md`
-  // as the canonical deliverable. Auto-discover it when the YAML's `report:`
-  // field is empty so the dashboard surfaces the worker's writeup without a
-  // manual frontmatter step.
+  // <task-done report="path/to/produced/file.md"/>. If empty / unset, fall
+  // back to the v1.2 file-rendezvous convention (`tasks/<bucket>/<id>.md`).
+  let reportPath: string | null = asNullableString(doc.report);
   if (!reportPath) {
     const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${file.replace(/\.yaml$/, "")}.md`);
     if (existsSync(candidate)) {
@@ -217,27 +188,30 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
 
   return {
     id,
-    headline,
+    headline: asString(doc.headline),
     agent,
     bucket,
-    status,
-    kind,
-    from,
-    to,
+    status: asString(doc.status),
+    kind: asString(doc.kind) || "other",
+    from: asString(doc.from),
+    to: asString(doc.to) || agent,
     parent,
-    priority,
-    brief,
-    summary: { brief: summaryBrief, response: summaryResponse },
+    priority: asNullableString(doc.priority),
+    brief: asString(doc.brief),
+    summary: {
+      brief: asString(summary.brief),
+      response: asString(summary.response),
+    },
     context,
     dispatch: {
-      chat_id: dispatchChat,
-      chat_name: dispatchChatName,
-      chat_preview: dispatchChatPreview,
-      chat_agent: dispatchChatAgent,
-      auto_resume: dispatchAutoResume,
+      chat_id: asNullableString(dispatch.chat_id),
+      chat_name: asNullableString(dispatch.chat_name),
+      chat_preview: asNullableString(dispatch.chat_preview),
+      chat_agent: asNullableString(dispatch.chat_agent),
+      auto_resume: asNullableString(dispatch.auto_resume),
     },
-    created,
-    updated,
+    created: asNullableString(doc.created),
+    updated: asNullableString(doc.updated),
     envelopePath,
     reportPath,
   };

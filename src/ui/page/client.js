@@ -2917,9 +2917,9 @@
 
       function renderPanelCard(card, label, isCurrent) {
         if (!card) return "";
-        var brief = card.brief || "";
-        var summaryBrief = card.summary && card.summary.brief ? card.summary.brief : "";
-        var summaryResponse = card.summary && card.summary.response ? card.summary.response : "";
+        var brief = (card.brief || "").trim();
+        var summaryBrief = card.summary && card.summary.brief ? String(card.summary.brief).trim() : "";
+        var summaryResponse = card.summary && card.summary.response ? String(card.summary.response).trim() : "";
         var ctx = card.context || [];
         var ctxLines = ctx.map(function (c) {
           var safe = escapeHtml(c);
