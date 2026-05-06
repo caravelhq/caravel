@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -604,6 +604,26 @@ self.addEventListener('fetch', e => {
             response: String(body?.response ?? ""),
           });
           if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Revisit a `done` or `failed` task: append a follow-up to revisits[]
+      // and move the envelope back to `tasks/open/` so the runner re-claims.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/revisit") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/revisit".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await revisitTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            instruction: String(body?.instruction ?? ""),
+          });
+          if (!result.ok) return json({ ok: false, error: result.error, code: result.code });
           return json({ ok: true, id: result.id });
         } catch (err) {
           return json({ ok: false, error: String(err) });

@@ -235,6 +235,10 @@ ${pageStyles}
         </div>
         <form class="multi-agent-new" id="multi-agent-new" hidden>
           <div class="multi-agent-new-head">Create task</div>
+          <div class="multi-agent-new-parent" id="multi-agent-new-parent-chip" hidden>
+            <span>↳ child of <strong id="multi-agent-new-parent-id"></strong></span>
+            <button type="button" class="multi-agent-new-parent-clear" id="multi-agent-new-parent-clear" title="Clear parent">✕</button>
+          </div>
           <label class="multi-agent-new-block">
             <span>Headline <em class="multi-agent-new-hint">(required, ≤10 words — appears in lists & notifications)</em></span>
             <input id="multi-agent-new-headline" type="text" maxlength="120" placeholder="BLE plugin survey" required />

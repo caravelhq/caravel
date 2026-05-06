@@ -2940,6 +2940,14 @@
           actions.push('<button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Open report in Files</button>');
         }
         actions.push('<button data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Spawn chat</button>');
+        // Done/failed cards get a "Spawn Follow-up" button that opens the
+        // new-task form pre-filled with parent=<id> + to=<agent>. The form's
+        // submit handler reads the parent from its data attribute.
+        var statusLower = (card.status || "").toLowerCase();
+        var isTerminalCard = statusLower.indexOf("done") === 0 || statusLower.indexOf("failed") === 0 || statusLower === "escalated";
+        if (isTerminalCard) {
+          actions.push('<button data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Spawn follow-up</button>');
+        }
         if (!isCurrent) {
           actions.push('<button data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
         }
@@ -2970,6 +2978,23 @@
             '</div>' +
             '</div>';
           sections += renderSection("⏳ Unblock — your response", unblockHtml, true);
+        }
+        // Done/failed cards get an inline Revisit form so Kelly can re-open
+        // the task with a follow-up instruction without leaving the panel.
+        // The submit handler hits POST /api/tasks/:id/revisit; cap-rejection
+        // (5 revisits already) returns code:"cap" and the UI suggests Spawn
+        // Follow-up instead.
+        if (isCurrent && isTerminalCard) {
+          var revisitHtml =
+            '<div class="task-panel-revisit" data-revisit-agent="' + escapeHtml(card.agent || "") + '" data-revisit-id="' + escapeHtml(card.id) + '">' +
+            '<div class="task-panel-unblock-hint">Add a follow-up instruction. The original brief stays untouched; this revisit is appended and the task moves back to the open queue. Use Spawn Follow-up instead if the scope has materially changed.</div>' +
+            '<textarea class="task-panel-unblock-input task-panel-revisit-input" rows="4" placeholder="What needs revisiting? (e.g. &quot;the Y bit was wrong, redo with Z&quot;)"></textarea>' +
+            '<div class="task-panel-unblock-actions">' +
+            '<button type="button" class="is-primary task-panel-revisit-submit">Revisit &amp; return to queue</button>' +
+            '<span class="task-panel-unblock-status task-panel-revisit-status"></span>' +
+            '</div>' +
+            '</div>';
+          sections += renderSection("↺ Revisit — follow-up instruction", revisitHtml, false);
         }
         if (summaryResponse) {
           sections += renderSection("Worker result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', openResult);
@@ -3209,6 +3234,95 @@
         }
       }
 
+      async function submitRevisit(wrapper) {
+        if (!wrapper) return;
+        var agent = wrapper.getAttribute("data-revisit-agent");
+        var taskId = wrapper.getAttribute("data-revisit-id");
+        var input = wrapper.querySelector(".task-panel-revisit-input");
+        var btn = wrapper.querySelector(".task-panel-revisit-submit");
+        var statusEl = wrapper.querySelector(".task-panel-revisit-status");
+        if (!agent || !taskId || !input) return;
+        var instruction = (input.value || "").trim();
+        if (!instruction) {
+          if (statusEl) {
+            statusEl.textContent = "Type a follow-up first.";
+            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
+          }
+          return;
+        }
+        if (btn) btn.disabled = true;
+        if (statusEl) {
+          statusEl.textContent = "Sending…";
+          statusEl.className = "task-panel-unblock-status task-panel-revisit-status";
+        }
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/revisit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent, instruction: instruction }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            if (statusEl) {
+              var msg = "Error: " + (data.error || "unknown");
+              if (data.code === "cap") {
+                msg += " — use Spawn Follow-up to create a child task instead.";
+              }
+              statusEl.textContent = msg;
+              statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
+            }
+            if (btn) btn.disabled = false;
+            return;
+          }
+          if (statusEl) {
+            statusEl.textContent = "Re-opened to queue.";
+            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-ok";
+          }
+          openTaskPanel(taskId);
+          fetchTasks();
+          fetchSummary();
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (err && err.message || err);
+            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
+          }
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function spawnFollowUp(taskId, agent) {
+        if (!newForm) return;
+        // Open the form (in chat panel if a chat is active, otherwise inline
+        // dashboard) and stamp the parent attribute so the submit handler
+        // includes it on the payload.
+        try {
+          if (typeof chatSessionId !== "undefined" && chatSessionId && typeof window.__openTaskFormInChat === "function") {
+            window.__openTaskFormInChat();
+          } else {
+            newForm.removeAttribute("hidden");
+            if (newBtn) newBtn.classList.add("is-active");
+          }
+        } catch (_) {}
+        newForm.setAttribute("data-parent", taskId);
+        var chip = document.getElementById("multi-agent-new-parent-chip");
+        var chipId = document.getElementById("multi-agent-new-parent-id");
+        if (chip) chip.removeAttribute("hidden");
+        if (chipId) chipId.textContent = taskId;
+        if (agent) {
+          var toEl = document.getElementById("multi-agent-new-to");
+          if (toEl) {
+            for (var i = 0; i < toEl.options.length; i++) {
+              if (toEl.options[i].value === agent) {
+                toEl.value = agent;
+                break;
+              }
+            }
+          }
+        }
+        var headlineEl = document.getElementById("multi-agent-new-headline");
+        if (headlineEl) headlineEl.focus();
+      }
+
       // Delegate clicks inside the task panel for action buttons.
       if (taskPanelBody) {
         taskPanelBody.addEventListener("click", function (ev) {
@@ -3216,6 +3330,21 @@
           if (unblockBtn) {
             ev.preventDefault();
             submitUnblock(unblockBtn.closest(".task-panel-unblock"));
+            return;
+          }
+          var revisitBtn = ev.target.closest(".task-panel-revisit-submit");
+          if (revisitBtn) {
+            ev.preventDefault();
+            submitRevisit(revisitBtn.closest(".task-panel-revisit"));
+            return;
+          }
+          var followUpBtn = ev.target.closest("[data-spawn-followup-id]");
+          if (followUpBtn) {
+            ev.preventDefault();
+            spawnFollowUp(
+              followUpBtn.getAttribute("data-spawn-followup-id"),
+              followUpBtn.getAttribute("data-spawn-followup-to")
+            );
             return;
           }
           var openTaskBtn = ev.target.closest("[data-open-task]");
@@ -3429,6 +3558,13 @@
 
       if (newCancelBtn && newForm) {
         newCancelBtn.addEventListener("click", function () {
+          // Cancel always clears any pending parent — Spawn Follow-up is a
+          // single-shot intent, not a sticky form mode.
+          newForm.removeAttribute("data-parent");
+          var chipEl2 = document.getElementById("multi-agent-new-parent-chip");
+          var chipIdEl2 = document.getElementById("multi-agent-new-parent-id");
+          if (chipEl2) chipEl2.setAttribute("hidden", "");
+          if (chipIdEl2) chipIdEl2.textContent = "";
           if (newForm.parentElement === chatTaskHost) {
             returnFormToDashboard();
           } else {
@@ -3436,6 +3572,17 @@
             if (newBtn) newBtn.classList.remove("is-active");
             if (newStatus) newStatus.textContent = "";
           }
+        });
+      }
+
+      var parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
+      if (parentClearBtn && newForm) {
+        parentClearBtn.addEventListener("click", function () {
+          newForm.removeAttribute("data-parent");
+          var chipEl3 = document.getElementById("multi-agent-new-parent-chip");
+          var chipIdEl3 = document.getElementById("multi-agent-new-parent-id");
+          if (chipEl3) chipEl3.setAttribute("hidden", "");
+          if (chipIdEl3) chipIdEl3.textContent = "";
         });
       }
 
@@ -3473,6 +3620,11 @@
             if (pendingChatContext && pendingChatContext.chatId) {
               payload.chat_id = pendingChatContext.chatId;
             }
+            // Spawn Follow-up stamps the parent on the form's data attribute;
+            // forwarding it tells the service to allocate a decimal sub-task
+            // id (`<parent>.N`).
+            var parentAttr = newForm.getAttribute("data-parent");
+            if (parentAttr) payload.parent = parentAttr;
             var res = await fetch("/api/tasks/new", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -3493,6 +3645,13 @@
             if (briefEl) briefEl.value = "";
             if (outputEl) outputEl.value = "";
             if (ctxEl) ctxEl.value = "";
+            // Parent is single-shot: clear after a successful spawn so the
+            // next dispatch from the same form doesn't accidentally inherit it.
+            newForm.removeAttribute("data-parent");
+            var chipEl = document.getElementById("multi-agent-new-parent-chip");
+            var chipIdEl = document.getElementById("multi-agent-new-parent-id");
+            if (chipEl) chipEl.setAttribute("hidden", "");
+            if (chipIdEl) chipIdEl.textContent = "";
             updateHeadlineCount();
             // If the form was hosted in the chat panel, return it to the
             // dashboard now — the dispatched-id confirmation already showed.

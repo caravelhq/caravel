@@ -75,6 +75,64 @@ function readField(yaml: string, key: string): string | null {
   return m ? m[1].trim() : null;
 }
 
+// Parses the `revisits:` block-form list into `{ ts, by, instruction }`
+// entries. Returns [] when the field is absent, inline empty (`revisits: []`),
+// or null. Robust to either `instruction: |` block scalars (6-space indented
+// body lines) or inline `instruction: "..."` strings.
+function readRevisits(yaml: string): { ts: string; by: string; instruction: string }[] {
+  const blockRe = /^revisits:\s*\n((?:[ \t]+.*\n?)*)/m;
+  const m = blockRe.exec(yaml);
+  if (!m) return [];
+  const body = m[1];
+  const lines = body.split("\n");
+  const out: { ts: string; by: string; instruction: string }[] = [];
+  let cur: { ts: string; by: string; instruction: string } | null = null;
+  let collecting: "block" | null = null;
+  let blockBuf: string[] = [];
+  const flushBlock = () => {
+    if (cur && collecting === "block") {
+      cur.instruction = blockBuf.join("\n").replace(/\s+$/, "");
+    }
+    blockBuf = [];
+    collecting = null;
+  };
+  for (const line of lines) {
+    const itemMatch = /^  - ts:\s*(.*)$/.exec(line);
+    if (itemMatch) {
+      flushBlock();
+      if (cur) out.push(cur);
+      cur = { ts: itemMatch[1].trim(), by: "", instruction: "" };
+      continue;
+    }
+    if (!cur) continue;
+    const byMatch = /^    by:\s*(.*)$/.exec(line);
+    if (byMatch) {
+      flushBlock();
+      cur.by = byMatch[1].trim();
+      continue;
+    }
+    const instInline = /^    instruction:\s*(.+)$/.exec(line);
+    if (instInline) {
+      flushBlock();
+      let v = instInline[1].trim();
+      if (v === "|" || v === "|-" || v === "|+") {
+        collecting = "block";
+        blockBuf = [];
+      } else {
+        if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) v = v.slice(1, -1);
+        cur.instruction = v;
+      }
+      continue;
+    }
+    if (collecting === "block" && /^      /.test(line)) {
+      blockBuf.push(line.replace(/^      /, ""));
+    }
+  }
+  flushBlock();
+  if (cur) out.push(cur);
+  return out;
+}
+
 function setField(yaml: string, key: string, value: string): string {
   const re = new RegExp(`^${key}:\\s*.*$`, "m");
   if (re.test(yaml)) return yaml.replace(re, `${key}: ${value}`);
@@ -323,13 +381,31 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
   // The prompt is the brief itself plus the file-as-output contract.
   const brief = readField(yaml, "brief") ?? "";
   const agent = readField(yaml, "to") ?? "<self>";
-  return [
+  const revisits = readRevisits(yaml);
+  const sections: string[] = [
     `You have been delegated task ${taskId}. The full envelope is at:`,
     `  agents/${agent}/tasks/open/${taskId}.yaml`,
     "",
     "Brief:",
     brief.trim() || "(see envelope)",
     "",
+  ];
+  if (revisits.length > 0) {
+    sections.push("## Follow-up instructions (revisits)");
+    sections.push("");
+    sections.push(
+      "This task was previously completed (or failed) and re-opened with the follow-up instructions below. Treat them as additive corrections to the original brief — **the latest revisit takes precedence** when it conflicts with earlier guidance. Update your prior deliverable in place rather than producing a duplicate."
+    );
+    sections.push("");
+    revisits.forEach((r, i) => {
+      const tag = `Revisit ${i + 1} of ${revisits.length} — ${r.ts}${r.by ? ` (by ${r.by})` : ""}`;
+      sections.push(tag);
+      sections.push(r.instruction.trim() || "(no instruction)");
+      sections.push("");
+    });
+  }
+  return [
+    ...sections,
     "## How to return your result (primary contract)",
     "",
     `Your final action MUST be a Write call that creates this file:`,

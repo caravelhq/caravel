@@ -78,6 +78,14 @@ summary:
   response: ""                      # ≤2 lines; worker fills on done/failed — restates the result
 report: ""                          # path to the produced output file (set by worker via <task-done report="..."/>),
                                     # OR a block-scalar with the inline report body. Empty until the worker finishes.
+
+# === revisits (optional; appended when Kelly re-opens a done/failed task) ===
+revisits:                           # parallel to brief — original brief stays immutable; revisits accumulate
+  - ts: 2026-05-06T09:38:00+12      # when Kelly clicked Revisit
+    by: kelly
+    instruction: |
+      Follow-up: now also handle X.
+      The Y bit you did was wrong — redo with Z.
 ```
 
 ## Status values
@@ -168,3 +176,20 @@ See `agents/_shared/task-envelope-examples/` for canonical examples of:
 - `coordinator-delegation.yaml` — Alice delegating to a specialist
 - `escalation-back.yaml` — a worker escalating to Alice for a decision
 - `waiting-on-user.yaml` — a task parked waiting for Kelly's input
+
+## Revisit workflow
+
+A `done` or `failed` task can be re-opened with a follow-up instruction so the same agent picks up where it left off. Mirrors the `waiting:on:user` unblock pattern: the file moves back to `tasks/open/` and the runner re-claims on its next tick.
+
+**Schema rule:** the original `brief:` is **immutable**. Follow-up instructions go into the optional `revisits:` array — never edit the brief in place. Old envelopes without `revisits:` are unchanged; readers ignore the field if absent.
+
+**Lifecycle (in-place):**
+
+1. Kelly clicks Revisit on a `done` / `failed` task in the dashboard.
+2. The runner appends a `revisits:` entry, flips status back to `open`, clears the lease, and moves the file `tasks/{done,failed}/<id>.yaml` → `tasks/open/<id>.yaml`. A history entry records the `done → open` (or `failed:<reason> → open`) transition with `by: kelly`, `note: "revisit"`.
+3. Next tick, the worker re-claims. The worker prompt builder reads `brief` *and* walks `revisits[]` in order; the **latest revisit takes precedence** when it conflicts with earlier instructions.
+4. The worker updates the existing report file in place — does not create a duplicate.
+
+**Cap:** max 5 entries in `revisits[]`. Past that, scope has drifted; the right tool is **Spawn Follow-up** (a child task with `parent: <old-id>`, decimal sub-task id), which is a separate flow that uses the standard `/api/tasks/new` endpoint.
+
+**Why `revisits[]` and not `brief.current` + `brief.history`?** Backwards-compatibility. Every existing reader (worker prompt builder, dashboard renderer, examples, skill scripts) treats `brief:` as a string. A parallel array adds the new capability without breaking any current reader, and existing envelopes need zero migration. See `Notes/Projects/WAL-63_Multi-Agent/Decision_Log.md` DEC-0005.

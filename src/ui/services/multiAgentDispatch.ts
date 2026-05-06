@@ -306,6 +306,153 @@ export type UnblockTaskResult =
   | { ok: true; id: string; path: string }
   | { ok: false; error: string };
 
+const MAX_REVISITS = 5;
+
+// Counts top-level entries in a `revisits:` block. Indented (4-space) lines
+// belong to the previous entry's instruction body; only `  - ts:` rows count.
+function countRevisits(yaml: string): number {
+  const re = /^revisits:\s*\n((?:[ \t]+.*\n)+)/m;
+  const m = re.exec(yaml);
+  if (!m) return 0;
+  const body = m[1];
+  let count = 0;
+  for (const line of body.split("\n")) {
+    if (/^  - ts:/.test(line)) count += 1;
+  }
+  return count;
+}
+
+function appendRevisitEntry(yaml: string, entry: { ts: string; by: string; instruction: string }): string {
+  const indented = entry.instruction
+    .split("\n")
+    .map((l) => (l.length > 0 ? `      ${l}` : ""))
+    .join("\n");
+  const block =
+    `  - ts: ${entry.ts}\n` +
+    `    by: ${entry.by}\n` +
+    `    instruction: |\n` +
+    `${indented}\n`;
+  // Block-form header already present.
+  if (/^revisits:[ \t]*\n/m.test(yaml) || /^revisits:[ \t]*$/m.test(yaml)) {
+    return yaml.replace(/^revisits:[ \t]*\n?/m, (m) => m + block);
+  }
+  // Inline (`revisits: []` / `revisits: null`) — replace with block form.
+  if (/^revisits:.*$/m.test(yaml)) {
+    return yaml.replace(/^revisits:.*$/m, () => `revisits:\n${block.trimEnd()}`);
+  }
+  // Field absent — splice it just before the dispatch block (if present) or
+  // append at end. Prefer "before dispatch:" so the order matches the schema.
+  if (/^dispatch:/m.test(yaml)) {
+    return yaml.replace(/^dispatch:/m, () => `revisits:\n${block.trimEnd()}\n\ndispatch:`);
+  }
+  return yaml.trimEnd() + `\n\nrevisits:\n${block}`;
+}
+
+interface RevisitTaskInput {
+  agent: string;
+  taskId: string;
+  instruction: string;
+}
+
+export type RevisitTaskResult =
+  | { ok: true; id: string; path: string; revisitCount: number }
+  | { ok: false; error: string; code?: "cap" };
+
+// Re-open a `done` or `failed` task with a follow-up instruction. Mirrors
+// `unblockTask()` but the source bucket is done/ or failed/, the original
+// brief is left untouched, and the new instruction is appended to a parallel
+// `revisits:` array. Capped at MAX_REVISITS — past that, scope has drifted
+// and the caller should use createTask({ parent: oldId, ... }) to spawn a
+// child task instead.
+export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const instruction = (input.instruction ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
+  if (!instruction) return { ok: false, error: "instruction is required" };
+
+  const donePath = join(AGENTS_DIR, agent, "tasks", "done", `${taskId}.yaml`);
+  const failedPath = join(AGENTS_DIR, agent, "tasks", "failed", `${taskId}.yaml`);
+  const openPath = join(AGENTS_DIR, agent, "tasks", "open", `${taskId}.yaml`);
+
+  let sourcePath: string;
+  let sourceBucket: "done" | "failed";
+  if (existsSync(donePath)) {
+    sourcePath = donePath;
+    sourceBucket = "done";
+  } else if (existsSync(failedPath)) {
+    sourcePath = failedPath;
+    sourceBucket = "failed";
+  } else {
+    return { ok: false, error: `task ${taskId} is not in agents/${agent}/tasks/{done,failed}/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(sourcePath, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  const existingCount = countRevisits(yaml);
+  if (existingCount >= MAX_REVISITS) {
+    return {
+      ok: false,
+      code: "cap",
+      error: `task already has ${existingCount} revisits (max ${MAX_REVISITS}); use Spawn Follow-up to create a child task instead`,
+    };
+  }
+
+  const statusMatch = /^status:\s*(.*)$/m.exec(yaml);
+  const currentStatus = statusMatch ? statusMatch[1].trim() : "";
+
+  const now = new Date().toISOString();
+
+  // Drop any worker-written `.md` rendezvous file for the prior run so the
+  // runner doesn't re-trigger off stale signal when it claims again.
+  const sourceReportPath = join(AGENTS_DIR, agent, "tasks", sourceBucket, `${taskId}.md`);
+  if (existsSync(sourceReportPath)) {
+    try { await unlink(sourceReportPath); } catch {}
+  }
+
+  let next = yaml;
+  next = appendRevisitEntry(next, { ts: now, by: "kelly", instruction });
+  next = setStatus(next, "open");
+  next = setUpdated(next, now);
+  // Clear the lease — the prior run's claim must not carry forward.
+  next = next.replace(/^(lease:[\s\S]*?\n)( {2}holder:\s*.*)$/m, (_match, head, _line) => `${head}  holder: null`);
+  next = next.replace(/^(lease:[\s\S]*?\n[\s\S]*?\n)( {2}expires:\s*.*)$/m, (_match, head, _line) => `${head}  expires: null`);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: currentStatus || sourceBucket,
+    to: "open",
+    by: "kelly",
+    note: "revisit via dashboard",
+  });
+
+  await mkdir(join(AGENTS_DIR, agent, "tasks", "open"), { recursive: true });
+  await writeFile(openPath, next);
+  try {
+    await unlink(sourcePath);
+  } catch {
+    // The new file is in place; the stale source copy is the only artefact.
+  }
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: "open",
+    transition: `${currentStatus || sourceBucket}→open`,
+    by: "kelly",
+    note: "revisit via dashboard",
+    revisit_count: existingCount + 1,
+  });
+
+  return { ok: true, id: taskId, path: openPath, revisitCount: existingCount + 1 };
+}
+
 export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskResult> {
   const agent = (input.agent ?? "").trim();
   const taskId = (input.taskId ?? "").trim();

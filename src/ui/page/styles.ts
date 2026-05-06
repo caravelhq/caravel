@@ -2652,6 +2652,33 @@ export const pageStyles = String.raw`    :root {
     }
     .task-panel-unblock-status.is-error { color: #ff9a9a; }
     .task-panel-unblock-status.is-ok { color: #93e0a8; }
+    .task-panel-revisit { /* shares .task-panel-unblock styling */ }
+    .multi-agent-new-parent {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      margin: 0 0 10px 0;
+      background: #173255;
+      border: 1px solid #2a4f80;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #cfe1ff;
+    }
+    .multi-agent-new-parent strong {
+      font-family: "JetBrains Mono", monospace;
+      color: #fff;
+    }
+    .multi-agent-new-parent-clear {
+      margin-left: auto;
+      background: transparent;
+      border: 0;
+      color: #cfe1ff;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+    }
+    .multi-agent-new-parent-clear:hover { color: #fff; }
     .task-panel-section {
       border: 1px solid #ffffff10;
       border-radius: 8px;
