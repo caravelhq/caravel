@@ -29,7 +29,6 @@ import { readdir, readFile, writeFile, rename, mkdir, stat } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
-import { appendMessage } from "./ui/services/chats";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -280,9 +279,11 @@ async function readReportFile(agent: string, taskId: string): Promise<TaskDirect
     if (status === "done" || bucket === "done") {
       const reportPath = (fm.report_path ?? "").trim();
       // If the worker pointed report_path at a sibling deliverable, link to
-      // that. Otherwise the report IS this .md file — link there so the
-      // dashboard can open it directly.
-      const report = reportPath || `agents/${agent}/tasks/${bucket}/${taskId}.md`;
+      // that. Otherwise the report IS this .md file — store the relative leaf
+      // (`<id>.md`) so the renderer can resolve against whichever bucket the
+      // envelope is currently in. Bucket-bound paths break on revisit when the
+      // envelope moves done → open. (See 2026-05-06_revisit-loses-report.md.)
+      const report = reportPath || `${taskId}.md`;
       return {
         kind: "done",
         reason: null,
@@ -337,6 +338,20 @@ function stripFrontmatter(content: string): string {
   return content.replace(/^---\s*\n[\s\S]*?\n---\s*(\n|$)/, "");
 }
 
+// Normalise a worker-emitted `report=` path. When the worker points at its own
+// rendezvous `.md` inside `agents/<who>/tasks/<bucket>/<id>.md`, persist only
+// the relative leaf so the path stays valid across bucket transitions (e.g.
+// done → open on revisit). Paths to deliverables outside the rendezvous tree
+// (Notes/Projects/..., repos/dev/features/...) are kept as-is — those are
+// repo-relative and don't move when the envelope does.
+function normaliseReportPath(report: string | null): string | null {
+  if (!report) return null;
+  const trimmed = report.trim();
+  if (!trimmed) return null;
+  const m = /^agents\/[^/]+\/tasks\/(?:done|failed|waiting|open)\/([^/]+\.md)$/.exec(trimmed);
+  return m ? m[1] : trimmed;
+}
+
 function parseDirective(text: string): TaskDirective | null {
   const doneMatch = /<task-done([^>]*)>([\s\S]*?)<\/task-done>/.exec(text);
   if (doneMatch) {
@@ -346,7 +361,7 @@ function parseDirective(text: string): TaskDirective | null {
       reason: null,
       summary: (attrs.summary ?? "").trim(),
       body: (doneMatch[2] ?? "").trim(),
-      report: attrs.report ? attrs.report.trim() : null,
+      report: normaliseReportPath(attrs.report ?? null),
     };
   }
   const failMatch = /<task-failed([^>]*)>([\s\S]*?)<\/task-failed>/.exec(text);
@@ -513,24 +528,13 @@ async function claimTask(
   return fields;
 }
 
-// Post a passive status notification to the chat that originally spawned this
-// task (if any), and — if Alice was the dispatcher — enqueue a continuation
-// envelope in her own queue so the runner wakes her out-of-band rather than
-// impersonating Kelly with a synthetic user message. The chat_id is stamped on
-// the envelope at /task dispatch time. No-ops cleanly when the chat doesn't
-// exist (e.g. dashboard-spawned tasks without a chat thread).
-//
-// Behaviour:
-//   - assistant-role status message ALWAYS posts (visible to Kelly,
-//     non-interrupting).
-//   - If `from: alice` AND `to: <not alice>` AND directive is `done` or
-//     `failed`, write a continuation envelope to agents/alice/tasks/open/
-//     so Alice's normal worker tick processes the result and decides next
-//     step. She surfaces back to chat by completing her continuation with
-//     a `<task-done>` summary, which posts as the next assistant status.
-//   - `<task-waiting on="user">` from Alice's continuation is the only
-//     channel that should ask Kelly for input; the status message says so
-//     and Kelly's next chat turn naturally fires the chat processor.
+// On worker transition: enqueue an Alice continuation envelope when she was
+// the dispatcher of a sub-task that's now done/failed, so she can decide the
+// next step out-of-band. No chat surface — task status is visible in the
+// dashboard's task panel and journal feed; posting assistant-role messages
+// into Kelly's chat thread was just noise (see 2026-05-06 chat-mute fix).
+// The dashboard's blocked-task UI is the channel for `waiting:on:user`; no
+// chat post needed there either.
 async function notifyDispatchChat(
   yaml: string,
   agent: string,
@@ -538,48 +542,10 @@ async function notifyDispatchChat(
   finalStatus: string,
   directive: TaskDirective
 ): Promise<void> {
-  const chatId = readNestedField(yaml, "dispatch", "chat_id");
-  if (!chatId) return;
-
-  const verb = directive.kind === "done"
-    ? "completed"
-    : directive.kind === "waiting"
-    ? "is waiting"
-    : "failed";
-  const headline = `**Task ${taskId}** (${agent}) ${verb}.`;
-  const status = `Status: \`${finalStatus}\``;
-  const summary = directive.summary ? `\nSummary: ${directive.summary}` : "";
-
-  const subdir = directive.kind === "waiting"
-    ? "waiting"
-    : directive.kind === "done"
-    ? "done"
-    : "failed";
-  const envelopePath = `agents/${agent}/tasks/${subdir}/${taskId}.yaml`;
-  const reportLine = directive.kind === "done" && directive.report
-    ? `\nReport: \`${directive.report}\`\nEnvelope: \`${envelopePath}\``
-    : `\nEnvelope: \`${envelopePath}\``;
-
-  const notificationText = `${headline}\n${status}${summary}${reportLine}`;
-
-  try {
-    await appendMessage(chatId, {
-      role: "assistant",
-      text: notificationText,
-      state: "done",
-      startedAt: Date.now(),
-      updatedAt: Date.now(),
-    });
-  } catch (err) {
-    console.error(`[multi-agent] failed to notify chat ${chatId}:`, err);
-    return;
-  }
-
+  void finalStatus;
   // Continuation: if Alice dispatched this sub-task, enqueue a follow-up in
   // her own queue. The runner ticks alice/tasks/open/ on the normal cadence,
   // so she wakes there — never via a synthetic user prompt in Kelly's chat.
-  // Skip when Alice was the worker herself (her own completion IS the chat
-  // surface — the assistant status message above already conveys it).
   const from = readField(yaml, "from");
   const to = readField(yaml, "to");
   if (
@@ -587,6 +553,8 @@ async function notifyDispatchChat(
     to !== "alice" &&
     (directive.kind === "done" || directive.kind === "failed")
   ) {
+    const subdir = directive.kind === "done" ? "done" : "failed";
+    const chatId = readNestedField(yaml, "dispatch", "chat_id");
     try {
       // Carry the chat metadata stamped on the parent through to the
       // continuation envelope so the dashboard / runner has full context

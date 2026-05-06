@@ -175,14 +175,43 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   const summary = (doc.summary && typeof doc.summary === "object" ? doc.summary : {}) as Record<string, any>;
 
   const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
+  const taskIdLeaf = file.replace(/\.yaml$/, "");
   // `report:` is a top-level field — the worker sets it via
-  // <task-done report="path/to/produced/file.md"/>. If empty / unset, fall
-  // back to the v1.2 file-rendezvous convention (`tasks/<bucket>/<id>.md`).
+  // <task-done report="path/to/produced/file.md"/>. Three forms accepted:
+  //   (a) relative leaf "<id>.md" — resolve against current bucket (preferred,
+  //       v1.2+; survives bucket transitions on revisit).
+  //   (b) full repo-relative path to a sibling deliverable (Notes/..., repos/...) —
+  //       use as-is.
+  //   (c) legacy bucket-bound "agents/<a>/tasks/<bucket>/<id>.md" — try as-is,
+  //       fall back to current bucket if the file moved (revisit case).
+  // If `report:` is empty/unset, fall back to the v1.2 file-rendezvous
+  // convention (`<id>.md` in the current bucket).
   let reportPath: string | null = asNullableString(doc.report);
+  if (reportPath) {
+    const looksLikeLeaf = !reportPath.includes("/");
+    const looksLikeBucketBound = /^agents\/[^/]+\/tasks\/(?:done|failed|waiting|open)\/[^/]+\.md$/.test(reportPath);
+    if (looksLikeLeaf) {
+      const candidate = join(AGENTS_DIR, agent, "tasks", bucket, reportPath);
+      reportPath = existsSync(candidate)
+        ? `agents/${agent}/tasks/${bucket}/${reportPath}`
+        : null;
+    } else if (looksLikeBucketBound) {
+      // Legacy form: try literal path; if missing (envelope moved between
+      // buckets), retry as a leaf in the current bucket.
+      const literal = join(AGENTS_DIR, reportPath.replace(/^agents\//, ""));
+      if (!existsSync(literal)) {
+        const leaf = reportPath.split("/").pop() || "";
+        const candidate = join(AGENTS_DIR, agent, "tasks", bucket, leaf);
+        if (existsSync(candidate)) {
+          reportPath = `agents/${agent}/tasks/${bucket}/${leaf}`;
+        }
+      }
+    }
+  }
   if (!reportPath) {
-    const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${file.replace(/\.yaml$/, "")}.md`);
+    const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${taskIdLeaf}.md`);
     if (existsSync(candidate)) {
-      reportPath = `agents/${agent}/tasks/${bucket}/${file.replace(/\.yaml$/, "")}.md`;
+      reportPath = `agents/${agent}/tasks/${bucket}/${taskIdLeaf}.md`;
     }
   }
 

@@ -410,11 +410,16 @@ export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskR
 
   const now = new Date().toISOString();
 
-  // Drop any worker-written `.md` rendezvous file for the prior run so the
-  // runner doesn't re-trigger off stale signal when it claims again.
+  // Archive the prior run's `.md` rendezvous file by renaming to
+  // `<id>.r{N}.md` in the same bucket (N = revisit count being created, 0-based
+  // before increment). The runner only inspects `<id>.md` so this neutralises
+  // any stale-signal risk while preserving Kelly's view of prior deliverables.
+  // For task reports — where the `.md` body IS the deliverable — this prevents
+  // the deletion bug fixed in 2026-05-06_revisit-loses-report.md.
   const sourceReportPath = join(AGENTS_DIR, agent, "tasks", sourceBucket, `${taskId}.md`);
   if (existsSync(sourceReportPath)) {
-    try { await unlink(sourceReportPath); } catch {}
+    const archivedPath = join(AGENTS_DIR, agent, "tasks", sourceBucket, `${taskId}.r${existingCount}.md`);
+    try { await rename(sourceReportPath, archivedPath); } catch {}
   }
 
   let next = yaml;
