@@ -44,10 +44,12 @@ function escapeRegex(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-// Decimal sub-task scheme: a task with a parent gets `{parent}.N` where N is
-// the next unused integer suffix among existing siblings (children of the same
-// parent). This lets reviewers trace orchestration trees from the id alone:
-// TSK-2026-05-04-0001 → TSK-2026-05-04-0001.1 → TSK-2026-05-04-0001.1.2 etc.
+// Single-level decimal sub-task scheme: a task with a parent gets
+// `{root}.NN` (zero-padded 2 digits) where `root` is the parent's top-level
+// id (everything before the first `.`) and NN is the next unused integer
+// suffix among existing children of that root. This keeps orchestration trees
+// readable — grandchildren become siblings rather than nested deeper:
+//   TSK-2026-05-04-0001 → TSK-2026-05-04-0001.01, .02, .03, ...
 // Top-level tasks (no parent) keep the flat date-prefixed counter.
 async function nextTaskId(parent: string | null): Promise<string> {
   // Include `archived` so ids that were swept off the active dirs are still
@@ -55,7 +57,8 @@ async function nextTaskId(parent: string | null): Promise<string> {
   const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
 
   if (parent) {
-    const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
+    const root = parent.split(".")[0]!;
+    const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
     for (const a of KNOWN_AGENTS) {
       for (const sub of SCAN_DIRS) {
@@ -70,7 +73,7 @@ async function nextTaskId(parent: string | null): Promise<string> {
         }
       }
     }
-    return `${parent}.${maxN + 1}`;
+    return `${root}.${String(maxN + 1).padStart(2, "0")}`;
   }
 
   const prefix = todayPrefix();

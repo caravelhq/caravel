@@ -68,10 +68,13 @@ async function listAllIds(agent) {
 // Decimal-aware allocator. Mirrors the daemon's nextAliceTaskId logic so
 // the runtime and the CLI never disagree on what the next id should be.
 //   - parent === null  → next free top-level `<prefix>NNNN` (skips dotted ids)
-//   - parent !== null  → next free integer suffix `<parent>.M` across all agents
+//   - parent !== null  → next free integer suffix `<root>.NN` (zero-padded 2
+//     digits) where root is parent flattened to top-level id. Grandchildren
+//     become siblings; orchestration trees stay one level deep.
 async function nextIdForAgent(_agent, parent = null) {
   if (parent) {
-    const re = new RegExp("^" + escapeRegex(parent) + "\\.(\\d+)(?:\\.|$)");
+    const root = parent.split(".")[0];
+    const re = new RegExp("^" + escapeRegex(root) + "\\.(\\d+)$");
     let maxN = 0;
     for (const a of AGENTS) {
       const ids = await listAllIds(a);
@@ -82,7 +85,7 @@ async function nextIdForAgent(_agent, parent = null) {
         if (Number.isFinite(n) && n > maxN) maxN = n;
       }
     }
-    return `${parent}.${maxN + 1}`;
+    return `${root}.${String(maxN + 1).padStart(2, "0")}`;
   }
 
   const prefix = todayPrefix();

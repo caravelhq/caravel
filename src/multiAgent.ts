@@ -586,9 +586,10 @@ function escapeRegex(s: string): string {
 //
 // Decimal sub-task scheme (mirrors the dispatch service):
 //   - When `parent` is provided (the normal continuation path), the new id is
-//     `{parent}.N` where N is the next unused integer suffix among existing
-//     children of that parent. Scans every agent's task dirs because children
-//     of an Alice-dispatched task may live anywhere.
+//     `{root}.NN` (zero-padded 2 digits) where `root` is the parent flattened
+//     to its top-level id (everything before the first `.`) and NN is the
+//     next unused integer suffix among existing children of that root. This
+//     enforces a single-level child scheme — grandchildren become siblings.
 //   - When `parent` is null (defensive fallback), use the flat
 //     TSK-YYYY-MM-DD-NNNN counter scoped to Alice's own dirs.
 async function nextAliceTaskId(parent: string | null): Promise<string> {
@@ -596,7 +597,8 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
   const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
 
   if (parent) {
-    const childRe = new RegExp(`^${escapeRegex(parent)}\\.(\\d+)\\.yaml$`);
+    const root = parent.split(".")[0]!;
+    const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
     const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
     for (const a of knownAgents) {
@@ -611,7 +613,7 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
         }
       }
     }
-    return `${parent}.${maxN + 1}`;
+    return `${root}.${String(maxN + 1).padStart(2, "0")}`;
   }
 
   const d = new Date();
@@ -1038,7 +1040,16 @@ async function transitionToTerminal(
 
 async function runWorker(agent: string, taskId: string, yaml: string): Promise<TaskDirective | null> {
   const prompt = buildWorkerPrompt(yaml, taskId);
-  const threadId = `task-${taskId}`;
+  // Thread scope: rooted at the parent task and keyed by agent. All sub-tasks
+  // under the same parent share one resumed Claude session per agent — the
+  // agent doesn't re-read its CLAUDE.md, brief context, or the project
+  // README on each sibling sub-task. Anthropic's prompt cache stays warm
+  // across the project burst, and per-agent isolation prevents cross-agent
+  // session collision (Cliff and Bob each get their own thread under the
+  // same parent). Top-level tasks (no parent) thread on the task id itself.
+  const fields = parseFields(yaml, taskId);
+  const root = (fields.parent && fields.parent !== "null" ? fields.parent : taskId).split(".")[0]!;
+  const threadId = `task-${root}-${agent}`;
 
   let captured = "";
   try {
