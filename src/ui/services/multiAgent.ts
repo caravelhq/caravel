@@ -82,12 +82,18 @@ function parseEnvelope(content: string): Record<string, any> | null {
 function asString(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
   return String(value);
 }
 
 function asNullableString(value: unknown): string | null {
   if (value == null) return null;
   if (typeof value === "string") return value === "" ? null : value;
+  // js-yaml parses ISO-8601 timestamps into Date objects. Re-emit as ISO so
+  // string comparisons (sort, since-filter) stay chronological. `String(Date)`
+  // produces locale-formatted output like "Thu May 07 2026 …" that doesn't
+  // sort correctly.
+  if (value instanceof Date) return value.toISOString();
   return String(value);
 }
 

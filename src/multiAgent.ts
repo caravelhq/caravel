@@ -25,7 +25,7 @@
 //   - Direct Alice escalation tooling (phase 3).
 //   - Dashboard wiring (phase 4).
 
-import { readdir, readFile, writeFile, rename, mkdir, stat } from "fs/promises";
+import { readdir, readFile, writeFile, rename, mkdir, stat, unlink } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
@@ -834,6 +834,7 @@ async function transitionToWaiting(
   if (sourcePath !== targetPath) {
     await rename(sourcePath, targetPath);
   }
+  await cleanStaleRendezvous(agent, taskId, "waiting");
 
   await appendJournal(agent, {
     ts: now,
@@ -847,6 +848,31 @@ async function transitionToWaiting(
   });
 
   await notifyDispatchChat(next, agent, taskId, finalStatus, directive);
+}
+
+// Delete stale `<id>.md` rendezvous files from any rendezvous bucket other
+// than the current one. Called after a YAML transitions between buckets so
+// the runner's file-rendezvous reader (`readReportFile`, scans done → failed
+// → waiting) doesn't pick up an outdated worker turn from a previous state.
+// Revisit-archived files (`<id>.r{N}.md`) are NOT deleted — only the bare
+// `<id>.md` gets cleaned. Open/waiting `.md`s are pure rendezvous and always
+// safe to drop; done/failed `.md`s carry the report body, so they're left
+// alone outside their own bucket only when stale (the runner only writes
+// `<id>.md` to the bucket the YAML lands in, so any other bucket's `<id>.md`
+// is by definition from a prior turn).
+async function cleanStaleRendezvous(
+  agent: string,
+  taskId: string,
+  keepBucket: "open" | "waiting" | "done" | "failed"
+): Promise<void> {
+  const buckets: Array<"open" | "waiting" | "done" | "failed"> = ["open", "waiting", "done", "failed"];
+  for (const b of buckets) {
+    if (b === keepBucket) continue;
+    const stalePath = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.md`);
+    if (existsSync(stalePath)) {
+      try { await unlink(stalePath); } catch {}
+    }
+  }
 }
 
 // Resolve a `waiting:on:<spec>` dependency. Returns true when the task can be
@@ -922,6 +948,7 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
 
       await writeFile(filePath, next);
       await rename(filePath, targetPath);
+      await cleanStaleRendezvous(agent, taskId, "open");
 
       await appendJournal(agent, {
         ts: now,
@@ -991,6 +1018,7 @@ async function transitionToTerminal(
   if (sourcePath !== targetPath) {
     await rename(sourcePath, targetPath);
   }
+  await cleanStaleRendezvous(agent, taskId, subdir);
 
   await appendJournal(agent, {
     ts: now,
