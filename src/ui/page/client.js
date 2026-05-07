@@ -1442,10 +1442,12 @@
       const allPanels = [dashboardPanel, chatPanel];
       const filesBtn = $("tab-files");
       const filesPnl = $("files-panel");
-      const taskPnl = $("task-panel");
+      const tasksBtn = $("tab-tasks");
+      const tasksPnl = $("tasks-panel");
       if (filesBtn) allBtns.push(filesBtn);
       if (filesPnl) allPanels.push(filesPnl);
-      if (taskPnl) allPanels.push(taskPnl);
+      if (tasksBtn) allBtns.push(tasksBtn);
+      if (tasksPnl) allPanels.push(tasksPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
 
@@ -1464,8 +1466,10 @@
       } else if (tab === "files") {
         if (filesBtn) { filesBtn.classList.add("tab-btn-active"); filesBtn.setAttribute("aria-selected", "true"); }
         if (filesPnl) filesPnl.hidden = false;
-      } else if (tab === "task") {
-        if (taskPnl) taskPnl.hidden = false;
+      } else if (tab === "tasks") {
+        if (tasksBtn) { tasksBtn.classList.add("tab-btn-active"); tasksBtn.setAttribute("aria-selected", "true"); }
+        if (tasksPnl) tasksPnl.hidden = false;
+        if (typeof window.__ensureTasksLoaded === "function") window.__ensureTasksLoaded();
       }
     }
 
@@ -1475,6 +1479,8 @@
       setActiveTab("dashboard");
     });
     if (tabChatBtn) tabChatBtn.addEventListener("click", () => setActiveTab("chat"));
+    var tabTasksBtn = $("tab-tasks");
+    if (tabTasksBtn) tabTasksBtn.addEventListener("click", () => setActiveTab("tasks"));
 
     // Right-pane (embed) defaults to the chat tab so split view opens
     // straight into a second chat instead of a duplicate dashboard.
@@ -1547,33 +1553,8 @@
       }
       empty.appendChild(list);
 
-      // Parallel paths after picking: chat (type below) or set a task.
-      var actions = document.createElement("div");
-      actions.className = "chat-picker-actions";
-
-      var hint = document.createElement("div");
-      hint.className = "chat-picker-actions-hint";
-      hint.textContent = "Then either type a message below, or:";
-      actions.appendChild(hint);
-
-      var taskBtn = document.createElement("button");
-      taskBtn.type = "button";
-      taskBtn.className = "chat-picker-task-btn";
-      taskBtn.textContent = "Set a task →";
-      taskBtn.disabled = !pendingAgentId;
-      taskBtn.addEventListener("click", function () {
-        if (!pendingAgentId) return;
-        if (typeof window.__openTaskFormInChat === "function") {
-          window.__openTaskFormInChat();
-        }
-      });
-      actions.appendChild(taskBtn);
-
-      function updatePickerActions() {
-        taskBtn.disabled = !pendingAgentId;
-      }
-
-      empty.appendChild(actions);
+      // Task creation lives in the Tasks panel now — chat is for chat.
+      function updatePickerActions() { /* no-op kept for the click handler above */ }
 
       return empty;
     }
@@ -1666,14 +1647,9 @@
     }
 
     function updateChatTaskBtnVisibility() {
-      var btn = $("chat-new-task-btn");
-      if (!btn) return;
-      // Only show "+ Task" once the chat has at least one message —
-      // dispatching a task before the chat is established gives the runner
-      // nothing useful to link back to.
-      var active = chatHistory.length > 0;
-      if (active) btn.removeAttribute("hidden");
-      else btn.setAttribute("hidden", "");
+      // Chat-pane "+ Task" button retired — task creation now lives in the
+      // dedicated Tasks panel. Function preserved as a no-op so callers
+      // (renderChatHistory) don't need to be touched.
     }
 
     function renderChatHistory() {
@@ -2782,15 +2758,33 @@
         });
       }
 
-      // === Phase 5/6: task list, chain expansion, new-task form ============
-      var listToggleBtn = document.getElementById("multi-agent-list-toggle");
-      var newBtn = document.getElementById("multi-agent-new-btn");
-      var tasksWrap = document.getElementById("multi-agent-tasks");
-      var tasksList = document.getElementById("multi-agent-tasks-list");
-      var tasksMeta = document.getElementById("multi-agent-tasks-meta");
+      // === Phase 5/6: task tree, chain expansion, new-task form ============
+      // Dashboard summary "Open Tasks" button — switch to the Tasks tab.
+      var openTasksBtn = document.getElementById("multi-agent-open-tasks-btn");
+      if (openTasksBtn) {
+        openTasksBtn.addEventListener("click", function () {
+          if (typeof setActiveTab === "function") setActiveTab("tasks");
+        });
+      }
+
+      // Tasks-panel DOM refs.
+      var tasksTree = document.getElementById("tasks-tree");
+      var tasksFilterChips = document.getElementById("tasks-filter-chips");
+      var tasksRefreshBtn = document.getElementById("tasks-refresh");
+      var tasksNewBtn = document.getElementById("tasks-new-btn");
+      var tasksPickerToggle = document.getElementById("tasks-picker-toggle");
+      var tasksPickerToggleLabel = document.getElementById("tasks-picker-toggle-label");
+      var tasksSidebar = document.getElementById("tasks-sidebar");
+      var tasksContent = document.getElementById("tasks-content");
+      var tasksViewer = document.getElementById("tasks-viewer");
+      var tasksEmpty = document.getElementById("tasks-empty");
       var newForm = document.getElementById("multi-agent-new");
       var newCancelBtn = document.getElementById("multi-agent-new-cancel");
       var newStatus = document.getElementById("multi-agent-new-status");
+
+      var tasksFilter = "all";
+      var tasksLoaded = false;
+      var tasksCache = [];
 
       function timeAgo(iso) {
         if (!iso) return "";
@@ -2821,88 +2815,20 @@
         return s.slice(0, n - 1) + "…";
       }
 
-      function renderTaskRow(t) {
-        var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
-        var meta = [t.from || "?", "→", t.to || "?", "·", t.kind || "?"].join(" ");
-        var chatLine = "";
-        var d = t.dispatch || {};
-        if (d.chat_id) {
-          var chatLabel = d.chat_name || d.chat_preview || d.chat_id;
-          var chatTitle = d.chat_preview || d.chat_name || d.chat_id;
-          chatLine =
-            '<div class="multi-agent-task-chat" title="' + escapeHtml(chatTitle) + '">' +
-            '💬 ' + escapeHtml(shorten(chatLabel, 60)) +
-            (d.chat_agent ? ' · ' + escapeHtml(d.chat_agent) : "") +
-            '</div>';
-        }
-        var rowExtra = t.status === "waiting:on:user" ? " is-waiting-user" : "";
-        return (
-          '<div class="multi-agent-task-row' + rowExtra + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
-          '<div class="multi-agent-task-row-head">' +
-          '<span class="multi-agent-task-id">' + escapeHtml(t.id) + '</span>' +
-          '<span class="multi-agent-task-status ' + statusClass(t.status) + '">' + escapeHtml(t.status || "?") + '</span>' +
-          '<span class="multi-agent-task-time">' + escapeHtml(timeAgo(t.updated)) + '</span>' +
-          '</div>' +
-          '<div class="multi-agent-task-headline">' + escapeHtml(shorten(headline, 140)) + '</div>' +
-          '<div class="multi-agent-task-meta">' + escapeHtml(meta) + '</div>' +
-          chatLine +
-          '</div>'
-        );
+      // Tasks tree refresh — used by callbacks (unblock, revisit, dispatch)
+      // that previously refreshed the dashboard list.
+      function fetchTasks() {
+        if (typeof loadTasksTree === "function") loadTasksTree();
       }
 
-      async function fetchTasks() {
-        if (!tasksList) return;
-        tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Loading…</div></div>';
-        try {
-          var res = await fetch("/api/tasks?limit=50", { cache: "no-store" });
-          var data = await res.json();
-          if (!data.ok || !Array.isArray(data.tasks)) {
-            tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Unable to load tasks.</div></div>';
-            return;
-          }
-          if (data.tasks.length === 0) {
-            tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">No tasks yet.</div></div>';
-            if (tasksMeta) tasksMeta.textContent = "0 tasks";
-            return;
-          }
-          // Float `waiting:on:user` rows to the top so Kelly sees parked tasks
-          // before everything else. Within each group, the API's `updated`-desc
-          // ordering is preserved.
-          var blocked = [];
-          var rest = [];
-          for (var ti = 0; ti < data.tasks.length; ti++) {
-            var tt = data.tasks[ti];
-            if (tt && tt.status === "waiting:on:user") blocked.push(tt);
-            else rest.push(tt);
-          }
-          var html = "";
-          if (blocked.length > 0) {
-            html += '<div class="multi-agent-tasks-section-label">⏳ Waiting on you (' + blocked.length + ')</div>';
-            html += blocked.map(renderTaskRow).join("");
-            if (rest.length > 0) {
-              html += '<div class="multi-agent-tasks-section-label">Other tasks</div>';
-            }
-          }
-          html += rest.map(renderTaskRow).join("");
-          tasksList.innerHTML = html;
-          if (tasksMeta) {
-            var n = data.tasks.length;
-            var label = n + " task" + (n === 1 ? "" : "s");
-            if (blocked.length > 0) label += " · " + blocked.length + " waiting on you";
-            tasksMeta.textContent = label;
-          }
-        } catch (err) {
-          tasksList.innerHTML = '<div class="multi-agent-task-row"><div class="multi-agent-task-brief">Error: ' + escapeHtml(String(err && err.message || err)) + '</div></div>';
-        }
-      }
-
-      // === Full-screen task panel ============================================
-      var taskPanelBody = document.getElementById("task-panel-body");
-      var taskPanelHeadline = document.getElementById("task-panel-headline");
-      var taskPanelId = document.getElementById("task-panel-id");
-      var taskPanelStatus = document.getElementById("task-panel-status");
-      var taskPanelBack = document.getElementById("task-panel-back");
+      // === Tasks panel right-pane viewer ====================================
+      var taskPanelBody = document.getElementById("tasks-viewer-body");
+      var taskPanelHeadline = document.getElementById("tasks-viewer-headline");
+      var taskPanelId = document.getElementById("tasks-viewer-id");
+      var taskPanelStatus = document.getElementById("tasks-viewer-status");
       var currentTaskId = null;
+      var currentTaskChain = null;
+      var currentViewMode = "task"; // "task" | "report"
 
       function renderSection(title, bodyHtml, openByDefault) {
         if (!bodyHtml) return "";
@@ -3112,14 +3038,47 @@
           });
       }
 
+      function setRightPaneMode(mode) {
+        // mode: "empty" | "view" | "new"
+        if (tasksEmpty) tasksEmpty.hidden = mode !== "empty";
+        if (tasksViewer) tasksViewer.hidden = mode !== "view";
+        if (newForm) {
+          if (mode === "new") newForm.removeAttribute("hidden");
+          else newForm.setAttribute("hidden", "");
+        }
+      }
+
+      function setViewMode(mode) {
+        currentViewMode = mode === "report" ? "report" : "task";
+        if (!taskPanelBody) return;
+        var panes = taskPanelBody.querySelectorAll(".tasks-viewer-pane");
+        for (var i = 0; i < panes.length; i++) {
+          panes[i].hidden = panes[i].getAttribute("data-pane") !== currentViewMode;
+        }
+        var tabs = document.querySelectorAll(".tasks-viewer-tab");
+        for (var j = 0; j < tabs.length; j++) {
+          var isActive = tabs[j].getAttribute("data-view") === currentViewMode;
+          tabs[j].classList.toggle("is-active", isActive);
+          tabs[j].setAttribute("aria-selected", isActive ? "true" : "false");
+        }
+      }
+
       async function openTaskPanel(taskId) {
         if (!taskId || !taskPanelBody) return;
         currentTaskId = taskId;
-        if (typeof setActiveTab === "function") setActiveTab("task");
+        if (typeof setActiveTab === "function") setActiveTab("tasks");
+        setRightPaneMode("view");
         if (taskPanelId) taskPanelId.textContent = taskId;
         if (taskPanelHeadline) taskPanelHeadline.textContent = "Loading…";
-        if (taskPanelStatus) { taskPanelStatus.textContent = ""; taskPanelStatus.className = "task-panel-status"; }
+        if (taskPanelStatus) { taskPanelStatus.textContent = ""; taskPanelStatus.className = "tasks-viewer-status"; }
         taskPanelBody.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
+        // Update active row in picker.
+        if (tasksTree) {
+          var rows = tasksTree.querySelectorAll(".tasks-tree-row");
+          for (var r = 0; r < rows.length; r++) {
+            rows[r].classList.toggle("is-active", rows[r].getAttribute("data-task-id") === taskId);
+          }
+        }
         try {
           var res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
           var data = await res.json();
@@ -3128,34 +3087,46 @@
             return;
           }
           var c = data.chain;
+          currentTaskChain = c;
           var task = c.task;
           if (task) {
             if (taskPanelHeadline) taskPanelHeadline.textContent = task.headline || task.brief || "Task " + taskId;
             if (taskPanelStatus) {
               taskPanelStatus.textContent = task.status || "?";
-              taskPanelStatus.className = "task-panel-status " + statusClass(task.status);
+              taskPanelStatus.className = "tasks-viewer-status " + statusClass(task.status);
             }
           }
-          var parts = [];
+
+          var taskParts = [];
           var hasChain = (c.ancestors && c.ancestors.length > 0) || (c.children && c.children.length > 0);
           if (hasChain) {
-            parts.push('<div class="task-panel-section-label">Dependency tree</div>');
-            parts.push(renderTaskTree(c));
+            taskParts.push('<div class="task-panel-section-label">Dependency tree</div>');
+            taskParts.push(renderTaskTree(c));
           }
-          if (task) parts.push(renderPanelCard(task, "Current task", true));
-          // Report sits in its own card below the task card so the markdown
-          // render gets the full panel width on mobile.
-          if (task) parts.push(renderReportCard(task));
-          taskPanelBody.innerHTML = parts.length > 0 ? parts.join("") : '<div class="task-panel-loading">No chain data.</div>';
-          // The report card opens by default; eagerly load its .md so Kelly
-          // doesn't have to click anything. The toggle listener below still
-          // covers any other (collapsed-default) report nodes that show up.
+          if (task) taskParts.push(renderPanelCard(task, "Current task", true));
+
+          var reportParts = [];
+          if (task && task.reportPath) {
+            reportParts.push(renderReportCard(task));
+          } else {
+            reportParts.push('<div class="task-panel-loading">No report yet for this task.</div>');
+          }
+
+          taskPanelBody.innerHTML =
+            '<div class="tasks-viewer-pane" data-pane="task"' + (currentViewMode === "task" ? '' : ' hidden') + '>' +
+            (taskParts.length > 0 ? taskParts.join("") : '<div class="task-panel-loading">No chain data.</div>') +
+            '</div>' +
+            '<div class="tasks-viewer-pane" data-pane="report"' + (currentViewMode === "report" ? '' : ' hidden') + '>' +
+            reportParts.join("") +
+            '</div>';
+
+          // Eagerly load the report markdown so flipping to the Report tab is
+          // instant. Lazy-load fallback is still wired below for any nested
+          // collapsed report nodes.
           var eagerReports = taskPanelBody.querySelectorAll(".task-panel-report-section[open] .task-panel-report");
           for (var er = 0; er < eagerReports.length; er++) {
             loadReportNode(eagerReports[er]);
           }
-          // Wire lazy-load for any collapsed report dropdowns. The `<details>`
-          // toggle event doesn't bubble, so attach per element.
           var reportNodes = taskPanelBody.querySelectorAll(".task-panel-report");
           for (var rn = 0; rn < reportNodes.length; rn++) {
             (function (node) {
@@ -3171,13 +3142,231 @@
         }
       }
 
-      // Back button: return to the dashboard panel where the row was clicked.
-      if (taskPanelBack) {
-        taskPanelBack.addEventListener("click", function () {
-          currentTaskId = null;
-          if (typeof setActiveTab === "function") setActiveTab("dashboard");
+      // Tab switching between Task view and Report view.
+      var viewerTabs = document.querySelectorAll(".tasks-viewer-tab");
+      for (var vt = 0; vt < viewerTabs.length; vt++) {
+        viewerTabs[vt].addEventListener("click", function (ev) {
+          var mode = ev.currentTarget.getAttribute("data-view");
+          setViewMode(mode);
         });
       }
+
+      // === Tasks panel picker ==============================================
+      // Filter logic: an "open" filter includes both `open` and `claimed`;
+      // "waiting" includes any `waiting:*`; "failed" includes any `failed:*`
+      // and `escalated`; "done" is exact.
+      function passesFilter(t) {
+        if (tasksFilter === "all") return true;
+        var s = (t.status || "").toLowerCase();
+        if (tasksFilter === "open") return s === "open" || s === "claimed";
+        if (tasksFilter === "waiting") return s.indexOf("waiting:") === 0;
+        if (tasksFilter === "done") return s === "done";
+        if (tasksFilter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
+        return true;
+      }
+
+      // Build a parent→child tree from the flat task list. Tasks whose parent
+      // isn't in the working set become roots themselves so nothing is lost.
+      function buildTaskTree(tasks) {
+        var byId = {};
+        for (var i = 0; i < tasks.length; i++) byId[tasks[i].id] = tasks[i];
+        var roots = [];
+        var childrenOf = {};
+        for (var j = 0; j < tasks.length; j++) {
+          var t = tasks[j];
+          var parentId = t.parent && t.parent !== "null" ? t.parent : null;
+          if (parentId && byId[parentId]) {
+            (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
+          } else {
+            roots.push(t);
+          }
+        }
+        // Sort children oldest→newest within a parent (kid-1, kid-2…); roots
+        // by `updated` desc so the most-recently-touched tasks float up.
+        function byUpdatedDesc(a, b) {
+          return (Date.parse(b.updated || 0) || 0) - (Date.parse(a.updated || 0) || 0);
+        }
+        function byIdAsc(a, b) {
+          return String(a.id).localeCompare(String(b.id));
+        }
+        roots.sort(byUpdatedDesc);
+        Object.keys(childrenOf).forEach(function (k) { childrenOf[k].sort(byIdAsc); });
+        return { roots: roots, childrenOf: childrenOf };
+      }
+
+      function renderTreeRow(t, depth) {
+        var status = statusClass(t.status);
+        var marker = depth === 0 ? "●" : "└";
+        var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
+        var rowClass = "tasks-tree-row";
+        if (t.id === currentTaskId) rowClass += " is-active";
+        if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+        var indent = '<span class="tasks-tree-indent" style="width:' + (depth * 14) + 'px"></span>';
+        return (
+          '<div class="' + rowClass + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
+          indent +
+          '<span class="tasks-tree-marker">' + marker + '</span>' +
+          '<span class="tasks-tree-id">' + escapeHtml(t.id) + '</span>' +
+          '<span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + '</span>' +
+          '<span class="tasks-tree-status ' + status + '">' + escapeHtml(t.status || "?") + '</span>' +
+          '<span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span>' +
+          '</div>'
+        );
+      }
+
+      function renderTreeBranch(tree, node, depth, out) {
+        out.push(renderTreeRow(node, depth));
+        var kids = tree.childrenOf[node.id] || [];
+        for (var i = 0; i < kids.length; i++) {
+          renderTreeBranch(tree, kids[i], depth + 1, out);
+        }
+      }
+
+      function renderTaskPicker() {
+        if (!tasksTree) return;
+        var filtered = tasksCache.filter(passesFilter);
+        if (filtered.length === 0) {
+          tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
+          return;
+        }
+        // Surface waiting:on:user roots in a dedicated section at the top so
+        // Kelly sees parked tasks before everything else.
+        var blocked = filtered.filter(function (t) { return t.status === "waiting:on:user"; });
+        var rest = filtered.filter(function (t) { return t.status !== "waiting:on:user"; });
+
+        var html = "";
+        if (blocked.length > 0 && tasksFilter !== "waiting") {
+          html += '<div class="tasks-tree-section">⏳ Waiting on you (' + blocked.length + ')</div>';
+          var blockedTree = buildTaskTree(blocked);
+          var blockedOut = [];
+          for (var b = 0; b < blockedTree.roots.length; b++) {
+            renderTreeBranch(blockedTree, blockedTree.roots[b], 0, blockedOut);
+          }
+          html += blockedOut.join("");
+          html += '<div class="tasks-tree-section">Other tasks</div>';
+        }
+        var tree = buildTaskTree(rest);
+        var out = [];
+        for (var k = 0; k < tree.roots.length; k++) {
+          renderTreeBranch(tree, tree.roots[k], 0, out);
+        }
+        html += out.join("");
+        tasksTree.innerHTML = html;
+      }
+
+      async function loadTasksTree() {
+        if (!tasksTree) return;
+        tasksTree.innerHTML = '<div class="tasks-loading">Loading…</div>';
+        try {
+          var res = await fetch("/api/tasks?limit=120", { cache: "no-store" });
+          var data = await res.json();
+          if (!data.ok || !Array.isArray(data.tasks)) {
+            tasksTree.innerHTML = '<div class="tasks-tree-empty">Unable to load tasks.</div>';
+            return;
+          }
+          tasksCache = data.tasks;
+          renderTaskPicker();
+        } catch (err) {
+          tasksTree.innerHTML = '<div class="tasks-tree-empty">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+        }
+      }
+
+      // Picker click handlers.
+      if (tasksTree) {
+        tasksTree.addEventListener("click", function (ev) {
+          var row = ev.target.closest(".tasks-tree-row");
+          if (!row) return;
+          var taskId = row.getAttribute("data-task-id");
+          if (taskId) {
+            openTaskPanel(taskId);
+            // On mobile, collapse the picker after selection so the viewer
+            // gets full width.
+            if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+              setTasksPickerCollapsed(true);
+            }
+          }
+        });
+        tasksTree.addEventListener("keydown", function (ev) {
+          if (ev.key !== "Enter" && ev.key !== " ") return;
+          var row = ev.target.closest(".tasks-tree-row");
+          if (!row) return;
+          ev.preventDefault();
+          var taskId = row.getAttribute("data-task-id");
+          if (taskId) openTaskPanel(taskId);
+        });
+      }
+
+      // Filter chips.
+      if (tasksFilterChips) {
+        tasksFilterChips.addEventListener("click", function (ev) {
+          var chip = ev.target.closest(".tasks-filter-chip");
+          if (!chip) return;
+          var f = chip.getAttribute("data-filter");
+          if (!f) return;
+          tasksFilter = f;
+          var chips = tasksFilterChips.querySelectorAll(".tasks-filter-chip");
+          for (var i = 0; i < chips.length; i++) {
+            chips[i].classList.toggle("is-active", chips[i] === chip);
+          }
+          renderTaskPicker();
+        });
+      }
+
+      if (tasksRefreshBtn) {
+        tasksRefreshBtn.addEventListener("click", loadTasksTree);
+      }
+
+      // Mobile picker toggle (matches the files-panel pattern).
+      function setTasksPickerCollapsed(collapsed) {
+        if (!tasksSidebar || !tasksPickerToggle) return;
+        tasksSidebar.classList.toggle("tasks-sidebar-collapsed", collapsed);
+        tasksPickerToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      }
+      function updateTasksPickerToggleLabel() {
+        if (!tasksPickerToggleLabel) return;
+        if (currentTaskId) {
+          tasksPickerToggleLabel.textContent = currentTaskId;
+        } else {
+          tasksPickerToggleLabel.textContent = "Browse tasks";
+        }
+      }
+      if (tasksPickerToggle) {
+        tasksPickerToggle.addEventListener("click", function () {
+          if (!tasksSidebar) return;
+          var collapsed = tasksSidebar.classList.contains("tasks-sidebar-collapsed");
+          setTasksPickerCollapsed(!collapsed);
+          updateTasksPickerToggleLabel();
+        });
+      }
+
+      // "+ New" button — open the new-task form in the right pane.
+      if (tasksNewBtn && newForm) {
+        tasksNewBtn.addEventListener("click", function () {
+          // Single-shot dispatch — clear any leftover parent so a fresh task
+          // doesn't accidentally inherit from the previously-viewed one.
+          newForm.removeAttribute("data-parent");
+          var chip = document.getElementById("multi-agent-new-parent-chip");
+          var chipId = document.getElementById("multi-agent-new-parent-id");
+          if (chip) chip.setAttribute("hidden", "");
+          if (chipId) chipId.textContent = "";
+          if (newStatus) { newStatus.textContent = ""; newStatus.classList.remove("is-error"); }
+          setRightPaneMode("new");
+          var headlineEl = document.getElementById("multi-agent-new-headline");
+          if (headlineEl) headlineEl.focus();
+        });
+      }
+
+      // Lazy-load on first activation, then refresh on every subsequent
+      // activation so the picker stays current.
+      window.__ensureTasksLoaded = function () {
+        if (!tasksLoaded) {
+          tasksLoaded = true;
+          loadTasksTree();
+          setRightPaneMode("empty");
+        } else {
+          loadTasksTree();
+        }
+      };
 
       async function submitUnblock(wrapper) {
         if (!wrapper) return;
@@ -3292,16 +3481,12 @@
 
       function spawnFollowUp(taskId, agent) {
         if (!newForm) return;
-        // Open the form (in chat panel if a chat is active, otherwise inline
-        // dashboard) and stamp the parent attribute so the submit handler
+        // Switch to the Tasks panel and surface the new-task form in the
+        // right pane, stamped with the parent task id so the submit handler
         // includes it on the payload.
         try {
-          if (typeof chatSessionId !== "undefined" && chatSessionId && typeof window.__openTaskFormInChat === "function") {
-            window.__openTaskFormInChat();
-          } else {
-            newForm.removeAttribute("hidden");
-            if (newBtn) newBtn.classList.add("is-active");
-          }
+          if (typeof setActiveTab === "function") setActiveTab("tasks");
+          if (typeof setRightPaneMode === "function") setRightPaneMode("new");
         } catch (_) {}
         newForm.setAttribute("data-parent", taskId);
         var chip = document.getElementById("multi-agent-new-parent-chip");
@@ -3416,133 +3601,6 @@
       // Expose so other modules can clear it when navigating away from files.
       window.__renderFilesBackButton = renderFilesBackButton;
 
-      if (tasksList) {
-        tasksList.addEventListener("click", function (ev) {
-          var row = ev.target.closest(".multi-agent-task-row");
-          if (!row) return;
-          var taskId = row.getAttribute("data-task-id");
-          if (!taskId) return;
-          openTaskPanel(taskId);
-        });
-        tasksList.addEventListener("keydown", function (ev) {
-          if (ev.key !== "Enter" && ev.key !== " ") return;
-          var row = ev.target.closest(".multi-agent-task-row");
-          if (!row) return;
-          var taskId = row.getAttribute("data-task-id");
-          if (!taskId) return;
-          ev.preventDefault();
-          openTaskPanel(taskId);
-        });
-      }
-
-      if (listToggleBtn && tasksWrap) {
-        listToggleBtn.addEventListener("click", function () {
-          var hidden = tasksWrap.hasAttribute("hidden");
-          if (hidden) {
-            // Show task list — hide the summary grid + extras so the pane
-            // toggles between the two views instead of stacking them.
-            tasksWrap.removeAttribute("hidden");
-            if (grid) grid.setAttribute("hidden", "");
-            if (extras) extras.setAttribute("hidden", "");
-            listToggleBtn.classList.add("is-active");
-            listToggleBtn.textContent = "Summary";
-            fetchTasks();
-          } else {
-            // Back to summary view.
-            tasksWrap.setAttribute("hidden", "");
-            if (grid) grid.removeAttribute("hidden");
-            if (extras) extras.removeAttribute("hidden");
-            listToggleBtn.classList.remove("is-active");
-            listToggleBtn.textContent = "Tasks";
-          }
-        });
-      }
-
-      if (newBtn) {
-        // Redirect dashboard "+ New" to the chat-tab "start chat with task"
-        // flow: a fresh chat with the agent picker + "Set a task" CTA.
-        // Keeps task creation funnelling through one entry point.
-        newBtn.addEventListener("click", function () {
-          if (typeof startNewChat === "function") startNewChat();
-          if (typeof setActiveTab === "function") setActiveTab("chat");
-        });
-      }
-
-      // === Chat-panel "+ Task" integration =================================
-      // When the user hits "+ Task" in the chat toolbar we re-parent the
-      // existing new-task form into the chat panel so it can be dispatched
-      // without leaving the chat. The form remembers the chat_id and the
-      // current chat's agent so the runner can post status updates back here
-      // and so `to` defaults to the right specialist.
-      var chatTaskBtn = document.getElementById("chat-new-task-btn");
-      var chatTaskHost = document.getElementById("chat-task-host");
-      var formOriginalParent = newForm ? newForm.parentElement : null;
-      var pendingChatContext = null; // { chatId, agentId }
-
-      function returnFormToDashboard() {
-        if (!newForm) return;
-        if (formOriginalParent && newForm.parentElement !== formOriginalParent) {
-          formOriginalParent.appendChild(newForm);
-        }
-        if (chatTaskHost) chatTaskHost.setAttribute("hidden", "");
-        newForm.classList.remove("is-in-chat");
-        if (newStatus) newStatus.textContent = "";
-        pendingChatContext = null;
-      }
-
-      function openFormInChat() {
-        if (!newForm || !chatTaskHost) return;
-        if (typeof chatSessionId === "undefined" || !chatSessionId) {
-          if (newStatus) {
-            newStatus.textContent = "Open or start a chat first.";
-            newStatus.classList.add("is-error");
-          }
-          return;
-        }
-        var agentId = (typeof effectiveAgentId === "function") ? effectiveAgentId() : null;
-        pendingChatContext = { chatId: chatSessionId, agentId: agentId || null };
-
-        // Move form into chat host and unhide.
-        chatTaskHost.appendChild(newForm);
-        chatTaskHost.removeAttribute("hidden");
-        newForm.removeAttribute("hidden");
-        newForm.classList.add("is-in-chat");
-
-        // Pre-fill target with the current chat's agent if it's a known
-        // dispatchable agent. From defaults to "kelly" — leave it.
-        if (agentId) {
-          var toEl = document.getElementById("multi-agent-new-to");
-          if (toEl) {
-            for (var i = 0; i < toEl.options.length; i++) {
-              if (toEl.options[i].value === agentId) {
-                toEl.value = agentId;
-                break;
-              }
-            }
-          }
-        }
-        var headlineEl = document.getElementById("multi-agent-new-headline");
-        if (headlineEl) headlineEl.focus();
-      }
-
-      if (chatTaskBtn) {
-        chatTaskBtn.addEventListener("click", function () {
-          if (!newForm) return;
-          // Toggle: if form is already in chat host, close it.
-          if (newForm.parentElement === chatTaskHost && !newForm.hasAttribute("hidden")) {
-            returnFormToDashboard();
-          } else {
-            openFormInChat();
-          }
-        });
-      }
-
-      // Expose openFormInChat so the empty-state "Set a task →" button and
-      // the dashboard "+ New" redirect can reuse it without duplicating
-      // chat-context wiring.
-      window.__openTaskFormInChat = openFormInChat;
-      window.__returnTaskFormToDashboard = returnFormToDashboard;
-
       // Live word counter for the headline field — flips red over 10 words.
       var headlineInput = document.getElementById("multi-agent-new-headline");
       var headlineCounter = document.getElementById("multi-agent-new-headline-count");
@@ -3556,34 +3614,32 @@
       if (headlineInput) headlineInput.addEventListener("input", updateHeadlineCount);
       updateHeadlineCount();
 
+      function clearParentChip() {
+        if (!newForm) return;
+        newForm.removeAttribute("data-parent");
+        var chipEl = document.getElementById("multi-agent-new-parent-chip");
+        var chipIdEl = document.getElementById("multi-agent-new-parent-id");
+        if (chipEl) chipEl.setAttribute("hidden", "");
+        if (chipIdEl) chipIdEl.textContent = "";
+      }
+
       if (newCancelBtn && newForm) {
         newCancelBtn.addEventListener("click", function () {
           // Cancel always clears any pending parent — Spawn Follow-up is a
           // single-shot intent, not a sticky form mode.
-          newForm.removeAttribute("data-parent");
-          var chipEl2 = document.getElementById("multi-agent-new-parent-chip");
-          var chipIdEl2 = document.getElementById("multi-agent-new-parent-id");
-          if (chipEl2) chipEl2.setAttribute("hidden", "");
-          if (chipIdEl2) chipIdEl2.textContent = "";
-          if (newForm.parentElement === chatTaskHost) {
-            returnFormToDashboard();
-          } else {
-            newForm.setAttribute("hidden", "");
-            if (newBtn) newBtn.classList.remove("is-active");
-            if (newStatus) newStatus.textContent = "";
+          clearParentChip();
+          if (newStatus) newStatus.textContent = "";
+          // Drop back to the empty-state placeholder (or current task view if
+          // we still have one selected).
+          if (typeof setRightPaneMode === "function") {
+            setRightPaneMode(currentTaskId ? "view" : "empty");
           }
         });
       }
 
       var parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
-      if (parentClearBtn && newForm) {
-        parentClearBtn.addEventListener("click", function () {
-          newForm.removeAttribute("data-parent");
-          var chipEl3 = document.getElementById("multi-agent-new-parent-chip");
-          var chipIdEl3 = document.getElementById("multi-agent-new-parent-id");
-          if (chipEl3) chipEl3.setAttribute("hidden", "");
-          if (chipIdEl3) chipIdEl3.textContent = "";
-        });
+      if (parentClearBtn) {
+        parentClearBtn.addEventListener("click", clearParentChip);
       }
 
       if (newForm) {
@@ -3615,11 +3671,6 @@
           if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
           try {
             var payload = { headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context };
-            // If the form is hosted in the chat panel, link the new task to
-            // this chat so the runner posts status updates back here.
-            if (pendingChatContext && pendingChatContext.chatId) {
-              payload.chat_id = pendingChatContext.chatId;
-            }
             // Spawn Follow-up stamps the parent on the form's data attribute;
             // forwarding it tells the service to allocate a decimal sub-task
             // id (`<parent>.N`).
@@ -3636,7 +3687,8 @@
               return;
             }
             if (newStatus) { newStatus.textContent = "Dispatched " + data.id; newStatus.classList.remove("is-error"); }
-            // Reset the form fields but keep the kind/target so the user can fire another quickly.
+            // Reset form fields. Keep kind/target so the user can fire another
+            // quickly. Parent is single-shot — clear it.
             var headlineEl = document.getElementById("multi-agent-new-headline");
             var briefEl = document.getElementById("multi-agent-new-brief");
             var outputEl = document.getElementById("multi-agent-new-output");
@@ -3645,26 +3697,20 @@
             if (briefEl) briefEl.value = "";
             if (outputEl) outputEl.value = "";
             if (ctxEl) ctxEl.value = "";
-            // Parent is single-shot: clear after a successful spawn so the
-            // next dispatch from the same form doesn't accidentally inherit it.
-            newForm.removeAttribute("data-parent");
-            var chipEl = document.getElementById("multi-agent-new-parent-chip");
-            var chipIdEl = document.getElementById("multi-agent-new-parent-id");
-            if (chipEl) chipEl.setAttribute("hidden", "");
-            if (chipIdEl) chipIdEl.textContent = "";
+            clearParentChip();
             updateHeadlineCount();
-            // If the form was hosted in the chat panel, return it to the
-            // dashboard now — the dispatched-id confirmation already showed.
-            if (newForm.parentElement === chatTaskHost) {
-              setTimeout(returnFormToDashboard, 1500);
-            } else {
-              // Dashboard mode: show the task list with the new entry on top.
-              if (tasksWrap && tasksWrap.hasAttribute("hidden")) {
-                tasksWrap.removeAttribute("hidden");
-                if (listToggleBtn) listToggleBtn.classList.add("is-active");
+            // Refresh the picker and surface the freshly dispatched task in
+            // the right pane.
+            try {
+              await loadTasksTree();
+              if (data.id) {
+                openTaskPanel(data.id);
+              } else {
+                setRightPaneMode("empty");
               }
+            } catch (_) {
+              setRightPaneMode("empty");
             }
-            fetchTasks();
             fetchSummary();
           } catch (err) {
             if (newStatus) newStatus.textContent = "Error: " + (err && err.message || err);

@@ -142,6 +142,7 @@ ${pageStyles}
     <nav class="tab-nav" role="tablist" aria-label="Main navigation">
       <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Dashboard</button>
       <button class="tab-btn" id="tab-chat" type="button" role="tab" aria-selected="false" aria-controls="chat-panel">Chat</button>
+      <button class="tab-btn" id="tab-tasks" type="button" role="tab" aria-selected="false" aria-controls="tasks-panel">Tasks</button>
       <button class="tab-btn" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="files-panel">Files</button>
       <button class="tab-btn tab-btn-split" id="split-nav-toggle" type="button" title="Toggle split view" aria-label="Toggle split view" aria-pressed="false">&#x2AFD;</button>
       <button class="tab-btn tab-btn-settings" id="settings-btn" type="button" title="Settings">&#x2699;</button>
@@ -219,87 +220,12 @@ ${pageStyles}
             <div class="multi-agent-sub" id="multi-agent-sub">Loading...</div>
           </div>
           <div class="multi-agent-head-actions">
-            <button class="multi-agent-action" id="multi-agent-new-btn" type="button" title="Create a new task">+ New</button>
-            <button class="multi-agent-action" id="multi-agent-list-toggle" type="button" title="Show recent tasks">Tasks</button>
+            <button class="multi-agent-action" id="multi-agent-open-tasks-btn" type="button" title="Open the Tasks panel">Open Tasks</button>
             <button class="multi-agent-refresh" id="multi-agent-refresh" type="button" title="Refresh">↻</button>
           </div>
         </div>
         <div class="multi-agent-grid" id="multi-agent-grid"></div>
         <div class="multi-agent-extras" id="multi-agent-extras"></div>
-        <div class="multi-agent-tasks" id="multi-agent-tasks" hidden>
-          <div class="multi-agent-tasks-head">
-            <span>Recent tasks</span>
-            <span class="multi-agent-tasks-meta" id="multi-agent-tasks-meta"></span>
-          </div>
-          <div class="multi-agent-tasks-list" id="multi-agent-tasks-list"></div>
-        </div>
-        <form class="multi-agent-new" id="multi-agent-new" hidden>
-          <div class="multi-agent-new-head">Create task</div>
-          <div class="multi-agent-new-parent" id="multi-agent-new-parent-chip" hidden>
-            <span>↳ child of <strong id="multi-agent-new-parent-id"></strong></span>
-            <button type="button" class="multi-agent-new-parent-clear" id="multi-agent-new-parent-clear" title="Clear parent">✕</button>
-          </div>
-          <label class="multi-agent-new-block">
-            <span>Headline <em class="multi-agent-new-hint">(required, ≤10 words — appears in lists & notifications)</em></span>
-            <input id="multi-agent-new-headline" type="text" maxlength="120" placeholder="BLE plugin survey" required />
-            <span class="multi-agent-new-counter" id="multi-agent-new-headline-count">0 / 10 words</span>
-          </label>
-          <div class="multi-agent-new-grid">
-            <label class="multi-agent-new-field">
-              <span>Target</span>
-              <select id="multi-agent-new-to">
-                <option value="ray">ray (research)</option>
-                <option value="adam">adam (advisor)</option>
-                <option value="sam">sam (strategist)</option>
-                <option value="bob">bob (builder)</option>
-                <option value="cliff">cliff (review)</option>
-                <option value="mark">mark (marketing)</option>
-                <option value="alice">alice (coordinator)</option>
-              </select>
-            </label>
-            <label class="multi-agent-new-field">
-              <span>Kind</span>
-              <select id="multi-agent-new-kind">
-                <option value="research">research</option>
-                <option value="code">code</option>
-                <option value="review">review</option>
-                <option value="summarise">summarise</option>
-                <option value="decide">decide</option>
-                <option value="other">other</option>
-              </select>
-            </label>
-            <label class="multi-agent-new-field">
-              <span>Priority</span>
-              <select id="multi-agent-new-priority">
-                <option value="P0">P0</option>
-                <option value="P1">P1</option>
-                <option value="P2" selected>P2</option>
-                <option value="P3">P3</option>
-              </select>
-            </label>
-            <label class="multi-agent-new-field">
-              <span>From</span>
-              <input id="multi-agent-new-from" type="text" value="kelly" />
-            </label>
-          </div>
-          <label class="multi-agent-new-block">
-            <span>Brief</span>
-            <textarea id="multi-agent-new-brief" rows="4" placeholder="Why and what — specific enough that two workers wouldn't duplicate effort." required></textarea>
-          </label>
-          <label class="multi-agent-new-block">
-            <span>Output format</span>
-            <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like. Required for code/review/summarise."></textarea>
-          </label>
-          <label class="multi-agent-new-block">
-            <span>Context (one per line — file path, jira:KEY, or URL)</span>
-            <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
-          </label>
-          <div class="multi-agent-new-actions">
-            <span class="multi-agent-new-status" id="multi-agent-new-status"></span>
-            <button class="multi-agent-new-cancel" id="multi-agent-new-cancel" type="button">Cancel</button>
-            <button class="multi-agent-new-submit" id="multi-agent-new-submit" type="submit">Dispatch</button>
-          </div>
-        </form>
       </section>
     </section>
     </div>
@@ -310,7 +236,6 @@ ${pageStyles}
           <span id="chat-agent-badge" class="chat-agent-badge" hidden></span>
         </div>
         <button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button>
-        <button id="chat-new-task-btn" class="chat-toolbar-btn" type="button" title="Dispatch a task linked to this chat" hidden>+ Task</button>
         <button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat (asks to confirm)" aria-label="Delete chat">🗑</button>
         <div id="chat-history-dropdown" class="chat-history-dropdown" hidden>
           <div class="chat-history-head">
@@ -321,7 +246,6 @@ ${pageStyles}
         </div>
       </div>
       <div id="chat-messages" class="chat-messages"></div>
-      <div id="chat-task-host" class="chat-task-host" hidden></div>
       <div class="chat-input-area">
         <form id="chat-form" class="chat-form">
           <textarea
@@ -367,19 +291,120 @@ ${pageStyles}
         </div>
       </div>
     </div>
-    <div id="task-panel" class="task-panel" hidden>
-      <div class="task-panel-toolbar">
-        <button id="task-panel-back" class="task-panel-back" type="button" title="Back to dashboard" aria-label="Back to dashboard">←</button>
-        <div class="task-panel-headline-wrap">
-          <div class="task-panel-id" id="task-panel-id"></div>
-          <div class="task-panel-headline" id="task-panel-headline">Task</div>
-        </div>
-        <div class="task-panel-status-wrap">
-          <span class="task-panel-status" id="task-panel-status"></span>
+    <div id="tasks-panel" class="tasks-panel" hidden>
+      <div class="tasks-toolbar">
+        <div class="tasks-toolbar-row">
+          <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">
+            <button type="button" class="tasks-filter-chip is-active" data-filter="all">All</button>
+            <button type="button" class="tasks-filter-chip" data-filter="open">Open</button>
+            <button type="button" class="tasks-filter-chip" data-filter="waiting">Waiting</button>
+            <button type="button" class="tasks-filter-chip" data-filter="done">Done</button>
+            <button type="button" class="tasks-filter-chip" data-filter="failed">Failed</button>
+          </div>
+          <div class="tasks-toolbar-actions">
+            <button class="tasks-action" id="tasks-new-btn" type="button" title="Create a new task">+ New</button>
+            <button class="tasks-refresh" id="tasks-refresh" type="button" title="Refresh">↻</button>
+          </div>
         </div>
       </div>
-      <div class="task-panel-body" id="task-panel-body">
-        <div class="task-panel-loading">Loading task...</div>
+      <button id="tasks-picker-toggle" class="tasks-picker-toggle" type="button" aria-expanded="true" hidden>
+        <span class="tasks-picker-toggle-label" id="tasks-picker-toggle-label">Browse tasks</span>
+        <span class="tasks-picker-toggle-caret" aria-hidden="true">▾</span>
+      </button>
+      <div class="tasks-split">
+        <div class="tasks-sidebar" id="tasks-sidebar">
+          <div class="tasks-tree" id="tasks-tree">
+            <div class="tasks-loading">Loading…</div>
+          </div>
+        </div>
+        <div class="tasks-content" id="tasks-content">
+          <div class="tasks-viewer" id="tasks-viewer" hidden>
+            <div class="tasks-viewer-head">
+              <div class="tasks-viewer-headline-wrap">
+                <div class="tasks-viewer-id" id="tasks-viewer-id"></div>
+                <div class="tasks-viewer-headline" id="tasks-viewer-headline">Task</div>
+              </div>
+              <div class="tasks-viewer-status-wrap">
+                <span class="tasks-viewer-status" id="tasks-viewer-status"></span>
+              </div>
+            </div>
+            <div class="tasks-viewer-tabs" role="tablist" aria-label="Task views">
+              <button type="button" class="tasks-viewer-tab is-active" data-view="task" role="tab" aria-selected="true">Task</button>
+              <button type="button" class="tasks-viewer-tab" data-view="report" role="tab" aria-selected="false">Report</button>
+            </div>
+            <div class="tasks-viewer-body" id="tasks-viewer-body">
+              <div class="task-panel-loading">Loading task…</div>
+            </div>
+          </div>
+          <div class="tasks-empty" id="tasks-empty">Select a task on the left, or click <strong>+ New</strong> to create one.</div>
+          <form class="multi-agent-new tasks-new-form" id="multi-agent-new" hidden>
+            <div class="multi-agent-new-head">Create task</div>
+            <div class="multi-agent-new-parent" id="multi-agent-new-parent-chip" hidden>
+              <span>↳ child of <strong id="multi-agent-new-parent-id"></strong></span>
+              <button type="button" class="multi-agent-new-parent-clear" id="multi-agent-new-parent-clear" title="Clear parent">✕</button>
+            </div>
+            <label class="multi-agent-new-block">
+              <span>Headline <em class="multi-agent-new-hint">(required, ≤10 words — appears in lists & notifications)</em></span>
+              <input id="multi-agent-new-headline" type="text" maxlength="120" placeholder="BLE plugin survey" required />
+              <span class="multi-agent-new-counter" id="multi-agent-new-headline-count">0 / 10 words</span>
+            </label>
+            <div class="multi-agent-new-grid">
+              <label class="multi-agent-new-field">
+                <span>Target</span>
+                <select id="multi-agent-new-to">
+                  <option value="ray">ray (research)</option>
+                  <option value="adam">adam (advisor)</option>
+                  <option value="sam">sam (strategist)</option>
+                  <option value="bob">bob (builder)</option>
+                  <option value="cliff">cliff (review)</option>
+                  <option value="mark">mark (marketing)</option>
+                  <option value="alice">alice (coordinator)</option>
+                </select>
+              </label>
+              <label class="multi-agent-new-field">
+                <span>Kind</span>
+                <select id="multi-agent-new-kind">
+                  <option value="research">research</option>
+                  <option value="code">code</option>
+                  <option value="review">review</option>
+                  <option value="summarise">summarise</option>
+                  <option value="decide">decide</option>
+                  <option value="other">other</option>
+                </select>
+              </label>
+              <label class="multi-agent-new-field">
+                <span>Priority</span>
+                <select id="multi-agent-new-priority">
+                  <option value="P0">P0</option>
+                  <option value="P1">P1</option>
+                  <option value="P2" selected>P2</option>
+                  <option value="P3">P3</option>
+                </select>
+              </label>
+              <label class="multi-agent-new-field">
+                <span>From</span>
+                <input id="multi-agent-new-from" type="text" value="kelly" />
+              </label>
+            </div>
+            <label class="multi-agent-new-block">
+              <span>Brief</span>
+              <textarea id="multi-agent-new-brief" rows="4" placeholder="Why and what — specific enough that two workers wouldn't duplicate effort." required></textarea>
+            </label>
+            <label class="multi-agent-new-block">
+              <span>Output format</span>
+              <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like. Required for code/review/summarise."></textarea>
+            </label>
+            <label class="multi-agent-new-block">
+              <span>Context (one per line — file path, jira:KEY, or URL)</span>
+              <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
+            </label>
+            <div class="multi-agent-new-actions">
+              <span class="multi-agent-new-status" id="multi-agent-new-status"></span>
+              <button class="multi-agent-new-cancel" id="multi-agent-new-cancel" type="button">Cancel</button>
+              <button class="multi-agent-new-submit" id="multi-agent-new-submit" type="submit">Dispatch</button>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   </main>

@@ -2325,6 +2325,337 @@ export const pageStyles = String.raw`    :root {
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
     }
+    /* ── Tasks panel ── */
+    .tasks-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1300px);
+      min-width: min(680px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+    }
+    .tasks-toolbar {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #ffffff12;
+    }
+    .tasks-toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tasks-filter-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tasks-filter-chip {
+      border: 1px solid #ffffff1f;
+      background: #0c1624a6;
+      color: #b9c8de;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .tasks-filter-chip:hover {
+      background: #14223680;
+      color: #e4eefb;
+    }
+    .tasks-filter-chip.is-active {
+      background: #1c3a64aa;
+      color: #f4f8ff;
+      border-color: #9be7ff66;
+    }
+    .tasks-toolbar-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .tasks-action,
+    .tasks-refresh {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+    .tasks-refresh {
+      width: 32px;
+      padding: 6px 0;
+      text-align: center;
+    }
+    .tasks-action:hover,
+    .tasks-refresh:hover { background: #14223680; }
+    .tasks-action.is-active {
+      background: #1c3a64aa;
+      border-color: #9be7ff66;
+      color: #f4f8ff;
+    }
+    .tasks-picker-toggle {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      border-bottom: 1px solid #ffffff12;
+      background: #0b121c;
+      color: #c8d4e5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+    }
+    .tasks-picker-toggle:hover { background: #111a26; }
+    .tasks-picker-toggle-caret {
+      font-size: 12px;
+      color: #9be7ff;
+      transition: transform 0.2s ease;
+    }
+    .tasks-picker-toggle[aria-expanded="false"] .tasks-picker-toggle-caret {
+      transform: rotate(-90deg);
+    }
+    .tasks-split {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .tasks-sidebar {
+      width: 320px;
+      min-width: 240px;
+      border-right: 1px solid #ffffff12;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .tasks-tree {
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-loading {
+      padding: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #5a7a9a;
+    }
+    .tasks-tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+      transition: background 0.12s;
+    }
+    .tasks-tree-row:hover { background: #ffffff0d; }
+    .tasks-tree-row.is-active {
+      background: #1c3a644d;
+      border-left: 2px solid #9be7ff;
+      padding-left: 6px;
+    }
+    .tasks-tree-row.is-waiting-user {
+      background: #f0c67414;
+      border-left: 2px solid #f0c674;
+      padding-left: 6px;
+    }
+    .tasks-tree-indent {
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .tasks-tree-marker {
+      flex-shrink: 0;
+      width: 12px;
+      color: #5a7a9a;
+      text-align: center;
+    }
+    .tasks-tree-id {
+      flex-shrink: 0;
+      color: #9be7ff;
+      font-size: 10px;
+    }
+    .tasks-tree-agent {
+      flex-shrink: 0;
+      color: #c8a3ff;
+      font-size: 10px;
+    }
+    .tasks-tree-status {
+      flex-shrink: 0;
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid #ffffff22;
+    }
+    .tasks-tree-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .tasks-tree-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-tree-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .tasks-tree-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .tasks-tree-headline {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #e4eefb;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+    }
+    .tasks-tree-empty {
+      padding: 16px;
+      color: #5a7a9a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-align: center;
+    }
+    .tasks-tree-section {
+      padding: 10px 10px 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .tasks-content {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .tasks-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 32px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #5a7a9a;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .tasks-empty strong { color: #cfe3ff; }
+    .tasks-viewer {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .tasks-viewer-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid #ffffff12;
+    }
+    .tasks-viewer-headline-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-viewer-id {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .tasks-viewer-headline {
+      font-family: "Fraunces", serif;
+      font-size: 17px;
+      color: #f4f8ff;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .tasks-viewer-status-wrap { flex: 0 0 auto; }
+    .tasks-viewer-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0c1624a6;
+      border: 1px solid #ffffff22;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .tasks-viewer-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .tasks-viewer-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-viewer-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .tasks-viewer-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .tasks-viewer-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px 0;
+      border-bottom: 1px solid #ffffff12;
+    }
+    .tasks-viewer-tab {
+      border: none;
+      background: transparent;
+      color: #8aa2c1;
+      padding: 8px 14px;
+      border-bottom: 2px solid transparent;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .tasks-viewer-tab:hover { color: #e4eefb; }
+    .tasks-viewer-tab.is-active {
+      color: #9be7ff;
+      border-bottom-color: #9be7ff;
+    }
+    .tasks-viewer-body {
+      padding: 14px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .tasks-new-form {
+      padding: 16px;
+      overflow-y: auto;
+    }
+
     .task-panel {
       display: flex;
       flex-direction: column;
@@ -3224,9 +3555,41 @@ export const pageStyles = String.raw`    :root {
         gap: 7px;
       }
       .chat-panel,
-      .files-panel {
+      .files-panel,
+      .tasks-panel {
         min-width: 100%;
         border-radius: 12px 12px 0 0;
+      }
+      .tasks-split {
+        flex-direction: column;
+      }
+      .tasks-sidebar {
+        width: 100%;
+        min-width: 100%;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid #ffffff12;
+      }
+      .tasks-picker-toggle {
+        display: flex;
+      }
+      .tasks-sidebar.tasks-sidebar-collapsed {
+        display: none;
+      }
+      .tasks-sidebar:not(.tasks-sidebar-collapsed) ~ .tasks-content {
+        display: none;
+      }
+      .tasks-content {
+        flex: 1;
+        min-height: 0;
+      }
+      .tasks-viewer-head {
+        flex-wrap: wrap;
+      }
+      .tasks-viewer-headline {
+        font-size: 15px;
       }
       .files-split {
         flex-direction: column;
