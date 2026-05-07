@@ -20,6 +20,15 @@ export interface AgentManifest {
   allowedPaths?: string[];
   model?: string;
   compactThreshold?: number;
+  // Anthropic-compatible base URL override (e.g. a LiteLLM proxy that maps
+  // Anthropic protocol to Gemini / Ollama). Sets ANTHROPIC_BASE_URL for the
+  // agent's child process. When set, the agent's traffic bypasses the
+  // standard Anthropic endpoint entirely.
+  apiBaseUrl?: string;
+  // Name of the env var that holds the auth token for the proxy. Read from
+  // the daemon's environment at child-spawn time and forwarded as
+  // ANTHROPIC_AUTH_TOKEN. Defaults to leaving the token unchanged when omitted.
+  apiKeyEnv?: string;
 }
 
 export interface AgentSummary {
@@ -62,6 +71,12 @@ function validateManifest(raw: unknown, dirName: string): AgentManifest | null {
   if (typeof m.model === "string" && m.model.trim()) manifest.model = m.model.trim();
   if (typeof m.compactThreshold === "number" && Number.isFinite(m.compactThreshold)) {
     manifest.compactThreshold = m.compactThreshold;
+  }
+  if (typeof m.apiBaseUrl === "string" && m.apiBaseUrl.trim()) {
+    manifest.apiBaseUrl = m.apiBaseUrl.trim();
+  }
+  if (typeof m.apiKeyEnv === "string" && m.apiKeyEnv.trim()) {
+    manifest.apiKeyEnv = m.apiKeyEnv.trim();
   }
   return manifest;
 }

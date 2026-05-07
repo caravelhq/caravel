@@ -637,6 +637,18 @@ async function streamClaude(
   const { CLAUDECODE: _, ...cleanEnv } = process.env;
   const childEnv = buildChildEnv(cleanEnv as Record<string, string>, effectiveModel, api, threadId);
 
+  // Per-agent provider routing: if the manifest sets apiBaseUrl, point the
+  // child Claude CLI at an Anthropic-compatible proxy (LiteLLM, etc.) instead
+  // of api.anthropic.com. Optional apiKeyEnv names a daemon env var holding
+  // the proxy's auth token.
+  if (agent?.manifest.apiBaseUrl) {
+    childEnv.ANTHROPIC_BASE_URL = agent.manifest.apiBaseUrl;
+    if (agent.manifest.apiKeyEnv) {
+      const tokenFromEnv = process.env[agent.manifest.apiKeyEnv];
+      if (tokenFromEnv?.trim()) childEnv.ANTHROPIC_AUTH_TOKEN = tokenFromEnv.trim();
+    }
+  }
+
   const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
   const agentTag = agent ? ` agent: ${agent.manifest.name},` : "";
   const journalTag = injectedJournalEntries > 0 ? ` shared-notes: ${injectedJournalEntries},` : "";
