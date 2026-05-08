@@ -2692,15 +2692,76 @@ export const pageStyles = String.raw`    :root {
       border-bottom-color: #9be7ff;
     }
     .tasks-viewer-body {
-      padding: 14px;
+      padding: 0;
       overflow-y: auto;
       flex: 1;
       min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 0;
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
+    }
+    .tasks-viewer-pane[data-pane="task"] {
+      padding: 14px;
+    }
+    .tasks-viewer-pane[data-pane="report"] {
+      padding: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-pane {
+      gap: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      margin: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc-head {
+      padding: 8px 12px;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-doc-pills {
+      padding: 8px 12px 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc .task-panel-report {
+      padding: 8px 12px 14px;
+      max-height: none;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+    .task-panel-report-frontmatter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #8a96a8;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin: 0 0 10px;
+      overflow-x: auto;
+      white-space: pre;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .task-panel-folder-btn {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      width: 32px;
+      height: 28px;
+      font-size: 14px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .task-panel-folder-btn:hover {
+      background: #14223680;
     }
     .tasks-new-form {
       padding: 16px;

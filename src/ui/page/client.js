@@ -2965,7 +2965,11 @@
       function renderReportPane(card) {
         if (!card || !card.reportPath) return "";
         var filename = card.reportPath.split("/").pop();
+        var folderPath = card.reportPath.indexOf("/") >= 0
+          ? card.reportPath.substring(0, card.reportPath.lastIndexOf("/"))
+          : ".";
         var safePath = escapeHtml(card.reportPath);
+        var safeFolder = escapeHtml(folderPath);
         var safeFname = escapeHtml(filename);
         var safeTaskId = escapeHtml(card.id || "");
         return (
@@ -2975,7 +2979,7 @@
           '<div class="task-panel-report-doc is-active" data-doc-path="' + safePath + '">' +
           '<div class="task-panel-report-doc-head">' +
           '<span class="task-panel-report-doc-title">' + safeFname + '</span>' +
-          '<button class="task-panel-action" data-open-file="' + safePath + '" data-from-task="' + safeTaskId + '" type="button">Open in Files</button>' +
+          '<button class="task-panel-folder-btn" data-open-folder="' + safeFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button>' +
           '</div>' +
           '<div class="task-panel-report" data-report-path="' + safePath + '" data-loaded="false" data-scan-extras="true">' +
           '<div class="task-panel-report-loading">Loading report…</div>' +
@@ -3080,7 +3084,11 @@
         for (var p = 0; p < paths.length; p++) {
           var path = paths[p];
           var fname = path.split("/").pop();
+          var folder = path.indexOf("/") >= 0
+            ? path.substring(0, path.lastIndexOf("/"))
+            : ".";
           var sp = escapeHtml(path);
+          var sFolder = escapeHtml(folder);
           var sf = escapeHtml(fname);
           var node = document.createElement("div");
           node.className = "task-panel-report-doc";
@@ -3089,7 +3097,7 @@
           node.innerHTML =
             '<div class="task-panel-report-doc-head">' +
             '<span class="task-panel-report-doc-title">' + sf + '</span>' +
-            '<button class="task-panel-action" data-open-file="' + sp + '" type="button">Open in Files</button>' +
+            '<button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button>' +
             '</div>' +
             '<div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false">' +
             '<div class="task-panel-report-loading">Loading…</div>' +
@@ -3187,7 +3195,15 @@
             if (!data.ok) throw new Error(data.error || "failed");
             node.setAttribute("data-loaded", "true");
             if (data.markdown) {
-              node.innerHTML = '<div class="task-panel-report-md files-md">' + renderMarkdown(data.content) + '</div>';
+              var raw = data.content || "";
+              var fmHtml = "";
+              var body = raw;
+              var fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+              if (fmMatch) {
+                fmHtml = '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + '</pre>';
+                body = raw.slice(fmMatch[0].length);
+              }
+              node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + '</div>';
             } else {
               var pre = document.createElement("pre");
               pre.className = "task-panel-report-raw";
@@ -3831,6 +3847,19 @@
               if (typeof setActiveTab === "function") setActiveTab("files");
               if (typeof loadFile === "function" && filePath) loadFile(filePath);
               if (fromTask) window.__taskBackContext = fromTask;
+              renderFilesBackButton();
+            } catch (_) {}
+            return;
+          }
+          var openFolderBtn = ev.target.closest("[data-open-folder]");
+          if (openFolderBtn) {
+            ev.preventDefault();
+            var folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
+            var fromTaskF = openFolderBtn.getAttribute("data-from-task") || currentTaskId;
+            try {
+              if (typeof setActiveTab === "function") setActiveTab("files");
+              if (typeof loadDirectory === "function") loadDirectory(folderPath);
+              if (fromTaskF) window.__taskBackContext = fromTaskF;
               renderFilesBackButton();
             } catch (_) {}
             return;
