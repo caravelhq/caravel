@@ -2621,18 +2621,20 @@ export const pageStyles = String.raw`    :root {
     .tasks-viewer-head {
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 12px 16px;
+      gap: 10px;
+      padding: 8px 14px;
       border-bottom: 1px solid #ffffff12;
     }
     .tasks-viewer-headline-wrap {
       flex: 1 1 auto;
       min-width: 0;
       display: flex;
-      flex-direction: column;
-      gap: 2px;
+      align-items: baseline;
+      gap: 8px;
+      overflow: hidden;
     }
     .tasks-viewer-id {
+      flex-shrink: 0;
       font-family: "JetBrains Mono", monospace;
       font-size: 10px;
       letter-spacing: 0.06em;
@@ -2640,11 +2642,15 @@ export const pageStyles = String.raw`    :root {
       color: #6a7e9b;
     }
     .tasks-viewer-headline {
+      flex: 1;
+      min-width: 0;
       font-family: "Fraunces", serif;
-      font-size: 17px;
+      font-size: 15px;
       color: #f4f8ff;
       line-height: 1.25;
-      overflow-wrap: anywhere;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .tasks-viewer-status-wrap { flex: 0 0 auto; }
     .tasks-viewer-status {
@@ -3725,10 +3731,19 @@ export const pageStyles = String.raw`    :root {
         min-height: 0;
       }
       .tasks-viewer-head {
-        flex-wrap: wrap;
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .tasks-viewer-headline-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
       }
       .tasks-viewer-headline {
-        font-size: 15px;
+        font-size: 14px;
+      }
+      .tasks-viewer-id {
+        font-size: 9px;
       }
       .files-split {
         flex-direction: column;
