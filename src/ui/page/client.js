@@ -3373,10 +3373,23 @@
           }
         }
         // Resolve each task's effective parent — null if missing/self/cyclic.
-        // Primary: explicit `parent` field (when in cache, no cycle).
-        // Fallback: ID-derived ancestor (handles dropped tasks).
+        // Primary: explicit `parent` field (when in cache, no cycle, and
+        // not deeper than the task's own ID hierarchy — see below).
+        // Fallback: ID-derived ancestor (handles dropped tasks AND keeps
+        // flat-IDed continuations rendering flat instead of buried under
+        // their dispatch-chain parent).
+        function dotDepth(id) { return (String(id).match(/\./g) || []).length; }
         function effectiveParent(t) {
           var pid = t.parent && t.parent !== "null" ? t.parent : null;
+          // If the explicit parent lives deeper in the ID hierarchy than
+          // this task's own ID, honoring it would bury a flat-IDed task
+          // (e.g. ".06") under a deeply nested dispatch-chain ancestor
+          // (e.g. ".5.1.7"). Prefer the ID-derived ancestor so the picker
+          // tree mirrors the ID hierarchy.
+          if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
+            var idAncestor = idDerivedAncestor(t.id);
+            if (idAncestor) return idAncestor;
+          }
           if (pid && pid !== t.id && byId[pid]) {
             // Walk up; bail if we ever come back to t.
             var seen = {};
@@ -3470,13 +3483,8 @@
         if (!taskId) return;
         var byId = {};
         for (var i = 0; i < tasksCache.length; i++) byId[tasksCache[i].id] = tasksCache[i];
-        function ancestorOf(id) {
-          var t = byId[id];
-          if (t) {
-            var p = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
-            if (p && byId[p]) return p;
-          }
-          // ID-derived fallback (matches buildTaskTree's logic).
+        function depth(id) { return (String(id).match(/\./g) || []).length; }
+        function idDerived(id) {
           var cur = id;
           while (true) {
             var m = /^(.+)\.[0-9]+$/.exec(cur);
@@ -3484,6 +3492,19 @@
             cur = m[1];
             if (byId[cur]) return cur;
           }
+        }
+        function ancestorOf(id) {
+          var t = byId[id];
+          if (t) {
+            var p = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
+            // Same flat-vs-deep guard as buildTaskTree.effectiveParent.
+            if (p && byId[p] && depth(p) >= depth(id)) {
+              var derived = idDerived(id);
+              if (derived) return derived;
+            }
+            if (p && byId[p]) return p;
+          }
+          return idDerived(id);
         }
         var seen = {};
         var cur = ancestorOf(taskId);
