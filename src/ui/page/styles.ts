@@ -1618,25 +1618,25 @@ export const pageStyles = String.raw`    :root {
     .tab-btn-label-short { display: none; }
     @media (max-width: 640px) {
       .tab-nav {
-        gap: 2px;
-        padding: 3px;
+        gap: 3px;
+        padding: 4px;
         margin-bottom: 8px;
       }
       .tab-btn {
-        height: 28px;
-        padding: 0 10px;
-        font-size: 10px;
+        height: 36px;
+        padding: 0 14px;
+        font-size: 12px;
         letter-spacing: 0.04em;
       }
       .tab-btn-settings {
-        font-size: 18px;
-        padding: 0 9px;
-        line-height: 28px;
+        font-size: 22px;
+        padding: 0 12px;
+        line-height: 36px;
       }
       .tab-btn-split {
-        font-size: 14px;
-        padding: 0 8px;
-        line-height: 28px;
+        font-size: 18px;
+        padding: 0 11px;
+        line-height: 36px;
       }
       .tab-btn-label-full { display: none; }
       .tab-btn-label-short { display: inline; }

@@ -2986,6 +2986,40 @@
         );
       }
 
+      // Resolve a markdown link's href to a project-relative path the
+      // /api/files/read endpoint can serve. Reports live in
+      // agents/<a>/tasks/<bucket>/ and frequently link to ../../../Notes/…
+      // or ../../../repos/… so we MUST resolve relative-to-the-report
+      // first. If the href already starts with a known top-level project
+      // dir, treat it as already-absolute. Returns null on bad input.
+      function resolveReportPath(primaryPath, href) {
+        if (!href) return null;
+        var clean = href.replace(/^\.\//, "").split("#")[0].split("?")[0];
+        if (!clean) return null;
+        if (/^https?:/i.test(clean) || clean.indexOf("mailto:") === 0) return null;
+        // Strip leading slash — treat as project-root absolute.
+        if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
+        // Already project-relative?
+        if (/^(agents|Notes|repos|setup|memory|\.claude|repos|src)\//.test(clean)) return clean;
+        // Resolve relative-to-report.
+        var primaryDir = primaryPath.indexOf("/") >= 0
+          ? primaryPath.substring(0, primaryPath.lastIndexOf("/"))
+          : "";
+        var baseParts = primaryDir.split("/").filter(Boolean);
+        var relParts = clean.split("/");
+        for (var i = 0; i < relParts.length; i++) {
+          var p = relParts[i];
+          if (p === "" || p === ".") continue;
+          if (p === "..") {
+            if (baseParts.length === 0) return null;
+            baseParts.pop();
+            continue;
+          }
+          baseParts.push(p);
+        }
+        return baseParts.join("/");
+      }
+
       // After the primary report's markdown has rendered, scan it for
       // links to additional deliverable docs. Build (or rebuild) the pill
       // switcher row, mount each extra doc as a hidden sibling, and
@@ -3007,16 +3041,20 @@
         var paths = [];
         for (var i = 0; i < anchors.length; i++) {
           var href = anchors[i].getAttribute("href") || "";
-          if (!href) continue;
-          if (/^https?:/i.test(href) || href.charAt(0) === "#" || href.indexOf("mailto:") === 0) continue;
-          // Strip leading ./ and any anchor.
-          var clean = href.replace(/^\.\//, "").split("#")[0].split("?")[0];
-          if (!clean) continue;
+          if (!href || href.charAt(0) === "#") continue;
+          var resolved = resolveReportPath(primaryPath, href);
+          if (!resolved) continue;
           // Only worthwhile docs — markdown, pdf, docx, csv, txt, yaml, json.
-          if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(clean)) continue;
-          if (seen[clean]) continue;
-          seen[clean] = true;
-          paths.push(clean);
+          if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
+          // Rewrite the anchor href so clicking the inline link in the
+          // rendered markdown also goes through the Files panel via the
+          // delegated data-open-file handler instead of attempting an
+          // unresolved nav.
+          anchors[i].setAttribute("href", "#" + resolved);
+          anchors[i].setAttribute("data-open-file", resolved);
+          if (seen[resolved]) continue;
+          seen[resolved] = true;
+          paths.push(resolved);
         }
         if (paths.length === 0) return;
 
