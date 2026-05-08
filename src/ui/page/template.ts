@@ -140,7 +140,7 @@ ${pageStyles}
   </section>
   <main class="stage">
     <nav class="tab-nav" role="tablist" aria-label="Main navigation">
-      <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Dashboard</button>
+      <button class="tab-btn tab-btn-active" id="tab-dashboard" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel"><span class="tab-btn-label-full">Dashboard</span><span class="tab-btn-label-short">Dash</span></button>
       <button class="tab-btn" id="tab-chat" type="button" role="tab" aria-selected="false" aria-controls="chat-panel">Chat</button>
       <button class="tab-btn" id="tab-tasks" type="button" role="tab" aria-selected="false" aria-controls="tasks-panel">Tasks</button>
       <button class="tab-btn" id="tab-files" type="button" role="tab" aria-selected="false" aria-controls="files-panel">Files</button>

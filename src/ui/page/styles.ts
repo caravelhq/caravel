@@ -1614,6 +1614,33 @@ export const pageStyles = String.raw`    :root {
       background: #0e2040cc;
       border-color: #ffffff22;
     }
+    /* Default: show full label, hide short. Mobile media query swaps these. */
+    .tab-btn-label-short { display: none; }
+    @media (max-width: 640px) {
+      .tab-nav {
+        gap: 2px;
+        padding: 3px;
+        margin-bottom: 8px;
+      }
+      .tab-btn {
+        height: 28px;
+        padding: 0 10px;
+        font-size: 10px;
+        letter-spacing: 0.04em;
+      }
+      .tab-btn-settings {
+        font-size: 18px;
+        padding: 0 9px;
+        line-height: 28px;
+      }
+      .tab-btn-split {
+        font-size: 14px;
+        padding: 0 8px;
+        line-height: 28px;
+      }
+      .tab-btn-label-full { display: none; }
+      .tab-btn-label-short { display: inline; }
+    }
 
     /* ── Chat panel ── */
     .chat-panel {
