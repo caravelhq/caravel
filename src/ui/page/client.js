@@ -3046,6 +3046,14 @@
           if (mode === "new") newForm.removeAttribute("hidden");
           else newForm.setAttribute("hidden", "");
         }
+        // On mobile, switching the right pane to view/new means the user
+        // wants to see the right pane — collapse the picker so it's actually
+        // visible. "empty" goes back to the list (sidebar expanded).
+        if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+          if (typeof setTasksPickerCollapsed === "function") {
+            setTasksPickerCollapsed(mode !== "empty");
+          }
+        }
       }
 
       function setViewMode(mode) {
@@ -3326,11 +3334,8 @@
           var taskId = row.getAttribute("data-task-id");
           if (taskId) {
             openTaskPanel(taskId);
-            // On mobile, collapse the picker after selection so the viewer
-            // gets full width.
-            if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
-              setTasksPickerCollapsed(true);
-            }
+            // setRightPaneMode("view") inside openTaskPanel handles the
+            // mobile picker collapse — no extra wiring needed here.
           }
         });
         tasksTree.addEventListener("keydown", function (ev) {
@@ -3368,11 +3373,20 @@
         if (!tasksSidebar || !tasksPickerToggle) return;
         tasksSidebar.classList.toggle("tasks-sidebar-collapsed", collapsed);
         tasksPickerToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        // Mark the panel as "list hidden" so CSS can hide the filter chips
+        // — filters are only relevant when looking at the list.
+        var panel = document.getElementById("tasks-panel");
+        if (panel) panel.classList.toggle("tasks-list-hidden", collapsed);
+        updateTasksPickerToggleLabel();
       }
       function updateTasksPickerToggleLabel() {
         if (!tasksPickerToggleLabel) return;
-        if (currentTaskId) {
-          tasksPickerToggleLabel.textContent = currentTaskId;
+        var collapsed = tasksSidebar && tasksSidebar.classList.contains("tasks-sidebar-collapsed");
+        if (collapsed) {
+          // Action-oriented when collapsed so the user reads it as a way back.
+          tasksPickerToggleLabel.textContent = currentTaskId
+            ? "Show task list (" + currentTaskId + ")"
+            : "Show task list";
         } else {
           tasksPickerToggleLabel.textContent = "Browse tasks";
         }
@@ -3382,7 +3396,6 @@
           if (!tasksSidebar) return;
           var collapsed = tasksSidebar.classList.contains("tasks-sidebar-collapsed");
           setTasksPickerCollapsed(!collapsed);
-          updateTasksPickerToggleLabel();
         });
       }
 

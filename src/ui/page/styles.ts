@@ -3608,6 +3608,12 @@ export const pageStyles = String.raw`    :root {
       .tasks-sidebar:not(.tasks-sidebar-collapsed) ~ .tasks-content {
         display: none;
       }
+      /* Filters only make sense when the list is showing — hide them on
+         mobile when we're in viewer mode (sidebar collapsed). The "+ New"
+         and refresh actions stay visible. */
+      .tasks-panel.tasks-list-hidden .tasks-filter-chips {
+        display: none;
+      }
       .tasks-content {
         flex: 1;
         min-height: 0;
