@@ -535,6 +535,12 @@ async function claimTask(
 // into Kelly's chat thread was just noise (see 2026-05-06 chat-mute fix).
 // The dashboard's blocked-task UI is the channel for `waiting:on:user`; no
 // chat post needed there either.
+//
+// Sibling consolidation: when Alice dispatches multiple parallel sub-tasks
+// (same orchestration parent), the runner waits for ALL of them to land
+// before enqueueing a single consolidated continuation listing every
+// sibling's report. This avoids the "one continuation per child + N stand-
+// downs" thrash that surfaces when 3 children each fire their own envelope.
 async function notifyDispatchChat(
   yaml: string,
   agent: string,
@@ -543,39 +549,156 @@ async function notifyDispatchChat(
   directive: TaskDirective
 ): Promise<void> {
   void finalStatus;
-  // Continuation: if Alice dispatched this sub-task, enqueue a follow-up in
-  // her own queue. The runner ticks alice/tasks/open/ on the normal cadence,
-  // so she wakes there — never via a synthetic user prompt in Kelly's chat.
   const from = readField(yaml, "from");
   const to = readField(yaml, "to");
   if (
-    from === "alice" &&
-    to !== "alice" &&
-    (directive.kind === "done" || directive.kind === "failed")
+    from !== "alice" ||
+    to === "alice" ||
+    (directive.kind !== "done" && directive.kind !== "failed")
   ) {
-    const subdir = directive.kind === "done" ? "done" : "failed";
+    return;
+  }
+
+  const orchParent = readField(yaml, "parent");
+  const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
+
+  try {
+    // Gather every alice-dispatched sibling under this orchestration parent.
+    // If any are still in flight we defer — the last one to land triggers
+    // the consolidated continuation.
+    const siblings = orchParent
+      ? await listAliceDispatchedChildren(orchParent, knownAgents)
+      : [{ id: taskId, agent, status: directive.kind, report: directive.report ?? null }];
+
+    const inFlight = siblings.filter(
+      (s) =>
+        s.status !== "done" && !s.status.startsWith("failed") && s.status !== directive.kind
+    );
+    // The just-completed task may not yet show terminal status on disk if
+    // there's a tiny race — patch it in by id.
+    const stillInFlight = inFlight.filter((s) => s.id !== taskId);
+    if (stillInFlight.length > 0) {
+      console.log(
+        `[multi-agent] alice continuation deferred — ${stillInFlight.length} sibling(s) of ${taskId} still in flight (${stillInFlight.map((s) => s.id).join(", ")})`
+      );
+      return;
+    }
+
+    // Dedupe: if alice already has a continuation envelope for this family
+    // in any non-terminal bucket, don't enqueue another one. The existing
+    // one will be unblocked or processed when ready.
+    const familyIds = new Set(siblings.map((s) => s.id));
+    const existing = await findExistingAliceContinuation(familyIds);
+    if (existing) {
+      console.log(
+        `[multi-agent] alice continuation ${existing} already covers family of ${taskId} — skipping enqueue`
+      );
+      return;
+    }
+
     const chatId = readNestedField(yaml, "dispatch", "chat_id");
-    try {
-      // Carry the chat metadata stamped on the parent through to the
-      // continuation envelope so the dashboard / runner has full context
-      // without a re-fetch.
-      const chatName = readNestedField(yaml, "dispatch", "chat_name");
-      const chatPreview = readNestedField(yaml, "dispatch", "chat_preview");
-      const chatAgent = readNestedField(yaml, "dispatch", "chat_agent");
-      await enqueueAliceContinuation({
-        chatId,
-        chatName,
-        chatPreview,
-        chatAgent,
-        completedTaskId: taskId,
-        completedAgent: agent,
-        completedSubdir: subdir,
-        directive,
-      });
-    } catch (err) {
-      console.error(`[multi-agent] failed to enqueue alice continuation for ${taskId}:`, err);
+    const chatName = readNestedField(yaml, "dispatch", "chat_name");
+    const chatPreview = readNestedField(yaml, "dispatch", "chat_preview");
+    const chatAgent = readNestedField(yaml, "dispatch", "chat_agent");
+
+    await enqueueAliceContinuation({
+      chatId,
+      chatName,
+      chatPreview,
+      chatAgent,
+      orchParent,
+      lastCompletedTaskId: taskId,
+      siblings,
+    });
+  } catch (err) {
+    console.error(`[multi-agent] failed to enqueue alice continuation for ${taskId}:`, err);
+  }
+}
+
+// Sibling info shape used by the consolidation logic.
+type AliceSibling = {
+  id: string;
+  agent: string;
+  status: "done" | "failed" | "open" | "claimed" | "waiting" | string;
+  report: string | null;
+  summary?: string;
+  headline?: string;
+};
+
+// Scan all known agents' tasks/{open,claimed,waiting,done,failed} for sub-
+// tasks dispatched from alice with `parent: <orchParent>`. Returns one entry
+// per sibling with its current status + report path (when terminal).
+async function listAliceDispatchedChildren(
+  orchParent: string,
+  knownAgents: string[]
+): Promise<AliceSibling[]> {
+  const buckets = ["open", "waiting", "done", "failed"];
+  const out: AliceSibling[] = [];
+  for (const a of knownAgents) {
+    if (a === "alice") continue;
+    for (const bucket of buckets) {
+      const dir = join(AGENTS_DIR, a, "tasks", bucket);
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        if (!fname.endsWith(".yaml")) continue;
+        const fpath = join(dir, fname);
+        let content: string;
+        try {
+          content = await readFile(fpath, "utf-8");
+        } catch {
+          continue;
+        }
+        const from = readField(content, "from");
+        const parent = readField(content, "parent");
+        if (from !== "alice" || parent !== orchParent) continue;
+        const id = fname.replace(/\.yaml$/, "");
+        const statusRaw = readField(content, "status") ?? bucket;
+        const report = readField(content, "report")?.replace(/^"|"$/g, "") ?? null;
+        const summary = readNestedField(content, "summary", "response")?.replace(/^"|"$/g, "");
+        const headline = readField(content, "headline") ?? "";
+        out.push({
+          id,
+          agent: a,
+          status: statusRaw,
+          report: report && report.length > 0 ? report : null,
+          summary,
+          headline,
+        });
+      }
     }
   }
+  return out;
+}
+
+// Look for an existing alice continuation envelope whose `parent` matches one
+// of the sibling ids in this family. Restricts to non-terminal buckets so a
+// previously-processed continuation doesn't suppress a fresh one when a new
+// sibling later lands. Returns the matched continuation id or null.
+async function findExistingAliceContinuation(
+  familyIds: Set<string>
+): Promise<string | null> {
+  const buckets = ["open", "waiting"];
+  for (const bucket of buckets) {
+    const dir = join(AGENTS_DIR, "alice", "tasks", bucket);
+    const entries = await readdir(dir).catch(() => [] as string[]);
+    for (const fname of entries) {
+      if (!fname.endsWith(".yaml")) continue;
+      const fpath = join(dir, fname);
+      let content: string;
+      try {
+        content = await readFile(fpath, "utf-8");
+      } catch {
+        continue;
+      }
+      const kind = readField(content, "kind");
+      if (kind !== "continuation") continue;
+      const parent = readField(content, "parent");
+      if (parent && familyIds.has(parent)) {
+        return fname.replace(/\.yaml$/, "");
+      }
+    }
+  }
+  return null;
 }
 
 function escapeRegex(s: string): string {
@@ -638,43 +761,79 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
 }
 
 async function enqueueAliceContinuation(opts: {
-  chatId: string;
+  chatId: string | null;
   chatName?: string | null;
   chatPreview?: string | null;
   chatAgent?: string | null;
-  completedTaskId: string;
-  completedAgent: string;
-  completedSubdir: string;
-  directive: TaskDirective;
+  orchParent: string | null;
+  lastCompletedTaskId: string;
+  siblings: AliceSibling[];
 }): Promise<void> {
   const {
     chatId,
     chatName,
     chatPreview,
     chatAgent,
-    completedTaskId,
-    completedAgent,
-    completedSubdir,
-    directive,
+    orchParent,
+    lastCompletedTaskId,
+    siblings,
   } = opts;
-  const id = await nextAliceTaskId(completedTaskId);
+  // Use the most recent terminal task as parent so the continuation lives
+  // in the same root family as its dispatched siblings.
+  const parentForId = lastCompletedTaskId;
+  const id = await nextAliceTaskId(parentForId);
   const now = new Date().toISOString();
-  const subEnvelope = `agents/${completedAgent}/tasks/${completedSubdir}/${completedTaskId}.yaml`;
-  const reportLine = directive.report
-    ? `\n  - ${directive.report}`
-    : "";
-  const briefSummary = directive.summary || "(no summary)";
-  const verb = directive.kind === "done" ? "completed" : "failed";
+
+  const isMulti = siblings.length > 1;
+  const headline = isMulti
+    ? `Briefing — ${siblings.length} sibling tasks landed (parent ${orchParent ?? "?"})`
+    : `Continue after ${lastCompletedTaskId}`;
+
+  const briefLines: string[] = [];
+  briefLines.push(
+    isMulti
+      ? `${siblings.length} parallel sub-tasks dispatched under ${orchParent ?? "?"} have all landed:`
+      : `Sub-task ${lastCompletedTaskId} landed.`
+  );
+  briefLines.push("");
+  for (const s of siblings) {
+    const verb = s.status === "done"
+      ? "✓ done"
+      : s.status.startsWith("failed")
+        ? `✗ ${s.status}`
+        : `· ${s.status}`;
+    const headlinePart = s.headline ? ` — ${s.headline}` : "";
+    briefLines.push(`  - ${verb} **${s.id}** (${s.agent})${headlinePart}`);
+    if (s.summary) briefLines.push(`      summary: ${s.summary}`);
+    if (s.report) briefLines.push(`      report: ${s.report}`);
+  }
+  briefLines.push("");
+  briefLines.push("  Read each sibling's report, write a consolidated briefing for Kelly, and end your turn.");
+  briefLines.push("");
+  briefLines.push("  Directives — chat integration is currently OFF, so use these:");
+  briefLines.push("    - Surface results to Kelly: emit <task-waiting on=\"user\" summary=\"...\">.");
+  briefLines.push("      Kelly sees the task in the picker's \"Waiting on you\" section at the top.");
+  briefLines.push("      Use this for orchestration completes — it's the default.");
+  briefLines.push("    - More work to dispatch: run /task then emit <task-waiting on=\"task:TSK-...\"> to park.");
+  briefLines.push("    - Stand-down (no Kelly action needed): emit <task-done summary=\"...\">. Closes silently.");
+
+  const briefBlock = briefLines.map((l) => (l.length > 0 ? `  ${l}` : "  ")).join("\n");
+
+  const contextLines: string[] = [];
+  for (const s of siblings) {
+    contextLines.push(`  - agents/${s.agent}/tasks/${s.status === "done" ? "done" : s.status.startsWith("failed") ? "failed" : "open"}/${s.id}.yaml`);
+    if (s.report) contextLines.push(`  - ${s.report}`);
+  }
 
   const body = [
     `id: ${id}`,
-    `headline: Continue chat after ${completedTaskId}`,
+    `headline: ${headline}`,
     `created: ${now}`,
     `updated: ${now}`,
     "",
     "from: runner",
     "to: alice",
-    `parent: ${completedTaskId}`,
+    `parent: ${parentForId}`,
     "reply_to: null",
     "",
     "kind: continuation",
@@ -682,31 +841,17 @@ async function enqueueAliceContinuation(opts: {
     "deadline: null",
     "",
     "budget:",
-    "  max_turns: 6",
+    `  max_turns: ${isMulti ? 12 : 6}`,
     "  max_subagents: 0",
     "  max_usd: null",
     "",
     "brief: |",
-    `  Sub-task ${completedTaskId} (${completedAgent}) ${verb}.`,
-    `  Summary: ${briefSummary}`,
-    "",
-    `  Envelope: ${subEnvelope}`,
-    directive.report ? `  Report: ${directive.report}` : "",
-    "",
-    `  You're orchestrating chat ${chatId}. Decide the next step:`,
-    "    - To continue the orchestration: dispatch another /task and emit",
-    "      <task-waiting on=\"task:TSK-...\"> so this continuation parks.",
-    "    - To surface the outcome to Kelly: emit <task-done summary=\"...\">.",
-    "      The summary is what Kelly will see in the chat.",
-    "    - To request Kelly's input: emit <task-waiting on=\"user\" summary=\"...\">.",
-    "      The summary will surface as a status message in the chat; Kelly's",
-    "      next typed reply naturally re-engages this orchestration.",
+    briefBlock,
     "",
     `output_format: ""`,
     "",
     "context:",
-    `  - ${subEnvelope}`,
-    directive.report ? `  - ${directive.report}` : "",
+    ...contextLines,
     "",
     "status: open",
     "lease:",
@@ -717,7 +862,7 @@ async function enqueueAliceContinuation(opts: {
     "    from: null",
     "    to: open",
     "    by: runner",
-    `    note: \"continuation enqueued after ${completedTaskId}\"`,
+    `    note: \"continuation enqueued after ${lastCompletedTaskId} (${siblings.length} sibling(s))\"`,
     "",
     "summary:",
     "  brief: \"\"",
@@ -731,11 +876,8 @@ async function enqueueAliceContinuation(opts: {
     chatPreview ? `  chat_preview: ${JSON.stringify(chatPreview)}` : "",
     chatAgent ? `  chat_agent: ${JSON.stringify(chatAgent)}` : "",
     "",
-  ]
-    .filter((line) => line !== "" || true) // preserve blanks
-    .join("\n");
+  ].join("\n");
 
-  // Drop empty placeholder lines (from optional report fields).
   const cleanedBody = body
     .split("\n")
     .filter((line, i, arr) => !(line === "" && arr[i - 1] === ""))
@@ -753,12 +895,14 @@ async function enqueueAliceContinuation(opts: {
     kind: "continuation",
     from: "runner",
     to: "alice",
-    parent: completedTaskId,
-    summary: `enqueued after ${completedTaskId} ${verb}`,
+    parent: parentForId,
+    summary: isMulti
+      ? `consolidated continuation for ${siblings.length} siblings under ${orchParent ?? "?"}`
+      : `enqueued after ${lastCompletedTaskId}`,
   });
 
   console.log(
-    `[multi-agent] enqueued alice continuation ${id} (parent ${completedTaskId} ${verb})`
+    `[multi-agent] enqueued alice continuation ${id} (${siblings.length} sibling(s) under ${orchParent ?? "?"})`
   );
 }
 
