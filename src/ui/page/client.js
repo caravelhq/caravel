@@ -3172,22 +3172,43 @@
       function buildTaskTree(tasks) {
         var byId = {};
         for (var i = 0; i < tasks.length; i++) byId[tasks[i].id] = tasks[i];
+        // Walk up the dotted-suffix ID hierarchy until we find a known
+        // ancestor in the cache. Defends against parents being temporarily
+        // absent from the API result (parser failures, transitions in flight).
+        // Example: "TSK-2026-05-07-0001.5.1" → "TSK-2026-05-07-0001.5" →
+        // "TSK-2026-05-07-0001". Returns null if no known ancestor exists.
+        function idDerivedAncestor(id) {
+          if (!id) return null;
+          var cur = id;
+          while (true) {
+            var m = /^(.+)\.[0-9]+$/.exec(cur);
+            if (!m) return null;
+            cur = m[1];
+            if (byId[cur]) return cur;
+          }
+        }
         // Resolve each task's effective parent — null if missing/self/cyclic.
+        // Primary: explicit `parent` field (when in cache, no cycle).
+        // Fallback: ID-derived ancestor (handles dropped tasks).
         function effectiveParent(t) {
           var pid = t.parent && t.parent !== "null" ? t.parent : null;
-          if (!pid || pid === t.id || !byId[pid]) return null;
-          // Walk up; bail if we ever come back to t.
-          var seen = {};
-          seen[t.id] = true;
-          var cur = byId[pid];
-          while (cur) {
-            if (seen[cur.id]) return null; // cycle
-            seen[cur.id] = true;
-            var nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
-            if (!nextId || nextId === cur.id || !byId[nextId]) break;
-            cur = byId[nextId];
+          if (pid && pid !== t.id && byId[pid]) {
+            // Walk up; bail if we ever come back to t.
+            var seen = {};
+            seen[t.id] = true;
+            var cur = byId[pid];
+            var cyclic = false;
+            while (cur) {
+              if (seen[cur.id]) { cyclic = true; break; }
+              seen[cur.id] = true;
+              var nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+              if (!nextId || nextId === cur.id || !byId[nextId]) break;
+              cur = byId[nextId];
+            }
+            if (!cyclic) return pid;
           }
-          return pid;
+          // Fallback to ID-derived ancestor.
+          return idDerivedAncestor(t.id);
         }
         var roots = [];
         var childrenOf = {};

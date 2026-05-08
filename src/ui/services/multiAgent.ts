@@ -66,14 +66,15 @@ export interface TaskChain {
 // when js-yaml gives up entirely.
 function parseEnvelope(content: string): Record<string, any> | null {
   const sanitized = content.replace(/^history:[\s\S]*?(?=^[a-z][a-z_]*:)/m, "history: []\n");
+  // `json: true` enables JSON-superset mode: duplicate mapping keys take
+  // last-wins semantics instead of throwing. Some legacy envelopes have
+  // duplicate `report:` keys from a runner write bug; we want to read them.
   try {
-    const doc = yamlLoad(sanitized);
+    const doc = yamlLoad(sanitized, { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
   } catch {}
-  // Fallback: try the original (unsanitized) content in case sanitisation
-  // ate something it shouldn't have.
   try {
-    const doc = yamlLoad(content);
+    const doc = yamlLoad(content, { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
   } catch {}
   return null;

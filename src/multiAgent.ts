@@ -998,8 +998,10 @@ async function transitionToTerminal(
   }
   if (directive.kind === "done" && directive.report) {
     // Worker produced a file — persist its path as a top-level scalar so the
-    // dashboard can link directly to it. Strip any pre-existing `report:` block.
-    next = next.replace(/^report:[\s\S]*?(?=^\S|\Z)/m, "");
+    // dashboard can link directly to it. Strip ALL pre-existing `report:`
+    // blocks (single-line or block-scalar) before appending. Global match
+    // handles legacy envelopes where prior write attempts left duplicates.
+    next = next.replace(/^report:[^\n]*(?:\n[ \t]+[^\n]*)*\n?/gm, "");
     next = next.trimEnd() + `\nreport: ${JSON.stringify(directive.report)}\n`;
   } else if (directive.body && directive.kind === "done") {
     // No produced file — fall back to the inline body so we don't lose the
