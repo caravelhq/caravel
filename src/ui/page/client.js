@@ -2857,43 +2857,23 @@
           return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + '</button></div>';
         }).join("");
 
-        var actions = [];
-        var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
-        actions.push('<button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Envelope</button>');
-        // Report opens in the Files tab for full-page editing / download. The
-        // inline render below is the read-quickly view.
-        if (card.reportPath) {
-          actions.push('<button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Open report in Files</button>');
-        }
-        actions.push('<button data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Spawn chat</button>');
-        // Done/failed cards get a "Spawn Follow-up" button that opens the
-        // new-task form pre-filled with parent=<id> + to=<agent>. The form's
-        // submit handler reads the parent from its data attribute.
         var statusLower = (card.status || "").toLowerCase();
-        var isTerminalCard = statusLower.indexOf("done") === 0 || statusLower.indexOf("failed") === 0 || statusLower === "escalated";
-        if (isTerminalCard) {
-          actions.push('<button data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Spawn follow-up</button>');
-        }
-        if (!isCurrent) {
-          actions.push('<button data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
-        }
+        var isTerminal = statusLower.indexOf("done") === 0 || statusLower.indexOf("failed") === 0 || statusLower === "escalated";
+        var isWaitingUser = card.status === "waiting:on:user";
+        var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
 
-        var meta = [card.from || "?", "→", card.to || "?", "·", card.kind || "?", card.priority ? "· " + card.priority : ""].filter(Boolean).join(" ");
-
-        // Decide which section gets the "primary" auto-open treatment based
-        // on task status. Done/failed → worker result is the payload. Open
-        // or waiting → the brief is what the user wants to see first.
-        var status = (card.status || "").toLowerCase();
-        var isTerminal = status.indexOf("done") === 0 || status.indexOf("failed") === 0 || status === "escalated";
-        var openResult = isTerminal && !!summaryResponse;
-        var openBrief = !isTerminal && !!brief;
+        // Meta line: from → to · kind · priority · time-ago
+        var metaParts = [];
+        metaParts.push(escapeHtml(card.from || "?") + " <span class=\"task-panel-meta-arrow\">→</span> " + escapeHtml(card.to || "?"));
+        if (card.kind) metaParts.push(escapeHtml(card.kind));
+        if (card.priority) metaParts.push(escapeHtml(card.priority));
+        if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
+        var metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + '</div>';
 
         var sections = "";
-        // When the worker has parked the task on `waiting:on:user`, surface
-        // the unblock UI as the first thing Kelly sees — response textarea +
-        // "Send & return to queue" button. The handler reads the agent + id
-        // from the wrapper's data attributes.
-        if (isCurrent && card.status === "waiting:on:user") {
+
+        // 1. Unblock — top priority when worker is parked on user input.
+        if (isCurrent && isWaitingUser) {
           var unblockHtml =
             '<div class="task-panel-unblock" data-unblock-agent="' + escapeHtml(card.agent || "") + '" data-unblock-id="' + escapeHtml(card.id) + '">' +
             '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type a response and it will be appended to the brief, then the task moves back to the open queue.</div>' +
@@ -2905,69 +2885,140 @@
             '</div>';
           sections += renderSection("⏳ Unblock — your response", unblockHtml, true);
         }
-        // Done/failed cards get an inline Revisit form so Kelly can re-open
-        // the task with a follow-up instruction without leaving the panel.
-        // The submit handler hits POST /api/tasks/:id/revisit; cap-rejection
-        // (5 revisits already) returns code:"cap" and the UI suggests Spawn
-        // Follow-up instead.
-        if (isCurrent && isTerminalCard) {
+
+        // 2. Brief (always open if non-empty).
+        if (brief) {
+          sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + '</div>', true);
+        }
+
+        // 3. Result (open if there's a worker response).
+        if (summaryResponse) {
+          sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', true);
+        }
+
+        // 4. Action buttons row — primary actions first (Revisit, + Child,
+        //    Chat), then utility (Envelope, Open report).
+        var actions = [];
+        if (isCurrent && isTerminal) {
+          actions.push('<button class="task-panel-action is-primary" data-toggle-revisit="' + escapeHtml(card.id) + '" type="button">↺ Revisit</button>');
+        }
+        actions.push('<button class="task-panel-action is-primary" data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ + Child</button>');
+        actions.push('<button class="task-panel-action is-primary" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
+        actions.push('<button class="task-panel-action" data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Envelope</button>');
+        if (card.reportPath) {
+          actions.push('<button class="task-panel-action" data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Open report in Files</button>');
+        }
+        if (!isCurrent) {
+          actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
+        }
+        sections += '<div class="task-panel-card-actions">' + actions.join("") + '</div>';
+
+        // 4b. Inline Revisit form — collapsed by default, the Revisit button
+        //     above toggles it open. POST /api/tasks/:id/revisit appends the
+        //     instruction and re-opens the task; cap-rejection (5 already)
+        //     returns code:"cap" and the UI suggests Spawn Follow-up instead.
+        if (isCurrent && isTerminal) {
           var revisitHtml =
             '<div class="task-panel-revisit" data-revisit-agent="' + escapeHtml(card.agent || "") + '" data-revisit-id="' + escapeHtml(card.id) + '">' +
-            '<div class="task-panel-unblock-hint">Add a follow-up instruction. The original brief stays untouched; this revisit is appended and the task moves back to the open queue. Use Spawn Follow-up instead if the scope has materially changed.</div>' +
+            '<div class="task-panel-unblock-hint">Add a follow-up instruction. The original brief stays untouched; this revisit is appended and the task moves back to the open queue. Use + Child instead if the scope has materially changed.</div>' +
             '<textarea class="task-panel-unblock-input task-panel-revisit-input" rows="4" placeholder="What needs revisiting? (e.g. &quot;the Y bit was wrong, redo with Z&quot;)"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
             '<button type="button" class="is-primary task-panel-revisit-submit">Revisit &amp; return to queue</button>' +
             '<span class="task-panel-unblock-status task-panel-revisit-status"></span>' +
             '</div>' +
             '</div>';
-          sections += renderSection("↺ Revisit — follow-up instruction", revisitHtml, false);
+          sections += renderSection("Revisit — follow-up instruction", revisitHtml, false);
         }
-        if (summaryResponse) {
-          sections += renderSection("Worker result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', openResult);
-        }
-        if (brief) {
-          sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + '</div>', openBrief);
-        }
+
+        // 5. Context / links at the bottom.
         if (ctxLines) {
           sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + '</div>', false);
         }
 
+        // Card head: just the headline is in the viewer-head above; we don't
+        // repeat id/agent/status here. The meta line carries the from→to.
         return (
           '<div class="task-panel-card' + (isCurrent ? " is-current" : "") + '">' +
-          '<div class="task-panel-section-label">' + escapeHtml(label) + '</div>' +
-          '<div class="task-panel-card-head">' +
-          '<span class="task-panel-card-id">' + escapeHtml(card.id) + '</span>' +
-          '<span class="task-panel-card-agent">' + escapeHtml(card.agent || card.to || "?") + '</span>' +
-          '<span class="task-panel-card-status ' + statusClass(card.status) + '">' + escapeHtml(card.status || "?") + '</span>' +
-          '</div>' +
-          (card.headline ? '<div class="task-panel-card-headline">' + escapeHtml(card.headline) + '</div>' : "") +
-          '<div class="task-panel-card-meta">' + escapeHtml(meta) + (card.updated ? " · " + escapeHtml(timeAgo(card.updated)) : "") + '</div>' +
+          metaHtml +
           sections +
-          '<div class="task-panel-card-actions">' + actions.join("") + '</div>' +
           '</div>'
         );
       }
 
-      // Standalone report card — sits below the main task card so the
-      // markdown render gets the panel's full width on mobile. Lazy-loads
-      // the .md on first toggle through the same mechanism wired up in
-      // openTaskPanel().
-      function renderReportCard(card) {
+      // Report pane — the rendezvous report is rendered inline (always
+      // visible) and after it loads we scan the rendered markdown for
+      // links to other deliverable docs (the brief often asks the worker
+      // to produce a Notes/… or repos/dev/features/… file). Each detected
+      // link gets appended as its own inline document section so the user
+      // can read the produced artefact without leaving the panel.
+      function renderReportPane(card) {
         if (!card || !card.reportPath) return "";
         var filename = card.reportPath.split("/").pop();
         return (
-          '<div class="task-panel-card task-panel-report-card">' +
-          '<div class="task-panel-section-label">Report</div>' +
-          '<details class="task-panel-section task-panel-report-section" open>' +
-          '<summary class="task-panel-section-summary">' + escapeHtml(filename) + '</summary>' +
-          '<div class="task-panel-section-body">' +
-          '<div class="task-panel-report" data-report-path="' + escapeHtml(card.reportPath) + '" data-loaded="false">' +
+          '<div class="task-panel-report-doc" data-doc-primary="true">' +
+          '<div class="task-panel-report-doc-head">' +
+          '<span class="task-panel-report-doc-title">' + escapeHtml(filename) + '</span>' +
+          '<button class="task-panel-action" data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(card.id) + '" type="button">Open in Files</button>' +
+          '</div>' +
+          '<div class="task-panel-report" data-report-path="' + escapeHtml(card.reportPath) + '" data-loaded="false" data-scan-extras="true">' +
           '<div class="task-panel-report-loading">Loading report…</div>' +
           '</div>' +
           '</div>' +
-          '</details>' +
-          '</div>'
+          '<div class="task-panel-report-extras" data-report-extras="' + escapeHtml(card.id) + '"></div>'
         );
+      }
+
+      // After the primary report loads, scan its rendered markdown for
+      // links to additional documents the task may have produced
+      // (Notes/…, repos/…, agents/…/tasks/…). Render each as its own
+      // inline doc section, deduped against the primary path.
+      function appendReportExtras(primaryNode) {
+        if (!primaryNode) return;
+        var primaryPath = primaryNode.getAttribute("data-report-path") || "";
+        var doc = primaryNode.closest(".task-panel-report-doc");
+        if (!doc) return;
+        var extras = doc.parentNode ? doc.parentNode.querySelector(".task-panel-report-extras") : null;
+        if (!extras) return;
+        var seen = {};
+        seen[primaryPath] = true;
+        var anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
+        var paths = [];
+        for (var i = 0; i < anchors.length; i++) {
+          var href = anchors[i].getAttribute("href") || "";
+          if (!href) continue;
+          if (/^https?:/i.test(href) || href.charAt(0) === "#" || href.indexOf("mailto:") === 0) continue;
+          // Strip leading ./ and any anchor.
+          var clean = href.replace(/^\.\//, "").split("#")[0].split("?")[0];
+          if (!clean) continue;
+          // Only worthwhile docs — markdown, pdf, docx, csv, txt, yaml, json.
+          if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(clean)) continue;
+          if (seen[clean]) continue;
+          seen[clean] = true;
+          paths.push(clean);
+        }
+        if (paths.length === 0) return;
+        var html = "";
+        for (var p = 0; p < paths.length; p++) {
+          var path = paths[p];
+          var fname = path.split("/").pop();
+          var safePath = escapeHtml(path);
+          var safeFname = escapeHtml(fname);
+          html +=
+            '<div class="task-panel-report-doc">' +
+            '<div class="task-panel-report-doc-head">' +
+            '<span class="task-panel-report-doc-title">' + safeFname + '</span>' +
+            '<button class="task-panel-action" data-open-file="' + safePath + '" type="button">Open in Files</button>' +
+            '</div>' +
+            '<div class="task-panel-report" data-report-path="' + safePath + '" data-loaded="false">' +
+            '<div class="task-panel-report-loading">Loading…</div>' +
+            '</div>' +
+            '</div>';
+        }
+        extras.innerHTML = html;
+        var newNodes = extras.querySelectorAll(".task-panel-report");
+        for (var n = 0; n < newNodes.length; n++) {
+          loadReportNode(newNodes[n]);
+        }
       }
 
       function renderTreeNode(node, depth, marker, isCurrent) {
@@ -3030,6 +3081,9 @@
               pre.textContent = data.content;
               node.innerHTML = "";
               node.appendChild(pre);
+            }
+            if (node.getAttribute("data-scan-extras") === "true" && typeof appendReportExtras === "function") {
+              appendReportExtras(node);
             }
           })
           .catch(function (err) {
@@ -3106,16 +3160,11 @@
           }
 
           var taskParts = [];
-          var hasChain = (c.ancestors && c.ancestors.length > 0) || (c.children && c.children.length > 0);
-          if (hasChain) {
-            taskParts.push('<div class="task-panel-section-label">Dependency tree</div>');
-            taskParts.push(renderTaskTree(c));
-          }
           if (task) taskParts.push(renderPanelCard(task, "Current task", true));
 
           var reportParts = [];
           if (task && task.reportPath) {
-            reportParts.push(renderReportCard(task));
+            reportParts.push(renderReportPane(task));
           } else {
             reportParts.push('<div class="task-panel-loading">No report yet for this task.</div>');
           }
@@ -3128,22 +3177,14 @@
             reportParts.join("") +
             '</div>';
 
-          // Eagerly load the report markdown so flipping to the Report tab is
-          // instant. Lazy-load fallback is still wired below for any nested
-          // collapsed report nodes.
-          var eagerReports = taskPanelBody.querySelectorAll(".task-panel-report-section[open] .task-panel-report");
-          for (var er = 0; er < eagerReports.length; er++) {
-            loadReportNode(eagerReports[er]);
-          }
+          // Eagerly load every report node — the pane shows them inline by
+          // default now (no <details> wrap), so flipping to the Report tab
+          // should be instant. Extras (additional documents linked from
+          // the primary report) are loaded by appendReportExtras after
+          // the primary finishes parsing.
           var reportNodes = taskPanelBody.querySelectorAll(".task-panel-report");
           for (var rn = 0; rn < reportNodes.length; rn++) {
-            (function (node) {
-              var details = node.closest("details");
-              if (!details) return;
-              details.addEventListener("toggle", function () {
-                if (details.open) loadReportNode(node);
-              });
-            })(reportNodes[rn]);
+            loadReportNode(reportNodes[rn]);
           }
         } catch (err) {
           taskPanelBody.innerHTML = '<div class="task-panel-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
@@ -3569,6 +3610,25 @@
           if (revisitBtn) {
             ev.preventDefault();
             submitRevisit(revisitBtn.closest(".task-panel-revisit"));
+            return;
+          }
+          var toggleRevisitBtn = ev.target.closest("[data-toggle-revisit]");
+          if (toggleRevisitBtn) {
+            ev.preventDefault();
+            // Find the collapsed Revisit section in this card and open it.
+            var card = toggleRevisitBtn.closest(".task-panel-card");
+            if (card) {
+              var sections = card.querySelectorAll("details.task-panel-section");
+              for (var s = 0; s < sections.length; s++) {
+                if (sections[s].querySelector(".task-panel-revisit")) {
+                  sections[s].open = true;
+                  var ta = sections[s].querySelector(".task-panel-revisit-input");
+                  if (ta) ta.focus();
+                  sections[s].scrollIntoView({ behavior: "smooth", block: "nearest" });
+                  break;
+                }
+              }
+            }
             return;
           }
           var followUpBtn = ev.target.closest("[data-spawn-followup-id]");

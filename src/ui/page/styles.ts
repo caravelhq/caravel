@@ -2904,7 +2904,7 @@ export const pageStyles = String.raw`    :root {
       flex-wrap: wrap;
       margin-top: 4px;
     }
-    .task-panel-card-actions button {
+    .task-panel-action {
       border: 1px solid #ffffff2a;
       background: #0c1624a6;
       color: #cfe3ff;
@@ -2916,16 +2916,31 @@ export const pageStyles = String.raw`    :root {
       letter-spacing: 0.04em;
       transition: background 120ms;
     }
-    .task-panel-card-actions button:hover {
+    .task-panel-action:hover {
       background: #14223680;
     }
-    .task-panel-card-actions button.is-primary {
+    .task-panel-action.is-primary {
       background: #2a4972;
       border-color: #ffd07a99;
       color: #ffe7b8;
     }
-    .task-panel-card-actions button.is-primary:hover {
+    .task-panel-action.is-primary:hover {
       background: #355a8a;
+    }
+    .task-panel-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #8a96a8;
+      letter-spacing: 0.04em;
+      padding: 2px 0 6px;
+    }
+    .task-panel-meta-arrow {
+      color: #ffd07a;
+      margin: 0 2px;
+    }
+    .task-panel-meta-sep {
+      color: #4a5668;
+      margin: 0 4px;
     }
     .task-panel-unblock {
       display: grid;
@@ -3078,14 +3093,43 @@ export const pageStyles = String.raw`    :root {
     .task-panel-context-item button:hover {
       color: #cfe3ff;
     }
-    .task-panel-report-card {
-      margin-top: 12px;
+    .task-panel-report-doc {
+      margin: 0 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.18);
+      overflow: hidden;
     }
-    .task-panel-report-card .task-panel-report {
+    .task-panel-report-doc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .task-panel-report-doc-title {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .task-panel-report-doc .task-panel-report {
       max-height: none;
       border: none;
+      border-radius: 0;
       background: transparent;
-      padding: 0;
+      padding: 12px 14px;
+    }
+    .task-panel-report-extras {
+      margin-top: 4px;
+    }
+    .task-panel-report-extras:empty {
+      display: none;
     }
     .task-panel-report {
       max-height: 480px;
