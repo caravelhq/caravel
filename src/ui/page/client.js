@@ -2988,25 +2988,43 @@
 
       // Resolve a markdown link's href to a project-relative path the
       // /api/files/read endpoint can serve. Reports live in
-      // agents/<a>/tasks/<bucket>/ and frequently link to ../../../Notes/…
-      // or ../../../repos/… so we MUST resolve relative-to-the-report
-      // first. If the href already starts with a known top-level project
-      // dir, treat it as already-absolute. Returns null on bad input.
+      // agents/<a>/tasks/<bucket>/ and the agents' relative ../ counts
+      // are often slightly off, so we pattern-match a known top-level
+      // project dir (Notes/, agents/, repos/, etc.) anywhere in the
+      // path and use that suffix verbatim. "../../../Notes/X/Y.md" and
+      // "../../../../Notes/X/Y.md" both resolve to "Notes/X/Y.md".
+      // Falls back to literal relative-to-report resolution only when no
+      // known top-level dir appears in the path.
+      var KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
       function resolveReportPath(primaryPath, href) {
         if (!href) return null;
-        var clean = href.replace(/^\.\//, "").split("#")[0].split("?")[0];
+        var clean = href.split("#")[0].split("?")[0];
         if (!clean) return null;
         if (/^https?:/i.test(clean) || clean.indexOf("mailto:") === 0) return null;
         // Strip leading slash — treat as project-root absolute.
         if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
-        // Already project-relative?
-        if (/^(agents|Notes|repos|setup|memory|\.claude|repos|src)\//.test(clean)) return clean;
-        // Resolve relative-to-report.
+
+        // Pattern A: scan for the LAST occurrence of a known top-level
+        // dir followed by /, take everything from there. Catches both
+        // already-project-relative paths ("Notes/X/Y.md") and any number
+        // of leading "../" segments ("../../../Notes/X/Y.md").
+        var parts = clean.split("/");
+        for (var k = parts.length - 1; k >= 0; k--) {
+          if (KNOWN_TOP_DIRS.indexOf(parts[k]) !== -1 && k < parts.length - 1) {
+            return parts.slice(k).join("/");
+          }
+        }
+
+        // Pattern B: literal relative resolution against the report's
+        // directory. Only used for paths that don't look like they're
+        // pointing at a top-level project dir (rare — typically same-dir
+        // siblings without any ../).
+        var lead = clean.replace(/^\.\//, "");
         var primaryDir = primaryPath.indexOf("/") >= 0
           ? primaryPath.substring(0, primaryPath.lastIndexOf("/"))
           : "";
         var baseParts = primaryDir.split("/").filter(Boolean);
-        var relParts = clean.split("/");
+        var relParts = lead.split("/");
         for (var i = 0; i < relParts.length; i++) {
           var p = relParts[i];
           if (p === "" || p === ".") continue;
@@ -3017,7 +3035,7 @@
           }
           baseParts.push(p);
         }
-        return baseParts.join("/");
+        return baseParts.length > 0 ? baseParts.join("/") : null;
       }
 
       // After the primary report's markdown has rendered, scan it for
