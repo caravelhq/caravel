@@ -2373,97 +2373,69 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-toolbar {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 10px 14px;
-      border-bottom: 1px solid #ffffff12;
-    }
-    .tasks-toolbar-row {
-      display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
+      padding: 6px 10px;
+      border-bottom: 1px solid #ffffff12;
       flex-wrap: wrap;
+    }
+    .tasks-toolbar-left {
+      display: flex;
+      gap: 6px;
+    }
+    .tasks-toolbar-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-left: auto;
+    }
+    .tasks-toolbar-btn {
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: transparent;
+      color: #a8b4c5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tasks-toolbar-btn:hover {
+      background: #ffffff10;
+      color: #eef4ff;
     }
     .tasks-filter-chips {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       flex-wrap: wrap;
     }
     .tasks-filter-chip {
-      border: 1px solid #ffffff1f;
-      background: #0c1624a6;
-      color: #b9c8de;
-      border-radius: 999px;
-      padding: 4px 12px;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: transparent;
+      color: #7a8698;
+      padding: 3px 9px;
       font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
+      font-size: 10px;
       letter-spacing: 0.04em;
-      text-transform: uppercase;
       cursor: pointer;
-      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
     .tasks-filter-chip:hover {
-      background: #14223680;
-      color: #e4eefb;
+      background: #ffffff10;
+      color: #eef4ff;
     }
     .tasks-filter-chip.is-active {
       background: #1c3a64aa;
       color: #f4f8ff;
       border-color: #9be7ff66;
     }
-    .tasks-toolbar-actions {
-      display: flex;
-      gap: 6px;
-      align-items: center;
-    }
-    .tasks-action,
-    .tasks-refresh {
-      border: 1px solid #ffffff2a;
-      background: #0c1624a6;
-      color: #cfe3ff;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      letter-spacing: 0.04em;
-      cursor: pointer;
-    }
-    .tasks-refresh {
-      width: 32px;
-      padding: 6px 0;
-      text-align: center;
-    }
-    .tasks-action:hover,
-    .tasks-refresh:hover { background: #14223680; }
-    .tasks-action.is-active {
-      background: #1c3a64aa;
-      border-color: #9be7ff66;
-      color: #f4f8ff;
-    }
+    /* Picker toggle is just another toolbar button — desktop hides it
+       (both panes are always side-by-side); mobile shows it as the way
+       back to the list when the viewer is full-width. */
     .tasks-picker-toggle {
       display: none;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      padding: 8px 14px;
-      border: none;
-      border-bottom: 1px solid #ffffff12;
-      background: #0b121c;
-      color: #c8d4e5;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 11px;
-      letter-spacing: 0.03em;
-      cursor: pointer;
-    }
-    .tasks-picker-toggle:hover { background: #111a26; }
-    .tasks-picker-toggle-caret {
-      font-size: 12px;
-      color: #9be7ff;
-      transition: transform 0.2s ease;
-    }
-    .tasks-picker-toggle[aria-expanded="false"] .tasks-picker-toggle-caret {
-      transform: rotate(-90deg);
     }
     .tasks-split {
       display: flex;
@@ -3600,7 +3572,7 @@ export const pageStyles = String.raw`    :root {
         border-bottom: 1px solid #ffffff12;
       }
       .tasks-picker-toggle {
-        display: flex;
+        display: inline-flex;
       }
       .tasks-sidebar.tasks-sidebar-collapsed {
         display: none;

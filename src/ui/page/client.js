@@ -3368,7 +3368,8 @@
         tasksRefreshBtn.addEventListener("click", loadTasksTree);
       }
 
-      // Mobile picker toggle (matches the files-panel pattern).
+      // Mobile picker toggle: tap "Tasks" toolbar button to flip between
+      // the list and the viewer/form pane.
       function setTasksPickerCollapsed(collapsed) {
         if (!tasksSidebar || !tasksPickerToggle) return;
         tasksSidebar.classList.toggle("tasks-sidebar-collapsed", collapsed);
@@ -3377,19 +3378,6 @@
         // — filters are only relevant when looking at the list.
         var panel = document.getElementById("tasks-panel");
         if (panel) panel.classList.toggle("tasks-list-hidden", collapsed);
-        updateTasksPickerToggleLabel();
-      }
-      function updateTasksPickerToggleLabel() {
-        if (!tasksPickerToggleLabel) return;
-        var collapsed = tasksSidebar && tasksSidebar.classList.contains("tasks-sidebar-collapsed");
-        if (collapsed) {
-          // Action-oriented when collapsed so the user reads it as a way back.
-          tasksPickerToggleLabel.textContent = currentTaskId
-            ? "Show task list (" + currentTaskId + ")"
-            : "Show task list";
-        } else {
-          tasksPickerToggleLabel.textContent = "Browse tasks";
-        }
       }
       if (tasksPickerToggle) {
         tasksPickerToggle.addEventListener("click", function () {

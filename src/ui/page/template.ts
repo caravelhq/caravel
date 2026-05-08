@@ -293,24 +293,21 @@ ${pageStyles}
     </div>
     <div id="tasks-panel" class="tasks-panel" hidden>
       <div class="tasks-toolbar">
-        <div class="tasks-toolbar-row">
-          <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">
-            <button type="button" class="tasks-filter-chip is-active" data-filter="all">All</button>
-            <button type="button" class="tasks-filter-chip" data-filter="open">Open</button>
-            <button type="button" class="tasks-filter-chip" data-filter="waiting">Waiting</button>
-            <button type="button" class="tasks-filter-chip" data-filter="done">Done</button>
-            <button type="button" class="tasks-filter-chip" data-filter="failed">Failed</button>
-          </div>
-          <div class="tasks-toolbar-actions">
-            <button class="tasks-action" id="tasks-new-btn" type="button" title="Create a new task">+ New</button>
-            <button class="tasks-refresh" id="tasks-refresh" type="button" title="Refresh">↻</button>
-          </div>
+        <div class="tasks-toolbar-left">
+          <button id="tasks-picker-toggle" class="tasks-toolbar-btn tasks-picker-toggle" type="button" aria-expanded="true" title="Show task list">Tasks</button>
+        </div>
+        <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">
+          <button type="button" class="tasks-filter-chip is-active" data-filter="all">All</button>
+          <button type="button" class="tasks-filter-chip" data-filter="open">Open</button>
+          <button type="button" class="tasks-filter-chip" data-filter="waiting">Waiting</button>
+          <button type="button" class="tasks-filter-chip" data-filter="done">Done</button>
+          <button type="button" class="tasks-filter-chip" data-filter="failed">Failed</button>
+        </div>
+        <div class="tasks-toolbar-right">
+          <button id="tasks-new-btn" class="tasks-toolbar-btn" type="button" title="Create a new task">+ New</button>
+          <button id="tasks-refresh" class="tasks-toolbar-btn" type="button" title="Refresh" aria-label="Refresh">↻</button>
         </div>
       </div>
-      <button id="tasks-picker-toggle" class="tasks-picker-toggle" type="button" aria-expanded="true">
-        <span class="tasks-picker-toggle-label" id="tasks-picker-toggle-label">Browse tasks</span>
-        <span class="tasks-picker-toggle-caret" aria-hidden="true">▾</span>
-      </button>
       <div class="tasks-split">
         <div class="tasks-sidebar" id="tasks-sidebar">
           <div class="tasks-tree" id="tasks-tree">
