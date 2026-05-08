@@ -2490,6 +2490,32 @@ export const pageStyles = String.raw`    :root {
       display: inline-block;
       flex-shrink: 0;
     }
+    .tasks-tree-chevron {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #6a7e9b;
+      font-size: 10px;
+      line-height: 16px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: color 120ms, background 120ms;
+    }
+    .tasks-tree-chevron:hover {
+      color: #cfe3ff;
+      background: #ffffff14;
+    }
+    .tasks-tree-chevron.is-expanded {
+      color: #ffd07a;
+    }
+    .tasks-tree-chevron-spacer {
+      display: inline-block;
+      flex-shrink: 0;
+      width: 16px;
+    }
     .tasks-tree-marker {
       flex-shrink: 0;
       width: 12px;
@@ -2498,8 +2524,9 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-tree-id {
       flex-shrink: 0;
-      color: #9be7ff;
+      color: #6a8cb0;
       font-size: 10px;
+      opacity: 0.85;
     }
     .tasks-tree-agent {
       flex-shrink: 0;

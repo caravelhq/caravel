@@ -2785,6 +2785,11 @@
       var tasksFilter = "all";
       var tasksLoaded = false;
       var tasksCache = [];
+      // Set of parent task IDs whose children are expanded in the picker.
+      // Collapsed by default — top-level parents show first; click the
+      // chevron on a parent to reveal its children. Persists across
+      // re-renders within the page lifetime (no localStorage).
+      var tasksExpanded = {};
 
       function timeAgo(iso) {
         if (!iso) return "";
@@ -3180,6 +3185,13 @@
         if (taskPanelHeadline) taskPanelHeadline.textContent = "Loading…";
         if (taskPanelStatus) { taskPanelStatus.textContent = ""; taskPanelStatus.className = "tasks-viewer-status"; }
         taskPanelBody.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
+        // Auto-expand ancestors so the active row stays visible in the
+        // collapsed-by-default picker, then re-render so the chain is
+        // open before we paint the active class.
+        if (typeof expandAncestors === "function") {
+          expandAncestors(taskId);
+          if (typeof renderTaskPicker === "function") renderTaskPicker();
+        }
         // Update active row in picker.
         if (tasksTree) {
           var rows = tasksTree.querySelectorAll(".tasks-tree-row");
@@ -3329,7 +3341,7 @@
         return { roots: roots, childrenOf: childrenOf };
       }
 
-      function renderTreeRow(t, depth) {
+      function renderTreeRow(t, depth, hasChildren, expanded) {
         var status = statusClass(t.status);
         var marker = depth === 0 ? "●" : "└";
         var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
@@ -3337,14 +3349,18 @@
         if (t.id === currentTaskId) rowClass += " is-active";
         if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
         var indent = '<span class="tasks-tree-indent" style="width:' + (depth * 14) + 'px"></span>';
+        var chevron = hasChildren
+          ? '<button class="tasks-tree-chevron' + (expanded ? ' is-expanded' : '') + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? 'Collapse' : 'Expand') + '">' + (expanded ? '▾' : '▸') + '</button>'
+          : '<span class="tasks-tree-chevron-spacer"></span>';
         return (
           '<div class="' + rowClass + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
           indent +
+          chevron +
           '<span class="tasks-tree-marker">' + marker + '</span>' +
+          '<span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span>' +
           '<span class="tasks-tree-id">' + escapeHtml(t.id) + '</span>' +
           '<span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + '</span>' +
           '<span class="tasks-tree-status ' + status + '">' + escapeHtml(t.status || "?") + '</span>' +
-          '<span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span>' +
           '</div>'
         );
       }
@@ -3357,10 +3373,44 @@
           return;
         }
         seen[node.id] = true;
-        out.push(renderTreeRow(node, depth));
         var kids = tree.childrenOf[node.id] || [];
+        var hasChildren = kids.length > 0;
+        var expanded = !!tasksExpanded[node.id];
+        out.push(renderTreeRow(node, depth, hasChildren, expanded));
+        if (!hasChildren || !expanded) return;
         for (var i = 0; i < kids.length; i++) {
           renderTreeBranch(tree, kids[i], depth + 1, out, seen);
+        }
+      }
+
+      // Walk up the task chain (using explicit parent + ID-derived
+      // fallback) and mark every ancestor as expanded so the active
+      // row stays visible after re-render.
+      function expandAncestors(taskId) {
+        if (!taskId) return;
+        var byId = {};
+        for (var i = 0; i < tasksCache.length; i++) byId[tasksCache[i].id] = tasksCache[i];
+        function ancestorOf(id) {
+          var t = byId[id];
+          if (t) {
+            var p = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
+            if (p && byId[p]) return p;
+          }
+          // ID-derived fallback (matches buildTaskTree's logic).
+          var cur = id;
+          while (true) {
+            var m = /^(.+)\.[0-9]+$/.exec(cur);
+            if (!m) return null;
+            cur = m[1];
+            if (byId[cur]) return cur;
+          }
+        }
+        var seen = {};
+        var cur = ancestorOf(taskId);
+        while (cur && !seen[cur]) {
+          seen[cur] = true;
+          tasksExpanded[cur] = true;
+          cur = ancestorOf(cur);
         }
       }
 
@@ -3416,6 +3466,19 @@
       // Picker click handlers.
       if (tasksTree) {
         tasksTree.addEventListener("click", function (ev) {
+          // Chevron toggles parent expansion without opening the row.
+          var chevron = ev.target.closest("[data-toggle-expand]");
+          if (chevron) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var pid = chevron.getAttribute("data-toggle-expand");
+            if (pid) {
+              if (tasksExpanded[pid]) delete tasksExpanded[pid];
+              else tasksExpanded[pid] = true;
+              renderTaskPicker();
+            }
+            return;
+          }
           var row = ev.target.closest(".tasks-tree-row");
           if (!row) return;
           var taskId = row.getAttribute("data-task-id");
