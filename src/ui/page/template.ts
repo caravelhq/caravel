@@ -307,7 +307,7 @@ ${pageStyles}
           </div>
         </div>
       </div>
-      <button id="tasks-picker-toggle" class="tasks-picker-toggle" type="button" aria-expanded="true" hidden>
+      <button id="tasks-picker-toggle" class="tasks-picker-toggle" type="button" aria-expanded="true">
         <span class="tasks-picker-toggle-label" id="tasks-picker-toggle-label">Browse tasks</span>
         <span class="tasks-picker-toggle-caret" aria-hidden="true">▾</span>
       </button>
