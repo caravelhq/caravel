@@ -2901,41 +2901,47 @@
           sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', true);
         }
 
-        // 4. Action buttons row — primary actions first (Revisit, + Child,
-        //    Chat), then utility (Envelope, Open report).
+        // 4. Action buttons row — Next (child), Rework, Chat. The Rework
+        //    form is hidden until the user clicks Rework.
         var actions = [];
+        actions.push('<button class="task-panel-action is-primary" data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
         if (isCurrent && isTerminal) {
-          actions.push('<button class="task-panel-action is-primary" data-toggle-revisit="' + escapeHtml(card.id) + '" type="button">↺ Revisit</button>');
+          actions.push('<button class="task-panel-action" data-toggle-revisit="' + escapeHtml(card.id) + '" type="button">↺ Rework</button>');
         }
-        actions.push('<button class="task-panel-action is-primary" data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ + Child</button>');
-        actions.push('<button class="task-panel-action is-primary" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
-        actions.push('<button class="task-panel-action" data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Envelope</button>');
-        if (card.reportPath) {
-          actions.push('<button class="task-panel-action" data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">Open report in Files</button>');
-        }
+        actions.push('<button class="task-panel-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (!isCurrent) {
           actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
         }
         sections += '<div class="task-panel-card-actions">' + actions.join("") + '</div>';
 
-        // 4b. Inline Revisit form — collapsed by default, the Revisit button
-        //     above toggles it open. POST /api/tasks/:id/revisit appends the
-        //     instruction and re-opens the task; cap-rejection (5 already)
-        //     returns code:"cap" and the UI suggests Spawn Follow-up instead.
+        // 4b. Rework form — completely hidden until the Rework button
+        //     toggles it visible. Reworking re-opens this task and the
+        //     worker overwrites the existing report. If the user is just
+        //     refining the output, prefer Next (child) — keeps the
+        //     original report intact and produces a fresh deliverable.
         if (isCurrent && isTerminal) {
-          var revisitHtml =
-            '<div class="task-panel-revisit" data-revisit-agent="' + escapeHtml(card.agent || "") + '" data-revisit-id="' + escapeHtml(card.id) + '">' +
-            '<div class="task-panel-unblock-hint">Add a follow-up instruction. The original brief stays untouched; this revisit is appended and the task moves back to the open queue. Use + Child instead if the scope has materially changed.</div>' +
-            '<textarea class="task-panel-unblock-input task-panel-revisit-input" rows="4" placeholder="What needs revisiting? (e.g. &quot;the Y bit was wrong, redo with Z&quot;)"></textarea>' +
+          sections +=
+            '<div class="task-panel-rework" data-revisit-agent="' + escapeHtml(card.agent || "") + '" data-revisit-id="' + escapeHtml(card.id) + '" hidden>' +
+            '<div class="task-panel-rework-warn">Rework re-opens this task and overwrites the report. To refine without losing the original, use <strong>Next</strong>.</div>' +
+            '<textarea class="task-panel-unblock-input task-panel-revisit-input" rows="3" placeholder="What needs reworking?"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
-            '<button type="button" class="is-primary task-panel-revisit-submit">Revisit &amp; return to queue</button>' +
+            '<button type="button" class="is-primary task-panel-revisit-submit">Rework &amp; return to queue</button>' +
             '<span class="task-panel-unblock-status task-panel-revisit-status"></span>' +
             '</div>' +
             '</div>';
-          sections += renderSection("Revisit — follow-up instruction", revisitHtml, false);
         }
 
-        // 5. Context / links at the bottom.
+        // 5. Files section — collapsed dropdown with envelope + report
+        //    file-style links. Replaces the old Envelope / Open report
+        //    action buttons.
+        var fileLinks = "";
+        fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(envelopePath) + '</button></div>';
+        if (card.reportPath) {
+          fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(card.reportPath) + '</button></div>';
+        }
+        sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + '</div>', false);
+
+        // 6. Context / links at the bottom.
         if (ctxLines) {
           sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + '</div>', false);
         }
@@ -3357,8 +3363,10 @@
           indent +
           chevron +
           '<span class="tasks-tree-marker">' + marker + '</span>' +
+          '<div class="tasks-tree-titlecol">' +
           '<span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span>' +
           '<span class="tasks-tree-id">' + escapeHtml(t.id) + '</span>' +
+          '</div>' +
           '<span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + '</span>' +
           '<span class="tasks-tree-status ' + status + '">' + escapeHtml(t.status || "?") + '</span>' +
           '</div>'
@@ -3718,7 +3726,7 @@
           var revisitBtn = ev.target.closest(".task-panel-revisit-submit");
           if (revisitBtn) {
             ev.preventDefault();
-            submitRevisit(revisitBtn.closest(".task-panel-revisit"));
+            submitRevisit(revisitBtn.closest(".task-panel-rework"));
             return;
           }
           var pillBtn = ev.target.closest("[data-doc-pill]");
@@ -3731,18 +3739,14 @@
           var toggleRevisitBtn = ev.target.closest("[data-toggle-revisit]");
           if (toggleRevisitBtn) {
             ev.preventDefault();
-            // Find the collapsed Revisit section in this card and open it.
             var card = toggleRevisitBtn.closest(".task-panel-card");
             if (card) {
-              var sections = card.querySelectorAll("details.task-panel-section");
-              for (var s = 0; s < sections.length; s++) {
-                if (sections[s].querySelector(".task-panel-revisit")) {
-                  sections[s].open = true;
-                  var ta = sections[s].querySelector(".task-panel-revisit-input");
-                  if (ta) ta.focus();
-                  sections[s].scrollIntoView({ behavior: "smooth", block: "nearest" });
-                  break;
-                }
+              var rework = card.querySelector(".task-panel-rework");
+              if (rework) {
+                rework.hidden = false;
+                var ta = rework.querySelector(".task-panel-revisit-input");
+                if (ta) ta.focus();
+                rework.scrollIntoView({ behavior: "smooth", block: "nearest" });
               }
             }
             return;

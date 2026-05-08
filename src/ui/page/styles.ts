@@ -2492,16 +2492,16 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-tree-chevron {
       flex-shrink: 0;
-      width: 16px;
-      height: 16px;
+      width: 24px;
+      height: 24px;
       padding: 0;
       border: none;
       background: transparent;
-      color: #6a7e9b;
-      font-size: 10px;
-      line-height: 16px;
+      color: #8aa0bd;
+      font-size: 14px;
+      line-height: 24px;
       cursor: pointer;
-      border-radius: 3px;
+      border-radius: 4px;
       transition: color 120ms, background 120ms;
     }
     .tasks-tree-chevron:hover {
@@ -2514,7 +2514,7 @@ export const pageStyles = String.raw`    :root {
     .tasks-tree-chevron-spacer {
       display: inline-block;
       flex-shrink: 0;
-      width: 16px;
+      width: 24px;
     }
     .tasks-tree-marker {
       flex-shrink: 0;
@@ -2522,11 +2522,20 @@ export const pageStyles = String.raw`    :root {
       color: #5a7a9a;
       text-align: center;
     }
+    .tasks-tree-titlecol {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      overflow: hidden;
+    }
     .tasks-tree-id {
       flex-shrink: 0;
       color: #6a8cb0;
       font-size: 10px;
       opacity: 0.85;
+      white-space: nowrap;
     }
     .tasks-tree-agent {
       flex-shrink: 0;
@@ -2555,6 +2564,17 @@ export const pageStyles = String.raw`    :root {
       color: #e4eefb;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 12px;
+    }
+    @media (max-width: 640px) {
+      .tasks-tree-titlecol {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1px;
+      }
+      .tasks-tree-id {
+        font-size: 9px;
+      }
+      .tasks-tree-agent { display: none; }
     }
     .tasks-tree-empty {
       padding: 16px;
@@ -2972,6 +2992,23 @@ export const pageStyles = String.raw`    :root {
     .task-panel-unblock {
       display: grid;
       gap: 8px;
+    }
+    .task-panel-rework {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border: 1px solid #ffd07a55;
+      border-radius: 8px;
+      background: rgba(240, 198, 116, 0.06);
+    }
+    .task-panel-rework-warn {
+      font-size: 12px;
+      color: #f0c674;
+      line-height: 1.45;
+    }
+    .task-panel-rework-warn strong {
+      color: #ffe7b8;
     }
     .task-panel-unblock-hint {
       font-size: 12px;
