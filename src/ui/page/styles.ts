@@ -941,10 +941,9 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-new {
       display: grid;
       gap: 8px;
-      padding: 10px;
-      border: 1px dashed #ffd07a55;
-      border-radius: 10px;
-      background: #0c162466;
+      padding: 0;
+      border: none;
+      background: transparent;
     }
     .multi-agent-new-head {
       font-family: "Fraunces", serif;
@@ -2894,16 +2893,14 @@ export const pageStyles = String.raw`    :root {
       .task-tree-agent { display: none; }
     }
     .task-panel-card {
-      background: #0a1220a8;
-      border: 1px solid #ffffff14;
-      border-radius: 10px;
-      padding: 12px 14px;
       display: grid;
       gap: 8px;
+      padding: 0;
+      background: transparent;
+      border: none;
     }
     .task-panel-card.is-current {
-      border-color: #ffd07a99;
-      background: #1a2a44a8;
+      background: transparent;
     }
     .task-panel-card-head {
       display: flex;
@@ -3285,7 +3282,7 @@ export const pageStyles = String.raw`    :root {
         padding: 10px;
       }
       .task-panel-card {
-        padding: 10px;
+        padding: 0;
       }
     }
     .files-toolbar {
