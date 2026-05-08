@@ -3167,15 +3167,34 @@
 
       // Build a parent→child tree from the flat task list. Tasks whose parent
       // isn't in the working set become roots themselves so nothing is lost.
+      // Self-parent links (legacy data quirk) and any chain that would loop
+      // back on itself are flattened to root to avoid infinite recursion.
       function buildTaskTree(tasks) {
         var byId = {};
         for (var i = 0; i < tasks.length; i++) byId[tasks[i].id] = tasks[i];
+        // Resolve each task's effective parent — null if missing/self/cyclic.
+        function effectiveParent(t) {
+          var pid = t.parent && t.parent !== "null" ? t.parent : null;
+          if (!pid || pid === t.id || !byId[pid]) return null;
+          // Walk up; bail if we ever come back to t.
+          var seen = {};
+          seen[t.id] = true;
+          var cur = byId[pid];
+          while (cur) {
+            if (seen[cur.id]) return null; // cycle
+            seen[cur.id] = true;
+            var nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+            if (!nextId || nextId === cur.id || !byId[nextId]) break;
+            cur = byId[nextId];
+          }
+          return pid;
+        }
         var roots = [];
         var childrenOf = {};
         for (var j = 0; j < tasks.length; j++) {
           var t = tasks[j];
-          var parentId = t.parent && t.parent !== "null" ? t.parent : null;
-          if (parentId && byId[parentId]) {
+          var parentId = effectiveParent(t);
+          if (parentId) {
             (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
           } else {
             roots.push(t);
@@ -3214,11 +3233,18 @@
         );
       }
 
-      function renderTreeBranch(tree, node, depth, out) {
+      function renderTreeBranch(tree, node, depth, out, seen) {
+        seen = seen || {};
+        if (seen[node.id] || depth > 32) {
+          // Defensive — buildTaskTree already breaks cycles, but guard
+          // against pathological depth too.
+          return;
+        }
+        seen[node.id] = true;
         out.push(renderTreeRow(node, depth));
         var kids = tree.childrenOf[node.id] || [];
         for (var i = 0; i < kids.length; i++) {
-          renderTreeBranch(tree, kids[i], depth + 1, out);
+          renderTreeBranch(tree, kids[i], depth + 1, out, seen);
         }
       }
 
