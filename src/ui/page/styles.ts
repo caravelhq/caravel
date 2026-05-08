@@ -3125,11 +3125,37 @@ export const pageStyles = String.raw`    :root {
       background: transparent;
       padding: 12px 14px;
     }
-    .task-panel-report-extras {
-      margin-top: 4px;
+    .task-panel-report-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
-    .task-panel-report-extras:empty {
-      display: none;
+    .task-panel-doc-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 0 4px;
+    }
+    .task-panel-doc-pill {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #b8cae3;
+      border-radius: 999px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms, color 120ms, border-color 120ms;
+    }
+    .task-panel-doc-pill:hover {
+      background: #14223680;
+      color: #cfe3ff;
+    }
+    .task-panel-doc-pill.is-active {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
     }
     .task-panel-report {
       max-height: 480px;

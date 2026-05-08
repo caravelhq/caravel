@@ -2945,40 +2945,51 @@
         );
       }
 
-      // Report pane — the rendezvous report is rendered inline (always
-      // visible) and after it loads we scan the rendered markdown for
-      // links to other deliverable docs (the brief often asks the worker
-      // to produce a Notes/… or repos/dev/features/… file). Each detected
-      // link gets appended as its own inline document section so the user
-      // can read the produced artefact without leaving the panel.
+      // Report pane — renders the rendezvous report inline. After it
+      // loads, we scan its rendered markdown for links to additional
+      // deliverable docs the task produced (Notes/…, repos/dev/features/…,
+      // etc.) and surface them as pill-style switcher buttons at the top.
+      // Only one doc is shown at a time. The pill row is hidden until
+      // extras are detected — single-report tasks render unchanged.
       function renderReportPane(card) {
         if (!card || !card.reportPath) return "";
         var filename = card.reportPath.split("/").pop();
+        var safePath = escapeHtml(card.reportPath);
+        var safeFname = escapeHtml(filename);
+        var safeTaskId = escapeHtml(card.id || "");
         return (
-          '<div class="task-panel-report-doc" data-doc-primary="true">' +
+          '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '">' +
+          '<div class="task-panel-doc-pills" hidden></div>' +
+          '<div class="task-panel-report-docs">' +
+          '<div class="task-panel-report-doc is-active" data-doc-path="' + safePath + '">' +
           '<div class="task-panel-report-doc-head">' +
-          '<span class="task-panel-report-doc-title">' + escapeHtml(filename) + '</span>' +
-          '<button class="task-panel-action" data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(card.id) + '" type="button">Open in Files</button>' +
+          '<span class="task-panel-report-doc-title">' + safeFname + '</span>' +
+          '<button class="task-panel-action" data-open-file="' + safePath + '" data-from-task="' + safeTaskId + '" type="button">Open in Files</button>' +
           '</div>' +
-          '<div class="task-panel-report" data-report-path="' + escapeHtml(card.reportPath) + '" data-loaded="false" data-scan-extras="true">' +
+          '<div class="task-panel-report" data-report-path="' + safePath + '" data-loaded="false" data-scan-extras="true">' +
           '<div class="task-panel-report-loading">Loading report…</div>' +
           '</div>' +
           '</div>' +
-          '<div class="task-panel-report-extras" data-report-extras="' + escapeHtml(card.id) + '"></div>'
+          '</div>' +
+          '</div>'
         );
       }
 
-      // After the primary report loads, scan its rendered markdown for
-      // links to additional documents the task may have produced
-      // (Notes/…, repos/…, agents/…/tasks/…). Render each as its own
-      // inline doc section, deduped against the primary path.
+      // After the primary report's markdown has rendered, scan it for
+      // links to additional deliverable docs. Build (or rebuild) the pill
+      // switcher row, mount each extra doc as a hidden sibling, and
+      // pre-load its markdown so switching pills is instant.
       function appendReportExtras(primaryNode) {
         if (!primaryNode) return;
         var primaryPath = primaryNode.getAttribute("data-report-path") || "";
         var doc = primaryNode.closest(".task-panel-report-doc");
         if (!doc) return;
-        var extras = doc.parentNode ? doc.parentNode.querySelector(".task-panel-report-extras") : null;
-        if (!extras) return;
+        var pane = doc.closest(".task-panel-report-pane");
+        if (!pane) return;
+        var docsHost = pane.querySelector(".task-panel-report-docs");
+        var pills = pane.querySelector(".task-panel-doc-pills");
+        if (!docsHost || !pills) return;
+
         var seen = {};
         seen[primaryPath] = true;
         var anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
@@ -2997,27 +3008,62 @@
           paths.push(clean);
         }
         if (paths.length === 0) return;
-        var html = "";
+
+        // Mount each extra doc as a hidden sibling of the primary.
         for (var p = 0; p < paths.length; p++) {
           var path = paths[p];
           var fname = path.split("/").pop();
-          var safePath = escapeHtml(path);
-          var safeFname = escapeHtml(fname);
-          html +=
-            '<div class="task-panel-report-doc">' +
+          var sp = escapeHtml(path);
+          var sf = escapeHtml(fname);
+          var node = document.createElement("div");
+          node.className = "task-panel-report-doc";
+          node.setAttribute("data-doc-path", path);
+          node.hidden = true;
+          node.innerHTML =
             '<div class="task-panel-report-doc-head">' +
-            '<span class="task-panel-report-doc-title">' + safeFname + '</span>' +
-            '<button class="task-panel-action" data-open-file="' + safePath + '" type="button">Open in Files</button>' +
+            '<span class="task-panel-report-doc-title">' + sf + '</span>' +
+            '<button class="task-panel-action" data-open-file="' + sp + '" type="button">Open in Files</button>' +
             '</div>' +
-            '<div class="task-panel-report" data-report-path="' + safePath + '" data-loaded="false">' +
+            '<div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false">' +
             '<div class="task-panel-report-loading">Loading…</div>' +
-            '</div>' +
             '</div>';
+          docsHost.appendChild(node);
         }
-        extras.innerHTML = html;
-        var newNodes = extras.querySelectorAll(".task-panel-report");
+
+        // Build the pill row — primary first, then extras in scan order.
+        var allPaths = [primaryPath].concat(paths);
+        var pillsHtml = "";
+        for (var q = 0; q < allPaths.length; q++) {
+          var pp = allPaths[q];
+          var pname = pp.split("/").pop();
+          pillsHtml +=
+            '<button class="task-panel-doc-pill' + (q === 0 ? ' is-active' : '') + '" ' +
+            'data-doc-pill="' + escapeHtml(pp) + '" type="button">' +
+            escapeHtml(pname) + '</button>';
+        }
+        pills.innerHTML = pillsHtml;
+        pills.hidden = false;
+
+        // Pre-load all extras so pill switches are instant.
+        var newNodes = docsHost.querySelectorAll('.task-panel-report-doc:not(.is-active) .task-panel-report');
         for (var n = 0; n < newNodes.length; n++) {
           loadReportNode(newNodes[n]);
+        }
+      }
+
+      // Switch which doc is visible in a report pane and toggle the
+      // matching pill. Idempotent — clicking the active pill is a no-op.
+      function setActiveReportDoc(pane, path) {
+        if (!pane || !path) return;
+        var docs = pane.querySelectorAll(".task-panel-report-doc");
+        for (var i = 0; i < docs.length; i++) {
+          var match = docs[i].getAttribute("data-doc-path") === path;
+          docs[i].classList.toggle("is-active", match);
+          docs[i].hidden = !match;
+        }
+        var pills = pane.querySelectorAll(".task-panel-doc-pill");
+        for (var j = 0; j < pills.length; j++) {
+          pills[j].classList.toggle("is-active", pills[j].getAttribute("data-doc-pill") === path);
         }
       }
 
@@ -3610,6 +3656,13 @@
           if (revisitBtn) {
             ev.preventDefault();
             submitRevisit(revisitBtn.closest(".task-panel-revisit"));
+            return;
+          }
+          var pillBtn = ev.target.closest("[data-doc-pill]");
+          if (pillBtn) {
+            ev.preventDefault();
+            var pane = pillBtn.closest(".task-panel-report-pane");
+            setActiveReportDoc(pane, pillBtn.getAttribute("data-doc-pill"));
             return;
           }
           var toggleRevisitBtn = ev.target.closest("[data-toggle-revisit]");
