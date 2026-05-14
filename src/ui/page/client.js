@@ -2878,17 +2878,21 @@
         var sections = "";
 
         // 1. Unblock — top priority when worker is parked on user input.
+        //    Submits via /next with source=unblock, which spawns a child
+        //    task carrying Kelly's answer. The parent stays in
+        //    waiting:on:user; the runner auto-closes it to `done` when the
+        //    child lands successfully.
         if (isCurrent && isWaitingUser) {
           var unblockHtml =
-            '<div class="task-panel-unblock" data-unblock-agent="' + escapeHtml(card.agent || "") + '" data-unblock-id="' + escapeHtml(card.id) + '">' +
-            '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type a response and it will be appended to the brief, then the task moves back to the open queue.</div>' +
-            '<textarea class="task-panel-unblock-input" rows="4" placeholder="Type your response or additional instruction…"></textarea>' +
+            '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="unblock">' +
+            '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type your response; a child task will pick up on the same session and continue from where the worker stopped. When the child completes, this task auto-closes as done.</div>' +
+            '<textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="Your response (the agent will continue with your answer)…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
-            '<button type="button" class="is-primary task-panel-unblock-submit">Send &amp; return to queue</button>' +
-            '<span class="task-panel-unblock-status"></span>' +
+            '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button>' +
+            '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
             '</div>';
-          sections += renderSection("⏳ Unblock — your response", unblockHtml, true);
+          sections += renderSection("⏳ Continue — your response", unblockHtml, true);
         }
 
         // 2. Brief (always open if non-empty).
@@ -2901,12 +2905,14 @@
           sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', true);
         }
 
-        // 4. Action buttons row — Next (child), Rework, Chat. The Rework
-        //    form is hidden until the user clicks Rework.
+        // 4. Action buttons row — Next, Chat, Open. Next spawns a child
+        //    task with parent pointer; original stays put. For waiting:on:
+        //    user the inline "⏳ Continue" form at the top of the card is
+        //    the equivalent affordance, so the Next button only renders
+        //    for terminal (done/failed) tasks.
         var actions = [];
-        actions.push('<button class="task-panel-action is-primary" data-spawn-followup-id="' + escapeHtml(card.id) + '" data-spawn-followup-to="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
         if (isCurrent && isTerminal) {
-          actions.push('<button class="task-panel-action" data-toggle-revisit="' + escapeHtml(card.id) + '" type="button">↺ Rework</button>');
+          actions.push('<button class="task-panel-action is-primary" data-toggle-next="' + escapeHtml(card.id) + '" type="button">↳ Next</button>');
         }
         actions.push('<button class="task-panel-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (!isCurrent) {
@@ -2914,19 +2920,18 @@
         }
         sections += '<div class="task-panel-card-actions">' + actions.join("") + '</div>';
 
-        // 4b. Rework form — completely hidden until the Rework button
-        //     toggles it visible. Reworking re-opens this task and the
-        //     worker overwrites the existing report. If the user is just
-        //     refining the output, prefer Next (child) — keeps the
-        //     original report intact and produces a fresh deliverable.
+        // 4b. Next form — hidden until the Next button toggles it. Spawns
+        //     a child task with parent pointer; the original done/failed
+        //     envelope is unchanged. The new child reuses the same session
+        //     thread so the agent already has the prior context cached.
         if (isCurrent && isTerminal) {
           sections +=
-            '<div class="task-panel-rework" data-revisit-agent="' + escapeHtml(card.agent || "") + '" data-revisit-id="' + escapeHtml(card.id) + '" hidden>' +
-            '<div class="task-panel-rework-warn">Rework re-opens this task and overwrites the report. To refine without losing the original, use <strong>Next</strong>.</div>' +
-            '<textarea class="task-panel-unblock-input task-panel-revisit-input" rows="3" placeholder="What needs reworking?"></textarea>' +
+            '<div class="task-panel-rework task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="revisit" hidden>' +
+            '<div class="task-panel-rework-warn">A fresh child task is spawned with a pointer back to this one. The agent resumes the same session, so prior context stays in cache. This task is unchanged.</div>' +
+            '<textarea class="task-panel-unblock-input task-panel-next-input" rows="3" placeholder="What\'s next? Refine, extend, or change direction…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
-            '<button type="button" class="is-primary task-panel-revisit-submit">Rework &amp; return to queue</button>' +
-            '<span class="task-panel-unblock-status task-panel-revisit-status"></span>' +
+            '<button type="button" class="is-primary task-panel-next-submit">↳ Spawn child task</button>' +
+            '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
             '</div>';
         }
@@ -3685,159 +3690,80 @@
         }
       };
 
-      async function submitUnblock(wrapper) {
+      // Unified Next-task submitter. Replaces the prior submitUnblock /
+      // submitRevisit pair. Reads source from `data-next-source` ("revisit"
+      // for done/failed parents, "unblock" for waiting:on:user parents)
+      // and posts to /api/tasks/<id>/next. Server-side, both branches call
+      // spawnNextTask() — the parent envelope is left in place and a fresh
+      // child is created with parent pointer + Kelly's instruction.
+      async function submitNext(wrapper) {
         if (!wrapper) return;
-        var agent = wrapper.getAttribute("data-unblock-agent");
-        var taskId = wrapper.getAttribute("data-unblock-id");
-        var input = wrapper.querySelector(".task-panel-unblock-input");
-        var btn = wrapper.querySelector(".task-panel-unblock-submit");
-        var statusEl = wrapper.querySelector(".task-panel-unblock-status");
+        var agent = wrapper.getAttribute("data-next-agent");
+        var taskId = wrapper.getAttribute("data-next-id");
+        var source = wrapper.getAttribute("data-next-source") || "revisit";
+        var input = wrapper.querySelector(".task-panel-next-input");
+        var btn = wrapper.querySelector(".task-panel-next-submit");
+        var statusEl = wrapper.querySelector(".task-panel-next-status");
         if (!agent || !taskId || !input) return;
-        var response = (input.value || "").trim();
-        if (!response) {
+        var instruction = (input.value || "").trim();
+        if (!instruction) {
           if (statusEl) {
-            statusEl.textContent = "Type a response first.";
-            statusEl.className = "task-panel-unblock-status is-error";
+            statusEl.textContent = source === "unblock" ? "Type a response first." : "Type a next instruction first.";
+            statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
           }
           return;
         }
         if (btn) btn.disabled = true;
         if (statusEl) {
-          statusEl.textContent = "Sending…";
-          statusEl.className = "task-panel-unblock-status";
+          statusEl.textContent = "Spawning child…";
+          statusEl.className = "task-panel-unblock-status task-panel-next-status";
         }
         try {
-          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/unblock", {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent: agent, response: response }),
+            body: JSON.stringify({ agent: agent, instruction: instruction, source: source }),
           });
           var data = await res.json();
           if (!data.ok) {
             if (statusEl) {
               statusEl.textContent = "Error: " + (data.error || "unknown");
-              statusEl.className = "task-panel-unblock-status is-error";
+              statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
             }
             if (btn) btn.disabled = false;
             return;
           }
           if (statusEl) {
-            statusEl.textContent = "Returned to open queue.";
-            statusEl.className = "task-panel-unblock-status is-ok";
+            statusEl.textContent = "Child " + (data.id || "?") + " queued.";
+            statusEl.className = "task-panel-unblock-status task-panel-next-status is-ok";
           }
-          // Refresh the task panel + dashboard widgets so the status flips
-          // to `open` (or `claimed` once the runner picks it up) without a
-          // page reload.
-          openTaskPanel(taskId);
+          input.value = "";
+          // Jump the user to the freshly-spawned child so they can see it
+          // pick up. Also refresh tree + summary.
+          if (data.id) openTaskPanel(data.id);
           fetchTasks();
           fetchSummary();
         } catch (err) {
           if (statusEl) {
             statusEl.textContent = "Error: " + (err && err.message || err);
-            statusEl.className = "task-panel-unblock-status is-error";
+            statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
           }
           if (btn) btn.disabled = false;
         }
       }
 
-      async function submitRevisit(wrapper) {
-        if (!wrapper) return;
-        var agent = wrapper.getAttribute("data-revisit-agent");
-        var taskId = wrapper.getAttribute("data-revisit-id");
-        var input = wrapper.querySelector(".task-panel-revisit-input");
-        var btn = wrapper.querySelector(".task-panel-revisit-submit");
-        var statusEl = wrapper.querySelector(".task-panel-revisit-status");
-        if (!agent || !taskId || !input) return;
-        var instruction = (input.value || "").trim();
-        if (!instruction) {
-          if (statusEl) {
-            statusEl.textContent = "Type a follow-up first.";
-            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
-          }
-          return;
-        }
-        if (btn) btn.disabled = true;
-        if (statusEl) {
-          statusEl.textContent = "Sending…";
-          statusEl.className = "task-panel-unblock-status task-panel-revisit-status";
-        }
-        try {
-          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/revisit", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent: agent, instruction: instruction }),
-          });
-          var data = await res.json();
-          if (!data.ok) {
-            if (statusEl) {
-              var msg = "Error: " + (data.error || "unknown");
-              if (data.code === "cap") {
-                msg += " — use Spawn Follow-up to create a child task instead.";
-              }
-              statusEl.textContent = msg;
-              statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
-            }
-            if (btn) btn.disabled = false;
-            return;
-          }
-          if (statusEl) {
-            statusEl.textContent = "Re-opened to queue.";
-            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-ok";
-          }
-          openTaskPanel(taskId);
-          fetchTasks();
-          fetchSummary();
-        } catch (err) {
-          if (statusEl) {
-            statusEl.textContent = "Error: " + (err && err.message || err);
-            statusEl.className = "task-panel-unblock-status task-panel-revisit-status is-error";
-          }
-          if (btn) btn.disabled = false;
-        }
-      }
-
-      function spawnFollowUp(taskId, agent) {
-        if (!newForm) return;
-        // Switch to the Tasks panel and surface the new-task form in the
-        // right pane, stamped with the parent task id so the submit handler
-        // includes it on the payload.
-        try {
-          if (typeof setActiveTab === "function") setActiveTab("tasks");
-          if (typeof setRightPaneMode === "function") setRightPaneMode("new");
-        } catch (_) {}
-        newForm.setAttribute("data-parent", taskId);
-        var chip = document.getElementById("multi-agent-new-parent-chip");
-        var chipId = document.getElementById("multi-agent-new-parent-id");
-        if (chip) chip.removeAttribute("hidden");
-        if (chipId) chipId.textContent = taskId;
-        if (agent) {
-          var toEl = document.getElementById("multi-agent-new-to");
-          if (toEl) {
-            for (var i = 0; i < toEl.options.length; i++) {
-              if (toEl.options[i].value === agent) {
-                toEl.value = agent;
-                break;
-              }
-            }
-          }
-        }
-        var headlineEl = document.getElementById("multi-agent-new-headline");
-        if (headlineEl) headlineEl.focus();
-      }
+      // (Removed: spawnFollowUp() — the old "↳ Next" button that opened the
+      // full new-task form. Replaced by the unified "↳ Next" affordance on
+      // the task card itself, which spawns a child via /api/tasks/<id>/next
+      // without a separate form. See submitNext above.)
 
       // Delegate clicks inside the task panel for action buttons.
       if (taskPanelBody) {
         taskPanelBody.addEventListener("click", function (ev) {
-          var unblockBtn = ev.target.closest(".task-panel-unblock-submit");
-          if (unblockBtn) {
+          var nextBtn = ev.target.closest(".task-panel-next-submit");
+          if (nextBtn) {
             ev.preventDefault();
-            submitUnblock(unblockBtn.closest(".task-panel-unblock"));
-            return;
-          }
-          var revisitBtn = ev.target.closest(".task-panel-revisit-submit");
-          if (revisitBtn) {
-            ev.preventDefault();
-            submitRevisit(revisitBtn.closest(".task-panel-rework"));
+            submitNext(nextBtn.closest(".task-panel-next"));
             return;
           }
           var pillBtn = ev.target.closest("[data-doc-pill]");
@@ -3847,28 +3773,19 @@
             setActiveReportDoc(pane, pillBtn.getAttribute("data-doc-pill"));
             return;
           }
-          var toggleRevisitBtn = ev.target.closest("[data-toggle-revisit]");
-          if (toggleRevisitBtn) {
+          var toggleNextBtn = ev.target.closest("[data-toggle-next]");
+          if (toggleNextBtn) {
             ev.preventDefault();
-            var card = toggleRevisitBtn.closest(".task-panel-card");
+            var card = toggleNextBtn.closest(".task-panel-card");
             if (card) {
-              var rework = card.querySelector(".task-panel-rework");
-              if (rework) {
-                rework.hidden = false;
-                var ta = rework.querySelector(".task-panel-revisit-input");
+              var nextForm = card.querySelector(".task-panel-next");
+              if (nextForm) {
+                nextForm.hidden = false;
+                var ta = nextForm.querySelector(".task-panel-next-input");
                 if (ta) ta.focus();
-                rework.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                nextForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
               }
             }
-            return;
-          }
-          var followUpBtn = ev.target.closest("[data-spawn-followup-id]");
-          if (followUpBtn) {
-            ev.preventDefault();
-            spawnFollowUp(
-              followUpBtn.getAttribute("data-spawn-followup-id"),
-              followUpBtn.getAttribute("data-spawn-followup-to")
-            );
             return;
           }
           var openTaskBtn = ev.target.closest("[data-open-task]");

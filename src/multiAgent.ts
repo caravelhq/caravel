@@ -1262,6 +1262,78 @@ async function transitionToTerminal(
   });
 
   await notifyDispatchChat(next, agent, taskId, finalStatus, directive);
+
+  // Auto-close parent if this was a `closes_parent_on_done` child landing as
+  // done. Spawned by Kelly via the "Next" button on a waiting:on:user task —
+  // when the child succeeds, the parent question is answered and the parent
+  // envelope can transition out of waiting/.
+  if (directive.kind === "done") {
+    await maybeCloseParentOnUserUnblock(next, taskId);
+  }
+}
+
+// When a child task tagged `closes_parent_on_done: true` lands as done,
+// transition its parent waiting:on:user envelope to `done`. Search all known
+// agents' `waiting/` buckets so cross-agent parenting still resolves. No-op
+// if the field is absent, the parent isn't in waiting/, or parent status
+// isn't waiting:on:user.
+async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string): Promise<void> {
+  const closesField = (readField(childYaml, "closes_parent_on_done") ?? "").trim().toLowerCase();
+  if (closesField !== "true") return;
+  const parentId = readField(childYaml, "parent");
+  if (!parentId || parentId === "null") return;
+
+  const agents = readEnvAgents() ?? DEFAULT_AGENTS;
+  for (const a of agents) {
+    const parentPath = join(AGENTS_DIR, a, "tasks", "waiting", `${parentId}.yaml`);
+    if (!existsSync(parentPath)) continue;
+    let parentYaml: string;
+    try {
+      parentYaml = await readFile(parentPath, "utf-8");
+    } catch { continue; }
+    const parentStatus = (readField(parentYaml, "status") ?? "").trim();
+    if (parentStatus !== "waiting:on:user") {
+      console.warn(`[multi-agent] auto-close: parent ${a}/${parentId} status is "${parentStatus}", not waiting:on:user — skipping`);
+      return;
+    }
+    const now = new Date().toISOString();
+    let next = setField(parentYaml, "status", "done");
+    next = setField(next, "updated", now);
+    next = appendHistory(next, {
+      ts: now,
+      from: "waiting:on:user",
+      to: "done",
+      by: `runner-${process.pid}`,
+      note: `auto-closed by child ${childId} (closes_parent_on_done)`,
+    });
+    const doneDir = join(AGENTS_DIR, a, "tasks", "done");
+    await mkdir(doneDir, { recursive: true });
+    const targetPath = join(doneDir, `${parentId}.yaml`);
+    await writeFile(parentPath, next);
+    try {
+      await rename(parentPath, targetPath);
+    } catch {
+      // If the rename fails (rare — same fs), the file is already updated
+      // in place. The picker will still show status=done via readField.
+    }
+    await cleanStaleRendezvous(a, parentId, "done");
+    const parentFields = parseFields(parentYaml, parentId);
+    await appendJournal(a, {
+      ts: now,
+      id: parentId,
+      status: "done",
+      kind: parentFields.kind,
+      from: parentFields.from,
+      to: a,
+      parent: parentFields.parent,
+      summary: `auto-closed by child ${childId}`,
+    });
+    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${a}/${parentId} → done (auto-closed by child ${childId})`);
+    return;
+  }
+  // Parent not in any waiting/ bucket — already terminal, or never was a
+  // waiting:on:user. Silent no-op; this code path runs for every done child,
+  // most of which don't have parents in waiting/.
 }
 
 // === Worker invocation =====================================================

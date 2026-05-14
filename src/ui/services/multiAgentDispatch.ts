@@ -543,3 +543,211 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
 
   return { ok: true, id: taskId, path: openPath };
 }
+
+// === Spawn-next child task ================================================
+//
+// Replaces the in-place mutation of revisitTask + unblockTask. Instead of
+// re-opening the parent envelope, we leave it terminal (done/failed/waiting:
+// on:user) and create a fresh child task with:
+//
+//   - parent: <parent id>
+//   - to: same worker agent as parent
+//   - brief: a tight envelope that says "continuation/rework of <parent>"
+//     plus Kelly's instruction, with cross-links to the parent's report
+//     and envelope for the agent's reference
+//   - kind / priority / budget / dispatch: copied from parent
+//   - context: empty (the agent's session thread already has the full
+//     prior reasoning + file reads in cache, no need to re-prime)
+//   - closes_parent_on_done: true when source=="unblock" — the runner
+//     auto-closes the parent waiting:on:user envelope when this child
+//     completes successfully
+//
+// The parent envelope gets a single history entry pointing at the child;
+// its status, brief, and report are unchanged.
+
+export type SpawnNextTaskInput = {
+  agent: string;
+  taskId: string;
+  instruction: string;
+  source: "revisit" | "unblock";
+};
+
+export type SpawnNextTaskResult =
+  | { ok: true; id: string; path: string; parentId: string }
+  | { ok: false; error: string };
+
+export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNextTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const instruction = (input.instruction ?? "").trim();
+  const source = input.source;
+
+  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
+  if (!instruction) return { ok: false, error: "instruction is required" };
+  if (source !== "revisit" && source !== "unblock") return { ok: false, error: `invalid source: ${source}` };
+
+  // Locate parent envelope across the three terminal-ish buckets.
+  const buckets = ["waiting", "done", "failed"] as const;
+  type Bucket = typeof buckets[number];
+  let parentPath: string | null = null;
+  let parentBucket: Bucket | null = null;
+  for (const b of buckets) {
+    const p = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.yaml`);
+    if (existsSync(p)) {
+      parentPath = p;
+      parentBucket = b;
+      break;
+    }
+  }
+  if (!parentPath || !parentBucket) {
+    return { ok: false, error: `parent task ${taskId} not in waiting/done/failed bucket for ${agent}` };
+  }
+
+  let parentYaml: string;
+  try {
+    parentYaml = await readFile(parentPath, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read parent envelope: ${String(err)}` };
+  }
+
+  const parentStatus = (/^status:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim();
+
+  // Validate source against parent's bucket / status.
+  if (source === "unblock") {
+    if (parentBucket !== "waiting" || parentStatus !== "waiting:on:user") {
+      return { ok: false, error: `unblock requires parent status waiting:on:user (got status="${parentStatus}", bucket=${parentBucket})` };
+    }
+  } else {
+    if (parentBucket === "waiting") {
+      return { ok: false, error: `revisit requires parent in done/failed (parent is in waiting/${parentStatus})` };
+    }
+  }
+
+  const childId = await nextTaskId(taskId);
+  const now = new Date().toISOString();
+
+  // Copy across kind / priority / budget / dispatch from parent.
+  const kind = (/^kind:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "other").trim() || "other";
+  const priority = (/^priority:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "P2").trim() || "P2";
+  const budgetBlock = parentYaml.match(/^budget:\s*\n((?:[ \t]+[^\n]+\n?)+)/m)?.[1]
+    ?? "  max_turns: 30\n  max_subagents: 0\n  max_usd: null\n";
+  const dispatchMatch = parentYaml.match(/^dispatch:\s*\n((?:[ \t]+[^\n]+\n?)+)/m);
+  const dispatchBlock = dispatchMatch ? dispatchMatch[0].trimEnd() : "";
+
+  // Cross-link parent's report path into the child's brief (if any).
+  const reportMatch = /^report:\s*(?:"([^"]*)"|([^\n]*))/m.exec(parentYaml);
+  const parentReport = ((reportMatch?.[1] ?? reportMatch?.[2] ?? "") + "").trim().replace(/^["']|["']$/g, "");
+  const parentEnvelopePath = `agents/${agent}/tasks/${parentBucket}/${taskId}.yaml`;
+
+  const parentHeadline = ((/^headline:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim() || taskId).slice(0, 56);
+  const childHeadline = source === "unblock"
+    ? `${parentHeadline} — continue with response`
+    : `${parentHeadline} — rework`;
+
+  const root = taskId.split(".")[0];
+  const sessionHint = `Same session thread \`task-${root}-${agent}\` is resumed — your prior reasoning, file reads, and context remain in cache.`;
+
+  const briefBody = source === "unblock"
+    ? [
+        `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and Kelly has now responded.`,
+        ``,
+        sessionHint,
+        ``,
+        parentReport ? `Your prior report: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
+        ``,
+        `### Kelly's response`,
+        ``,
+        instruction,
+      ].filter((l) => l !== undefined).join("\n")
+    : [
+        `Rework of **${taskId}** (was status \`${parentStatus}\`). Kelly has new instructions below.`,
+        ``,
+        sessionHint,
+        ``,
+        parentReport ? `Your prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
+        ``,
+        `### Kelly's rework instruction`,
+        ``,
+        instruction,
+      ].filter((l) => l !== undefined).join("\n");
+
+  const closesParent = source === "unblock";
+
+  const childYaml = [
+    `id: ${childId}`,
+    `headline: ${yamlEscape(childHeadline)}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    ``,
+    `from: kelly`,
+    `to: ${agent}`,
+    `parent: ${taskId}`,
+    `reply_to: kelly`,
+    ``,
+    `kind: ${kind}`,
+    `priority: ${priority}`,
+    `deadline: null`,
+    ``,
+    `budget:`,
+    budgetBlock.trimEnd(),
+    ``,
+    `brief: |`,
+    indent(briefBody, "  "),
+    ``,
+    `output_format: ""`,
+    `context: []`,
+    ``,
+    `closes_parent_on_done: ${closesParent ? "true" : "false"}`,
+    `parent_source: ${source}`,
+    ``,
+    `status: open`,
+    `lease:`,
+    `  holder: null`,
+    `  expires: null`,
+    `history:`,
+    `  - ts: ${now}`,
+    `    from: null`,
+    `    to: open`,
+    `    by: kelly`,
+    `    note: ${yamlEscape(`spawned as ${source} child of ${taskId}`)}`,
+    ``,
+    `summary:`,
+    `  brief: ""`,
+    `  response: ""`,
+    `report: ""`,
+    ...(dispatchBlock ? ["", dispatchBlock] : []),
+    ``,
+  ].join("\n");
+
+  const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+  await mkdir(openDir, { recursive: true });
+  const childPath = join(openDir, `${childId}.yaml`);
+  await writeFile(childPath, childYaml);
+
+  // Append a history entry to the parent noting the child was spawned.
+  // Parent stays in its bucket; status unchanged.
+  const updatedParentYaml = appendHistoryEntry(parentYaml, {
+    ts: now,
+    from: parentStatus || parentBucket,
+    to: parentStatus || parentBucket,
+    by: "kelly",
+    note: `spawned ${source} child ${childId}`,
+  });
+  // Also bump updated so the picker re-sorts the parent.
+  const bumpedParentYaml = setUpdated(updatedParentYaml, now);
+  await writeFile(parentPath, bumpedParentYaml);
+
+  await appendJournal(agent, {
+    ts: now,
+    id: childId,
+    status: "open",
+    kind,
+    from: "kelly",
+    to: agent,
+    parent: taskId,
+    summary: `${source} child of ${taskId}`,
+  });
+
+  return { ok: true, id: childId, path: childPath, parentId: taskId };
+}

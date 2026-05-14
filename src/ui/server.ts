@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask, spawnNextTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -612,6 +612,8 @@ self.addEventListener('fetch', e => {
 
       // Revisit a `done` or `failed` task: append a follow-up to revisits[]
       // and move the envelope back to `tasks/open/` so the runner re-claims.
+      // Kept for backward compat — new UI uses /next which spawns a child
+      // instead of mutating the original.
       if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/revisit") && req.method === "POST") {
         try {
           const middle = url.pathname.slice("/api/tasks/".length, -"/revisit".length);
@@ -625,6 +627,36 @@ self.addEventListener('fetch', e => {
           });
           if (!result.ok) return json({ ok: false, error: result.error, code: result.code });
           return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Spawn a "Next" child task. Unified successor to /unblock + /revisit:
+      // leaves the parent envelope in place (status unchanged for done/failed,
+      // status unchanged for waiting:on:user until the child completes), and
+      // creates a fresh child envelope with parent pointer + Kelly's
+      // instruction woven into the brief. For waiting:on:user parents, the
+      // child carries closes_parent_on_done=true so the runner auto-closes
+      // the parent when the child lands as done.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/next") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/next".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const sourceRaw = String(body?.source ?? "").trim();
+          if (sourceRaw !== "revisit" && sourceRaw !== "unblock") {
+            return json({ ok: false, error: "source must be 'revisit' or 'unblock'" });
+          }
+          const result = await spawnNextTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            instruction: String(body?.instruction ?? ""),
+            source: sourceRaw,
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, parentId: result.parentId });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
