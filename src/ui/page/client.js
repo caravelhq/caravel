@@ -3909,14 +3909,47 @@
             var agentName = spawnBtn.getAttribute("data-spawn-agent");
             var taskId2 = spawnBtn.getAttribute("data-spawn-task");
             try {
-              if (typeof startNewChat === "function") startNewChat();
-              if (agentName && Array.isArray(agentsCache)) {
-                var match = agentsCache.find(function (a) { return a.name === agentName; });
-                if (match) pendingAgentId = match.name;
+              // Share the worker's Claude session so the agent doesn't have
+              // to reload its CLAUDE.md, brief context or project README.
+              // The runner threads workers on `task-<root>-<agent>`; Claude
+              // SDK sessions are keyed purely on the threadId, so when the
+              // chat's chatId matches the worker's threadId the first chat
+              // message resumes the worker's hot session.
+              var taskRoot = taskId2 ? String(taskId2).split(".")[0] : "";
+              var sharedThreadId = (taskRoot && agentName) ? ("task-" + taskRoot + "-" + agentName) : null;
+              var existing = null;
+              if (sharedThreadId && Array.isArray(chatListCache)) {
+                existing = chatListCache.find(function (c) { return c.id === sharedThreadId; });
+              }
+              if (existing) {
+                switchToChat(sharedThreadId);
+              } else if (sharedThreadId) {
+                chatSessionId = sharedThreadId;
+                try { localStorage.setItem(CHAT_ID_KEY, sharedThreadId); } catch (_) {}
+                chatHistory = [];
+                chatServerUpdatedAt = null;
+                chatAgentLocked = null;
+                pendingAgentId = agentName || null;
+                updateAgentBadge();
+                updateSendDisabled();
+                renderChatHistory();
+                schedulePoll();
+                loadChatList();
+              } else {
+                // Defensive fallback: no task id or agent — behave like the
+                // pre-Item-6 path (fresh chat, no session sharing).
+                if (typeof startNewChat === "function") startNewChat();
+                if (agentName && Array.isArray(agentsCache)) {
+                  var match = agentsCache.find(function (a) { return a.name === agentName; });
+                  if (match) pendingAgentId = match.name;
+                }
               }
               if (typeof setActiveTab === "function") setActiveTab("chat");
-              if (chatInput && taskId2) {
-                chatInput.value = "Let's discuss task " + taskId2 + ". Please read the envelope and tell me your read.";
+              if (chatInput) {
+                // No "read the envelope" pre-fill — when we share the worker's
+                // session the agent already has full context. Let Kelly type
+                // her first message naturally.
+                chatInput.value = "";
                 chatInput.focus();
               }
             } catch (_) {}
