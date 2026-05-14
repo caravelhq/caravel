@@ -25,7 +25,7 @@
 //   - Direct Alice escalation tooling (phase 3).
 //   - Dashboard wiring (phase 4).
 
-import { readdir, readFile, writeFile, rename, mkdir, stat, unlink } from "fs/promises";
+import { readdir, readFile, writeFile, rename, mkdir, stat, unlink, rm } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
@@ -45,6 +45,127 @@ const DEFAULT_PER_AGENT_CONCURRENCY = 1;
 // losing history. Override via CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS.
 const DEFAULT_ARCHIVE_DAYS = 7;
 const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting"] as const;
+
+// Global rate-limit gate. When Claude Code surfaces "You've hit your limit ·
+// resets <time> (<tz>)" — an account-level Anthropic rate cap — the runner
+// stops claiming work until the reset time has passed. Stored at the project
+// root so it survives daemon restart and any worker can read it.
+const LIMITS_GATE_FILE = join(PROJECT_DIR, ".claude", "claudeclaw", "limits-gate.json");
+
+interface LimitsGate {
+  reset_at: string; // ISO timestamp
+  hit_at: string;
+  source_agent?: string;
+  source_task?: string;
+  raw_message?: string;
+}
+
+async function readLimitsGate(): Promise<LimitsGate | null> {
+  try {
+    const raw = await readFile(LIMITS_GATE_FILE, "utf-8");
+    const gate = JSON.parse(raw) as LimitsGate;
+    if (!gate?.reset_at) return null;
+    const resetMs = Date.parse(gate.reset_at);
+    if (!Number.isFinite(resetMs)) return null;
+    if (resetMs <= Date.now()) {
+      // Gate expired — clean up and report clear.
+      await clearLimitsGate().catch(() => {});
+      return null;
+    }
+    return gate;
+  } catch {
+    return null;
+  }
+}
+
+async function writeLimitsGate(gate: LimitsGate): Promise<void> {
+  try {
+    await mkdir(join(PROJECT_DIR, ".claude", "claudeclaw"), { recursive: true });
+    await writeFile(LIMITS_GATE_FILE, JSON.stringify(gate, null, 2));
+    console.log(
+      `[${new Date().toLocaleTimeString()}] multi-agent: GLOBAL LIMITS GATE set — runner paused until ${gate.reset_at}` +
+        (gate.source_agent ? ` (triggered by ${gate.source_agent}/${gate.source_task})` : "")
+    );
+  } catch (err) {
+    console.error(`[multi-agent] failed to write limits gate:`, err);
+  }
+}
+
+async function clearLimitsGate(): Promise<void> {
+  try {
+    await rm(LIMITS_GATE_FILE, { force: true });
+    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: limits gate cleared`);
+  } catch {}
+}
+
+// Find the timezone offset (in minutes east of UTC) for the named IANA zone
+// at a given moment. Uses Intl.DateTimeFormat's longOffset format which
+// renders as e.g. "GMT+12:00".
+function tzOffsetMinutes(tz: string, at: Date): number | null {
+  try {
+    const fmt = new Intl.DateTimeFormat("en-US", { timeZone: tz, timeZoneName: "longOffset" });
+    const parts = fmt.formatToParts(at);
+    const tzPart = parts.find((p) => p.type === "timeZoneName");
+    if (!tzPart) return null;
+    const m = /GMT([+-])(\d{1,2}):?(\d{2})?/.exec(tzPart.value);
+    if (!m) return tzPart.value === "GMT" ? 0 : null;
+    const sign = m[1] === "+" ? 1 : -1;
+    const h = parseInt(m[2]!, 10);
+    const mn = parseInt(m[3] ?? "0", 10);
+    return sign * (h * 60 + mn);
+  } catch {
+    return null;
+  }
+}
+
+// Parse Claude Code's "resets <H:MMam/pm> (<IANA-TZ>)" rate-limit message
+// into a JS Date (UTC moment). Returns null when the pattern doesn't match.
+// If the named hour has already passed today in the target timezone, the
+// reset is rolled forward by 24h (it's tomorrow's slot).
+function parseResetTime(text: string): Date | null {
+  const m = /resets\s+(\d{1,2}):(\d{2})\s*(am|pm)\s*\(([^)]+)\)/i.exec(text);
+  if (!m) return null;
+  let hour = parseInt(m[1]!, 10);
+  const min = parseInt(m[2]!, 10);
+  const ampm = m[3]!.toLowerCase();
+  if (hour === 12 && ampm === "am") hour = 0;
+  else if (hour < 12 && ampm === "pm") hour += 12;
+  const tz = m[4]!.trim();
+
+  const now = new Date();
+  const offsetMin = tzOffsetMinutes(tz, now);
+  if (offsetMin === null) {
+    // Unknown timezone — fall back to system local time. Good enough when
+    // the daemon runs in the matching zone, which is the common case.
+    const reset = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, min, 0, 0);
+    if (reset.getTime() <= now.getTime()) reset.setDate(reset.getDate() + 1);
+    return reset;
+  }
+
+  // Compute today's calendar date in the target timezone (independent of
+  // the system zone).
+  const dateFmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const todayInTz = dateFmt.format(now); // "YYYY-MM-DD"
+
+  const sign = offsetMin >= 0 ? "+" : "-";
+  const absMin = Math.abs(offsetMin);
+  const oH = String(Math.floor(absMin / 60)).padStart(2, "0");
+  const oM = String(absMin % 60).padStart(2, "0");
+  const hh = String(hour).padStart(2, "0");
+  const mm = String(min).padStart(2, "0");
+  const iso = `${todayInTz}T${hh}:${mm}:00${sign}${oH}:${oM}`;
+  let reset = new Date(iso);
+  if (!Number.isFinite(reset.getTime())) return null;
+  if (reset.getTime() <= now.getTime()) {
+    reset = new Date(reset.getTime() + 24 * 60 * 60 * 1000);
+  }
+  return reset;
+}
 
 interface MultiAgentOptions {
   agents?: string[];
@@ -354,12 +475,17 @@ function normaliseReportPath(report: string | null): string | null {
 
 // Detect Anthropic API / Claude Code token-limit, rate-limit, and
 // context-window error signatures in worker output or thrown error text.
-// Used to route these into `waiting:on:limits` (auto-retry) instead of
-// `failed:other` (dead-end).
+// Used to route these into `waiting:on:limits` (gate-aware retry) instead
+// of `failed:other` (dead-end). The Claude Code CLI surfaces account-level
+// rate caps as a short user-facing message ("You've hit your limit · resets
+// 6:30pm (Pacific/Auckland)") that we match explicitly so the parsed reset
+// time can drive the global gate.
 function detectLimitsHit(text: string): boolean {
   if (!text) return false;
   const t = text.toLowerCase();
   return (
+    t.includes("you've hit your limit") ||
+    t.includes("you’ve hit your limit") || // curly apostrophe variant
     t.includes("prompt is too long") ||
     t.includes("context_length_exceeded") ||
     t.includes("rate_limit_error") ||
@@ -1106,53 +1232,13 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
 
       let unblocked = false;
       if (spec === "limits") {
-        // Auto-retry token/rate/context limit hits after a backoff window.
-        // Cap retries to avoid an envelope bouncing forever when the brief
-        // itself is too big.
-        const retryMs = readEnvNumber("CLAUDECLAW_MULTI_AGENT_LIMITS_RETRY_MS", 300000); // 5 min
-        const maxRetries = readEnvNumber("CLAUDECLAW_MULTI_AGENT_LIMITS_MAX_RETRIES", 3);
-        const hitAt = readField(yaml, "limits_hit_at");
-        const retryCount = Number(readField(yaml, "limits_retry_count") ?? "0") || 0;
-        if (retryCount >= maxRetries) {
-          // Give up — promote to failed:limits so Alice/Kelly can intervene.
-          const fields = parseFields(yaml, taskId);
-          const now = new Date().toISOString();
-          let next = setField(yaml, "status", "failed:limits");
-          next = setField(next, "updated", now);
-          next = appendHistory(next, {
-            ts: now,
-            from: status,
-            to: "failed:limits",
-            by: `runner-${process.pid}`,
-            note: `auto-retry cap reached (${retryCount} attempts) — escalating`,
-          });
-          const failedDir = join(AGENTS_DIR, agent, "tasks", "failed");
-          await mkdir(failedDir, { recursive: true });
-          await writeFile(filePath, next);
-          await rename(filePath, join(failedDir, fname));
-          await cleanStaleRendezvous(agent, taskId, "failed");
-          await appendJournal(agent, {
-            ts: now,
-            id: taskId,
-            status: "failed:limits",
-            kind: fields.kind,
-            from: fields.from,
-            to: agent,
-            parent: fields.parent,
-            summary: `auto-retry cap reached after ${retryCount} attempts at limits backoff`,
-          });
-          console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → failed:limits (cap reached)`);
-          continue;
-        }
-        if (hitAt) {
-          const stamp = Date.parse(hitAt);
-          if (Number.isFinite(stamp) && Date.now() - stamp >= retryMs) {
-            unblocked = true;
-          }
-        } else {
-          // No timestamp recorded — be permissive, retry now.
-          unblocked = true;
-        }
+        // Gate-authoritative. The global limits gate is checked at the top
+        // of tickOnce; if we got here the gate is clear, so any
+        // waiting:on:limits task is free to retry. No per-task backoff cap
+        // — if the same task hits the limit again, the next gate cycle
+        // takes over. Logged once on the unblock so bouncing is visible.
+        unblocked = true;
+        console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} limits gate clear — unblocking`);
       } else {
         unblocked = await checkDependencyResolved(spec, opts.agents);
       }
@@ -1365,11 +1451,12 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   } catch (err) {
     const errText = err instanceof Error ? err.message : String(err);
     if (detectLimitsHit(errText) || detectLimitsHit(captured)) {
-      console.warn(`[multi-agent] worker ${agent}/${taskId} hit a token/rate/context limit — routing to waiting:on:limits for auto-retry`);
+      await maybeSetGlobalLimitsGate(`${errText}\n${captured}`, agent, taskId);
+      console.warn(`[multi-agent] worker ${agent}/${taskId} hit a token/rate/context limit — routing to waiting:on:limits`);
       return {
         kind: "waiting",
         reason: "limits",
-        summary: `worker hit an Anthropic API limit (token/rate/context). Auto-retry scheduled. Detail: ${errText.slice(0, 280)}`,
+        summary: `worker hit an Anthropic API limit. Detail: ${errText.slice(0, 280)}`,
         body: "",
         report: null,
       };
@@ -1393,16 +1480,39 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   // to waiting:on:limits so it gets retried rather than dead-ended at
   // failed:other.
   if (detectLimitsHit(captured)) {
-    console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but stream contains a limit signature — routing to waiting:on:limits for auto-retry`);
+    await maybeSetGlobalLimitsGate(captured, agent, taskId);
+    console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but stream contains a limit signature — routing to waiting:on:limits`);
     return {
       kind: "waiting",
       reason: "limits",
-      summary: "worker stream surfaced a token/rate/context limit error and emitted no directive — auto-retry scheduled",
+      summary: "worker stream surfaced an Anthropic API limit and emitted no directive — gate set, will retry after reset",
       body: "",
       report: null,
     };
   }
   return null;
+}
+
+// Parse the reset time from a limit-hit message and write the global gate.
+// No-op if the text doesn't contain a parseable reset time (the gate stays
+// untouched and individual tasks still get parked in waiting:on:limits).
+async function maybeSetGlobalLimitsGate(
+  text: string,
+  agent: string,
+  taskId: string
+): Promise<void> {
+  const resetAt = parseResetTime(text);
+  if (!resetAt) {
+    console.warn(`[multi-agent] ${agent}/${taskId}: limit detected but no reset time in message — gate not set`);
+    return;
+  }
+  await writeLimitsGate({
+    reset_at: resetAt.toISOString(),
+    hit_at: new Date().toISOString(),
+    source_agent: agent,
+    source_task: taskId,
+    raw_message: text.slice(0, 500),
+  });
 }
 
 // === Tick ==================================================================
@@ -1468,6 +1578,18 @@ function readEnvNumber(key: string, fallback: number): number {
 
 async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string, number>): Promise<void> {
   if (!existsSync(AGENTS_DIR)) return;
+
+  // Global rate-limit gate. Skip all claim passes (and the waiting-sweep,
+  // which would just bounce limits-tagged tasks back to open prematurely)
+  // until the reset moment has passed. readLimitsGate clears the file
+  // automatically when its reset_at lapses, so the runner self-recovers.
+  const gate = await readLimitsGate();
+  if (gate) {
+    console.log(
+      `[${new Date().toLocaleTimeString()}] multi-agent: limits gate active until ${gate.reset_at} — skipping tick`
+    );
+    return;
+  }
 
   // Sweep waiting tasks first — any unblock will land them in tasks/open/ in
   // time for the same tick's claim pass.
