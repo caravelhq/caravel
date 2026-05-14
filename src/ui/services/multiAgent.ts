@@ -62,15 +62,48 @@ export interface TaskChain {
 // corrupt `history:` blocks (the runner's pre-fix appendHistory left mangled
 // indentation). Since the dashboard never displays history, we strip that
 // section before parsing so display stays robust against past corruption.
+// Quote any plain-scalar value that starts with a YAML reserved indicator
+// (backtick or `@`). YAML forbids these at the start of a plain scalar, but
+// briefs and `why:` annotations routinely paste code identifiers wrapped in
+// backticks (e.g. `attributesByType()`). Without this pre-pass the entire
+// envelope fails to parse and the task vanishes from the picker.
+function quoteReservedScalarStarts(content: string): string {
+  return content.replace(
+    /^(\s+[a-z_][a-z0-9_]*:\s+)([`@][^\n]*)$/gm,
+    (_m, key, val) => `${key}${JSON.stringify(val)}`
+  );
+}
+
+// Repair runner-write artefact where a top-level key was written as both
+// `lease: null` AND then immediately followed by indented sub-keys. YAML
+// treats this as a conflict. Strip the `null` so the indented mapping wins.
+function repairNullOverwrittenMappings(content: string): string {
+  return content.replace(
+    /^([a-z_][a-z0-9_]*):\s*null\s*\n(?=\s+[a-z_][a-z0-9_]*:)/gm,
+    "$1:\n"
+  );
+}
+
 // The hand-rolled regex helpers above are still used as a last-resort fallback
 // when js-yaml gives up entirely.
 function parseEnvelope(content: string): Record<string, any> | null {
-  const sanitized = content.replace(/^history:[\s\S]*?(?=^[a-z][a-z_]*:)/m, "history: []\n");
+  const sanitized = repairNullOverwrittenMappings(
+    content.replace(/^history:[\s\S]*?(?=^[a-z][a-z_]*:)/m, "history: []\n")
+  );
+  const sanitizedQuoted = quoteReservedScalarStarts(sanitized);
   // `json: true` enables JSON-superset mode: duplicate mapping keys take
   // last-wins semantics instead of throwing. Some legacy envelopes have
   // duplicate `report:` keys from a runner write bug; we want to read them.
   try {
+    const doc = yamlLoad(sanitizedQuoted, { json: true });
+    if (doc && typeof doc === "object") return doc as Record<string, any>;
+  } catch {}
+  try {
     const doc = yamlLoad(sanitized, { json: true });
+    if (doc && typeof doc === "object") return doc as Record<string, any>;
+  } catch {}
+  try {
+    const doc = yamlLoad(quoteReservedScalarStarts(content), { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
   } catch {}
   try {

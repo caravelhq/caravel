@@ -352,6 +352,29 @@ function normaliseReportPath(report: string | null): string | null {
   return m ? m[1] : trimmed;
 }
 
+// Detect Anthropic API / Claude Code token-limit, rate-limit, and
+// context-window error signatures in worker output or thrown error text.
+// Used to route these into `waiting:on:limits` (auto-retry) instead of
+// `failed:other` (dead-end).
+function detectLimitsHit(text: string): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return (
+    t.includes("prompt is too long") ||
+    t.includes("context_length_exceeded") ||
+    t.includes("rate_limit_error") ||
+    t.includes("rate limit exceeded") ||
+    t.includes("exceeded your per-minute") ||
+    t.includes("exceeded your per-hour") ||
+    t.includes("exceeded your per-day") ||
+    t.includes("token limit") ||
+    t.includes("max_tokens") && t.includes("must be at most") ||
+    /\btokens?\s*>\s*\d+/.test(t) ||
+    /\bhttp\s*429\b/.test(t) ||
+    /\bstatus\s+code\s+429\b/.test(t)
+  );
+}
+
 function parseDirective(text: string): TaskDirective | null {
   const doneMatch = /<task-done([^>]*)>([\s\S]*?)<\/task-done>/.exec(text);
   if (doneMatch) {
@@ -968,6 +991,14 @@ async function transitionToWaiting(
   if (directive.summary) {
     next = setNestedField(next, "summary", "response", JSON.stringify(directive.summary));
   }
+  // For `waiting:on:limits`, stamp the time the limit was hit and bump the
+  // retry counter so sweepWaiting can decide when to auto-retry and when to
+  // give up. limits_retry_count caps the bounce loop.
+  if (onSpec === "limits") {
+    next = setField(next, "limits_hit_at", now);
+    const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
+    next = setField(next, "limits_retry_count", String(prevCount + 1));
+  }
   next = appendHistory(next, {
     ts: now,
     from: "claimed",
@@ -1073,7 +1104,58 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       if (!status.startsWith("waiting:on:")) continue;
       const spec = status.slice("waiting:on:".length);
 
-      const unblocked = await checkDependencyResolved(spec, opts.agents);
+      let unblocked = false;
+      if (spec === "limits") {
+        // Auto-retry token/rate/context limit hits after a backoff window.
+        // Cap retries to avoid an envelope bouncing forever when the brief
+        // itself is too big.
+        const retryMs = readEnvNumber("CLAUDECLAW_MULTI_AGENT_LIMITS_RETRY_MS", 300000); // 5 min
+        const maxRetries = readEnvNumber("CLAUDECLAW_MULTI_AGENT_LIMITS_MAX_RETRIES", 3);
+        const hitAt = readField(yaml, "limits_hit_at");
+        const retryCount = Number(readField(yaml, "limits_retry_count") ?? "0") || 0;
+        if (retryCount >= maxRetries) {
+          // Give up — promote to failed:limits so Alice/Kelly can intervene.
+          const fields = parseFields(yaml, taskId);
+          const now = new Date().toISOString();
+          let next = setField(yaml, "status", "failed:limits");
+          next = setField(next, "updated", now);
+          next = appendHistory(next, {
+            ts: now,
+            from: status,
+            to: "failed:limits",
+            by: `runner-${process.pid}`,
+            note: `auto-retry cap reached (${retryCount} attempts) — escalating`,
+          });
+          const failedDir = join(AGENTS_DIR, agent, "tasks", "failed");
+          await mkdir(failedDir, { recursive: true });
+          await writeFile(filePath, next);
+          await rename(filePath, join(failedDir, fname));
+          await cleanStaleRendezvous(agent, taskId, "failed");
+          await appendJournal(agent, {
+            ts: now,
+            id: taskId,
+            status: "failed:limits",
+            kind: fields.kind,
+            from: fields.from,
+            to: agent,
+            parent: fields.parent,
+            summary: `auto-retry cap reached after ${retryCount} attempts at limits backoff`,
+          });
+          console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → failed:limits (cap reached)`);
+          continue;
+        }
+        if (hitAt) {
+          const stamp = Date.parse(hitAt);
+          if (Number.isFinite(stamp) && Date.now() - stamp >= retryMs) {
+            unblocked = true;
+          }
+        } else {
+          // No timestamp recorded — be permissive, retry now.
+          unblocked = true;
+        }
+      } else {
+        unblocked = await checkDependencyResolved(spec, opts.agents);
+      }
       if (!unblocked) continue;
 
       const fields = parseFields(yaml, taskId);
@@ -1209,8 +1291,19 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       agent
     );
   } catch (err) {
+    const errText = err instanceof Error ? err.message : String(err);
+    if (detectLimitsHit(errText) || detectLimitsHit(captured)) {
+      console.warn(`[multi-agent] worker ${agent}/${taskId} hit a token/rate/context limit — routing to waiting:on:limits for auto-retry`);
+      return {
+        kind: "waiting",
+        reason: "limits",
+        summary: `worker hit an Anthropic API limit (token/rate/context). Auto-retry scheduled. Detail: ${errText.slice(0, 280)}`,
+        body: "",
+        report: null,
+      };
+    }
     console.error(`[multi-agent] worker ${agent}/${taskId} threw:`, err);
-    return { kind: "failed", reason: "crash", summary: String(err), body: "", report: null };
+    return { kind: "failed", reason: "crash", summary: errText, body: "", report: null };
   }
 
   // Primary contract: a report file at agents/<agent>/tasks/<status>/<id>.md.
@@ -1221,7 +1314,23 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     return fromFile;
   }
 
-  return parseDirective(captured);
+  const parsed = parseDirective(captured);
+  if (parsed) return parsed;
+
+  // No file, no directive — but if the stream surfaced a limit error, route
+  // to waiting:on:limits so it gets retried rather than dead-ended at
+  // failed:other.
+  if (detectLimitsHit(captured)) {
+    console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but stream contains a limit signature — routing to waiting:on:limits for auto-retry`);
+    return {
+      kind: "waiting",
+      reason: "limits",
+      summary: "worker stream surfaced a token/rate/context limit error and emitted no directive — auto-retry scheduled",
+      body: "",
+      report: null,
+    };
+  }
+  return null;
 }
 
 // === Tick ==================================================================

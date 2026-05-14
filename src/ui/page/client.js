@@ -3443,6 +3443,8 @@
         var chevron = hasChildren
           ? '<button class="tasks-tree-chevron' + (expanded ? ' is-expanded' : '') + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? 'Collapse' : 'Expand') + '">' + (expanded ? '▾' : '▸') + '</button>'
           : '<span class="tasks-tree-chevron-spacer"></span>';
+        var rawStatus = t.status || "?";
+        var shortStatus = shortenStatusLabel(rawStatus);
         return (
           '<div class="' + rowClass + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' +
           indent +
@@ -3450,12 +3452,28 @@
           '<span class="tasks-tree-marker">' + marker + '</span>' +
           '<div class="tasks-tree-titlecol">' +
           '<span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span>' +
+          '<div class="tasks-tree-meta">' +
           '<span class="tasks-tree-id">' + escapeHtml(t.id) + '</span>' +
-          '</div>' +
           '<span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + '</span>' +
-          '<span class="tasks-tree-status ' + status + '">' + escapeHtml(t.status || "?") + '</span>' +
+          '<span class="tasks-tree-status ' + status + '" title="' + escapeHtml(rawStatus) + '">' + escapeHtml(shortStatus) + '</span>' +
+          '</div>' +
+          '</div>' +
           '</div>'
         );
+      }
+
+      // Compact status label for the picker pill. Full status surfaces via
+      // the tooltip (title=). Keeps the row readable when there's a status
+      // like `waiting:on:task` that would otherwise crowd out the headline.
+      function shortenStatusLabel(s) {
+        if (!s) return "?";
+        s = String(s);
+        if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
+        if (s.indexOf("failed:") === 0) {
+          var rest = s.slice("failed:".length);
+          return rest === "other" ? "failed" : "fail " + rest;
+        }
+        return s;
       }
 
       function renderTreeBranch(tree, node, depth, out, seen) {

@@ -2525,9 +2525,17 @@ export const pageStyles = String.raw`    :root {
       flex: 1;
       min-width: 0;
       display: flex;
-      align-items: baseline;
-      gap: 8px;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1px;
       overflow: hidden;
+    }
+    .tasks-tree-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
     }
     .tasks-tree-id {
       flex-shrink: 0;
@@ -2549,13 +2557,14 @@ export const pageStyles = String.raw`    :root {
       padding: 1px 6px;
       border-radius: 999px;
       border: 1px solid #ffffff22;
+      white-space: nowrap;
     }
     .tasks-tree-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
     .tasks-tree-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
     .tasks-tree-status.is-done { color: #93e0a8; border-color: #93e0a855; }
     .tasks-tree-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
     .tasks-tree-headline {
-      flex: 1;
+      flex: 1 1 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -2565,11 +2574,6 @@ export const pageStyles = String.raw`    :root {
       font-size: 12px;
     }
     @media (max-width: 640px) {
-      .tasks-tree-titlecol {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1px;
-      }
       .tasks-tree-id {
         font-size: 9px;
       }
