@@ -1617,7 +1617,29 @@ async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string,
       try {
         yaml = await readFile(filePath, "utf-8");
       } catch { continue; }
-      if ((readField(yaml, "status") ?? "open") !== "open") continue;
+
+      // Bucket is the source of truth — file is in open/, so it's claimable.
+      // The `status:` field is metadata; tolerate worker-side typos and
+      // unrecognised values (e.g. "in_progress" — not part of the runner's
+      // taxonomy) by treating anything that isn't a recognised non-open
+      // status as `open`. Stops envelopes from being stranded forever when
+      // an agent writes a custom status manually in a chat session.
+      const rawStatus = (readField(yaml, "status") ?? "open").trim();
+      const isClaimed = rawStatus === "claimed";
+      const isTerminalish =
+        rawStatus === "done" ||
+        rawStatus.startsWith("failed:") ||
+        rawStatus.startsWith("waiting:on:");
+      if (isClaimed || isTerminalish) {
+        // `claimed` = worker mid-flight (lease check below handles re-claim).
+        // Terminalish in open/ = stale file move race, sweep will reconcile.
+        continue;
+      }
+      if (rawStatus !== "open") {
+        console.warn(
+          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} has unrecognised status "${rawStatus}" in open/ — treating as open`
+        );
+      }
 
       const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
       if (!fields) continue;
