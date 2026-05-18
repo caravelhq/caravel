@@ -49,6 +49,12 @@ export interface TaskRow {
   updated: string | null;
   envelopePath: string;
   reportPath: string | null;
+  // Additional deliverable paths surfaced via the YAML `report:` field
+  // when it points to an external artefact (e.g. an FDP in repos/dev/...).
+  // The task's own <id>.md rendezvous file is always the primary
+  // reportPath when it exists; everything else flows here so the UI can
+  // mount them as secondary tabs without dropping the worker's writeup.
+  deliverables: string[];
 }
 
 export interface TaskChain {
@@ -216,43 +222,56 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
 
   const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
   const taskIdLeaf = file.replace(/\.yaml$/, "");
-  // `report:` is a top-level field — the worker sets it via
-  // <task-done report="path/to/produced/file.md"/>. Three forms accepted:
-  //   (a) relative leaf "<id>.md" — resolve against current bucket (preferred,
-  //       v1.2+; survives bucket transitions on revisit).
-  //   (b) full repo-relative path to a sibling deliverable (Notes/..., repos/...) —
-  //       use as-is.
-  //   (c) legacy bucket-bound "agents/<a>/tasks/<bucket>/<id>.md" — try as-is,
-  //       fall back to current bucket if the file moved (revisit case).
-  // If `report:` is empty/unset, fall back to the v1.2 file-rendezvous
-  // convention (`<id>.md` in the current bucket).
-  let reportPath: string | null = asNullableString(doc.report);
-  if (reportPath) {
-    const looksLikeLeaf = !reportPath.includes("/");
-    const looksLikeBucketBound = /^agents\/[^/]+\/tasks\/(?:done|failed|waiting|open)\/[^/]+\.md$/.test(reportPath);
+  // Resolution rules (Kelly's 2026-05-18 fix):
+  //
+  //   primary `reportPath` is ALWAYS the worker's own rendezvous file
+  //   `agents/<a>/tasks/<bucket>/<id>.md` when it exists. That's where
+  //   the worker's done-writeup, summary, and frontmatter live — it
+  //   must never be dropped from the panel.
+  //
+  //   any path from the YAML `report:` field (worker-set via
+  //   <task-done report="…"/>) that points at a different file is folded
+  //   into the `deliverables` array as a secondary tab. Common case:
+  //   bob sets report to the FDP in repos/dev/features/; the task .md
+  //   stays primary, the FDP becomes a sibling tab.
+  //
+  //   if the rendezvous .md doesn't exist (rare — legacy envelope or
+  //   worker bug), fall back to whatever `report:` resolves to so the
+  //   panel isn't empty.
+  const rendezvousAbs = join(AGENTS_DIR, agent, "tasks", bucket, `${taskIdLeaf}.md`);
+  const rendezvousRel = existsSync(rendezvousAbs)
+    ? `agents/${agent}/tasks/${bucket}/${taskIdLeaf}.md`
+    : null;
+
+  const declaredReport = asNullableString(doc.report);
+  let declaredResolved: string | null = null;
+  if (declaredReport) {
+    const looksLikeLeaf = !declaredReport.includes("/");
+    const looksLikeBucketBound = /^agents\/[^/]+\/tasks\/(?:done|failed|waiting|open)\/[^/]+\.md$/.test(declaredReport);
     if (looksLikeLeaf) {
-      const candidate = join(AGENTS_DIR, agent, "tasks", bucket, reportPath);
-      reportPath = existsSync(candidate)
-        ? `agents/${agent}/tasks/${bucket}/${reportPath}`
-        : null;
+      const candidate = join(AGENTS_DIR, agent, "tasks", bucket, declaredReport);
+      if (existsSync(candidate)) declaredResolved = `agents/${agent}/tasks/${bucket}/${declaredReport}`;
     } else if (looksLikeBucketBound) {
-      // Legacy form: try literal path; if missing (envelope moved between
-      // buckets), retry as a leaf in the current bucket.
-      const literal = join(AGENTS_DIR, reportPath.replace(/^agents\//, ""));
-      if (!existsSync(literal)) {
-        const leaf = reportPath.split("/").pop() || "";
+      const literal = join(AGENTS_DIR, declaredReport.replace(/^agents\//, ""));
+      if (existsSync(literal)) {
+        declaredResolved = declaredReport;
+      } else {
+        const leaf = declaredReport.split("/").pop() || "";
         const candidate = join(AGENTS_DIR, agent, "tasks", bucket, leaf);
-        if (existsSync(candidate)) {
-          reportPath = `agents/${agent}/tasks/${bucket}/${leaf}`;
-        }
+        if (existsSync(candidate)) declaredResolved = `agents/${agent}/tasks/${bucket}/${leaf}`;
       }
+    } else {
+      // Full repo-relative path (Notes/..., repos/...). Trust the worker;
+      // the dashboard's file-serve endpoint will surface the 404 if it's
+      // wrong.
+      declaredResolved = declaredReport;
     }
   }
-  if (!reportPath) {
-    const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${taskIdLeaf}.md`);
-    if (existsSync(candidate)) {
-      reportPath = `agents/${agent}/tasks/${bucket}/${taskIdLeaf}.md`;
-    }
+
+  const reportPath: string | null = rendezvousRel ?? declaredResolved;
+  const deliverables: string[] = [];
+  if (declaredResolved && declaredResolved !== reportPath) {
+    deliverables.push(declaredResolved);
   }
 
   return {
@@ -283,6 +302,7 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     updated: asNullableString(doc.updated),
     envelopePath,
     reportPath,
+    deliverables,
   };
 }
 

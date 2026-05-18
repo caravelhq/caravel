@@ -2969,27 +2969,66 @@
       // extras are detected — single-report tasks render unchanged.
       function renderReportPane(card) {
         if (!card || !card.reportPath) return "";
-        var filename = card.reportPath.split("/").pop();
-        var folderPath = card.reportPath.indexOf("/") >= 0
-          ? card.reportPath.substring(0, card.reportPath.lastIndexOf("/"))
-          : ".";
-        var safePath = escapeHtml(card.reportPath);
-        var safeFolder = escapeHtml(folderPath);
-        var safeFname = escapeHtml(filename);
         var safeTaskId = escapeHtml(card.id || "");
+
+        // Always-present primary doc = the task's own <id>.md rendezvous file
+        // (service guarantees this when it exists; falls back to the YAML
+        // `report:` path if not). YAML-declared external deliverables
+        // (e.g. FDP in repos/dev/) flow through `card.deliverables` and
+        // get mounted as hidden siblings so the pill switcher exposes
+        // them as secondary tabs.
+        var allPaths = [card.reportPath];
+        var declaredDeliverables = Array.isArray(card.deliverables) ? card.deliverables : [];
+        for (var d = 0; d < declaredDeliverables.length; d++) {
+          if (declaredDeliverables[d] && allPaths.indexOf(declaredDeliverables[d]) === -1) {
+            allPaths.push(declaredDeliverables[d]);
+          }
+        }
+
+        function docNode(path, isActive, scanExtras) {
+          var filename = path.split("/").pop();
+          var folderPath = path.indexOf("/") >= 0 ? path.substring(0, path.lastIndexOf("/")) : ".";
+          var sp = escapeHtml(path);
+          var sFolder = escapeHtml(folderPath);
+          var sf = escapeHtml(filename);
+          var activeAttr = isActive ? " is-active" : "";
+          var hiddenAttr = isActive ? "" : " hidden";
+          var scanAttr = scanExtras ? ' data-scan-extras="true"' : "";
+          return (
+            '<div class="task-panel-report-doc' + activeAttr + '" data-doc-path="' + sp + '"' + hiddenAttr + '>' +
+            '<div class="task-panel-report-doc-head">' +
+            '<span class="task-panel-report-doc-title">' + sf + '</span>' +
+            '<button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button>' +
+            '</div>' +
+            '<div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + scanAttr + '>' +
+            '<div class="task-panel-report-loading">Loading report…</div>' +
+            '</div>' +
+            '</div>'
+          );
+        }
+
+        var docsHtml = "";
+        for (var i = 0; i < allPaths.length; i++) {
+          docsHtml += docNode(allPaths[i], i === 0, i === 0);
+        }
+
+        var pillsHidden = allPaths.length <= 1;
+        var pillsHtml = "";
+        if (!pillsHidden) {
+          for (var j = 0; j < allPaths.length; j++) {
+            var pname = allPaths[j].split("/").pop();
+            pillsHtml +=
+              '<button class="task-panel-doc-pill' + (j === 0 ? ' is-active' : '') + '" ' +
+              'data-doc-pill="' + escapeHtml(allPaths[j]) + '" type="button">' +
+              escapeHtml(pname) + '</button>';
+          }
+        }
+
         return (
           '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '">' +
-          '<div class="task-panel-doc-pills" hidden></div>' +
+          '<div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + '>' + pillsHtml + '</div>' +
           '<div class="task-panel-report-docs">' +
-          '<div class="task-panel-report-doc is-active" data-doc-path="' + safePath + '">' +
-          '<div class="task-panel-report-doc-head">' +
-          '<span class="task-panel-report-doc-title">' + safeFname + '</span>' +
-          '<button class="task-panel-folder-btn" data-open-folder="' + safeFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button>' +
-          '</div>' +
-          '<div class="task-panel-report" data-report-path="' + safePath + '" data-loaded="false" data-scan-extras="true">' +
-          '<div class="task-panel-report-loading">Loading report…</div>' +
-          '</div>' +
-          '</div>' +
+          docsHtml +
           '</div>' +
           '</div>'
         );
