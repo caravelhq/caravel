@@ -43,8 +43,16 @@ const DEFAULT_PER_AGENT_CONCURRENCY = 1;
 // How long a terminal/waiting task lives in its bucket before being moved
 // to tasks/archived/<bucket>/. Keeps the working directories small without
 // losing history. Override via CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS.
-const DEFAULT_ARCHIVE_DAYS = 7;
-const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting"] as const;
+// WAL-63 Phase 1: archival is now gated on `closed.at`, not file mtime.
+// Threshold bumped from 7 → 30 days because closed tasks are the audit
+// trail in the Project view, not just queue cleanup. Active tasks
+// (closed: null) never archive regardless of age.
+const DEFAULT_ARCHIVE_DAYS = 30;
+// Closed-task sweep scans every bucket — even `open` and `archived` are
+// candidates if some external process has retired them. The runner-owned
+// status is preserved in the envelope; bucket placement is just the file
+// home, and closed envelopes get folded to `archived/` once aged out.
+const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
 
 // Global rate-limit gate. When Claude Code surfaces "You've hit your limit ·
 // resets <time> (<tz>)" — an account-level Anthropic rate cap — the runner
@@ -257,6 +265,39 @@ function setField(yaml: string, key: string, value: string): string {
   const re = new RegExp(`^${key}:\\s*.*$`, "m");
   if (re.test(yaml)) return yaml.replace(re, `${key}: ${value}`);
   return yaml + `\n${key}: ${value}\n`;
+}
+
+// WAL-63 Phase 1: rewrite the top-level `closed:` block on an envelope.
+// Pass `null` to clear (writes `closed: null` so the field stays explicit
+// and parser-friendly). Strips any pre-existing closed block (single-line
+// or block-mapping form) before writing the new value. Inserts immediately
+// after `status:` for stable layout. Mirrors the dispatch service helper
+// (services/multiAgentDispatch.ts) — keep them in sync if the schema shifts.
+interface ClosedBlockShape {
+  status: string;
+  at: string;
+  by: string;
+  reason: string;
+}
+function setClosedField(yaml: string, closed: ClosedBlockShape | null): string {
+  // Strip block-mapping form first (multi-line indented children).
+  let next = yaml.replace(/^closed:\s*\n(?:[ \t]+[^\n]*\n?)+/m, "");
+  // Then any single-line scalar form (`closed: null`, etc.).
+  next = next.replace(/^closed:[^\n]*\n/m, "");
+
+  const insertion = closed === null
+    ? "closed: null\n"
+    : "closed:\n" +
+      `  status: ${closed.status}\n` +
+      `  at: ${closed.at}\n` +
+      `  by: ${closed.by}\n` +
+      `  reason: ${JSON.stringify(closed.reason)}\n`;
+
+  const statusRe = /^status:[^\n]*\n/m;
+  if (statusRe.test(next)) {
+    return next.replace(statusRe, (m) => m + insertion);
+  }
+  return next.trimEnd() + "\n" + insertion;
 }
 
 function setNestedField(yaml: string, parent: string, key: string, value: string): string {
@@ -1385,6 +1426,17 @@ async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string)
     const now = new Date().toISOString();
     let next = setField(parentYaml, "status", "done");
     next = setField(next, "updated", now);
+    // WAL-63 Phase 1: also flip the user-attention overlay to `closed`.
+    // The runner status transition (waiting:on:user → done) is preserved
+    // unchanged; this is the additional user-attention closure that puts
+    // the parent in the audit trail rather than leaving it as a stale
+    // "done but not triaged" leaf in the Current view.
+    next = setClosedField(next, {
+      status: "closed",
+      at: now,
+      by: "runner",
+      reason: `auto-closed by child ${childId} (waiting:on:user resolved)`,
+    });
     next = appendHistory(next, {
       ts: now,
       from: "waiting:on:user",
@@ -1517,6 +1569,21 @@ async function maybeSetGlobalLimitsGate(
 
 // === Tick ==================================================================
 
+// WAL-63 Phase 1: archive sweep is now gated on the `closed` block.
+//
+// Old predicate: anything in done/, failed/, waiting/ with `updated:` older
+// than 7 days archived. That treated runner-terminal state as "user has
+// retired this" — wrong. A `waiting:on:user` task you haven't replied to in
+// 8 days would silently archive while still actively asking for attention.
+//
+// New predicate:
+//   archive iff:
+//     closed.status is non-null
+//     AND (now - closed.at) > CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS  (default 30)
+//
+// Active tasks (closed: null) never archive regardless of age. Closed tasks
+// fade gradually — visible in the Projects view's Closed section for 30 days
+// post-close, then move to archived/ and only surface via "Show archived".
 async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
   const days = readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS);
   if (!Number.isFinite(days) || days <= 0) return;
@@ -1534,32 +1601,51 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
           yaml = await readFile(srcPath, "utf-8");
         } catch { continue; }
 
-        // Prefer the envelope's `updated:` timestamp (set on every transition);
-        // fall back to file mtime if missing.
-        const updatedRaw = readField(yaml, "updated");
-        let stamp = NaN;
-        if (updatedRaw) {
-          const parsed = Date.parse(updatedRaw);
-          if (Number.isFinite(parsed)) stamp = parsed;
+        const closedStatus = readNestedField(yaml, "closed", "status");
+        if (!closedStatus) continue; // active — never archive
+
+        const closedAtRaw = readNestedField(yaml, "closed", "at");
+        let closedMs = NaN;
+        if (closedAtRaw) {
+          // YAML's bare ISO-8601 dates round-trip cleanly; quoted forms keep
+          // their surrounding quote chars in the regex-based reader.
+          const cleaned = closedAtRaw.replace(/^["']|["']$/g, "");
+          const parsed = Date.parse(cleaned);
+          if (Number.isFinite(parsed)) closedMs = parsed;
         }
-        if (!Number.isFinite(stamp)) {
+        if (!Number.isFinite(closedMs)) {
+          // Closed without a parseable `at:` — fall back to file mtime so an
+          // orphan envelope still eventually leaves the working dirs, but
+          // log so the data gap is visible.
           try {
             const st = await stat(srcPath);
-            stamp = st.mtimeMs;
+            closedMs = st.mtimeMs;
+            console.warn(
+              `[multi-agent] archive: ${agent}/${bucket}/${fname} has closed.status=${closedStatus} but unparseable closed.at — falling back to file mtime`
+            );
           } catch { continue; }
         }
-        if (stamp > cutoff) continue;
+        if (closedMs > cutoff) continue;
 
         // Archive flat into tasks/archived/. The envelope's `status:` field
         // already records the original bucket (`done`, `failed:*`,
-        // `waiting:on:*`), so the source dir info isn't lost.
+        // `waiting:on:*`), and `closed:` records who retired it and when,
+        // so no provenance is lost.
         const archiveDir = join(AGENTS_DIR, agent, "tasks", "archived");
         await mkdir(archiveDir, { recursive: true });
         const targetPath = join(archiveDir, fname);
         try {
           await rename(srcPath, targetPath);
+          // Move the rendezvous .md too if present so the archived row keeps
+          // its deliverable. Pre-Phase-1 sweep ignored these; the new gate
+          // means closed reports are valuable history, not stale debris.
+          const mdPath = join(srcDir, `${fname.replace(/\.yaml$/, "")}.md`);
+          if (existsSync(mdPath)) {
+            const mdTarget = join(archiveDir, `${fname.replace(/\.yaml$/, "")}.md`);
+            try { await rename(mdPath, mdTarget); } catch {}
+          }
           console.log(
-            `[${new Date().toLocaleTimeString()}] multi-agent: archived ${agent}/${bucket}/${fname}`
+            `[${new Date().toLocaleTimeString()}] multi-agent: archived ${agent}/${bucket}/${fname} (closed.status=${closedStatus}, ${days}d threshold)`
           );
         } catch (err) {
           console.error(`[multi-agent] archive failed for ${srcPath}:`, err);

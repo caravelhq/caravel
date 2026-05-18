@@ -240,6 +240,379 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   return { ok: true, id, path: outPath };
 }
 
+// === Close / Reopen (WAL-63 Phase 1) =======================================
+//
+// `closed` is the user-attention overlay on the envelope. It records that
+// Kelly (or an automated rule on her behalf) has retired the task from the
+// active inbox. Independent of the runner-owned `status` field — a closed
+// task keeps whatever execution state it had when retired.
+//
+// The shape on disk is a top-level block:
+//
+//   closed:
+//     status: closed | superseded | cancelled
+//     at: <ISO-8601>
+//     by: kelly | alice | runner | auto-on-next | auto-backfill | auto-backfill-archive
+//     reason: "free-form note"
+//
+// Set to `null` (or omitted) means active. The dispatch writers below are the
+// only path that mutates this field outside the backfill script and the
+// runner's spawnNextTask / maybeCloseParentOnUserUnblock helpers.
+
+export type ClosedStatus = "closed" | "superseded" | "cancelled";
+
+export interface ClosedBlock {
+  status: ClosedStatus;
+  at: string;
+  by: string;
+  reason: string;
+}
+
+const TASK_BUCKETS = ["open", "waiting", "done", "failed"] as const;
+type TaskBucket = (typeof TASK_BUCKETS)[number];
+
+// Strip any existing `closed:` field from the YAML. Handles three shapes:
+//   single-line scalar (`closed: null`, `closed: foo`)
+//   inline mapping (`closed: { status: closed, ... }`)
+//   block mapping (`closed:\n  status: ...\n  at: ...`)
+// Returns the cleaned YAML. Idempotent — no-op when the field is absent.
+function stripClosedBlock(yaml: string): string {
+  // Block-mapping form first (multi-line, indented children).
+  let next = yaml.replace(/^closed:\s*\n(?:[ \t]+[^\n]*\n?)+/m, "");
+  // Then single-line scalar / inline mapping. Match the rest of the line
+  // including its trailing newline so we don't leave a blank line behind.
+  next = next.replace(/^closed:[^\n]*\n/m, "");
+  return next;
+}
+
+function formatClosedBlock(closed: ClosedBlock): string {
+  return (
+    "closed:\n" +
+    `  status: ${closed.status}\n` +
+    `  at: ${closed.at}\n` +
+    `  by: ${closed.by}\n` +
+    `  reason: ${yamlEscape(closed.reason)}\n`
+  );
+}
+
+// Insert a `closed:` block (or `closed: null` when clearing) immediately
+// after the top-level `status:` line. Stable placement keeps the envelope
+// readable across re-writes. Falls back to appending at end-of-document
+// when no `status:` line exists.
+function setClosedField(yaml: string, closed: ClosedBlock | null): string {
+  const cleaned = stripClosedBlock(yaml);
+  const insertion = closed === null ? "closed: null\n" : formatClosedBlock(closed);
+  const statusRe = /^status:[^\n]*\n/m;
+  if (statusRe.test(cleaned)) {
+    return cleaned.replace(statusRe, (m) => m + insertion);
+  }
+  return cleaned.trimEnd() + "\n" + insertion;
+}
+
+// Locate the envelope file for (agent, taskId) across the four runner-owned
+// buckets. The 'archived' bucket is intentionally excluded — closing an
+// already-archived task is meaningless; the file has already left the active
+// directories.
+async function locateActiveEnvelope(
+  agent: string,
+  taskId: string
+): Promise<{ path: string; bucket: TaskBucket } | null> {
+  for (const bucket of TASK_BUCKETS) {
+    const p = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.yaml`);
+    if (existsSync(p)) return { path: p, bucket };
+  }
+  return null;
+}
+
+interface CloseTaskInput {
+  agent: string;
+  taskId: string;
+  status?: ClosedStatus; // explicit override; otherwise inferred from runner status
+  reason?: string;
+  by?: string;           // default "kelly"
+  cascade?: boolean;     // close all non-closed descendants too
+}
+
+export type CloseTaskResult =
+  | { ok: true; id: string; closed: ClosedBlock; cascaded: string[] }
+  | { ok: false; error: string };
+
+// Close a task — write the `closed` block on the envelope. Refuses if the
+// task is currently `claimed` (a worker is mid-turn; cancel via Abort, not
+// Close). Returns the closed block actually written so the UI can echo it.
+//
+// Cascade walks the family tree (children of children of …) and closes any
+// non-closed descendant with status `cancelled`, reason citing the parent
+// closure. Stops at already-closed descendants — those stay as they were.
+// No file moves — closing is a metadata flip, not an archival operation.
+// The runner's sweepArchive picks closed envelopes up later based on age.
+export async function closeTask(input: CloseTaskInput): Promise<CloseTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) {
+    return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  }
+  if (!/^TSK-/.test(taskId)) {
+    return { ok: false, error: `invalid task id: ${taskId}` };
+  }
+
+  const loc = await locateActiveEnvelope(agent, taskId);
+  if (!loc) {
+    return { ok: false, error: `task ${taskId} not found in agents/${agent}/tasks/{open,waiting,done,failed}/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(loc.path, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  const runnerStatus = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
+  if (runnerStatus === "claimed") {
+    return { ok: false, error: "cannot close a claimed task — a worker is mid-turn. Wait for it to land or abort the lease." };
+  }
+
+  // If the envelope already carries a non-null closed block, this is a
+  // re-close (idempotent). We still rewrite with the new metadata so the
+  // history reflects who pushed the most recent close.
+  const inferredStatus: ClosedStatus = input.status
+    ? input.status
+    : runnerStatus === "done"
+      ? "closed"
+      : "cancelled";
+
+  const now = new Date().toISOString();
+  const closed: ClosedBlock = {
+    status: inferredStatus,
+    at: now,
+    by: (input.by ?? "kelly").trim() || "kelly",
+    reason: (input.reason ?? "").trim(),
+  };
+
+  let nextYaml = setClosedField(yaml, closed);
+  nextYaml = setUpdated(nextYaml, now);
+  nextYaml = appendHistoryEntry(nextYaml, {
+    ts: now,
+    from: runnerStatus || loc.bucket,
+    to: runnerStatus || loc.bucket,
+    by: closed.by,
+    note: `closed: ${closed.status}${closed.reason ? ` — ${closed.reason}` : ""}`,
+  });
+  await writeFile(loc.path, nextYaml);
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: runnerStatus || loc.bucket,
+    transition: `closed:${closed.status}`,
+    by: closed.by,
+    note: closed.reason || `closed via dashboard`,
+  });
+
+  const cascaded: string[] = [];
+  if (input.cascade) {
+    const descendants = await collectActiveDescendants(taskId);
+    for (const d of descendants) {
+      try {
+        const dYaml = await readFile(d.path, "utf-8");
+        if (hasNonNullClosed(dYaml)) continue;
+        const dStatus = (/^status:\s*(.*)$/m.exec(dYaml)?.[1] ?? "").trim();
+        if (dStatus === "claimed") continue; // never bulldoze an in-flight worker
+        const dClosed: ClosedBlock = {
+          status: "cancelled",
+          at: now,
+          by: closed.by,
+          reason: `cascade-cancelled by parent ${taskId} closure`,
+        };
+        let nextD = setClosedField(dYaml, dClosed);
+        nextD = setUpdated(nextD, now);
+        nextD = appendHistoryEntry(nextD, {
+          ts: now,
+          from: dStatus || d.bucket,
+          to: dStatus || d.bucket,
+          by: closed.by,
+          note: dClosed.reason,
+        });
+        await writeFile(d.path, nextD);
+        await appendJournal(d.agent, {
+          ts: now,
+          id: d.id,
+          status: dStatus || d.bucket,
+          transition: `closed:cancelled`,
+          by: closed.by,
+          note: dClosed.reason,
+        });
+        cascaded.push(d.id);
+      } catch {
+        // Skip descendants we can't read — they'll surface on the next pass.
+      }
+    }
+  }
+
+  return { ok: true, id: taskId, closed, cascaded };
+}
+
+interface ReopenTaskInput {
+  agent: string;
+  taskId: string;
+  by?: string;
+}
+
+export type ReopenTaskResult =
+  | { ok: true; id: string; previousStatus: ClosedStatus | null }
+  | { ok: false; error: string };
+
+// Drop the `closed` block back to null. Appends a history entry referencing
+// the prior closed.status so the audit trail is preserved. No file moves —
+// reopen leaves the envelope in whatever bucket the runner had it in.
+// The task becomes an active leaf again; if it was previously superseded by
+// a Next child, Kelly can hit Next from the reopened task to spawn a fresh
+// alternative line.
+export async function reopenTask(input: ReopenTaskInput): Promise<ReopenTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) {
+    return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  }
+  if (!/^TSK-/.test(taskId)) {
+    return { ok: false, error: `invalid task id: ${taskId}` };
+  }
+
+  const loc = await locateActiveEnvelope(agent, taskId);
+  if (!loc) {
+    return { ok: false, error: `task ${taskId} not found in agents/${agent}/tasks/{open,waiting,done,failed}/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(loc.path, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  const previousStatus = extractClosedStatus(yaml);
+  if (previousStatus === null) {
+    return { ok: false, error: `task ${taskId} is not closed (closed.status is null)` };
+  }
+
+  const now = new Date().toISOString();
+  const by = (input.by ?? "kelly").trim() || "kelly";
+  const runnerStatus = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
+
+  let next = setClosedField(yaml, null);
+  next = setUpdated(next, now);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: runnerStatus || loc.bucket,
+    to: runnerStatus || loc.bucket,
+    by,
+    note: `reopened (previous closed.status was ${previousStatus})`,
+  });
+  await writeFile(loc.path, next);
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: runnerStatus || loc.bucket,
+    transition: `reopened`,
+    by,
+    note: `previous closed.status was ${previousStatus}`,
+  });
+
+  return { ok: true, id: taskId, previousStatus: previousStatus as ClosedStatus };
+}
+
+// Pull the `closed.status` value from an envelope's YAML, returning null
+// when the field is absent or explicitly null. Used by reopenTask + cascade
+// short-circuiting; not as strict as TaskRow parsing (no js-yaml dep).
+function extractClosedStatus(yaml: string): string | null {
+  const blockMatch = /^closed:\s*\n((?:[ \t]+[^\n]*\n?)+)/m.exec(yaml);
+  if (blockMatch) {
+    const sub = /^[ \t]+status:\s*(.*)$/m.exec(blockMatch[1] ?? "");
+    if (!sub) return null;
+    const v = sub[1].trim();
+    if (!v || v === "null") return null;
+    return v.replace(/^["']|["']$/g, "");
+  }
+  const inlineMatch = /^closed:[ \t]*(.*)$/m.exec(yaml);
+  if (!inlineMatch) return null;
+  const raw = inlineMatch[1].trim();
+  if (!raw || raw === "null") return null;
+  // Inline mapping form e.g. `closed: {status: closed, ...}` — pluck status.
+  const mapMatch = /status:\s*([^,}\s]+)/.exec(raw);
+  if (mapMatch) return mapMatch[1].replace(/^["']|["']$/g, "");
+  return null;
+}
+
+function hasNonNullClosed(yaml: string): boolean {
+  return extractClosedStatus(yaml) !== null;
+}
+
+// Collect every descendant of `rootId` across all agents' active buckets.
+// Iterative BFS — handles arbitrarily deep nesting but in practice the
+// dispatch service flattens to one level (TSK-X.NN). Returns each match
+// with agent/bucket/path so closeTask can rewrite it.
+interface DescendantHit {
+  id: string;
+  agent: string;
+  bucket: TaskBucket;
+  path: string;
+}
+
+async function collectActiveDescendants(rootId: string): Promise<DescendantHit[]> {
+  // Index every active envelope by id once, with its parent pointer. Cheap
+  // because the active buckets are small and BFS keeps the search bounded.
+  const index: Array<{ id: string; parent: string | null; agent: string; bucket: TaskBucket; path: string }> = [];
+  for (const agent of KNOWN_AGENTS) {
+    for (const bucket of TASK_BUCKETS) {
+      const dir = join(AGENTS_DIR, agent, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        if (!fname.endsWith(".yaml")) continue;
+        const id = fname.replace(/\.yaml$/, "");
+        const path = join(dir, fname);
+        let content: string;
+        try {
+          content = await readFile(path, "utf-8");
+        } catch {
+          continue;
+        }
+        const parentMatch = /^parent:\s*(.*)$/m.exec(content);
+        const parentRaw = parentMatch ? parentMatch[1].trim() : "";
+        const parent = parentRaw && parentRaw !== "null" ? parentRaw : null;
+        index.push({ id, parent, agent, bucket, path });
+      }
+    }
+  }
+
+  const byParent = new Map<string, typeof index>();
+  for (const entry of index) {
+    if (!entry.parent) continue;
+    const list = byParent.get(entry.parent);
+    if (list) list.push(entry);
+    else byParent.set(entry.parent, [entry]);
+  }
+
+  const out: DescendantHit[] = [];
+  const queue: string[] = [rootId];
+  const seen = new Set<string>([rootId]);
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    const kids = byParent.get(cur) ?? [];
+    for (const kid of kids) {
+      if (seen.has(kid.id)) continue;
+      seen.add(kid.id);
+      out.push({ id: kid.id, agent: kid.agent, bucket: kid.bucket, path: kid.path });
+      queue.push(kid.id);
+    }
+  }
+  return out;
+}
+
 // === Unblock waiting:on:user tasks ========================================
 //
 // When a worker emits <task-waiting on="user">, the runner parks the envelope
@@ -726,7 +1099,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   await writeFile(childPath, childYaml);
 
   // Append a history entry to the parent noting the child was spawned.
-  // Parent stays in its bucket; status unchanged.
+  // Parent stays in its bucket; runner status unchanged.
   const updatedParentYaml = appendHistoryEntry(parentYaml, {
     ts: now,
     from: parentStatus || parentBucket,
@@ -734,9 +1107,21 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     by: "kelly",
     note: `spawned ${source} child ${childId}`,
   });
-  // Also bump updated so the picker re-sorts the parent.
+  // Bump updated so the picker re-sorts the parent.
   const bumpedParentYaml = setUpdated(updatedParentYaml, now);
-  await writeFile(parentPath, bumpedParentYaml);
+  // WAL-63 Phase 1: auto-close-on-next. The child has taken over the
+  // workflow slot, so the parent moves to `closed.status: superseded`
+  // unconditionally — across all Next sources. The parent's runner status
+  // is unchanged; this is purely a user-attention transition. If Kelly
+  // later decides the child was the wrong direction, the Reopen button
+  // drops the closed block and the parent re-surfaces as an active leaf.
+  const supersededParentYaml = setClosedField(bumpedParentYaml, {
+    status: "superseded",
+    at: now,
+    by: "auto-on-next",
+    reason: `spawned child ${childId} via ${source}`,
+  });
+  await writeFile(parentPath, supersededParentYaml);
 
   await appendJournal(agent, {
     ts: now,

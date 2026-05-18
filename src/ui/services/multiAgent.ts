@@ -24,6 +24,13 @@ export interface MultiAgentSummary {
   escalated: { agent: string; file: string }[];
 }
 
+export interface TaskClosed {
+  status: string; // closed | superseded | cancelled
+  at: string | null;
+  by: string | null;
+  reason: string | null;
+}
+
 export interface TaskRow {
   id: string;
   headline: string;
@@ -35,6 +42,14 @@ export interface TaskRow {
   to: string;
   parent: string | null;
   priority: string | null;
+  // WAL-63 Phase 1: project tag for the Projects view. Auto-inferred from
+  // context: paths when the envelope doesn't carry an explicit `project:`
+  // field. Null means "unassigned" (or no Notes/Projects/<X>/ path found in
+  // the context array).
+  project: string | null;
+  // WAL-63 Phase 1: user-attention overlay. Null until Kelly (or an
+  // auto-rule) retires the task from the active inbox.
+  closed: TaskClosed | null;
   brief: string;
   summary: { brief: string; response: string };
   context: string[];
@@ -137,6 +152,38 @@ function asNullableString(value: unknown): string | null {
   return String(value);
 }
 
+// WAL-63 Phase 1: scan context: paths for Notes/Projects/<X>/... entries and
+// return the most-frequently-cited project folder. Stable on ties (first
+// distinct project wins). Null when no context path resolves into a project
+// folder. Anchored on the canonical `Notes/Projects/` prefix; relative paths
+// like `../Notes/Projects/...` are deliberately ignored — context entries
+// are repo-relative by contract.
+const PROJECT_PATH_RE = /^Notes\/Projects\/([^/]+)\//;
+function inferProjectFromContext(context: string[]): string | null {
+  if (!context.length) return null;
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  for (const entry of context) {
+    const m = PROJECT_PATH_RE.exec(entry);
+    if (!m) continue;
+    const project = m[1];
+    if (!counts.has(project)) order.push(project);
+    counts.set(project, (counts.get(project) ?? 0) + 1);
+  }
+  if (counts.size === 0) return null;
+  if (counts.size === 1) return order[0]!;
+  let best = order[0]!;
+  let bestCount = counts.get(best)!;
+  for (const name of order) {
+    const c = counts.get(name)!;
+    if (c > bestCount) {
+      best = name;
+      bestCount = c;
+    }
+  }
+  return best;
+}
+
 function envAgents(): string[] {
   const raw = process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
   if (!raw) return DEFAULT_AGENTS;
@@ -220,6 +267,30 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   const dispatch = (doc.dispatch && typeof doc.dispatch === "object" ? doc.dispatch : {}) as Record<string, any>;
   const summary = (doc.summary && typeof doc.summary === "object" ? doc.summary : {}) as Record<string, any>;
 
+  // WAL-63 Phase 1: project tag — explicit field wins, else infer from
+  // context paths. Inference picks the most-frequently-cited Notes/Projects/
+  // <X>/ folder; ties broken by first-seen order.
+  const explicitProject = asNullableString(doc.project);
+  const project = explicitProject ?? inferProjectFromContext(context);
+
+  // WAL-63 Phase 1: closed lifecycle block. Tolerates missing / null /
+  // partially-filled shapes. A non-null `closed` requires `status` at
+  // minimum; everything else is best-effort.
+  const closedRaw = doc.closed;
+  let closed: TaskClosed | null = null;
+  if (closedRaw && typeof closedRaw === "object" && !Array.isArray(closedRaw)) {
+    const closedObj = closedRaw as Record<string, any>;
+    const closedStatus = asString(closedObj.status).trim();
+    if (closedStatus) {
+      closed = {
+        status: closedStatus,
+        at: asNullableString(closedObj.at),
+        by: asNullableString(closedObj.by),
+        reason: asNullableString(closedObj.reason),
+      };
+    }
+  }
+
   const envelopePath = `agents/${agent}/tasks/${bucket}/${file}`;
   const taskIdLeaf = file.replace(/\.yaml$/, "");
   // Resolution rules (Kelly's 2026-05-18 fix):
@@ -285,6 +356,8 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     to: asString(doc.to) || agent,
     parent,
     priority: asNullableString(doc.priority),
+    project,
+    closed,
     brief: asString(doc.brief),
     summary: {
       brief: asString(summary.brief),

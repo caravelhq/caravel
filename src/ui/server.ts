@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask } from "./services/multiAgentDispatch";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -657,6 +657,59 @@ self.addEventListener('fetch', e => {
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, parentId: result.parentId });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // WAL-63 Phase 1: close a task — write the user-attention `closed`
+      // block on the envelope. Refuses when the runner has `status: claimed`
+      // (worker mid-turn). Cascade walks descendants; the UI prompts before
+      // setting it true.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/close") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/close".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const statusRaw = typeof body?.status === "string" ? body.status.trim() : "";
+          const status = statusRaw === "closed" || statusRaw === "superseded" || statusRaw === "cancelled"
+            ? statusRaw
+            : undefined;
+          if (statusRaw && !status) {
+            return json({ ok: false, error: `invalid closed.status: ${statusRaw}` });
+          }
+          const result = await closeTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            status,
+            reason: typeof body?.reason === "string" ? body.reason : undefined,
+            by: typeof body?.by === "string" ? body.by : undefined,
+            cascade: Boolean(body?.cascade),
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, closed: result.closed, cascaded: result.cascaded });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // WAL-63 Phase 1: reopen a task — drop the `closed` block back to null
+      // so the task re-surfaces as an active leaf. Runner status is untouched
+      // (a previously `done, superseded` task becomes `done, closed: null`).
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/reopen") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/reopen".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await reopenTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            by: typeof body?.by === "string" ? body.by : undefined,
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, previousStatus: result.previousStatus });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

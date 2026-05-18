@@ -2826,6 +2826,41 @@
         if (typeof loadTasksTree === "function") loadTasksTree();
       }
 
+      // WAL-63 Phase 1: count active (closed: null) descendants of a task
+      // by walking the in-memory tasksCache. Used by the Close form to label
+      // the cascade prompt — the actual cascade walk happens server-side in
+      // closeTask() which uses fs-side BFS for authoritative counts. The UI
+      // figure can undercount if the cache is stale; the server number is
+      // truth. If tasksCache hasn't loaded yet (initial paint race), the
+      // function returns 0 and the prompt is skipped — Kelly can still
+      // cascade by re-opening the picker after the cache is populated.
+      function countActiveDescendants(taskId) {
+        if (!taskId || !Array.isArray(tasksCache) || tasksCache.length === 0) return 0;
+        var byParent = {};
+        for (var i = 0; i < tasksCache.length; i++) {
+          var t = tasksCache[i];
+          var p = (t.parent && t.parent !== "null") ? t.parent : null;
+          if (!p) continue;
+          (byParent[p] = byParent[p] || []).push(t);
+        }
+        var queue = [taskId];
+        var seen = {};
+        seen[taskId] = true;
+        var count = 0;
+        while (queue.length > 0) {
+          var cur = queue.shift();
+          var kids = byParent[cur] || [];
+          for (var k = 0; k < kids.length; k++) {
+            var kid = kids[k];
+            if (seen[kid.id]) continue;
+            seen[kid.id] = true;
+            if (!kid.closed || !kid.closed.status) count++;
+            queue.push(kid.id);
+          }
+        }
+        return count;
+      }
+
       // === Tasks panel right-pane viewer ====================================
       var taskPanelBody = document.getElementById("tasks-viewer-body");
       var taskPanelHeadline = document.getElementById("tasks-viewer-headline");
@@ -2864,7 +2899,9 @@
 
         var statusLower = (card.status || "").toLowerCase();
         var isTerminal = statusLower.indexOf("done") === 0 || statusLower.indexOf("failed") === 0 || statusLower === "escalated";
+        var isClaimed = card.status === "claimed";
         var isWaitingUser = card.status === "waiting:on:user";
+        var isClosed = !!(card.closed && card.closed.status);
         var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
 
         // Meta line: from → to · kind · priority · time-ago
@@ -2905,20 +2942,69 @@
           sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + '</div>', true);
         }
 
-        // 4. Action buttons row — Next, Chat, Open. Next spawns a child
-        //    task with parent pointer; original stays put. For waiting:on:
-        //    user the inline "⏳ Continue" form at the top of the card is
-        //    the equivalent affordance, so the Next button only renders
-        //    for terminal (done/failed) tasks.
+        // 3b. Closed banner — when the user-attention overlay is set, surface
+        //     who closed it and when so the viewer doesn't look stale. Reopen
+        //     is offered as the primary action below.
+        if (isCurrent && isClosed) {
+          var closedAtTxt = card.closed.at ? timeAgo(card.closed.at) : "";
+          var closedByTxt = card.closed.by ? escapeHtml(card.closed.by) : "?";
+          var closedReasonTxt = card.closed.reason ? escapeHtml(card.closed.reason) : "";
+          var closedStatusTxt = escapeHtml(card.closed.status);
+          sections +=
+            '<div class="task-panel-closed-banner">' +
+            '<span class="task-panel-closed-pill">' + closedStatusTxt + '</span>' +
+            '<span class="task-panel-closed-meta">by ' + closedByTxt + (closedAtTxt ? ' · ' + escapeHtml(closedAtTxt) : '') + '</span>' +
+            (closedReasonTxt ? '<div class="task-panel-closed-reason">' + closedReasonTxt + '</div>' : '') +
+            '</div>';
+        }
+
+        // 4. Action buttons row — Next, Close, Reopen, Chat, Open. Next spawns
+        //    a child task with parent pointer; original stays put. For
+        //    waiting:on:user the inline "⏳ Continue" form at the top of the
+        //    card is the equivalent affordance, so the Next button only
+        //    renders for terminal (done/failed) tasks. Close and Reopen
+        //    manage the user-attention `closed` overlay (WAL-63 Phase 1).
         var actions = [];
-        if (isCurrent && isTerminal) {
+        if (isCurrent && isTerminal && !isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-toggle-next="' + escapeHtml(card.id) + '" type="button">↳ Next</button>');
+        }
+        if (isCurrent && !isClaimed && !isClosed) {
+          // "Close" reads clean on done tasks; non-done closures are really
+          // cancellations — surface that in the label so Kelly doesn't think
+          // she's marking a stuck task as resolved.
+          var closeLabel = (statusLower === "done") ? "✓ Close" : "✕ Close / Cancel";
+          actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">' + closeLabel + '</button>');
+        }
+        if (isCurrent && isClosed) {
+          actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
         }
         actions.push('<button class="task-panel-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (!isCurrent) {
           actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
         }
         sections += '<div class="task-panel-card-actions">' + actions.join("") + '</div>';
+
+        // 4c. Close form — hidden until the Close button toggles it. Optional
+        //     reason textarea + cascade checkbox (only shown when active
+        //     descendants exist). Posts to /api/tasks/<id>/close.
+        if (isCurrent && !isClaimed && !isClosed) {
+          var defaultCloseStatus = (statusLower === "done") ? "closed" : "cancelled";
+          var activeDescendantCount = (typeof countActiveDescendants === "function") ? countActiveDescendants(card.id) : 0;
+          sections +=
+            '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultCloseStatus + '" hidden>' +
+            '<div class="task-panel-rework-warn">Close marks this task <strong>' + defaultCloseStatus + '</strong> from your perspective. The runner state (' + escapeHtml(card.status || "?") + ') is preserved. You can <strong>↻ Reopen</strong> later — closure is reversible.</div>' +
+            '<textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="Optional reason (e.g. \'rolled into TSK-X\', \'no longer needed\')…"></textarea>' +
+            (activeDescendantCount > 0
+              ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" />' +
+                '<span>Close family — cancel ' + activeDescendantCount + ' active descendant' + (activeDescendantCount === 1 ? '' : 's') + ' too</span></label>'
+              : '') +
+            '<div class="task-panel-unblock-actions">' +
+            '<button type="button" class="is-primary task-panel-close-submit">Confirm close</button>' +
+            '<button type="button" class="task-panel-close-cancel">Dismiss</button>' +
+            '<span class="task-panel-close-status task-panel-unblock-status"></span>' +
+            '</div>' +
+            '</div>';
+        }
 
         // 4b. Next form — hidden until the Next button toggles it. Spawns
         //     a child task with parent pointer; the original done/failed
@@ -3483,6 +3569,10 @@
         var rowClass = "tasks-tree-row";
         if (t.id === currentTaskId) rowClass += " is-active";
         if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+        // WAL-63 Phase 1: greyed-out cue for closed tasks. Phase 4 will add
+        // a per-project "Hide closed" toggle; for now closed rows still
+        // render in the tree but visibly recede.
+        if (t.closed && t.closed.status) rowClass += " is-closed";
         var indent = '<span class="tasks-tree-indent" style="width:' + (depth * 14) + 'px"></span>';
         var chevron = hasChildren
           ? '<button class="tasks-tree-chevron' + (expanded ? ' is-expanded' : '') + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? 'Collapse' : 'Expand') + '">' + (expanded ? '▾' : '▸') + '</button>'
@@ -3791,6 +3881,90 @@
         }
       }
 
+      // WAL-63 Phase 1: submit a Close request. Reads the optional reason
+      // textarea and cascade checkbox from the inline close form, posts to
+      // /api/tasks/<id>/close, refreshes the picker + viewer on success.
+      async function submitClose(wrapper) {
+        if (!wrapper) return;
+        var agent = wrapper.getAttribute("data-close-agent");
+        var taskId = wrapper.getAttribute("data-close-id");
+        var defaultStatus = wrapper.getAttribute("data-close-default-status") || "closed";
+        var input = wrapper.querySelector(".task-panel-close-input");
+        var cascadeBox = wrapper.querySelector(".task-panel-close-cascade-checkbox");
+        var btn = wrapper.querySelector(".task-panel-close-submit");
+        var statusEl = wrapper.querySelector(".task-panel-close-status");
+        if (!agent || !taskId) return;
+        var reason = input ? (input.value || "").trim() : "";
+        var cascade = !!(cascadeBox && cascadeBox.checked);
+        if (btn) btn.disabled = true;
+        if (statusEl) {
+          statusEl.textContent = "Closing…";
+          statusEl.className = "task-panel-close-status task-panel-unblock-status";
+        }
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent, reason: reason, status: defaultStatus, cascade: cascade }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            if (statusEl) {
+              statusEl.textContent = "Error: " + (data.error || "unknown");
+              statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+            }
+            if (btn) btn.disabled = false;
+            return;
+          }
+          var cascadedCount = (data.cascaded && data.cascaded.length) || 0;
+          if (statusEl) {
+            statusEl.textContent = cascadedCount > 0
+              ? "Closed (cascade: " + cascadedCount + " task" + (cascadedCount === 1 ? "" : "s") + ")."
+              : "Closed.";
+            statusEl.className = "task-panel-close-status task-panel-unblock-status is-ok";
+          }
+          openTaskPanel(taskId); // refresh viewer with new closed state
+          fetchTasks();
+          fetchSummary();
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (err && err.message || err);
+            statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      // WAL-63 Phase 1: reopen — drops the closed block back to null. No
+      // confirmation; the action is fully reversible. The viewer refresh
+      // re-renders without the banner, and the Next button becomes available.
+      async function submitReopen(btn) {
+        if (!btn) return;
+        var agent = btn.getAttribute("data-reopen-agent");
+        var taskId = btn.getAttribute("data-reopen-task");
+        if (!agent || !taskId) return;
+        btn.disabled = true;
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/reopen", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            console.warn("Reopen failed:", data.error);
+            btn.disabled = false;
+            return;
+          }
+          openTaskPanel(taskId);
+          fetchTasks();
+          fetchSummary();
+        } catch (err) {
+          console.warn("Reopen error:", err);
+          btn.disabled = false;
+        }
+      }
+
       // (Removed: spawnFollowUp() — the old "↳ Next" button that opened the
       // full new-task form. Replaced by the unified "↳ Next" affordance on
       // the task card itself, which spawns a child via /api/tasks/<id>/next
@@ -3825,6 +3999,41 @@
                 nextForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
               }
             }
+            return;
+          }
+          // WAL-63 Phase 1: Close / Reopen handlers.
+          var toggleCloseBtn = ev.target.closest("[data-toggle-close]");
+          if (toggleCloseBtn) {
+            ev.preventDefault();
+            var closeCard = toggleCloseBtn.closest(".task-panel-card");
+            if (closeCard) {
+              var closeForm = closeCard.querySelector(".task-panel-close-form");
+              if (closeForm) {
+                closeForm.hidden = false;
+                var closeInput = closeForm.querySelector(".task-panel-close-input");
+                if (closeInput) closeInput.focus();
+                closeForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              }
+            }
+            return;
+          }
+          var closeSubmitBtn = ev.target.closest(".task-panel-close-submit");
+          if (closeSubmitBtn) {
+            ev.preventDefault();
+            submitClose(closeSubmitBtn.closest(".task-panel-close-form"));
+            return;
+          }
+          var closeCancelBtn = ev.target.closest(".task-panel-close-cancel");
+          if (closeCancelBtn) {
+            ev.preventDefault();
+            var dismissForm = closeCancelBtn.closest(".task-panel-close-form");
+            if (dismissForm) dismissForm.hidden = true;
+            return;
+          }
+          var reopenBtn = ev.target.closest("[data-reopen-task]");
+          if (reopenBtn) {
+            ev.preventDefault();
+            submitReopen(reopenBtn);
             return;
           }
           var openTaskBtn = ev.target.closest("[data-open-task]");

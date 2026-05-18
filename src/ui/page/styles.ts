@@ -2485,6 +2485,19 @@ export const pageStyles = String.raw`    :root {
       border-left: 2px solid #f0c674;
       padding-left: 6px;
     }
+    /* WAL-63 Phase 1: closed tasks recede in the picker. The headline, ids,
+       and status pill all fade so the user-attention overlay reads at a
+       glance without an extra column. Hover and active highlights still
+       override so the row stays interactive. */
+    .tasks-tree-row.is-closed {
+      opacity: 0.45;
+    }
+    .tasks-tree-row.is-closed .tasks-tree-headline {
+      text-decoration: line-through;
+      text-decoration-color: #5a7a9a99;
+    }
+    .tasks-tree-row.is-closed:hover { opacity: 0.75; }
+    .tasks-tree-row.is-closed.is-active { opacity: 1; }
     .tasks-tree-indent {
       display: inline-block;
       flex-shrink: 0;
@@ -3077,6 +3090,74 @@ export const pageStyles = String.raw`    :root {
     }
     .task-panel-rework-warn strong {
       color: #ffe7b8;
+    }
+    /* WAL-63 Phase 1: closed-task banner — sits between Result and the
+       action row. Surfaces the closed.status + by + reason at a glance so
+       the Reopen affordance reads as the natural escape hatch. */
+    .task-panel-closed-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      padding: 8px 12px;
+      border: 1px solid #ffffff1f;
+      border-left: 3px solid #8aa0bd;
+      border-radius: 8px;
+      background: #0c1624a6;
+      color: #b8cae3;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-closed-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #2c3a55;
+      color: #cfe3ff;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .task-panel-closed-meta {
+      color: #8a96a8;
+    }
+    .task-panel-closed-reason {
+      flex-basis: 100%;
+      color: #cfe3ff;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    /* WAL-63 Phase 1: close form — borrows the rework warning chrome (same
+       collapse/expand toggle pattern as Next) but reuses unblock-input
+       styling for the textarea + actions row. */
+    .task-panel-close-form {
+      /* inherits .task-panel-rework layout (set in markup) — only overrides
+         that diverge from the rework variant live here. */
+    }
+    .task-panel-close-cascade {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #f0c674;
+      cursor: pointer;
+    }
+    .task-panel-close-cascade input[type="checkbox"] {
+      accent-color: #f0c674;
+    }
+    .task-panel-close-cancel {
+      border: 1px solid #ffffff2a;
+      background: transparent;
+      color: #8aa0bd;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-close-cancel:hover {
+      background: #ffffff0d;
+      color: #cfe3ff;
     }
     .task-panel-unblock-hint {
       font-size: 12px;
