@@ -25,6 +25,17 @@ function renderValue(value: unknown, depth: number): string {
     }
     return `<span class="yaml-str">${escapeHtml(value)}</span>`;
   }
+  // js-yaml's load() auto-parses ISO-8601 timestamp strings into JavaScript
+  // Date instances (YAML 1.1 timestamp tag). Without this branch, Date
+  // objects fall through to renderObject (they pass typeof === "object"
+  // and !Array.isArray) where Object.entries(date) returns [], so every
+  // timestamp in the envelope renders as `{}`. Restore the ISO string.
+  if (value instanceof Date) {
+    if (Number.isFinite(value.getTime())) {
+      return `<span class="yaml-str">${escapeHtml(value.toISOString())}</span>`;
+    }
+    return '<span class="yaml-null">invalid date</span>';
+  }
   if (Array.isArray(value)) {
     if (value.length === 0) return '<span class="yaml-empty">[]</span>';
     const items = value

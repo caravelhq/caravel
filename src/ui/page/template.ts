@@ -380,7 +380,7 @@ ${pageStyles}
               </label>
               <label class="multi-agent-new-field">
                 <span>From</span>
-                <input id="multi-agent-new-from" type="text" value="kelly" />
+                <input id="multi-agent-new-from" type="text" value="user" />
               </label>
             </div>
             <label class="multi-agent-new-block">

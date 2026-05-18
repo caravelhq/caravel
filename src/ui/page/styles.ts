@@ -2497,7 +2497,10 @@ export const pageStyles = String.raw`    :root {
       text-decoration-color: #5a7a9a99;
     }
     .tasks-tree-row.is-closed:hover { opacity: 0.75; }
-    .tasks-tree-row.is-closed.is-active { opacity: 1; }
+    /* Selected-closed rows: keep the muted look so the user-attention
+       overlay still reads when a closed task is open in the viewer.
+       The .is-active border + background still apply for affordance. */
+    .tasks-tree-row.is-closed.is-active { opacity: 0.55; }
     .tasks-tree-indent {
       display: inline-block;
       flex-shrink: 0;

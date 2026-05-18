@@ -2972,7 +2972,7 @@
           // "Close" reads clean on done tasks; non-done closures are really
           // cancellations — surface that in the label so Kelly doesn't think
           // she's marking a stuck task as resolved.
-          var closeLabel = (statusLower === "done") ? "✓ Close" : "✕ Close / Cancel";
+          var closeLabel = (statusLower === "done") ? "✓ Close" : "✕ Close";
           actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">' + closeLabel + '</button>');
         }
         if (isCurrent && isClosed) {
@@ -4199,7 +4199,7 @@
           var to = (document.getElementById("multi-agent-new-to") || {}).value || "";
           var kind = (document.getElementById("multi-agent-new-kind") || {}).value || "";
           var priority = (document.getElementById("multi-agent-new-priority") || {}).value || "";
-          var from = ((document.getElementById("multi-agent-new-from") || {}).value || "kelly").trim() || "kelly";
+          var from = ((document.getElementById("multi-agent-new-from") || {}).value || "user").trim() || "user";
           var brief = ((document.getElementById("multi-agent-new-brief") || {}).value || "").trim();
           var output = ((document.getElementById("multi-agent-new-output") || {}).value || "").trim();
           var contextRaw = ((document.getElementById("multi-agent-new-context") || {}).value || "").trim();

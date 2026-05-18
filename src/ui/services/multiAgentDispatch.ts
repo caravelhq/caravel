@@ -116,7 +116,7 @@ async function appendJournal(agent: string, entry: Record<string, unknown>): Pro
 
 export async function createTask(input: CreateTaskInput): Promise<CreateTaskResult> {
   const to = (input.to ?? "").trim();
-  const from = (input.from ?? "kelly").trim() || "kelly";
+  const from = (input.from ?? "user").trim() || "user";
   const kind = (input.kind ?? "other").trim();
   const priority = (input.priority ?? "P2").trim();
   const brief = (input.brief ?? "").trim();
@@ -252,7 +252,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 //   closed:
 //     status: closed | superseded | cancelled
 //     at: <ISO-8601>
-//     by: kelly | alice | runner | auto-on-next | auto-backfill | auto-backfill-archive
+//     by: user | alice | runner | auto-on-next | auto-backfill | auto-backfill-archive
 //     reason: "free-form note"
 //
 // Set to `null` (or omitted) means active. The dispatch writers below are the
@@ -329,7 +329,7 @@ interface CloseTaskInput {
   taskId: string;
   status?: ClosedStatus; // explicit override; otherwise inferred from runner status
   reason?: string;
-  by?: string;           // default "kelly"
+  by?: string;           // default "user"
   cascade?: boolean;     // close all non-closed descendants too
 }
 
@@ -387,7 +387,7 @@ export async function closeTask(input: CloseTaskInput): Promise<CloseTaskResult>
   const closed: ClosedBlock = {
     status: inferredStatus,
     at: now,
-    by: (input.by ?? "kelly").trim() || "kelly",
+    by: (input.by ?? "user").trim() || "user",
     reason: (input.reason ?? "").trim(),
   };
 
@@ -499,7 +499,7 @@ export async function reopenTask(input: ReopenTaskInput): Promise<ReopenTaskResu
   }
 
   const now = new Date().toISOString();
-  const by = (input.by ?? "kelly").trim() || "kelly";
+  const by = (input.by ?? "user").trim() || "user";
   const runnerStatus = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
 
   let next = setClosedField(yaml, null);
@@ -799,7 +799,7 @@ export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskR
   }
 
   let next = yaml;
-  next = appendRevisitEntry(next, { ts: now, by: "kelly", instruction });
+  next = appendRevisitEntry(next, { ts: now, by: "user", instruction });
   next = setStatus(next, "open");
   next = setUpdated(next, now);
   // Clear the lease — the prior run's claim must not carry forward.
@@ -809,7 +809,7 @@ export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskR
     ts: now,
     from: currentStatus || sourceBucket,
     to: "open",
-    by: "kelly",
+    by: "user",
     note: "revisit via dashboard",
   });
 
@@ -826,7 +826,7 @@ export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskR
     id: taskId,
     status: "open",
     transition: `${currentStatus || sourceBucket}→open`,
-    by: "kelly",
+    by: "user",
     note: "revisit via dashboard",
     revisit_count: existingCount + 1,
   });
@@ -876,7 +876,7 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
   let next = yaml;
   next = appendToBrief(
     next,
-    `\n--- kelly response (${now}) ---\n${response}\n`
+    `\n--- user response (${now}) ---\n${response}\n`
   );
   next = setStatus(next, "open");
   next = setUpdated(next, now);
@@ -884,7 +884,7 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
     ts: now,
     from: "waiting:on:user",
     to: "open",
-    by: "kelly",
+    by: "user",
     note: "unblocked via dashboard",
   });
 
@@ -910,7 +910,7 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
     id: taskId,
     status: "open",
     transition: "waiting:on:user→open",
-    by: "kelly",
+    by: "user",
     note: "unblocked via dashboard",
   });
 
@@ -1053,10 +1053,10 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `created: ${now}`,
     `updated: ${now}`,
     ``,
-    `from: kelly`,
+    `from: user`,
     `to: ${agent}`,
     `parent: ${taskId}`,
-    `reply_to: kelly`,
+    `reply_to: user`,
     ``,
     `kind: ${kind}`,
     `priority: ${priority}`,
@@ -1082,7 +1082,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `  - ts: ${now}`,
     `    from: null`,
     `    to: open`,
-    `    by: kelly`,
+    `    by: user`,
     `    note: ${yamlEscape(`spawned as ${source} child of ${taskId}`)}`,
     ``,
     `summary:`,
@@ -1104,7 +1104,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     ts: now,
     from: parentStatus || parentBucket,
     to: parentStatus || parentBucket,
-    by: "kelly",
+    by: "user",
     note: `spawned ${source} child ${childId}`,
   });
   // Bump updated so the picker re-sorts the parent.
@@ -1128,7 +1128,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     id: childId,
     status: "open",
     kind,
-    from: "kelly",
+    from: "user",
     to: agent,
     parent: taskId,
     summary: `${source} child of ${taskId}`,
