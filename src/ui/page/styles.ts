@@ -2370,6 +2370,142 @@ export const pageStyles = String.raw`    :root {
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
     }
+    /* WAL-63 Phase 2: top-level Tasks view tabs (Current / Projects / All
+       tasks). Sits above the existing status-filter chip row. Active tab
+       carries a brighter underline so the structural split between view
+       (which list) and filter (what's in this list) reads at a glance. */
+    .tasks-view-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 10px 0;
+      border-bottom: 1px solid #ffffff10;
+    }
+    .tasks-view-tab {
+      border: none;
+      background: transparent;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      padding: 6px 14px 8px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 120ms, border-color 120ms;
+    }
+    .tasks-view-tab:hover { color: #cfe3ff; }
+    .tasks-view-tab.is-active {
+      color: #ffe7b8;
+      border-bottom-color: #ffd07a;
+    }
+    /* Current view: project group cards. Each project is a collapsible
+       section; rows inside carry status colour dots so the inbox reads at a
+       glance. Grouping by project replaces the flat picker for the Current
+       inbox; the All-tasks view still uses the legacy tree. */
+    .tasks-current {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 10px 12px;
+      overflow-y: auto;
+    }
+    .tasks-current-empty {
+      padding: 24px;
+      text-align: center;
+      color: #5a7a9a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .tasks-current-group {
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      background: #0c1624a6;
+      overflow: hidden;
+    }
+    .tasks-current-group-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #14223680;
+      border-bottom: 1px solid #ffffff12;
+      cursor: pointer;
+      user-select: none;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #cfe3ff;
+    }
+    .tasks-current-group-name {
+      flex: 1;
+      letter-spacing: 0.04em;
+    }
+    .tasks-current-group-count {
+      color: #8aa0bd;
+      font-size: 10px;
+    }
+    .tasks-current-group-chevron {
+      color: #8aa0bd;
+      font-size: 11px;
+    }
+    .tasks-current-group.is-collapsed .tasks-current-group-body { display: none; }
+    .tasks-current-group.is-collapsed .tasks-current-group-chevron::before { content: "▸"; }
+    .tasks-current-group:not(.is-collapsed) .tasks-current-group-chevron::before { content: "▾"; }
+    .tasks-current-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #ffffff08;
+      transition: background 120ms;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+    }
+    .tasks-current-row:last-child { border-bottom: none; }
+    .tasks-current-row:hover { background: #ffffff0a; }
+    .tasks-current-row.is-active {
+      background: #1c3a644d;
+      border-left: 2px solid #9be7ff;
+      padding-left: 10px;
+    }
+    .tasks-current-row-dot {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5a7a9a;
+    }
+    .tasks-current-row.status-done .tasks-current-row-dot { background: #6fcf97; }
+    .tasks-current-row.status-failed .tasks-current-row-dot { background: #eb5757; }
+    .tasks-current-row.status-waiting-user .tasks-current-row-dot { background: #f0c674; }
+    .tasks-current-row.status-waiting-task .tasks-current-row-dot { background: #f2994a; }
+    .tasks-current-row.status-waiting-limits .tasks-current-row-dot { background: #e0e0e0; }
+    .tasks-current-row.status-waiting-other .tasks-current-row-dot { background: #b0b0b0; }
+    .tasks-current-row.status-claimed .tasks-current-row-dot { background: #56ccf2; }
+    .tasks-current-row.status-open .tasks-current-row-dot { background: #4a5668; }
+    .tasks-current-row-title {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .tasks-current-row-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: #8aa0bd;
+      font-size: 10px;
+    }
+    /* Projects placeholder — Phase 4 will fill in real cards. */
+    .tasks-projects-placeholder {
+      padding: 32px 24px;
+      text-align: center;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .tasks-projects-placeholder strong { color: #cfe3ff; }
     .tasks-toolbar {
       display: flex;
       align-items: center;

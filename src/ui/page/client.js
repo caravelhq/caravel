@@ -2770,6 +2770,7 @@
       // Tasks-panel DOM refs.
       var tasksTree = document.getElementById("tasks-tree");
       var tasksFilterChips = document.getElementById("tasks-filter-chips");
+      var tasksViewTabs = document.getElementById("tasks-view-tabs");
       var tasksRefreshBtn = document.getElementById("tasks-refresh");
       var tasksNewBtn = document.getElementById("tasks-new-btn");
       var tasksPickerToggle = document.getElementById("tasks-picker-toggle");
@@ -2783,6 +2784,14 @@
       var newStatus = document.getElementById("multi-agent-new-status");
 
       var tasksFilter = "all";
+      // WAL-63 Phase 2: view selector — "current" (active leaves grouped by
+      // project, default landing), "projects" (Phase 4 placeholder), "all"
+      // (legacy flat picker with status filters). Status filter chips only
+      // apply to the "all" view.
+      var tasksView = "current";
+      // Per-project collapse state for the Current view. Default open; click
+      // the group head to fold a project section away.
+      var currentCollapsed = {};
       var tasksLoaded = false;
       var tasksCache = [];
       // Set of parent task IDs whose children are expanded in the picker.
@@ -3400,9 +3409,10 @@
           expandAncestors(taskId);
           if (typeof renderTaskPicker === "function") renderTaskPicker();
         }
-        // Update active row in picker.
+        // Update active row in picker (both legacy tree rows and the new
+        // Current-view rows).
         if (tasksTree) {
-          var rows = tasksTree.querySelectorAll(".tasks-tree-row");
+          var rows = tasksTree.querySelectorAll(".tasks-tree-row, .tasks-current-row");
           for (var r = 0; r < rows.length; r++) {
             rows[r].classList.toggle("is-active", rows[r].getAttribute("data-task-id") === taskId);
           }
@@ -3669,6 +3679,15 @@
 
       function renderTaskPicker() {
         if (!tasksTree) return;
+        // WAL-63 Phase 2: dispatch by view. Filter chips only render results
+        // in the "all" view; current and projects compose their own lists.
+        if (tasksFilterChips) tasksFilterChips.hidden = (tasksView !== "all");
+        if (tasksView === "current") return renderCurrentView();
+        if (tasksView === "projects") return renderProjectsView();
+        return renderAllTasksView();
+      }
+
+      function renderAllTasksView() {
         var filtered = tasksCache.filter(passesFilter);
         if (filtered.length === 0) {
           tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
@@ -3699,6 +3718,155 @@
         tasksTree.innerHTML = html;
       }
 
+      // WAL-63 Phase 2: Current view — active leaves only, grouped by project.
+      //
+      // Active leaf definition (per the lifecycle plan):
+      //   - closed: null (not closed)
+      //   - AND no descendant where closed: null (the leaf of every workstream)
+      //
+      // Sort: within each project, by `updated` desc. Projects sorted by
+      // most-recently-touched leaf first. "Unassigned" (project: null) sinks
+      // to the bottom so tagged workstreams take prominence.
+      function renderCurrentView() {
+        if (!tasksCache.length) {
+          tasksTree.innerHTML = '<div class="tasks-current-empty">No tasks yet. Click <strong>+ New</strong> to create one.</div>';
+          return;
+        }
+        // Build parent → children index so we can detect active descendants.
+        var byParent = {};
+        for (var i = 0; i < tasksCache.length; i++) {
+          var t = tasksCache[i];
+          var p = (t.parent && t.parent !== "null") ? t.parent : null;
+          if (!p) continue;
+          (byParent[p] = byParent[p] || []).push(t);
+        }
+        function isActive(task) { return !(task && task.closed && task.closed.status); }
+        function hasActiveDescendant(id, seen) {
+          seen = seen || {};
+          if (seen[id]) return false;
+          seen[id] = true;
+          var kids = byParent[id] || [];
+          for (var k = 0; k < kids.length; k++) {
+            if (isActive(kids[k])) return true;
+            if (hasActiveDescendant(kids[k].id, seen)) return true;
+          }
+          return false;
+        }
+        var leaves = [];
+        for (var j = 0; j < tasksCache.length; j++) {
+          var task = tasksCache[j];
+          if (!isActive(task)) continue;
+          if (hasActiveDescendant(task.id)) continue;
+          leaves.push(task);
+        }
+        if (leaves.length === 0) {
+          tasksTree.innerHTML = '<div class="tasks-current-empty">No active leaves. Inbox zero. ✨</div>';
+          return;
+        }
+
+        // Group by project.
+        var groups = {};
+        var order = [];
+        var UNASSIGNED = "__unassigned__";
+        for (var l = 0; l < leaves.length; l++) {
+          var leaf = leaves[l];
+          var key = leaf.project || UNASSIGNED;
+          if (!groups[key]) { groups[key] = []; order.push(key); }
+          groups[key].push(leaf);
+        }
+        // Within group: sort by updated desc.
+        Object.keys(groups).forEach(function (g) {
+          groups[g].sort(function (a, b) {
+            return (Date.parse(b.updated || 0) || 0) - (Date.parse(a.updated || 0) || 0);
+          });
+        });
+        // Order groups: most-recently-touched group first; unassigned last.
+        order.sort(function (a, b) {
+          if (a === UNASSIGNED && b !== UNASSIGNED) return 1;
+          if (b === UNASSIGNED && a !== UNASSIGNED) return -1;
+          var ta = groups[a][0] ? Date.parse(groups[a][0].updated || 0) || 0 : 0;
+          var tb = groups[b][0] ? Date.parse(groups[b][0].updated || 0) || 0 : 0;
+          return tb - ta;
+        });
+
+        var html = '<div class="tasks-current">';
+        for (var o = 0; o < order.length; o++) {
+          var groupKey = order[o];
+          var rows = groups[groupKey];
+          var displayName = groupKey === UNASSIGNED ? "Unassigned" : groupKey;
+          var collapsed = !!currentCollapsed[groupKey];
+          html += '<div class="tasks-current-group' + (collapsed ? ' is-collapsed' : '') + '" data-project-key="' + escapeHtml(groupKey) + '">';
+          html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
+          html += '<span class="tasks-current-group-chevron"></span>';
+          html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + '</span>';
+          html += '<span class="tasks-current-group-count">' + rows.length + '</span>';
+          html += '</div>';
+          html += '<div class="tasks-current-group-body">';
+          for (var r = 0; r < rows.length; r++) {
+            html += renderCurrentRow(rows[r]);
+          }
+          html += '</div></div>';
+        }
+        html += '</div>';
+        tasksTree.innerHTML = html;
+      }
+
+      // Map status string → a CSS class that drives the row's status dot
+      // colour. Mirrors the legend in the Phase 2 plan (1. Current view).
+      function currentStatusClass(status) {
+        var s = (status || "").toLowerCase();
+        if (s === "done") return "status-done";
+        if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
+        if (s === "waiting:on:user") return "status-waiting-user";
+        if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
+        if (s === "waiting:on:limits") return "status-waiting-limits";
+        if (s.indexOf("waiting:") === 0) return "status-waiting-other";
+        if (s === "claimed") return "status-claimed";
+        return "status-open";
+      }
+
+      function renderCurrentRow(task) {
+        var statusClass = currentStatusClass(task.status);
+        var headline = task.headline || (task.summary && task.summary.brief) || task.brief || "(no headline)";
+        var meta = [];
+        meta.push(escapeHtml(task.agent || task.to || "?"));
+        meta.push(escapeHtml(shortenStatusLabel(task.status || "?")));
+        if (task.updated) meta.push(escapeHtml(timeAgo(task.updated)));
+        var rowClass = "tasks-current-row " + statusClass;
+        if (task.id === currentTaskId) rowClass += " is-active";
+        return (
+          '<div class="' + rowClass + '" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' +
+          '<span class="tasks-current-row-dot" aria-hidden="true"></span>' +
+          '<span class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 80)) + '</span>' +
+          '<span class="tasks-current-row-meta">' + meta.join(' · ') + '</span>' +
+          '</div>'
+        );
+      }
+
+      // WAL-63 Phase 2: Projects placeholder. The full project-card grid
+      // with roll-up counts lands in Phase 4. For now the tab exists so
+      // Kelly knows the surface is coming and so the All-tasks tab isn't
+      // the only non-Current option.
+      function renderProjectsView() {
+        var projectKeys = {};
+        for (var i = 0; i < tasksCache.length; i++) {
+          var p = tasksCache[i].project;
+          if (p) projectKeys[p] = (projectKeys[p] || 0) + 1;
+        }
+        var names = Object.keys(projectKeys).sort();
+        var listing = names.length === 0
+          ? '<em>No project-tagged tasks yet.</em>'
+          : '<ul>' + names.map(function (n) {
+              return '<li><strong>' + escapeHtml(n) + '</strong> · ' + projectKeys[n] + ' task' + (projectKeys[n] === 1 ? '' : 's') + '</li>';
+            }).join("") + '</ul>';
+        tasksTree.innerHTML =
+          '<div class="tasks-projects-placeholder">' +
+          'Project cards with roll-up counts (active · done-not-closed · stuck · closed) ' +
+          'land in <strong>Phase 4</strong>. Detected projects:' +
+          listing +
+          '</div>';
+      }
+
       async function loadTasksTree() {
         if (!tasksTree) return;
         tasksTree.innerHTML = '<div class="tasks-loading">Loading…</div>';
@@ -3719,6 +3887,20 @@
       // Picker click handlers.
       if (tasksTree) {
         tasksTree.addEventListener("click", function (ev) {
+          // WAL-63 Phase 2: project-group head toggles collapsed state in
+          // the Current view. Handled before the row hit-test so clicking
+          // the head doesn't open a task.
+          var groupHead = ev.target.closest("[data-toggle-group]");
+          if (groupHead) {
+            ev.preventDefault();
+            var gk = groupHead.getAttribute("data-toggle-group");
+            if (gk) {
+              if (currentCollapsed[gk]) delete currentCollapsed[gk];
+              else currentCollapsed[gk] = true;
+              renderTaskPicker();
+            }
+            return;
+          }
           // Chevron toggles parent expansion without opening the row.
           var chevron = ev.target.closest("[data-toggle-expand]");
           if (chevron) {
@@ -3732,7 +3914,7 @@
             }
             return;
           }
-          var row = ev.target.closest(".tasks-tree-row");
+          var row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
           if (!row) return;
           var taskId = row.getAttribute("data-task-id");
           if (taskId) {
@@ -3743,11 +3925,29 @@
         });
         tasksTree.addEventListener("keydown", function (ev) {
           if (ev.key !== "Enter" && ev.key !== " ") return;
-          var row = ev.target.closest(".tasks-tree-row");
+          var row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
           if (!row) return;
           ev.preventDefault();
           var taskId = row.getAttribute("data-task-id");
           if (taskId) openTaskPanel(taskId);
+        });
+      }
+
+      // WAL-63 Phase 2: view-tabs (Current / Projects / All tasks).
+      if (tasksViewTabs) {
+        tasksViewTabs.addEventListener("click", function (ev) {
+          var btn = ev.target.closest(".tasks-view-tab");
+          if (!btn) return;
+          var v = btn.getAttribute("data-view");
+          if (!v || v === tasksView) return;
+          tasksView = v;
+          var tabs = tasksViewTabs.querySelectorAll(".tasks-view-tab");
+          for (var i = 0; i < tabs.length; i++) {
+            var isActive = tabs[i] === btn;
+            tabs[i].classList.toggle("is-active", isActive);
+            tabs[i].setAttribute("aria-selected", isActive ? "true" : "false");
+          }
+          renderTaskPicker();
         });
       }
 

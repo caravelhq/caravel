@@ -292,6 +292,15 @@ ${pageStyles}
       </div>
     </div>
     <div id="tasks-panel" class="tasks-panel" hidden>
+      <!-- WAL-63 Phase 2: view tabs replacing the single Tasks pane. Current
+           is the inbox of active leaves and the default landing view.
+           Projects is a placeholder for Phase 4. All tasks is the legacy
+           flat picker with status filter chips intact. -->
+      <div class="tasks-view-tabs" id="tasks-view-tabs" role="tablist" aria-label="Tasks view">
+        <button type="button" class="tasks-view-tab is-active" data-view="current" role="tab" aria-selected="true">Current</button>
+        <button type="button" class="tasks-view-tab" data-view="projects" role="tab" aria-selected="false">Projects</button>
+        <button type="button" class="tasks-view-tab" data-view="all" role="tab" aria-selected="false">All tasks</button>
+      </div>
       <div class="tasks-toolbar">
         <div class="tasks-toolbar-left">
           <button id="tasks-picker-toggle" class="tasks-toolbar-btn tasks-picker-toggle" type="button" aria-expanded="true" title="Show task list">Tasks</button>
