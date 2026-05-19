@@ -3655,6 +3655,9 @@
         // a per-project "Hide closed" toggle; for now closed rows still
         // render in the tree but visibly recede.
         if (t.closed && t.closed.status) rowClass += " is-closed";
+        // Kelly 2026-05-20: top-level parent rows read with a lighter
+        // background so the family hierarchy is easier to scan.
+        if (depth === 0) rowClass += " is-root";
         var indent = '<span class="tasks-tree-indent" style="width:' + (depth * 14) + 'px"></span>';
         var chevron = hasChildren
           ? '<button class="tasks-tree-chevron' + (expanded ? ' is-expanded' : '') + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? 'Collapse' : 'Expand') + '">' + (expanded ? '▾' : '▸') + '</button>'
@@ -3803,10 +3806,13 @@
           tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
           return;
         }
-        // Surface waiting:on:user roots in a dedicated section at the top so
-        // Kelly sees parked tasks before everything else.
+        // Surface waiting:on:user as a jump-list at the top so Kelly sees
+        // parked tasks before scrolling. Kelly's 2026-05-20 note: same
+        // tasks should ALSO appear in the project tree below so it's clear
+        // where they sit in the workstream. So the top section is a
+        // shortcut, not a filter — `rest` is the full filtered set, not
+        // `filtered minus blocked`.
         var blocked = filtered.filter(function (t) { return t.status === "waiting:on:user"; });
-        var rest = filtered.filter(function (t) { return t.status !== "waiting:on:user"; });
 
         var html = "";
         if (blocked.length > 0 && tasksFilter !== "waiting") {
@@ -3817,14 +3823,52 @@
             renderTreeBranch(blockedTree, blockedTree.roots[b], 0, blockedOut);
           }
           html += blockedOut.join("");
-          html += '<div class="tasks-tree-section">Other tasks</div>';
         }
-        var tree = buildTaskTree(rest);
-        var out = [];
-        for (var k = 0; k < tree.roots.length; k++) {
-          renderTreeBranch(tree, tree.roots[k], 0, out);
+
+        // Group by project for the main tree. Same shape as the Current
+        // view's grouping: collapsible header per project, "Unassigned"
+        // sinks to the bottom, projects sorted by most-recently-touched
+        // task within them.
+        var groups = {};
+        for (var i = 0; i < filtered.length; i++) {
+          var key = filtered[i].project || "__unassigned";
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(filtered[i]);
         }
-        html += out.join("");
+        var projectKeys = Object.keys(groups);
+        projectKeys.sort(function (a, b) {
+          if (a === "__unassigned" && b !== "__unassigned") return 1;
+          if (b === "__unassigned" && a !== "__unassigned") return -1;
+          var aLatest = groups[a].reduce(function (m, t) { return Math.max(m, Date.parse(t.updated || 0) || 0); }, 0);
+          var bLatest = groups[b].reduce(function (m, t) { return Math.max(m, Date.parse(t.updated || 0) || 0); }, 0);
+          return bLatest - aLatest;
+        });
+
+        if (blocked.length > 0 && tasksFilter !== "waiting") {
+          html += '<div class="tasks-tree-section">All tasks (' + filtered.length + ')</div>';
+        }
+
+        for (var pk = 0; pk < projectKeys.length; pk++) {
+          var groupKey = projectKeys[pk];
+          var rows = groups[groupKey];
+          var displayName = (groupKey === "__unassigned") ? "Unassigned" : groupKey;
+          var collapsed = !!currentCollapsed[groupKey];
+          html += '<div class="tasks-current-group' + (collapsed ? ' is-collapsed' : '') + '" data-project-key="' + escapeHtml(groupKey) + '">';
+          html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
+          html += '<span class="tasks-current-group-chevron"></span>';
+          html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + '</span>';
+          html += '<span class="tasks-current-group-count">' + rows.length + '</span>';
+          html += '</div>';
+          html += '<div class="tasks-current-group-body">';
+          var tree = buildTaskTree(rows);
+          var out = [];
+          for (var k = 0; k < tree.roots.length; k++) {
+            renderTreeBranch(tree, tree.roots[k], 0, out);
+          }
+          html += out.join("");
+          html += '</div></div>';
+        }
+
         tasksTree.innerHTML = html;
       }
 
@@ -3944,11 +3988,20 @@
         if (task.updated) meta.push(escapeHtml(timeAgo(task.updated)));
         var rowClass = "tasks-current-row " + statusClass;
         if (task.id === currentTaskId) rowClass += " is-active";
+        // Two-line shape (Kelly 2026-05-20):
+        //   row 1: status dot + headline
+        //   row 2: task id (left) · agent | status | when (right)
+        // The dot stays in the gutter so colour-coding tracks at a glance.
         return (
           '<div class="' + rowClass + '" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' +
           '<span class="tasks-current-row-dot" aria-hidden="true"></span>' +
-          '<span class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 80)) + '</span>' +
+          '<div class="tasks-current-row-body">' +
+          '<div class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 96)) + '</div>' +
+          '<div class="tasks-current-row-sub">' +
+          '<span class="tasks-current-row-id">' + escapeHtml(task.id) + '</span>' +
           '<span class="tasks-current-row-meta">' + meta.join(' · ') + '</span>' +
+          '</div>' +
+          '</div>' +
           '</div>'
         );
       }

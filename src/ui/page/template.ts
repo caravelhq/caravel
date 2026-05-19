@@ -300,7 +300,7 @@ ${pageStyles}
       <div class="tasks-view-tabs" id="tasks-view-tabs" role="tablist" aria-label="Tasks view">
         <button type="button" class="tasks-view-tab is-active" data-view="current" role="tab" aria-selected="true">Current</button>
         <button type="button" class="tasks-view-tab" data-view="projects" role="tab" aria-selected="false">Projects</button>
-        <button type="button" class="tasks-view-tab" data-view="all" role="tab" aria-selected="false">All tasks</button>
+        <button type="button" class="tasks-view-tab" data-view="all" role="tab" aria-selected="false">All</button>
       </div>
       <div class="tasks-toolbar">
         <div class="tasks-toolbar-left">

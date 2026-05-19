@@ -2385,10 +2385,14 @@ export const pageStyles = String.raw`    :root {
     }
 
     /* ── Files panel ── */
+    /* Width matches the Tasks panel (Kelly 2026-05-20). Both pages share
+       the same picker-on-left, viewer-on-right shape, so they should
+       render at the same width on large screens. The min/max-width rules
+       below clamp identically. */
     .files-panel {
       display: flex;
       flex-direction: column;
-      width: min(100%, 1100px);
+      width: min(100%, 1300px);
       min-width: min(680px, 100%);
       max-width: 100%;
       flex: 1;
@@ -2503,8 +2507,8 @@ export const pageStyles = String.raw`    :root {
     .tasks-current-group:not(.is-collapsed) .tasks-current-group-chevron::before { content: "▾"; }
     .tasks-current-row {
       display: flex;
-      align-items: center;
-      gap: 8px;
+      align-items: flex-start;
+      gap: 10px;
       padding: 8px 12px;
       cursor: pointer;
       border-bottom: 1px solid #ffffff08;
@@ -2526,6 +2530,27 @@ export const pageStyles = String.raw`    :root {
       height: 8px;
       border-radius: 50%;
       background: #5a7a9a;
+      margin-top: 5px; /* align with the title baseline on the first line */
+    }
+    .tasks-current-row-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-current-row-sub {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .tasks-current-row-id {
+      flex-shrink: 0;
+      color: #6a8cb0;
+      font-family: "JetBrains Mono", monospace;
     }
     .tasks-current-row.status-done .tasks-current-row-dot { background: #6fcf97; }
     .tasks-current-row.status-failed .tasks-current-row-dot { background: #eb5757; }
@@ -2536,10 +2561,13 @@ export const pageStyles = String.raw`    :root {
     .tasks-current-row.status-claimed .tasks-current-row-dot { background: #56ccf2; }
     .tasks-current-row.status-open .tasks-current-row-dot { background: #4a5668; }
     .tasks-current-row-title {
-      flex: 1;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: #e4eefb;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.35;
     }
     .tasks-current-row-meta {
       display: flex;
@@ -2547,6 +2575,8 @@ export const pageStyles = String.raw`    :root {
       align-items: center;
       color: #8aa0bd;
       font-size: 10px;
+      text-align: right;
+      white-space: nowrap;
     }
     /* Projects placeholder — Phase 4 will fill in real cards. */
     .tasks-projects-placeholder {
@@ -2663,6 +2693,11 @@ export const pageStyles = String.raw`    :root {
       transition: background 0.12s;
     }
     .tasks-tree-row:hover { background: #ffffff0d; }
+    /* Top-level parent rows in the picker tree get a lighter background
+       so the family hierarchy is easier to scan. Kelly 2026-05-20. */
+    .tasks-tree-row.is-root {
+      background: #ffffff05;
+    }
     .tasks-tree-row.is-active {
       background: #1c3a644d;
       border-left: 2px solid #9be7ff;
