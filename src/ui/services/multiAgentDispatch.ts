@@ -948,6 +948,10 @@ export type SpawnNextTaskInput = {
                           // over implementation). When target !== agent, the child starts on
                           // a fresh session thread; the brief links back to the parent's
                           // report so the new agent picks up the context.
+  headline?: string;      // optional override for the child's headline. Defaults to
+                          // "<parent headline> — continue with response" (unblock) or
+                          // "<parent headline> — rework" (revisit). Set when the next step
+                          // is materially different from the parent.
 };
 
 export type SpawnNextTaskResult =
@@ -1023,9 +1027,11 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   const parentEnvelopePath = `agents/${agent}/tasks/${parentBucket}/${taskId}.yaml`;
 
   const parentHeadline = ((/^headline:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim() || taskId).slice(0, 56);
-  const childHeadline = source === "unblock"
+  const headlineOverride = (input.headline ?? "").trim();
+  const autoHeadline = source === "unblock"
     ? `${parentHeadline} — continue with response`
     : `${parentHeadline} — rework`;
+  const childHeadline = headlineOverride || autoHeadline;
 
   const root = taskId.split(".")[0];
   const sessionHint = isReroute

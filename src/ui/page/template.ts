@@ -235,6 +235,7 @@ ${pageStyles}
           <button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button>
           <span id="chat-agent-badge" class="chat-agent-badge" hidden></span>
         </div>
+        <input id="chat-name-input" class="chat-name-input" type="text" placeholder="auto" title="Chat title — leave blank for auto-name from first message" autocomplete="off" />
         <button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button>
         <button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat (asks to confirm)" aria-label="Delete chat">🗑</button>
         <div id="chat-history-dropdown" class="chat-history-dropdown" hidden>

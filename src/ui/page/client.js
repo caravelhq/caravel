@@ -1381,6 +1381,7 @@
       chatServerUpdatedAt = null;
       chatAgentLocked = null;
       pendingAgentId = null;
+      var fetchedName = "";
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(id));
         var data = await res.json();
@@ -1388,6 +1389,7 @@
           chatHistory = cleanHistory(data.chat.messages);
           chatServerUpdatedAt = data.chat.updatedAt || null;
           chatAgentLocked = data.chat.agentId || null;
+          fetchedName = data.chat.name || "";
         } else {
           chatHistory = [];
         }
@@ -1400,12 +1402,25 @@
         pendingAgentId = (v ? v.name : agentsCache[0].name);
       }
       updateAgentBadge();
+      updateChatNameInput(fetchedName);
       updateSendDisabled();
       renderChatHistory();
       schedulePoll();
       var dropdown = $("chat-history-dropdown");
       if (dropdown) dropdown.hidden = true;
       loadChatList();
+    }
+
+    // Reflect the current chat's name into the inline toolbar input.
+    // Empty value reveals the "auto" placeholder so a brand-new chat
+    // shows the affordance without committing a name. Also resets the
+    // committed-value marker so the blur/Enter handler doesn't fire a
+    // spurious PATCH right after a chat switch.
+    function updateChatNameInput(name) {
+      var inp = $("chat-name-input");
+      if (!inp) return;
+      inp.value = name || "";
+      inp.dataset.committed = name || "";
     }
 
     function startNewChat() {
@@ -1419,6 +1434,7 @@
         pendingAgentId = (v ? v.name : agentsCache[0].name);
       }
       updateAgentBadge();
+      updateChatNameInput("");
       updateSendDisabled();
       renderChatHistory();
       schedulePoll();
@@ -1787,6 +1803,30 @@
           // isn't stuck staring at a chat they just tried to delete.
         }
         startNewChat();
+      });
+    }
+
+    // Chat name input in the toolbar — commits on blur or Enter via the
+    // existing rename endpoint. Empty value clears the name (chat list will
+    // fall back to preview / "(empty)"). Skips the PATCH when the value
+    // hasn't changed since the last commit (or since populate-on-switch).
+    var chatNameInputEl = $("chat-name-input");
+    if (chatNameInputEl) {
+      chatNameInputEl.dataset.committed = chatNameInputEl.value || "";
+      var commitChatName = function () {
+        var v = (chatNameInputEl.value || "").trim();
+        if (!chatSessionId) return;
+        if (v === (chatNameInputEl.dataset.committed || "")) return;
+        chatNameInputEl.dataset.committed = v;
+        submitChatRename(chatSessionId, v).then(function () { loadChatList(); }).catch(function () {});
+      };
+      chatNameInputEl.addEventListener("blur", commitChatName);
+      chatNameInputEl.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          commitChatName();
+          chatNameInputEl.blur();
+        }
       });
     }
 
@@ -2930,9 +2970,11 @@
         //    child lands successfully.
         if (isCurrent && isWaitingUser) {
           var unblockTargetPicker = renderNextTargetPicker(card.agent || "");
+          var unblockHeadlineSuggest = suggestChildHeadline(card.headline || card.id, "unblock");
           var unblockHtml =
             '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="unblock">' +
             '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type your response; a child task will pick up on the same session and continue from where the worker stopped. When the child completes, this task auto-closes as done.</div>' +
+            '<input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(unblockHeadlineSuggest) + '" />' +
             '<textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="Your response (the agent will continue with your answer)…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
             unblockTargetPicker +
@@ -2989,11 +3031,35 @@
         if (isCurrent && isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
         }
-        actions.push('<button class="task-panel-action" data-spawn-agent="' + escapeHtml(card.agent) + '" data-spawn-task="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
+        actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (!isCurrent) {
           actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
         }
         sections += '<div class="task-panel-card-actions">' + actions.join("") + '</div>';
+
+        // 4b'. Chat-from-task form — hidden until the 💬 Chat button toggles
+        //      it. Same pattern as Next: optional title + agent select +
+        //      initial message. Submitting either switches to an existing
+        //      chat for this task family (when one exists at the shared
+        //      threadId) or seeds a fresh chat with the picked agent.
+        //      Initial message is staged into the chat input — Kelly hits
+        //      send when ready, not on submit, so the same review-before-
+        //      send rhythm carries through.
+        if (isCurrent) {
+          var chatAgentPicker = renderNextTargetPicker(card.agent || "");
+          var chatTitleSuggest = card.headline ? String(card.headline).slice(0, 56) : "";
+          sections +=
+            '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + '" hidden>' +
+            '<div class="task-panel-rework-warn">Chat opens on the same thread as the task worker, so the agent\'s prior context is in cache. Pick a different agent below to start a fresh thread for that role.</div>' +
+            '<input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="' + escapeHtml(chatTitleSuggest) + '" />' +
+            '<textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea>' +
+            '<div class="task-panel-unblock-actions">' +
+            chatAgentPicker +
+            '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button>' +
+            '<span class="task-panel-unblock-status task-panel-chat-status"></span>' +
+            '</div>' +
+            '</div>';
+        }
 
         // 4c. Close form — hidden until the Close button toggles it. Optional
         //     reason textarea + cascade checkbox (only shown when active
@@ -3023,9 +3089,11 @@
         //     thread so the agent already has the prior context cached.
         if (isCurrent && isTerminal) {
           var revisitTargetPicker = renderNextTargetPicker(card.agent || "");
+          var revisitHeadlineSuggest = suggestChildHeadline(card.headline || card.id, "revisit");
           sections +=
             '<div class="task-panel-rework task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="revisit" hidden>' +
             '<div class="task-panel-rework-warn">A fresh child task is spawned with a pointer back to this one. Pick a different agent below to hand the next step off — by default the same agent picks up the same session, so prior context stays in cache.</div>' +
+            '<input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(revisitHeadlineSuggest) + '" />' +
             '<textarea class="task-panel-unblock-input task-panel-next-input" rows="3" placeholder="What\'s next? Refine, extend, or change direction…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
             revisitTargetPicker +
@@ -3624,6 +3692,16 @@
         return s;
       }
 
+      // Mirror of spawnNextTask's headline rule (multiAgentDispatch.ts) — used
+      // to pre-fill the editable headline input on the Next form. The user
+      // can edit before submitting; if they leave the suggestion, the result
+      // matches what the service would have generated.
+      function suggestChildHeadline(parentHeadline, source) {
+        var base = String(parentHeadline || "").slice(0, 56);
+        if (source === "unblock") return base + " — continue with response";
+        return base + " — rework";
+      }
+
       // Render the agent picker shown next to the Next button. Defaults to
       // the parent's agent (same as current behaviour); picking a different
       // option routes the spawned child to that agent's queue. The picker is
@@ -4057,6 +4135,83 @@
       // and posts to /api/tasks/<id>/next. Server-side, both branches call
       // spawnNextTask() — the parent envelope is left in place and a fresh
       // child is created with parent pointer + Kelly's instruction.
+      // Submit the chat-from-task mini-form. Replaces the pre-2026-05-19
+      // insta-switch behaviour (which got Kelly stuck mid-handoff when she
+      // wanted to switch agents). The form gives a moment to name the chat,
+      // pick the right agent, and stage an initial message before the chat
+      // tab opens.
+      async function submitChatFromTask(wrapper) {
+        if (!wrapper) return;
+        var taskId = wrapper.getAttribute("data-chat-task-id") || "";
+        var parentAgent = wrapper.getAttribute("data-chat-parent-agent") || "";
+        var titleEl = wrapper.querySelector(".task-panel-chat-title-input");
+        var msgEl = wrapper.querySelector(".task-panel-chat-msg-input");
+        var targetSel = wrapper.querySelector(".task-panel-next-target-select");
+        var statusEl = wrapper.querySelector(".task-panel-chat-status");
+        var btn = wrapper.querySelector(".task-panel-chat-submit");
+        var title = (titleEl && titleEl.value) ? String(titleEl.value).trim() : "";
+        var initialMsg = (msgEl && msgEl.value) ? String(msgEl.value) : "";
+        var pickedAgent = (targetSel && targetSel.value) ? String(targetSel.value).trim() : parentAgent;
+        if (!taskId || !pickedAgent) {
+          if (statusEl) {
+            statusEl.textContent = "Missing task id or agent.";
+            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-error";
+          }
+          return;
+        }
+        if (btn) btn.disabled = true;
+        try {
+          // Compute the threadId for the picked agent. Shares with the
+          // task worker only when the picked agent === parent's agent.
+          // For a different agent the threadId is task-<root>-<other>,
+          // which starts a fresh session for that role.
+          var taskRoot = String(taskId).split(".")[0];
+          var sharedThreadId = "task-" + taskRoot + "-" + pickedAgent;
+          var existing = Array.isArray(chatListCache)
+            ? chatListCache.find(function (c) { return c.id === sharedThreadId; })
+            : null;
+          if (existing) {
+            await switchToChat(sharedThreadId);
+          } else {
+            chatSessionId = sharedThreadId;
+            try { localStorage.setItem(CHAT_ID_KEY, sharedThreadId); } catch (_) {}
+            chatHistory = [];
+            chatServerUpdatedAt = null;
+            chatAgentLocked = null;
+            pendingAgentId = pickedAgent;
+            updateAgentBadge();
+            updateSendDisabled();
+            renderChatHistory();
+            schedulePoll();
+            loadChatList();
+          }
+          // Rename if a title was supplied (or if the user kept the
+          // pre-filled headline — that's still better than auto).
+          if (title) {
+            try { await submitChatRename(sharedThreadId, title); } catch (_) {}
+          }
+          if (typeof setActiveTab === "function") setActiveTab("chat");
+          if (chatInput) {
+            chatInput.value = initialMsg || "";
+            chatInput.focus();
+          }
+          if (statusEl) {
+            statusEl.textContent = existing ? "Switched to existing chat." : "New chat ready — send when you're set.";
+            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-ok";
+          }
+          // Collapse the form back so it's tidy if Kelly returns to the task.
+          wrapper.hidden = true;
+          if (msgEl) msgEl.value = "";
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (err && err.message || err);
+            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-error";
+          }
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
       async function submitNext(wrapper) {
         if (!wrapper) return;
         var agent = wrapper.getAttribute("data-next-agent");
@@ -4067,6 +4222,8 @@
         var statusEl = wrapper.querySelector(".task-panel-next-status");
         var targetSel = wrapper.querySelector(".task-panel-next-target-select");
         var target = (targetSel && targetSel.value) ? String(targetSel.value).trim() : "";
+        var headlineEl = wrapper.querySelector(".task-panel-next-headline-input");
+        var headline = (headlineEl && headlineEl.value) ? String(headlineEl.value).trim() : "";
         if (!agent || !taskId || !input) return;
         var instruction = (input.value || "").trim();
         if (!instruction) {
@@ -4084,6 +4241,7 @@
         try {
           var payload = { agent: agent, instruction: instruction, source: source };
           if (target && target !== agent) payload.target = target;
+          if (headline) payload.headline = headline;
           var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -4304,6 +4462,30 @@
             } catch (_) {}
             return;
           }
+          var toggleChatBtn = ev.target.closest("[data-toggle-chat]");
+          if (toggleChatBtn) {
+            ev.preventDefault();
+            var chatCard = toggleChatBtn.closest(".task-panel-card");
+            if (chatCard) {
+              var chatForm = chatCard.querySelector(".task-panel-chat-form");
+              if (chatForm) {
+                chatForm.hidden = false;
+                var chatTa = chatForm.querySelector(".task-panel-chat-msg-input");
+                if (chatTa) chatTa.focus();
+                chatForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              }
+            }
+            return;
+          }
+          var chatSubmitBtn = ev.target.closest(".task-panel-chat-submit");
+          if (chatSubmitBtn) {
+            ev.preventDefault();
+            submitChatFromTask(chatSubmitBtn.closest(".task-panel-chat-form"));
+            return;
+          }
+          // (Legacy: spawn-agent was instant chat-switch; now superseded by
+          // the toggle-chat form above. Kept the placeholder so any cached
+          // markup with the old attribute still no-ops gracefully.)
           var spawnBtn = ev.target.closest("[data-spawn-agent]");
           if (spawnBtn) {
             ev.preventDefault();

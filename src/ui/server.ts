@@ -655,6 +655,7 @@ self.addEventListener('fetch', e => {
             instruction: String(body?.instruction ?? ""),
             source: sourceRaw,
             target: body?.target ? String(body.target).trim() : undefined,
+            headline: body?.headline ? String(body.headline).trim() : undefined,
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, parentId: result.parentId });

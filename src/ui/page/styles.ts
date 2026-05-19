@@ -1688,6 +1688,58 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
+    /* Inline chat title input in the toolbar. Blank reveals the "auto"
+       placeholder so a fresh chat shows the affordance; typed value PATCHes
+       to /api/chats/<id> on blur or Enter via submitChatRename. Centred
+       between the toolbar-left buttons and the right-hand session/delete
+       cluster so it doesn't crowd either side. */
+    .chat-name-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0 12px;
+      max-width: 360px;
+      background: transparent;
+      color: #cfe3ff;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .chat-name-input::placeholder {
+      color: #5a7a9a;
+      font-style: italic;
+    }
+    .chat-name-input:hover {
+      border-color: #ffffff14;
+    }
+    .chat-name-input:focus {
+      outline: none;
+      border-color: #ffd07a99;
+      background: #0c1624a6;
+    }
+    /* Title input inside the chat-from-task mini-form on the task viewer.
+       Same shape as the Next form's headline input — single-line, full-
+       width, accent on focus. */
+    .task-panel-chat-title-input {
+      display: block;
+      width: 100%;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    .task-panel-chat-title-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
+    }
     .chat-session-badge {
       border: 1px solid #ffffff14;
       border-radius: 6px;
@@ -3325,6 +3377,27 @@ export const pageStyles = String.raw`    :root {
       align-items: center;
       gap: 12px;
       flex-wrap: wrap;
+    }
+    /* Editable child-headline field at the top of the Next form. Pre-filled
+       with the parent's headline + a suffix; user can override before
+       submitting if the next step is materially different. */
+    .task-panel-next-headline-input {
+      display: block;
+      width: 100%;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    .task-panel-next-headline-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
     }
     /* Re-route picker inside the Next form. Compact arrow + native select
        so handing the child off to a different agent stays a one-click
