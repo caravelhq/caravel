@@ -1070,6 +1070,38 @@
     // pendingAgentId is the user's picker selection for a brand-new chat that
     // hasn't been locked in yet; it's sent with the first message.
     var agentsCache = [];
+
+    // Kelly's preferred order + role labels for the chat agent picker
+    // (2026-05-20). Agents not in this list still render — after the
+    // canonical six, alphabetised, without a role label.
+    var CHAT_AGENT_ORDER = ["alice", "sam", "mark", "ray", "bob", "cliff"];
+    var CHAT_AGENT_ROLES = {
+      alice: "Assistant",
+      sam: "Strategy",
+      mark: "Marketing",
+      ray: "Research",
+      bob: "the Builder",
+      cliff: "Code Review"
+    };
+    function orderedChatAgents() {
+      var byName = {};
+      for (var i = 0; i < agentsCache.length; i++) {
+        if (agentsCache[i] && agentsCache[i].name) byName[agentsCache[i].name] = agentsCache[i];
+      }
+      var out = [];
+      for (var j = 0; j < CHAT_AGENT_ORDER.length; j++) {
+        var nm = CHAT_AGENT_ORDER[j];
+        if (byName[nm]) {
+          out.push(byName[nm]);
+          delete byName[nm];
+        }
+      }
+      // Append any remaining agents (e.g. adam, vesper) at the end,
+      // alphabetised, so they're discoverable but don't crowd the
+      // canonical six.
+      var rest = Object.keys(byName).sort().map(function (k) { return byName[k]; });
+      return out.concat(rest);
+    }
     var chatAgentLocked = null;
     var pendingAgentId = null;
     var agentsFetched = false;
@@ -1382,6 +1414,7 @@
       chatAgentLocked = null;
       pendingAgentId = null;
       var fetchedName = "";
+      var fetchedPreview = "";
       try {
         var res = await fetch("/api/chats/" + encodeURIComponent(id));
         var data = await res.json();
@@ -1390,6 +1423,7 @@
           chatServerUpdatedAt = data.chat.updatedAt || null;
           chatAgentLocked = data.chat.agentId || null;
           fetchedName = data.chat.name || "";
+          fetchedPreview = data.chat.preview || "";
         } else {
           chatHistory = [];
         }
@@ -1402,7 +1436,7 @@
         pendingAgentId = (v ? v.name : agentsCache[0].name);
       }
       updateAgentBadge();
-      updateChatNameInput(fetchedName);
+      updateChatNameInput(fetchedName, fetchedPreview);
       updateSendDisabled();
       renderChatHistory();
       schedulePoll();
@@ -1411,16 +1445,39 @@
       loadChatList();
     }
 
-    // Reflect the current chat's name into the inline toolbar input.
-    // Empty value reveals the "auto" placeholder so a brand-new chat
-    // shows the affordance without committing a name. Also resets the
-    // committed-value marker so the blur/Enter handler doesn't fire a
-    // spurious PATCH right after a chat switch.
-    function updateChatNameInput(name) {
-      var inp = $("chat-name-input");
-      if (!inp) return;
-      inp.value = name || "";
-      inp.dataset.committed = name || "";
+    // Reflect the current chat's name into the inline toolbar input AND
+    // the new-chat-area title input. The toolbar one is shown for chats
+    // with messages; the new-chat one is shown for empty chats. Both
+    // commit via submitChatRename on blur or Enter.
+    //
+    // Kelly 2026-05-20: the toolbar's placeholder shows what the chat
+    // WOULD auto-name to (chat.preview or "Untitled chat") rather than
+    // the literal word "auto", so it reads like a suggestion.
+    function updateChatNameInput(name, preview) {
+      var toolbar = $("chat-name-input");
+      var inline = $("chat-new-title-input");
+      var autoSuggestion = (preview ? String(preview).trim().slice(0, 50) : "") || "Untitled chat";
+      if (toolbar) {
+        toolbar.value = name || "";
+        toolbar.dataset.committed = name || "";
+        toolbar.setAttribute("placeholder", autoSuggestion);
+      }
+      if (inline) {
+        inline.value = name || "";
+        inline.dataset.committed = name || "";
+      }
+      refreshChatTitleVisibility();
+    }
+
+    // Toolbar input shown for existing chats; new-chat input shown for
+    // empty chats. Called from updateChatNameInput and after every
+    // renderChatHistory so the visibility tracks chatHistory.length.
+    function refreshChatTitleVisibility() {
+      var toolbar = $("chat-name-input");
+      var inline = $("chat-new-title-input");
+      var isEmpty = !chatHistory || chatHistory.length === 0;
+      if (toolbar) toolbar.hidden = isEmpty;
+      if (inline) inline.hidden = !isEmpty;
     }
 
     function startNewChat() {
@@ -1531,7 +1588,8 @@
 
       var list = document.createElement("div");
       list.className = "chat-picker-list";
-      for (var i = 0; i < agentsCache.length; i++) {
+      var orderedAgents = orderedChatAgents();
+      for (var i = 0; i < orderedAgents.length; i++) {
         (function(agent) {
           var item = document.createElement("button");
           item.type = "button";
@@ -1540,7 +1598,12 @@
 
           var title = document.createElement("div");
           title.className = "chat-picker-item-title";
-          title.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
+          var nameLabel = agent.displayName || agent.name;
+          var role = CHAT_AGENT_ROLES[agent.name] || "";
+          title.textContent =
+            (agent.emoji ? agent.emoji + " " : "") +
+            nameLabel +
+            (role ? " — " + role : "");
           item.appendChild(title);
 
           var desc = document.createElement("div");
@@ -1565,7 +1628,7 @@
           });
 
           list.appendChild(item);
-        })(agentsCache[i]);
+        })(orderedAgents[i]);
       }
       empty.appendChild(list);
 
@@ -1670,6 +1733,9 @@
 
     function renderChatHistory() {
       updateChatTaskBtnVisibility();
+      // Title-input visibility tracks chatHistory.length (toolbar input
+      // for chats with messages, inline new-chat input for empty chats).
+      if (typeof refreshChatTitleVisibility === "function") refreshChatTitleVisibility();
       if (!chatMessages) return;
       if (!chatHistory.length) {
         if (
@@ -1806,29 +1872,37 @@
       });
     }
 
-    // Chat name input in the toolbar — commits on blur or Enter via the
-    // existing rename endpoint. Empty value clears the name (chat list will
-    // fall back to preview / "(empty)"). Skips the PATCH when the value
-    // hasn't changed since the last commit (or since populate-on-switch).
-    var chatNameInputEl = $("chat-name-input");
-    if (chatNameInputEl) {
-      chatNameInputEl.dataset.committed = chatNameInputEl.value || "";
-      var commitChatName = function () {
-        var v = (chatNameInputEl.value || "").trim();
+    // Chat name inputs — TWO surfaces (Kelly 2026-05-20):
+    //   - toolbar input (#chat-name-input), shown for chats with messages.
+    //   - new-chat-area input (#chat-new-title-input), shown for empty
+    //     chats. Sits above the message input box.
+    // Both commit via submitChatRename on blur or Enter, sync each other
+    // via updateChatNameInput, and skip the PATCH when value is unchanged.
+    function wireChatNameInput(el, peerSel) {
+      if (!el) return;
+      el.dataset.committed = el.value || "";
+      var commit = function () {
+        var v = (el.value || "").trim();
         if (!chatSessionId) return;
-        if (v === (chatNameInputEl.dataset.committed || "")) return;
-        chatNameInputEl.dataset.committed = v;
+        if (v === (el.dataset.committed || "")) return;
+        el.dataset.committed = v;
+        // Mirror into the peer so both inputs read the same when the user
+        // toggles between empty and populated states later.
+        var peer = peerSel ? document.querySelector(peerSel) : null;
+        if (peer) { peer.value = v; peer.dataset.committed = v; }
         submitChatRename(chatSessionId, v).then(function () { loadChatList(); }).catch(function () {});
       };
-      chatNameInputEl.addEventListener("blur", commitChatName);
-      chatNameInputEl.addEventListener("keydown", function (ev) {
+      el.addEventListener("blur", commit);
+      el.addEventListener("keydown", function (ev) {
         if (ev.key === "Enter") {
           ev.preventDefault();
-          commitChatName();
-          chatNameInputEl.blur();
+          commit();
+          el.blur();
         }
       });
     }
+    wireChatNameInput($("chat-name-input"), "#chat-new-title-input");
+    wireChatNameInput($("chat-new-title-input"), "#chat-name-input");
 
     var chatSessionBadge = $("chat-session-badge");
     if (chatSessionBadge) {

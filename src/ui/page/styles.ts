@@ -1688,16 +1688,16 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
-    /* Inline chat title input in the toolbar. Blank reveals the "auto"
-       placeholder so a fresh chat shows the affordance; typed value PATCHes
-       to /api/chats/<id> on blur or Enter via submitChatRename. Centred
-       between the toolbar-left buttons and the right-hand session/delete
-       cluster so it doesn't crowd either side. */
+    /* Toolbar chat-title input. Kelly 2026-05-20: sits inside
+       .chat-toolbar-left, immediately after the agent badge, so the
+       title reads alongside the agent. Hidden for empty chats — those
+       use #chat-new-title-input above the message box instead. The
+       placeholder mirrors what the chat WOULD auto-name to (preview
+       text, or "Untitled chat") so it reads like a suggestion. */
     .chat-name-input {
-      flex: 1 1 auto;
+      flex: 0 1 240px;
       min-width: 0;
-      margin: 0 12px;
-      max-width: 360px;
+      max-width: 320px;
       background: transparent;
       color: #cfe3ff;
       border: 1px solid transparent;
@@ -1718,6 +1718,31 @@ export const pageStyles = String.raw`    :root {
       outline: none;
       border-color: #ffd07a99;
       background: #0c1624a6;
+    }
+    /* New-chat title input — sits above the message textarea, only
+       visible while the chat has no messages. Commits via the same
+       submitChatRename mechanism. */
+    .chat-new-title-input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff22;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 13px;
+    }
+    .chat-new-title-input::placeholder {
+      color: #6a7e9b;
+      font-style: italic;
+    }
+    .chat-new-title-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
     }
     /* Title input inside the chat-from-task mini-form on the task viewer.
        Same shape as the Next form's headline input — single-line, full-
