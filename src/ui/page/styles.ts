@@ -3324,7 +3324,35 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
+    /* Re-route picker inside the Next form. Compact arrow + native select
+       so handing the child off to a different agent stays a one-click
+       affordance. Defaults to the parent's agent — picking another agent
+       lights up the submit button with the new destination. */
+    .task-panel-next-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #b8cae3;
+    }
+    .task-panel-next-target-label {
+      color: #6a7e9b;
+    }
+    .task-panel-next-target-select {
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .task-panel-next-target-select:hover { border-color: #ffd07a99; }
+    .task-panel-next-target-select:focus { outline: 2px solid #ffd07a99; outline-offset: 1px; }
     .task-panel-unblock-submit {
       border: 1px solid #ffd07a99;
       background: #2a4972;

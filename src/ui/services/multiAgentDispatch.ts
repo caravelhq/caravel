@@ -939,10 +939,15 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
 // its status, brief, and report are unchanged.
 
 export type SpawnNextTaskInput = {
-  agent: string;
+  agent: string;          // parent envelope's owning agent (where to find the file)
   taskId: string;
   instruction: string;
   source: "revisit" | "unblock";
+  target?: string;        // optional destination agent for the child. Defaults to parent's
+                          // agent. Allows re-routing (e.g. ray finishes research → bob takes
+                          // over implementation). When target !== agent, the child starts on
+                          // a fresh session thread; the brief links back to the parent's
+                          // report so the new agent picks up the context.
 };
 
 export type SpawnNextTaskResult =
@@ -954,8 +959,12 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   const taskId = (input.taskId ?? "").trim();
   const instruction = (input.instruction ?? "").trim();
   const source = input.source;
+  const targetRaw = (input.target ?? "").trim();
+  const targetAgent = targetRaw || agent;
+  const isReroute = targetAgent !== agent;
 
   if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!KNOWN_AGENTS.includes(targetAgent)) return { ok: false, error: `unknown target agent: ${targetAgent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!instruction) return { ok: false, error: "instruction is required" };
   if (source !== "revisit" && source !== "unblock") return { ok: false, error: `invalid source: ${source}` };
@@ -1019,26 +1028,41 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     : `${parentHeadline} — rework`;
 
   const root = taskId.split(".")[0];
-  const sessionHint = `Same session thread \`task-${root}-${agent}\` is resumed — your prior reasoning, file reads, and context remain in cache.`;
+  const sessionHint = isReroute
+    ? `**Re-routed to you from ${agent}.** This is a fresh session — ${agent}'s prior reasoning is in their report (link below). Read it before starting.`
+    : `Same session thread \`task-${root}-${agent}\` is resumed — your prior reasoning, file reads, and context remain in cache.`;
+
+  // When the parent task itself was a continuation of an earlier worker
+  // ("you previously parked"), but this child is being handed to a NEW
+  // agent, the second-person framing doesn't fit. Open the brief with a
+  // handoff line so the new agent doesn't think they parked on something
+  // they've never seen.
+  const continuationOpener = source === "unblock"
+    ? (isReroute
+        ? `**${taskId}** was waiting on the user; Kelly has now responded and is handing the continuation to you (re-routed from ${agent}).`
+        : `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and Kelly has now responded.`)
+    : (isReroute
+        ? `**${taskId}** (was status \`${parentStatus}\`) is being re-worked. Kelly is handing this to you (re-routed from ${agent}) with new instructions below.`
+        : `Rework of **${taskId}** (was status \`${parentStatus}\`). Kelly has new instructions below.`);
 
   const briefBody = source === "unblock"
     ? [
-        `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and Kelly has now responded.`,
+        continuationOpener,
         ``,
         sessionHint,
         ``,
-        parentReport ? `Your prior report: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
+        parentReport ? `Prior report: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
         ``,
         `### Kelly's response`,
         ``,
         instruction,
       ].filter((l) => l !== undefined).join("\n")
     : [
-        `Rework of **${taskId}** (was status \`${parentStatus}\`). Kelly has new instructions below.`,
+        continuationOpener,
         ``,
         sessionHint,
         ``,
-        parentReport ? `Your prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
+        parentReport ? `Prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
         ``,
         `### Kelly's rework instruction`,
         ``,
@@ -1054,7 +1078,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `updated: ${now}`,
     ``,
     `from: user`,
-    `to: ${agent}`,
+    `to: ${targetAgent}`,
     `parent: ${taskId}`,
     `reply_to: user`,
     ``,
@@ -1083,7 +1107,9 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `    from: null`,
     `    to: open`,
     `    by: user`,
-    `    note: ${yamlEscape(`spawned as ${source} child of ${taskId}`)}`,
+    `    note: ${yamlEscape(isReroute
+      ? `spawned as ${source} child of ${taskId} — re-routed from ${agent} to ${targetAgent}`
+      : `spawned as ${source} child of ${taskId}`)}`,
     ``,
     `summary:`,
     `  brief: ""`,
@@ -1093,7 +1119,9 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     ``,
   ].join("\n");
 
-  const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+  // Write into the TARGET agent's bucket. Re-route lands the child in a
+  // different agent's queue while the parent stays anchored in `agent/`.
+  const openDir = join(AGENTS_DIR, targetAgent, "tasks", "open");
   await mkdir(openDir, { recursive: true });
   const childPath = join(openDir, `${childId}.yaml`);
   await writeFile(childPath, childYaml);
@@ -1105,7 +1133,9 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     from: parentStatus || parentBucket,
     to: parentStatus || parentBucket,
     by: "user",
-    note: `spawned ${source} child ${childId}`,
+    note: isReroute
+      ? `spawned ${source} child ${childId} → re-routed to ${targetAgent}`
+      : `spawned ${source} child ${childId}`,
   });
   // Bump updated so the picker re-sorts the parent.
   const bumpedParentYaml = setUpdated(updatedParentYaml, now);
@@ -1123,15 +1153,20 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   });
   await writeFile(parentPath, supersededParentYaml);
 
-  await appendJournal(agent, {
+  // Journal entry lands in the TARGET agent's journal (that's whose queue
+  // owns the child now). Summary names the re-route when present so the
+  // dashboard widgets can show "ray → bob" hand-offs at a glance.
+  await appendJournal(targetAgent, {
     ts: now,
     id: childId,
     status: "open",
     kind,
     from: "user",
-    to: agent,
+    to: targetAgent,
     parent: taskId,
-    summary: `${source} child of ${taskId}`,
+    summary: isReroute
+      ? `${source} child of ${taskId} — re-routed from ${agent}`
+      : `${source} child of ${taskId}`,
   });
 
   return { ok: true, id: childId, path: childPath, parentId: taskId };

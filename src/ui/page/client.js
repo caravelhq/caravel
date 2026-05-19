@@ -2929,11 +2929,13 @@
         //    waiting:on:user; the runner auto-closes it to `done` when the
         //    child lands successfully.
         if (isCurrent && isWaitingUser) {
+          var unblockTargetPicker = renderNextTargetPicker(card.agent || "");
           var unblockHtml =
             '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="unblock">' +
             '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type your response; a child task will pick up on the same session and continue from where the worker stopped. When the child completes, this task auto-closes as done.</div>' +
             '<textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="Your response (the agent will continue with your answer)…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
+            unblockTargetPicker +
             '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button>' +
             '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
@@ -3020,11 +3022,13 @@
         //     envelope is unchanged. The new child reuses the same session
         //     thread so the agent already has the prior context cached.
         if (isCurrent && isTerminal) {
+          var revisitTargetPicker = renderNextTargetPicker(card.agent || "");
           sections +=
             '<div class="task-panel-rework task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="revisit" hidden>' +
-            '<div class="task-panel-rework-warn">A fresh child task is spawned with a pointer back to this one. The agent resumes the same session, so prior context stays in cache. This task is unchanged.</div>' +
+            '<div class="task-panel-rework-warn">A fresh child task is spawned with a pointer back to this one. Pick a different agent below to hand the next step off — by default the same agent picks up the same session, so prior context stays in cache.</div>' +
             '<textarea class="task-panel-unblock-input task-panel-next-input" rows="3" placeholder="What\'s next? Refine, extend, or change direction…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
+            revisitTargetPicker +
             '<button type="button" class="is-primary task-panel-next-submit">↳ Spawn child task</button>' +
             '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
@@ -3620,6 +3624,34 @@
         return s;
       }
 
+      // Render the agent picker shown next to the Next button. Defaults to
+      // the parent's agent (same as current behaviour); picking a different
+      // option routes the spawned child to that agent's queue. The picker is
+      // rendered on every Next form (unblock + revisit) — submitNext reads
+      // its value when posting to /api/tasks/<id>/next.
+      function renderNextTargetPicker(currentAgent) {
+        var options = "";
+        var agents = Array.isArray(agentsCache) ? agentsCache : [];
+        for (var i = 0; i < agents.length; i++) {
+          var a = agents[i];
+          if (!a || !a.name) continue;
+          var label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+          var selected = (a.name === currentAgent) ? " selected" : "";
+          options += '<option value="' + escapeHtml(a.name) + '"' + selected + '>' + escapeHtml(label) + '</option>';
+        }
+        // Fallback when agentsCache hasn't loaded — emit just the parent's
+        // agent so the form still submits sensibly.
+        if (!options && currentAgent) {
+          options = '<option value="' + escapeHtml(currentAgent) + '" selected>' + escapeHtml(currentAgent) + '</option>';
+        }
+        return (
+          '<label class="task-panel-next-target" title="Pick a different agent to take over from here">' +
+          '<span class="task-panel-next-target-label">→</span>' +
+          '<select class="task-panel-next-target-select">' + options + '</select>' +
+          '</label>'
+        );
+      }
+
       function renderTreeBranch(tree, node, depth, out, seen) {
         seen = seen || {};
         if (seen[node.id] || depth > 32) {
@@ -4033,6 +4065,8 @@
         var input = wrapper.querySelector(".task-panel-next-input");
         var btn = wrapper.querySelector(".task-panel-next-submit");
         var statusEl = wrapper.querySelector(".task-panel-next-status");
+        var targetSel = wrapper.querySelector(".task-panel-next-target-select");
+        var target = (targetSel && targetSel.value) ? String(targetSel.value).trim() : "";
         if (!agent || !taskId || !input) return;
         var instruction = (input.value || "").trim();
         if (!instruction) {
@@ -4048,10 +4082,12 @@
           statusEl.className = "task-panel-unblock-status task-panel-next-status";
         }
         try {
+          var payload = { agent: agent, instruction: instruction, source: source };
+          if (target && target !== agent) payload.target = target;
           var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent: agent, instruction: instruction, source: source }),
+            body: JSON.stringify(payload),
           });
           var data = await res.json();
           if (!data.ok) {
