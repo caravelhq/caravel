@@ -2194,9 +2194,21 @@
 
         filesContent.textContent = "";
         if (data.markdown) {
+          // Detect + strip YAML frontmatter so the marked renderer doesn't
+          // treat the `---` pair as horizontal-rule + paragraph + hr.
+          // Frontmatter renders as a small monospace block above the body.
+          // Mirror of the task-report panel's frontmatter handling.
+          var fmHtml = "";
+          var rawSrc = data.content || "";
+          var bodySrc = rawSrc;
+          var fmMatch = rawSrc.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+          if (fmMatch) {
+            fmHtml = '<pre class="files-md-frontmatter">' + escapeHtml(fmMatch[1]) + '</pre>';
+            bodySrc = rawSrc.slice(fmMatch[0].length);
+          }
           var div = document.createElement("div");
           div.className = "files-md";
-          div.innerHTML = renderMarkdown(data.content);
+          div.innerHTML = fmHtml + renderMarkdown(bodySrc);
           filesContent.appendChild(div);
         } else if (isYaml(filePath) && typeof globalThis.yamlRender === 'function') {
           var ydiv = document.createElement("div");

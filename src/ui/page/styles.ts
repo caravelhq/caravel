@@ -2973,7 +2973,8 @@ export const pageStyles = String.raw`    :root {
       border-radius: 0;
       background: transparent;
     }
-    .task-panel-report-frontmatter {
+    .task-panel-report-frontmatter,
+    .files-md-frontmatter {
       font-family: "JetBrains Mono", monospace;
       font-size: 10px;
       line-height: 1.4;
@@ -2982,7 +2983,7 @@ export const pageStyles = String.raw`    :root {
       border: 1px solid rgba(255, 255, 255, 0.05);
       border-radius: 4px;
       padding: 6px 8px;
-      margin: 0 0 10px;
+      margin: 0 0 14px;
       overflow-x: auto;
       white-space: pre;
       scrollbar-width: thin;
