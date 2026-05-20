@@ -22,6 +22,7 @@ import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask } from "./services/multiAgentDispatch";
+import { listProjects } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -536,6 +537,17 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/agents" && req.method === "GET") {
         try {
           return json({ ok: true, agents: await listAgents() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // WAL-63 Phase 3: project folder listing. Powers the new-task form
+      // project dropdown (and Phase 4 project cards). Read-only scan of
+      // Notes/Projects/<slug>/ with light README frontmatter sniffing.
+      if (url.pathname === "/api/projects" && req.method === "GET") {
+        try {
+          return json({ ok: true, projects: await listProjects() });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

@@ -393,6 +393,18 @@ ${pageStyles}
                 <span>From</span>
                 <input id="multi-agent-new-from" type="text" value="user" />
               </label>
+              <!-- WAL-63 Phase 3: project tag dropdown. Populated at panel
+                   open from /api/projects (Notes/Projects/<slug>/ directory
+                   scan). "(auto)" means: leave the field absent and let the
+                   helper / createTask infer from context paths. "(none)"
+                   forces project: null. -->
+              <label class="multi-agent-new-field">
+                <span>Project</span>
+                <select id="multi-agent-new-project">
+                  <option value="">(auto from context)</option>
+                  <option value="__none__">(none / unassigned)</option>
+                </select>
+              </label>
             </div>
             <label class="multi-agent-new-block">
               <span>Brief</span>

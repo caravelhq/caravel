@@ -4239,6 +4239,41 @@
         });
       }
 
+      // WAL-63 Phase 3: project dropdown population. Cached for the page
+      // session — Notes/Projects/ rarely changes mid-day, and the dropdown
+      // refresh-on-every-open felt sluggish on slow file systems. Forced
+      // refresh via the loader call when needed (right now only on first
+      // open; can be re-triggered by reloading the page).
+      var projectsCache = null;
+      async function ensureProjectsLoaded(select) {
+        if (!select) return;
+        if (projectsCache !== null) return populateProjectSelect(select, projectsCache);
+        try {
+          var res = await fetch("/api/projects", { cache: "no-store" });
+          var data = await res.json();
+          projectsCache = (data && data.ok && Array.isArray(data.projects)) ? data.projects : [];
+        } catch (_) {
+          projectsCache = [];
+        }
+        populateProjectSelect(select, projectsCache);
+      }
+      function populateProjectSelect(select, projects) {
+        // Preserve current selection if it's still in the new list.
+        var current = select.value;
+        // Two pinned options at the top: (auto) and (none).
+        var html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
+        for (var i = 0; i < projects.length; i++) {
+          var p = projects[i];
+          var label = p.title ? (p.slug + ' — ' + p.title) : p.slug;
+          html += '<option value="' + escapeHtml(p.slug) + '">' + escapeHtml(label) + '</option>';
+        }
+        select.innerHTML = html;
+        // Restore selection when possible.
+        if (current && Array.prototype.some.call(select.options, function (o) { return o.value === current; })) {
+          select.value = current;
+        }
+      }
+
       // "+ New" button — open the new-task form in the right pane.
       if (tasksNewBtn && newForm) {
         tasksNewBtn.addEventListener("click", function () {
@@ -4250,6 +4285,10 @@
           if (chip) chip.setAttribute("hidden", "");
           if (chipId) chipId.textContent = "";
           if (newStatus) { newStatus.textContent = ""; newStatus.classList.remove("is-error"); }
+          // Populate the project dropdown on first open (and refresh entries
+          // if the cache is set).
+          var projectSelect = document.getElementById("multi-agent-new-project");
+          if (projectSelect) ensureProjectsLoaded(projectSelect);
           setRightPaneMode("new");
           var headlineEl = document.getElementById("multi-agent-new-headline");
           if (headlineEl) headlineEl.focus();
@@ -4778,6 +4817,17 @@
           if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
           try {
             var payload = { headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context };
+            // WAL-63 Phase 3: forward the project dropdown selection. Empty
+            // string = "(auto from context)" — omit so the service infers.
+            // "__none__" = explicit no-project — send null so the service
+            // skips the inference fallback.
+            var projectEl = document.getElementById("multi-agent-new-project");
+            if (projectEl) {
+              var projVal = (projectEl.value || "").trim();
+              if (projVal === "__none__") payload.project = null;
+              else if (projVal) payload.project = projVal;
+              // else: leave payload.project undefined → service auto-infers.
+            }
             // Spawn Follow-up stamps the parent on the form's data attribute;
             // forwarding it tells the service to allocate a decimal sub-task
             // id (`<parent>.N`).

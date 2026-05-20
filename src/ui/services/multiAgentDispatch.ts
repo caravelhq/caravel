@@ -109,6 +109,33 @@ function indent(text: string, prefix: string): string {
     .join("\n");
 }
 
+// WAL-63 Phase 3: infer a project tag from context entries by picking the
+// most-frequently-cited `Notes/Projects/<X>/` path. Stable on ties
+// (first-seen wins). Returns null when no context path resolves into a
+// project folder. Mirrors the read-time inference in services/multiAgent.ts
+// so the field a worker reads matches what would be inferred lazily.
+const CTX_PROJECT_RE = /^Notes\/Projects\/([^/]+)\//;
+function inferProjectFromContext(context: string[]): string | null {
+  if (!context.length) return null;
+  const order: string[] = [];
+  const counts = new Map<string, number>();
+  for (const entry of context) {
+    const m = CTX_PROJECT_RE.exec(entry);
+    if (!m) continue;
+    const project = m[1];
+    if (!counts.has(project)) order.push(project);
+    counts.set(project, (counts.get(project) ?? 0) + 1);
+  }
+  if (counts.size === 0) return null;
+  let best = order[0]!;
+  let bestCount = counts.get(best)!;
+  for (const name of order) {
+    const c = counts.get(name)!;
+    if (c > bestCount) { best = name; bestCount = c; }
+  }
+  return best;
+}
+
 function yamlEscape(value: string): string {
   return JSON.stringify(value);
 }
@@ -129,7 +156,22 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   const replyTo = (input.reply_to ?? from).trim() || from;
   const parent = input.parent && input.parent !== "null" ? String(input.parent).trim() : null;
   const context = Array.isArray(input.context) ? input.context.map((c) => String(c).trim()).filter(Boolean) : [];
-  const project = (input.project ?? "").trim();
+  // WAL-63 Phase 3: project resolution. Three input states to honour:
+  //   undefined / ""  → infer from context (auto)
+  //   null            → explicit "no project" — leave the field absent
+  //   "<slug>"        → use that exact slug
+  // Matches the dashboard dropdown's "(auto)" / "(none)" / "<slug>" UX.
+  let project: string | null = null;
+  if (input.project === null) {
+    project = null;
+  } else {
+    const trimmed = (input.project ?? "").trim();
+    if (trimmed) {
+      project = trimmed;
+    } else {
+      project = inferProjectFromContext(context);
+    }
+  }
 
   const headline = (input.headline ?? "").trim();
 
