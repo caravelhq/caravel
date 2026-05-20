@@ -29,6 +29,11 @@ interface CreateTaskInput {
   budget?: { max_turns?: number; max_subagents?: number; max_usd?: number | null };
   chat_id?: string | null;
   auto_resume?: boolean;
+  // Optional explicit project tag. When omitted, the runner's reader
+  // auto-infers from `context:` paths at read time. Set when you know
+  // the project but the context paths don't point at the folder
+  // (e.g. retro-creating an envelope or a cross-project lift).
+  project?: string | null;
 }
 
 export type CreateTaskResult =
@@ -124,6 +129,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   const replyTo = (input.reply_to ?? from).trim() || from;
   const parent = input.parent && input.parent !== "null" ? String(input.parent).trim() : null;
   const context = Array.isArray(input.context) ? input.context.map((c) => String(c).trim()).filter(Boolean) : [];
+  const project = (input.project ?? "").trim();
 
   const headline = (input.headline ?? "").trim();
 
@@ -186,6 +192,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
     ``,
     `kind: ${kind}`,
     `priority: ${priority}`,
+    ...(project ? [`project: ${project}`] : []),
     `deadline: null`,
     ``,
     `budget:`,
@@ -1016,6 +1023,13 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   // Copy across kind / priority / budget / dispatch from parent.
   const kind = (/^kind:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "other").trim() || "other";
   const priority = (/^priority:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "P2").trim() || "P2";
+  // Inherit the parent's project tag so the child lands in the same
+  // workstream. The runner's auto-infer can't catch this case — child
+  // envelopes are seeded with `context: []` (deliberate, since the
+  // session thread carries the prior context). Without explicit
+  // inheritance the child renders untagged in the Current view's
+  // project groups.
+  const parentProject = (/^project:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim();
   const budgetBlock = parentYaml.match(/^budget:\s*\n((?:[ \t]+[^\n]+\n?)+)/m)?.[1]
     ?? "  max_turns: 30\n  max_subagents: 0\n  max_usd: null\n";
   const dispatchMatch = parentYaml.match(/^dispatch:\s*\n((?:[ \t]+[^\n]+\n?)+)/m);
@@ -1090,6 +1104,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     ``,
     `kind: ${kind}`,
     `priority: ${priority}`,
+    ...(parentProject ? [`project: ${parentProject}`] : []),
     `deadline: null`,
     ``,
     `budget:`,
