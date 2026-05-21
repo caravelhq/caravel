@@ -2918,6 +2918,32 @@ export const pageStyles = String.raw`    :root {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background 120ms;
+    }
+    .tasks-viewer-headline.is-editable {
+      cursor: text;
+    }
+    .tasks-viewer-headline.is-editable:hover {
+      background: #ffffff0a;
+    }
+    .tasks-viewer-headline-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0c1624a6;
+      color: #f4f8ff;
+      border: 1px solid #ffd07a99;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: "Fraunces", serif;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+    .tasks-viewer-headline-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #ffd07a55;
     }
     .tasks-viewer-status-wrap { flex: 0 0 auto; }
     .tasks-viewer-status {

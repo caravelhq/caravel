@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask } from "./services/multiAgentDispatch";
 import { listProjects } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
@@ -724,6 +724,27 @@ self.addEventListener('fetch', e => {
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, previousStatus: result.previousStatus });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Rename a task — edit the headline on an existing envelope. Refused
+      // while status: claimed. Audit trail captured in the envelope's
+      // history + the agent's journal.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/rename") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/rename".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await renameTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            headline: String(body?.headline ?? ""),
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, previous: result.previous });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

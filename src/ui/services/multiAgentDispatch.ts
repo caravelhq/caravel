@@ -600,6 +600,100 @@ function hasNonNullClosed(yaml: string): boolean {
   return extractClosedStatus(yaml) !== null;
 }
 
+// === Rename a task =========================================================
+//
+// Allows Kelly to edit the `headline:` of an existing envelope from the
+// dashboard. Refuses while the task is `status: claimed` — same constraint
+// as Close, since a worker mid-turn might have the headline in scope.
+//
+// Headline-only by design — the id, parent, agent, status, etc. stay
+// fixed. The rename writes the new headline, bumps `updated:`, and
+// appends a history entry so the prior title is recoverable from the
+// audit trail.
+
+export type RenameTaskInput = {
+  agent: string;
+  taskId: string;
+  headline: string;
+};
+
+export type RenameTaskResult =
+  | { ok: true; id: string; path: string; previous: string }
+  | { ok: false; error: string };
+
+export async function renameTask(input: RenameTaskInput): Promise<RenameTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const headline = (input.headline ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
+  if (!headline) return { ok: false, error: "headline is required" };
+  const wordCount = headline.split(/\s+/).filter(Boolean).length;
+  if (wordCount > 14) return { ok: false, error: `headline too long (${wordCount} words; soft cap 14)` };
+  if (headline.length > 200) return { ok: false, error: "headline too long (200 char hard cap)" };
+
+  // Locate envelope across all active + archived buckets so closed tasks
+  // (and even archived) can be renamed.
+  const buckets = ["open", "waiting", "done", "failed", "archived"] as const;
+  let path: string | null = null;
+  let bucket: (typeof buckets)[number] | null = null;
+  for (const b of buckets) {
+    const p = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.yaml`);
+    if (existsSync(p)) { path = p; bucket = b; break; }
+  }
+  if (!path || !bucket) {
+    return { ok: false, error: `task ${taskId} not in any bucket for ${agent}` };
+  }
+
+  let yaml: string;
+  try { yaml = await readFile(path, "utf-8"); }
+  catch (err) { return { ok: false, error: `failed to read envelope: ${String(err)}` }; }
+
+  const status = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
+  if (status === "claimed") {
+    return { ok: false, error: `task is currently claimed by a worker — wait for it to land before renaming` };
+  }
+
+  // js-yaml-safe value: wrap in double quotes when it has any character
+  // that would otherwise break a plain scalar. Keep it bare otherwise so
+  // unmodified envelopes stay readable.
+  const previousMatch = /^headline:\s*(.*)$/m.exec(yaml);
+  const previous = previousMatch ? previousMatch[1].trim().replace(/^["']|["']$/g, "") : "";
+  const escapedNew = /[:#&*!|>'"%@`,\[\]{}?]/.test(headline)
+    ? JSON.stringify(headline)
+    : headline;
+
+  const now = new Date().toISOString();
+  let next: string;
+  if (previousMatch) {
+    next = yaml.replace(/^headline:\s*.*$/m, `headline: ${escapedNew}`);
+  } else {
+    // Defensive: insert after id: if headline is somehow missing.
+    next = yaml.replace(/^(id:\s.*)$/m, `$1\nheadline: ${escapedNew}`);
+  }
+  next = next.replace(/^updated:\s*.*$/m, `updated: ${now}`);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: status || bucket,
+    to: status || bucket,
+    by: "user",
+    note: `renamed from ${JSON.stringify(previous)} to ${JSON.stringify(headline)}`,
+  });
+
+  await writeFile(path, next);
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status,
+    transition: "renamed",
+    by: "user",
+    note: `headline: ${previous} → ${headline}`,
+  });
+
+  return { ok: true, id: taskId, path, previous };
+}
+
 // Collect every descendant of `rootId` across all agents' active buckets.
 // Iterative BFS — handles arbitrarily deep nesting but in practice the
 // dispatch service flattens to one level (TSK-X.NN). Returns each match

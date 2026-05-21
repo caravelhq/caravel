@@ -3005,6 +3005,69 @@
       var currentTaskChain = null;
       var currentViewMode = "task"; // "task" | "report"
 
+      // Click-to-edit on the task viewer headline. Swaps in an inline input
+      // pre-populated with the current text; commits to /api/tasks/<id>/rename
+      // on blur or Enter, reverts on Esc. Refuses when the headline is
+      // marked locked (status: claimed — set in the renderer above).
+      if (taskPanelHeadline) {
+        taskPanelHeadline.addEventListener("click", function () {
+          if (taskPanelHeadline.dataset.locked === "true") return;
+          if (taskPanelHeadline.querySelector("input")) return; // already editing
+          var taskIdAttr = taskPanelHeadline.dataset.taskId || "";
+          var agentAttr = taskPanelHeadline.dataset.agent || "";
+          if (!taskIdAttr || !agentAttr) return;
+          var original = taskPanelHeadline.textContent || "";
+          taskPanelHeadline.textContent = "";
+          var input = document.createElement("input");
+          input.type = "text";
+          input.className = "tasks-viewer-headline-input";
+          input.value = original;
+          input.maxLength = 200;
+          input.autocomplete = "off";
+          taskPanelHeadline.appendChild(input);
+          input.focus();
+          input.select();
+          var done = false;
+          var finish = function (commit) {
+            if (done) return;
+            done = true;
+            var newValue = (input.value || "").trim();
+            if (!commit || !newValue || newValue === original) {
+              taskPanelHeadline.removeChild(input);
+              taskPanelHeadline.textContent = original;
+              return;
+            }
+            taskPanelHeadline.textContent = newValue + " …";
+            fetch("/api/tasks/" + encodeURIComponent(taskIdAttr) + "/rename", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent: agentAttr, headline: newValue }),
+            })
+              .then(function (r) { return r.json(); })
+              .then(function (data) {
+                if (!data || !data.ok) {
+                  taskPanelHeadline.textContent = original;
+                  if (typeof console !== "undefined") console.warn("rename failed:", data && data.error);
+                  return;
+                }
+                taskPanelHeadline.textContent = newValue;
+                // Refresh the picker so the renamed task shows the new
+                // headline in the tree without a full reload.
+                if (typeof fetchTasks === "function") fetchTasks();
+              })
+              .catch(function (err) {
+                taskPanelHeadline.textContent = original;
+                if (typeof console !== "undefined") console.warn("rename error:", err);
+              });
+          };
+          input.addEventListener("blur", function () { finish(true); });
+          input.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter") { ev.preventDefault(); finish(true); }
+            else if (ev.key === "Escape") { ev.preventDefault(); finish(false); }
+          });
+        });
+      }
+
       function renderSection(title, bodyHtml, openByDefault) {
         if (!bodyHtml) return "";
         var openAttr = openByDefault ? ' open' : '';
@@ -3586,7 +3649,20 @@
           currentTaskChain = c;
           var task = c.task;
           if (task) {
-            if (taskPanelHeadline) taskPanelHeadline.textContent = task.headline || task.brief || "Task " + taskId;
+            if (taskPanelHeadline) {
+              taskPanelHeadline.textContent = task.headline || task.brief || "Task " + taskId;
+              // Stash the task's agent + id on the headline so the
+              // click-to-edit handler (wired once below) has enough
+              // context to PATCH /api/tasks/<id>/rename. Disabled when
+              // a worker is mid-turn so renames can't race the run.
+              taskPanelHeadline.dataset.taskId = task.id || "";
+              taskPanelHeadline.dataset.agent = task.agent || task.to || "";
+              taskPanelHeadline.dataset.locked = (task.status === "claimed") ? "true" : "false";
+              taskPanelHeadline.title = (task.status === "claimed")
+                ? "Cannot rename while the worker is claimed"
+                : "Click to rename — Enter to save, Esc to cancel";
+              taskPanelHeadline.classList.toggle("is-editable", task.status !== "claimed");
+            }
             if (taskPanelStatus) {
               taskPanelStatus.textContent = task.status || "?";
               taskPanelStatus.className = "tasks-viewer-status " + statusClass(task.status);
