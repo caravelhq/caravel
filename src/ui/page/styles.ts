@@ -2603,7 +2603,8 @@ export const pageStyles = String.raw`    :root {
       text-align: right;
       white-space: nowrap;
     }
-    /* Projects placeholder — Phase 4 will fill in real cards. */
+    /* Projects placeholder — kept for compatibility but unused after Phase 4
+       replaced the placeholder with the live card grid below. */
     .tasks-projects-placeholder {
       padding: 32px 24px;
       text-align: center;
@@ -2613,6 +2614,256 @@ export const pageStyles = String.raw`    :root {
       line-height: 1.6;
     }
     .tasks-projects-placeholder strong { color: #cfe3ff; }
+    /* WAL-63 Phase 4: project card grid in the Projects view sidebar. One
+       card per Notes/Projects/<slug>/ folder (plus an Unassigned card when
+       un-tagged tasks exist). Counts row mirrors the plan's legend. */
+    .tasks-projects-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      overflow-y: auto;
+    }
+    .tasks-project-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      background: #0c1624a6;
+      cursor: pointer;
+      text-align: left;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+      transition: background 120ms, border-color 120ms;
+    }
+    .tasks-project-card:hover {
+      background: #14223680;
+      border-color: #ffffff22;
+    }
+    .tasks-project-card.is-active {
+      background: #1c3a644d;
+      border-color: #9be7ff;
+    }
+    .tasks-project-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-card-name {
+      flex: 1;
+      color: #ffe7b8;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    .tasks-project-card-jira, .tasks-project-card-status {
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tasks-project-card-jira {
+      background: #2a4972;
+      color: #cfe3ff;
+    }
+    .tasks-project-card-status {
+      background: #1a3322;
+      color: #6fcf97;
+    }
+    .tasks-project-card-slug {
+      color: #8aa0bd;
+      font-size: 10px;
+    }
+    .tasks-project-card-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tasks-project-card-counts .count {
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      color: #8aa0bd;
+    }
+    .tasks-project-card-counts .count-active { color: #56ccf2; }
+    .tasks-project-card-counts .count-done { color: #6fcf97; }
+    .tasks-project-card-counts .count-stuck { color: #eb5757; }
+    .tasks-project-card-counts .count-closed { color: #5a7a9a; }
+    .tasks-project-card-foot {
+      display: flex;
+      justify-content: flex-end;
+      color: #5a7a9a;
+      font-size: 10px;
+    }
+    /* WAL-63 Phase 4: project page right-pane container — replaces the task
+       viewer when Kelly drills into a project card. */
+    .tasks-project-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      color: #cfe3ff;
+    }
+    .tasks-project-head {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #ffffff14;
+    }
+    .tasks-project-head-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-title {
+      flex: 1;
+      font-family: "Fraunces", serif;
+      font-size: 22px;
+      color: #ffe7b8;
+      letter-spacing: 0.01em;
+    }
+    .tasks-project-jira, .tasks-project-status {
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tasks-project-jira { background: #2a4972; color: #cfe3ff; }
+    .tasks-project-status { background: #1a3322; color: #6fcf97; }
+    .tasks-project-slug {
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .tasks-project-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .tasks-project-metrics .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-project-metrics .metric-label {
+      font-size: 10px;
+      color: #5a7a9a;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .tasks-project-metrics .metric-value {
+      color: #ffe7b8;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+    }
+    .tasks-project-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-hide-toggle {
+      cursor: pointer;
+      gap: 6px;
+    }
+    /* WAL-63 Phase 4a: documents shelf — sits between header and leaves. */
+    .tasks-project-docs {
+      margin: 14px 0;
+    }
+    .tasks-project-docs-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #5a7a9a;
+      margin-bottom: 8px;
+    }
+    .tasks-project-docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .tasks-project-doc-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      cursor: pointer;
+      text-align: left;
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      font-size: 12px;
+      transition: background 120ms, border-color 120ms;
+    }
+    .tasks-project-doc-card:hover {
+      background: #14223680;
+      border-color: #ffd07a55;
+    }
+    .tasks-project-doc-card.kind-primary { border-left: 3px solid #9be7ff; }
+    .tasks-project-doc-card.kind-fdp { border-left: 3px solid #ffd07a; }
+    .tasks-project-doc-card.kind-other { border-left: 3px solid #5a7a9a; }
+    .tasks-project-doc-card-title {
+      font-family: "Fraunces", serif;
+      font-size: 14px;
+      color: #ffe7b8;
+    }
+    .tasks-project-doc-card-desc {
+      color: #b8cae3;
+      line-height: 1.45;
+    }
+    .tasks-project-doc-card-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #8aa0bd;
+    }
+    .tasks-project-docs-other {
+      margin-top: 10px;
+    }
+    .tasks-project-docs-other > summary {
+      cursor: pointer;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 6px 0;
+    }
+    .tasks-project-docs-other > summary:hover { color: #cfe3ff; }
+    .tasks-project-docs-other[open] > summary { color: #cfe3ff; }
+    /* Project page sections — leaves, families, closed. */
+    .tasks-project-section {
+      margin-top: 18px;
+    }
+    .tasks-project-section-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #ffd07a;
+      margin-bottom: 8px;
+    }
+    .tasks-project-trees {
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #0c1624a6;
+    }
+    .tasks-project-closed > summary {
+      cursor: pointer;
+    }
+    .tasks-project-closed[open] > summary {
+      margin-bottom: 8px;
+    }
     .tasks-toolbar {
       display: flex;
       align-items: center;

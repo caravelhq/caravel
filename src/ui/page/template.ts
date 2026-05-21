@@ -344,6 +344,11 @@ ${pageStyles}
               <div class="task-panel-loading">Loading task…</div>
             </div>
           </div>
+          <!-- WAL-63 Phase 4: project page right-pane container. Shown when
+               Kelly clicks a project card in the left sidebar. Renders the
+               docs shelf, active leaves, family trees, closed section, and
+               header metrics for one project. -->
+          <div class="tasks-project-pane" id="tasks-project-pane" hidden></div>
           <div class="tasks-empty" id="tasks-empty">Select a task on the left, or click <strong>+ New</strong> to create one.</div>
           <form class="multi-agent-new tasks-new-form" id="multi-agent-new" hidden>
             <div class="multi-agent-new-head">Create task</div>

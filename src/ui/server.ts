@@ -22,7 +22,7 @@ import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask } from "./services/multiAgentDispatch";
-import { listProjects } from "./services/projects";
+import { listProjects, listProjectsWithCounts, getProjectSummary } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -543,11 +543,30 @@ self.addEventListener('fetch', e => {
       }
 
       // WAL-63 Phase 3: project folder listing. Powers the new-task form
-      // project dropdown (and Phase 4 project cards). Read-only scan of
-      // Notes/Projects/<slug>/ with light README frontmatter sniffing.
+      // project dropdown (slug + README frontmatter). The Phase 4 card grid
+      // wants additional roll-up counts (active · done-not-closed · stuck ·
+      // closed) so it asks for ?counts=1 to get the richer payload.
       if (url.pathname === "/api/projects" && req.method === "GET") {
         try {
+          if (url.searchParams.get("counts") === "1") {
+            return json({ ok: true, projects: await listProjectsWithCounts() });
+          }
           return json({ ok: true, projects: await listProjects() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // WAL-63 Phase 4: per-project summary for the Project page (leaves,
+      // family trees, closed history, docs shelf, workstream metrics).
+      // Slug "" maps to the Unassigned bucket — wire the empty-string path
+      // explicitly so the URL can encode it as `%20` or similar.
+      if (url.pathname.startsWith("/api/projects/") && req.method === "GET") {
+        try {
+          const slug = decodeURIComponent(url.pathname.slice("/api/projects/".length));
+          const summary = await getProjectSummary(slug);
+          if (!summary) return json({ ok: false, error: "project not found" });
+          return json({ ok: true, summary });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

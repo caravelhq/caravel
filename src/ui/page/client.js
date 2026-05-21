@@ -3582,16 +3582,18 @@
       }
 
       function setRightPaneMode(mode) {
-        // mode: "empty" | "view" | "new"
+        // mode: "empty" | "view" | "new" | "project"
         if (tasksEmpty) tasksEmpty.hidden = mode !== "empty";
         if (tasksViewer) tasksViewer.hidden = mode !== "view";
+        var projectPane = document.getElementById("tasks-project-pane");
+        if (projectPane) projectPane.hidden = mode !== "project";
         if (newForm) {
           if (mode === "new") newForm.removeAttribute("hidden");
           else newForm.setAttribute("hidden", "");
         }
-        // On mobile, switching the right pane to view/new means the user
-        // wants to see the right pane — collapse the picker so it's actually
-        // visible. "empty" goes back to the list (sidebar expanded).
+        // On mobile, switching the right pane to view/new/project means the
+        // user wants to see the right pane — collapse the picker so it's
+        // actually visible. "empty" goes back to the list (sidebar expanded).
         if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
           if (typeof setTasksPickerCollapsed === "function") {
             setTasksPickerCollapsed(mode !== "empty");
@@ -4168,28 +4170,249 @@
         );
       }
 
-      // WAL-63 Phase 2: Projects placeholder. The full project-card grid
-      // with roll-up counts lands in Phase 4. For now the tab exists so
-      // Kelly knows the surface is coming and so the All-tasks tab isn't
-      // the only non-Current option.
+      // WAL-63 Phase 4: Projects card grid. One card per project folder
+      // (plus an Unassigned card when un-tagged tasks exist). Each card
+      // shows the title (or slug), jira/status pill if known, the rollup
+      // counts (active · done-not-closed · stuck · closed), and the last-
+      // touched timestamp. Cards sort by most-recently-touched, with
+      // Unassigned last.
+      var projectsOverviewCache = null;
+      var currentProjectSlug = null;
       function renderProjectsView() {
-        var projectKeys = {};
-        for (var i = 0; i < tasksCache.length; i++) {
-          var p = tasksCache[i].project;
-          if (p) projectKeys[p] = (projectKeys[p] || 0) + 1;
+        // Show a quick spinner while we fetch the counts payload — the
+        // first paint is cheap (cards from cache) but the cold path can
+        // take a beat when there are many envelopes.
+        tasksTree.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
+        loadProjectsOverview().then(function (cards) {
+          if (!cards.length) {
+            tasksTree.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
+            return;
+          }
+          cards.sort(function (a, b) {
+            if (a.slug === "" && b.slug !== "") return 1;
+            if (b.slug === "" && a.slug !== "") return -1;
+            var ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
+            var tb = b.lastTouched ? Date.parse(b.lastTouched) || 0 : 0;
+            if (tb !== ta) return tb - ta;
+            return a.slug.localeCompare(b.slug);
+          });
+          var html = '<div class="tasks-projects-grid">';
+          for (var i = 0; i < cards.length; i++) html += renderProjectCard(cards[i]);
+          html += '</div>';
+          tasksTree.innerHTML = html;
+        }).catch(function (err) {
+          tasksTree.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+        });
+      }
+
+      async function loadProjectsOverview() {
+        if (projectsOverviewCache !== null) return projectsOverviewCache;
+        try {
+          var res = await fetch("/api/projects?counts=1", { cache: "no-store" });
+          var data = await res.json();
+          projectsOverviewCache = (data && data.ok && Array.isArray(data.projects)) ? data.projects : [];
+        } catch (_) {
+          projectsOverviewCache = [];
         }
-        var names = Object.keys(projectKeys).sort();
-        var listing = names.length === 0
-          ? '<em>No project-tagged tasks yet.</em>'
-          : '<ul>' + names.map(function (n) {
-              return '<li><strong>' + escapeHtml(n) + '</strong> · ' + projectKeys[n] + ' task' + (projectKeys[n] === 1 ? '' : 's') + '</li>';
-            }).join("") + '</ul>';
-        tasksTree.innerHTML =
-          '<div class="tasks-projects-placeholder">' +
-          'Project cards with roll-up counts (active · done-not-closed · stuck · closed) ' +
-          'land in <strong>Phase 4</strong>. Detected projects:' +
-          listing +
-          '</div>';
+        return projectsOverviewCache;
+      }
+
+      function renderProjectCard(card) {
+        var displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
+        var slugLine = (card.slug && card.slug !== "" && card.title) ? card.slug : "";
+        var jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml(card.jira) + '</span>' : "";
+        var statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml(card.status) + '</span>' : "";
+        var counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
+        var touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
+        var isActiveCard = currentProjectSlug !== null && currentProjectSlug === card.slug;
+        return (
+          '<div class="tasks-project-card' + (isActiveCard ? ' is-active' : '') + '" data-project-slug="' + escapeHtml(card.slug || "") + '" role="button" tabindex="0">' +
+            '<div class="tasks-project-card-head">' +
+              '<div class="tasks-project-card-name">' + escapeHtml(displayName) + '</div>' +
+              jiraPill + statusPill +
+            '</div>' +
+            (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml(slugLine) + '</div>' : '') +
+            '<div class="tasks-project-card-counts">' +
+              '<span class="count count-active" title="Active">' + counts.active + ' active</span>' +
+              '<span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span>' +
+              '<span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span>' +
+              '<span class="count count-closed" title="Closed">' + counts.closed + ' closed</span>' +
+            '</div>' +
+            '<div class="tasks-project-card-foot">' +
+              '<span class="tasks-project-card-touched">' + escapeHtml(touched) + '</span>' +
+            '</div>' +
+          '</div>'
+        );
+      }
+
+      // WAL-63 Phase 4 + 4a: project page renderer. Fetches the per-project
+      // summary endpoint and renders header / docs shelf / leaves / family
+      // trees / closed section into the project pane. Hide-closed toggle
+      // state persists per project via localStorage.
+      var projectPaneEl = document.getElementById("tasks-project-pane");
+      async function openProjectPanel(slug) {
+        if (!projectPaneEl) return;
+        currentProjectSlug = slug;
+        setRightPaneMode("project");
+        projectPaneEl.innerHTML = '<div class="task-panel-loading">Loading project…</div>';
+        // Refresh card-active highlight in the sidebar.
+        if (tasksTree) {
+          var cards = tasksTree.querySelectorAll(".tasks-project-card");
+          for (var c = 0; c < cards.length; c++) {
+            cards[c].classList.toggle("is-active", cards[c].getAttribute("data-project-slug") === slug);
+          }
+        }
+        try {
+          var res = await fetch("/api/projects/" + encodeURIComponent(slug || ""), { cache: "no-store" });
+          var data = await res.json();
+          if (!data.ok || !data.summary) {
+            projectPaneEl.innerHTML = '<div class="task-panel-loading">Unable to load project.</div>';
+            return;
+          }
+          renderProjectPage(data.summary);
+        } catch (err) {
+          projectPaneEl.innerHTML = '<div class="task-panel-loading">Error: ' + escapeHtml(String(err && err.message || err)) + '</div>';
+        }
+      }
+
+      function projectHideClosedKey(slug) { return "claudeclaw.project.hideClosed." + (slug || "__unassigned__"); }
+      function getProjectHideClosed(slug) {
+        try {
+          return window.localStorage && window.localStorage.getItem(projectHideClosedKey(slug)) === "1";
+        } catch (_) { return false; }
+      }
+      function setProjectHideClosed(slug, hide) {
+        try {
+          if (!window.localStorage) return;
+          if (hide) window.localStorage.setItem(projectHideClosedKey(slug), "1");
+          else window.localStorage.removeItem(projectHideClosedKey(slug));
+        } catch (_) {}
+      }
+
+      function fmtDaysHours(ms) {
+        if (!Number.isFinite(ms) || ms < 0) return "—";
+        var seconds = Math.floor(ms / 1000);
+        var days = Math.floor(seconds / 86400);
+        var hours = Math.floor((seconds % 86400) / 3600);
+        if (days > 0) return days + "d " + hours + "h";
+        var mins = Math.floor((seconds % 3600) / 60);
+        return hours + "h " + mins + "m";
+      }
+
+      function renderProjectPage(summary) {
+        var slug = summary.slug;
+        var displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
+        var hideClosed = getProjectHideClosed(slug);
+
+        var headParts = '';
+        headParts += '<div class="tasks-project-head">';
+        headParts +=   '<div class="tasks-project-head-row">';
+        headParts +=     '<div class="tasks-project-title">' + escapeHtml(displayName) + '</div>';
+        if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml(summary.jira) + '</span>';
+        if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml(summary.status) + '</span>';
+        headParts +=   '</div>';
+        if (summary.title && slug && slug !== "") {
+          headParts += '<div class="tasks-project-slug">' + escapeHtml(slug) + '</div>';
+        }
+        // Metrics row.
+        var medClose = fmtDaysHours(summary.metrics && summary.metrics.medianCloseTimeMs);
+        var medAge = fmtDaysHours(summary.metrics && summary.metrics.medianActiveAgeMs);
+        headParts += '<div class="tasks-project-metrics">';
+        headParts +=   '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml(medClose) + '</span></span>';
+        headParts +=   '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml(medAge) + '</span></span>';
+        headParts +=   '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + '</span></span>';
+        headParts += '</div>';
+        // Actions row.
+        headParts += '<div class="tasks-project-actions">';
+        if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml(slug) + '">+ New task here</button>';
+        headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle">' +
+          '<input type="checkbox" data-project-hide-closed="' + escapeHtml(slug) + '"' + (hideClosed ? ' checked' : '') + ' />' +
+          '<span>Hide closed</span></label>';
+        headParts += '</div>';
+        headParts += '</div>';
+
+        // Docs shelf.
+        var docs = summary.docs || { primary: [], fdps: [], other: [] };
+        var docsHtml = '';
+        if (docs.primary.length || docs.fdps.length || docs.other.length) {
+          docsHtml += '<div class="tasks-project-docs">';
+          docsHtml += '<div class="tasks-project-docs-head">Documents</div>';
+          docsHtml += '<div class="tasks-project-docs-grid">';
+          for (var i = 0; i < docs.primary.length; i++) docsHtml += renderDocCard(docs.primary[i], "primary");
+          for (var f = 0; f < docs.fdps.length; f++) docsHtml += renderDocCard(docs.fdps[f], "fdp");
+          docsHtml += '</div>';
+          if (docs.other.length) {
+            docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ')</summary>';
+            docsHtml += '<div class="tasks-project-docs-grid">';
+            for (var o = 0; o < docs.other.length; o++) docsHtml += renderDocCard(docs.other[o], "other");
+            docsHtml += '</div></details>';
+          }
+          docsHtml += '</div>';
+        }
+
+        // Active leaves section.
+        var leavesHtml = '<div class="tasks-project-section">';
+        leavesHtml += '<div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ')</div>';
+        if (summary.leaves.length === 0) {
+          leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
+        } else {
+          leavesHtml += '<div class="tasks-current">';
+          var sortedLeaves = summary.leaves.slice().sort(function (a, b) {
+            return (Date.parse(b.updated || 0) || 0) - (Date.parse(a.updated || 0) || 0);
+          });
+          for (var l = 0; l < sortedLeaves.length; l++) leavesHtml += renderCurrentRow(sortedLeaves[l]);
+          leavesHtml += '</div>';
+        }
+        leavesHtml += '</div>';
+
+        // Family trees — every top-level task with descendants, rendered via
+        // the existing tree primitives. Closed rows respect the hide-closed
+        // toggle; otherwise they show greyed out via the existing styling.
+        var familiesScoped = hideClosed
+          ? summary.families.filter(function (t) { return !(t.closed && t.closed.status); })
+          : summary.families;
+        var familiesHtml = '';
+        if (familiesScoped.length > 0) {
+          familiesHtml += '<div class="tasks-project-section">';
+          familiesHtml += '<div class="tasks-project-section-head">Family trees</div>';
+          familiesHtml += '<div class="tasks-project-trees">';
+          var tree = buildTaskTree(familiesScoped);
+          // Auto-expand top-level roots so the trees aren't collapsed.
+          for (var r = 0; r < tree.roots.length; r++) tasksExpanded[tree.roots[r].id] = true;
+          var out = [];
+          for (var k = 0; k < tree.roots.length; k++) renderTreeBranch(tree, tree.roots[k], 0, out);
+          familiesHtml += out.join("");
+          familiesHtml += '</div></div>';
+        }
+
+        // Closed section.
+        var closedHtml = '';
+        if (summary.closedTasks.length > 0 && !hideClosed) {
+          closedHtml += '<details class="tasks-project-section tasks-project-closed">';
+          closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ')</summary>';
+          closedHtml += '<div class="tasks-current">';
+          for (var cIdx = 0; cIdx < summary.closedTasks.length; cIdx++) {
+            closedHtml += renderCurrentRow(summary.closedTasks[cIdx]);
+          }
+          closedHtml += '</div></details>';
+        }
+
+        projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
+      }
+
+      function renderDocCard(doc, kind) {
+        var title = doc.title || doc.filename;
+        var desc = doc.description ? escapeHtml(shorten(doc.description, 140)) : '';
+        var meta = [];
+        if (doc.doc_type) meta.push(escapeHtml(doc.doc_type));
+        if (doc.last_updated) meta.push(escapeHtml(doc.last_updated));
+        return (
+          '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml(kind || 'other') + '" data-open-file="' + escapeHtml(doc.path) + '">' +
+            '<div class="tasks-project-doc-card-title">' + escapeHtml(title) + '</div>' +
+            (desc ? '<div class="tasks-project-doc-card-desc">' + desc + '</div>' : '') +
+            (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(' · ') + '</div>' : '') +
+          '</button>'
+        );
       }
 
       async function loadTasksTree() {
@@ -4224,6 +4447,14 @@
               else currentCollapsed[gk] = true;
               renderTaskPicker();
             }
+            return;
+          }
+          // WAL-63 Phase 4: project card in the Projects view sidebar.
+          var projectCardEl = ev.target.closest(".tasks-project-card");
+          if (projectCardEl) {
+            ev.preventDefault();
+            var slug = projectCardEl.getAttribute("data-project-slug");
+            if (slug !== null) openProjectPanel(slug);
             return;
           }
           // Chevron toggles parent expansion without opening the row.
@@ -4272,6 +4503,18 @@
             tabs[i].classList.toggle("is-active", isActive);
             tabs[i].setAttribute("aria-selected", isActive ? "true" : "false");
           }
+          // WAL-63 Phase 4: switching INTO Projects refreshes the counts
+          // cache so cards reflect what's actually on disk. Switching OUT
+          // returns the right pane to empty so the project page doesn't
+          // linger over a non-Projects view.
+          if (v === "projects") {
+            projectsOverviewCache = null;
+          } else {
+            var projPane = document.getElementById("tasks-project-pane");
+            if (projPane && projPane.hidden === false && typeof setRightPaneMode === "function") {
+              setRightPaneMode(currentTaskId ? "view" : "empty");
+            }
+          }
           renderTaskPicker();
         });
       }
@@ -4293,7 +4536,13 @@
       }
 
       if (tasksRefreshBtn) {
-        tasksRefreshBtn.addEventListener("click", loadTasksTree);
+        tasksRefreshBtn.addEventListener("click", function () {
+          // WAL-63 Phase 4: invalidate the projects cache on explicit
+          // refresh so the card-grid counts catch up with newly-landed
+          // tasks. (The task list itself is re-fetched by loadTasksTree.)
+          projectsOverviewCache = null;
+          loadTasksTree();
+        });
       }
 
       // Mobile picker toggle: tap "Tasks" toolbar button to flip between
@@ -4619,6 +4868,90 @@
       // without a separate form. See submitNext above.)
 
       // Delegate clicks inside the task panel for action buttons.
+      // WAL-63 Phase 4: project pane click delegate. Handles task rows
+      // (open the task viewer), tree-chevron toggles (expand/collapse a
+      // sub-tree in the Family Trees section), doc-card opens (route to the
+      // Files panel), hide-closed toggle, and "+ New task here" button.
+      if (projectPaneEl) {
+        projectPaneEl.addEventListener("click", function (ev) {
+          // Doc card opens the file in the Files tab.
+          var docBtn = ev.target.closest("[data-open-file]");
+          if (docBtn) {
+            ev.preventDefault();
+            var path = docBtn.getAttribute("data-open-file");
+            try {
+              if (typeof setActiveTab === "function") setActiveTab("files");
+              if (typeof loadFile === "function" && path) loadFile(path);
+            } catch (_) {}
+            return;
+          }
+          // Hide-closed toggle is a label-wrapped checkbox; let the checkbox
+          // emit the change event itself — handled below.
+          var newHere = ev.target.closest("[data-project-new-task]");
+          if (newHere) {
+            ev.preventDefault();
+            var newSlug = newHere.getAttribute("data-project-new-task");
+            openNewTaskFormForProject(newSlug);
+            return;
+          }
+          // Tree-chevron in the Family Trees section.
+          var chevron = ev.target.closest("[data-toggle-expand]");
+          if (chevron) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var pid = chevron.getAttribute("data-toggle-expand");
+            if (pid && currentProjectSlug !== null) {
+              if (tasksExpanded[pid]) delete tasksExpanded[pid];
+              else tasksExpanded[pid] = true;
+              openProjectPanel(currentProjectSlug);
+            }
+            return;
+          }
+          // Task row → open viewer (replaces the project page in the right
+          // pane until Kelly clicks the card again).
+          var row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
+          if (row) {
+            var taskId = row.getAttribute("data-task-id");
+            if (taskId) openTaskPanel(taskId);
+            return;
+          }
+        });
+        projectPaneEl.addEventListener("change", function (ev) {
+          var toggle = ev.target.closest("[data-project-hide-closed]");
+          if (toggle) {
+            var s = toggle.getAttribute("data-project-hide-closed");
+            setProjectHideClosed(s, toggle.checked);
+            if (currentProjectSlug !== null) openProjectPanel(currentProjectSlug);
+            return;
+          }
+        });
+      }
+
+      // Click the "+ New task here" button on the project page → open the
+      // existing new-task form with the project dropdown pre-selected and
+      // a tag indicating the source.
+      async function openNewTaskFormForProject(slug) {
+        if (!newForm) return;
+        newForm.removeAttribute("data-parent");
+        var chip = document.getElementById("multi-agent-new-parent-chip");
+        var chipId = document.getElementById("multi-agent-new-parent-id");
+        if (chip) chip.setAttribute("hidden", "");
+        if (chipId) chipId.textContent = "";
+        if (newStatus) { newStatus.textContent = ""; newStatus.classList.remove("is-error"); }
+        var projectSelect = document.getElementById("multi-agent-new-project");
+        if (projectSelect) {
+          await ensureProjectsLoaded(projectSelect);
+          // Force-select the requested slug if it's in the list; otherwise
+          // leave on (auto) — the form's auto-infer will pick it up via
+          // context paths if the user adds the right file references.
+          var found = Array.prototype.some.call(projectSelect.options, function (o) { return o.value === slug; });
+          projectSelect.value = found ? slug : "";
+        }
+        setRightPaneMode("new");
+        var headlineEl = document.getElementById("multi-agent-new-headline");
+        if (headlineEl) headlineEl.focus();
+      }
+
       if (taskPanelBody) {
         taskPanelBody.addEventListener("click", function (ev) {
           var nextBtn = ev.target.closest(".task-panel-next-submit");
