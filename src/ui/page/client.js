@@ -4515,6 +4515,14 @@
               setRightPaneMode(currentTaskId ? "view" : "empty");
             }
           }
+          // Kelly 2026-05-24: on mobile, tapping a top tab should close
+          // the task detail and expose the list. CSS hides .tasks-content
+          // when .tasks-sidebar is uncollapsed on small viewports, so
+          // uncollapsing the sidebar is enough — no need to toggle the
+          // right pane separately.
+          if (typeof isMobileFiles === "function" && isMobileFiles()) {
+            setPickerCollapsed(false);
+          }
           renderTaskPicker();
         });
       }
