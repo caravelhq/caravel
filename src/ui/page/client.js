@@ -2277,7 +2277,7 @@
           var bodySrc = rawSrc;
           var fmMatch = rawSrc.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
           if (fmMatch) {
-            fmHtml = '<pre class="files-md-frontmatter">' + escapeHtml(fmMatch[1]) + '</pre>';
+            fmHtml = '<pre class="files-md-frontmatter">' + escHtml(fmMatch[1]) + '</pre>';
             bodySrc = rawSrc.slice(fmMatch[0].length);
           }
           var div = document.createElement("div");
