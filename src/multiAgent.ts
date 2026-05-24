@@ -1584,6 +1584,127 @@ async function maybeSetGlobalLimitsGate(
 // Active tasks (closed: null) never archive regardless of age. Closed tasks
 // fade gradually — visible in the Projects view's Closed section for 30 days
 // post-close, then move to archived/ and only surface via "Show archived".
+// Recover envelopes stranded in `tasks/open/` with `status: claimed` after
+// a daemon crash, restart, or any other process death that killed the
+// worker before it could emit a directive. Two recovery paths:
+//
+//   - If the envelope has a populated `summary.response` (the worker
+//     actually finished its turn but the runner died before transitioning
+//     the file), promote it to `status: done` directly. Captures the
+//     "looks finished but stuck in claimed" case that left
+//     TSK-2026-05-23-0001.13 in limbo across last night's outage.
+//
+//   - Otherwise re-open the envelope so the runner re-claims it on the
+//     next tick. Worker context (session thread, files in cache) is
+//     gone with the dead process, but the brief is still valid.
+//
+// `includeUnexpired = false` (default, every tick): only recover when the
+// lease window has elapsed — anything within the window may still be a
+// live worker on this daemon.
+//
+// `includeUnexpired = true` (startup only): claim any claimed envelope
+// regardless of lease, because at startup the only live worker is the
+// freshly-spawned daemon, so any pre-existing claim is from the prior
+// process by definition.
+async function sweepStaleClaims(
+  opts: Required<MultiAgentOptions>,
+  includeUnexpired = false
+): Promise<void> {
+  for (const agent of opts.agents) {
+    const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+    if (!existsSync(openDir)) continue;
+    const entries = await readdir(openDir).catch(() => [] as string[]);
+    for (const fname of entries.filter((e) => e.endsWith(".yaml"))) {
+      const path = join(openDir, fname);
+      let yaml: string;
+      try {
+        yaml = await readFile(path, "utf-8");
+      } catch {
+        continue;
+      }
+      const status = (readField(yaml, "status") ?? "").trim();
+      if (status !== "claimed") continue;
+
+      const expiresRaw = readNestedField(yaml, "lease", "expires");
+      const expiresMs = expiresRaw ? Date.parse(expiresRaw) : NaN;
+      const expired = Number.isFinite(expiresMs) && expiresMs < Date.now();
+      if (!includeUnexpired && !expired) continue;
+
+      const taskId = fname.replace(/\.yaml$/, "");
+      const fields = parseFields(yaml, taskId);
+      const summaryResponseRaw = readNestedField(yaml, "summary", "response") ?? "";
+      const summaryResponse = summaryResponseRaw.trim().replace(/^"|"$/g, "");
+      const now = new Date().toISOString();
+
+      if (summaryResponse) {
+        // Worker had emitted a completion summary — treat as done.
+        let next = setField(yaml, "status", "done");
+        next = setField(next, "updated", now);
+        next = setNestedField(next, "lease", "holder", "null");
+        next = setNestedField(next, "lease", "expires", "null");
+        next = appendHistory(next, {
+          ts: now,
+          from: "claimed",
+          to: "done",
+          by: `runner-${process.pid}`,
+          note: includeUnexpired
+            ? "stale-claim recovery on startup: worker had populated summary.response — promoting to done"
+            : "stale-claim recovery: lease expired with summary.response populated — promoting to done",
+        });
+        const doneDir = join(AGENTS_DIR, agent, "tasks", "done");
+        await mkdir(doneDir, { recursive: true });
+        await writeFile(path, next);
+        try {
+          await rename(path, join(doneDir, fname));
+        } catch {}
+        await cleanStaleRendezvous(agent, taskId, "done");
+        await appendJournal(agent, {
+          ts: now,
+          id: taskId,
+          status: "done",
+          kind: fields.kind,
+          from: fields.from,
+          to: agent,
+          parent: fields.parent,
+          summary: "stale-claim recovery (worker had completed)",
+        });
+        console.log(
+          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (stale-claim recovery, summary populated)`
+        );
+      } else {
+        // No completion signal — reset to open so the runner re-claims.
+        let next = setField(yaml, "status", "open");
+        next = setField(next, "updated", now);
+        next = setNestedField(next, "lease", "holder", "null");
+        next = setNestedField(next, "lease", "expires", "null");
+        next = appendHistory(next, {
+          ts: now,
+          from: "claimed",
+          to: "open",
+          by: `runner-${process.pid}`,
+          note: includeUnexpired
+            ? "stale-claim recovery on startup: re-opening for fresh claim"
+            : "stale-claim recovery: lease expired with no completion signal — re-opening",
+        });
+        await writeFile(path, next);
+        await appendJournal(agent, {
+          ts: now,
+          id: taskId,
+          status: "open",
+          kind: fields.kind,
+          from: fields.from,
+          to: agent,
+          parent: fields.parent,
+          summary: "stale-claim recovery (re-opened for fresh claim)",
+        });
+        console.log(
+          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} stale claim → open (re-queued)`
+        );
+      }
+    }
+  }
+}
+
 async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
   const days = readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS);
   if (!Number.isFinite(days) || days <= 0) return;
@@ -1662,7 +1783,11 @@ function readEnvNumber(key: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
-async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string, number>): Promise<void> {
+async function tickOnce(
+  opts: Required<MultiAgentOptions>,
+  inFlight: Map<string, number>,
+  isFirstTick = false
+): Promise<void> {
   if (!existsSync(AGENTS_DIR)) return;
 
   // Global rate-limit gate. Skip all claim passes (and the waiting-sweep,
@@ -1676,6 +1801,12 @@ async function tickOnce(opts: Required<MultiAgentOptions>, inFlight: Map<string,
     );
     return;
   }
+
+  // Stale-claim recovery. On the first tick after daemon startup, any
+  // envelope still in `status: claimed` is from the prior process by
+  // definition — reset immediately regardless of lease window. On
+  // subsequent ticks, only recover claims whose lease has elapsed.
+  await sweepStaleClaims(opts, isFirstTick);
 
   // Sweep waiting tasks first — any unblock will land them in tasks/open/ in
   // time for the same tick's claim pass.
@@ -1784,16 +1915,18 @@ export function startMultiAgentRunner(options: MultiAgentOptions = {}): MultiAge
   };
   const inFlight = new Map<string, number>();
   let stopped = false;
+  let isFirstTick = true;
 
   console.log(`[${new Date().toLocaleTimeString()}] multi-agent runner: enabled (tick ${opts.tickMs}ms, agents: ${opts.agents.join(",")})`);
 
   const loop = async () => {
     if (stopped) return;
     try {
-      await tickOnce(opts, inFlight);
+      await tickOnce(opts, inFlight, isFirstTick);
     } catch (err) {
       console.error("[multi-agent] tick error:", err);
     }
+    isFirstTick = false;
     if (!stopped) setTimeout(loop, opts.tickMs);
   };
   setTimeout(loop, opts.tickMs);
