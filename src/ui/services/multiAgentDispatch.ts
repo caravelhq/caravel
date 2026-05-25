@@ -1328,3 +1328,93 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
 
   return { ok: true, id: childId, path: childPath, parentId: taskId };
 }
+
+// === Assign / change project on an existing task ===========================
+//
+// Kelly 2026-05-25: there was no way to change `project:` from the
+// dashboard. Auto-infer is best-effort but often wrong (e.g. when an
+// envelope's context paths span multiple project folders). This service +
+// the `/api/tasks/:id/project` endpoint expose a manual override.
+//
+// Passing `project: null` or empty string clears the field. The runner's
+// reader then falls back to auto-inferring from context: at read time.
+
+export type SetTaskProjectInput = {
+  agent: string;
+  taskId: string;
+  project: string | null;
+};
+
+export type SetTaskProjectResult =
+  | { ok: true; id: string; previous: string }
+  | { ok: false; error: string };
+
+export async function setTaskProject(input: SetTaskProjectInput): Promise<SetTaskProjectResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const project = ((input.project ?? "") + "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
+  if (project.length > 200) return { ok: false, error: "project slug too long (200 char cap)" };
+  if (project && /[^A-Za-z0-9_./-]/.test(project)) {
+    return { ok: false, error: "project slug may only contain letters, digits, _, ., /, -" };
+  }
+
+  // Locate envelope across all buckets including archived (audit-rewrite is OK).
+  const buckets = ["open", "waiting", "done", "failed", "archived"] as const;
+  let path: string | null = null;
+  let bucket: (typeof buckets)[number] | null = null;
+  for (const b of buckets) {
+    const p = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.yaml`);
+    if (existsSync(p)) { path = p; bucket = b; break; }
+  }
+  if (!path || !bucket) {
+    return { ok: false, error: `task ${taskId} not in any bucket for ${agent}` };
+  }
+
+  let yaml: string;
+  try { yaml = await readFile(path, "utf-8"); }
+  catch (err) { return { ok: false, error: `failed to read envelope: ${String(err)}` }; }
+
+  const previousMatch = /^project:\s*(.*)$/m.exec(yaml);
+  const previous = previousMatch ? previousMatch[1].trim() : "";
+  const now = new Date().toISOString();
+
+  let next: string;
+  if (project) {
+    if (previousMatch) {
+      next = yaml.replace(/^project:\s*.*$/m, `project: ${project}`);
+    } else if (/^priority:.*$/m.test(yaml)) {
+      next = yaml.replace(/^(priority:.*)$/m, `$1\nproject: ${project}`);
+    } else if (/^kind:.*$/m.test(yaml)) {
+      next = yaml.replace(/^(kind:.*)$/m, `$1\nproject: ${project}`);
+    } else {
+      next = yaml + `\nproject: ${project}\n`;
+    }
+  } else {
+    // Clear: drop the line entirely if present.
+    next = previousMatch ? yaml.replace(/^project:\s*.*\n?/m, "") : yaml;
+  }
+
+  next = next.replace(/^updated:\s*.*$/m, `updated: ${now}`);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: previous || "(unset)",
+    to: project || "(unset)",
+    by: "user",
+    note: `project: ${JSON.stringify(previous || null)} → ${JSON.stringify(project || null)}`,
+  });
+
+  await writeFile(path, next);
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: "project-assigned",
+    transition: "project",
+    by: "user",
+    note: `project: ${previous || "(unset)"} → ${project || "(unset)"}`,
+  });
+
+  return { ok: true, id: taskId, previous };
+}

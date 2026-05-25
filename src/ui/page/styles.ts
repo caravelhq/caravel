@@ -3599,6 +3599,41 @@ export const pageStyles = String.raw`    :root {
       color: #4a5668;
       margin: 0 4px;
     }
+    /* Project chip in the task panel meta line. Click to swap to a
+       dropdown of known projects. Distinct from other meta entries —
+       border + folder icon advertise the affordance. */
+    .task-panel-project-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 8px;
+      border: 1px solid #ffffff22;
+      border-radius: 999px;
+      background: #0c1624a6;
+      cursor: pointer;
+      color: #cfe3ff;
+      transition: border-color 120ms, background 120ms;
+    }
+    .task-panel-project-chip:hover {
+      border-color: #ffd07a99;
+      background: #14223680;
+    }
+    .task-panel-project-chip.is-unassigned {
+      color: #6a7e9b;
+      font-style: italic;
+    }
+    .task-panel-project-select {
+      background: transparent;
+      color: #cfe3ff;
+      border: none;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+    }
+    .task-panel-project-select:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 2px;
+    }
     .task-panel-unblock {
       display: grid;
       gap: 8px;

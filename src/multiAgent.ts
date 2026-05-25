@@ -1127,162 +1127,16 @@ async function locateEnvelope(
   return null;
 }
 
-// Handoff transformation: when a worker emits `<task-waiting on="task:X">`,
-// instead of parking the current envelope as waiting:on:task:X (which
-// leaves the parent stuck as an "active" leaf while a separate continuation
-// also runs), the runner:
-//
-//   1. Spawns a continuation child with status: waiting:on:task:X. Same
-//      agent, parent = self, kind: continuation. Lands directly in the
-//      waiting/ bucket (no open/claim cycle).
-//   2. Marks self as done + closed.status: superseded. Self drops out of
-//      the active-leaves view. The continuation IS the active waiter.
-//
-// When task X resolves, sweepWaiting unblocks the continuation, agent
-// re-claims, processes whatever's next. Same end-to-end behaviour as the
-// old waiting-park pattern, but without the parent-still-showing-up bug.
-async function handoffToContinuation(
-  agent: string,
-  taskId: string,
-  sourcePath: string,
-  parentYaml: string,
-  dependency: string,
-  directive: TaskDirective
-): Promise<void> {
-  const now = new Date().toISOString();
-  const childId = await nextAliceTaskId(taskId); // reuses sibling-id allocator (agent-agnostic when parent is set)
-
-  // Inherit parent metadata onto the continuation envelope.
-  const project = (readField(parentYaml, "project") ?? "").trim();
-  const parentHeadline = (readField(parentYaml, "headline") ?? "").trim().replace(/^["']|["']$/g, "");
-  const dispatchMatch = parentYaml.match(/^dispatch:\s*\n((?:[ \t]+[^\n]+\n?)+)/m);
-  const dispatchBlock = dispatchMatch ? dispatchMatch[0].trimEnd() : "";
-
-  const summaryNote = (directive.summary ?? "").trim();
-  const briefLines = [
-    `Continuation of **${taskId}** — was waiting on \`task:${dependency}\`.`,
-    ``,
-    summaryNote
-      ? `Prior summary: ${summaryNote}`
-      : `(no prior summary — see parent envelope for context)`,
-    ``,
-    `Same session thread \`task-${taskId.split(".")[0]}-${agent}\` is resumed — prior reasoning, file reads, and context remain in cache.`,
-    ``,
-    `Parent envelope: \`agents/${agent}/tasks/done/${taskId}.yaml\``,
-    `Resolved dependency: \`agents/*/tasks/done/${dependency}.yaml\``,
-  ];
-  const briefBody = briefLines.join("\n");
-
-  const childLines = [
-    `id: ${childId}`,
-    `headline: ${JSON.stringify(parentHeadline ? `${parentHeadline.slice(0, 56)} — continuation` : `continuation after ${dependency}`)}`,
-    `created: ${now}`,
-    `updated: ${now}`,
-    ``,
-    `from: runner`,
-    `to: ${agent}`,
-    `parent: ${taskId}`,
-    `reply_to: ${(readField(parentYaml, "reply_to") ?? "user").trim() || "user"}`,
-    ``,
-    `kind: continuation`,
-    `priority: ${(readField(parentYaml, "priority") ?? "P2").trim() || "P2"}`,
-    ...(project ? [`project: ${project}`] : []),
-    `deadline: null`,
-    ``,
-    `budget:`,
-    `  max_turns: 12`,
-    `  max_subagents: 0`,
-    `  max_usd: null`,
-    ``,
-    `brief: |`,
-    briefBody.split("\n").map((l) => (l.length ? `  ${l}` : `  `)).join("\n"),
-    ``,
-    `output_format: ""`,
-    `context: []`,
-    ``,
-    `status: waiting:on:task:${dependency}`,
-    `lease:`,
-    `  holder: null`,
-    `  expires: null`,
-    `history:`,
-    `  - ts: ${now}`,
-    `    from: null`,
-    `    to: waiting:on:task:${dependency}`,
-    `    by: runner-${process.pid}`,
-    `    note: ${JSON.stringify(`spawned as handoff continuation of ${taskId} (parent was waiting on task:${dependency})`)}`,
-    ``,
-    `summary:`,
-    `  brief: ""`,
-    `  response: ""`,
-    `report: ""`,
-    ...(dispatchBlock ? ["", dispatchBlock] : []),
-    ``,
-  ].join("\n");
-
-  const waitingDir = join(AGENTS_DIR, agent, "tasks", "waiting");
-  await mkdir(waitingDir, { recursive: true });
-  await writeFile(join(waitingDir, `${childId}.yaml`), childLines);
-
-  // Mark self as done with closed.status: superseded. The continuation is
-  // the live thread now — self's place in the active-leaves view is taken.
-  let nextSelf = setField(parentYaml, "status", "done");
-  nextSelf = setField(nextSelf, "updated", now);
-  nextSelf = setNestedField(nextSelf, "lease", "holder", "null");
-  nextSelf = setNestedField(nextSelf, "lease", "expires", "null");
-  if (summaryNote) {
-    nextSelf = setNestedField(nextSelf, "summary", "response", JSON.stringify(summaryNote));
-  }
-  nextSelf = setClosedField(nextSelf, {
-    status: "superseded",
-    at: now,
-    by: "auto-handoff",
-    reason: `spawned continuation ${childId} waiting on task:${dependency}`,
-  });
-  nextSelf = appendHistory(nextSelf, {
-    ts: now,
-    from: "claimed",
-    to: "done",
-    by: `runner-${process.pid}`,
-    note: `handed off to continuation ${childId} (was waiting on task:${dependency})`,
-  });
-
-  const doneDir = join(AGENTS_DIR, agent, "tasks", "done");
-  await mkdir(doneDir, { recursive: true });
-  await writeFile(sourcePath, nextSelf);
-  try {
-    await rename(sourcePath, join(doneDir, `${taskId}.yaml`));
-  } catch {}
-  await cleanStaleRendezvous(agent, taskId, "done");
-
-  const parentFields = parseFields(parentYaml, taskId);
-  await appendJournal(agent, {
-    ts: now,
-    id: taskId,
-    status: "done",
-    kind: parentFields.kind,
-    from: parentFields.from,
-    to: agent,
-    parent: parentFields.parent,
-    summary: `auto-handoff to continuation ${childId} (was waiting on task:${dependency})`,
-  });
-  await appendJournal(agent, {
-    ts: now,
-    id: childId,
-    status: `waiting:on:task:${dependency}`,
-    kind: "continuation",
-    from: "runner",
-    to: agent,
-    parent: taskId,
-    summary: `spawned as handoff continuation of ${taskId}`,
-  });
-
-  console.log(
-    `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (handoff to ${childId} waiting on task:${dependency})`
-  );
-
-  // Deliberately skip notifyDispatchChat — the auto-enqueue would create
-  // yet another continuation envelope. Our handoff IS that continuation.
-}
+// Note: an earlier `handoffToContinuation` helper used to short-circuit
+// waiting:on:task:X by spawning a sibling continuation immediately and
+// marking the parent done. Removed 2026-05-25 — it broke sibling
+// consolidation (Alice got woken per-sibling instead of once-when-all-
+// landed, see TSK-2026-05-25-0002.06). Replaced with a small change in
+// transitionToWaiting: when reason starts with "task:", set
+// closed.status: superseded on the parked parent. The existing auto-
+// continuation in notifyDispatchChat → enqueueAliceContinuation fires
+// once when all siblings land, becoming the new active leaf; the
+// superseded parent drops from the active-leaves view.
 
 async function transitionToWaiting(
   agent: string,
@@ -1307,20 +1161,6 @@ async function transitionToWaiting(
   const onSpec = (directive.reason ?? "user").trim() || "user";
   const finalStatus = `waiting:on:${onSpec}`;
 
-  // Kelly 2026-05-24: parent tasks should never park in waiting:on:task:X.
-  // Instead the runner spawns a continuation child waiting on X and marks
-  // the parent done (closed.status: superseded). The continuation is the
-  // active leaf; the parent stops appearing as "needs action". `user`,
-  // `limits`, `agent:*` etc. dependencies still park self as before —
-  // those represent genuine pauses, not handoffs.
-  if (onSpec.startsWith("task:")) {
-    const dependency = onSpec.slice("task:".length).trim();
-    if (dependency) {
-      await handoffToContinuation(agent, taskId, sourcePath, yaml, dependency, directive);
-      return;
-    }
-  }
-
   let next = setField(yaml, "status", finalStatus);
   next = setField(next, "updated", now);
   // Release the lease so a stale claim-holder doesn't block re-claim.
@@ -1336,6 +1176,25 @@ async function transitionToWaiting(
     next = setField(next, "limits_hit_at", now);
     const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
     next = setField(next, "limits_retry_count", String(prevCount + 1));
+  }
+  // Kelly 2026-05-24/25: when a worker parks waiting on a sibling task,
+  // the parent also gets `closed.status: superseded`. The auto-continuation
+  // logic (notifyDispatchChat → enqueueAliceContinuation) creates ONE
+  // consolidated continuation when all siblings land — that continuation
+  // is the new active leaf. Setting closed:superseded here drops the
+  // parked parent out of the Current view's active-leaves list so Kelly
+  // doesn't see it duplicated alongside the eventual continuation.
+  //
+  // Only `waiting:on:task:*` triggers the supersede. `user`, `limits`,
+  // and `agent:*` are genuine pauses where the parent IS the active leaf
+  // — don't mark them superseded.
+  if (onSpec.startsWith("task:")) {
+    next = setClosedField(next, {
+      status: "superseded",
+      at: now,
+      by: "auto-on-waiting-task",
+      reason: `parked waiting on ${onSpec} — continuation will be the active leaf when siblings land`,
+    });
   }
   next = appendHistory(next, {
     ts: now,

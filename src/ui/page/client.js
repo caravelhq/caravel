@@ -3102,11 +3102,21 @@
         var isClosed = !!(card.closed && card.closed.status);
         var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
 
-        // Meta line: from → to · kind · priority · time-ago
+        // Meta line: from → to · kind · priority · project · time-ago
         var metaParts = [];
         metaParts.push(escapeHtml(card.from || "?") + " <span class=\"task-panel-meta-arrow\">→</span> " + escapeHtml(card.to || "?"));
         if (card.kind) metaParts.push(escapeHtml(card.kind));
         if (card.priority) metaParts.push(escapeHtml(card.priority));
+        // Project chip — click to edit. Always rendered (even unassigned)
+        // so the affordance is discoverable.
+        var projectLabel = card.project ? card.project : "Unassigned";
+        var projectChip =
+          '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" ' +
+          'data-project-edit="' + escapeHtml(card.id) + '" ' +
+          'data-project-agent="' + escapeHtml(card.agent || card.to || "") + '" ' +
+          'data-project-current="' + escapeHtml(card.project || "") + '" ' +
+          'title="Click to change project">📁 ' + escapeHtml(projectLabel) + '</span>';
+        metaParts.push(projectChip);
         if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
         var metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + '</div>';
 
@@ -4973,6 +4983,89 @@
             ev.preventDefault();
             var pane = pillBtn.closest(".task-panel-report-pane");
             setActiveReportDoc(pane, pillBtn.getAttribute("data-doc-pill"));
+            return;
+          }
+          // Project chip click — swap to dropdown of known projects + Unassigned.
+          var projChip = ev.target.closest("[data-project-edit]");
+          if (projChip && !projChip.querySelector("select")) {
+            ev.preventDefault();
+            var projTaskId = projChip.getAttribute("data-project-edit") || "";
+            var projAgent = projChip.getAttribute("data-project-agent") || "";
+            var projCurrent = projChip.getAttribute("data-project-current") || "";
+            if (!projTaskId || !projAgent) return;
+            // Distinct project values from tasksCache.
+            var seenProj = {};
+            var projOptions = [];
+            for (var pi = 0; pi < (tasksCache || []).length; pi++) {
+              var pp = tasksCache[pi] && tasksCache[pi].project;
+              if (pp && !seenProj[pp]) { seenProj[pp] = true; projOptions.push(pp); }
+            }
+            projOptions.sort();
+            var prevLabel = projChip.textContent;
+            projChip.textContent = "";
+            var sel = document.createElement("select");
+            sel.className = "task-panel-project-select";
+            var optNone = document.createElement("option");
+            optNone.value = "__none__";
+            optNone.textContent = "— Unassigned —";
+            if (!projCurrent) optNone.selected = true;
+            sel.appendChild(optNone);
+            for (var pj = 0; pj < projOptions.length; pj++) {
+              var opt = document.createElement("option");
+              opt.value = projOptions[pj];
+              opt.textContent = projOptions[pj];
+              if (projOptions[pj] === projCurrent) opt.selected = true;
+              sel.appendChild(opt);
+            }
+            // "+ New…" option triggers a prompt for an ad-hoc slug.
+            var optNew = document.createElement("option");
+            optNew.value = "__new__";
+            optNew.textContent = "+ New project…";
+            sel.appendChild(optNew);
+            projChip.appendChild(sel);
+            sel.focus();
+            var revert = function () {
+              projChip.textContent = prevLabel;
+            };
+            var commit = function () {
+              var val = sel.value;
+              if (val === "__new__") {
+                var typed = (window.prompt("New project slug (folder under Notes/Projects/, e.g. TPD-300_my-project):", "") || "").trim();
+                if (!typed) { revert(); return; }
+                val = typed;
+              }
+              var payload = (val === "__none__")
+                ? { agent: projAgent, project: null }
+                : { agent: projAgent, project: val };
+              projChip.textContent = "📁 saving…";
+              fetch("/api/tasks/" + encodeURIComponent(projTaskId) + "/project", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+              })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                  if (!data || !data.ok) {
+                    revert();
+                    if (typeof console !== "undefined") console.warn("setTaskProject failed:", data && data.error);
+                    return;
+                  }
+                  // Refresh the panel so the chip shows the new value and
+                  // tasksCache repopulates (so other chips know about the
+                  // new slug if it was a fresh "+ New" entry).
+                  if (typeof openTaskPanel === "function") openTaskPanel(projTaskId);
+                  if (typeof fetchTasks === "function") fetchTasks();
+                })
+                .catch(function (err) {
+                  revert();
+                  if (typeof console !== "undefined") console.warn("setTaskProject error:", err);
+                });
+            };
+            sel.addEventListener("change", commit);
+            sel.addEventListener("blur", function () {
+              // If user blurred without picking anything, revert.
+              if (projChip.contains(sel)) revert();
+            });
             return;
           }
           var toggleNextBtn = ev.target.closest("[data-toggle-next]");

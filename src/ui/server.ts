@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
@@ -761,6 +761,27 @@ self.addEventListener('fetch', e => {
             agent: String(body?.agent ?? "").trim(),
             taskId,
             headline: String(body?.headline ?? ""),
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, previous: result.previous });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Assign / change project on a task. Empty string or null clears.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/project") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/project".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const projectRaw = body?.project;
+          const project = projectRaw == null ? null : String(projectRaw);
+          const result = await setTaskProject({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            project,
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, previous: result.previous });
