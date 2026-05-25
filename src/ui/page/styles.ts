@@ -4436,25 +4436,13 @@ export const pageStyles = String.raw`    :root {
       color: #d7e3f5;
     }
 
-    @media (max-width: 640px) {
-      .stage {
-        padding: 38px 8px 80px;
-      }
-      body.hide-header .stage { padding-top: 8px; }
-      .tab-nav {
-        margin-bottom: 8px;
-      }
-      .repo-cta {
-        font-size: 10px;
-        height: 30px;
-        gap: 7px;
-      }
-      .chat-panel,
-      .files-panel,
-      .tasks-panel {
-        min-width: 100%;
-        border-radius: 12px 12px 0 0;
-      }
+    /* Kelly 2026-05-25: collapse the Tasks + Files split layout into
+       the mobile-style picker-toggle flow for any viewport narrower
+       than the "lg" breakpoint. On medium screens the reading pane
+       was being squeezed; only large screens get the side-by-side
+       layout. The fine-tuning rules (smaller fonts, dock tweaks, etc.)
+       stay in the 640px block below. */
+    @media (max-width: 1199px) {
       .tasks-split {
         flex-direction: column;
       }
@@ -4476,30 +4464,12 @@ export const pageStyles = String.raw`    :root {
       .tasks-sidebar:not(.tasks-sidebar-collapsed) ~ .tasks-content {
         display: none;
       }
-      /* Filters only make sense when the list is showing — hide them on
-         mobile when we're in viewer mode (sidebar collapsed). The "+ New"
-         and refresh actions stay visible. */
       .tasks-panel.tasks-list-hidden .tasks-filter-chips {
         display: none;
       }
       .tasks-content {
         flex: 1;
         min-height: 0;
-      }
-      .tasks-viewer-head {
-        padding: 6px 10px;
-        gap: 8px;
-      }
-      .tasks-viewer-headline-wrap {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1px;
-      }
-      .tasks-viewer-headline {
-        font-size: 14px;
-      }
-      .tasks-viewer-id {
-        font-size: 9px;
       }
       .files-split {
         flex-direction: column;
@@ -4525,6 +4495,42 @@ export const pageStyles = String.raw`    :root {
       .files-content {
         flex: 1;
         min-height: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .stage {
+        padding: 38px 8px 80px;
+      }
+      body.hide-header .stage { padding-top: 8px; }
+      .tab-nav {
+        margin-bottom: 8px;
+      }
+      .repo-cta {
+        font-size: 10px;
+        height: 30px;
+        gap: 7px;
+      }
+      .chat-panel,
+      .files-panel,
+      .tasks-panel {
+        min-width: 100%;
+        border-radius: 12px 12px 0 0;
+      }
+      .tasks-viewer-head {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .tasks-viewer-headline-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+      }
+      .tasks-viewer-headline {
+        font-size: 14px;
+      }
+      .tasks-viewer-id {
+        font-size: 9px;
       }
       .files-breadcrumb {
         font-size: 10px;

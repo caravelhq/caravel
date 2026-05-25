@@ -1994,9 +1994,13 @@
     var filesHistoryIdx = -1;
     var filesSkipHistoryPush = false;
 
+    // Kelly 2026-05-25: the picker-collapse layout extends to medium
+    // screens now (1199px and below). Only large screens keep the
+    // side-by-side split. Matches the CSS `@media (max-width: 1199px)`
+    // block that handles .tasks-sidebar / .files-sidebar collapse.
     function isMobileFiles() {
       return typeof window.matchMedia === "function"
-        && window.matchMedia("(max-width: 640px)").matches;
+        && window.matchMedia("(max-width: 1199px)").matches;
     }
 
     function setPickerCollapsed(collapsed) {
@@ -3601,10 +3605,11 @@
           if (mode === "new") newForm.removeAttribute("hidden");
           else newForm.setAttribute("hidden", "");
         }
-        // On mobile, switching the right pane to view/new/project means the
-        // user wants to see the right pane — collapse the picker so it's
-        // actually visible. "empty" goes back to the list (sidebar expanded).
-        if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+        // On mobile/medium (≤1199px), switching the right pane to view/
+        // new/project means the user wants to see the right pane —
+        // collapse the picker so it's actually visible. "empty" goes
+        // back to the list (sidebar expanded).
+        if (window.matchMedia && window.matchMedia("(max-width: 1199px)").matches) {
           if (typeof setTasksPickerCollapsed === "function") {
             setTasksPickerCollapsed(mode !== "empty");
           }
