@@ -2415,7 +2415,7 @@ export const pageStyles = String.raw`    :root {
        render at the same width on large screens. The min/max-width rules
        below clamp identically.
 
-       Kelly 2026-05-25: `container-type: inline-size` lets the inner
+       Kelly 2026-05-25: container-type: inline-size lets the inner
        split-collapse rules react to THIS panel's width rather than the
        viewport — so a split-screen or sidebar browser window collapses
        the picker correctly even when the OS viewport is wide. */
