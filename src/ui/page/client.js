@@ -1994,13 +1994,19 @@
     var filesHistoryIdx = -1;
     var filesSkipHistoryPush = false;
 
-    // Kelly 2026-05-25: the picker-collapse layout extends to medium
-    // screens now (1199px and below). Only large screens keep the
-    // side-by-side split. Matches the CSS `@media (max-width: 1199px)`
-    // block that handles .tasks-sidebar / .files-sidebar collapse.
-    function isMobileFiles() {
+    // Kelly 2026-05-25: the picker-collapse layout is now driven by
+    // container queries on the panel itself, not viewport media queries
+    // (so split-screen / sidebar-mode browsers collapse correctly even
+    // when the OS viewport is wide). Mirror that here by reading the
+    // panel's actual width. Falls back to viewport when no panel found.
+    function isPanelNarrow(panelId, threshold) {
+      var el = document.getElementById(panelId);
+      if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
       return typeof window.matchMedia === "function"
-        && window.matchMedia("(max-width: 1199px)").matches;
+        && window.matchMedia("(max-width: " + threshold + "px)").matches;
+    }
+    function isMobileFiles() {
+      return isPanelNarrow("files-panel", 1199);
     }
 
     function setPickerCollapsed(collapsed) {
@@ -3605,11 +3611,12 @@
           if (mode === "new") newForm.removeAttribute("hidden");
           else newForm.setAttribute("hidden", "");
         }
-        // On mobile/medium (≤1199px), switching the right pane to view/
-        // new/project means the user wants to see the right pane —
-        // collapse the picker so it's actually visible. "empty" goes
-        // back to the list (sidebar expanded).
-        if (window.matchMedia && window.matchMedia("(max-width: 1199px)").matches) {
+        // When the tasks panel is narrow (container-query threshold,
+        // not viewport), switching the right pane to view/new/project
+        // means the user wants to see the right pane — collapse the
+        // picker so it's actually visible. "empty" goes back to the
+        // list (sidebar expanded).
+        if (isPanelNarrow("tasks-panel", 1199)) {
           if (typeof setTasksPickerCollapsed === "function") {
             setTasksPickerCollapsed(mode !== "empty");
           }

@@ -2413,7 +2413,12 @@ export const pageStyles = String.raw`    :root {
     /* Width matches the Tasks panel (Kelly 2026-05-20). Both pages share
        the same picker-on-left, viewer-on-right shape, so they should
        render at the same width on large screens. The min/max-width rules
-       below clamp identically. */
+       below clamp identically.
+
+       Kelly 2026-05-25: `container-type: inline-size` lets the inner
+       split-collapse rules react to THIS panel's width rather than the
+       viewport — so a split-screen or sidebar browser window collapses
+       the picker correctly even when the OS viewport is wide. */
     .files-panel {
       display: flex;
       flex-direction: column;
@@ -2431,6 +2436,8 @@ export const pageStyles = String.raw`    :root {
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
+      container-type: inline-size;
+      container-name: files-panel;
     }
     /* ── Tasks panel ── */
     .tasks-panel {
@@ -2449,6 +2456,8 @@ export const pageStyles = String.raw`    :root {
         linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
+      container-type: inline-size;
+      container-name: tasks-panel;
       overflow: hidden;
     }
     /* WAL-63 Phase 2: top-level Tasks view tabs (Current / Projects / All
@@ -4436,13 +4445,16 @@ export const pageStyles = String.raw`    :root {
       color: #d7e3f5;
     }
 
-    /* Kelly 2026-05-25: collapse the Tasks + Files split layout into
-       the mobile-style picker-toggle flow for any viewport narrower
-       than the "lg" breakpoint. On medium screens the reading pane
-       was being squeezed; only large screens get the side-by-side
-       layout. The fine-tuning rules (smaller fonts, dock tweaks, etc.)
-       stay in the 640px block below. */
-    @media (max-width: 1199px) {
+    /* Kelly 2026-05-25: collapse the picker + viewer split into the
+       mobile-style picker-toggle flow when the PANEL itself is narrower
+       than the "lg" breakpoint (1200px). Uses container queries instead
+       of @media so the layout responds to the actual rendered width of
+       the .tasks-panel / .files-panel container — works correctly in
+       browser split-screen / sidebar / iframe contexts where the viewport
+       is wide but the panel isn't. Fine-tuning rules (smaller fonts, dock
+       tweaks, etc.) stay in the 640px @media block below — those are
+       device-class adjustments, not container-size ones. */
+    @container tasks-panel (max-width: 1199px) {
       .tasks-split {
         flex-direction: column;
       }
@@ -4471,6 +4483,8 @@ export const pageStyles = String.raw`    :root {
         flex: 1;
         min-height: 0;
       }
+    }
+    @container files-panel (max-width: 1199px) {
       .files-split {
         flex-direction: column;
       }
