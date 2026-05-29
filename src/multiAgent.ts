@@ -1301,6 +1301,22 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       if (!status.startsWith("waiting:on:")) continue;
       const spec = status.slice("waiting:on:".length);
 
+      // Kelly 2026-05-30: skip unblock when the parked task has been
+      // superseded by a continuation. `transitionToWaiting` stamps
+      // `closed.status: superseded` on the parent when it parks on a
+      // sibling task — the consolidated continuation enqueued by
+      // notifyDispatchChat is the new active leaf, and re-opening the
+      // parent here was the source of the duplicate-fire bug in
+      // TSK-2026-05-28-0001.20 (Alice ran twice per sibling completion,
+      // then had to mark each continuation a stand-down dup).
+      const closedStatus = readNestedField(yaml, "closed", "status");
+      if (closedStatus) {
+        // Tombstoned task — dependency resolution is moot. Leave the
+        // file in waiting/; sweepArchive will fold it to archived/ once
+        // its closed.at ages past the threshold.
+        continue;
+      }
+
       let unblocked = false;
       if (spec === "limits") {
         // Gate-authoritative. The global limits gate is checked at the top
