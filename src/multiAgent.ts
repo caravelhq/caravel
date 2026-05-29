@@ -1004,7 +1004,12 @@ async function enqueueAliceContinuation(opts: {
   briefLines.push("    - Surface results to Kelly: emit <task-waiting on=\"user\" summary=\"...\">.");
   briefLines.push("      Kelly sees the task in the picker's \"Waiting on you\" section at the top.");
   briefLines.push("      Use this for orchestration completes — it's the default.");
-  briefLines.push("    - More work to dispatch: run /task then emit <task-waiting on=\"task:TSK-...\"> to park.");
+  briefLines.push("    - More work to dispatch: run /task to push the next envelope, then emit");
+  briefLines.push("      <task-done summary=\"dispatched X to Y; continuation will wake me when result lands\">.");
+  briefLines.push("      DO NOT park on the sub-task — the runner enqueues your next continuation");
+  briefLines.push("      automatically when the dispatched task(s) land (sibling-consolidated under the");
+  briefLines.push("      same orchestration parent). Parking on task:* is redundant and leaves a");
+  briefLines.push("      tombstoned superseded parent in waiting/.");
   briefLines.push("    - Stand-down (no Kelly action needed): emit <task-done summary=\"...\">. Closes silently.");
 
   const briefBlock = briefLines.map((l) => (l.length > 0 ? `  ${l}` : "  ")).join("\n");

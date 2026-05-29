@@ -45,7 +45,7 @@ Silence breaks all five. The deliverable on disk doesn't matter if the envelope 
 - Use this when you tried and the work can't be done in this attempt — not when you forgot to close.
 
 **`<task-waiting on="…" summary="…">` — you need something before you can continue.**
-- `on="task:TSK-XYZ"` — you've dispatched a sub-task and need its result.
+- `on="task:TSK-XYZ"` — you've dispatched a sub-task and need its result. **Orchestrators (Alice) don't use this** — when Alice dispatches a sub-task from a chat-dispatched parent, she closes with `<task-done>` and lets the runner enqueue a continuation envelope when the sub-task lands. Parking on `task:*` is for non-orchestrator agents that have no continuation system to wake them.
 - `on="agent:bob"` — you need a specific agent to finish their current work.
 - `on="user"` — you need Kelly's input to proceed.
 - The lease releases. The runner re-claims when the dependency resolves.
