@@ -3197,6 +3197,12 @@
           var closeLabel = (statusLower === "done") ? "✓ Close" : "✕ Close";
           actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">' + closeLabel + '</button>');
         }
+        // Claimed = worker mid-flight. Close refuses these; Abort kills the
+        // live worker process (behind a confirm step) and lands the task as
+        // cancelled.
+        if (isCurrent && isClaimed && !isClosed) {
+          actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml(card.id) + '" type="button">✕ Abort</button>');
+        }
         if (isCurrent && isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
         }
@@ -3248,6 +3254,23 @@
             '<button type="button" class="is-primary task-panel-close-submit">Confirm close</button>' +
             '<button type="button" class="task-panel-close-cancel">Dismiss</button>' +
             '<span class="task-panel-close-status task-panel-unblock-status"></span>' +
+            '</div>' +
+            '</div>';
+        }
+
+        // 4c'. Abort form — the confirmation step for killing a claimed
+        //      (mid-flight) worker. Hidden until ✕ Abort toggles it. Posts
+        //      to /api/tasks/<id>/abort, which kills the live process and
+        //      lands the task as cancelled.
+        if (isCurrent && isClaimed && !isClosed) {
+          sections +=
+            '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden>' +
+            '<div class="task-panel-rework-warn task-panel-abort-warn"><strong>⚠ Aborts a running worker.</strong> This kills the live process for this task immediately — any in-progress work is lost. The task lands as <strong>cancelled</strong> (failed:aborted). Files the worker already wrote to disk are kept. This is <em>not</em> reversible like Close — to resume, spawn a fresh task.</div>' +
+            '<textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason (e.g. \'wrong project\', \'no longer needed\')…"></textarea>' +
+            '<div class="task-panel-unblock-actions">' +
+            '<button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button>' +
+            '<button type="button" class="task-panel-abort-cancel">Dismiss</button>' +
+            '<span class="task-panel-abort-status task-panel-unblock-status"></span>' +
             '</div>' +
             '</div>';
         }
@@ -4862,6 +4885,56 @@
         }
       }
 
+      // Submit an Abort request — kills the live worker for a claimed task.
+      // Reads the optional reason from the inline abort form, posts to
+      // /api/tasks/<id>/abort, refreshes the picker + viewer on success.
+      async function submitAbort(wrapper) {
+        if (!wrapper) return;
+        var agent = wrapper.getAttribute("data-abort-agent");
+        var taskId = wrapper.getAttribute("data-abort-id");
+        var input = wrapper.querySelector(".task-panel-abort-input");
+        var btn = wrapper.querySelector(".task-panel-abort-submit");
+        var statusEl = wrapper.querySelector(".task-panel-abort-status");
+        if (!agent || !taskId) return;
+        var reason = input ? (input.value || "").trim() : "";
+        if (btn) btn.disabled = true;
+        if (statusEl) {
+          statusEl.textContent = "Killing worker…";
+          statusEl.className = "task-panel-abort-status task-panel-unblock-status";
+        }
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/abort", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent, reason: reason }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            if (statusEl) {
+              statusEl.textContent = "Error: " + (data.error || "unknown");
+              statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+            }
+            if (btn) btn.disabled = false;
+            return;
+          }
+          if (statusEl) {
+            statusEl.textContent = data.mode === "stale"
+              ? "Cancelled (no live worker — stale claim cleared)."
+              : "Worker killed — finalising as cancelled…";
+            statusEl.className = "task-panel-abort-status task-panel-unblock-status is-ok";
+          }
+          // The runner finalises the envelope a beat after the kill; give it
+          // a moment, then refresh so the cancelled state shows.
+          setTimeout(function () { openTaskPanel(taskId); fetchTasks(); fetchSummary(); }, data.mode === "stale" ? 0 : 1200);
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (err && err.message || err);
+            statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+        }
+      }
+
       // WAL-63 Phase 1: reopen — drops the closed block back to null. No
       // confirmation; the action is fully reversible. The viewer refresh
       // re-renders without the banner, and the Next button becomes available.
@@ -5122,6 +5195,35 @@
             ev.preventDefault();
             var dismissForm = closeCancelBtn.closest(".task-panel-close-form");
             if (dismissForm) dismissForm.hidden = true;
+            return;
+          }
+          // Abort (claimed mid-flight) — toggle / submit / dismiss.
+          var toggleAbortBtn = ev.target.closest("[data-toggle-abort]");
+          if (toggleAbortBtn) {
+            ev.preventDefault();
+            var abortCard = toggleAbortBtn.closest(".task-panel-card");
+            if (abortCard) {
+              var abortForm = abortCard.querySelector(".task-panel-abort-form");
+              if (abortForm) {
+                abortForm.hidden = false;
+                var abortInput = abortForm.querySelector(".task-panel-abort-input");
+                if (abortInput) abortInput.focus();
+                abortForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              }
+            }
+            return;
+          }
+          var abortSubmitBtn = ev.target.closest(".task-panel-abort-submit");
+          if (abortSubmitBtn) {
+            ev.preventDefault();
+            submitAbort(abortSubmitBtn.closest(".task-panel-abort-form"));
+            return;
+          }
+          var abortCancelBtn = ev.target.closest(".task-panel-abort-cancel");
+          if (abortCancelBtn) {
+            ev.preventDefault();
+            var dismissAbort = abortCancelBtn.closest(".task-panel-abort-form");
+            if (dismissAbort) dismissAbort.hidden = true;
             return;
           }
           var reopenBtn = ev.target.closest("[data-reopen-task]");

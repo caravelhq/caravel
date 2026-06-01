@@ -54,6 +54,46 @@ const DEFAULT_ARCHIVE_DAYS = 30;
 // home, and closed envelopes get folded to `archived/` once aged out.
 const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
 
+// === Mid-flight abort registry =============================================
+// In-flight workers register their AbortController here keyed by
+// `${agent}/${taskId}` while runWorker is awaiting the spawned Claude
+// process. The web server (same daemon process — see commands/start.ts,
+// which launches the runner and the dashboard together) reaches in via
+// abortInflightWorker() to kill a worker mid-turn when Kelly hits Abort on
+// a claimed task. The runner stays the sole writer of the envelope: aborting
+// just kills the process and records intent; runWorker then returns a
+// cancellation directive and the normal transition path finalises the file.
+type InflightEntry = { controller: AbortController; aborted: boolean; by: string; reason: string };
+const inflightWorkers = new Map<string, InflightEntry>();
+
+function inflightKey(agent: string, taskId: string): string {
+  return `${agent}/${taskId}`;
+}
+
+// Kill the live worker process for a claimed task. Returns true when a live
+// worker was found and signalled, false when no worker is registered in this
+// process (stale claim, different daemon, or the worker already landed) — in
+// which case the caller falls back to writing the cancellation directly.
+export function abortInflightWorker(
+  agent: string,
+  taskId: string,
+  reason: string,
+  by: string
+): boolean {
+  const entry = inflightWorkers.get(inflightKey(agent, taskId));
+  if (!entry) return false;
+  entry.aborted = true;
+  entry.reason = reason;
+  entry.by = by;
+  try {
+    entry.controller.abort();
+  } catch {
+    // AbortController.abort never throws in practice; guard anyway so a
+    // bad state can't wedge the dashboard request.
+  }
+  return true;
+}
+
 // Global rate-limit gate. When Claude Code surfaces "You've hit your limit ·
 // resets <time> (<tz>)" — an account-level Anthropic rate cap — the runner
 // stops claiming work until the reset time has passed. Stored at the project
@@ -397,6 +437,11 @@ interface TaskDirective {
   summary: string;
   body: string;
   report: string | null;
+  // Set when the worker was aborted mid-flight via the dashboard. The
+  // transition still lands the envelope in failed/ (status: failed:aborted)
+  // but additionally stamps a `closed: cancelled` overlay so it reads as a
+  // deliberate cancellation, not a genuine failure needing retry.
+  cancelled?: { by: string; reason: string };
 }
 
 function parseAttrs(s: string): Record<string, string> {
@@ -1414,12 +1459,27 @@ async function transitionToTerminal(
       next += `\nreport: |\n  ${directive.body.replace(/\n/g, "\n  ")}\n`;
     }
   }
+  // Mid-flight abort: stamp a `closed: cancelled` overlay so the task reads
+  // as a deliberate cancellation (not an active leaf, not a failure needing
+  // retry). The bucket is still failed/ and status failed:aborted preserves
+  // the lifecycle truth; the closed block is the user-attention layer.
+  if (directive.cancelled) {
+    next = setClosedField(next, {
+      status: "cancelled",
+      at: now,
+      by: directive.cancelled.by || "user",
+      reason: directive.cancelled.reason || "aborted mid-flight via dashboard",
+    });
+  }
+
   next = appendHistory(next, {
     ts: now,
     from: "claimed",
     to: finalStatus,
     by: `runner-${process.pid}`,
-    note: directive.kind === "done" ? "worker completed" : `worker reported ${finalStatus}`,
+    note: directive.cancelled
+      ? `worker aborted mid-flight by ${directive.cancelled.by || "user"}${directive.cancelled.reason ? ` — ${directive.cancelled.reason}` : ""}`
+      : directive.kind === "done" ? "worker completed" : `worker reported ${finalStatus}`,
   });
 
   await writeFile(sourcePath, next);
@@ -1540,6 +1600,13 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   const root = (fields.parent && fields.parent !== "null" ? fields.parent : taskId).split(".")[0]!;
   const threadId = `task-${root}-${agent}`;
 
+  // Register an AbortController so the dashboard can kill this worker
+  // mid-turn (see abortInflightWorker). Cleared in the finally below.
+  const key = inflightKey(agent, taskId);
+  const entry: InflightEntry = { controller: new AbortController(), aborted: false, by: "", reason: "" };
+  inflightWorkers.set(key, entry);
+
+  try {
   let captured = "";
   try {
     await streamUserMessage(
@@ -1547,11 +1614,26 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       prompt,
       (chunk) => { captured += chunk; },
       () => {},
-      undefined,
+      entry.controller.signal,
       threadId,
       agent
     );
   } catch (err) {
+    if (entry.aborted) {
+      // The spawn was killed by an abort signal — the thrown error is the
+      // kill, not a real crash. Fall through to the cancellation directive.
+      console.warn(`[multi-agent] worker ${agent}/${taskId} aborted by ${entry.by || "user"} mid-turn`);
+      return {
+        kind: "failed",
+        reason: "aborted",
+        summary: entry.reason
+          ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
+          : `Aborted mid-flight by ${entry.by || "user"}.`,
+        body: "",
+        report: null,
+        cancelled: { by: entry.by || "user", reason: entry.reason },
+      };
+    }
     const errText = err instanceof Error ? err.message : String(err);
     if (detectLimitsHit(errText) || detectLimitsHit(captured)) {
       await maybeSetGlobalLimitsGate(`${errText}\n${captured}`, agent, taskId);
@@ -1566,6 +1648,24 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     }
     console.error(`[multi-agent] worker ${agent}/${taskId} threw:`, err);
     return { kind: "failed", reason: "crash", summary: errText, body: "", report: null };
+  }
+
+  // Abort that resolved rather than threw: proc.kill() ends the stream
+  // reader cleanly, so streamUserMessage returns normally. Catch that here
+  // so an aborted worker can't fall through and get read as a (likely
+  // empty) success / failed:other.
+  if (entry.aborted) {
+    console.warn(`[multi-agent] worker ${agent}/${taskId} aborted by ${entry.by || "user"} (stream closed cleanly)`);
+    return {
+      kind: "failed",
+      reason: "aborted",
+      summary: entry.reason
+        ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
+        : `Aborted mid-flight by ${entry.by || "user"}.`,
+      body: "",
+      report: null,
+      cancelled: { by: entry.by || "user", reason: entry.reason },
+    };
   }
 
   // Primary contract: a report file at agents/<agent>/tasks/<status>/<id>.md.
@@ -1594,6 +1694,9 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     };
   }
   return null;
+  } finally {
+    inflightWorkers.delete(key);
+  }
 }
 
 // Parse the reset time from a limit-hit message and write the global gate.

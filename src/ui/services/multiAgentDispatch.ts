@@ -7,6 +7,7 @@ import { mkdir, readdir, readFile, rename, unlink, writeFile } from "fs/promises
 import { existsSync } from "fs";
 import { join } from "path";
 import { loadChat } from "./chats";
+import { abortInflightWorker } from "../../multiAgent";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -501,6 +502,113 @@ export async function closeTask(input: CloseTaskInput): Promise<CloseTaskResult>
   }
 
   return { ok: true, id: taskId, closed, cascaded };
+}
+
+interface AbortTaskInput {
+  agent: string;
+  taskId: string;
+  reason?: string;
+  by?: string;
+}
+
+export type AbortTaskResult =
+  | { ok: true; id: string; mode: "signalled" | "stale" }
+  | { ok: false; error: string };
+
+// Abort a claimed task mid-flight. closeTask refuses claimed tasks because a
+// worker is writing; this is the deliberate kill-the-worker path. It calls
+// the runner's in-flight registry (same daemon process) to abort the
+// worker's AbortController, which kills the spawned Claude process. The
+// runner's runWorker then returns a failed:aborted directive and
+// transitionToTerminal finalises the envelope (failed:aborted +
+// closed:cancelled) — the runner stays the SOLE envelope writer, so there's
+// no file-move race between us and the transition.
+//
+// Fallback: when no live worker is registered (stale claim — lease held but
+// the process is gone, or a prior daemon owned it), we finalise the envelope
+// here ourselves, mirroring the runner's terminal write so the end state is
+// identical.
+export async function abortTask(input: AbortTaskInput): Promise<AbortTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const by = (input.by ?? "user").trim() || "user";
+  const reason = (input.reason ?? "").trim();
+
+  if (!KNOWN_AGENTS.includes(agent)) {
+    return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  }
+  if (!/^TSK-/.test(taskId)) {
+    return { ok: false, error: `invalid task id: ${taskId}` };
+  }
+
+  const loc = await locateActiveEnvelope(agent, taskId);
+  if (!loc) {
+    return { ok: false, error: `task ${taskId} not found in agents/${agent}/tasks/{open,waiting,done,failed}/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(loc.path, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  const runnerStatus = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
+  if (runnerStatus !== "claimed") {
+    return {
+      ok: false,
+      error: `task ${taskId} is not claimed (status: ${runnerStatus || "?"}) — no live worker to abort. Use Close instead.`,
+    };
+  }
+
+  // Preferred path: signal the live worker. We do NOT touch the envelope —
+  // the runner's transition owns it from here.
+  const signalled = abortInflightWorker(agent, taskId, reason, by);
+  if (signalled) {
+    return { ok: true, id: taskId, mode: "signalled" };
+  }
+
+  // Stale claim — finalise the envelope ourselves to match the runner's
+  // terminal write: failed:aborted + closed:cancelled, lease released,
+  // moved to failed/.
+  const now = new Date().toISOString();
+  let next = yaml;
+  next = next.replace(/^status:[^\n]*\n/m, "status: failed:aborted\n");
+  next = setClosedField(next, {
+    status: "cancelled",
+    at: now,
+    by,
+    reason: reason || "aborted via dashboard (stale claim — no live worker)",
+  });
+  // Release the lease so nothing treats the dead claim as live.
+  next = next.replace(/^(lease:[\s\S]*?\n)( {2}holder:\s*.*)$/m, (_m, head) => `${head}  holder: null`);
+  next = next.replace(/^(lease:[\s\S]*?\n[\s\S]*?\n)( {2}expires:\s*.*)$/m, (_m, head) => `${head}  expires: null`);
+  next = setUpdated(next, now);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: "claimed",
+    to: "failed:aborted",
+    by,
+    note: `aborted via dashboard (stale claim — no live worker)${reason ? ` — ${reason}` : ""}`,
+  });
+
+  const failedDir = join(AGENTS_DIR, agent, "tasks", "failed");
+  await mkdir(failedDir, { recursive: true });
+  const targetPath = join(failedDir, `${taskId}.yaml`);
+  await writeFile(loc.path, next);
+  if (loc.path !== targetPath) {
+    try { await rename(loc.path, targetPath); } catch {}
+  }
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: "failed:aborted",
+    transition: "closed:cancelled",
+    by,
+    note: reason || "aborted via dashboard (stale claim)",
+  });
+
+  return { ok: true, id: taskId, mode: "stale" };
 }
 
 interface ReopenTaskInput {

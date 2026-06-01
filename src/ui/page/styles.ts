@@ -3593,6 +3593,29 @@ export const pageStyles = String.raw`    :root {
     .task-panel-action.is-primary:hover {
       background: #355a8a;
     }
+    /* Danger variant — Abort (kills a live worker). Red-tinted so the
+       irreversible action reads distinctly from Close. */
+    .task-panel-action-danger {
+      border-color: #ff6b6b66;
+      color: #ffb3b3;
+    }
+    .task-panel-action-danger:hover {
+      background: #3a1620;
+    }
+    .task-panel-action.is-primary.task-panel-action-danger {
+      background: #6b2330;
+      border-color: #ff6b6baa;
+      color: #ffd9d9;
+    }
+    .task-panel-action.is-primary.task-panel-action-danger:hover {
+      background: #842b3b;
+    }
+    .task-panel-abort-warn {
+      color: #ff9d9d;
+    }
+    .task-panel-abort-warn strong {
+      color: #ffd9d9;
+    }
     .task-panel-meta {
       font-family: "JetBrains Mono", monospace;
       font-size: 10px;

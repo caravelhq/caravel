@@ -21,7 +21,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from 
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
@@ -722,6 +722,30 @@ self.addEventListener('fetch', e => {
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, closed: result.closed, cascaded: result.cascaded });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Abort a claimed task mid-flight — kills the live worker process, then
+      // the runner finalises it as failed:aborted + closed:cancelled. Unlike
+      // /close (which refuses claimed tasks), this is the deliberate kill
+      // path. The UI gates it behind a confirm step. POST body: { agent,
+      // reason?, by? }.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/abort") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/abort".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await abortTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            reason: typeof body?.reason === "string" ? body.reason : undefined,
+            by: typeof body?.by === "string" ? body.by : undefined,
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, mode: result.mode });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }
