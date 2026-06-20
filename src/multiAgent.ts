@@ -171,10 +171,12 @@ function tzOffsetMinutes(tz: string, at: Date): number | null {
 // If the named hour has already passed today in the target timezone, the
 // reset is rolled forward by 24h (it's tomorrow's slot).
 function parseResetTime(text: string): Date | null {
-  const m = /resets\s+(\d{1,2}):(\d{2})\s*(am|pm)\s*\(([^)]+)\)/i.exec(text);
+  // Minutes are optional — the CLI writes both "resets 6:30pm (TZ)" and the
+  // shorter "resets 6pm (TZ)". Missing minutes default to :00.
+  const m = /resets\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)\s*\(([^)]+)\)/i.exec(text);
   if (!m) return null;
   let hour = parseInt(m[1]!, 10);
-  const min = parseInt(m[2]!, 10);
+  const min = m[2] ? parseInt(m[2], 10) : 0;
   const ampm = m[3]!.toLowerCase();
   if (hour === 12 && ampm === "am") hour = 0;
   else if (hour < 12 && ampm === "pm") hour += 12;
@@ -1608,6 +1610,12 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
 
   try {
   let captured = "";
+  // Out-of-band diagnostic stream: stderr + result-event text + exit marker.
+  // These carry usage-limit signatures that never reach the assistant-text
+  // `captured` stream (stderr-only messages, error result events after prior
+  // output, immediate non-zero exits). Kept separate so it doesn't pollute
+  // directive parsing, but fed to detectLimitsHit alongside captured.
+  let diag = "";
   try {
     await streamUserMessage(
       `multi-agent:${taskId}`,
@@ -1616,7 +1624,8 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       () => {},
       entry.controller.signal,
       threadId,
-      agent
+      agent,
+      (d) => { diag += d; }
     );
   } catch (err) {
     if (entry.aborted) {
@@ -1635,8 +1644,8 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       };
     }
     const errText = err instanceof Error ? err.message : String(err);
-    if (detectLimitsHit(errText) || detectLimitsHit(captured)) {
-      await maybeSetGlobalLimitsGate(`${errText}\n${captured}`, agent, taskId);
+    if (detectLimitsHit(errText) || detectLimitsHit(captured) || detectLimitsHit(diag)) {
+      await maybeSetGlobalLimitsGate(`${errText}\n${captured}\n${diag}`, agent, taskId);
       console.warn(`[multi-agent] worker ${agent}/${taskId} hit a token/rate/context limit — routing to waiting:on:limits`);
       return {
         kind: "waiting",
@@ -1679,16 +1688,35 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   const parsed = parseDirective(captured);
   if (parsed) return parsed;
 
-  // No file, no directive — but if the stream surfaced a limit error, route
-  // to waiting:on:limits so it gets retried rather than dead-ended at
-  // failed:other.
-  if (detectLimitsHit(captured)) {
-    await maybeSetGlobalLimitsGate(captured, agent, taskId);
-    console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but stream contains a limit signature — routing to waiting:on:limits`);
+  // No file, no directive — but if the stream OR the diagnostic channel
+  // (stderr / result-event / exit marker) surfaced a limit error, route to
+  // waiting:on:limits so it gets retried rather than dead-ended at
+  // failed:other. The diag channel is what catches the two shapes that
+  // bit us on 2026-06-20: a stderr-only limit message on immediate exit,
+  // and an error result event after a long-running worker already emitted
+  // text (which suppressed the result-text fallback in captured).
+  if (detectLimitsHit(captured) || detectLimitsHit(diag)) {
+    await maybeSetGlobalLimitsGate(`${captured}\n${diag}`, agent, taskId);
+    console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but a limit signature was found (captured or diagnostic) — routing to waiting:on:limits`);
     return {
       kind: "waiting",
       reason: "limits",
-      summary: "worker stream surfaced an Anthropic API limit and emitted no directive — gate set, will retry after reset",
+      summary: "worker hit an Anthropic API limit and emitted no directive — gate set, will retry after reset",
+      body: "",
+      report: null,
+    };
+  }
+  // Non-zero exit with no directive and no limit signature: a genuine crash
+  // (not a clean "forgot the tag" turn). Surface it as failed:crash with the
+  // exit detail so it's diagnosable, rather than the misleading "forgot the
+  // closing tag" failed:other synthesised by the caller.
+  if (/\[claude exited \d+\]/.test(diag)) {
+    const tail = diag.slice(-400).trim();
+    console.warn(`[multi-agent] ${agent}/${taskId}: worker exited non-zero with no directive — failed:crash`);
+    return {
+      kind: "failed",
+      reason: "crash",
+      summary: `worker process exited non-zero with no directive/report. Diagnostic tail: ${tail || "(empty)"}`,
       body: "",
       report: null,
     };

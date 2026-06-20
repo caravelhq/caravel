@@ -571,7 +571,15 @@ async function streamClaude(
   onUnblock: () => void,
   abortSignal?: AbortSignal,
   threadId?: string,
-  agentId?: string
+  agentId?: string,
+  // Optional out-of-band diagnostic channel. Receives the child's stderr,
+  // the final `result` event text (always — even when assistant text was
+  // emitted), and a non-zero exit marker. NOT shown to chat users; the
+  // multi-agent runner supplies it to spot usage-limit signatures that
+  // never reach the assistant-text stream (stderr-only messages, error
+  // result events after prior output, immediate non-zero exits). Chat
+  // callers omit it and behaviour is unchanged.
+  onDiagnostic?: (text: string) => void
 ): Promise<void> {
   await mkdir(LOGS_DIR, { recursive: true });
 
@@ -660,6 +668,28 @@ async function streamClaude(
     env: childEnv,
   });
 
+  // Drain stderr concurrently into the diagnostic channel. The Claude CLI
+  // prints account-level usage-limit messages ("You've hit your limit ·
+  // resets …") and other fatal errors to stderr and exits — none of which
+  // reach the stdout stream-json reader below. Without this, an immediate
+  // limit-hit looks like a clean empty turn to the runner. Reading stderr
+  // also prevents a full-pipe deadlock on a chatty child.
+  const drainStderr = (async () => {
+    if (!onDiagnostic || !proc.stderr) return;
+    try {
+      const sr = (proc.stderr as ReadableStream<Uint8Array>).getReader();
+      const sd = new TextDecoder();
+      while (true) {
+        const { done, value } = await sr.read();
+        if (done) break;
+        const chunk = sd.decode(value, { stream: true });
+        if (chunk) onDiagnostic(chunk);
+      }
+    } catch {
+      // stderr drain is best-effort; never let it break the turn.
+    }
+  })();
+
   let aborted = false;
   const onAbort = () => {
     aborted = true;
@@ -742,9 +772,24 @@ async function streamClaude(
           maybeUnblock();
         } else if (event.type === "result") {
           // Final result event — emit text as fallback if no assistant text was seen
-          const resultText = (event as Record<string, unknown>).result as string | undefined;
+          const ev = event as Record<string, unknown>;
+          const resultText = ev.result as string | undefined;
           if (resultText && !textEmitted) {
             emit(resultText);
+          }
+          // Always surface the result text + error markers to the diagnostic
+          // channel, even when assistant text was already emitted. A
+          // usage-limit hit after prior output lands here (subtype/is_error
+          // + the limit message in `result`) and would otherwise be dropped
+          // — exactly the gap that mis-marked long-running workers
+          // failed:other instead of waiting:on:limits.
+          if (onDiagnostic) {
+            const isError = ev.is_error === true;
+            const subtype = typeof ev.subtype === "string" ? ev.subtype : "";
+            if (resultText) onDiagnostic(`[result] ${resultText}`);
+            if (isError || (subtype && subtype !== "success")) {
+              onDiagnostic(`[result is_error=${isError} subtype=${subtype}]`);
+            }
           }
           maybeUnblock();
         }
@@ -753,6 +798,13 @@ async function streamClaude(
   }
 
   const exitCode = await proc.exited;
+  await drainStderr; // ensure all stderr is delivered before we evaluate
+  // A non-zero exit with no useful stdout is the other usage-limit shape
+  // (the CLI dies immediately on a hard cap). Mark it on the diagnostic
+  // channel so the runner can distinguish "limit/crash" from "clean turn".
+  if (onDiagnostic && exitCode !== 0 && !aborted) {
+    onDiagnostic(`[claude exited ${exitCode}]`);
+  }
   if (abortSignal) abortSignal.removeEventListener("abort", onAbort);
   // Flush any held-back text from the journal filter (e.g. trailing chars
   // we conservatively buffered while watching for a `<journal` tag that
@@ -819,12 +871,13 @@ export async function streamUserMessage(
   onUnblock: () => void,
   abortSignal?: AbortSignal,
   threadId?: string,
-  agentId?: string
+  agentId?: string,
+  onDiagnostic?: (text: string) => void
 ): Promise<void> {
   // Per-thread queue when threadId is set (web chats run in parallel, matches
   // Discord). Falls back to the global queue for heartbeat/CLI calls.
   return enqueue(
-    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId, agentId),
+    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId, agentId, onDiagnostic),
     threadId
   );
 }
