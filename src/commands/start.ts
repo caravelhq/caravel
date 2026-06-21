@@ -45,9 +45,14 @@ function fmt(ms) {
 
 function alive() {
   try {
-    var pid = readFileSync(PID_FILE, "utf-8").trim();
-    process.kill(Number(pid), 0);
-    return true;
+    var pid = Number(readFileSync(PID_FILE, "utf-8").trim());
+    process.kill(pid, 0);
+    // PID-recycling guard: confirm the live PID is actually our daemon
+    // (cmdline check via /proc; trust liveness if /proc is unavailable).
+    try {
+      var cmd = readFileSync("/proc/" + pid + "/cmdline", "utf-8").replace(/\0/g, " ");
+      return cmd.indexOf("claudeclaw") !== -1 && cmd.indexOf("index.ts") !== -1;
+    } catch { return true; }
   } catch { return false; }
 }
 

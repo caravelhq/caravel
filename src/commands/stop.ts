@@ -1,7 +1,7 @@
 import { writeFile, unlink, readdir, readFile } from "fs/promises";
 import { join } from "path";
 import { homedir } from "os";
-import { getPidPath, cleanupPidFile } from "../pid";
+import { getPidPath, cleanupPidFile, isDaemonProcess } from "../pid";
 
 const CLAUDE_DIR = join(process.cwd(), ".claude");
 const HEARTBEAT_DIR = join(CLAUDE_DIR, "claudeclaw");
@@ -31,6 +31,16 @@ export async function stop() {
     pid = (await Bun.file(pidFile).text()).trim();
   } catch {
     console.log("No daemon is running (PID file not found).");
+    process.exit(0);
+  }
+
+  if (!isDaemonProcess(Number(pid))) {
+    // Stale pid file: process is dead, or the PID was recycled after an
+    // ungraceful shutdown and now belongs to an unrelated process. Never
+    // SIGTERM a stranger — just clear the stale file.
+    console.log(`No live daemon for PID ${pid} (stale PID file) — cleaning up.`);
+    await cleanupPidFile();
+    await teardownStatusline();
     process.exit(0);
   }
 
@@ -71,8 +81,12 @@ export async function stopAll() {
     let pid: string;
     try {
       pid = (await readFile(pidFile, "utf-8")).trim();
-      process.kill(Number(pid), 0);
     } catch {
+      continue;
+    }
+    if (!isDaemonProcess(Number(pid))) {
+      // dead or PID recycled — clear the stale file, don't kill a stranger.
+      try { await unlink(pidFile); } catch {}
       continue;
     }
 

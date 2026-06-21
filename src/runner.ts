@@ -894,7 +894,17 @@ function prefixUserMessageWithClock(prompt: string): string {
 }
 
 export async function runUserMessage(name: string, prompt: string, threadId?: string): Promise<RunResult> {
-  return run(name, prefixUserMessageWithClock(prompt), threadId);
+  const ts = () => new Date().toLocaleTimeString();
+  const oneLine = (s: string, n = 120) => {
+    const flat = (s || "").replace(/\s+/g, " ").trim();
+    return flat.length > n ? flat.slice(0, n) + "…" : flat;
+  };
+  const where = threadId ? `${name}/${threadId}` : name;
+  console.log(`[${ts()}] [chat] ← ${where}: ${oneLine(prompt)}`);
+  const result = await run(name, prefixUserMessageWithClock(prompt), threadId);
+  const reply = oneLine(result?.stdout ?? "");
+  console.log(`[${ts()}] [chat] → ${where}: ${reply || "(no reply)"}${result?.exitCode ? ` [exit ${result.exitCode}]` : ""}`);
+  return result;
 }
 
 /**

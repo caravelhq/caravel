@@ -19,8 +19,12 @@
 #   CLAUDECLAW_SKIP_SYNC      (optional) "1" to skip the git pull + plugin copy.
 #
 # Args:
-#   --stop-only   Stop the daemon, do not restart.
-#   -h|--help     Show this header.
+#   --stop-only          Stop the daemon, do not restart.
+#   --foreground|--attach Run attached in the foreground, streaming logs live
+#                        (and appending to daemon.log). Blocks for the life of
+#                        the daemon — use for Windows/WSL auto-start. Default is
+#                        backgrounded via nohup.
+#   -h|--help            Show this header.
 
 set -euo pipefail
 
@@ -37,9 +41,11 @@ PRESTART_HOOK="${CLAUDECLAW_PRESTART_HOOK:-}"
 SKIP_SYNC="${CLAUDECLAW_SKIP_SYNC:-0}"
 
 STOP_ONLY=0
+FOREGROUND=0
 for arg in "$@"; do
   case "$arg" in
     --stop-only) STOP_ONLY=1 ;;
+    --foreground|--attach) FOREGROUND=1 ;;
     -h|--help)
       sed -n '2,25p' "$0"
       exit 0
@@ -114,6 +120,18 @@ fi
 
 mkdir -p "$LOG_DIR"
 cd "$PROJECT_DIR"
+if [[ $FOREGROUND -eq 1 ]]; then
+  # Foreground / attached mode: run the daemon in the foreground, streaming
+  # logs live to this terminal AND appending to daemon.log. The shell blocks
+  # here for the life of the daemon, which keeps the launching process (and,
+  # under `wsl <cmd>`, the whole WSL instance) alive — required for a Windows
+  # auto-start entry like `wsl ~/work/setup/start-claw.sh`. SIGINT/teardown
+  # propagates to the daemon for a graceful shutdown (pidfile cleaned).
+  echo "Starting daemon (foreground) in ${PROJECT_DIR}..."
+  echo "Web UI: http://127.0.0.1:${WEB_PORT}  —  Ctrl-C to stop"
+  exec "$BUN" run "$CLAW_ENTRY" start --web 2>&1 | tee -a "${LOG_DIR}/daemon.log"
+fi
+
 echo "Starting daemon in ${PROJECT_DIR}..."
 nohup "$BUN" run "$CLAW_ENTRY" start --web > "${LOG_DIR}/daemon.log" 2>&1 &
 

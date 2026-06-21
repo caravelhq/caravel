@@ -1213,6 +1213,9 @@ async function transitionToWaiting(
   const onSpec = (directive.reason ?? "user").trim() || "user";
   const finalStatus = `waiting:on:${onSpec}`;
 
+  const sm = (directive.summary || "").replace(/\s+/g, " ").trim().slice(0, 120);
+  console.log(`[${new Date().toLocaleTimeString()}] [task] ⏸ ${finalStatus} ${agent}/${taskId}${sm ? ` — ${sm}` : ""}`);
+
   let next = setField(yaml, "status", finalStatus);
   next = setField(next, "updated", now);
   // Release the lease so a stale claim-holder doesn't block re-claim.
@@ -1442,6 +1445,10 @@ async function transitionToTerminal(
   const fields = parseFields(yaml, taskId);
   const now = new Date().toISOString();
 
+  const icon = directive.kind === "done" ? "✓" : "✗";
+  const sm = (directive.summary || "").replace(/\s+/g, " ").trim().slice(0, 120);
+  console.log(`[${new Date().toLocaleTimeString()}] [task] ${icon} ${finalStatus} ${agent}/${taskId}${sm ? ` — ${sm}` : ""}`);
+
   let next = setField(yaml, "status", finalStatus);
   next = setField(next, "updated", now);
   if (directive.summary) {
@@ -1601,6 +1608,9 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   const fields = parseFields(yaml, taskId);
   const root = (fields.parent && fields.parent !== "null" ? fields.parent : taskId).split(".")[0]!;
   const threadId = `task-${root}-${agent}`;
+
+  const headline = (yaml.match(/^headline:\s*(.*)$/m)?.[1] ?? "").replace(/^["']|["']$/g, "").trim();
+  console.log(`[${new Date().toLocaleTimeString()}] [task] ▶ start ${agent}/${taskId}${headline ? ` — ${headline}` : ""}`);
 
   // Register an AbortController so the dashboard can kill this worker
   // mid-turn (see abortInflightWorker). Cleared in the finally below.

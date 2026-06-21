@@ -1,6 +1,7 @@
 import { join } from "path";
 import { readdir, readFile } from "fs/promises";
 import { homedir } from "os";
+import { isDaemonProcess } from "../pid";
 
 const CLAUDE_DIR = join(process.cwd(), ".claude");
 const HEARTBEAT_DIR = join(CLAUDE_DIR, "claudeclaw");
@@ -40,10 +41,11 @@ async function findAllDaemons(): Promise<{ path: string; pid: string }[]> {
 
     try {
       const pid = (await readFile(pidFile, "utf-8")).trim();
-      process.kill(Number(pid), 0);
-      results.push({ path: candidatePath, pid });
+      if (isDaemonProcess(Number(pid))) {
+        results.push({ path: candidatePath, pid });
+      }
     } catch {
-      // no pid file or process dead
+      // no pid file
     }
   }
 
@@ -69,10 +71,9 @@ async function showStatus(): Promise<boolean> {
   let pid = "";
   try {
     pid = (await Bun.file(PID_FILE).text()).trim();
-    process.kill(Number(pid), 0);
-    daemonRunning = true;
+    daemonRunning = isDaemonProcess(Number(pid));
   } catch {
-    // not running or no pid file
+    // no pid file
   }
 
   if (!daemonRunning) {
