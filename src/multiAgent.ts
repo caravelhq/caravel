@@ -1731,7 +1731,31 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       report: null,
     };
   }
-  return null;
+  // No file, no directive, no limit signature, clean exit. Genuinely opaque:
+  // either the worker forgot the closing tag, or it hit a limit/error whose
+  // message form detectLimitsHit doesn't recognise yet. DON'T discard the
+  // evidence — log the diagnostic + captured tails so the next opaque failure
+  // is diagnosable, and carry them into the envelope summary so the
+  // dashboard shows what happened instead of the vague "forgot the tag" guess.
+  // (Returning a directive here replaces the caller's synthesised
+  // failed:other with this richer one.)
+  const diagTail = diag.slice(-600).trim();
+  const capTail = captured.slice(-400).trim();
+  const respondedNote = capTail
+    ? `worker emitted ${captured.length} chars of text but no directive/report (likely forgot the closing tag)`
+    : `worker emitted NO text and no directive/report (silent turn — possible undetected limit/error)`;
+  console.warn(
+    `[multi-agent] ${agent}/${taskId}: no directive, clean exit — ${respondedNote}.\n` +
+    `  diagnostic tail: ${diagTail || "(empty)"}\n` +
+    `  captured tail: ${capTail || "(empty)"}`
+  );
+  return {
+    kind: "failed",
+    reason: "other",
+    summary: `${respondedNote}. Diagnostic tail: ${diagTail || "(none — no stderr/result/exit signal)"}`,
+    body: "",
+    report: null,
+  };
   } finally {
     inflightWorkers.delete(key);
   }
