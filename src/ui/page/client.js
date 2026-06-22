@@ -2353,10 +2353,11 @@
       return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
     }
 
-    // Render an image into the Files content pane. Pixel art (small natural
-    // size) is integer-upscaled and pixel-rendered so it's crisp and big
-    // enough to see; large images (photos) render smooth at fit-to-width.
-    // A toggle flips pixelated/smooth, and a checkerboard backs transparency.
+    // Render an image into the Files content pane with zoom + pan. Pixel art
+    // (small natural size) starts integer-upscaled and pixel-rendered so it's
+    // crisp; photos start fit-to-width. Zoom via the +/−/Fit/1:1 buttons or
+    // the mouse wheel (cursor-anchored); pan by dragging when zoomed past the
+    // viewport. A toggle flips pixelated/smooth; a checkerboard backs alpha.
     function renderImageFile(filePath) {
       if (!filesContent) return;
       var url = "/api/files/raw?path=" + encodeURIComponent(filePath);
@@ -2366,16 +2367,34 @@
       var wrap = document.createElement("div");
       wrap.className = "files-image-view";
 
+      // Toolbar: dimensions/zoom readout + zoom controls + pixelated toggle.
       var meta = document.createElement("div");
       meta.className = "files-image-meta";
       var info = document.createElement("span");
       info.className = "files-image-info";
       info.textContent = "Loading…";
-      var toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "files-image-toggle";
-      toggle.textContent = "Pixelated: on";
+      function mkBtn(label, title) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "files-image-toggle";
+        b.textContent = label;
+        if (title) b.title = title;
+        return b;
+      }
+      var zoomOutBtn = mkBtn("−", "Zoom out (or scroll down)");
+      var zoomLevel = document.createElement("span");
+      zoomLevel.className = "files-image-zoom";
+      zoomLevel.textContent = "—";
+      var zoomInBtn = mkBtn("+", "Zoom in (or scroll up)");
+      var fitBtn = mkBtn("Fit", "Fit to width");
+      var oneBtn = mkBtn("1:1", "Actual pixels");
+      var toggle = mkBtn("Pixelated: on", "Toggle crisp / smooth scaling");
       meta.appendChild(info);
+      meta.appendChild(zoomOutBtn);
+      meta.appendChild(zoomLevel);
+      meta.appendChild(zoomInBtn);
+      meta.appendChild(fitBtn);
+      meta.appendChild(oneBtn);
       meta.appendChild(toggle);
 
       var imgWrap = document.createElement("div");
@@ -2384,29 +2403,110 @@
       img.className = "files-image is-pixelated";
       img.alt = filePath;
 
-      var pixelated = true;
+      // scale = display pixels per image pixel. natural dims captured on load.
+      var natW = 0, natH = 0, scale = 1, pixelated = true, loaded = false;
+      var MIN_SCALE = 0.05, MAX_SCALE = 64;
+
+      function clamp(s) { return Math.max(MIN_SCALE, Math.min(MAX_SCALE, s)); }
+
+      function apply() {
+        if (!natW) return;
+        img.style.width = Math.max(1, Math.round(natW * scale)) + "px";
+        img.style.height = Math.max(1, Math.round(natH * scale)) + "px";
+        var pct = scale >= 1 ? ("×" + (Math.round(scale * 100) / 100)) : (Math.round(scale * 100) + "%");
+        zoomLevel.textContent = pct;
+        info.textContent = natW + " × " + natH + " px";
+      }
+
+      function fitScale() {
+        var avail = (imgWrap.clientWidth || 400) - 24; // minus padding
+        if (!natW) return 1;
+        return natW <= avail ? defaultScale() : avail / natW;
+      }
+      function defaultScale() {
+        // Pixel-art: integer upscale toward ~384px. Photo: 1:1 (fit handles big).
+        if (natW <= 512) return Math.max(1, Math.floor(384 / natW));
+        return 1;
+      }
+
+      // Zoom keeping the point under the cursor (cx,cy in canvas client coords)
+      // stationary. factor multiplies the current scale.
+      function zoomAt(factor, cx, cy) {
+        if (!natW) return;
+        var prev = scale;
+        scale = clamp(scale * factor);
+        if (scale === prev) return;
+        var rect = imgWrap.getBoundingClientRect();
+        // position within the scrollable content, at the cursor
+        var px = imgWrap.scrollLeft + (cx - rect.left);
+        var py = imgWrap.scrollTop + (cy - rect.top);
+        var ratio = scale / prev;
+        apply();
+        imgWrap.scrollLeft = px * ratio - (cx - rect.left);
+        imgWrap.scrollTop = py * ratio - (cy - rect.top);
+      }
+      function zoomCenter(factor) {
+        var rect = imgWrap.getBoundingClientRect();
+        zoomAt(factor, rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }
+
+      zoomInBtn.addEventListener("click", function () { zoomCenter(1.25); });
+      zoomOutBtn.addEventListener("click", function () { zoomCenter(1 / 1.25); });
+      oneBtn.addEventListener("click", function () { var p = scale; scale = clamp(1); if (scale !== p) apply(); });
+      fitBtn.addEventListener("click", function () { scale = clamp(fitScale()); apply(); imgWrap.scrollTop = 0; imgWrap.scrollLeft = 0; });
       toggle.addEventListener("click", function () {
         pixelated = !pixelated;
         img.classList.toggle("is-pixelated", pixelated);
         toggle.textContent = "Pixelated: " + (pixelated ? "on" : "off");
       });
 
+      // Wheel zoom, anchored at the cursor. Plain wheel zooms (no modifier
+      // needed) since the canvas is a dedicated viewer; preventDefault stops
+      // the page from scrolling under it.
+      imgWrap.addEventListener("wheel", function (ev) {
+        if (!loaded) return;
+        ev.preventDefault();
+        var factor = ev.deltaY < 0 ? 1.12 : 1 / 1.12;
+        zoomAt(factor, ev.clientX, ev.clientY);
+      }, { passive: false });
+
+      // Drag to pan when the image overflows the canvas.
+      var dragging = false, sx = 0, sy = 0, sl = 0, st = 0;
+      imgWrap.addEventListener("pointerdown", function (ev) {
+        if (!loaded) return;
+        dragging = true; sx = ev.clientX; sy = ev.clientY;
+        sl = imgWrap.scrollLeft; st = imgWrap.scrollTop;
+        imgWrap.classList.add("is-grabbing");
+        try { imgWrap.setPointerCapture(ev.pointerId); } catch (_) {}
+      });
+      imgWrap.addEventListener("pointermove", function (ev) {
+        if (!dragging) return;
+        imgWrap.scrollLeft = sl - (ev.clientX - sx);
+        imgWrap.scrollTop = st - (ev.clientY - sy);
+      });
+      function endDrag(ev) {
+        if (!dragging) return;
+        dragging = false;
+        imgWrap.classList.remove("is-grabbing");
+        try { imgWrap.releasePointerCapture(ev.pointerId); } catch (_) {}
+      }
+      imgWrap.addEventListener("pointerup", endDrag);
+      imgWrap.addEventListener("pointercancel", endDrag);
+
       img.addEventListener("load", function () {
-        var w = img.naturalWidth, h = img.naturalHeight;
-        if (!w || !h) { info.textContent = "image"; return; }
-        if (w > 512) {
-          // Photo-scale: fit to width, smooth by default.
+        natW = img.naturalWidth; natH = img.naturalHeight;
+        if (!natW || !natH) { info.textContent = "image"; return; }
+        loaded = true;
+        if (natW > 512) {
+          // Photo: smooth, fit to width.
           pixelated = false;
           img.classList.remove("is-pixelated");
           toggle.textContent = "Pixelated: off";
-          info.textContent = w + " × " + h + " px";
+          scale = clamp(fitScale());
         } else {
-          // Pixel-art scale: integer upscale toward a comfortable size.
-          var scale = Math.max(1, Math.floor(384 / w));
-          img.style.width = (w * scale) + "px";
-          img.style.height = (h * scale) + "px";
-          info.textContent = w + " × " + h + " px (×" + scale + ")";
+          scale = clamp(defaultScale());
         }
+        apply();
       });
       img.addEventListener("error", function () {
         wrap.innerHTML = '<div class="files-empty">Could not load image: ' + escHtml(filePath) + '</div>';

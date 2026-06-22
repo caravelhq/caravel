@@ -4374,15 +4374,25 @@ export const pageStyles = String.raw`    :root {
       flex-direction: column;
       gap: 10px;
       padding: 14px;
+      height: 100%;
+      box-sizing: border-box;
     }
     .files-image-meta {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
       color: #8a96a8;
       letter-spacing: 0.03em;
+      flex: 0 0 auto;
+    }
+    .files-image-info { margin-right: 4px; }
+    .files-image-zoom {
+      min-width: 48px;
+      text-align: center;
+      color: #cfe3ff;
     }
     .files-image-toggle {
       border: 1px solid #ffffff2a;
@@ -4393,10 +4403,17 @@ export const pageStyles = String.raw`    :root {
       cursor: pointer;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
+      line-height: 1.4;
     }
     .files-image-toggle:hover { background: #14223680; }
     .files-image-canvas {
+      /* Bounded, scrollable viewport — the image can exceed it when zoomed
+         and the user pans by dragging or scrolling. */
+      flex: 1 1 auto;
+      min-height: 160px;
+      overflow: auto;
       /* Checkerboard so transparent PNGs (sprites/icons) read clearly. */
+      background-color: #0c1018;
       background-image:
         linear-gradient(45deg, #1c2735 25%, transparent 25%),
         linear-gradient(-45deg, #1c2735 25%, transparent 25%),
@@ -4407,14 +4424,14 @@ export const pageStyles = String.raw`    :root {
       border: 1px solid #ffffff1a;
       border-radius: 4px;
       padding: 12px;
-      align-self: flex-start;
-      max-width: 100%;
-      overflow: auto;
+      cursor: grab;
     }
+    .files-image-canvas.is-grabbing { cursor: grabbing; }
     .files-image {
       display: block;
-      max-width: 100%;
-      height: auto;
+      /* width/height are set explicitly by the zoom logic — don't cap. */
+      user-select: none;
+      -webkit-user-drag: none;
     }
     .files-image.is-pixelated {
       image-rendering: pixelated;
