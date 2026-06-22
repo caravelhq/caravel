@@ -4425,6 +4425,10 @@ export const pageStyles = String.raw`    :root {
       border-radius: 4px;
       padding: 12px;
       cursor: grab;
+      /* Claim touch gestures (pinch-zoom + drag-pan handled in JS) instead of
+         letting the browser do native page pinch-zoom / scroll over the
+         viewer. */
+      touch-action: none;
     }
     .files-image-canvas.is-grabbing { cursor: grabbing; }
     .files-image {

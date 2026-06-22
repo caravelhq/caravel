@@ -2470,28 +2470,77 @@
         zoomAt(factor, ev.clientX, ev.clientY);
       }, { passive: false });
 
-      // Drag to pan when the image overflows the canvas.
-      var dragging = false, sx = 0, sy = 0, sl = 0, st = 0;
+      // Pointer handling: 1 pointer = drag-to-pan, 2 pointers = pinch-zoom
+      // (anchored at the pinch midpoint) + two-finger pan. Works for mouse,
+      // touch, and pen via Pointer Events; the canvas sets touch-action:none
+      // so the browser doesn't claim the gesture for native scroll/zoom.
+      var pointers = new Map(); // pointerId -> { x, y }
+      var panActive = false, panSL = 0, panST = 0, panSX = 0, panSY = 0;
+      var pinchPrevDist = 0, pinchPrevMid = null;
+
+      function ptList() { return Array.prototype.slice.call(pointers.values()); }
+      function pinchMid() { var p = ptList(); return { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 }; }
+      function pinchSpread() { var p = ptList(); return Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y); }
+
+      function startPan(x, y) {
+        panActive = true; panSX = x; panSY = y;
+        panSL = imgWrap.scrollLeft; panST = imgWrap.scrollTop;
+        imgWrap.classList.add("is-grabbing");
+      }
+
       imgWrap.addEventListener("pointerdown", function (ev) {
         if (!loaded) return;
-        dragging = true; sx = ev.clientX; sy = ev.clientY;
-        sl = imgWrap.scrollLeft; st = imgWrap.scrollTop;
-        imgWrap.classList.add("is-grabbing");
+        pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
         try { imgWrap.setPointerCapture(ev.pointerId); } catch (_) {}
+        if (pointers.size === 1) {
+          startPan(ev.clientX, ev.clientY);
+        } else if (pointers.size === 2) {
+          // Entering pinch — stop single-finger pan, seed the baselines.
+          panActive = false;
+          imgWrap.classList.remove("is-grabbing");
+          pinchPrevDist = pinchSpread();
+          pinchPrevMid = pinchMid();
+        }
       });
+
       imgWrap.addEventListener("pointermove", function (ev) {
-        if (!dragging) return;
-        imgWrap.scrollLeft = sl - (ev.clientX - sx);
-        imgWrap.scrollTop = st - (ev.clientY - sy);
+        if (!pointers.has(ev.pointerId)) return;
+        pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
+        if (pointers.size >= 2) {
+          ev.preventDefault();
+          var dist = pinchSpread();
+          var mid = pinchMid();
+          if (pinchPrevDist > 0 && dist > 0) {
+            zoomAt(dist / pinchPrevDist, mid.x, mid.y);   // scale about the pinch centre
+            if (pinchPrevMid) {                            // + two-finger pan
+              imgWrap.scrollLeft -= (mid.x - pinchPrevMid.x);
+              imgWrap.scrollTop -= (mid.y - pinchPrevMid.y);
+            }
+          }
+          pinchPrevDist = dist; pinchPrevMid = mid;
+        } else if (panActive) {
+          imgWrap.scrollLeft = panSL - (ev.clientX - panSX);
+          imgWrap.scrollTop = panST - (ev.clientY - panSY);
+        }
       });
-      function endDrag(ev) {
-        if (!dragging) return;
-        dragging = false;
-        imgWrap.classList.remove("is-grabbing");
+
+      function dropPointer(ev) {
+        if (!pointers.has(ev.pointerId)) return;
+        pointers.delete(ev.pointerId);
         try { imgWrap.releasePointerCapture(ev.pointerId); } catch (_) {}
+        if (pointers.size === 1) {
+          // 2→1: resume single-finger pan from the remaining pointer.
+          var rem = ptList()[0];
+          pinchPrevDist = 0; pinchPrevMid = null;
+          startPan(rem.x, rem.y);
+        } else if (pointers.size === 0) {
+          panActive = false;
+          pinchPrevDist = 0; pinchPrevMid = null;
+          imgWrap.classList.remove("is-grabbing");
+        }
       }
-      imgWrap.addEventListener("pointerup", endDrag);
-      imgWrap.addEventListener("pointercancel", endDrag);
+      imgWrap.addEventListener("pointerup", dropPointer);
+      imgWrap.addEventListener("pointercancel", dropPointer);
 
       img.addEventListener("load", function () {
         natW = img.naturalWidth; natH = img.naturalHeight;
