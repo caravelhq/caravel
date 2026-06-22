@@ -17,7 +17,7 @@ import {
   recoverStuckChats,
   type ChatMessageState,
 } from "./services/chats";
-import { listDirectory, readFileContent, isMarkdown, listBranchesForPath } from "./services/files";
+import { listDirectory, readFileContent, isMarkdown, listBranchesForPath, isImage, readFileRaw } from "./services/files";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
@@ -492,6 +492,28 @@ self.addEventListener('fetch', e => {
           return json({ ok: true, ...result, markdown: isMarkdown(file) });
         } catch (err) {
           return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Raw bytes for the Files-tab image viewer. Serves the file with its
+      // image MIME type so an <img> can load it directly (binary won't
+      // survive the JSON text reader above). Path safety + branch view are
+      // handled in readFileRaw.
+      if (url.pathname === "/api/files/raw") {
+        try {
+          const file = url.searchParams.get("path");
+          if (!file) return new Response("path param required", { status: 400 });
+          if (!isImage(file)) return new Response("not an image", { status: 415 });
+          const branch = url.searchParams.get("branch") || undefined;
+          const { bytes, contentType } = await readFileRaw(file, branch);
+          // Cast to BodyInit: Bun serves a bare Uint8Array fine at runtime,
+          // but lib.dom's Response/Blob types reject Bun's generic
+          // Uint8Array. Zero behavioural difference.
+          return new Response(bytes as unknown as BodyInit, {
+            headers: { "Content-Type": contentType, "Cache-Control": "no-cache" },
+          });
+        } catch (err) {
+          return new Response(String(err instanceof Error ? err.message : err), { status: 404 });
         }
       }
 

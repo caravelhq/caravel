@@ -4368,6 +4368,58 @@ export const pageStyles = String.raw`    :root {
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
+    /* Files-tab image viewer */
+    .files-image-view {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+    .files-image-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #8a96a8;
+      letter-spacing: 0.03em;
+    }
+    .files-image-toggle {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .files-image-toggle:hover { background: #14223680; }
+    .files-image-canvas {
+      /* Checkerboard so transparent PNGs (sprites/icons) read clearly. */
+      background-image:
+        linear-gradient(45deg, #1c2735 25%, transparent 25%),
+        linear-gradient(-45deg, #1c2735 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1c2735 75%),
+        linear-gradient(-45deg, transparent 75%, #1c2735 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 4px;
+      padding: 12px;
+      align-self: flex-start;
+      max-width: 100%;
+      overflow: auto;
+    }
+    .files-image {
+      display: block;
+      max-width: 100%;
+      height: auto;
+    }
+    .files-image.is-pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
     .files-loading {
       padding: 12px;
       font-family: "JetBrains Mono", monospace;

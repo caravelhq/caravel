@@ -384,3 +384,72 @@ export function isMarkdown(filePath: string): boolean {
   const ext = extname(filePath).toLowerCase();
   return ext === ".md" || ext === ".markdown" || ext === ".mdx";
 }
+
+// Image types the Files-tab viewer can render. Maps extension → MIME so the
+// raw-bytes endpoint serves the right Content-Type.
+const IMAGE_MIME: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".gif": "image/gif",
+  ".webp": "image/webp",
+  ".svg": "image/svg+xml",
+  ".bmp": "image/bmp",
+  ".ico": "image/x-icon",
+  ".avif": "image/avif",
+};
+
+const MAX_RAW_SIZE = 10 * 1024 * 1024; // 10 MB — images run larger than text.
+
+export function isImage(filePath: string): boolean {
+  return extname(filePath).toLowerCase() in IMAGE_MIME;
+}
+
+export interface RawFile {
+  bytes: Uint8Array;
+  contentType: string;
+}
+
+// Serve a file's raw bytes (for the image viewer). Honours the same path
+// safety + branch-view mechanics as readFileContent, but returns binary
+// rather than decoding to UTF-8 text. Larger size cap than the text reader.
+export async function readFileRaw(filePath: string, branch?: string): Promise<RawFile> {
+  const full = safePath(filePath);
+  const ext = extname(full).toLowerCase();
+  const contentType = IMAGE_MIME[ext] ?? "application/octet-stream";
+
+  const root = resolveRepoRoot(full);
+  const current = root.hasRepo ? await currentBranch(root.absPath) : "";
+  const requestedBranch = (branch || "").trim();
+  const useGit = root.hasRepo && Boolean(requestedBranch) && requestedBranch !== current;
+
+  if (!useGit) {
+    const st = await stat(full);
+    if (!st.isFile()) throw new Error("Not a file");
+    if (st.size > MAX_RAW_SIZE) {
+      throw new Error(`File too large (${(st.size / 1024 / 1024).toFixed(1)} MB, max ${MAX_RAW_SIZE / 1024 / 1024} MB)`);
+    }
+    const buf = await readFile(full);
+    return { bytes: new Uint8Array(buf), contentType };
+  }
+
+  let realFull = full;
+  try { realFull = realpathSync(full); } catch {}
+  const relToRoot = relative(root.absPath, realFull);
+  if (!relToRoot || relToRoot.startsWith("..")) {
+    throw new Error("File outside resolved repo root");
+  }
+  const spec = `${requestedBranch}:${relToRoot}`;
+  const sizeRes = await runGit(root.absPath, ["cat-file", "-s", spec]);
+  if (sizeRes.code !== 0) {
+    throw new Error(sizeRes.stderr.trim() || `not found on ${requestedBranch}`);
+  }
+  if ((Number.parseInt(sizeRes.stdout.trim(), 10) || 0) > MAX_RAW_SIZE) {
+    throw new Error(`File too large (max ${MAX_RAW_SIZE / 1024 / 1024} MB)`);
+  }
+  const buf = await runGitBuffer(root.absPath, ["show", spec]);
+  if (buf.code !== 0) {
+    throw new Error(buf.stderr.trim() || `show failed on ${requestedBranch}`);
+  }
+  return { bytes: buf.stdout, contentType };
+}

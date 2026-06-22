@@ -2056,6 +2056,7 @@
       if (ext === "json") return "\ud83d\udccb";
       if (ext === "sh" || ext === "bash") return "\u2699\ufe0f";
       if (ext === "yml" || ext === "yaml") return "\ud83d\udcd1";
+      if (["png","jpg","jpeg","gif","webp","svg","bmp","ico","avif"].indexOf(ext) !== -1) return "\ud83d\uddbc\ufe0f";
       return "\ud83d\udcc4";
     }
 
@@ -2267,6 +2268,14 @@
       }
 
       if (!filesContent) return;
+
+      // Image files: render an <img> from the raw-bytes endpoint. The JSON
+      // text reader below can't carry binary, so images route here first.
+      if (isImageFile(filePath)) {
+        renderImageFile(filePath);
+        return;
+      }
+
       filesContent.innerHTML = '<div class="files-loading">Loading...</div>';
 
       try {
@@ -2336,6 +2345,78 @@
       var ext = (filePath.match(/\.([^./]+)$/) || [])[1] || "";
       ext = ext.toLowerCase();
       return ext === "yaml" || ext === "yml";
+    }
+
+    function isImageFile(filePath) {
+      var ext = (filePath.match(/\.([^./]+)$/) || [])[1] || "";
+      ext = ext.toLowerCase();
+      return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
+    }
+
+    // Render an image into the Files content pane. Pixel art (small natural
+    // size) is integer-upscaled and pixel-rendered so it's crisp and big
+    // enough to see; large images (photos) render smooth at fit-to-width.
+    // A toggle flips pixelated/smooth, and a checkerboard backs transparency.
+    function renderImageFile(filePath) {
+      if (!filesContent) return;
+      var url = "/api/files/raw?path=" + encodeURIComponent(filePath);
+      if (filesSelectedBranch) url += "&branch=" + encodeURIComponent(filesSelectedBranch);
+
+      filesContent.textContent = "";
+      var wrap = document.createElement("div");
+      wrap.className = "files-image-view";
+
+      var meta = document.createElement("div");
+      meta.className = "files-image-meta";
+      var info = document.createElement("span");
+      info.className = "files-image-info";
+      info.textContent = "Loading…";
+      var toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "files-image-toggle";
+      toggle.textContent = "Pixelated: on";
+      meta.appendChild(info);
+      meta.appendChild(toggle);
+
+      var imgWrap = document.createElement("div");
+      imgWrap.className = "files-image-canvas";
+      var img = document.createElement("img");
+      img.className = "files-image is-pixelated";
+      img.alt = filePath;
+
+      var pixelated = true;
+      toggle.addEventListener("click", function () {
+        pixelated = !pixelated;
+        img.classList.toggle("is-pixelated", pixelated);
+        toggle.textContent = "Pixelated: " + (pixelated ? "on" : "off");
+      });
+
+      img.addEventListener("load", function () {
+        var w = img.naturalWidth, h = img.naturalHeight;
+        if (!w || !h) { info.textContent = "image"; return; }
+        if (w > 512) {
+          // Photo-scale: fit to width, smooth by default.
+          pixelated = false;
+          img.classList.remove("is-pixelated");
+          toggle.textContent = "Pixelated: off";
+          info.textContent = w + " × " + h + " px";
+        } else {
+          // Pixel-art scale: integer upscale toward a comfortable size.
+          var scale = Math.max(1, Math.floor(384 / w));
+          img.style.width = (w * scale) + "px";
+          img.style.height = (h * scale) + "px";
+          info.textContent = w + " × " + h + " px (×" + scale + ")";
+        }
+      });
+      img.addEventListener("error", function () {
+        wrap.innerHTML = '<div class="files-empty">Could not load image: ' + escHtml(filePath) + '</div>';
+      });
+      img.src = url;
+
+      imgWrap.appendChild(img);
+      wrap.appendChild(meta);
+      wrap.appendChild(imgWrap);
+      filesContent.appendChild(wrap);
     }
 
     function escHtml(s) {
