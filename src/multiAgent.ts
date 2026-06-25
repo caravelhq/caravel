@@ -572,8 +572,12 @@ function detectLimitsHit(text: string): boolean {
   if (!text) return false;
   const t = text.toLowerCase();
   return (
-    t.includes("you've hit your limit") ||
-    t.includes("you’ve hit your limit") || // curly apostrophe variant
+    // "you've hit your <qualifier?> limit" — tolerate a qualifier between
+    // "your" and "limit" (straight + curly apostrophe). Catches the bare
+    // "you've hit your limit", "…your session limit" (the 2026-06-25 miss
+    // that mis-routed to failed:crash), "…your usage limit", "…your 5-hour
+    // limit", etc.
+    /you[''’]ve hit your\b[^.\n]*\blimit/i.test(t) ||
     t.includes("prompt is too long") ||
     t.includes("context_length_exceeded") ||
     t.includes("rate_limit_error") ||
