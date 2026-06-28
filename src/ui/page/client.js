@@ -56,6 +56,9 @@
     let lastRenderedJobs = [];
     let scrollAnimFrame = 0;
     let heartbeatTimezoneOffsetMinutes = 0;
+    // Status-dock connectivity: drives an adaptive poll cadence (faster while
+    // offline) and an immediate refresh on tab-visible / network-back.
+    let stateOnline = true;
 
     function clampTimezoneOffsetMinutes(value) {
       const n = Number(value);
@@ -399,8 +402,10 @@
 
     async function refreshState() {
       try {
-        const res = await fetch("/api/state");
+        const res = await fetch("/api/state", { cache: "no-store" });
+        if (!res.ok) throw new Error("status " + res.status);
         const state = await res.json();
+        stateOnline = true;
         const pills = buildPills(state);
         dockEl.innerHTML = pills.map((p) =>
           '<div class="pill ' + p.cls + '">' +
@@ -427,6 +432,7 @@
             '<div class="side-label">Uptime</div>';
         }
       } catch (err) {
+        stateOnline = false;
         dockEl.innerHTML = '<div class="pill bad"><div class="pill-label"><span class="pill-icon">⚠️</span>Status</div><div class="pill-value">Offline</div></div>';
         if (jobsBubbleEl) {
           jobsBubbleEl.innerHTML = '<div class="side-icon">🗂️</div><div class="side-value">-</div><div class="side-label">Jobs</div>';
@@ -1042,8 +1048,35 @@
     setQuickView(quickView);
 
     loadSettings();
-    refreshState();
-    setInterval(refreshState, 1000);
+    // Adaptive status-dock polling. Self-scheduling (not a fixed setInterval)
+    // so we can poll faster while offline and recover instantly when the tab
+    // becomes visible again. Mobile freezes timers while the screen is off, so
+    // after an unlock the old fixed interval could leave the dock stuck on
+    // "Offline" until a throttled tick fired — the visibility/online kick
+    // below fixes that.
+    var STATE_POLL_OK_MS = 1000;
+    var STATE_POLL_OFFLINE_MS = 400;
+    var statePollTimer = null;
+    function scheduleStatePoll(delay) {
+      if (statePollTimer) clearTimeout(statePollTimer);
+      statePollTimer = setTimeout(runStatePoll, delay);
+    }
+    async function runStatePoll() {
+      await refreshState();
+      scheduleStatePoll(stateOnline ? STATE_POLL_OK_MS : STATE_POLL_OFFLINE_MS);
+    }
+    function kickStatePoll() {
+      // Refresh now and reset the cadence — don't wait on a throttled timer.
+      scheduleStatePoll(0);
+    }
+    runStatePoll();
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible") kickStatePoll();
+    });
+    window.addEventListener("online", kickStatePoll);
+    window.addEventListener("focus", kickStatePoll);
+    // bfcache restore (mobile back/forward + some unlock paths).
+    window.addEventListener("pageshow", kickStatePoll);
 
     // ── Chat ──
     const tabDashboardBtn = $("tab-dashboard");
