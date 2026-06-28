@@ -171,6 +171,12 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       project = trimmed;
     } else {
       project = inferProjectFromContext(context);
+      // Inherit the parent task's project when context inference came up
+      // empty — a sub-task belongs to its parent's project rather than
+      // "unknown". Only when the caller didn't explicitly pass null ("none").
+      if (!project && parent) {
+        project = await readParentProject(parent);
+      }
     }
   }
 
@@ -320,6 +326,27 @@ export interface ClosedBlock {
 
 const TASK_BUCKETS = ["open", "waiting", "done", "failed"] as const;
 type TaskBucket = (typeof TASK_BUCKETS)[number];
+
+// Read a parent task's `project:` by id, scanning all agents + buckets
+// (incl. archived). Returns the trimmed slug, or null if absent/not found.
+// Lets a dispatched sub-task inherit its parent's project tag.
+async function readParentProject(parentId: string): Promise<string | null> {
+  const buckets = [...TASK_BUCKETS, "archived"];
+  for (const agent of KNOWN_AGENTS) {
+    for (const bucket of buckets) {
+      const p = join(AGENTS_DIR, agent, "tasks", bucket, `${parentId}.yaml`);
+      if (!existsSync(p)) continue;
+      try {
+        const m = /^project:\s*(.*)$/m.exec(await readFile(p, "utf-8"));
+        const proj = (m?.[1] ?? "").trim();
+        return proj && proj !== "null" ? proj : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
 
 // Strip any existing `closed:` field from the YAML. Handles three shapes:
 //   single-line scalar (`closed: null`, `closed: foo`)

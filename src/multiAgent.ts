@@ -1001,6 +1001,28 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
   return `${prefix}${String(max + 1).padStart(4, "0")}`;
 }
 
+// Read a task envelope's `project:` by id, scanning all agents + buckets
+// (incl. archived). Returns the trimmed slug or null. Used so continuation
+// envelopes inherit the project of the orchestration family rather than
+// dropping to "unknown".
+async function readTaskProject(taskId: string): Promise<string | null> {
+  const agents = readEnvAgents() ?? DEFAULT_AGENTS;
+  const buckets = ["open", "waiting", "done", "failed", "archived"];
+  for (const a of agents) {
+    for (const b of buckets) {
+      const p = join(AGENTS_DIR, a, "tasks", b, `${taskId}.yaml`);
+      if (!existsSync(p)) continue;
+      try {
+        const proj = (readField(await readFile(p, "utf-8"), "project") ?? "").trim();
+        return proj && proj !== "null" ? proj : null;
+      } catch {
+        return null;
+      }
+    }
+  }
+  return null;
+}
+
 async function enqueueAliceContinuation(opts: {
   chatId: string | null;
   chatName?: string | null;
@@ -1024,6 +1046,18 @@ async function enqueueAliceContinuation(opts: {
   const parentForId = lastCompletedTaskId;
   const id = await nextAliceTaskId(parentForId);
   const now = new Date().toISOString();
+
+  // Inherit the project from the orchestration family so the continuation
+  // (and anything Alice dispatches from it) carries the right project tag
+  // instead of falling to "unknown". Prefer the orchestration parent's
+  // project; fall back to the first sibling that has one.
+  let contProject = orchParent ? await readTaskProject(orchParent) : null;
+  if (!contProject) {
+    for (const s of siblings) {
+      const p = await readTaskProject(s.id);
+      if (p) { contProject = p; break; }
+    }
+  }
 
   const isMulti = siblings.length > 1;
   const headline = isMulti
@@ -1084,6 +1118,7 @@ async function enqueueAliceContinuation(opts: {
     "",
     "kind: continuation",
     "priority: P2",
+    ...(contProject ? [`project: ${contProject}`] : []),
     "deadline: null",
     "",
     "budget:",

@@ -3155,6 +3155,9 @@
       // (legacy flat picker with status filters). Status filter chips only
       // apply to the "all" view.
       var tasksView = "current";
+      // Tracks the right-pane mode ("empty"|"view"|"new"|"project") so
+      // navigation can reason about where we came from (see taskFromProjectSlug).
+      var currentRightPaneMode = "empty";
       // Per-project collapse state for the Current view. Default open; click
       // the group head to fold a project section away.
       var currentCollapsed = {};
@@ -3856,6 +3859,7 @@
 
       function setRightPaneMode(mode) {
         // mode: "empty" | "view" | "new" | "project"
+        currentRightPaneMode = mode;
         if (tasksEmpty) tasksEmpty.hidden = mode !== "empty";
         if (tasksViewer) tasksViewer.hidden = mode !== "view";
         var projectPane = document.getElementById("tasks-project-pane");
@@ -3893,6 +3897,14 @@
 
       async function openTaskPanel(taskId) {
         if (!taskId || !taskPanelBody) return;
+        // Back-stack bookkeeping (before currentTaskId is reassigned):
+        //  - opened while a project panel was showing → remember the project.
+        //  - re-opening the SAME task (a post-action refresh) → preserve it.
+        //  - opening a DIFFERENT task from elsewhere → clear it.
+        var prevPaneMode = currentRightPaneMode;
+        var sameTask = (taskId === currentTaskId);
+        if (prevPaneMode === "project") taskFromProjectSlug = currentProjectSlug;
+        else if (!sameTask) taskFromProjectSlug = null;
         currentTaskId = taskId;
         if (typeof setActiveTab === "function") setActiveTab("tasks");
         setRightPaneMode("view");
@@ -4453,6 +4465,11 @@
       // Unassigned last.
       var projectsOverviewCache = null;
       var currentProjectSlug = null;
+      // Back-stack: when a task detail is opened from a project panel, remember
+      // the project so "back" (the picker-toggle on narrow screens) returns to
+      // that project panel — one level up — instead of jumping to the full
+      // projects list. Cleared once we navigate elsewhere.
+      var taskFromProjectSlug = null;
       function renderProjectsView() {
         // Show a quick spinner while we fetch the counts payload — the
         // first paint is cheap (cards from cache) but the cold path can
@@ -4772,6 +4789,9 @@
           var v = btn.getAttribute("data-view");
           if (!v || v === tasksView) return;
           tasksView = v;
+          // Explicit view switch = leaving any project drill-down; drop the
+          // back-to-project target so a later picker-toggle behaves normally.
+          taskFromProjectSlug = null;
           var tabs = tasksViewTabs.querySelectorAll(".tasks-view-tab");
           for (var i = 0; i < tabs.length; i++) {
             var isActive = tabs[i] === btn;
@@ -4843,6 +4863,16 @@
         tasksPickerToggle.addEventListener("click", function () {
           if (!tasksSidebar) return;
           var collapsed = tasksSidebar.classList.contains("tasks-sidebar-collapsed");
+          // Expanding out of a task detail that was reached via a project
+          // panel → pop ONE level back to that project panel rather than
+          // exposing the full projects list. (To then reach the list, use
+          // the Projects view-tab.)
+          if (collapsed && currentRightPaneMode === "view" && taskFromProjectSlug !== null) {
+            var slug = taskFromProjectSlug;
+            taskFromProjectSlug = null;
+            openProjectPanel(slug);
+            return;
+          }
           setTasksPickerCollapsed(!collapsed);
         });
       }
