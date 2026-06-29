@@ -1107,14 +1107,15 @@
     // Kelly's preferred order + role labels for the chat agent picker
     // (2026-05-20). Agents not in this list still render — after the
     // canonical six, alphabetised, without a role label.
-    var CHAT_AGENT_ORDER = ["alice", "sam", "mark", "ray", "bob", "cliff"];
+    var CHAT_AGENT_ORDER = ["alice", "sam", "mark", "ray", "bob", "cliff", "jill"];
     var CHAT_AGENT_ROLES = {
       alice: "Assistant",
       sam: "Strategy",
       mark: "Marketing",
       ray: "Research",
       bob: "the Builder",
-      cliff: "Code Review"
+      cliff: "Code Review",
+      jill: "the Jester"
     };
     function orderedChatAgents() {
       var byName = {};

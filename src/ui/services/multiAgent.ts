@@ -10,7 +10,7 @@ import { load as yamlLoad } from "js-yaml";
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
-const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
 const BUCKETS = ["open", "waiting", "done", "failed", "archived"] as const;
 type Bucket = (typeof BUCKETS)[number];
 

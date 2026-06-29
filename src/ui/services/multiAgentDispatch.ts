@@ -12,7 +12,7 @@ import { abortInflightWorker } from "../../multiAgent";
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
-const KNOWN_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const KNOWN_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
 const KNOWN_KINDS = ["research", "code", "review", "summarise", "decide", "other"];
 const KNOWN_PRIORITIES = ["P0", "P1", "P2", "P3"];
 

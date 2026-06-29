@@ -35,7 +35,7 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
 // Default agent roster — kept in sync with .claude/skills/task/script/task.mjs.
 // Override at runtime via CLAUDECLAW_MULTI_AGENT_AGENTS=alice,ray,...
-const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
 
 const DEFAULT_TICK_MS = 30 * 1000;
 const DEFAULT_LEASE_MS = 10 * 60 * 1000;
