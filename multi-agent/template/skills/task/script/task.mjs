@@ -34,7 +34,7 @@ function flag(name, fallback = null) {
 }
 
 const ROOT = process.cwd();
-const AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff"];
+const AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
 // Buckets scanned for ID-collision avoidance. `archived` is included so
 // retired IDs are never reused by the next-id allocator.
 const SCAN_BUCKETS = ["open", "waiting", "done", "failed", "archived"];
