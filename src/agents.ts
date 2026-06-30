@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from "fs/promises";
 import { join } from "path";
-import { existsSync } from "fs";
+import { existsSync, readdirSync, statSync } from "fs";
 
 // Agent profiles live at <projectRoot>/agents/<name>/.
 // Each profile contains:
@@ -116,12 +116,36 @@ export async function listAgents(): Promise<AgentSummary[]> {
     }
   }
 
-  // Vesper first if present, then alphabetical.
-  return agents.sort((a, b) => {
-    if (a.name === "vesper") return -1;
-    if (b.name === "vesper") return 1;
-    return a.displayName.localeCompare(b.displayName);
-  });
+  // Alphabetical by display name. The dashboard applies its own default
+  // selection (coordinator first); ordering here is just a stable catalog.
+  return agents.sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+// Synchronous roster lookup: the directory names under agents/ that contain
+// an agent.json manifest. Used by the runner and dashboard services to derive
+// the live roster from disk instead of a hardcoded list — add an agent profile
+// and it shows up everywhere, no source edits required. Directories starting
+// with "_" (e.g. _shared) are skipped. Returns names sorted alphabetically.
+export function listAgentNamesSync(): string[] {
+  if (!existsSync(AGENTS_DIR)) return [];
+  let entries: string[];
+  try {
+    entries = readdirSync(AGENTS_DIR);
+  } catch {
+    return [];
+  }
+  const names: string[] = [];
+  for (const name of entries) {
+    if (name.startsWith("_") || name.startsWith(".")) continue;
+    try {
+      if (!statSync(join(AGENTS_DIR, name)).isDirectory()) continue;
+      if (!existsSync(join(AGENTS_DIR, name, "agent.json"))) continue;
+      names.push(name);
+    } catch {
+      continue;
+    }
+  }
+  return names.sort();
 }
 
 async function loadRules(dir: string): Promise<string> {

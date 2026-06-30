@@ -32,7 +32,7 @@ set -euo pipefail
 PROJECT_DIR="$CLAUDECLAW_PROJECT_DIR"
 CLAW_REPO="${CLAUDECLAW_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
 BRANCH="${CLAUDECLAW_BRANCH:-local}"
-AGENTS_RAW="${CLAUDECLAW_AGENTS:-alice ray adam sam bob mark cliff}"
+AGENTS_RAW="${CLAUDECLAW_AGENTS:-alice bob ray}"
 read -r -a AGENTS <<<"$AGENTS_RAW"
 
 SRC_DIR="${CLAW_REPO}/multi-agent/template"
@@ -129,6 +129,19 @@ for agent in "${AGENTS[@]}"; do
       : > "$agent_dir/journal.ndjson"
     fi
     echo "  created agents/${agent}/tasks/journal.ndjson"
+  fi
+
+  # Seed an example profile (agent.json + CLAUDE.md) only when one isn't
+  # already present, so a fresh install has a runnable roster but existing
+  # profiles are never overwritten.
+  example_src="${SRC_DIR}/agents/${agent}"
+  profile_dir="${PROJECT_DIR}/agents/${agent}"
+  if [[ -d "$example_src" && ! -f "$profile_dir/agent.json" ]]; then
+    for f in agent.json CLAUDE.md; do
+      [[ -e "$example_src/$f" ]] || continue
+      run cp "$example_src/$f" "$profile_dir/$f"
+    done
+    echo "  seeded example profile agents/${agent}/ (agent.json + CLAUDE.md)"
   fi
 done
 

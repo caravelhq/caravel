@@ -364,15 +364,9 @@ ${pageStyles}
             <div class="multi-agent-new-grid">
               <label class="multi-agent-new-field">
                 <span>Target</span>
-                <select id="multi-agent-new-to">
-                  <option value="ray">ray (research)</option>
-                  <option value="adam">adam (advisor)</option>
-                  <option value="sam">sam (strategist)</option>
-                  <option value="bob">bob (builder)</option>
-                  <option value="cliff">cliff (review)</option>
-                  <option value="mark">mark (marketing)</option>
-                  <option value="alice">alice (coordinator)</option>
-                </select>
+                <!-- Options populated at runtime from /api/agents (see
+                     populateTaskTargetSelect in client.js). -->
+                <select id="multi-agent-new-to"></select>
               </label>
               <label class="multi-agent-new-field">
                 <span>Kind</span>

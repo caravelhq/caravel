@@ -6,11 +6,14 @@ import { readdir, readFile, stat } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
+import { listAgentNamesSync } from "../../agents";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
-const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
+// Example roster used only when no agent profiles exist on disk and no env
+// override is set. Real deployments derive the roster from agents/<name>/.
+const EXAMPLE_AGENTS = ["alice", "bob", "ray"];
 const BUCKETS = ["open", "waiting", "done", "failed", "archived"] as const;
 type Bucket = (typeof BUCKETS)[number];
 
@@ -186,9 +189,13 @@ function inferProjectFromContext(context: string[]): string | null {
 
 function envAgents(): string[] {
   const raw = process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
-  if (!raw) return DEFAULT_AGENTS;
-  const list = raw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
-  return list.length > 0 ? list : DEFAULT_AGENTS;
+  if (raw) {
+    const list = raw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
+    if (list.length > 0) return list;
+  }
+  // Derive the roster from disk; fall back to the example set only when empty.
+  const disk = listAgentNamesSync();
+  return disk.length > 0 ? disk : EXAMPLE_AGENTS;
 }
 
 export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {

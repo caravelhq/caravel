@@ -16,7 +16,7 @@ import { load as yamlLoad } from "js-yaml";
 import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
-const ROOT = process.argv[2] ?? "/home/chellino/work/agents";
+const ROOT = process.argv[2] ?? join(process.cwd(), "agents");
 
 function walk(dir) {
   const out = [];

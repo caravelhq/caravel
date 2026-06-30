@@ -1104,37 +1104,30 @@
     // hasn't been locked in yet; it's sent with the first message.
     var agentsCache = [];
 
-    // Kelly's preferred order + role labels for the chat agent picker
-    // (2026-05-20). Agents not in this list still render — after the
-    // canonical six, alphabetised, without a role label.
-    var CHAT_AGENT_ORDER = ["alice", "sam", "mark", "ray", "bob", "cliff", "jill"];
-    var CHAT_AGENT_ROLES = {
-      alice: "Assistant",
-      sam: "Strategy",
-      mark: "Marketing",
-      ray: "Research",
-      bob: "the Builder",
-      cliff: "Code Review",
-      jill: "the Jester"
-    };
+    // The agent picked by default for a new chat when nothing's selected.
+    // Falls back to the first agent in the catalog if this name isn't present.
+    var DEFAULT_CHAT_AGENT = "alice";
+    // The chat picker renders the catalog in the order /api/agents returns it
+    // (the server sorts it). Each agent's emoji / displayName / description
+    // come from its agents/<name>/agent.json manifest — no hardcoded roster.
     function orderedChatAgents() {
-      var byName = {};
+      var coord = null;
+      var rest = [];
       for (var i = 0; i < agentsCache.length; i++) {
-        if (agentsCache[i] && agentsCache[i].name) byName[agentsCache[i].name] = agentsCache[i];
+        var a = agentsCache[i];
+        if (!a || !a.name) continue;
+        if (a.name === DEFAULT_CHAT_AGENT) coord = a;
+        else rest.push(a);
       }
-      var out = [];
-      for (var j = 0; j < CHAT_AGENT_ORDER.length; j++) {
-        var nm = CHAT_AGENT_ORDER[j];
-        if (byName[nm]) {
-          out.push(byName[nm]);
-          delete byName[nm];
-        }
-      }
-      // Append any remaining agents (e.g. adam, vesper) at the end,
-      // alphabetised, so they're discoverable but don't crowd the
-      // canonical six.
-      var rest = Object.keys(byName).sort().map(function (k) { return byName[k]; });
-      return out.concat(rest);
+      // Coordinator first (if present), then the rest in catalog order.
+      return coord ? [coord].concat(rest) : rest;
+    }
+    // Resolve the default chat agent from the catalog (coordinator if present,
+    // else the first available agent).
+    function defaultChatAgentName() {
+      var match = agentsCache.find(function (a) { return a.name === DEFAULT_CHAT_AGENT; });
+      if (match) return match.name;
+      return agentsCache.length > 0 ? agentsCache[0].name : null;
     }
     var chatAgentLocked = null;
     var pendingAgentId = null;
@@ -1243,6 +1236,23 @@
       el.dataset.sessionId = session.sessionId;
     }
 
+    // Populate the "new task" target <select> from the live agent catalog so
+    // it reflects whatever agents/<name>/ profiles exist — no hardcoded list.
+    function populateTaskTargetSelect() {
+      var sel = $("multi-agent-new-to");
+      if (!sel) return;
+      var prev = sel.value;
+      var ordered = orderedChatAgents();
+      var html = "";
+      for (var i = 0; i < ordered.length; i++) {
+        var a = ordered[i];
+        var label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+        html += '<option value="' + escapeHtml(a.name) + '">' + escapeHtml(label) + '</option>';
+      }
+      sel.innerHTML = html;
+      if (prev) sel.value = prev;
+    }
+
     async function loadAgents() {
       try {
         var res = await fetch("/api/agents");
@@ -1252,13 +1262,13 @@
         }
       } catch (_) {}
       agentsFetched = true;
-      // Default pendingAgentId to vesper when nothing's picked yet and the
-      // chat hasn't locked one in — matches "Vesper by default" behaviour.
+      // Default pendingAgentId to the coordinator when nothing's picked yet
+      // and the chat hasn't locked one in.
       if (!pendingAgentId && !chatAgentLocked) {
-        var vesper = agentsCache.find(function(a) { return a.name === "vesper"; });
-        if (vesper) pendingAgentId = vesper.name;
-        else if (agentsCache.length > 0) pendingAgentId = agentsCache[0].name;
+        pendingAgentId = defaultChatAgentName();
       }
+      // Populate the "new task" target dropdown from the live catalog.
+      populateTaskTargetSelect();
       renderChatHistory();
       updateAgentBadge();
     }
@@ -1464,10 +1474,9 @@
       } catch (_) {
         chatHistory = [];
       }
-      // Freshly-opened chat with no lock-in: default the picker to Vesper.
+      // Freshly-opened chat with no lock-in: default the picker to the coordinator.
       if (!chatAgentLocked && !pendingAgentId && agentsCache.length > 0) {
-        var v = agentsCache.find(function(a) { return a.name === "vesper"; });
-        pendingAgentId = (v ? v.name : agentsCache[0].name);
+        pendingAgentId = defaultChatAgentName();
       }
       updateAgentBadge();
       updateChatNameInput(fetchedName, fetchedPreview);
@@ -1521,8 +1530,7 @@
       chatAgentLocked = null;
       pendingAgentId = null;
       if (agentsCache.length > 0) {
-        var v = agentsCache.find(function(a) { return a.name === "vesper"; });
-        pendingAgentId = (v ? v.name : agentsCache[0].name);
+        pendingAgentId = defaultChatAgentName();
       }
       updateAgentBadge();
       updateChatNameInput("");
@@ -1633,11 +1641,9 @@
           var title = document.createElement("div");
           title.className = "chat-picker-item-title";
           var nameLabel = agent.displayName || agent.name;
-          var role = CHAT_AGENT_ROLES[agent.name] || "";
           title.textContent =
             (agent.emoji ? agent.emoji + " " : "") +
-            nameLabel +
-            (role ? " — " + role : "");
+            nameLabel;
           item.appendChild(title);
 
           var desc = document.createElement("div");

@@ -56,7 +56,7 @@ output_format: |
   citation requirements, length limits. Empty only when the task is
   exploratory and the worker is expected to propose a format.
 context:                            # references, not inlined content
-  - Notes/Projects/Trakk_Collector/BT_Plugin_Research_Brief.md
+  - Notes/Projects/Example_Project/Research_Brief.md
   - jira:TPD-189
   - https://example.com/relevant-spec
 

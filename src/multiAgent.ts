@@ -29,13 +29,26 @@ import { readdir, readFile, writeFile, rename, mkdir, stat, unlink, rm } from "f
 import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
+import { listAgentNamesSync } from "./agents";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
-// Default agent roster — kept in sync with .claude/skills/task/script/task.mjs.
-// Override at runtime via CLAUDECLAW_MULTI_AGENT_AGENTS=alice,ray,...
-const DEFAULT_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
+// Example roster used only when no agent profiles exist on disk and no env
+// override is set — keeps a fresh clone runnable for a demo. Real deployments
+// derive the roster from agents/<name>/agent.json (see knownAgents()).
+const EXAMPLE_AGENTS = ["alice", "bob", "ray"];
+
+// The live roster: an explicit env override wins; otherwise derive from the
+// agent profiles on disk; fall back to the example roster only when both are
+// empty. Deriving from disk means adding an agent profile is the only step —
+// no source list to keep in sync (which is what used to drift).
+function knownAgents(): string[] {
+  const env = readEnvAgents();
+  if (env) return env;
+  const disk = listAgentNamesSync();
+  return disk.length > 0 ? disk : EXAMPLE_AGENTS;
+}
 
 const DEFAULT_TICK_MS = 30 * 1000;
 const DEFAULT_LEASE_MS = 10 * 60 * 1000;
@@ -801,14 +814,14 @@ async function notifyDispatchChat(
   }
 
   const orchParent = readField(yaml, "parent");
-  const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
+  const roster = knownAgents();
 
   try {
     // Gather every alice-dispatched sibling under this orchestration parent.
     // If any are still in flight we defer — the last one to land triggers
     // the consolidated continuation.
     const siblings = orchParent
-      ? await listAliceDispatchedChildren(orchParent, knownAgents)
+      ? await listAliceDispatchedChildren(orchParent, roster)
       : [{ id: taskId, agent, status: directive.kind, report: directive.report ?? null }];
 
     const inFlight = siblings.filter(
@@ -964,8 +977,8 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
     const root = parent.split(".")[0]!;
     const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
-    const knownAgents = readEnvAgents() ?? DEFAULT_AGENTS;
-    for (const a of knownAgents) {
+    const roster = knownAgents();
+    for (const a of roster) {
       for (const sub of SCAN_DIRS) {
         const dir = join(AGENTS_DIR, a, "tasks", sub);
         const entries = await readdir(dir).catch(() => [] as string[]);
@@ -1006,7 +1019,7 @@ async function nextAliceTaskId(parent: string | null): Promise<string> {
 // envelopes inherit the project of the orchestration family rather than
 // dropping to "unknown".
 async function readTaskProject(taskId: string): Promise<string | null> {
-  const agents = readEnvAgents() ?? DEFAULT_AGENTS;
+  const agents = knownAgents();
   const buckets = ["open", "waiting", "done", "failed", "archived"];
   for (const a of agents) {
     for (const b of buckets) {
@@ -1569,7 +1582,7 @@ async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string)
   const parentId = readField(childYaml, "parent");
   if (!parentId || parentId === "null") return;
 
-  const agents = readEnvAgents() ?? DEFAULT_AGENTS;
+  const agents = knownAgents();
   for (const a of agents) {
     const parentPath = join(AGENTS_DIR, a, "tasks", "waiting", `${parentId}.yaml`);
     if (!existsSync(parentPath)) continue;
@@ -2163,7 +2176,7 @@ async function tickOnce(
 
 export function startMultiAgentRunner(options: MultiAgentOptions = {}): MultiAgentHandle {
   const opts: Required<MultiAgentOptions> = {
-    agents: options.agents ?? readEnvAgents() ?? DEFAULT_AGENTS,
+    agents: options.agents ?? knownAgents(),
     tickMs: options.tickMs ?? DEFAULT_TICK_MS,
     leaseMs: options.leaseMs ?? DEFAULT_LEASE_MS,
     perAgentConcurrency: options.perAgentConcurrency ?? DEFAULT_PER_AGENT_CONCURRENCY,

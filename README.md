@@ -57,6 +57,45 @@ Then open a Claude Code session and run:
 ```
 The setup wizard walks you through model, heartbeat, Telegram, Discord, and security, then your daemon is live with a web dashboard.
 
+## Run from source (clone and run)
+
+If you'd rather run this fork directly instead of installing it as a plugin:
+
+```bash
+git clone https://github.com/<your-org>/claudeclaw.git
+cd claudeclaw
+bun install
+bun run start --web        # starts the daemon + web dashboard on http://127.0.0.1:4632
+```
+
+All configuration and secrets live in `.claude/claudeclaw/settings.json` (Telegram/Discord tokens, model selection, security level, web host/port). That directory is gitignored — nothing sensitive is ever committed. The first `start` writes a default settings file you can edit, or run `/claudeclaw:start` inside a Claude Code session to use the setup wizard.
+
+Requirements: [Bun](https://bun.sh) and the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) on your PATH.
+
+## Multi-agent mode
+
+This fork adds a **multi-agent task system** on top of the daemon. Instead of one assistant, you define a roster of agents — each with its own identity, rules, and memory — and dispatch work to them as tasks. A coordinator agent triages requests, hands tasks to specialists, and consolidates the results. The dashboard shows every agent's queue, and tasks flow through `open → claimed → done/failed/waiting` buckets on disk.
+
+### How it works
+
+- **Agents live on disk.** Each agent is a directory at `agents/<name>/` containing `agent.json` (manifest: name, display name, emoji, description) and `CLAUDE.md` (its identity prompt). Optional `rules/*.md` and `memory/` are picked up automatically. The roster is derived from this directory — add an agent and it appears everywhere (runner, dashboard, task picker) with no code changes.
+- **Tasks are YAML envelopes.** Each agent has `tasks/{open,done,failed,waiting}/` and an append-only `journal.ndjson`. The runner claims open tasks, spawns the agent to work them, and moves the file as the status changes.
+- **The coordinator** (named `alice` by default) receives consolidated continuations when a family of dispatched sub-tasks completes. Keep one coordinator in your roster.
+
+### Set it up
+
+```bash
+# from your project root (the directory the daemon runs in)
+CLAUDECLAW_PROJECT_DIR="$PWD" \
+CLAUDECLAW_REPO_DIR="/path/to/claudeclaw" \
+CLAUDECLAW_AGENTS="alice bob ray" \
+  bash /path/to/claudeclaw/scripts/install-multi-agent.sh
+```
+
+This scaffolds the `/task` skill, the shared task-envelope spec, and per-agent `tasks/` directories. For any agent name that doesn't already have a profile, it seeds an example one (coordinator / builder / researcher) from `multi-agent/template/agents/` so you start with a runnable roster. Edit those profiles — or add your own under `agents/<name>/` — to define your team. Enable the runner with `CLAUDECLAW_MULTI_AGENT_RUNNER=1`.
+
+See [`multi-agent/README.md`](multi-agent/README.md) for the full task-envelope schema and dispatch model.
+
 ## What Would Be Built Next?
 
 > **Mega Post:** Help shape the next ClaudeClaw features.

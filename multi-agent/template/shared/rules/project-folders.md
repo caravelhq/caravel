@@ -23,7 +23,7 @@ A project folder is `Notes/Projects/<KEY>_<slug>/`. **Naming convention (v1.2):*
   Examples: `TPD-16_Custom-Report-Builder/`, `TPD-148_RPC-API-Completion/`,
   `TPD-210_IoT-Ingest/`, `WAL-63_Multi-Agent-Orchestration/`.
 - **Descriptive short name** — when no Jira ticket exists yet. Same kebab-case style:
-  `Trakk-Collector/`, `FM-Building-Compliance/`. Rename to add the Jira prefix
+  `Mobile-App/`, `Billing-Service/`. Rename to add the Jira prefix
   once a ticket lands.
 
 ## What lives in a project folder
@@ -129,8 +129,8 @@ Some folders predate this rule and remain valid because they hold cross-project
 reference material rather than project work:
 
 - `Notes/Projects/Competitors/` — competitor profiles
-- `Notes/Projects/MarketingAgent/Trakk_ICP_Pitch.md`,
-  `Trakk_Vision_Roadmap.md`, `Feature_Dev_Plans.md`,
+- `Notes/Projects/Marketing/ICP_Pitch.md`,
+  `Vision_Roadmap.md`, `Feature_Dev_Plans.md`,
   `Notes/Projects/MarketingAgent/evergreen/`,
   `Notes/Projects/MarketingAgent/customer-insights/` —
   Mark's evergreen brand voice and customer-knowledge library
@@ -169,7 +169,7 @@ correct.
 
 ## Workflow integration
 
-The Trakk product workflow maps to project folders like this:
+A product workflow maps to project folders like this:
 
 | Stage | Owner | Output | Where |
 |---|---|---|---|

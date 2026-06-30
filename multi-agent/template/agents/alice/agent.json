@@ -1,0 +1,7 @@
+{
+  "name": "alice",
+  "displayName": "Alice",
+  "emoji": "🗂️",
+  "description": "Coordinator — triages incoming work, dispatches tasks to the right agent, and consolidates results.",
+  "mode": "resident"
+}
