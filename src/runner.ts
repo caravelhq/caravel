@@ -655,6 +655,12 @@ async function streamClaude(
       const tokenFromEnv = process.env[agent.manifest.apiKeyEnv];
       if (tokenFromEnv?.trim()) childEnv.ANTHROPIC_AUTH_TOKEN = tokenFromEnv.trim();
     }
+    // Safeguard: when routing to a non-Anthropic provider (z.ai, OpenRouter,
+    // LiteLLM, …) a stray ANTHROPIC_API_KEY in the daemon env can make the
+    // child Claude CLI silently fall back to api.anthropic.com and throw
+    // confusing model-not-found errors. Blank it so only ANTHROPIC_AUTH_TOKEN
+    // + ANTHROPIC_BASE_URL above are honoured.
+    childEnv.ANTHROPIC_API_KEY = "";
   }
 
   const threadTag = threadId ? ` thread: ${threadId.slice(0, 8)},` : "";
