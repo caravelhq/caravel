@@ -25,9 +25,14 @@ export interface AgentManifest {
   // agent's child process. When set, the agent's traffic bypasses the
   // standard Anthropic endpoint entirely.
   apiBaseUrl?: string;
-  // Name of the env var that holds the auth token for the proxy. Read from
-  // the daemon's environment at child-spawn time and forwarded as
-  // ANTHROPIC_AUTH_TOKEN. Defaults to leaving the token unchanged when omitted.
+  // Dotted path into .claude/config.json holding the auth token for the proxy
+  // (e.g. "openrouter.token"). Read at child-spawn time and forwarded as
+  // ANTHROPIC_AUTH_TOKEN. Preferred over apiKeyEnv — keeps secrets in the
+  // workspace config rather than the daemon environment.
+  apiKeyConfig?: string;
+  // Fallback: name of an env var that holds the auth token for the proxy. Read
+  // from the daemon's environment at child-spawn time and forwarded as
+  // ANTHROPIC_AUTH_TOKEN. Used only when apiKeyConfig is unset or unresolved.
   apiKeyEnv?: string;
 }
 
@@ -74,6 +79,9 @@ function validateManifest(raw: unknown, dirName: string): AgentManifest | null {
   }
   if (typeof m.apiBaseUrl === "string" && m.apiBaseUrl.trim()) {
     manifest.apiBaseUrl = m.apiBaseUrl.trim();
+  }
+  if (typeof m.apiKeyConfig === "string" && m.apiKeyConfig.trim()) {
+    manifest.apiKeyConfig = m.apiKeyConfig.trim();
   }
   if (typeof m.apiKeyEnv === "string" && m.apiKeyEnv.trim()) {
     manifest.apiKeyEnv = m.apiKeyEnv.trim();
