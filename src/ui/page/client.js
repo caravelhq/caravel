@@ -1209,7 +1209,7 @@
       for (var i = 0; i < ordered.length; i++) {
         var a = ordered[i];
         var label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-        html += '<option value="' + escapeHtml(a.name) + '">' + escapeHtml(label) + '</option>';
+        html += '<option value="' + escAttr(a.name) + '">' + esc(label) + '</option>';
       }
       sel.innerHTML = html;
       if (prev) sel.value = prev;
