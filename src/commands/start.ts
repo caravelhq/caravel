@@ -62,7 +62,7 @@ var TR = DIM + "\\u256e" + R;
 var BL = DIM + "\\u2570" + R;
 var BR = DIM + "\\u256f" + R;
 var H = DIM + "\\u2500" + R;
-var HEADER = TL + H.repeat(6) + " \\ud83e\\udd9e ClaudeClaw \\ud83e\\udd9e " + H.repeat(6) + TR;
+var HEADER = TL + H.repeat(7) + " \\u26f5 Caravel \\u26f5 " + H.repeat(7) + TR;
 var FOOTER = BL + H.repeat(30) + BR;
 
 if (!alive()) {
@@ -337,7 +337,7 @@ export async function start(args: string[] = []) {
   process.on("SIGTERM", shutdown);
   process.on("SIGINT", shutdown);
 
-  console.log("ClaudeClaw daemon started");
+  console.log("Caravel daemon started");
   console.log(`  PID: ${process.pid}`);
   console.log(`  Security: ${settings.security.level}`);
   if (settings.security.allowedTools.length > 0)

@@ -198,6 +198,24 @@ function envAgents(): string[] {
   return disk.length > 0 ? disk : EXAMPLE_AGENTS;
 }
 
+// Lightweight active-task count for the dashboard side-bubble. "Active" =
+// open + waiting envelopes across the roster (work in flight, not yet
+// done/failed/archived). Deliberately readdir-only (no YAML parse) because
+// /api/state polls this ~1×/second — mirror the cheap jobs.length count.
+export async function countActiveTasks(): Promise<number> {
+  if (!existsSync(AGENTS_DIR)) return 0;
+  let total = 0;
+  for (const agent of envAgents()) {
+    for (const bucket of ["open", "waiting"] as const) {
+      const dir = join(AGENTS_DIR, agent, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      total += entries.filter((e) => e.endsWith(".yaml")).length;
+    }
+  }
+  return total;
+}
+
 export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   const summary: MultiAgentSummary = {
     enabled: existsSync(AGENTS_DIR),

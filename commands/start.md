@@ -8,7 +8,7 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
    - Run `pwd` and `echo "$HOME"`.
    - If `pwd` equals `$HOME`, STOP immediately.
    - Tell the user exactly:
-     - "CRITICAL BLOCKER: For security reasons, close this session and start a new one from the folder you want to initialize ClaudeClaw in."
+     - "CRITICAL BLOCKER: For security reasons, close this session and start a new one from the folder you want to initialize Caravel in."
    - Do not continue with any other step until they restart from a non-home project directory.
 
 2. **Runtime checker (Bun + Node)**:
@@ -57,7 +57,7 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
 
    Use **AskUserQuestion** to ask all unconfigured sections at once (up to 3 questions in one call):
 
-   - **Model** (always ask if `model` is empty/unset): "Which Claude model should ClaudeClaw use?" (header: "Model", options: "opus (default)", "sonnet", "haiku", "glm")
+   - **Model** (always ask if `model` is empty/unset): "Which Claude model should Caravel use?" (header: "Model", options: "opus (default)", "sonnet", "haiku", "glm")
    - **If heartbeat is NOT configured**: "Enable heartbeat? Example: I can remind you to drink water every 30 minutes, or you can fully customize what runs." (header: "Heartbeat", options: "Yes" / "No")
    - **If Telegram is NOT configured**: "Configure Telegram? Recommended if you want it 24/7 live." (header: "Telegram", options: "Yes" / "No")
    - **If Discord is NOT configured**: "Configure Discord? Connect your bot to Discord servers." (header: "Discord", options: "Yes" / "No")
@@ -115,7 +115,7 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
    ```bash
    mkdir -p .claude/claudeclaw/logs && nohup bun run ${CLAUDE_PLUGIN_ROOT}/src/index.ts start --web > .claude/claudeclaw/logs/daemon.log 2>&1 & echo $!
    ```
-   Use the description "Starting ClaudeClaw server" for this command.
+   Use the description "Starting Caravel server" for this command.
    Wait 1 second, then check `cat .claude/claudeclaw/logs/daemon.log`. If it contains "Aborted: daemon already running", tell the user and exit.
    - Read `.claude/claudeclaw/settings.json` for `web.port` (default `4632` if missing) and `web.host` (default `127.0.0.1`).
    - Then try to open the dashboard directly:
@@ -130,13 +130,16 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
 CRITICAL: Output the ASCII art block below EXACTLY as-is inside a markdown code block. Do NOT re-indent, re-align, or adjust ANY whitespace. Copy every character verbatim. Only replace `<PID>` and `<WORKING_DIR>` with actual values.
 
 ```
-🦞         🦞
-   ▐▛███▜▌
-  ▝▜█████▛▘
-    ▘▘ ▝▝
+        |    |    |
+       )_)  )_)  )_)
+      )___))___))___)
+     )____)____)_____)
+   _____|____|____|____
+   \                   /
+~~~~~^~~~~~~~~~~~~~~~~~^~~~~
 ```
 
-# HELLO, I AM YOUR CLAUDECLAW!
+# HELLO, I AM CARAVEL!
 **Daemon is running! PID: \<PID> | Dir: \<WORKING_DIR>**
 
 ```

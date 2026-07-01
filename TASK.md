@@ -1,4 +1,4 @@
-# Task: Add Multi-Session Thread Support to ClaudeClaw
+# Task: Add Multi-Session Thread Support to Caravel
 
 Read MULTI_SESSION_SPEC.md for the full specification.
 
@@ -40,4 +40,4 @@ Read MULTI_SESSION_SPEC.md for the full specification.
 - Keep the same coding style as the existing codebase (TypeScript, Bun)
 - Run `bun build` or type-check if possible to verify no errors
 
-When completely finished, run: openclaw system event --text "Done: ClaudeClaw multi-session thread support implemented" --mode now
+When completely finished, run: openclaw system event --text "Done: Caravel multi-session thread support implemented" --mode now

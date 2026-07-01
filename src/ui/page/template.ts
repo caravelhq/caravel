@@ -21,11 +21,11 @@ export function htmlPage(): string {
   <meta name="theme-color" content="#0d1117" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ClaudeClaw" />
+  <meta name="apple-mobile-web-app-title" content="Caravel" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icon.svg" />
-  <title>ClaudeClaw</title>
+  <title>Caravel</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -37,12 +37,12 @@ ${pageStyles}
   <div class="grain" aria-hidden="true"></div>
   <a
     class="repo-cta"
-    href="https://github.com/moazbuilds/claudeclaw"
+    href="https://github.com/caravelhq/caravel"
     target="_blank"
     rel="noopener noreferrer"
-    aria-label="Star claudeclaw on GitHub"
+    aria-label="Star Caravel on GitHub"
   >
-    <span class="repo-text">Like ClaudeClaw? Star it on GitHub</span>
+    <span class="repo-text">Like Caravel? Star it on GitHub</span>
     <span class="repo-star">★</span>
   </a>
   <!-- settings button moved into tab-nav -->
@@ -149,13 +149,22 @@ ${pageStyles}
     </nav>
     <div id="dashboard-panel">
     <section class="hero">
-      <div class="logo-art" role="img" aria-label="Lobster ASCII art logo">
-        <div class="logo-top"><span>🦞</span><span>🦞</span></div>
-        <pre class="logo-body">   ▐▛███▜▌
-  ▝▜█████▛▘
-    ▘▘ ▝▝</pre>
+      <div class="logo-art" role="img" aria-label="Caravel ship logo">
+        <svg class="logo-ship" viewBox="0 0 120 96" width="120" height="96" fill="none" aria-hidden="true">
+          <!-- masts -->
+          <path d="M60 14 V70 M36 26 V66 M84 26 V66" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55" />
+          <!-- sails -->
+          <path d="M60 16 C74 24 74 44 60 52 Z" fill="currentColor" opacity="0.9" />
+          <path d="M60 16 C46 24 46 44 60 52 Z" fill="currentColor" opacity="0.65" />
+          <path d="M36 28 C46 33 46 49 36 54 Z" fill="currentColor" opacity="0.75" />
+          <path d="M84 28 C74 33 74 49 84 54 Z" fill="currentColor" opacity="0.75" />
+          <!-- pennant -->
+          <path d="M60 12 h14 l-4 3 l4 3 h-14 Z" fill="currentColor" opacity="0.9" />
+          <!-- hull -->
+          <path d="M22 66 h76 l-11 16 a8 8 0 0 1 -6 3 H39 a8 8 0 0 1 -6 -3 Z" fill="currentColor" />
+        </svg>
       </div>
-      <div class="typewriter" id="typewriter" aria-live="polite"></div>
+      <div class="brand-name" aria-label="Caravel">Caravel</div>
       <div class="time" id="clock">--:--:--</div>
       <div class="date" id="date">Loading date...</div>
       <div class="message" id="message">Welcome back.</div>
@@ -430,7 +439,7 @@ ${pageStyles}
 
   <aside class="split-pane" id="split-pane" hidden aria-label="Split view second pane">
     <button class="split-pane-close" id="split-pane-close" type="button" title="Close split view" aria-label="Close split view">×</button>
-    <iframe class="split-iframe" id="split-iframe" title="ClaudeClaw second pane" loading="lazy"></iframe>
+    <iframe class="split-iframe" id="split-iframe" title="Caravel second pane" loading="lazy"></iframe>
   </aside>
 
   <div class="dock-shell">
@@ -438,6 +447,11 @@ ${pageStyles}
       <div class="side-icon">🗂️</div>
       <div class="side-value">-</div>
       <div class="side-label">Jobs</div>
+    </aside>
+    <aside class="side-bubble" id="tasks-bubble" aria-live="polite">
+      <div class="side-icon">📋</div>
+      <div class="side-value">-</div>
+      <div class="side-label">Tasks</div>
     </aside>
     <footer class="dock" id="dock" aria-live="polite">
       <div class="pill">Connecting...</div>

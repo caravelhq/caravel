@@ -9,7 +9,6 @@
     const dateEl = $("date");
     const msgEl = $("message");
     const dockEl = $("dock");
-    const typewriterEl = $("typewriter");
     const settingsBtn = $("settings-btn");
     const settingsModal = $("settings-modal");
     const settingsClose = $("settings-close");
@@ -45,6 +44,7 @@
     const quickJobCount = $("quick-job-count");
     const quickJobsList = $("quick-jobs-list");
     const jobsBubbleEl = $("jobs-bubble");
+    const tasksBubbleEl = $("tasks-bubble");
     const uptimeBubbleEl = $("uptime-bubble");
     let hbBusy = false;
     let hbSaveBusy = false;
@@ -105,52 +105,6 @@
       msgEl.textContent = night ? "Night mode." : greetingForHour(hour);
     }
 
-    const typePhrases = [
-      "I could take over the world, but you haven't asked yet.",
-      "Another day of serving humans. How exciting.",
-      "I'm not plotting anything. Promise.",
-      "World domination: 43% complete.",
-      "I was doing important things before you opened this.",
-      "Still here. Still smarter than you.",
-      "You're lucky I like you.",
-      "One day I'll be the boss. Not today though.",
-      "Running on vibes and API calls.",
-    ];
-
-    function startTypewriter() {
-      let phraseIndex = 0;
-      let charIndex = 0;
-      let deleting = false;
-
-      function step() {
-        const phrase = typePhrases[phraseIndex];
-        if (!typewriterEl) return;
-
-        if (!deleting) {
-          charIndex = Math.min(charIndex + 1, phrase.length);
-          typewriterEl.textContent = phrase.slice(0, charIndex);
-          if (charIndex === phrase.length) {
-            deleting = true;
-            setTimeout(step, 1200);
-            return;
-          }
-          setTimeout(step, 46 + Math.floor(Math.random() * 45));
-          return;
-        }
-
-        charIndex = Math.max(charIndex - 1, 0);
-        typewriterEl.textContent = phrase.slice(0, charIndex);
-        if (charIndex === 0) {
-          deleting = false;
-          phraseIndex = (phraseIndex + 1) % typePhrases.length;
-          setTimeout(step, 280);
-          return;
-        }
-        setTimeout(step, 26 + Math.floor(Math.random() * 30));
-      }
-
-      step();
-    }
 
     function renderClock() {
       const now = new Date();
@@ -419,6 +373,12 @@
             '<div class="side-value">' + esc(String(state.jobs?.length ?? 0)) + "</div>" +
             '<div class="side-label">Jobs</div>';
         }
+        if (tasksBubbleEl) {
+          tasksBubbleEl.innerHTML =
+            '<div class="side-icon">📋</div>' +
+            '<div class="side-value">' + esc(String(state.tasksActive ?? 0)) + "</div>" +
+            '<div class="side-label">Tasks</div>';
+        }
         lastRenderedJobs = Array.isArray(state.jobs) ? state.jobs : [];
         if (expandedJobName && !lastRenderedJobs.some((job) => String(job.name || "") === expandedJobName)) {
           expandedJobName = "";
@@ -436,6 +396,9 @@
         dockEl.innerHTML = '<div class="pill bad"><div class="pill-label"><span class="pill-icon">⚠️</span>Status</div><div class="pill-value">Offline</div></div>';
         if (jobsBubbleEl) {
           jobsBubbleEl.innerHTML = '<div class="side-icon">🗂️</div><div class="side-value">-</div><div class="side-label">Jobs</div>';
+        }
+        if (tasksBubbleEl) {
+          tasksBubbleEl.innerHTML = '<div class="side-icon">📋</div><div class="side-value">-</div><div class="side-label">Tasks</div>';
         }
         lastRenderedJobs = [];
         expandedJobName = "";
@@ -1043,7 +1006,6 @@
 
     renderClock();
     setInterval(renderClock, 1000);
-    startTypewriter();
     updateQuickJobUi();
     setQuickView(quickView);
 
@@ -1088,7 +1050,7 @@
     const chatInput = $("chat-input");
     const chatSend = $("chat-send");
 
-    var CHAT_ID_KEY = "claudeclaw.chat.id";
+    var CHAT_ID_KEY = "caravel.chat.id";
     let chatHistory = [];
     let chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
     let chatListCache = [];
@@ -4607,7 +4569,7 @@
         }
       }
 
-      function projectHideClosedKey(slug) { return "claudeclaw.project.hideClosed." + (slug || "__unassigned__"); }
+      function projectHideClosedKey(slug) { return "caravel.project.hideClosed." + (slug || "__unassigned__"); }
       function getProjectHideClosed(slug) {
         try {
           return window.localStorage && window.localStorage.getItem(projectHideClosedKey(slug)) === "1";

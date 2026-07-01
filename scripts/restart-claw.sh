@@ -1,7 +1,13 @@
 #!/usr/bin/env bash
-# Restart the ClaudeClaw daemon for a consuming project. Pulls the latest
-# claudeclaw source from the configured branch, copies src/ into the plugin
+# Restart the Caravel daemon for a consuming project. Pulls the latest
+# Caravel source from the configured branch, copies src/ into the plugin
 # cache, then bounces the daemon.
+#
+# NOTE: The CLAUDECLAW_* env vars, the `repos/claudeclaw` repo dir, the
+# `.claude/plugins/cache/claudeclaw/...` plugin-cache path, and the
+# `.claude/claudeclaw/` state dir are intentionally left un-renamed — they
+# are on-disk/operational identifiers (Tier C) coupled to the live install
+# and the caller script. Renaming them is a separate, migration-gated change.
 #
 # Configuration (env vars; consuming projects pass via a thin caller):
 #   CLAUDECLAW_PROJECT_DIR    (required) Project root the daemon serves.
@@ -138,7 +144,7 @@ nohup "$BUN" run "$CLAW_ENTRY" start --web > "${LOG_DIR}/daemon.log" 2>&1 &
 sleep 1
 if grep -q "daemon started" "${LOG_DIR}/daemon.log" 2>/dev/null; then
   PID=$(cat "${PROJECT_DIR}/.claude/claudeclaw/daemon.pid" 2>/dev/null || echo "?")
-  echo "ClaudeClaw running (PID ${PID})"
+  echo "Caravel running (PID ${PID})"
   echo "Web UI: http://127.0.0.1:${WEB_PORT}"
 else
   echo "Check log: ${LOG_DIR}/daemon.log"

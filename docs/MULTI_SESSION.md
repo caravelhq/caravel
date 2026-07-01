@@ -1,6 +1,6 @@
 # Multi-Session Thread Support
 
-Technical documentation for ClaudeClaw's multi-session thread feature.
+Technical documentation for Caravel's multi-session thread feature.
 
 ## Overview
 

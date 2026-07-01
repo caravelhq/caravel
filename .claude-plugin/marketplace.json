@@ -1,15 +1,15 @@
 {
-  "name": "claudeclaw",
+  "name": "caravel",
   "owner": {
-    "name": "moazbuilds"
+    "name": "caravelhq"
   },
   "plugins": [
     {
-      "name": "claudeclaw",
+      "name": "caravel",
       "source": "./",
-      "description": "Cron-like daemon that runs Claude prompts on a schedule",
+      "description": "Self-hosted, provider-agnostic multi-agent daemon — a personal staff of named agents on a schedule. Forked from ClaudeClaw (moazbuilds).",
       "version": "1.0.0",
-      "keywords": ["cron", "heartbeat", "scheduler", "daemon"],
+      "keywords": ["cron", "heartbeat", "scheduler", "daemon", "multi-agent", "agents"],
       "category": "productivity"
     }
   ]

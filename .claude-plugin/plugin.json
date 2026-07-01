@@ -1,5 +1,5 @@
 {
-  "name": "claudeclaw",
+  "name": "caravel",
   "version": "1.0.0",
-  "description": "Cron-like daemon that runs Claude prompts on a schedule"
+  "description": "Self-hosted, provider-agnostic multi-agent daemon — a personal staff of named agents on a schedule. Forked from ClaudeClaw (moazbuilds)."
 }

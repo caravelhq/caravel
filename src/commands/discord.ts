@@ -925,8 +925,8 @@ function sendIdentify(token: string): void {
       intents: INTENTS,
       properties: {
         os: process.platform,
-        browser: "claudeclaw",
-        device: "claudeclaw",
+        browser: "caravel",
+        device: "caravel",
       },
     },
   });

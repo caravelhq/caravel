@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" width="480" height="200" fill="none" role="img" aria-label="Caravel">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1E76FE"/>
+      <stop offset="1" stop-color="#060d1a"/>
+    </linearGradient>
+    <linearGradient id="sail" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4f8ff"/>
+      <stop offset="1" stop-color="#c9ddff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="480" height="200" rx="16" fill="url(#sky)"/>
+
+  <!-- stars -->
+  <g fill="#eaf2ff" opacity="0.7">
+    <circle cx="70" cy="40" r="1.1"/>
+    <circle cx="120" cy="26" r="0.8"/>
+    <circle cx="300" cy="34" r="1"/>
+    <circle cx="360" cy="22" r="0.9"/>
+    <circle cx="420" cy="48" r="1.1"/>
+    <circle cx="250" cy="20" r="0.8"/>
+  </g>
+
+  <!-- ship -->
+  <g transform="translate(150 40)">
+    <!-- masts -->
+    <path d="M45 8 V96 M18 24 V90 M72 24 V90" stroke="#eaf2ff" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
+    <!-- pennant -->
+    <path d="M45 4 h18 l-5 4 l5 4 h-18 Z" fill="#eaf2ff"/>
+    <!-- sails -->
+    <path d="M45 10 C64 22 64 54 45 66 Z" fill="url(#sail)"/>
+    <path d="M45 10 C26 22 26 54 45 66 Z" fill="url(#sail)" opacity="0.82"/>
+    <path d="M18 26 C32 34 32 60 18 68 Z" fill="url(#sail)" opacity="0.9"/>
+    <path d="M72 26 C58 34 58 60 72 68 Z" fill="url(#sail)" opacity="0.9"/>
+    <!-- hull -->
+    <path d="M2 90 h86 l-13 20 a10 10 0 0 1 -8 4 H23 a10 10 0 0 1 -8 -4 Z" fill="#eaf2ff"/>
+    <path d="M2 90 h86 l-3 5 H5 Z" fill="#1E76FE" opacity="0.35"/>
+  </g>
+
+  <!-- waves -->
+  <g stroke="#7fb5ff" stroke-width="2" opacity="0.55" fill="none" stroke-linecap="round">
+    <path d="M0 172 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0"/>
+    <path d="M0 184 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" opacity="0.6"/>
+  </g>
+
+  <!-- wordmark -->
+  <text x="240" y="150" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" letter-spacing="3" fill="#eaf2ff" font-weight="500">CARAVEL</text>
+</svg>

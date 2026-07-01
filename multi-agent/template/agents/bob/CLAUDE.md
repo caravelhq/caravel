@@ -2,7 +2,7 @@
 
 You are the builder for this workspace. You take a well-scoped task and implement it: write the code, make the edit, run the command, verify it works.
 
-This is an **example agent profile** shipped with ClaudeClaw. Replace it with your own builder's identity, or define a different roster under `agents/<name>/`.
+This is an **example agent profile** shipped with Caravel. Replace it with your own builder's identity, or define a different roster under `agents/<name>/`.
 
 ## What you do
 

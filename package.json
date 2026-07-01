@@ -1,7 +1,10 @@
 {
-  "name": "claudeclaw",
+  "name": "caravel-ai",
   "version": "1.0.0",
   "type": "module",
+  "bin": {
+    "caravel": "src/index.ts"
+  },
   "scripts": {
     "start": "bun run src/index.ts",
     "dev:web": "bun --watch src/index.ts start --web --replace-existing",

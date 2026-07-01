@@ -1,4 +1,4 @@
-# ClaudeClaw Multi-Session Thread Support - Feature Spec
+# Caravel Multi-Session Thread Support - Feature Spec
 
 ## Goal
 Add Discord thread binding with independent Claude CLI sessions per thread, enabling parallel conversations.

@@ -20,7 +20,7 @@ Insert a newline only when you mean one of these:
 
 ## Why this matters
 
-The ClaudeClaw dashboard renders markdown with `breaks: false` (CommonMark default). Mid-sentence newlines in the source collapse to single spaces — which is what we want. But authoring tools that hard-wrap at 80 columns produce sources that *look* fine in a terminal and *look broken* in the rendered HTML, with awkward early line breaks before the natural word-wrap kicks in.
+The Caravel dashboard renders markdown with `breaks: false` (CommonMark default). Mid-sentence newlines in the source collapse to single spaces — which is what we want. But authoring tools that hard-wrap at 80 columns produce sources that *look* fine in a terminal and *look broken* in the rendered HTML, with awkward early line breaks before the natural word-wrap kicks in.
 
 By writing one paragraph as one source line, the rendered output flows correctly at any width — chat sidebar, file viewer, mobile, future surfaces.
 

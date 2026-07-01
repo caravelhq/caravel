@@ -276,9 +276,9 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
 
       if (url.pathname === "/manifest.json") {
         return json({
-          name: "ClaudeClaw",
-          short_name: "Claw",
-          description: "ClaudeClaw Dashboard",
+          name: "Caravel",
+          short_name: "Caravel",
+          description: "Caravel Dashboard",
           start_url: "/",
           display: "standalone",
           background_color: "#0d1117",
@@ -336,8 +336,16 @@ self.addEventListener('fetch', e => {
 
       if (url.pathname === "/icon.svg") {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="96" fill="#0d1117"/>
-<text x="256" y="320" font-size="280" text-anchor="middle" font-family="sans-serif">🦞</text>
+<rect width="512" height="512" rx="96" fill="#1E76FE"/>
+<g transform="translate(140 120)" fill="none">
+<path d="M116 24 V300 M56 84 V276 M176 84 V276" stroke="#eaf2ff" stroke-width="9" stroke-linecap="round" opacity="0.65"/>
+<path d="M116 12 h52 l-14 12 l14 12 h-52 Z" fill="#eaf2ff"/>
+<path d="M116 30 C168 62 168 176 116 208 Z" fill="#eaf2ff"/>
+<path d="M116 30 C64 62 64 176 116 208 Z" fill="#eaf2ff" opacity="0.8"/>
+<path d="M56 90 C96 110 96 190 56 210 Z" fill="#eaf2ff" opacity="0.9"/>
+<path d="M176 90 C136 110 136 190 176 210 Z" fill="#eaf2ff" opacity="0.9"/>
+<path d="M8 276 h216 l-34 52 a26 26 0 0 1 -20 10 H62 a26 26 0 0 1 -20 -10 Z" fill="#eaf2ff"/>
+</g>
 </svg>`;
         return new Response(svg, { headers: { "Content-Type": "image/svg+xml" } });
       }

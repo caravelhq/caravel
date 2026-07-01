@@ -56,13 +56,13 @@ The script is idempotent — re-running it after edits just refreshes the skill 
 - **Phase 1** (this directory): schema, examples, /task skill, install script. Done.
 - **Phase 2**: runner pickup + claim/lease + status journal writes. Implemented as `repos/claudeclaw/src/multiAgent.ts` (additive module, off by default).
 - **Phase 3**: Alice delegation + escalation tools + failure-rule prompt. Lives in `agents/alice/rules/`.
-- **Phase 4**: ClaudeClaw "New task" form + dashboard summary widget + Files-tab links. Lives in `repos/claudeclaw/src/ui/`.
+- **Phase 4**: Caravel "New task" form + dashboard summary widget + Files-tab links. Lives in `repos/claudeclaw/src/ui/`.
 
 See `Notes/Projects/ClaudeClaw/Multi-Agent-Orchestration-Design-Review.md` in the assistant repo for the design rationale.
 
 ## Phase 2 — runner extension
 
-The multi-agent runner is a polling loop inside the ClaudeClaw daemon. Default tick is 30s. Each tick:
+The multi-agent runner is a polling loop inside the Caravel daemon. Default tick is 30s. Each tick:
 
 1. Scans `agents/<name>/tasks/open/*.yaml` for tasks with `status: open`.
 2. Claims the next task by setting `status: claimed`, writing `lease.holder` / `lease.expires`, and appending a journal entry.

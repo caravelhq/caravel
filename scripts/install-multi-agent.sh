@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install / refresh the ClaudeClaw multi-agent task envelope system into a
+# Install / refresh the Caravel multi-agent task envelope system into a
 # consuming project's live instance.
 #
 # Source of truth: <repo>/multi-agent/template/

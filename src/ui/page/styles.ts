@@ -1,8 +1,9 @@
 export const pageStyles = String.raw`    :root {
-      --bg-top: #2a4262;
-      --bg-bottom: #0d1828;
-      --bg-spot-a: #7fb8ff3d;
-      --bg-spot-b: #95d1ff38;
+      /* Trakk blue (#1E76FE, from the Trakk Assets brand) grading to dark navy. */
+      --bg-top: #1E76FE;
+      --bg-bottom: #060d1a;
+      --bg-spot-a: #1e76fe3d;
+      --bg-spot-b: #4a9bff33;
       --text: #f0f4fb;
       --muted: #a8b4c5;
       --panel: #0b1220aa;
@@ -37,17 +38,17 @@ export const pageStyles = String.raw`    :root {
     }
 
     body.day-mode {
-      --bg-top: #2a4262;
-      --bg-bottom: #0d1828;
-      --bg-spot-a: #7fb8ff3d;
-      --bg-spot-b: #95d1ff38;
+      --bg-top: #1E76FE;
+      --bg-bottom: #060d1a;
+      --bg-spot-a: #1e76fe3d;
+      --bg-spot-b: #4a9bff33;
     }
 
     body.night-mode {
-      --bg-top: #101b2a;
+      --bg-top: #0f3a80;
       --bg-bottom: #02040a;
-      --bg-spot-a: #3557822b;
-      --bg-spot-b: #4a7ab42a;
+      --bg-spot-a: #1e76fe24;
+      --bg-spot-b: #3a78c828;
     }
 
     body.night-mode .message {
@@ -162,53 +163,29 @@ export const pageStyles = String.raw`    :root {
     }
 
     .logo-art {
-      width: 12ch;
-      margin: 0 auto 18px;
-      transform: translateX(-0.75ch);
+      margin: 0 auto 10px;
       color: #dbe7ff;
       filter: drop-shadow(0 8px 20px #00000040);
     }
-    .logo-top {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8ch;
-      font-size: 18px;
-      line-height: 1.1;
-      margin-bottom: 2px;
-      transform: translateX(1.35ch);
+    .logo-ship {
+      display: block;
+      margin: 0 auto;
+      color: #eaf2ff;
+      animation: bob 4s ease-in-out infinite;
     }
-    .logo-body {
-      margin: 0;
-      white-space: pre;
-      font-family: "JetBrains Mono", monospace;
-      font-size: 20px;
-      letter-spacing: 0;
-      line-height: 1.08;
-      text-align: left;
-    }
-    .typewriter {
-      margin: 6px 0 14px;
-      min-height: 1.4em;
-      font-family: "JetBrains Mono", monospace;
-      font-size: clamp(0.9rem, 1.8vw, 1.05rem);
-      color: #c8d6ec;
-      letter-spacing: 0.02em;
-    }
-    .typewriter::after {
-      content: "";
-      display: inline-block;
-      width: 0.62ch;
-      height: 1.05em;
-      margin-left: 0.18ch;
-      vertical-align: -0.12em;
-      background: #c8d6ec;
-      animation: caret 1s step-end infinite;
+    .brand-name {
+      margin: 4px 0 16px;
+      text-align: center;
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 500;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: 0.04em;
+      color: #eaf2ff;
     }
 
-    @keyframes caret {
-      0%, 49% { opacity: 1; }
-      50%, 100% { opacity: 0; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
     }
 
     @keyframes rise {
@@ -1483,7 +1460,7 @@ export const pageStyles = String.raw`    :root {
       color: #e7f0ff;
       font-size: 12px;
       letter-spacing: 0.01em;
-      font-family: "JetBrains Mono", monospace;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       display: grid;
       align-content: center;
       justify-items: center;
@@ -1501,7 +1478,7 @@ export const pageStyles = String.raw`    :root {
       display: grid;
       place-items: center;
       text-align: center;
-      font-family: "JetBrains Mono", monospace;
+      font-family: "Space Grotesk", system-ui, sans-serif;
       color: #eef4ff;
       line-height: 1.1;
       padding: 8px;

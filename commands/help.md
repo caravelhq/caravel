@@ -4,7 +4,7 @@ description: Show heartbeat plugin help
 
 Display this help information to the user:
 
-**ClaudeClaw** — daemon mode plus one-shot prompt/trigger runs.
+**Caravel** — daemon mode plus one-shot prompt/trigger runs.
 
 **Commands:**
 - `/heartbeat:start` — Initialize config and start the daemon

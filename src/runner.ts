@@ -417,7 +417,7 @@ async function execClaude(name: string, prompt: string, threadId?: string): Prom
   // --append-system-prompt does not persist across --resume.
   const promptContent = await loadPrompts();
   const appendParts: string[] = [
-    "You are running inside ClaudeClaw.",
+    "You are running inside Caravel.",
   ];
   if (promptContent) appendParts.push(promptContent);
 
@@ -602,7 +602,7 @@ async function streamClaude(
   if (existing) args.push("--resume", existing.sessionId);
 
   const promptContent = await loadPrompts();
-  const appendParts: string[] = ["You are running inside ClaudeClaw."];
+  const appendParts: string[] = ["You are running inside Caravel."];
   if (promptContent) appendParts.push(promptContent);
 
   // CLAUDE.md selection:

@@ -2,6 +2,7 @@ import { readFile } from "fs/promises";
 import { peekSession } from "../../sessions";
 import { SESSION_FILE, SETTINGS_FILE, STATE_FILE } from "../constants";
 import type { WebSnapshot } from "../types";
+import { countActiveTasks } from "./multiAgent";
 
 export function sanitizeSettings(snapshot: WebSnapshot["settings"]) {
   return {
@@ -24,6 +25,7 @@ export function sanitizeSettings(snapshot: WebSnapshot["settings"]) {
 export async function buildState(snapshot: WebSnapshot) {
   const now = Date.now();
   const session = await peekSession();
+  const tasksActive = await countActiveTasks();
   return {
     daemon: {
       running: true,
@@ -31,6 +33,7 @@ export async function buildState(snapshot: WebSnapshot) {
       startedAt: snapshot.startedAt,
       uptimeMs: now - snapshot.startedAt,
     },
+    tasksActive,
     heartbeat: {
       enabled: snapshot.settings.heartbeat.enabled,
       intervalMinutes: snapshot.settings.heartbeat.interval,
