@@ -12,6 +12,7 @@ import { getSettings, type ModelConfig, type SecurityConfig } from "./config";
 import { buildClockPromptPrefix } from "./timezone";
 import { selectModel } from "./model-router";
 import { loadAgent } from "./agents";
+import { resolveWorkspaceSecret } from "./workspaceConfig";
 import {
   appendEntry,
   formatEntriesForPrompt,
@@ -647,14 +648,20 @@ async function streamClaude(
 
   // Per-agent provider routing: if the manifest sets apiBaseUrl, point the
   // child Claude CLI at an Anthropic-compatible proxy (LiteLLM, etc.) instead
-  // of api.anthropic.com. Optional apiKeyEnv names a daemon env var holding
-  // the proxy's auth token.
+  // of api.anthropic.com. The proxy's auth token is sourced — in order — from
+  // apiKeyConfig (a dotted path into .claude/config.json) then apiKeyEnv (a
+  // daemon env var). Config is preferred so secrets live in the workspace
+  // config, not the daemon environment.
   if (agent?.manifest.apiBaseUrl) {
     childEnv.ANTHROPIC_BASE_URL = agent.manifest.apiBaseUrl;
-    if (agent.manifest.apiKeyEnv) {
-      const tokenFromEnv = process.env[agent.manifest.apiKeyEnv];
-      if (tokenFromEnv?.trim()) childEnv.ANTHROPIC_AUTH_TOKEN = tokenFromEnv.trim();
+    let proxyToken: string | null = null;
+    if (agent.manifest.apiKeyConfig) {
+      proxyToken = await resolveWorkspaceSecret(agent.manifest.apiKeyConfig);
     }
+    if (!proxyToken && agent.manifest.apiKeyEnv) {
+      proxyToken = process.env[agent.manifest.apiKeyEnv]?.trim() || null;
+    }
+    if (proxyToken) childEnv.ANTHROPIC_AUTH_TOKEN = proxyToken;
     // Safeguard: when routing to a non-Anthropic provider (z.ai, OpenRouter,
     // LiteLLM, …) a stray ANTHROPIC_API_KEY in the daemon env can make the
     // child Claude CLI silently fall back to api.anthropic.com and throw
