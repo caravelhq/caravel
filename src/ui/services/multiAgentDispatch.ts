@@ -8,11 +8,18 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { loadChat } from "./chats";
 import { abortInflightWorker } from "../../multiAgent";
+import { listAgentNamesSync } from "../../agents";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
 
-const KNOWN_AGENTS = ["alice", "ray", "adam", "sam", "bob", "mark", "cliff", "jill"];
+// Roster is derived from disk (agents/<name>/agent.json), same as knownAgents()
+// in multiAgent.ts. Adding an agent needs no code change here — this fixes the
+// drift that rejected fabio (and would reject enco/jess) with "unknown target
+// agent" while the runner itself accepted them.
+function knownAgents(): string[] {
+  return listAgentNamesSync();
+}
 const KNOWN_KINDS = ["research", "code", "review", "summarise", "decide", "other"];
 const KNOWN_PRIORITIES = ["P0", "P1", "P2", "P3"];
 
@@ -66,7 +73,7 @@ async function nextTaskId(parent: string | null): Promise<string> {
     const root = parent.split(".")[0]!;
     const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
     let maxN = 0;
-    for (const a of KNOWN_AGENTS) {
+    for (const a of knownAgents()) {
       for (const sub of SCAN_DIRS) {
         const dir = join(AGENTS_DIR, a, "tasks", sub);
         if (!existsSync(dir)) continue;
@@ -84,7 +91,7 @@ async function nextTaskId(parent: string | null): Promise<string> {
 
   const prefix = todayPrefix();
   let maxN = 0;
-  for (const a of KNOWN_AGENTS) {
+  for (const a of knownAgents()) {
     for (const sub of SCAN_DIRS) {
       const dir = join(AGENTS_DIR, a, "tasks", sub);
       if (!existsSync(dir)) continue;
@@ -182,7 +189,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 
   const headline = (input.headline ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
+  if (!knownAgents().includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
   if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
   if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
   if (!headline) return { ok: false, error: "headline is required (≤10 words)" };
@@ -332,7 +339,7 @@ type TaskBucket = (typeof TASK_BUCKETS)[number];
 // Lets a dispatched sub-task inherit its parent's project tag.
 async function readParentProject(parentId: string): Promise<string | null> {
   const buckets = [...TASK_BUCKETS, "archived"];
-  for (const agent of KNOWN_AGENTS) {
+  for (const agent of knownAgents()) {
     for (const bucket of buckets) {
       const p = join(AGENTS_DIR, agent, "tasks", bucket, `${parentId}.yaml`);
       if (!existsSync(p)) continue;
@@ -427,7 +434,7 @@ export async function closeTask(input: CloseTaskInput): Promise<CloseTaskResult>
   const agent = (input.agent ?? "").trim();
   const taskId = (input.taskId ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) {
+  if (!knownAgents().includes(agent)) {
     return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   }
   if (!/^TSK-/.test(taskId)) {
@@ -561,7 +568,7 @@ export async function abortTask(input: AbortTaskInput): Promise<AbortTaskResult>
   const by = (input.by ?? "user").trim() || "user";
   const reason = (input.reason ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) {
+  if (!knownAgents().includes(agent)) {
     return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   }
   if (!/^TSK-/.test(taskId)) {
@@ -658,7 +665,7 @@ export async function reopenTask(input: ReopenTaskInput): Promise<ReopenTaskResu
   const agent = (input.agent ?? "").trim();
   const taskId = (input.taskId ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) {
+  if (!knownAgents().includes(agent)) {
     return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   }
   if (!/^TSK-/.test(taskId)) {
@@ -761,7 +768,7 @@ export async function renameTask(input: RenameTaskInput): Promise<RenameTaskResu
   const taskId = (input.taskId ?? "").trim();
   const headline = (input.headline ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!headline) return { ok: false, error: "headline is required" };
   const wordCount = headline.split(/\s+/).filter(Boolean).length;
@@ -844,7 +851,7 @@ async function collectActiveDescendants(rootId: string): Promise<DescendantHit[]
   // Index every active envelope by id once, with its parent pointer. Cheap
   // because the active buckets are small and BFS keeps the search bounded.
   const index: Array<{ id: string; parent: string | null; agent: string; bucket: TaskBucket; path: string }> = [];
-  for (const agent of KNOWN_AGENTS) {
+  for (const agent of knownAgents()) {
     for (const bucket of TASK_BUCKETS) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
@@ -1023,7 +1030,7 @@ export async function revisitTask(input: RevisitTaskInput): Promise<RevisitTaskR
   const taskId = (input.taskId ?? "").trim();
   const instruction = (input.instruction ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!instruction) return { ok: false, error: "instruction is required" };
 
@@ -1117,7 +1124,7 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
   const taskId = (input.taskId ?? "").trim();
   const response = (input.response ?? "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!response) return { ok: false, error: "response is required" };
 
@@ -1245,8 +1252,8 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   const targetAgent = targetRaw || agent;
   const isReroute = targetAgent !== agent;
 
-  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
-  if (!KNOWN_AGENTS.includes(targetAgent)) return { ok: false, error: `unknown target agent: ${targetAgent || "(empty)"}` };
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!knownAgents().includes(targetAgent)) return { ok: false, error: `unknown target agent: ${targetAgent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!instruction) return { ok: false, error: "instruction is required" };
   if (source !== "revisit" && source !== "unblock") return { ok: false, error: `invalid source: ${source}` };
@@ -1489,7 +1496,7 @@ export async function setTaskProject(input: SetTaskProjectInput): Promise<SetTas
   const taskId = (input.taskId ?? "").trim();
   const project = ((input.project ?? "") + "").trim();
 
-  if (!KNOWN_AGENTS.includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (project.length > 200) return { ok: false, error: "project slug too long (200 char cap)" };
   if (project && /[^A-Za-z0-9_./-]/.test(project)) {
