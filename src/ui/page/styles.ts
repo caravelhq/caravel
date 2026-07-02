@@ -2589,6 +2589,61 @@ export const pageStyles = String.raw`    :root {
       text-align: right;
       white-space: nowrap;
     }
+    /* Multi-select close: per-row checkbox and group-head select-all. */
+    .current-row-select, .current-group-select-all {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      margin-top: 3px;
+      cursor: pointer;
+      accent-color: #56ccf2;
+    }
+    /* Bulk-action bar — sticks above the task list when ≥1 row is selected. */
+    .tasks-bulk-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #1c3a64cc;
+      border-bottom: 1px solid #9be7ff40;
+      flex-wrap: wrap;
+    }
+    .bulk-bar-count {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9be7ff;
+      flex-shrink: 0;
+    }
+    .bulk-bar-reason {
+      flex: 1;
+      min-width: 140px;
+      background: #0c1624;
+      border: 1px solid #2d4a6a;
+      border-radius: 4px;
+      color: #c8d4e5;
+      font-size: 11px;
+      padding: 3px 7px;
+    }
+    .bulk-bar-close {
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+    .bulk-bar-clear {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #2d4a6a;
+      border-radius: 4px;
+      color: #8aa0bd;
+      cursor: pointer;
+    }
+    .bulk-bar-clear:hover { background: #ffffff0a; }
+    .bulk-bar-status {
+      font-size: 11px;
+      color: #8aa0bd;
+    }
+    .bulk-bar-status.is-ok { color: #6fcf97; }
+    .bulk-bar-status.is-error { color: #eb5757; }
     /* Projects placeholder — kept for compatibility but unused after Phase 4
        replaced the placeholder with the live card grid below. */
     .tasks-projects-placeholder {
