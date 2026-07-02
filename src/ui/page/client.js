@@ -3163,6 +3163,9 @@
       // Per-project collapse state for the Current view. Default open; click
       // the group head to fold a project section away.
       var currentCollapsed = {};
+      // Multi-select close: tracks selected task ids → {agent, defaultStatus}.
+      // Persists across renderCurrentView() calls within the page lifetime.
+      var currentSelected = {};
       var tasksLoaded = false;
       var tasksCache = [];
       // Set of parent task IDs whose children are expanded in the picker.
@@ -3239,6 +3242,117 @@
           }
         }
         return count;
+      }
+
+      // === Multi-select close bulk bar ======================================
+      // A sticky bar above the task list, shown only in the Current view when
+      // ≥1 task is selected. Persists across renderCurrentView() calls.
+      var currentBulkBar = null;
+      function getOrCreateBulkBar() {
+        if (currentBulkBar) return currentBulkBar;
+        currentBulkBar = document.createElement("div");
+        currentBulkBar.className = "tasks-bulk-bar";
+        currentBulkBar.hidden = true;
+        currentBulkBar.innerHTML =
+          '<span class="bulk-bar-count"></span>' +
+          '<input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…">' +
+          '<button type="button" class="bulk-bar-close is-primary"></button>' +
+          '<button type="button" class="bulk-bar-clear">Clear</button>' +
+          '<span class="bulk-bar-status"></span>';
+        var bulkCloseBtn = currentBulkBar.querySelector(".bulk-bar-close");
+        if (bulkCloseBtn) bulkCloseBtn.addEventListener("click", submitBulkClose);
+        var bulkClearBtn = currentBulkBar.querySelector(".bulk-bar-clear");
+        if (bulkClearBtn) {
+          bulkClearBtn.addEventListener("click", function () {
+            currentSelected = {};
+            updateBulkBar();
+            renderTaskPicker();
+          });
+        }
+        if (tasksTree && tasksTree.parentNode) {
+          tasksTree.parentNode.insertBefore(currentBulkBar, tasksTree);
+        }
+        return currentBulkBar;
+      }
+
+      function updateBulkBar() {
+        var bar = getOrCreateBulkBar();
+        if (!bar) return;
+        var ids = Object.keys(currentSelected);
+        if (ids.length === 0 || tasksView !== "current") {
+          bar.hidden = true;
+          return;
+        }
+        bar.hidden = false;
+        var countEl = bar.querySelector(".bulk-bar-count");
+        if (countEl) countEl.textContent = ids.length + " selected";
+        var closeBtn = bar.querySelector(".bulk-bar-close");
+        if (closeBtn) closeBtn.textContent = "Close selected (" + ids.length + ")";
+        var statusEl = bar.querySelector(".bulk-bar-status");
+        if (statusEl) statusEl.textContent = "";
+      }
+
+      async function submitBulkClose() {
+        var bar = currentBulkBar;
+        if (!bar) return;
+        var ids = Object.keys(currentSelected);
+        if (ids.length === 0) return;
+        var reasonEl = bar.querySelector(".bulk-bar-reason");
+        var reason = reasonEl ? (reasonEl.value || "").trim() : "";
+        var statusEl = bar.querySelector(".bulk-bar-status");
+        var closeBtn = bar.querySelector(".bulk-bar-close");
+        if (closeBtn) closeBtn.disabled = true;
+        if (statusEl) { statusEl.textContent = "Closing…"; statusEl.className = "bulk-bar-status"; }
+        var closed = 0, failed = 0;
+        for (var bi = 0; bi < ids.length; bi++) {
+          var sel = currentSelected[ids[bi]];
+          if (!sel) continue;
+          try {
+            var bres = await fetch("/api/tasks/" + encodeURIComponent(ids[bi]) + "/close", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent: sel.agent, reason: reason, status: sel.defaultStatus }),
+            });
+            var bdata = await bres.json();
+            if (bdata && bdata.ok) closed++;
+            else { failed++; if (typeof console !== "undefined") console.warn("bulk close failed:", ids[bi], bdata && bdata.error); }
+          } catch (err) {
+            failed++;
+            if (typeof console !== "undefined") console.warn("bulk close error:", ids[bi], err);
+          }
+        }
+        currentSelected = {};
+        if (statusEl) {
+          statusEl.textContent = failed > 0
+            ? "Closed " + closed + " · " + failed + " failed."
+            : "Closed " + closed + ".";
+          statusEl.className = "bulk-bar-status is-ok";
+        }
+        if (closeBtn) closeBtn.disabled = false;
+        fetchTasks();
+        fetchSummary();
+      }
+
+      function updateGroupSelectAll(groupEl) {
+        if (!groupEl) return;
+        var allCb = groupEl.querySelector(".current-group-select-all");
+        if (!allCb) return;
+        var rowCbs = groupEl.querySelectorAll(".current-row-select");
+        if (rowCbs.length === 0) return;
+        var checkedCount = 0;
+        for (var i = 0; i < rowCbs.length; i++) {
+          if (rowCbs[i].checked) checkedCount++;
+        }
+        if (checkedCount === 0) {
+          allCb.checked = false;
+          allCb.indeterminate = false;
+        } else if (checkedCount === rowCbs.length) {
+          allCb.checked = true;
+          allCb.indeterminate = false;
+        } else {
+          allCb.checked = false;
+          allCb.indeterminate = true;
+        }
       }
 
       // === Tasks panel right-pane viewer ====================================
@@ -3415,15 +3529,18 @@
             '</div>';
         }
 
-        // 4. Action buttons row — Next, Close, Reopen, Chat, Open. Next spawns
-        //    a child task with parent pointer; original stays put. For
-        //    waiting:on:user the inline "⏳ Continue" form at the top of the
-        //    card is the equivalent affordance, so the Next button only
-        //    renders for terminal (done/failed) tasks. Close and Reopen
-        //    manage the user-attention `closed` overlay (WAL-63 Phase 1).
+        // 4. Action buttons row — Next, Follow-on, Close, Reopen, Chat, Open.
+        //    Next spawns a child immediately (via spawnNextTask API). Follow-on
+        //    opens the new-task form pre-seeded with parent + context so Kelly
+        //    can customise before dispatching. For waiting:on:user the inline
+        //    "⏳ Continue" form at the top is the equivalent affordance, so
+        //    Next only renders for terminal (done/failed) tasks.
         var actions = [];
         if (isCurrent && isTerminal && !isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-toggle-next="' + escapeHtml(card.id) + '" type="button">↳ Next</button>');
+        }
+        if (isCurrent) {
+          actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Follow-on</button>');
         }
         if (isCurrent && !isClaimed && !isClosed) {
           // "Close" reads clean on done tasks; non-done closures are really
@@ -4404,6 +4521,9 @@
           var collapsed = !!currentCollapsed[groupKey];
           html += '<div class="tasks-current-group' + (collapsed ? ' is-collapsed' : '') + '" data-project-key="' + escapeHtml(groupKey) + '">';
           html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
+          // Select-all checkbox for this group — click does NOT bubble to the
+          // toggle-group handler because the change event is intercepted first.
+          html += '<input type="checkbox" class="current-group-select-all" data-group-key="' + escapeHtml(groupKey) + '" title="Select all in group" tabindex="-1">';
           html += '<span class="tasks-current-group-chevron"></span>';
           html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + '</span>';
           html += '<span class="tasks-current-group-count">' + rows.length + '</span>';
@@ -4416,6 +4536,7 @@
         }
         html += '</div>';
         tasksTree.innerHTML = html;
+        updateBulkBar();
       }
 
       // Map status string → a CSS class that drives the row's status dot
@@ -4434,6 +4555,7 @@
 
       function renderCurrentRow(task) {
         var statusClass = currentStatusClass(task.status);
+        var isClaimed = task.status === "claimed";
         var headline = task.headline || (task.summary && task.summary.brief) || task.brief || "(no headline)";
         var meta = [];
         meta.push(escapeHtml(task.agent || task.to || "?"));
@@ -4441,12 +4563,22 @@
         if (task.updated) meta.push(escapeHtml(timeAgo(task.updated)));
         var rowClass = "tasks-current-row " + statusClass;
         if (task.id === currentTaskId) rowClass += " is-active";
+        // Checkbox for multi-select close. Not shown for claimed tasks (those
+        // require Abort, not Close) since the close endpoint refuses claimed tasks.
+        var defaultCloseStatus = (task.status === "done") ? "closed" : "cancelled";
+        var checkbox = isClaimed ? "" :
+          '<input type="checkbox" class="current-row-select" ' +
+          'data-task-id="' + escapeHtml(task.id) + '" ' +
+          'data-task-agent="' + escapeHtml(task.agent || task.to || "") + '" ' +
+          'data-task-default-status="' + escapeHtml(defaultCloseStatus) + '"' +
+          (currentSelected[task.id] ? " checked" : "") + '>';
         // Two-line shape (Kelly 2026-05-20):
         //   row 1: status dot + headline
         //   row 2: task id (left) · agent | status | when (right)
         // The dot stays in the gutter so colour-coding tracks at a glance.
         return (
           '<div class="' + rowClass + '" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' +
+          checkbox +
           '<span class="tasks-current-row-dot" aria-hidden="true"></span>' +
           '<div class="tasks-current-row-body">' +
           '<div class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 96)) + '</div>' +
@@ -4728,7 +4860,51 @@
 
       // Picker click handlers.
       if (tasksTree) {
+        // Multi-select: handle checkbox state changes before the click handler
+        // so selecting a task row doesn't also open the task panel.
+        tasksTree.addEventListener("change", function (ev) {
+          var cb = ev.target;
+          if (!cb || cb.type !== "checkbox") return;
+
+          if (cb.classList.contains("current-row-select")) {
+            var cbTaskId = cb.getAttribute("data-task-id");
+            var cbAgent = cb.getAttribute("data-task-agent") || "";
+            var cbStatus = cb.getAttribute("data-task-default-status") || "cancelled";
+            if (cb.checked) currentSelected[cbTaskId] = { agent: cbAgent, defaultStatus: cbStatus };
+            else delete currentSelected[cbTaskId];
+            updateBulkBar();
+            updateGroupSelectAll(cb.closest("[data-project-key]"));
+            return;
+          }
+
+          if (cb.classList.contains("current-group-select-all")) {
+            var groupEl = cb.closest("[data-project-key]");
+            var rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
+            for (var i = 0; i < rowCbs.length; i++) {
+              var rCb = rowCbs[i];
+              var rId = rCb.getAttribute("data-task-id");
+              var rAgent = rCb.getAttribute("data-task-agent") || "";
+              var rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
+              if (cb.checked) {
+                currentSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
+                rCb.checked = true;
+              } else {
+                delete currentSelected[rId];
+                rCb.checked = false;
+              }
+            }
+            updateBulkBar();
+            return;
+          }
+        });
+
         tasksTree.addEventListener("click", function (ev) {
+          // Checkbox clicks are handled by the change event above — stop them
+          // from bubbling into the row/group-head handlers below.
+          if (ev.target && ev.target.type === "checkbox") {
+            ev.stopPropagation();
+            return;
+          }
           // WAL-63 Phase 2: project-group head toggles collapsed state in
           // the Current view. Handled before the row hit-test so clicking
           // the head doesn't open a task.
@@ -4775,6 +4951,9 @@
         });
         tasksTree.addEventListener("keydown", function (ev) {
           if (ev.key !== "Enter" && ev.key !== " ") return;
+          // Space on a checkbox lets the browser toggle it natively (change
+          // event handles state update) — don't also open the task panel.
+          if (ev.target && ev.target.type === "checkbox") return;
           var row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
           if (!row) return;
           ev.preventDefault();
@@ -5147,6 +5326,100 @@
         }
       }
 
+      // Open the new-task form pre-populated for a follow-on task. Sets the
+      // parent, seeds context with the source report + child review paths,
+      // and pre-fills a headline and brief referencing the source task.
+      function openFollowOnForm(sourceTaskId, sourceAgent) {
+        if (!newForm || !sourceTaskId) return;
+
+        // Find the source card from the currently loaded chain.
+        var sourceCard = null;
+        var childReviewPaths = [];
+        if (currentTaskChain) {
+          if (currentTaskChain.task && currentTaskChain.task.id === sourceTaskId) {
+            sourceCard = currentTaskChain.task;
+            var children = currentTaskChain.children || [];
+            for (var ci = 0; ci < children.length; ci++) {
+              var ch = children[ci];
+              if (ch.reportPath) childReviewPaths.push(ch.reportPath);
+            }
+          } else {
+            // Source may be an ancestor or sibling in the chain.
+            var all = (currentTaskChain.ancestors || []).concat(currentTaskChain.children || []);
+            for (var ai = 0; ai < all.length; ai++) {
+              if (all[ai].id === sourceTaskId) { sourceCard = all[ai]; break; }
+            }
+          }
+        }
+
+        // Build context list: source report first, then child deliverables.
+        var contextLines = [];
+        if (sourceCard && sourceCard.reportPath) {
+          contextLines.push(sourceCard.reportPath);
+          var delivs = sourceCard.deliverables || [];
+          for (var di = 0; di < delivs.length; di++) contextLines.push(delivs[di]);
+        }
+        for (var ri = 0; ri < childReviewPaths.length; ri++) {
+          if (childReviewPaths[ri] && contextLines.indexOf(childReviewPaths[ri]) === -1) {
+            contextLines.push(childReviewPaths[ri]);
+          }
+        }
+
+        // Headline: "Follow-on: <first N words of source headline>" ≤10 words.
+        var sourceHeadline = sourceCard ? (sourceCard.headline || sourceTaskId) : sourceTaskId;
+        var srcWords = String(sourceHeadline).split(/\s+/).filter(Boolean);
+        var headlineSuggest = ("Follow-on: " + srcWords.slice(0, 8).join(" ")).trim();
+
+        // Brief: short reference block Kelly can extend.
+        var briefSuggest = "Follow-on from " + sourceTaskId + " — " + String(sourceHeadline).slice(0, 120) + ".\n\n";
+
+        // Stamp the parent and reveal the parent chip.
+        newForm.setAttribute("data-parent", sourceTaskId);
+        var parentChipEl = document.getElementById("multi-agent-new-parent-chip");
+        var parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
+        if (parentChipEl) parentChipEl.removeAttribute("hidden");
+        if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
+
+        // Fill fields.
+        var headlineEl = document.getElementById("multi-agent-new-headline");
+        if (headlineEl) headlineEl.value = headlineSuggest;
+
+        var briefEl = document.getElementById("multi-agent-new-brief");
+        if (briefEl) briefEl.value = briefSuggest;
+
+        var ctxEl = document.getElementById("multi-agent-new-context");
+        if (ctxEl) ctxEl.value = contextLines.join("\n");
+
+        // Suggest a target agent: cliff → bob (hand review result to builder),
+        // otherwise keep the same agent so Kelly can override.
+        var toEl = document.getElementById("multi-agent-new-to");
+        if (toEl && sourceAgent) {
+          var suggestedAgent = sourceAgent === "cliff" ? "bob" : sourceAgent;
+          for (var oi = 0; oi < toEl.options.length; oi++) {
+            if (toEl.options[oi].value === suggestedAgent) { toEl.value = suggestedAgent; break; }
+          }
+        }
+
+        // Pre-select the source task's project if available.
+        if (sourceCard && sourceCard.project) {
+          var projEl = document.getElementById("multi-agent-new-project");
+          if (projEl) {
+            var srcProject = sourceCard.project;
+            ensureProjectsLoaded(projEl).then(function () {
+              for (var pi = 0; pi < projEl.options.length; pi++) {
+                if (projEl.options[pi].value === srcProject) { projEl.value = srcProject; break; }
+              }
+            }).catch(function () {});
+          }
+        }
+
+        if (newStatus) { newStatus.textContent = ""; newStatus.classList.remove("is-error"); }
+        updateHeadlineCount();
+        setRightPaneMode("new");
+        var focusEl = document.getElementById("multi-agent-new-headline");
+        if (focusEl) focusEl.focus();
+      }
+
       // Submit an Abort request — kills the live worker for a claimed task.
       // Reads the optional reason from the inline abort form, posts to
       // /api/tasks/<id>/abort, refreshes the picker + viewer on success.
@@ -5374,39 +5647,57 @@
             var revert = function () {
               projChip.textContent = prevLabel;
             };
-            var commit = function () {
+            var commit = async function () {
               var val = sel.value;
+              var isNew = false;
               if (val === "__new__") {
                 var typed = (window.prompt("New project slug (folder under Notes/Projects/, e.g. TPD-300_my-project):", "") || "").trim();
                 if (!typed) { revert(); return; }
+                isNew = true;
                 val = typed;
               }
               var payload = (val === "__none__")
                 ? { agent: projAgent, project: null }
                 : { agent: projAgent, project: val };
               projChip.textContent = "📁 saving…";
-              fetch("/api/tasks/" + encodeURIComponent(projTaskId) + "/project", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-              })
-                .then(function (r) { return r.json(); })
-                .then(function (data) {
-                  if (!data || !data.ok) {
+              try {
+                // Create the project folder when the user typed a new slug.
+                if (isNew) {
+                  var createRes = await fetch("/api/projects", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ slug: val }),
+                  });
+                  var createData = await createRes.json();
+                  if (!createData || !createData.ok) {
                     revert();
-                    if (typeof console !== "undefined") console.warn("setTaskProject failed:", data && data.error);
+                    if (typeof console !== "undefined") console.warn("createProject failed:", createData && createData.error);
                     return;
                   }
-                  // Refresh the panel so the chip shows the new value and
-                  // tasksCache repopulates (so other chips know about the
-                  // new slug if it was a fresh "+ New" entry).
-                  if (typeof openTaskPanel === "function") openTaskPanel(projTaskId);
-                  if (typeof fetchTasks === "function") fetchTasks();
-                })
-                .catch(function (err) {
-                  revert();
-                  if (typeof console !== "undefined") console.warn("setTaskProject error:", err);
+                  // Invalidate the projects cache so the new-task form
+                  // dropdown picks up the new folder on next open.
+                  projectsCache = null;
+                }
+                var r = await fetch("/api/tasks/" + encodeURIComponent(projTaskId) + "/project", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(payload),
                 });
+                var data = await r.json();
+                if (!data || !data.ok) {
+                  revert();
+                  if (typeof console !== "undefined") console.warn("setTaskProject failed:", data && data.error);
+                  return;
+                }
+                // Refresh the panel so the chip shows the new value and
+                // tasksCache repopulates (so other chips know about the
+                // new slug if it was a fresh "+ New" entry).
+                if (typeof openTaskPanel === "function") openTaskPanel(projTaskId);
+                if (typeof fetchTasks === "function") fetchTasks();
+              } catch (err) {
+                revert();
+                if (typeof console !== "undefined") console.warn("setTaskProject error:", err);
+              }
             };
             sel.addEventListener("change", commit);
             sel.addEventListener("blur", function () {
@@ -5492,6 +5783,15 @@
           if (reopenBtn) {
             ev.preventDefault();
             submitReopen(reopenBtn);
+            return;
+          }
+          var followonBtn = ev.target.closest("[data-followon-task]");
+          if (followonBtn) {
+            ev.preventDefault();
+            openFollowOnForm(
+              followonBtn.getAttribute("data-followon-task"),
+              followonBtn.getAttribute("data-followon-agent") || ""
+            );
             return;
           }
           var openTaskBtn = ev.target.closest("[data-open-task]");

@@ -22,7 +22,7 @@ import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
-import { listProjects, listProjectsWithCounts, getProjectSummary } from "./services/projects";
+import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -582,6 +582,23 @@ self.addEventListener('fetch', e => {
             return json({ ok: true, projects: await listProjectsWithCounts() });
           }
           return json({ ok: true, projects: await listProjects() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Create a project folder with a minimal README scaffold. Called by the
+      // dashboard's "+ New project…" option in the task-panel project chip.
+      // Returns ok:true (and the new path) on success, or ok:false with an
+      // error message. Already-existing slugs return ok:true so the caller
+      // can always proceed to tag the task.
+      if (url.pathname === "/api/projects" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const slug = typeof body?.slug === "string" ? body.slug.trim() : "";
+          if (!slug) return json({ ok: false, error: "slug is required" });
+          const result = await createProject(slug);
+          return json(result);
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

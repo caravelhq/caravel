@@ -9,7 +9,7 @@
 // and label sensibly without forcing every caller to read the file itself.
 // Sort order: alphabetical by slug — predictable for keyboard nav.
 
-import { readdir, readFile, stat } from "node:fs/promises";
+import { mkdir, readdir, readFile, stat, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { basename, join, relative } from "node:path";
 import { listTasks, type TaskRow } from "./multiAgent";
@@ -404,4 +404,54 @@ export async function getProjectSummary(slug: string): Promise<ProjectSummary | 
     docs,
     metrics,
   };
+}
+
+// Create a new project folder with a minimal README.md scaffold. Returns ok:true
+// when the folder is created OR already exists (so callers can always proceed to
+// tag a task). Returns ok:false only on validation failure or fs error.
+export async function createProject(
+  slug: string
+): Promise<{ ok: boolean; path?: string; error?: string }> {
+  if (!slug || slug.length > 200) {
+    return { ok: false, error: "Invalid project slug — must be 1–200 characters" };
+  }
+  if (!/^[A-Za-z0-9_./-]+$/.test(slug) || slug.includes("..") || slug.startsWith("/")) {
+    return { ok: false, error: "Invalid project slug — use letters, digits, underscores, hyphens, dots only (no leading slash or ..)." };
+  }
+  if (!existsSync(PROJECTS_DIR)) {
+    return { ok: false, error: "Notes/Projects/ directory not found" };
+  }
+  const projectDir = join(PROJECTS_DIR, slug);
+  if (existsSync(projectDir)) {
+    return { ok: true, path: `Notes/Projects/${slug}/` };
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  const readmeContent = [
+    "---",
+    `title: ${slug}`,
+    "description: New project — update this description.",
+    "doc_type: readme",
+    "status: draft",
+    `last_updated: ${today}`,
+    "---",
+    "",
+    `# ${slug}`,
+    "",
+    "## Status",
+    "",
+    "New project — add status summary here.",
+    "",
+    "## File index",
+    "",
+    "| Doc | Type | Status | Last updated | Description |",
+    "|---|---|---|---|---|",
+    "",
+  ].join("\n");
+  try {
+    await mkdir(projectDir, { recursive: true });
+    await writeFile(join(projectDir, "README.md"), readmeContent, "utf-8");
+    return { ok: true, path: `Notes/Projects/${slug}/` };
+  } catch (err) {
+    return { ok: false, error: `Failed to create project: ${String(err)}` };
+  }
 }
