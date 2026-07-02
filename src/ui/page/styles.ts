@@ -1428,7 +1428,7 @@ export const pageStyles = String.raw`    :root {
       transform: translateX(-50%);
       width: min(1140px, calc(100% - 24px));
       display: grid;
-      grid-template-columns: 84px minmax(0, 1fr) 84px;
+      grid-template-columns: 84px 84px minmax(0, 1fr) 84px;
       gap: 12px;
       align-items: center;
       z-index: 2;
