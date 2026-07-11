@@ -3166,6 +3166,10 @@
       // Multi-select close: tracks selected task ids → {agent, defaultStatus}.
       // Persists across renderCurrentView() calls within the page lifetime.
       var currentSelected = {};
+      // Mobile long-press multi-select mode — true while checkboxes are visible
+      // on touch devices. Activated by long-press (~500 ms); deactivated by
+      // the "Done" button or clearing all selections on mobile.
+      var currentMultiSelectActive = false;
       var tasksLoaded = false;
       var tasksCache = [];
       // Set of parent task IDs whose children are expanded in the picker.
@@ -3258,6 +3262,7 @@
           '<input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…">' +
           '<button type="button" class="bulk-bar-close is-primary"></button>' +
           '<button type="button" class="bulk-bar-clear">Clear</button>' +
+          '<button type="button" class="bulk-bar-done">Done</button>' +
           '<span class="bulk-bar-status"></span>';
         var bulkCloseBtn = currentBulkBar.querySelector(".bulk-bar-close");
         if (bulkCloseBtn) bulkCloseBtn.addEventListener("click", submitBulkClose);
@@ -3265,6 +3270,16 @@
         if (bulkClearBtn) {
           bulkClearBtn.addEventListener("click", function () {
             currentSelected = {};
+            updateBulkBar();
+            renderTaskPicker();
+          });
+        }
+        var bulkDoneBtn = currentBulkBar.querySelector(".bulk-bar-done");
+        if (bulkDoneBtn) {
+          bulkDoneBtn.addEventListener("click", function () {
+            currentMultiSelectActive = false;
+            currentSelected = {};
+            if (tasksTree) tasksTree.classList.remove("is-multiselect-active");
             updateBulkBar();
             renderTaskPicker();
           });
@@ -3279,15 +3294,22 @@
         var bar = getOrCreateBulkBar();
         if (!bar) return;
         var ids = Object.keys(currentSelected);
-        if (ids.length === 0 || tasksView !== "current") {
+        // On mobile (touch), show the bar while multi-select mode is active
+        // so the Done button is always reachable. On desktop, hide when empty.
+        if (tasksView !== "current" || (ids.length === 0 && !currentMultiSelectActive)) {
           bar.hidden = true;
           return;
         }
         bar.hidden = false;
         var countEl = bar.querySelector(".bulk-bar-count");
-        if (countEl) countEl.textContent = ids.length + " selected";
+        if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
         var closeBtn = bar.querySelector(".bulk-bar-close");
-        if (closeBtn) closeBtn.textContent = "Close selected (" + ids.length + ")";
+        if (closeBtn) {
+          closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
+          closeBtn.hidden = ids.length === 0;
+        }
+        var clearBtn = bar.querySelector(".bulk-bar-clear");
+        if (clearBtn) clearBtn.hidden = ids.length === 0;
         var statusEl = bar.querySelector(".bulk-bar-status");
         if (statusEl) statusEl.textContent = "";
       }
@@ -3529,19 +3551,17 @@
             '</div>';
         }
 
-        // 4. Action buttons row — Next, Follow-on, Close, Reopen, Chat, Open.
-        //    Next spawns a child immediately (via spawnNextTask API). Follow-on
-        //    opens the new-task form pre-seeded with parent + context so Kelly
-        //    can customise before dispatching. For waiting:on:user the inline
-        //    "⏳ Continue" form at the top is the equivalent affordance, so
-        //    Next only renders for terminal (done/failed) tasks.
+        // 4. Action buttons row — Next, Chat, Close/Abort/Reopen, Open.
+        //    Next opens the new-task form pre-seeded with parent + context so
+        //    Kelly can customise before dispatching (follow-on behaviour).
+        //    For waiting:on:user the inline "⏳ Continue" form is the
+        //    equivalent affordance, so Next is suppressed there.
         var actions = [];
-        if (isCurrent && isTerminal && !isClosed) {
-          actions.push('<button class="task-panel-action is-primary" data-toggle-next="' + escapeHtml(card.id) + '" type="button">↳ Next</button>');
+        if (isCurrent && !isClosed) {
+          actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
         }
-        if (isCurrent) {
-          actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Follow-on</button>');
-        }
+        // Chat is always present for current tasks; render before Close/Abort.
+        actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (isCurrent && !isClaimed && !isClosed) {
           // "Close" reads clean on done tasks; non-done closures are really
           // cancellations — surface that in the label so Kelly doesn't think
@@ -3558,7 +3578,6 @@
         if (isCurrent && isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
         }
-        actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (!isCurrent) {
           actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
         }
@@ -3577,7 +3596,7 @@
           var chatTitleSuggest = card.headline ? String(card.headline).slice(0, 56) : "";
           sections +=
             '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + '" hidden>' +
-            '<div class="task-panel-rework-warn">Chat opens on the same thread as the task worker, so the agent\'s prior context is in cache. Pick a different agent below to start a fresh thread for that role.</div>' +
+            '<details class="task-panel-rework-warn"><summary>Continues on the worker\'s session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent\'s prior context is in cache. Pick a different agent below to start a fresh thread for that role.</p></details>' +
             '<input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="' + escapeHtml(chatTitleSuggest) + '" />' +
             '<textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
@@ -3596,7 +3615,7 @@
           var activeDescendantCount = (typeof countActiveDescendants === "function") ? countActiveDescendants(card.id) : 0;
           sections +=
             '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultCloseStatus + '" hidden>' +
-            '<div class="task-panel-rework-warn">Close marks this task <strong>' + defaultCloseStatus + '</strong> from your perspective. The runner state (' + escapeHtml(card.status || "?") + ') is preserved. You can <strong>↻ Reopen</strong> later — closure is reversible.</div>' +
+            '<details class="task-panel-rework-warn"><summary>Marks <strong>' + defaultCloseStatus + '</strong> — reversible, runner state kept.</summary><p>Close marks this task <strong>' + defaultCloseStatus + '</strong> from your perspective. The runner state (' + escapeHtml(card.status || "?") + ') is preserved. You can <strong>↻ Reopen</strong> later — closure is reversible.</p></details>' +
             '<textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="Optional reason (e.g. \'rolled into TSK-X\', \'no longer needed\')…"></textarea>' +
             (activeDescendantCount > 0
               ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" />' +
@@ -3617,32 +3636,12 @@
         if (isCurrent && isClaimed && !isClosed) {
           sections +=
             '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden>' +
-            '<div class="task-panel-rework-warn task-panel-abort-warn"><strong>⚠ Aborts a running worker.</strong> This kills the live process for this task immediately — any in-progress work is lost. The task lands as <strong>cancelled</strong> (failed:aborted). Files the worker already wrote to disk are kept. This is <em>not</em> reversible like Close — to resume, spawn a fresh task.</div>' +
+            '<details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary><p><strong>⚠ Aborts a running worker.</strong> This kills the live process for this task immediately — any in-progress work is lost. The task lands as <strong>cancelled</strong> (failed:aborted). Files the worker already wrote to disk are kept. This is <em>not</em> reversible like Close — to resume, spawn a fresh task.</p></details>' +
             '<textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason (e.g. \'wrong project\', \'no longer needed\')…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
             '<button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button>' +
             '<button type="button" class="task-panel-abort-cancel">Dismiss</button>' +
             '<span class="task-panel-abort-status task-panel-unblock-status"></span>' +
-            '</div>' +
-            '</div>';
-        }
-
-        // 4b. Next form — hidden until the Next button toggles it. Spawns
-        //     a child task with parent pointer; the original done/failed
-        //     envelope is unchanged. The new child reuses the same session
-        //     thread so the agent already has the prior context cached.
-        if (isCurrent && isTerminal) {
-          var revisitTargetPicker = renderNextTargetPicker(card.agent || "");
-          var revisitHeadlineSuggest = suggestChildHeadline(card.headline || card.id, "revisit");
-          sections +=
-            '<div class="task-panel-rework task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="revisit" hidden>' +
-            '<div class="task-panel-rework-warn">A fresh child task is spawned with a pointer back to this one. Pick a different agent below to hand the next step off — by default the same agent picks up the same session, so prior context stays in cache.</div>' +
-            '<input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(revisitHeadlineSuggest) + '" />' +
-            '<textarea class="task-panel-unblock-input task-panel-next-input" rows="3" placeholder="What\'s next? Refine, extend, or change direction…"></textarea>' +
-            '<div class="task-panel-unblock-actions">' +
-            revisitTargetPicker +
-            '<button type="button" class="is-primary task-panel-next-submit">↳ Spawn child task</button>' +
-            '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
             '</div>';
         }
@@ -4536,6 +4535,8 @@
         }
         html += '</div>';
         tasksTree.innerHTML = html;
+        if (currentMultiSelectActive) tasksTree.classList.add("is-multiselect-active");
+        else tasksTree.classList.remove("is-multiselect-active");
         updateBulkBar();
       }
 
@@ -4959,6 +4960,39 @@
           ev.preventDefault();
           var taskId = row.getAttribute("data-task-id");
           if (taskId) openTaskPanel(taskId);
+        });
+
+        // Mobile long-press: ~500 ms hold on a task row enters multi-select
+        // mode (checkboxes become visible). Moving more than ~8 px or lifting
+        // early cancels the timer so normal scrolling is unaffected.
+        var lpTimer = null;
+        var lpStartX = 0, lpStartY = 0;
+        tasksTree.addEventListener("pointerdown", function (ev) {
+          if (ev.pointerType !== "touch") return;
+          if (ev.target && ev.target.type === "checkbox") return;
+          var row = ev.target.closest(".tasks-current-row");
+          if (!row) return;
+          lpStartX = ev.clientX;
+          lpStartY = ev.clientY;
+          lpTimer = setTimeout(function () {
+            lpTimer = null;
+            currentMultiSelectActive = true;
+            if (tasksTree) tasksTree.classList.add("is-multiselect-active");
+            updateBulkBar();
+            // Vibrate briefly as haptic confirmation (no-op where unavailable).
+            if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(40);
+          }, 500);
+        });
+        tasksTree.addEventListener("pointermove", function (ev) {
+          if (!lpTimer) return;
+          var dx = ev.clientX - lpStartX, dy = ev.clientY - lpStartY;
+          if (dx * dx + dy * dy > 64) { clearTimeout(lpTimer); lpTimer = null; }
+        });
+        tasksTree.addEventListener("pointerup", function () {
+          if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
+        });
+        tasksTree.addEventListener("pointercancel", function () {
+          if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; }
         });
       }
 
@@ -5704,21 +5738,6 @@
               // If user blurred without picking anything, revert.
               if (projChip.contains(sel)) revert();
             });
-            return;
-          }
-          var toggleNextBtn = ev.target.closest("[data-toggle-next]");
-          if (toggleNextBtn) {
-            ev.preventDefault();
-            var card = toggleNextBtn.closest(".task-panel-card");
-            if (card) {
-              var nextForm = card.querySelector(".task-panel-next");
-              if (nextForm) {
-                nextForm.hidden = false;
-                var ta = nextForm.querySelector(".task-panel-next-input");
-                if (ta) ta.focus();
-                nextForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-              }
-            }
             return;
           }
           // WAL-63 Phase 1: Close / Reopen handlers.

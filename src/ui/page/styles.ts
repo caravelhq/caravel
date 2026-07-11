@@ -2589,7 +2589,9 @@ export const pageStyles = String.raw`    :root {
       text-align: right;
       white-space: nowrap;
     }
-    /* Multi-select close: per-row checkbox and group-head select-all. */
+    /* Multi-select close: per-row checkbox and group-head select-all.
+       On touch/coarse-pointer devices (mobile) hide checkboxes by default;
+       they appear only when long-press activates multi-select mode. */
     .current-row-select, .current-group-select-all {
       flex-shrink: 0;
       width: 14px;
@@ -2597,6 +2599,11 @@ export const pageStyles = String.raw`    :root {
       margin-top: 3px;
       cursor: pointer;
       accent-color: #56ccf2;
+    }
+    @media (pointer: coarse) {
+      .current-row-select, .current-group-select-all { display: none; }
+      #tasks-tree.is-multiselect-active .current-row-select,
+      #tasks-tree.is-multiselect-active .current-group-select-all { display: block; }
     }
     /* Bulk-action bar — sticks above the task list when ≥1 row is selected. */
     .tasks-bulk-bar {
@@ -2628,7 +2635,7 @@ export const pageStyles = String.raw`    :root {
       font-size: 11px;
       padding: 4px 10px;
     }
-    .bulk-bar-clear {
+    .bulk-bar-clear, .bulk-bar-done {
       font-size: 11px;
       padding: 4px 8px;
       background: transparent;
@@ -2637,7 +2644,10 @@ export const pageStyles = String.raw`    :root {
       color: #8aa0bd;
       cursor: pointer;
     }
-    .bulk-bar-clear:hover { background: #ffffff0a; }
+    .bulk-bar-clear:hover, .bulk-bar-done:hover { background: #ffffff0a; }
+    /* Done button only appears on touch/mobile to exit multi-select mode. */
+    .bulk-bar-done { display: none; }
+    @media (pointer: coarse) { .bulk-bar-done { display: inline-block; } }
     .bulk-bar-status {
       font-size: 11px;
       color: #8aa0bd;
@@ -3718,6 +3728,23 @@ export const pageStyles = String.raw`    :root {
     }
     .task-panel-rework-warn strong {
       color: #ffe7b8;
+    }
+    /* Expand-on-click: rework-warn is a <details> — terse summary visible by
+       default, full explanation revealed on click. */
+    details.task-panel-rework-warn summary {
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    details.task-panel-rework-warn summary::after {
+      content: " ⓘ";
+      opacity: 0.6;
+      font-size: 10px;
+    }
+    details.task-panel-rework-warn[open] summary::after { content: ""; }
+    details.task-panel-rework-warn p {
+      margin: 6px 0 2px;
+      color: #c8a84a;
     }
     /* WAL-63 Phase 1: closed-task banner — sits between Result and the
        action row. Surfaces the closed.status + by + reason at a glance so
