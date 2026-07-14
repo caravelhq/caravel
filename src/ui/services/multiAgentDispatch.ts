@@ -237,7 +237,9 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 
   const yaml = [
     `id: ${id}`,
-    `headline: ${headline}`,
+    // Quote the headline — an unquoted colon ("Follow-on: X") makes the
+    // envelope unparseable to js-yaml and the task goes invisible in the UI.
+    `headline: ${yamlEscape(headline)}`,
     `created: ${now}`,
     `updated: ${now}`,
     ``,
