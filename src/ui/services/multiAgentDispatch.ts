@@ -1337,11 +1337,11 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   // they've never seen.
   const continuationOpener = source === "unblock"
     ? (isReroute
-        ? `**${taskId}** was waiting on the user; Kelly has now responded and is handing the continuation to you (re-routed from ${agent}).`
-        : `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and Kelly has now responded.`)
+        ? `**${taskId}** was waiting on the user; they have now responded and the continuation is being handed to you (re-routed from ${agent}).`
+        : `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and the user has now responded.`)
     : (isReroute
-        ? `**${taskId}** (was status \`${parentStatus}\`) is being re-worked. Kelly is handing this to you (re-routed from ${agent}) with new instructions below.`
-        : `Rework of **${taskId}** (was status \`${parentStatus}\`). Kelly has new instructions below.`);
+        ? `**${taskId}** (was status \`${parentStatus}\`) is being re-worked. The user is handing this to you (re-routed from ${agent}) with new instructions below.`
+        : `Rework of **${taskId}** (was status \`${parentStatus}\`). The user has new instructions below.`);
 
   const briefBody = source === "unblock"
     ? [
@@ -1351,7 +1351,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
         ``,
         parentReport ? `Prior report: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
         ``,
-        `### Kelly's response`,
+        `### User's response`,
         ``,
         instruction,
       ].filter((l) => l !== undefined).join("\n")
@@ -1362,7 +1362,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
         ``,
         parentReport ? `Prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
         ``,
-        `### Kelly's rework instruction`,
+        `### User's rework instruction`,
         ``,
         instruction,
       ].filter((l) => l !== undefined).join("\n");

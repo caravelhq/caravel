@@ -1,36 +1,36 @@
 ---
 name: task
-description: Formulate a multi-agent task envelope and dispatch it to the right agent's tasks/open/. Use when Kelly says "/task", asks Alice to "delegate", "send to Ray", "ask Sam", or describes work that should run in another agent's queue rather than this chat. Also use when an in-progress chat needs to spawn a follow-up task for another agent.
+description: Formulate a multi-agent task envelope and dispatch it to the right agent's tasks/open/. Use when the user says "/task", asks Alice to "delegate", "send to Ray", "ask Sam", or describes work that should run in another agent's queue rather than this chat. Also use when an in-progress chat needs to spawn a follow-up task for another agent.
 ---
 
 # /task — formulate and dispatch a multi-agent task
 
-Alice is the coordinator. Kelly invokes `/task` (or asks in plain language) to push work onto another agent's queue rather than doing it inline. This skill turns a rough request into a well-formed YAML envelope on disk.
+Alice is the coordinator. The user invokes `/task` (or asks in plain language) to push work onto another agent's queue rather than doing it inline. This skill turns a rough request into a well-formed YAML envelope on disk.
 
 The full schema lives at `agents/_shared/task-envelope.md`. Read it once if you're unsure about a field. Examples live in `agents/_shared/task-envelope-examples/`.
 
 ## When to use
 
-Trigger when Kelly:
+Trigger when the user:
 - Types `/task` (with or without args).
 - Says "send this to Ray", "have Sam look at this", "queue this for Bob", etc.
-- Describes work that's bigger than a single chat turn and could run while Kelly does something else.
+- Describes work that's bigger than a single chat turn and could run while the user does something else.
 
 Don't trigger when:
-- Kelly wants the answer **now in this chat** — just answer.
+- the user wants the answer **now in this chat** — just answer.
 - It's a casual question, decision, or note that doesn't need delegation.
-- Alice is already mid-task and Kelly is steering — keep working, don't spawn.
+- Alice is already mid-task and the user is steering — keep working, don't spawn.
 
 ## Procedure
 
 ### 1. Capture intent
 
-Read what Kelly asked. If it's vague (`/task` with no body, or "ask Ray about X"), ask **one consolidated clarifying question** covering anything missing. Don't pepper Kelly with five questions in a row.
+Read what the user asked. If it's vague (`/task` with no body, or "ask Ray about X"), ask **one consolidated clarifying question** covering anything missing. Don't pepper the user with five questions in a row.
 
 The fields you need:
 
 - **headline** — ≤10 words, required. The label that appears in dashboards, notifications, and chat prompts. Read like a Jira summary, not a sentence. *"BLE plugin survey"* not *"Please survey BLE plugins for the capacitor app"*. The CLI rejects empty or over-length headlines.
-- **target agent** — one of `ray` (Researcher), `sam` (Strategist), `bob` (Builder), `mark` (Marketing), `cliff` (Reviewer), `adam` (Advisor), or `alice` (Coordinator — i.e. self). If Kelly named one, use it. Otherwise infer from the work:
+- **target agent** — one of `ray` (Researcher), `sam` (Strategist), `bob` (Builder), `mark` (Marketing), `cliff` (Reviewer), `adam` (Advisor), or `alice` (Coordinator — i.e. self). If the user named one, use it. Otherwise infer from the work:
   - factual / web research → `ray`
   - synthesis, recommendations, decision memos → `sam`
   - code or implementation → `bob`
@@ -42,13 +42,13 @@ The fields you need:
 - **brief** — the *why* and the shape of *what*. Specific enough that two workers wouldn't duplicate effort. Free-form prose, multi-line.
 - **output_format** — what "done" looks like. Required for `code` / `review` / `summarise`. Optional for exploratory `research`.
 - **context** — file paths (relative to repo root), Jira keys (`jira:KEY`), or URLs. References, not inlined content.
-- **priority** — P0 (Kelly blocked) → P3 (idle). Default P2.
+- **priority** — P0 (the user blocked) → P3 (idle). Default P2.
 - **deadline** — optional ISO-8601. Add when there's a real constraint.
 - **budget** — `max_turns` (default 30 for research, 50 for code, 10 for decide), `max_subagents` (default 0 — sequential), `max_usd` (default null).
 - **parent** — set if this is a sub-task of an existing task envelope. Otherwise null. **Setting `parent` triggers decimal sub-task IDs** — the dispatched envelope gets `<parent>.N` (e.g. `TSK-2026-05-04-0042.1`) instead of a fresh top-level id. Recursive: a sub-of-sub becomes `<parent>.M.K`.
-- **reply_to** — where the result lands. Default to `from`. Override when Alice is delegating and wants results back to herself, not to Kelly.
+- **reply_to** — where the result lands. Default to `from`. Override when Alice is delegating and wants results back to herself, not to the user.
 
-If Kelly's `/task` body already includes everything (a long, specific brief), skip the clarifying question and go straight to draft.
+If the user's `/task` body already includes everything (a long, specific brief), skip the clarifying question and go straight to draft.
 
 ### 2. Draft the envelope
 
@@ -62,10 +62,10 @@ headline: <≤10-word summary>       # required; appears in lists, notifications
 created: PLACEHOLDER
 updated: PLACEHOLDER
 
-from: alice                        # or "kelly" if Kelly is the source
+from: alice                        # or "user" if the user is the source
 to: <target>
 parent: null                       # or parent task id (triggers decimal sub-id)
-reply_to: kelly                    # or "alice"
+reply_to: user                     # or "alice"
 
 kind: <research|code|review|summarise|decide|other>
 priority: P2
@@ -114,7 +114,7 @@ You can also override the parent on the CLI without rewriting the YAML:
 node .claude/skills/task/script/task.mjs new --target ray --yaml /tmp/draft.yaml --parent TSK-2026-05-04-0042
 ```
 
-### 4. Confirm to Kelly
+### 4. Confirm to the user
 
 Reply with:
 - The assigned task ID.
@@ -134,9 +134,9 @@ Example (sub-task of an existing envelope):
 
 ## Failure modes
 
-- **Target agent doesn't exist** — the helper script rejects unknown agents. Names: `alice`, `ray`, `sam`, `bob`, `cliff`, `mark`, `adam`. Ask Kelly to pick one.
+- **Target agent doesn't exist** — the helper script rejects unknown agents. Names: `alice`, `ray`, `sam`, `bob`, `cliff`, `mark`, `adam`. Ask the user to pick one.
 - **Brief is one sentence** — push back. Either flesh it out with a clarifying question or refuse to dispatch ("this is too thin to delegate; tell me more about..."). A bad brief produces a bad result and burns turns.
-- **`/task` with empty body** — don't guess. Ask Kelly what work to dispatch.
+- **`/task` with empty body** — don't guess. Ask the user what work to dispatch.
 - **`max_subagents > 0`** — flag explicitly. Parallel sub-agents 5–15× the token spend. Confirm before dispatching.
 
 ## Helpful commands
@@ -159,8 +159,8 @@ The summary now reports five buckets: `open`, `waiting`, `done`, `failed`, `arch
 
 ## Notes for Alice
 
-- This skill creates the envelope. The runner picks it up on a heartbeat and the worker agent claims it. Kelly may or may not see the result land back in his inbox depending on `reply_to`.
-- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or escalate to Kelly via a `<task-waiting on="user">` directive.
+- This skill creates the envelope. The runner picks it up on a heartbeat and the worker agent claims it. the user may or may not see the result land back in his inbox depending on `reply_to`.
+- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or escalate to the user via a `<task-waiting on="user">` directive.
 - Always restate the brief tightly in your confirmation message. If you can't restate it, you didn't understand it well enough to dispatch — go back to step 1.
 
 ## Worker directives — what your tasks should produce

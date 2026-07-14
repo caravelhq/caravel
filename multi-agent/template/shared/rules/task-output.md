@@ -127,5 +127,5 @@ The file path is the canonical signal. Make sure you write it.
 
 ## Where it doesn't apply
 
-- **Live chat with Kelly** — you're not a spawned worker; no envelope to close. Talk normally.
+- **Live chat with the user** — you're not a spawned worker; no envelope to close. Talk normally.
 - **Your own internal scratch / scripts** — only the worker's final state matters.

@@ -1,5 +1,5 @@
 export const pageStyles = String.raw`    :root {
-      /* Trakk blue (#1E76FE, from the Trakk Assets brand) grading to dark navy. */
+      /* Primary accent (#1E76FE) grading to dark navy. */
       --bg-top: #1E76FE;
       --bg-bottom: #060d1a;
       --bg-spot-a: #1e76fe3d;
@@ -1665,7 +1665,7 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
-    /* Toolbar chat-title input. Kelly 2026-05-20: sits inside
+    /* Toolbar chat-title input — sits inside
        .chat-toolbar-left, immediately after the agent badge, so the
        title reads alongside the agent. Hidden for empty chats — those
        use #chat-new-title-input above the message box instead. The
@@ -2387,15 +2387,15 @@ export const pageStyles = String.raw`    :root {
     }
 
     /* ── Files panel ── */
-    /* Width matches the Tasks panel (Kelly 2026-05-20). Both pages share
-       the same picker-on-left, viewer-on-right shape, so they should
-       render at the same width on large screens. The min/max-width rules
-       below clamp identically.
+    /* Width matches the Tasks panel. Both pages share the same
+       picker-on-left, viewer-on-right shape, so they render at the
+       same width on large screens. The min/max-width rules below clamp
+       identically.
 
-       Kelly 2026-05-25: container-type: inline-size lets the inner
-       split-collapse rules react to THIS panel's width rather than the
-       viewport — so a split-screen or sidebar browser window collapses
-       the picker correctly even when the OS viewport is wide. */
+       container-type: inline-size lets the inner split-collapse rules
+       react to THIS panel's width rather than the viewport — so a
+       split-screen or sidebar browser window collapses the picker
+       correctly even when the OS viewport is wide. */
     .files-panel {
       display: flex;
       flex-direction: column;
@@ -2749,8 +2749,8 @@ export const pageStyles = String.raw`    :root {
       color: #5a7a9a;
       font-size: 10px;
     }
-    /* WAL-63 Phase 4: project page right-pane container — replaces the task
-       viewer when Kelly drills into a project card. */
+    /* Project page right-pane container — replaces the task viewer when
+       the user drills into a project card. */
     .tasks-project-pane {
       flex: 1;
       overflow-y: auto;
@@ -3021,7 +3021,7 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-tree-row:hover { background: #ffffff0d; }
     /* Top-level parent rows in the picker tree get a lighter background
-       so the family hierarchy is easier to scan. Kelly 2026-05-20. */
+       so the family hierarchy is easier to scan. */
     .tasks-tree-row.is-root {
       background: #ffffff05;
     }
@@ -4600,7 +4600,7 @@ export const pageStyles = String.raw`    :root {
       color: #d7e3f5;
     }
 
-    /* Kelly 2026-05-25: collapse the picker + viewer split into the
+    /* Collapse the picker + viewer split into the
        mobile-style picker-toggle flow when the PANEL itself is narrower
        than the "lg" breakpoint (1200px). Uses container queries instead
        of @media so the layout responds to the actual rendered width of

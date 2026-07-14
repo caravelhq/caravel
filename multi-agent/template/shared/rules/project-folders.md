@@ -39,8 +39,8 @@ The five canonical doc types (see `frontmatter.md` for the schema):
   major scope changes. **FDPs are different — they live in `repos/dev/features/`.**
 - **`GTM_Strategy.md`** (`doc_type: gtm`) — go-to-market: messaging pillars, channels,
   launch sequence. Cites positioning from the Project Plan; doesn't redefine it.
-  Mark owns. Triggered by Alice or Kelly once the Project Plan has strategic direction
-  and Kelly has signed off on it.
+  Mark owns. Triggered by Alice or the user once the Project Plan has strategic direction
+  and the user has signed off on it.
 - **`Decision_Log.md`** (`doc_type: decision_log`) — append-only Y-statement entries,
   sequential `DEC-NNNN` per project. See `decision-log.md` for the format.
 - **`reviews/`** — flat folder, files named `<DATE>_R<NN>_<role>_<agent>.md`.

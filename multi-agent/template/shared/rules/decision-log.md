@@ -34,7 +34,7 @@ The body is a sequence of H2 sections — one per decision — with no introduct
 
 - **Date:** YYYY-MM-DD
 - **Status:** accepted | proposed | rejected | superseded by DEC-MMMM
-- **Deciders:** <kelly, sam, bob, …>
+- **Deciders:** <user, sam, bob, …>
 - **Jira:** TPD-XXX (optional)
 
 **Decision (Y-statement):** In the context of <use case>, facing <concern>, we decided for <option> over <alternative>, to achieve <quality>, accepting <downside>.

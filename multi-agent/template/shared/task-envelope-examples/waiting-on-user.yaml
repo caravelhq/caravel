@@ -3,12 +3,12 @@ created: 2026-04-28T23:30:00+12
 updated: 2026-04-28T23:35:00+12
 
 from: alice
-to: alice                         # held by coordinator until Kelly responds
+to: alice                         # held by coordinator until the user responds
 parent: TSK-2026-04-28-0003
 reply_to: alice
 
 kind: decide
-priority: P0                      # blocking Kelly directly
+priority: P0                      # blocking the user directly
 deadline: 2026-04-29T09:00:00+12
 
 budget:
@@ -17,13 +17,13 @@ budget:
   max_usd: null
 
 brief: |
-  Kelly's decision needed on BT plugin licence/platform tradeoff
-  (see escalation TSK-2026-04-28-0003). Until Kelly answers, this
+  Owner decision needed on date library bundle size vs accuracy tradeoff
+  (see escalation TSK-2026-04-28-0003). Until the user answers, this
   task is parked and the parent task TSK-2026-04-28-0001 stays
   in waiting:agent:alice.
 
 output_format: |
-  Kelly's answer (A / B / alternative + reasoning) is folded into
+  The user's answer (A / B / alternative + reasoning) is folded into
   the resolution and the dependent tasks resume.
 
 context:
@@ -44,9 +44,9 @@ history:
     from: open
     to: waiting:user
     by: alice
-    note: posted decision summary to dashboard, awaiting Kelly response
+    note: posted decision summary to dashboard, awaiting user response
 
 summary:
-  brief: "Awaiting Kelly: BT plugin Apache+patent vs MIT+iOS-permission tradeoff"
+  brief: "Awaiting user: date library built-in-TZ vs Intl-API tradeoff"
   response: ""
 report: ""

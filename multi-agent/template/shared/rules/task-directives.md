@@ -47,7 +47,7 @@ Silence breaks all five. The deliverable on disk doesn't matter if the envelope 
 **`<task-waiting on="…" summary="…">` — you need something before you can continue.**
 - `on="task:TSK-XYZ"` — you've dispatched a sub-task and need its result. **Orchestrators (Alice) don't use this** — when Alice dispatches a sub-task from a chat-dispatched parent, she closes with `<task-done>` and lets the runner enqueue a continuation envelope when the sub-task lands. Parking on `task:*` is for non-orchestrator agents that have no continuation system to wake them.
 - `on="agent:bob"` — you need a specific agent to finish their current work.
-- `on="user"` — you need Kelly's input to proceed.
+- `on="user"` — you need the user's input to proceed.
 - The lease releases. The runner re-claims when the dependency resolves.
 
 ## Procedural checklist (run this before you stop typing)
@@ -75,7 +75,7 @@ Before ending any worker turn, ask:
 
 ## Where it doesn't apply
 
-- **Live chat with Kelly** — you're not a spawned worker; no envelope to close. Talk normally.
+- **Live chat with the user** — you're not a spawned worker; no envelope to close. Talk normally.
 - **Your own internal scratch / scripts you run between worker turns** — only the worker reply needs the directive.
 - **Tool output and shell commands** — directives go in the assistant's text reply, not in tool blocks.
 

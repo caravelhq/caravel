@@ -1,6 +1,6 @@
 # Task Envelope — schema and conventions (WAL-63)
 
-A task envelope is a YAML file that lives in `agents/<name>/tasks/{open,done,failed,waiting}/<id>.yaml`. It is the unit of orchestration for the multi-agent system: created by Kelly or by another agent, claimed by the target agent, transitioned through statuses, and ultimately archived, parked while waiting on a dependency, or escalated.
+A task envelope is a YAML file that lives in `agents/<name>/tasks/{open,done,failed,waiting}/<id>.yaml`. It is the unit of orchestration for the multi-agent system: created by the user or by another agent, claimed by the target agent, transitioned through statuses, and ultimately archived, parked while waiting on a dependency, or escalated.
 
 ## File location
 
@@ -30,20 +30,20 @@ created: 2026-04-28T22:30:00+12    # required ISO-8601 with offset
 updated: 2026-04-28T22:30:00+12    # touched on every transition
 
 # === routing ===
-from: kelly                         # required; "kelly" or an agent name (alice, ray, sam, bob, cliff, mark, adam)
+from: user                         # required; "user" or an agent name (alice, ray, sam, bob, cliff, mark, adam)
 to: ray                             # required; target agent name
 parent: null                        # task id this is a sub-task / reply of, or null
 reply_to: alice                     # where the result lands (default: from)
 
 # === nature ===
 kind: research                      # research | code | review | summarise | decide | other
-priority: P2                        # P0 (Kelly blocked) → P3 (idle)
+priority: P2                        # P0 (the user blocked) → P3 (idle)
 deadline: 2026-04-30T17:00:00+12    # optional ISO-8601
 
 # === budget — hard-enforced by runner ===
 budget:
   max_turns: 30                     # hard cap on conversation turns
-  max_subagents: 0                  # 0 = sequential (default); >0 requires explicit Kelly approval
+  max_subagents: 0                  # 0 = sequential (default); >0 requires explicit the user approval
   max_usd: null                     # optional dollar cap (null = unlimited within max_turns)
 
 # === specification ===
@@ -69,7 +69,7 @@ history:                            # append-only state log; runner writes
   - ts: 2026-04-28T22:30:00+12
     from: null
     to: open
-    by: kelly
+    by: user
     note: created via /task
 
 # === summaries (for dashboard) ===
@@ -79,10 +79,10 @@ summary:
 report: ""                          # path to the produced output file (set by worker via <task-done report="..."/>),
                                     # OR a block-scalar with the inline report body. Empty until the worker finishes.
 
-# === revisits (optional; appended when Kelly re-opens a done/failed task) ===
+# === revisits (optional; appended when the user re-opens a done/failed task) ===
 revisits:                           # parallel to brief — original brief stays immutable; revisits accumulate
-  - ts: 2026-05-06T09:38:00+12      # when Kelly clicked Revisit
-    by: kelly
+  - ts: 2026-05-06T09:38:00+12      # when the user clicked Revisit
+    by: user
     instruction: |
       Follow-up: now also handle X.
       The Y bit you did was wrong — redo with Z.
@@ -95,12 +95,12 @@ revisits:                           # parallel to brief — original brief stays
 | `open` | created, awaiting claim | `tasks/open/` |
 | `claimed` | a worker has claimed it; not yet started | `tasks/open/` (lease set) |
 | `in_progress` | worker actively running | `tasks/open/` |
-| `waiting:on:user` | blocked on Kelly | `tasks/waiting/` |
+| `waiting:on:user` | blocked on the user | `tasks/waiting/` |
 | `waiting:on:task:<id>` | blocked until that task is in any agent's `done/` | `tasks/waiting/` |
 | `waiting:on:agent:<name>` | blocked until that agent has any `done/` task (heuristic) | `tasks/waiting/` |
 | `done` | completed; report written | `tasks/done/` |
 | `failed:<reason>` | terminal failure; see Alice's failure-rule table | `tasks/failed/` |
-| `escalated` | sent to Kelly with a structured decision request | `tasks/failed/` |
+| `escalated` | sent to the user with a structured decision request | `tasks/failed/` |
 
 `<reason>` for `failed:` — one of: `budget`, `tool`, `refusal`, `context`, `crash`, `timeout`, `other`. **`failed:dependency` is no longer a valid reason** — workers blocked on a dependency must use `<task-waiting on="...">` so the runner can park and auto-resume the envelope.
 
@@ -109,7 +109,7 @@ revisits:                           # parallel to brief — original brief stays
 `agents/<name>/tasks/journal.ndjson` is one JSON object per line, append-only:
 
 ```json
-{"ts":"2026-04-28T22:30:00+12","id":"TSK-2026-04-28-0042","status":"open","kind":"research","from":"kelly","to":"ray","parent":null,"summary":""}
+{"ts":"2026-04-28T22:30:00+12","id":"TSK-2026-04-28-0042","status":"open","kind":"research","from":"user","to":"ray","parent":null,"summary":""}
 {"ts":"2026-04-28T22:35:12+12","id":"TSK-2026-04-28-0042","status":"claimed","by":"chat-1234abcd","summary":"Survey BT plugins for Capacitor coverage tracking"}
 {"ts":"2026-04-28T23:42:08+12","id":"TSK-2026-04-28-0042","status":"done","summary":"Survey BT plugins for Capacitor coverage tracking","response":"5 candidates; only @capacitor-community/bluetooth-le has active maintainers and BLE central support. Recommend that one."}
 ```
@@ -158,7 +158,7 @@ Workers signal completion or blocking by emitting a single directive at the end 
 
 - `task:<id>` — resolved when `<id>.yaml` exists in any agent's `done/`
 - `agent:<name>` — resolved when `<name>` has at least one task in their `done/` (heuristic — refine to "newer than this task's claim time" if needed)
-- `user` — never auto-resolves; only Kelly (or Alice on his behalf) moves it back
+- `user` — never auto-resolves; only the user (or Alice on their behalf) moves it back
 
 If a worker emits no directive at all, the envelope stays `claimed` in `tasks/open/` and a human/coordinator must intervene.
 
@@ -175,7 +175,7 @@ See `agents/_shared/task-envelope-examples/` for canonical examples of:
 - `simple-research.yaml` — a one-shot research task
 - `coordinator-delegation.yaml` — Alice delegating to a specialist
 - `escalation-back.yaml` — a worker escalating to Alice for a decision
-- `waiting-on-user.yaml` — a task parked waiting for Kelly's input
+- `waiting-on-user.yaml` — a task parked waiting for the user's input
 
 ## Revisit workflow
 
@@ -185,8 +185,8 @@ A `done` or `failed` task can be re-opened with a follow-up instruction so the s
 
 **Lifecycle (in-place):**
 
-1. Kelly clicks Revisit on a `done` / `failed` task in the dashboard.
-2. The runner appends a `revisits:` entry, flips status back to `open`, clears the lease, and moves the file `tasks/{done,failed}/<id>.yaml` → `tasks/open/<id>.yaml`. A history entry records the `done → open` (or `failed:<reason> → open`) transition with `by: kelly`, `note: "revisit"`.
+1. the user clicks Revisit on a `done` / `failed` task in the dashboard.
+2. The runner appends a `revisits:` entry, flips status back to `open`, clears the lease, and moves the file `tasks/{done,failed}/<id>.yaml` → `tasks/open/<id>.yaml`. A history entry records the `done → open` (or `failed:<reason> → open`) transition with `by: user`, `note: "revisit"`.
 3. Next tick, the worker re-claims. The worker prompt builder reads `brief` *and* walks `revisits[]` in order; the **latest revisit takes precedence** when it conflicts with earlier instructions.
 4. The worker updates the existing report file in place — does not create a duplicate.
 

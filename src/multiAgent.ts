@@ -719,7 +719,7 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "",
     `**DO NOT touch the YAML envelope** at \`agents/${agent}/tasks/open/${taskId}.yaml\`. The runner owns it — it will update the status field, append the history entry, and move the file to the matching bucket once it sees your .md report. If you move, rename, or rewrite the .yaml yourself, the runner's transition silently fails: no chat notification, no journal entry, no Alice continuation. Just write the .md and stop.`,
     "",
-    "Use `waiting` when you cannot proceed because you need another task's output, another agent's work, or Kelly's input. The runner parks your envelope and re-claims when the dependency clears. NEVER use `failed: dependency` — that's a worker bug; use `waiting` instead.",
+    "Use `waiting` when you cannot proceed because you need another task's output, another agent's work, or the user's input. The runner parks your envelope and re-claims when the dependency clears. NEVER use `failed: dependency` — that's a worker bug; use `waiting` instead.",
     "",
     "Delegation: if your brief requires inputs you don't have (deeper research, code review, etc.) you can dispatch sub-tasks via the `/task` skill. After dispatching, write a `waiting` file with `waiting_on: task:TSK-...`. The runner re-claims your envelope when the sub-task lands in `done/`.",
     "",
@@ -1096,11 +1096,11 @@ async function enqueueAliceContinuation(opts: {
     if (s.report) briefLines.push(`      report: ${s.report}`);
   }
   briefLines.push("");
-  briefLines.push("  Read each sibling's report, write a consolidated briefing for Kelly, and end your turn.");
+  briefLines.push("  Read each sibling's report, write a consolidated briefing for the user, and end your turn.");
   briefLines.push("");
   briefLines.push("  Directives — chat integration is currently OFF, so use these:");
-  briefLines.push("    - Surface results to Kelly: emit <task-waiting on=\"user\" summary=\"...\">.");
-  briefLines.push("      Kelly sees the task in the picker's \"Waiting on you\" section at the top.");
+  briefLines.push("    - Surface results to the user: emit <task-waiting on=\"user\" summary=\"...\">.");
+  briefLines.push("      The user sees the task in the picker's \"Waiting on you\" section at the top.");
   briefLines.push("      Use this for orchestration completes — it's the default.");
   briefLines.push("    - More work to dispatch: run /task to push the next envelope, then emit");
   briefLines.push("      <task-done summary=\"dispatched X to Y; continuation will wake me when result lands\">.");
@@ -1108,7 +1108,7 @@ async function enqueueAliceContinuation(opts: {
   briefLines.push("      automatically when the dispatched task(s) land (sibling-consolidated under the");
   briefLines.push("      same orchestration parent). Parking on task:* is redundant and leaves a");
   briefLines.push("      tombstoned superseded parent in waiting/.");
-  briefLines.push("    - Stand-down (no Kelly action needed): emit <task-done summary=\"...\">. Closes silently.");
+  briefLines.push("    - Stand-down (no user action needed): emit <task-done summary=\"...\">. Closes silently.");
 
   const briefBlock = briefLines.map((l) => (l.length > 0 ? `  ${l}` : "  ")).join("\n");
 

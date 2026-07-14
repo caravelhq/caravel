@@ -15,7 +15,7 @@ Reviews come in triads: **brief** (asking for review) → **review** (the review
 - **`<DATE>`** — `YYYY-MM-DD`, the date the doc was written.
 - **`R<NN>`** — two-digit round number, zero-padded (`R01`, `R02`, …, `R10`). Two digits so lex sort interleaves correctly.
 - **`<role>`** — `brief`, `review`, or `response`.
-- **`<agent>`** — the agent who wrote this specific doc (Bob, Cliff, Sam, Kelly, Mark, …).
+- **`<agent>`** — the agent who wrote this specific doc (Bob, Cliff, Sam, the user, Mark, …).
 
 ## Round numbers are per-project, not per-FDP
 
@@ -35,7 +35,7 @@ Notes/Projects/TPD-16_Custom-Report-Builder/
     2026-04-30_R02_review_cliff.md
     2026-04-30_R02_response_bob.md
     2026-05-02_R03_brief_sam.md         # target: Project Plan (different artefact, same project)
-    2026-05-02_R03_review_kelly.md
+    2026-05-02_R03_review_user.md
     2026-05-02_R03_response_sam.md
 ```
 

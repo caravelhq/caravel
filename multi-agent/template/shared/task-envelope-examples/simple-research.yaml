@@ -2,10 +2,10 @@ id: TSK-2026-04-28-0001
 created: 2026-04-28T22:00:00+12
 updated: 2026-04-28T22:00:00+12
 
-from: kelly
+from: user
 to: ray
 parent: null
-reply_to: kelly
+reply_to: user
 
 kind: research
 priority: P2
@@ -17,23 +17,23 @@ budget:
   max_usd: null
 
 brief: |
-  Survey current Capacitor / Cordova plugins for Bluetooth Low Energy
-  central-mode use on iOS and Android. We need to receive advertisements
-  from a fleet of GPS pucks during a coverage survey. Constraints:
-  - active maintenance in the last 12 months
+  Survey actively maintained JavaScript date/time libraries that handle
+  timezone-aware scheduling. Constraints:
+  - last release within 12 months
   - permissive licence (MIT / Apache / BSD)
-  - works in background mode on iOS
-  Reject anything ble-peripheral-only.
+  - tree-shakeable (ESM build available)
+  - <5 kB gzipped for the core
+  Reject moment.js and any legacy-only (CommonJS-only) packages.
 
 output_format: |
-  Markdown table with columns: name, repo URL, last commit, licence,
-  iOS background support (yes/no/unknown), maintenance signal (1-5),
+  Markdown table with columns: name, repo URL, last release, licence,
+  bundle size (core, gzipped), timezone support (built-in/external),
   notable caveats. Append a one-paragraph recommendation naming the
-  preferred plugin and why.
+  preferred library and why.
 
 context:
   - Notes/Projects/Example_Project/Research_Brief.md
-  - jira:TPD-189
+  - jira:TPD-001
 
 status: open
 lease:
@@ -43,7 +43,7 @@ history:
   - ts: 2026-04-28T22:00:00+12
     from: null
     to: open
-    by: kelly
+    by: user
     note: created via /task
 
 summary:

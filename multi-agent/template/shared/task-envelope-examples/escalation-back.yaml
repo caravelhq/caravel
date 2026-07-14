@@ -5,7 +5,7 @@ updated: 2026-04-28T23:15:00+12
 from: ray
 to: alice                         # escalating to coordinator
 parent: TSK-2026-04-28-0001
-reply_to: ray                     # Ray resumes work after Kelly decides
+reply_to: ray                     # Ray resumes work after the decision
 
 kind: decide
 priority: P1                      # blocking the parent task
@@ -17,12 +17,13 @@ budget:
   max_usd: null
 
 brief: |
-  Two BT plugins meet all criteria but disagree on a key tradeoff:
-  - Plugin A: better iOS background support, but Apache 2.0 with patent
-    grant (which Kelly previously flagged as "check before adopting").
-  - Plugin B: MIT licensed, weaker iOS background story (relies on
-    location-permission workaround that Apple has tightened in iOS 18+).
-  This is a Kelly decision, not a Ray one.
+  Two date libraries meet all criteria but disagree on a key tradeoff:
+  - Library A: full timezone database built-in (accurate everywhere),
+    but ~8 kB gzipped over the target budget.
+  - Library B: under 4 kB, relies on the Intl API (accurate on modern
+    browsers/Node, but may degrade on older targets in the project's
+    support matrix).
+  This is a product decision that requires owner input.
 
 output_format: |
   Decision: A or B (or "neither, propose alternative path").
@@ -40,9 +41,9 @@ history:
     from: null
     to: open
     by: ray
-    note: escalated to alice for Kelly decision (licence vs platform tradeoff)
+    note: escalated to alice for owner decision (bundle size vs accuracy tradeoff)
 
 summary:
-  brief: "BT plugin choice: Apache+patent vs MIT+iOS-permission risk"
+  brief: "Date library choice: built-in TZ db vs Intl API + smaller bundle"
   response: ""
 report: ""
