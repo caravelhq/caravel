@@ -4,7 +4,7 @@ import { join } from "path";
 // <projectRoot>/.claude/config.json. It holds sensitive workspace-level
 // settings (API tokens, integration credentials) that the daemon and its
 // agents need but that must never be committed. This is distinct from
-// .claude/claudeclaw/settings.json (daemon runtime settings — see config.ts).
+// .claude/caravel/settings.json (daemon runtime settings — see config.ts).
 const CONFIG_FILE = join(process.cwd(), ".claude", "config.json");
 
 /**

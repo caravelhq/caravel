@@ -30,6 +30,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
+import { resolveStateDir } from "./paths";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -111,7 +112,7 @@ export function abortInflightWorker(
 // resets <time> (<tz>)" — an account-level Anthropic rate cap — the runner
 // stops claiming work until the reset time has passed. Stored at the project
 // root so it survives daemon restart and any worker can read it.
-const LIMITS_GATE_FILE = join(PROJECT_DIR, ".claude", "claudeclaw", "limits-gate.json");
+const LIMITS_GATE_FILE = join(resolveStateDir(), "limits-gate.json");
 
 interface LimitsGate {
   reset_at: string; // ISO timestamp
@@ -141,7 +142,7 @@ async function readLimitsGate(): Promise<LimitsGate | null> {
 
 async function writeLimitsGate(gate: LimitsGate): Promise<void> {
   try {
-    await mkdir(join(PROJECT_DIR, ".claude", "claudeclaw"), { recursive: true });
+    await mkdir(resolveStateDir(), { recursive: true });
     await writeFile(LIMITS_GATE_FILE, JSON.stringify(gate, null, 2));
     console.log(
       `[${new Date().toLocaleTimeString()}] multi-agent: GLOBAL LIMITS GATE set — runner paused until ${gate.reset_at}` +

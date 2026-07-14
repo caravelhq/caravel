@@ -1,6 +1,7 @@
 import { join } from "path";
+import { resolveStateDir } from "../paths";
 
-export const HEARTBEAT_DIR = join(process.cwd(), ".claude", "claudeclaw");
+export const HEARTBEAT_DIR = resolveStateDir();
 export const LOGS_DIR = join(HEARTBEAT_DIR, "logs");
 export const JOBS_DIR = join(HEARTBEAT_DIR, "jobs");
 export const SETTINGS_FILE = join(HEARTBEAT_DIR, "settings.json");

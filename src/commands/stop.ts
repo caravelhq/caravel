@@ -2,9 +2,10 @@ import { writeFile, unlink, readdir, readFile } from "fs/promises";
 import { join } from "path";
 import { homedir } from "os";
 import { getPidPath, cleanupPidFile, isDaemonProcess } from "../pid";
+import { resolveStateDir, stateDirCandidates } from "../paths";
 
 const CLAUDE_DIR = join(process.cwd(), ".claude");
-const HEARTBEAT_DIR = join(CLAUDE_DIR, "claudeclaw");
+const HEARTBEAT_DIR = resolveStateDir();
 const STATUSLINE_FILE = join(CLAUDE_DIR, "statusline.cjs");
 const CLAUDE_SETTINGS_FILE = join(CLAUDE_DIR, "settings.json");
 
@@ -76,27 +77,29 @@ export async function stopAll() {
   let found = 0;
   for (const dir of dirs) {
     const projectPath = "/" + dir.slice(1).replace(/-/g, "/");
-    const pidFile = join(projectPath, ".claude", "claudeclaw", "daemon.pid");
 
-    let pid: string;
-    try {
-      pid = (await readFile(pidFile, "utf-8")).trim();
-    } catch {
-      continue;
-    }
-    if (!isDaemonProcess(Number(pid))) {
-      // dead or PID recycled — clear the stale file, don't kill a stranger.
-      try { await unlink(pidFile); } catch {}
-      continue;
-    }
+    for (const stateDir of stateDirCandidates(projectPath)) {
+      const pidFile = join(stateDir, "daemon.pid");
+      let pid: string;
+      try {
+        pid = (await readFile(pidFile, "utf-8")).trim();
+      } catch {
+        continue;
+      }
+      if (!isDaemonProcess(Number(pid))) {
+        try { await unlink(pidFile); } catch {}
+        continue;
+      }
 
-    found++;
-    try {
-      process.kill(Number(pid), "SIGTERM");
-      console.log(`\x1b[33m■ Stopped\x1b[0m PID ${pid} — ${projectPath}`);
-      try { await unlink(pidFile); } catch {}
-    } catch {
-      console.log(`\x1b[31m✗ Failed to stop\x1b[0m PID ${pid} — ${projectPath}`);
+      found++;
+      try {
+        process.kill(Number(pid), "SIGTERM");
+        console.log(`\x1b[33m■ Stopped\x1b[0m PID ${pid} — ${projectPath}`);
+        try { await unlink(pidFile); } catch {}
+      } catch {
+        console.log(`\x1b[31m✗ Failed to stop\x1b[0m PID ${pid} — ${projectPath}`);
+      }
+      break; // don't double-stop this project
     }
   }
 

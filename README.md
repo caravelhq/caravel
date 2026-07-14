@@ -31,9 +31,9 @@ bun install
 bun run start --web        # starts the daemon + web dashboard on http://127.0.0.1:4632
 ```
 
-All configuration and secrets live in `.claude/claudeclaw/settings.json` (Telegram/Discord tokens, model selection, security level, web host/port). That directory is gitignored — nothing sensitive is ever committed. The first `start` writes a default settings file you can edit.
+All configuration and secrets live in `.claude/caravel/settings.json` (Telegram/Discord tokens, model selection, security level, web host/port). That directory is gitignored — nothing sensitive is ever committed. The first `start` writes a default settings file you can edit.
 
-> The on-disk state directory is still named `.claude/claudeclaw/` — it is deliberately left un-renamed for now so existing installs don't lose their session, jobs, and cron state on upgrade. A migration behind a compatibility shim is a tracked follow-up.
+> **Existing installs:** if you already have a `.claude/claudeclaw/` directory, Caravel detects it automatically and keeps using it — no manual migration needed. New installs land in `.claude/caravel/`. To migrate an existing install, `mv .claude/claudeclaw .claude/caravel`.
 
 Requirements: [Bun](https://bun.sh) and a compatible coding-agent CLI (e.g. the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)) on your PATH.
 
@@ -76,7 +76,7 @@ CLAUDECLAW_AGENTS="alice bob ray" \
 
 This scaffolds the `/task` skill, the shared task-envelope spec, and per-agent `tasks/` directories. For any agent name that doesn't already have a profile, it seeds an example one (coordinator / builder / researcher) from `multi-agent/template/agents/` so you start with a runnable roster. Edit those profiles — or add your own under `agents/<name>/` — to define your team. Enable the runner with `CLAUDECLAW_MULTI_AGENT_RUNNER=1`.
 
-> The `CLAUDECLAW_*` environment variables keep their names for now (they're coupled to the on-disk state dir and the plugin cache path); they'll be renamed alongside the Tier-C state-dir migration.
+> The `CLAUDECLAW_*` environment variable names are a known legacy carry-over; they'll be renamed to `CARAVEL_*` in a future release.
 
 See [`multi-agent/README.md`](multi-agent/README.md) for the full task-envelope schema and dispatch model.
 

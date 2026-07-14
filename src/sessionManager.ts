@@ -1,6 +1,7 @@
 import { join } from "path";
+import { resolveStateDir } from "./paths";
 
-const HEARTBEAT_DIR = join(process.cwd(), ".claude", "claudeclaw");
+const HEARTBEAT_DIR = resolveStateDir();
 const SESSIONS_FILE = join(HEARTBEAT_DIR, "sessions.json");
 
 export interface ThreadSession {

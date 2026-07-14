@@ -2,9 +2,9 @@ import { join } from "path";
 import { readdir, readFile } from "fs/promises";
 import { homedir } from "os";
 import { isDaemonProcess } from "../pid";
+import { resolveStateDir, stateDirCandidates } from "../paths";
 
-const CLAUDE_DIR = join(process.cwd(), ".claude");
-const HEARTBEAT_DIR = join(CLAUDE_DIR, "claudeclaw");
+const HEARTBEAT_DIR = resolveStateDir();
 const PID_FILE = join(HEARTBEAT_DIR, "daemon.pid");
 const STATE_FILE = join(HEARTBEAT_DIR, "state.json");
 const SETTINGS_FILE = join(HEARTBEAT_DIR, "settings.json");
@@ -37,15 +37,18 @@ async function findAllDaemons(): Promise<{ path: string; pid: string }[]> {
 
   for (const dir of dirs) {
     const candidatePath = decodePath(dir);
-    const pidFile = join(candidatePath, ".claude", "claudeclaw", "daemon.pid");
-
-    try {
-      const pid = (await readFile(pidFile, "utf-8")).trim();
-      if (isDaemonProcess(Number(pid))) {
-        results.push({ path: candidatePath, pid });
+    // Check both .claude/caravel/ and .claude/claudeclaw/ (legacy) per project.
+    for (const stateDir of stateDirCandidates(candidatePath)) {
+      const pidFile = join(stateDir, "daemon.pid");
+      try {
+        const pid = (await readFile(pidFile, "utf-8")).trim();
+        if (isDaemonProcess(Number(pid))) {
+          results.push({ path: candidatePath, pid });
+          break; // found one, don't double-count this project
+        }
+      } catch {
+        // no pid file at this path
       }
-    } catch {
-      // no pid file
     }
   }
 

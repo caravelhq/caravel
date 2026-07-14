@@ -1,6 +1,7 @@
 import { existsSync } from "fs";
 import { mkdir, writeFile, readFile, open } from "fs/promises";
 import { join } from "path";
+import { resolveStateDir } from "./paths";
 
 /**
  * Per-agent append-only journal for cross-chat shared learnings (WAL-61 Phase A).
@@ -29,7 +30,7 @@ const VALID_KINDS = new Set<JournalKind>(["learn", "decide", "todo", "fact"]);
 const MAX_TEXT_LEN = 280;
 const MAX_INJECT_ENTRIES = 30;
 const MAX_INJECT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-const CURSORS_DIR = join(process.cwd(), ".claude/claudeclaw/journal-cursors");
+const CURSORS_DIR = join(resolveStateDir(), "journal-cursors");
 
 function agentJournalPath(agentName: string): string {
   return join(process.cwd(), "agents", agentName, "journal.ndjson");

@@ -21,13 +21,14 @@ import {
   setCursor,
   rotateIfLarge,
 } from "./journal";
+import { resolveStateDir } from "./paths";
 
-const LOGS_DIR = join(process.cwd(), ".claude/claudeclaw/logs");
-// Resolve prompts relative to the claudeclaw installation, not the project dir
+const LOGS_DIR = join(resolveStateDir(), "logs");
+// Resolve prompts relative to the Caravel installation, not the project dir
 const PROMPTS_DIR = join(import.meta.dir, "..", "prompts");
 const HEARTBEAT_PROMPT_FILE = join(PROMPTS_DIR, "heartbeat", "HEARTBEAT.md");
 // Project-level prompt overrides live here (gitignored, user-owned)
-const PROJECT_PROMPTS_DIR = join(process.cwd(), ".claude", "claudeclaw", "prompts");
+const PROJECT_PROMPTS_DIR = join(resolveStateDir(), "prompts");
 const PROJECT_CLAUDE_MD = join(process.cwd(), "CLAUDE.md");
 const LEGACY_PROJECT_CLAUDE_MD = join(process.cwd(), ".claude", "CLAUDE.md");
 const CLAUDECLAW_BLOCK_START = "<!-- claudeclaw:managed:start -->";
@@ -296,7 +297,7 @@ async function loadPrompts(): Promise<string> {
 /**
  * Load the heartbeat prompt template.
  * Project-level override takes precedence: place a file at
- * .claude/claudeclaw/prompts/HEARTBEAT.md to fully replace the built-in template.
+ * .claude/caravel/prompts/HEARTBEAT.md to fully replace the built-in template.
  */
 export async function loadHeartbeatPromptTemplate(): Promise<string> {
   const projectOverride = join(PROJECT_PROMPTS_DIR, "HEARTBEAT.md");

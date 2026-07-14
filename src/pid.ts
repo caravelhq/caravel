@@ -1,24 +1,25 @@
 import { writeFile, unlink, readFile } from "fs/promises";
 import { readFileSync } from "fs";
 import { join } from "path";
+import { resolveStateDir } from "./paths";
 
-const PID_FILE = join(process.cwd(), ".claude", "claudeclaw", "daemon.pid");
+const PID_FILE = join(resolveStateDir(), "daemon.pid");
 
 // Substrings that must appear in /proc/<pid>/cmdline for a PID to count as a
-// real claudeclaw daemon. This guards against PID recycling: after an
-// ungraceful shutdown (machine/WSL reboot, SIGKILL) the daemon dies WITHOUT
-// running cleanupPidFile(), so daemon.pid is left behind. On reboot the OS
-// recycles PIDs from low numbers, so that stale number is frequently reused by
-// an unrelated process — a bare `kill(pid, 0)` then reports it "alive",
-// causing start to abort and stop to SIGTERM an innocent process.
-const DAEMON_CMDLINE_MARKERS = ["claudeclaw", "index.ts"];
+// real Caravel daemon. This guards against PID recycling: after an ungraceful
+// shutdown (machine/WSL reboot, SIGKILL) the daemon dies WITHOUT running
+// cleanupPidFile(), so daemon.pid is left behind. On reboot the OS recycles
+// PIDs from low numbers, so that stale number is frequently reused by an
+// unrelated process — a bare `kill(pid, 0)` then reports it "alive", causing
+// start to abort and stop to SIGTERM an innocent process.
+const DAEMON_CMDLINE_MARKERS = ["src/index.ts"];
 
 export function getPidPath(): string {
   return PID_FILE;
 }
 
 /**
- * True if `pid` is alive AND its command line looks like the claudeclaw daemon.
+ * True if `pid` is alive AND its command line looks like the Caravel daemon.
  *
  * Liveness is checked with `kill(pid, 0)`; ownership is then confirmed by
  * reading `/proc/<pid>/cmdline` (Linux/WSL). If /proc is unavailable
@@ -43,7 +44,7 @@ export function isDaemonProcess(pid: number): boolean {
  * Check if a daemon is already running in this directory.
  * If the PID file is stale — process dead OR the PID has been recycled by an
  * unrelated process — it gets cleaned up. Returns the running PID if it is a
- * live claudeclaw daemon, or null.
+ * live Caravel daemon, or null.
  */
 export async function checkExistingDaemon(): Promise<number | null> {
   let raw: string;

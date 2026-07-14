@@ -8,6 +8,7 @@ import { homedir } from "node:os";
 import { transcribeAudioToText } from "../whisper";
 import { resolveSkillPrompt } from "../skills";
 import { mkdir } from "node:fs/promises";
+import { resolveStateDir } from "../paths";
 import { extname, join } from "node:path";
 
 // --- Discord API constants ---
@@ -344,7 +345,7 @@ async function downloadDiscordAttachment(
   attachment: DiscordAttachment,
   type: "image" | "voice",
 ): Promise<string | null> {
-  const dir = join(process.cwd(), ".claude", "claudeclaw", "inbox", "discord");
+  const dir = join(resolveStateDir(), "inbox", "discord");
   await mkdir(dir, { recursive: true });
 
   const response = await fetch(attachment.url);
@@ -1200,7 +1201,7 @@ export async function discord() {
   const config = getSettings().discord;
 
   if (!config.token) {
-    console.error("Discord token not configured. Set discord.token in .claude/claudeclaw/settings.json");
+    console.error("Discord token not configured. Set discord.token in .claude/caravel/settings.json");
     process.exit(1);
   }
 

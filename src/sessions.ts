@@ -1,7 +1,8 @@
 import { join } from "path";
 import { unlink, readdir, rename } from "fs/promises";
+import { resolveStateDir } from "./paths";
 
-const HEARTBEAT_DIR = join(process.cwd(), ".claude", "claudeclaw");
+const HEARTBEAT_DIR = resolveStateDir();
 const SESSION_FILE = join(HEARTBEAT_DIR, "session.json");
 
 export interface GlobalSession {
