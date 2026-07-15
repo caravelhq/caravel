@@ -33,7 +33,7 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
      - Tell the user Node.js is required for the OGG converter helper.
      - Ask them to install Node.js LTS and rerun start, then exit.
 
-3. **Check existing config**: Read `.claude/caravel/settings.json` (if it exists). Determine which sections are already configured:
+3. **Check existing config**: Read `.caravel/settings.json` (if it exists). Determine which sections are already configured:
    - **Heartbeat configured** = `heartbeat.enabled` is `true` AND `heartbeat.prompt` is non-empty
    - **Telegram configured** = `telegram.token` is non-empty
    - **Discord configured** = `discord.token` is non-empty
@@ -109,21 +109,28 @@ Start the heartbeat daemon for this project. Follow these steps exactly:
      - "Allow any specific tools on top of the security level? (e.g. Bash(git:*) to allow only git commands)" (header: "Allow tools", options: "None — use level defaults (Recommended)", "Bash(git:*) — git only", "Bash(git:*) Bash(npm:*) — git + npm")
      - If they pick an option with tools or type custom ones, set `security.allowedTools` to the list.
 
-   Update `.claude/caravel/settings.json` with their answers.
+   Update `.caravel/settings.json` with their answers.
 
 6. **Launch/start action**:
+
+   First, ensure `.caravel/` is in the project's `.gitignore` (settings contain API keys — never commit):
    ```bash
-   mkdir -p .claude/caravel/logs && nohup bun run ${CLAUDE_PLUGIN_ROOT}/src/index.ts start --web > .claude/caravel/logs/daemon.log 2>&1 & echo $!
+   grep -qxF '.caravel/' .gitignore 2>/dev/null || printf '\n.caravel/\n' >> .gitignore
+   ```
+
+   Then launch the daemon:
+   ```bash
+   mkdir -p .caravel/logs && nohup bun run ${CLAUDE_PLUGIN_ROOT}/src/index.ts start --web > .caravel/logs/daemon.log 2>&1 & echo $!
    ```
    Use the description "Starting Caravel server" for this command.
-   Wait 1 second, then check `cat .claude/caravel/logs/daemon.log`. If it contains "Aborted: daemon already running", tell the user and exit.
-   - Read `.claude/caravel/settings.json` for `web.port` (default `4632` if missing) and `web.host` (default `127.0.0.1`).
+   Wait 1 second, then check `cat .caravel/logs/daemon.log`. If it contains "Aborted: daemon already running", tell the user and exit.
+   - Read `.caravel/settings.json` for `web.port` (default `4632` if missing) and `web.host` (default `127.0.0.1`).
    - Then try to open the dashboard directly:
      - Linux: `xdg-open http://<HOST>:<PORT>`
      - macOS: `open http://<HOST>:<PORT>`
      - If open command fails, print the URL clearly so user can open it manually.
 
-7. **Capture session ID**: Read `.claude/caravel/session.json` and extract the `sessionId` field. This is the shared Claude session used by the daemon for heartbeat, jobs, Telegram, and Discord.
+7. **Capture session ID**: Read `.caravel/session.json` and extract the `sessionId` field. This is the shared Claude session used by the daemon for heartbeat, jobs, Telegram, and Discord.
 
 8. **Report**: Print the ASCII art below then show the PID, session, status info, Telegram bot next step, and the Web UI URL.
 
@@ -170,7 +177,7 @@ Defaults: `WEB_HOST=127.0.0.1`, `WEB_PORT=4632` unless changed via settings or `
 
 ## Reference: File Formats
 
-### Settings — `.claude/caravel/settings.json`
+### Settings — `.caravel/settings.json`
 ```json
 {
   "model": "opus",
@@ -231,7 +238,7 @@ Defaults: `WEB_HOST=127.0.0.1`, `WEB_PORT=4632` unless changed via settings or `
 - `heartbeat.enabled` — whether the recurring heartbeat runs
 - `heartbeat.interval` — minutes between heartbeat runs
 - `heartbeat.prompt` — the prompt sent to Claude on each heartbeat. Can be an inline string or a file path ending in `.md`, `.txt`, or `.prompt` (relative to project root). File contents are re-read on each tick, so edits take effect without restarting the daemon.
-- Heartbeat template override (optional) — create `.claude/caravel/prompts/HEARTBEAT.md` to replace the built-in heartbeat template for this project.
+- Heartbeat template override (optional) — create `.caravel/prompts/HEARTBEAT.md` to replace the built-in heartbeat template for this project.
 - `telegram.token` — Telegram bot token from @BotFather
 - `telegram.allowedUserIds` — array of numeric Telegram user IDs allowed to interact
 - `discord.token` — Discord bot token from the Developer Portal
@@ -251,7 +258,7 @@ All levels run without permission prompts (headless). Security is enforced via t
 | `moderate` | All tools | Yes — project dir only |
 | `unrestricted` | All tools | No — full system access |
 
-### Jobs — `.claude/caravel/jobs/<name>.md`
+### Jobs — `.caravel/jobs/<name>.md`
 Jobs are markdown files with cron schedule frontmatter and a prompt body:
 ```markdown
 ---
@@ -262,4 +269,4 @@ Your prompt here. Claude will run this at the scheduled time.
 - Schedule uses standard cron syntax: `minute hour day-of-month month day-of-week`
 - **Timezone-aware**: cron times are evaluated in the configured `timezone`. E.g. `0 9 * * *` with `timezone: "UTC+2"` fires at 9:00 AM local time.
 - The filename (without `.md`) becomes the job name
-- Jobs are loaded at daemon startup from `.claude/caravel/jobs/`
+- Jobs are loaded at daemon startup from `.caravel/jobs/`

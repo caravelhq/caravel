@@ -31,9 +31,9 @@ bun install
 bun run start --web        # starts the daemon + web dashboard on http://127.0.0.1:4632
 ```
 
-All configuration and secrets live in `.claude/caravel/settings.json` (Telegram/Discord tokens, model selection, security level, web host/port). That directory is gitignored — nothing sensitive is ever committed. The first `start` writes a default settings file you can edit.
+All configuration and secrets live in `.caravel/settings.json` (Telegram/Discord tokens, model selection, security level, web host/port). That directory is gitignored — nothing sensitive is ever committed. The first `start` writes a default settings file you can edit.
 
-> **Existing installs:** if you already have a `.claude/claudeclaw/` directory, Caravel detects it automatically and keeps using it — no manual migration needed. New installs land in `.claude/caravel/`. To migrate an existing install, `mv .claude/claudeclaw .claude/caravel`.
+> **Existing ClaudeClaw installs:** if you already have a `.claude/claudeclaw/` directory, Caravel detects it automatically and keeps using it — no manual migration needed. New installs land in `.caravel/`. To migrate an existing install, `mv .claude/claudeclaw .caravel`.
 
 Requirements: [Bun](https://bun.sh) and a compatible coding-agent CLI (e.g. the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)) on your PATH.
 

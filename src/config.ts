@@ -1,5 +1,5 @@
 import { join, isAbsolute } from "path";
-import { mkdir } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { normalizeTimezoneName, resolveTimezoneOffsetMinutes } from "./timezone";
 import { resolveStateDir } from "./paths";
@@ -151,12 +151,26 @@ export interface SttConfig {
 
 let cached: Settings | null = null;
 
+async function ensureGitignore(): Promise<void> {
+  const gitignorePath = join(process.cwd(), ".gitignore");
+  const entry = ".caravel/";
+  try {
+    const existing = await readFile(gitignorePath, "utf-8");
+    if (!existing.split("\n").some((l) => l.trim() === entry)) {
+      await writeFile(gitignorePath, existing.trimEnd() + "\n" + entry + "\n");
+    }
+  } catch {
+    await writeFile(gitignorePath, entry + "\n");
+  }
+}
+
 export async function initConfig(): Promise<void> {
   await mkdir(HEARTBEAT_DIR, { recursive: true });
   await mkdir(JOBS_DIR, { recursive: true });
   await mkdir(LOGS_DIR, { recursive: true });
 
   if (!existsSync(SETTINGS_FILE)) {
+    await ensureGitignore();
     await Bun.write(SETTINGS_FILE, JSON.stringify(DEFAULT_SETTINGS, null, 2) + "\n");
   }
 }

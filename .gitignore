@@ -1,4 +1,5 @@
 .claude
+.caravel
 node_modules
 .codemachine
 AGENTS.md

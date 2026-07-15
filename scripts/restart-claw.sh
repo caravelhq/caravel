@@ -5,8 +5,8 @@
 #
 # NOTE: The CLAUDECLAW_* env vars and the `.claude/plugins/cache/claudeclaw/...`
 # plugin-cache path are legacy names that will be renamed to CARAVEL_* in a
-# future release. The on-disk state directory (.claude/caravel/ or .claude/claudeclaw/
-# for existing installs) is resolved automatically by the daemon — see src/paths.ts.
+# future release. The on-disk state directory (.caravel/ or .claude/claudeclaw/
+# for legacy ClaudeClaw installs) is resolved automatically by the daemon — see src/paths.ts.
 #
 # Configuration (env vars; consuming projects pass via a thin caller):
 #   CLAUDECLAW_PROJECT_DIR    (required) Project root the daemon serves.
@@ -40,7 +40,7 @@ CLAW_REPO="${CLAUDECLAW_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
 BRANCH="${CLAUDECLAW_BRANCH:-local}"
 BUN="${CLAUDECLAW_BUN:-${HOME}/.bun/bin/bun}"
 CLAW_ENTRY="${CLAUDECLAW_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
-LOG_DIR="${CLAUDECLAW_LOG_DIR:-${PROJECT_DIR}/.claude/caravel/logs}"
+LOG_DIR="${CLAUDECLAW_LOG_DIR:-${PROJECT_DIR}/.caravel/logs}"
 WEB_PORT="${CLAUDECLAW_WEB_PORT:-4632}"
 PRESTART_HOOK="${CLAUDECLAW_PRESTART_HOOK:-}"
 SKIP_SYNC="${CLAUDECLAW_SKIP_SYNC:-0}"
@@ -142,7 +142,7 @@ nohup "$BUN" run "$CLAW_ENTRY" start --web > "${LOG_DIR}/daemon.log" 2>&1 &
 
 sleep 1
 if grep -q "daemon started" "${LOG_DIR}/daemon.log" 2>/dev/null; then
-  PID=$(cat "${PROJECT_DIR}/.claude/caravel/daemon.pid" "${PROJECT_DIR}/.claude/claudeclaw/daemon.pid" 2>/dev/null | head -1 || echo "?")
+  PID=$(cat "${PROJECT_DIR}/.caravel/daemon.pid" "${PROJECT_DIR}/.claude/claudeclaw/daemon.pid" 2>/dev/null | head -1 || echo "?")
   echo "Caravel running (PID ${PID})"
   echo "Web UI: http://127.0.0.1:${WEB_PORT}"
 else
