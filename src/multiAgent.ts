@@ -1,7 +1,7 @@
 // Multi-agent task pickup loop (WAL-63 phase 2).
 //
 // Additive module — wired in `commands/start.ts` only when the feature flag
-// `CLAUDECLAW_MULTI_AGENT_RUNNER=1` is set (or settings.multiAgent.enabled is
+// `CARAVEL_MULTI_AGENT_RUNNER=1` is set (or settings.multiAgent.enabled is
 // true). When the flag is off, this module is never imported by the daemon
 // startup path; rolling back to phase-1 behaviour is a single env var flip.
 //
@@ -56,7 +56,7 @@ const DEFAULT_LEASE_MS = 10 * 60 * 1000;
 const DEFAULT_PER_AGENT_CONCURRENCY = 1;
 // How long a terminal/waiting task lives in its bucket before being moved
 // to tasks/archived/<bucket>/. Keeps the working directories small without
-// losing history. Override via CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS.
+// losing history. Override via CARAVEL_MULTI_AGENT_ARCHIVE_DAYS.
 // WAL-63 Phase 1: archival is now gated on `closed.at`, not file mtime.
 // Threshold bumped from 7 → 30 days because closed tasks are the audit
 // trail in the Project view, not just queue cleanup. Active tasks
@@ -1848,7 +1848,7 @@ async function maybeSetGlobalLimitsGate(
 // New predicate:
 //   archive iff:
 //     closed.status is non-null
-//     AND (now - closed.at) > CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS  (default 30)
+//     AND (now - closed.at) > CARAVEL_MULTI_AGENT_ARCHIVE_DAYS  (default 30)
 //
 // Active tasks (closed: null) never archive regardless of age. Closed tasks
 // fade gradually — visible in the Projects view's Closed section for 30 days
@@ -1975,7 +1975,8 @@ async function sweepStaleClaims(
 }
 
 async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
-  const days = readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS);
+  const days = readEnvNumber("CARAVEL_MULTI_AGENT_ARCHIVE_DAYS",
+    readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS));
   if (!Number.isFinite(days) || days <= 0) return;
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
 
@@ -2206,14 +2207,14 @@ export function startMultiAgentRunner(options: MultiAgentOptions = {}): MultiAge
 }
 
 function readEnvAgents(): string[] | null {
-  const raw = process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
+  const raw = process.env.CARAVEL_MULTI_AGENT_AGENTS ?? process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
   if (!raw) return null;
   const list = raw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
   return list.length > 0 ? list : null;
 }
 
 export function isMultiAgentEnabled(): boolean {
-  const flag = process.env.CLAUDECLAW_MULTI_AGENT_RUNNER ?? "";
+  const flag = process.env.CARAVEL_MULTI_AGENT_RUNNER ?? process.env.CLAUDECLAW_MULTI_AGENT_RUNNER ?? "";
   return flag === "1" || flag.toLowerCase() === "true";
 }
 

@@ -13,12 +13,15 @@
 # Idempotent. Safe to re-run.
 #
 # Configuration (env vars; consuming projects pass via a thin caller):
-#   CLAUDECLAW_PROJECT_DIR  (required) Project root that receives the install.
-#   CLAUDECLAW_REPO_DIR     (optional) Path to the claudeclaw repo checkout.
-#                           Default: <project>/repos/claudeclaw
-#   CLAUDECLAW_BRANCH       (optional) Branch to pull from. Default: local
-#   CLAUDECLAW_AGENTS       (optional) Space-separated agent names.
-#                           Default: alice ray adam sam bob mark cliff
+#   CARAVEL_PROJECT_DIR  (required) Project root that receives the install.
+#   CARAVEL_REPO_DIR     (optional) Path to the caravel repo checkout.
+#                        Default: <project>/repos/claudeclaw
+#   CARAVEL_BRANCH       (optional) Branch to pull from. Default: local
+#   CARAVEL_AGENTS       (optional) Space-separated agent names.
+#                        Default: alice ray adam sam bob mark cliff
+#
+# Legacy aliases (still accepted for existing callers):
+#   CLAUDECLAW_PROJECT_DIR, CLAUDECLAW_REPO_DIR, CLAUDECLAW_BRANCH, CLAUDECLAW_AGENTS
 #
 # Args:
 #   --no-pull   Skip the git pull step.
@@ -27,12 +30,18 @@
 
 set -euo pipefail
 
-: "${CLAUDECLAW_PROJECT_DIR:?CLAUDECLAW_PROJECT_DIR must be set (project root)}"
+# Accept new CARAVEL_* names, falling back to legacy CLAUDECLAW_* for existing callers.
+CARAVEL_PROJECT_DIR="${CARAVEL_PROJECT_DIR:-${CLAUDECLAW_PROJECT_DIR:-}}"
+CARAVEL_REPO_DIR="${CARAVEL_REPO_DIR:-${CLAUDECLAW_REPO_DIR:-}}"
+CARAVEL_BRANCH="${CARAVEL_BRANCH:-${CLAUDECLAW_BRANCH:-}}"
+CARAVEL_AGENTS="${CARAVEL_AGENTS:-${CLAUDECLAW_AGENTS:-}}"
 
-PROJECT_DIR="$CLAUDECLAW_PROJECT_DIR"
-CLAW_REPO="${CLAUDECLAW_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
-BRANCH="${CLAUDECLAW_BRANCH:-local}"
-AGENTS_RAW="${CLAUDECLAW_AGENTS:-alice bob ray}"
+: "${CARAVEL_PROJECT_DIR:?CARAVEL_PROJECT_DIR (or CLAUDECLAW_PROJECT_DIR) must be set (project root)}"
+
+PROJECT_DIR="$CARAVEL_PROJECT_DIR"
+CLAW_REPO="${CARAVEL_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
+BRANCH="${CARAVEL_BRANCH:-local}"
+AGENTS_RAW="${CARAVEL_AGENTS:-alice bob ray}"
 read -r -a AGENTS <<<"$AGENTS_RAW"
 
 SRC_DIR="${CLAW_REPO}/multi-agent/template"
@@ -46,7 +55,7 @@ for arg in "$@"; do
     --no-pull) NO_PULL=1 ;;
     --dry-run) DRY_RUN=1 ;;
     -h|--help)
-      sed -n '2,30p' "$0"
+      sed -n '2,32p' "$0"
       exit 0
       ;;
     *)
@@ -65,23 +74,23 @@ run() {
 }
 
 if [[ ! -d "$CLAW_REPO/.git" ]]; then
-  echo "Error: claudeclaw repo not found at $CLAW_REPO" >&2
-  echo "       clone the claudeclaw fork into that path or set CLAUDECLAW_REPO_DIR" >&2
+  echo "Error: caravel repo not found at $CLAW_REPO" >&2
+  echo "       clone the caravel repo into that path or set CARAVEL_REPO_DIR" >&2
   exit 1
 fi
 
 if [[ ! -d "$SRC_DIR" ]]; then
   echo "Error: multi-agent template not found at $SRC_DIR" >&2
-  echo "       are you on the right claudeclaw branch? expected: $BRANCH" >&2
+  echo "       are you on the right branch? expected: $BRANCH" >&2
   exit 1
 fi
 
 if [[ $NO_PULL -eq 0 ]]; then
   CURRENT_BRANCH=$(git -C "$CLAW_REPO" branch --show-current)
   if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
-    echo "claudeclaw is on branch '$CURRENT_BRANCH', expected '$BRANCH' — skipping pull"
+    echo "caravel is on branch '$CURRENT_BRANCH', expected '$BRANCH' — skipping pull"
   else
-    echo "Pulling latest from claudeclaw $BRANCH branch..."
+    echo "Pulling latest from caravel $BRANCH branch..."
     git -C "$CLAW_REPO" pull --ff-only origin "$BRANCH" 2>/dev/null || \
       echo "  (pull skipped — may be offline or up to date)"
   fi

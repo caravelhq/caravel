@@ -188,7 +188,7 @@ function inferProjectFromContext(context: string[]): string | null {
 }
 
 function envAgents(): string[] {
-  const raw = process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
+  const raw = process.env.CARAVEL_MULTI_AGENT_AGENTS ?? process.env.CLAUDECLAW_MULTI_AGENT_AGENTS;
   if (raw) {
     const list = raw.split(/[,\s]+/).map((s) => s.trim()).filter(Boolean);
     if (list.length > 0) return list;

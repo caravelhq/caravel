@@ -3,25 +3,25 @@
 # Caravel source from the configured branch, copies src/ into the plugin
 # cache, then bounces the daemon.
 #
-# NOTE: The CLAUDECLAW_* env vars and the `.claude/plugins/cache/claudeclaw/...`
-# plugin-cache path are legacy names that will be renamed to CARAVEL_* in a
-# future release. The on-disk state directory (.caravel/ or .claude/claudeclaw/
-# for legacy ClaudeClaw installs) is resolved automatically by the daemon — see src/paths.ts.
-#
 # Configuration (env vars; consuming projects pass via a thin caller):
-#   CLAUDECLAW_PROJECT_DIR    (required) Project root the daemon serves.
-#   CLAUDECLAW_REPO_DIR       (optional) claudeclaw repo checkout.
-#                             Default: <project>/repos/claudeclaw
-#   CLAUDECLAW_BRANCH         (optional) Branch to pull. Default: local
-#   CLAUDECLAW_BUN            (optional) bun binary. Default: $HOME/.bun/bin/bun
-#   CLAUDECLAW_PLUGIN_ENTRY   (optional) Plugin cache entry path.
-#                             Default: $HOME/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts
-#   CLAUDECLAW_LOG_DIR        (optional) Daemon log dir.
-#                             Default: <project>/.claude/claudeclaw/logs
-#   CLAUDECLAW_WEB_PORT       (optional) Web UI port (display only). Default: 4632
-#   CLAUDECLAW_PRESTART_HOOK  (optional) Shell command to run before restart
-#                             (e.g. "tailscale up"). Empty = no hook.
-#   CLAUDECLAW_SKIP_SYNC      (optional) "1" to skip the git pull + plugin copy.
+#   CARAVEL_PROJECT_DIR    (required) Project root the daemon serves.
+#   CARAVEL_REPO_DIR       (optional) Caravel repo checkout.
+#                          Default: <project>/repos/claudeclaw
+#   CARAVEL_BRANCH         (optional) Branch to pull. Default: local
+#   CARAVEL_BUN            (optional) bun binary. Default: $HOME/.bun/bin/bun
+#   CARAVEL_PLUGIN_ENTRY   (optional) Plugin cache entry path.
+#                          Default: $HOME/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts
+#   CARAVEL_LOG_DIR        (optional) Daemon log dir.
+#                          Default: <project>/.caravel/logs
+#   CARAVEL_WEB_PORT       (optional) Web UI port (display only). Default: 4632
+#   CARAVEL_PRESTART_HOOK  (optional) Shell command to run before restart
+#                          (e.g. "tailscale up"). Empty = no hook.
+#   CARAVEL_SKIP_SYNC      (optional) "1" to skip the git pull + plugin copy.
+#
+# Legacy aliases (still accepted for existing callers):
+#   CLAUDECLAW_PROJECT_DIR, CLAUDECLAW_REPO_DIR, CLAUDECLAW_BRANCH, CLAUDECLAW_BUN,
+#   CLAUDECLAW_PLUGIN_ENTRY, CLAUDECLAW_LOG_DIR, CLAUDECLAW_WEB_PORT,
+#   CLAUDECLAW_PRESTART_HOOK, CLAUDECLAW_SKIP_SYNC
 #
 # Args:
 #   --stop-only          Stop the daemon, do not restart.
@@ -33,17 +33,28 @@
 
 set -euo pipefail
 
-: "${CLAUDECLAW_PROJECT_DIR:?CLAUDECLAW_PROJECT_DIR must be set (project root)}"
+# Accept new CARAVEL_* names, falling back to legacy CLAUDECLAW_* for existing callers.
+CARAVEL_PROJECT_DIR="${CARAVEL_PROJECT_DIR:-${CLAUDECLAW_PROJECT_DIR:-}}"
+CARAVEL_REPO_DIR="${CARAVEL_REPO_DIR:-${CLAUDECLAW_REPO_DIR:-}}"
+CARAVEL_BRANCH="${CARAVEL_BRANCH:-${CLAUDECLAW_BRANCH:-}}"
+CARAVEL_BUN="${CARAVEL_BUN:-${CLAUDECLAW_BUN:-}}"
+CARAVEL_PLUGIN_ENTRY="${CARAVEL_PLUGIN_ENTRY:-${CLAUDECLAW_PLUGIN_ENTRY:-}}"
+CARAVEL_LOG_DIR="${CARAVEL_LOG_DIR:-${CLAUDECLAW_LOG_DIR:-}}"
+CARAVEL_WEB_PORT="${CARAVEL_WEB_PORT:-${CLAUDECLAW_WEB_PORT:-}}"
+CARAVEL_PRESTART_HOOK="${CARAVEL_PRESTART_HOOK:-${CLAUDECLAW_PRESTART_HOOK:-}}"
+CARAVEL_SKIP_SYNC="${CARAVEL_SKIP_SYNC:-${CLAUDECLAW_SKIP_SYNC:-}}"
 
-PROJECT_DIR="$CLAUDECLAW_PROJECT_DIR"
-CLAW_REPO="${CLAUDECLAW_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
-BRANCH="${CLAUDECLAW_BRANCH:-local}"
-BUN="${CLAUDECLAW_BUN:-${HOME}/.bun/bin/bun}"
-CLAW_ENTRY="${CLAUDECLAW_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
-LOG_DIR="${CLAUDECLAW_LOG_DIR:-${PROJECT_DIR}/.caravel/logs}"
-WEB_PORT="${CLAUDECLAW_WEB_PORT:-4632}"
-PRESTART_HOOK="${CLAUDECLAW_PRESTART_HOOK:-}"
-SKIP_SYNC="${CLAUDECLAW_SKIP_SYNC:-0}"
+: "${CARAVEL_PROJECT_DIR:?CARAVEL_PROJECT_DIR (or CLAUDECLAW_PROJECT_DIR) must be set (project root)}"
+
+PROJECT_DIR="$CARAVEL_PROJECT_DIR"
+CLAW_REPO="${CARAVEL_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
+BRANCH="${CARAVEL_BRANCH:-local}"
+BUN="${CARAVEL_BUN:-${HOME}/.bun/bin/bun}"
+CLAW_ENTRY="${CARAVEL_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
+LOG_DIR="${CARAVEL_LOG_DIR:-${PROJECT_DIR}/.caravel/logs}"
+WEB_PORT="${CARAVEL_WEB_PORT:-4632}"
+PRESTART_HOOK="${CARAVEL_PRESTART_HOOK:-}"
+SKIP_SYNC="${CARAVEL_SKIP_SYNC:-0}"
 
 STOP_ONLY=0
 FOREGROUND=0
@@ -68,7 +79,7 @@ if [[ -n "$PRESTART_HOOK" ]]; then
 fi
 
 if [[ ! -x "$BUN" ]]; then
-  echo "Error: bun not found at $BUN (set CLAUDECLAW_BUN)" >&2
+  echo "Error: bun not found at $BUN (set CARAVEL_BUN)" >&2
   exit 1
 fi
 
@@ -76,14 +87,14 @@ CLAW_SRC_DIR="$(dirname "$CLAW_ENTRY")"
 
 if [[ "$SKIP_SYNC" != "1" ]]; then
   if [[ ! -d "$CLAW_REPO/.git" ]]; then
-    echo "Error: claudeclaw repo not found at $CLAW_REPO" >&2
-    echo "       clone the claudeclaw fork there or set CLAUDECLAW_REPO_DIR" >&2
+    echo "Error: caravel repo not found at $CLAW_REPO" >&2
+    echo "       clone the caravel repo there or set CARAVEL_REPO_DIR" >&2
     exit 1
   fi
 
   CURRENT_BRANCH=$(git -C "$CLAW_REPO" branch --show-current)
   if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
-    echo "Switching claudeclaw repo to $BRANCH branch..."
+    echo "Switching caravel repo to $BRANCH branch..."
     git -C "$CLAW_REPO" checkout "$BRANCH"
   fi
   echo "Pulling latest from $BRANCH branch..."
@@ -92,10 +103,10 @@ if [[ "$SKIP_SYNC" != "1" ]]; then
 
   if [[ ! -d "$CLAW_SRC_DIR" ]]; then
     echo "Error: plugin cache dir not found at $CLAW_SRC_DIR" >&2
-    echo "       set CLAUDECLAW_PLUGIN_ENTRY or install the plugin first" >&2
+    echo "       set CARAVEL_PLUGIN_ENTRY or install the plugin first" >&2
     exit 1
   fi
-  echo "Copying src/ from claudeclaw repo to plugin cache..."
+  echo "Copying src/ from caravel repo to plugin cache..."
   cp -r "$CLAW_REPO/src"/. "$CLAW_SRC_DIR"/
 
   # Bun.build (used at runtime to bundle browser entries like marked) needs

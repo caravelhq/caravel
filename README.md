@@ -68,15 +68,13 @@ This is Caravel's headline feature. Instead of one assistant, you define a roste
 
 ```bash
 # from your project root (the directory the daemon runs in)
-CLAUDECLAW_PROJECT_DIR="$PWD" \
-CLAUDECLAW_REPO_DIR="/path/to/caravel" \
-CLAUDECLAW_AGENTS="alice bob ray" \
+CARAVEL_PROJECT_DIR="$PWD" \
+CARAVEL_REPO_DIR="/path/to/caravel" \
+CARAVEL_AGENTS="alice bob ray" \
   bash /path/to/caravel/scripts/install-multi-agent.sh
 ```
 
-This scaffolds the `/task` skill, the shared task-envelope spec, and per-agent `tasks/` directories. For any agent name that doesn't already have a profile, it seeds an example one (coordinator / builder / researcher) from `multi-agent/template/agents/` so you start with a runnable roster. Edit those profiles — or add your own under `agents/<name>/` — to define your team. Enable the runner with `CLAUDECLAW_MULTI_AGENT_RUNNER=1`.
-
-> The `CLAUDECLAW_*` environment variable names are a known legacy carry-over; they'll be renamed to `CARAVEL_*` in a future release.
+This scaffolds the `/task` skill, the shared task-envelope spec, and per-agent `tasks/` directories. For any agent name that doesn't already have a profile, it seeds an example one (coordinator / builder / researcher) from `multi-agent/template/agents/` so you start with a runnable roster. Edit those profiles — or add your own under `agents/<name>/` — to define your team. Enable the runner with `CARAVEL_MULTI_AGENT_RUNNER=1`.
 
 See [`multi-agent/README.md`](multi-agent/README.md) for the full task-envelope schema and dispatch model.
 

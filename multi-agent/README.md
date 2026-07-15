@@ -77,7 +77,7 @@ The multi-agent runner is a polling loop inside the Caravel daemon. Default tick
 The runner is **off by default**. To enable, set the env var before starting the daemon:
 
 ```bash
-export CLAUDECLAW_MULTI_AGENT_RUNNER=1
+export CARAVEL_MULTI_AGENT_RUNNER=1
 ```
 
 The thin caller `setup/restart-claw.sh` in the assistant repo can set this — uncomment the relevant `export` line in the wrapper if you want it on for that machine.
@@ -86,8 +86,8 @@ Optional overrides:
 
 | Env | Default | Notes |
 |---|---|---|
-| `CLAUDECLAW_MULTI_AGENT_RUNNER` | `0` | `1` or `true` enables the loop |
-| `CLAUDECLAW_MULTI_AGENT_AGENTS` | `alice,ray,adam,sam,bob,mark,cliff` | comma- or space-separated agent names to scan |
+| `CARAVEL_MULTI_AGENT_RUNNER` | `0` | `1` or `true` enables the loop |
+| `CARAVEL_MULTI_AGENT_AGENTS` | `alice,ray,adam,sam,bob,mark,cliff` | comma- or space-separated agent names to scan |
 
 Per-tick cadence and concurrency are currently constants (30s, 1 active task per agent) — promote to env if needed.
 
@@ -95,7 +95,7 @@ Per-tick cadence and concurrency are currently constants (30s, 1 active task per
 
 Three levels, fastest first:
 
-1. **Disable the flag** — set `CLAUDECLAW_MULTI_AGENT_RUNNER=0` (or unset) and restart the daemon. The new code is dormant; no behaviour change.
+1. **Disable the flag** — set `CARAVEL_MULTI_AGENT_RUNNER=0` (or unset) and restart the daemon. The new code is dormant; no behaviour change.
 2. **Revert the wiring** — `git revert <phase-2-commit>` in `repos/claudeclaw`. Leaves `multiAgent.ts` in place but unwired.
 3. **Hard reset** — `git -C repos/claudeclaw reset --hard multi-agent-pre-phase-2`. The `multi-agent-pre-phase-2` tag points at the last commit before the runner extension. Use only if commit history needs to be clean.
 

@@ -351,11 +351,11 @@ export async function start(args: string[] = []) {
   jobs.forEach((j) => console.log(`    - ${j.name} [${j.schedule}]`));
 
   // WAL-63 phase 2: multi-agent task runner. Off by default; opt-in via env.
-  // Rollback: unset CLAUDECLAW_MULTI_AGENT_RUNNER (or set to 0) and restart.
+  // Rollback: unset CARAVEL_MULTI_AGENT_RUNNER (or set to 0) and restart.
   if (isMultiAgentEnabled()) {
     multiAgentHandle = startMultiAgentRunner();
   } else {
-    console.log("  Multi-agent runner: disabled (set CLAUDECLAW_MULTI_AGENT_RUNNER=1 to enable)");
+    console.log("  Multi-agent runner: disabled (set CARAVEL_MULTI_AGENT_RUNNER=1 to enable)");
   }
 
   // --- Mutable state ---

@@ -178,7 +178,7 @@ async function newTask() {
   // result back to the chat that spawned the task. CLI override via --chat
   // wins over the env var so dashboard / scripted dispatchers can supply
   // their own context.
-  const chatId = flag("chat") ?? process.env.CLAUDECLAW_CHAT_ID ?? null;
+  const chatId = flag("chat") ?? process.env.CARAVEL_CHAT_ID ?? process.env.CLAUDECLAW_CHAT_ID ?? null;
   if (chatId && !/^dispatch:/m.test(body)) {
     const dispatchBlock = `\ndispatch:\n  chat_id: ${chatId}\n  chat_ts: ${now}\n`;
     body = body.trimEnd() + "\n" + dispatchBlock;

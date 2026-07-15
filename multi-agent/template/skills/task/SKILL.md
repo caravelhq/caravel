@@ -155,7 +155,7 @@ node .claude/skills/task/script/task.mjs list --agent ray --status open
 node .claude/skills/task/script/task.mjs summary
 ```
 
-The summary now reports five buckets: `open`, `waiting`, `done`, `failed`, `archived`. Tasks older than the daemon's archive threshold (default 7 days, configurable via `CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS`) get swept from done/failed/waiting into `tasks/archived/` flat. Archived envelopes still count for ID-collision avoidance, so retired IDs are never reused.
+The summary now reports five buckets: `open`, `waiting`, `done`, `failed`, `archived`. Tasks older than the daemon's archive threshold (default 7 days, configurable via `CARAVEL_MULTI_AGENT_ARCHIVE_DAYS`) get swept from done/failed/waiting into `tasks/archived/` flat. Archived envelopes still count for ID-collision avoidance, so retired IDs are never reused.
 
 ## Notes for Alice
 

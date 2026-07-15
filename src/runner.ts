@@ -31,8 +31,8 @@ const HEARTBEAT_PROMPT_FILE = join(PROMPTS_DIR, "heartbeat", "HEARTBEAT.md");
 const PROJECT_PROMPTS_DIR = join(resolveStateDir(), "prompts");
 const PROJECT_CLAUDE_MD = join(process.cwd(), "CLAUDE.md");
 const LEGACY_PROJECT_CLAUDE_MD = join(process.cwd(), ".claude", "CLAUDE.md");
-const CLAUDECLAW_BLOCK_START = "<!-- claudeclaw:managed:start -->";
-const CLAUDECLAW_BLOCK_END = "<!-- claudeclaw:managed:end -->";
+const CARAVEL_BLOCK_START = "<!-- claudeclaw:managed:start -->";
+const CARAVEL_BLOCK_END = "<!-- claudeclaw:managed:end -->";
 
 /**
  * Compact configuration.
@@ -129,7 +129,10 @@ function buildChildEnv(
     childEnv.API_TIMEOUT_MS = "3000000";
   }
 
-  if (threadId) childEnv.CLAUDECLAW_CHAT_ID = threadId;
+  if (threadId) {
+    childEnv.CARAVEL_CHAT_ID = threadId;
+    childEnv.CLAUDECLAW_CHAT_ID = threadId; // backward compat for old task.mjs templates
+  }
 
   return childEnv;
 }
@@ -207,9 +210,9 @@ export async function ensureProjectClaudeMd(): Promise<void> {
 
   const promptContent = (await loadPrompts()).trim();
   const managedBlock = [
-    CLAUDECLAW_BLOCK_START,
+    CARAVEL_BLOCK_START,
     promptContent,
-    CLAUDECLAW_BLOCK_END,
+    CARAVEL_BLOCK_END,
   ].join("\n");
 
   let content = "";
@@ -226,9 +229,9 @@ export async function ensureProjectClaudeMd(): Promise<void> {
 
   const normalized = content.trim();
   const hasManagedBlock =
-    normalized.includes(CLAUDECLAW_BLOCK_START) && normalized.includes(CLAUDECLAW_BLOCK_END);
+    normalized.includes(CARAVEL_BLOCK_START) && normalized.includes(CARAVEL_BLOCK_END);
   const managedPattern = new RegExp(
-    `${CLAUDECLAW_BLOCK_START}[\\s\\S]*?${CLAUDECLAW_BLOCK_END}`,
+    `${CARAVEL_BLOCK_START}[\\s\\S]*?${CARAVEL_BLOCK_END}`,
     "m"
   );
 
