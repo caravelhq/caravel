@@ -233,7 +233,7 @@ The dashboard can kill a claimed worker mid-turn. `abortInflightWorker(agent, ta
 
 When any worker encounters an Anthropic API rate or account limit, the runner:
 1. Parses the reset time from the error message (`resets 6:30pm (Pacific/Auckland)`).
-2. Writes a gate file at `.claude/claudeclaw/state/limits-gate.json` with `reset_at`.
+2. Writes a gate file at `.caravel/state/limits-gate.json` with `reset_at`.
 3. Parks the triggering task at `waiting:on:limits`.
 4. Skips all subsequent ticks until the gate clears (checked at tick start; the gate file is deleted automatically when `reset_at` passes).
 
