@@ -23,7 +23,7 @@
   </g>
 
   <!-- ship -->
-  <g transform="translate(150 40)">
+  <g transform="translate(40 40)">
     <!-- masts -->
     <path d="M45 8 V96 M18 24 V90 M72 24 V90" stroke="#eaf2ff" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
     <!-- pennant -->
