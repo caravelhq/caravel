@@ -46,4 +46,5 @@
 
   <!-- wordmark -->
   <text x="240" y="150" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="34" letter-spacing="3" fill="#eaf2ff" font-weight="500">CARAVEL</text>
+  <text x="240" y="160" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="18" letter-spacing="3" fill="#eaf2ff" font-weight="500">your crew, finding the way</text>
 </svg>
