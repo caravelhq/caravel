@@ -18,11 +18,6 @@
 #                          (e.g. "tailscale up"). Empty = no hook.
 #   CARAVEL_SKIP_SYNC      (optional) "1" to skip the git pull + plugin copy.
 #
-# Legacy aliases (still accepted for existing callers):
-#   CLAUDECLAW_PROJECT_DIR, CLAUDECLAW_REPO_DIR, CLAUDECLAW_BRANCH, CLAUDECLAW_BUN,
-#   CLAUDECLAW_PLUGIN_ENTRY, CLAUDECLAW_LOG_DIR, CLAUDECLAW_WEB_PORT,
-#   CLAUDECLAW_PRESTART_HOOK, CLAUDECLAW_SKIP_SYNC
-#
 # Args:
 #   --stop-only          Stop the daemon, do not restart.
 #   --foreground|--attach Run attached in the foreground, streaming logs live
@@ -33,7 +28,6 @@
 
 set -euo pipefail
 
-# Accept new CARAVEL_* names, falling back to legacy CLAUDECLAW_* for existing callers.
 CARAVEL_PROJECT_DIR="${CARAVEL_PROJECT_DIR:-${CLAUDECLAW_PROJECT_DIR:-}}"
 CARAVEL_REPO_DIR="${CARAVEL_REPO_DIR:-${CLAUDECLAW_REPO_DIR:-}}"
 CARAVEL_BRANCH="${CARAVEL_BRANCH:-${CLAUDECLAW_BRANCH:-}}"
@@ -44,7 +38,7 @@ CARAVEL_WEB_PORT="${CARAVEL_WEB_PORT:-${CLAUDECLAW_WEB_PORT:-}}"
 CARAVEL_PRESTART_HOOK="${CARAVEL_PRESTART_HOOK:-${CLAUDECLAW_PRESTART_HOOK:-}}"
 CARAVEL_SKIP_SYNC="${CARAVEL_SKIP_SYNC:-${CLAUDECLAW_SKIP_SYNC:-}}"
 
-: "${CARAVEL_PROJECT_DIR:?CARAVEL_PROJECT_DIR (or CLAUDECLAW_PROJECT_DIR) must be set (project root)}"
+: "${CARAVEL_PROJECT_DIR:?CARAVEL_PROJECT_DIR must be set (project root)}"
 
 PROJECT_DIR="$CARAVEL_PROJECT_DIR"
 CLAW_REPO="${CARAVEL_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"

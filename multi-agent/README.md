@@ -90,8 +90,6 @@ Configuration env vars:
 | `CARAVEL_BRANCH` | `local` | Branch to pull from. |
 | `CARAVEL_AGENTS` | `alice bob ray` | Space-separated agent names to provision. |
 
-Legacy aliases `CLAUDECLAW_*` are still accepted for existing callers.
-
 Flags: `--no-pull` skips the git pull; `--dry-run` shows what would change without writing anything.
 
 ## Enabling the runner
