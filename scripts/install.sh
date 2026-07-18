@@ -131,6 +131,21 @@ _write_caller \
   "--foreground" \
   "Start the Caravel daemon in the foreground (use for WSL auto-start)."
 
+# ─── 5. check claude code plugin ──────────────────────────────────────────
+
+echo ""
+echo "  Checking Claude Code plugin..."
+
+# The default plugin cache path. CARAVEL_PLUGIN_ENTRY overrides it.
+PLUGIN_ENTRY="${CARAVEL_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
+if [[ -f "$PLUGIN_ENTRY" ]]; then
+  echo "  Plugin cache found — OK"
+  PLUGIN_MISSING=0
+else
+  echo "  Plugin cache NOT found at: $PLUGIN_ENTRY"
+  PLUGIN_MISSING=1
+fi
+
 # ─── done ─────────────────────────────────────────────────────────────────
 
 cat <<MSG
@@ -139,13 +154,6 @@ cat <<MSG
 
   Your Caravel workspace is at:
     ${WORKDIR}
-
-  Start your crew:
-    cd ${WORKDIR}
-    bash restart-caravel.sh
-
-  Then open the dashboard:
-    http://127.0.0.1:4632
 
   Customise your roster (the example profiles are a starting point):
     ${WORKDIR}/agents/alice/CLAUDE.md   <- the coordinator
@@ -156,3 +164,32 @@ cat <<MSG
     Update the symlink: repos/caravel -> /new/path/to/the/repo
 
 MSG
+
+if [[ $PLUGIN_MISSING -eq 1 ]]; then
+  cat <<MSG
+  ┌─ Before you can start the daemon ─────────────────────────────────────────┐
+  │                                                                            │
+  │  The Claude Code plugin (claudeclaw) is not installed on this machine.    │
+  │                                                                            │
+  │  1. Open a Claude Code conversation.                                       │
+  │  2. Type:  /plugin install claudeclaw                                      │
+  │  3. Once installed, come back here and run:                                │
+  │                                                                            │
+  │       cd ${WORKDIR}
+  │       bash restart-caravel.sh                                              │
+  │                                                                            │
+  │  The daemon syncs the plugin cache with Caravel's source on every start.  │
+  └────────────────────────────────────────────────────────────────────────────┘
+
+MSG
+else
+  cat <<MSG
+  Start your crew:
+    cd ${WORKDIR}
+    bash restart-caravel.sh
+
+  Dashboard:
+    http://127.0.0.1:4632
+
+MSG
+fi

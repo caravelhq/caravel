@@ -40,7 +40,11 @@ CARAVEL_AGENTS="${CARAVEL_AGENTS:-${CLAUDECLAW_AGENTS:-}}"
 
 PROJECT_DIR="$CARAVEL_PROJECT_DIR"
 CLAW_REPO="${CARAVEL_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
-BRANCH="${CARAVEL_BRANCH:-local}"
+if [[ -n "${CARAVEL_BRANCH:-}" ]]; then
+  BRANCH="$CARAVEL_BRANCH"
+else
+  BRANCH="$(git -C "$CLAW_REPO" branch --show-current 2>/dev/null || echo "master")"
+fi
 AGENTS_RAW="${CARAVEL_AGENTS:-alice bob ray}"
 read -r -a AGENTS <<<"$AGENTS_RAW"
 

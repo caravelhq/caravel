@@ -42,7 +42,13 @@ CARAVEL_SKIP_SYNC="${CARAVEL_SKIP_SYNC:-${CLAUDECLAW_SKIP_SYNC:-}}"
 
 PROJECT_DIR="$CARAVEL_PROJECT_DIR"
 CLAW_REPO="${CARAVEL_REPO_DIR:-${PROJECT_DIR}/repos/claudeclaw}"
-BRANCH="${CARAVEL_BRANCH:-local}"
+# When CARAVEL_BRANCH is not set, track the repo's current branch rather than
+# defaulting to a hardcoded name ('local') that won't exist on a fresh clone.
+if [[ -n "${CARAVEL_BRANCH:-}" ]]; then
+  BRANCH="$CARAVEL_BRANCH"
+else
+  BRANCH="$(git -C "$CLAW_REPO" branch --show-current 2>/dev/null || echo "master")"
+fi
 BUN="${CARAVEL_BUN:-${HOME}/.bun/bin/bun}"
 CLAW_ENTRY="${CARAVEL_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
 LOG_DIR="${CARAVEL_LOG_DIR:-${PROJECT_DIR}/.caravel/logs}"
@@ -87,7 +93,8 @@ if [[ "$SKIP_SYNC" != "1" ]]; then
   fi
 
   CURRENT_BRANCH=$(git -C "$CLAW_REPO" branch --show-current)
-  if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
+  if [[ -n "${CARAVEL_BRANCH:-}" && "$CURRENT_BRANCH" != "$BRANCH" ]]; then
+    # Only switch branches when explicitly requested via CARAVEL_BRANCH.
     echo "Switching caravel repo to $BRANCH branch..."
     git -C "$CLAW_REPO" checkout "$BRANCH"
   fi
