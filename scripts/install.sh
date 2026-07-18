@@ -139,18 +139,18 @@ _write_caller \
   "--foreground" \
   "Start the Caravel daemon in the foreground (use for WSL auto-start)."
 
-# ─── 5. check claude code plugin (informational) ──────────────────────────
+# ─── 5. check claude code cli (required for workers) ──────────────────────
 
 echo ""
-echo "  Checking Claude Code plugin (optional)..."
+echo "  Checking Claude Code CLI (required)..."
 
-PLUGIN_CACHE="${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts"
-if [[ -f "$PLUGIN_CACHE" ]]; then
-  echo "  Found — daemon will sync Caravel source into the Claude Code plugin cache."
-  PLUGIN_PRESENT=1
+CLAUDE_BIN="$(command -v claude 2>/dev/null || true)"
+if [[ -n "$CLAUDE_BIN" ]]; then
+  echo "  Found: $CLAUDE_BIN"
+  CLAUDE_MISSING=0
 else
-  echo "  Not found — daemon will run directly from the repo source (no plugin needed)."
-  PLUGIN_PRESENT=0
+  echo "  NOT FOUND — 'claude' is not on PATH."
+  CLAUDE_MISSING=1
 fi
 
 # ─── done ─────────────────────────────────────────────────────────────────
@@ -172,22 +172,32 @@ cat <<MSG
 
 MSG
 
-cat <<MSG
+if [[ $CLAUDE_MISSING -eq 1 ]]; then
+  cat <<MSG
+  ┌─ Claude Code CLI required ─────────────────────────────────────────────────┐
+  │                                                                             │
+  │  The 'claude' command is not on your PATH.                                  │
+  │  Caravel workers run as 'claude -p ...' subprocesses — without it, no      │
+  │  tasks will execute.                                                        │
+  │                                                                             │
+  │  Install Claude Code CLI:  https://claude.ai/download                      │
+  │  Then authenticate:        claude login                                     │
+  │                                                                             │
+  │  Once done, run:                                                            │
+  │    cd ${WORKDIR}
+  │    bash restart-caravel.sh                                                  │
+  │                                                                             │
+  └─────────────────────────────────────────────────────────────────────────────┘
+
+MSG
+else
+  cat <<MSG
   Start your crew:
     cd ${WORKDIR}
     bash restart-caravel.sh
 
   Dashboard:
     http://127.0.0.1:4632
-
-MSG
-
-if [[ $PLUGIN_PRESENT -eq 0 ]]; then
-  cat <<MSG
-  Note: Claude Code plugin not found — the daemon will run from repo source directly.
-  This works fine for any agent CLI. If you later install the claudeclaw plugin
-  (/plugin install claudeclaw in a Claude Code session), the daemon will sync to
-  the plugin cache automatically on next start.
 
 MSG
 fi

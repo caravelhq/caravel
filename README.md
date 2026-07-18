@@ -35,22 +35,16 @@ All configuration and secrets live in `.caravel/settings.json` (Telegram/Discord
 
 > **Existing ClaudeClaw installs:** if you already have a `.claude/claudeclaw/` directory, Caravel detects it automatically and keeps using it — no manual migration needed. New installs land in `.caravel/`. To migrate an existing install, `mv .claude/claudeclaw .caravel`.
 
-Requirements: [Bun](https://bun.sh) and a compatible coding-agent CLI (e.g. the [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)) on your PATH.
+Requirements: [Bun](https://bun.sh) and the [Claude Code CLI](https://claude.ai/download) (`claude`) on your PATH. Caravel spawns workers as `claude -p ...` subprocesses — the Claude Code CLI is required; alternative agent CLIs are not tested or supported.
 
-## Install as a plugin
+## Install as a plugin *(optional, future)*
 
 ```bash
 claude plugin marketplace add caravelhq/caravel
 claude plugin install caravel
 ```
 
-Then open a session and run:
-
-```
-/caravel:start
-```
-
-The setup wizard walks you through model, heartbeat, Telegram, Discord, and security, then your daemon is live with a web dashboard.
+The plugin install is an alternative deployment path — it is not required for the multi-agent workflow. Running from source (above) is the primary, tested path. The plugin may not yet be available in all regions.
 
 > Migrating from a ClaudeClaw install? The command namespace moves from `/claudeclaw:*` to `/caravel:*` on reinstall. Keep the old plugin installed alongside during transition if you rely on the old commands.
 
