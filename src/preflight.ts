@@ -19,26 +19,15 @@ import { homedir, tmpdir } from "os";
 import { fileURLToPath } from "url";
 
 // ── Plugin repos to install (one plugin per repo) ───────────────────
-const PLUGINS = [
-  "https://github.com/SawyerHood/dev-browser",
-  "https://github.com/thedotmack/claude-mem",
-  "https://github.com/obra/superpowers-marketplace",
-  // Add more repos here:
-  // "https://github.com/user/repo",
-];
+// Empty by default — Caravel does not auto-install third-party plugins.
+// Add GitHub repo URLs here to install on first run:
+// "https://github.com/user/repo",
+const PLUGINS: string[] = [];
 
 // ── Cherry-pick from anthropics/claude-plugins-official ─────────────
-const OFFICIAL_PLUGINS = [
-  "ralph-loop",
-  "hookify",
-  "code-review",
-  "pr-review-toolkit",
-  "commit-commands",
-  "plugin-dev",
-  // Add more plugin names here (must match names in marketplace.json):
-  // "typescript-lsp",
-  // "playwright",
-];
+// Empty by default. Add plugin names to install from the official marketplace:
+// "typescript-lsp", "playwright", etc.
+const OFFICIAL_PLUGINS: string[] = [];
 
 // ── Config ──────────────────────────────────────────────────────────
 const OFFICIAL_REPO = "https://github.com/anthropics/claude-plugins-official";
