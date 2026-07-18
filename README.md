@@ -50,13 +50,19 @@ The plugin install is an alternative deployment path — it is not required for 
 
 ## Remote access via Tailscale
 
-The dashboard binds to `http://127.0.0.1:4632` by default — localhost only. To access it from your phone, tablet, or any other machine on your [Tailscale](https://tailscale.com) network, run this once on the machine running the daemon:
+The dashboard binds to `http://127.0.0.1:4632` by default — localhost only. To access it from your phone, tablet, or any other machine on your [Tailscale](https://tailscale.com) network:
 
 ```bash
+# 1. Allow your user to manage Tailscale without sudo (Linux — run once):
+sudo tailscale set --operator=$USER
+
+# 2. Expose the dashboard via Tailscale (run once, persists across reboots):
 tailscale serve http://127.0.0.1:4632
 ```
 
 The dashboard is then available at `https://<machine-name>.<tailnet>.ts.net` from every device on your tailnet. Tailscale handles HTTPS automatically — no cert setup required.
+
+> **macOS / Windows:** the `--operator` step is not needed. Start from step 2.
 
 **Auto-connect before the daemon starts.** If you need Tailscale to reconnect on reboot before workers can reach the network, uncomment this line in your workspace `restart-caravel.sh`:
 
