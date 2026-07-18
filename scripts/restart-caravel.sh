@@ -103,27 +103,29 @@ if [[ "$SKIP_SYNC" != "1" ]]; then
     echo "  (pull skipped — may be offline or up to date)"
 
   if [[ ! -d "$CLAW_SRC_DIR" ]]; then
-    echo "Error: plugin cache dir not found at $CLAW_SRC_DIR" >&2
-    echo "       set CARAVEL_PLUGIN_ENTRY or install the plugin first" >&2
-    exit 1
-  fi
-  echo "Copying src/ from caravel repo to plugin cache..."
-  cp -r "$CLAW_REPO/src"/. "$CLAW_SRC_DIR"/
-
-  # Bun.build (used at runtime to bundle browser entries like marked) needs
-  # to resolve dependencies declared in the repo's package.json. The plugin
-  # cache has the manifest but no node_modules — symlink to the repo's
-  # install so we don't duplicate the dependency tree.
-  CLAW_CACHE_ROOT="$(dirname "$CLAW_SRC_DIR")"
-  if [[ -d "$CLAW_REPO/node_modules" ]]; then
-    if [[ ! -e "$CLAW_CACHE_ROOT/node_modules" ]] || \
-       [[ "$(readlink "$CLAW_CACHE_ROOT/node_modules" 2>/dev/null)" != "$CLAW_REPO/node_modules" ]]; then
-      echo "Linking node_modules into plugin cache..."
-      rm -rf "$CLAW_CACHE_ROOT/node_modules"
-      ln -s "$CLAW_REPO/node_modules" "$CLAW_CACHE_ROOT/node_modules"
-    fi
+    echo "Plugin cache not found — running daemon from repo source directly."
+    CLAW_ENTRY="$CLAW_REPO/src/index.ts"
+    CLAW_SRC_DIR="$CLAW_REPO/src"
   else
-    echo "  (warning: $CLAW_REPO/node_modules missing — run 'bun install' in the repo)"
+    echo "Copying src/ from caravel repo to plugin cache..."
+    cp -r "$CLAW_REPO/src"/. "$CLAW_SRC_DIR"/
+  fi
+
+  # When running from the plugin cache (not from repo source directly),
+  # symlink the repo's node_modules into the cache root so Bun.build can
+  # resolve dependencies without duplicating the dependency tree.
+  if [[ "$CLAW_SRC_DIR" != "$CLAW_REPO/src" ]]; then
+    CLAW_CACHE_ROOT="$(dirname "$CLAW_SRC_DIR")"
+    if [[ -d "$CLAW_REPO/node_modules" ]]; then
+      if [[ ! -e "$CLAW_CACHE_ROOT/node_modules" ]] || \
+         [[ "$(readlink "$CLAW_CACHE_ROOT/node_modules" 2>/dev/null)" != "$CLAW_REPO/node_modules" ]]; then
+        echo "Linking node_modules into plugin cache..."
+        rm -rf "$CLAW_CACHE_ROOT/node_modules"
+        ln -s "$CLAW_REPO/node_modules" "$CLAW_CACHE_ROOT/node_modules"
+      fi
+    else
+      echo "  (warning: $CLAW_REPO/node_modules missing — run 'bun install' in the repo)"
+    fi
   fi
 fi
 
