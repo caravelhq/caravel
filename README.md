@@ -57,7 +57,7 @@ The dashboard binds to `http://127.0.0.1:4632` by default — localhost only. To
 sudo tailscale set --operator=$USER
 
 # 2. Expose the dashboard via Tailscale (run once, persists across reboots):
-tailscale serve http://127.0.0.1:4632
+tailscale serve -bg http://127.0.0.1:4632
 ```
 
 The dashboard is then available at `https://<machine-name>.<tailnet>.ts.net` from every device on your tailnet. Tailscale handles HTTPS automatically — no cert setup required.

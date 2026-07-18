@@ -175,7 +175,7 @@ MSG
 cat <<'MSG'
   Optional — access the dashboard from your phone or other devices:
     sudo tailscale set --operator=$USER   # Linux only, run once
-    tailscale serve http://127.0.0.1:4632
+    tailscale serve -bg http://127.0.0.1:4632
 
   To auto-connect Tailscale before the daemon starts, uncomment this line
   in your restart-caravel.sh:
