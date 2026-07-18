@@ -103,6 +103,14 @@ _write_caller() {
     printf 'export CARAVEL_PROJECT_DIR="$WORKDIR"\n'
     printf 'export CARAVEL_REPO_DIR="${WORKDIR}/repos/caravel"\n'
     printf 'export CARAVEL_MULTI_AGENT_RUNNER=1\n\n'
+    printf '# Run from the Claude Code plugin cache when present (keeps Claude Code workers in\n'
+    printf '# sync with this fork); fall back to running from the repo source directly.\n'
+    printf '# This means the daemon works whether or not you have Claude Code installed.\n'
+    printf '_PLUGIN_CACHE="${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts"\n'
+    printf 'if [[ ! -f "$_PLUGIN_CACHE" ]]; then\n'
+    printf '  export CARAVEL_PLUGIN_ENTRY="${CARAVEL_REPO_DIR}/src/index.ts"\n'
+    printf '  export CARAVEL_SKIP_SYNC=1\n'
+    printf 'fi\n\n'
     printf '# Uncomment to run a command before the daemon starts (e.g. connect Tailscale):\n'
     printf '# export CARAVEL_PRESTART_HOOK="tailscale up"\n\n'
     printf '# Source LiteLLM / provider API keys if present:\n'
@@ -131,19 +139,18 @@ _write_caller \
   "--foreground" \
   "Start the Caravel daemon in the foreground (use for WSL auto-start)."
 
-# ─── 5. check claude code plugin ──────────────────────────────────────────
+# ─── 5. check claude code plugin (informational) ──────────────────────────
 
 echo ""
-echo "  Checking Claude Code plugin..."
+echo "  Checking Claude Code plugin (optional)..."
 
-# The default plugin cache path. CARAVEL_PLUGIN_ENTRY overrides it.
-PLUGIN_ENTRY="${CARAVEL_PLUGIN_ENTRY:-${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts}"
-if [[ -f "$PLUGIN_ENTRY" ]]; then
-  echo "  Plugin cache found — OK"
-  PLUGIN_MISSING=0
+PLUGIN_CACHE="${HOME}/.claude/plugins/cache/claudeclaw/claudeclaw/1.0.0/src/index.ts"
+if [[ -f "$PLUGIN_CACHE" ]]; then
+  echo "  Found — daemon will sync Caravel source into the Claude Code plugin cache."
+  PLUGIN_PRESENT=1
 else
-  echo "  Plugin cache NOT found at: $PLUGIN_ENTRY"
-  PLUGIN_MISSING=1
+  echo "  Not found — daemon will run directly from the repo source (no plugin needed)."
+  PLUGIN_PRESENT=0
 fi
 
 # ─── done ─────────────────────────────────────────────────────────────────
@@ -165,31 +172,22 @@ cat <<MSG
 
 MSG
 
-if [[ $PLUGIN_MISSING -eq 1 ]]; then
-  cat <<MSG
-  ┌─ Before you can start the daemon ─────────────────────────────────────────┐
-  │                                                                            │
-  │  The Claude Code plugin (claudeclaw) is not installed on this machine.    │
-  │                                                                            │
-  │  1. Open a Claude Code conversation.                                       │
-  │  2. Type:  /plugin install claudeclaw                                      │
-  │  3. Once installed, come back here and run:                                │
-  │                                                                            │
-  │       cd ${WORKDIR}
-  │       bash restart-caravel.sh                                              │
-  │                                                                            │
-  │  The daemon syncs the plugin cache with Caravel's source on every start.  │
-  └────────────────────────────────────────────────────────────────────────────┘
-
-MSG
-else
-  cat <<MSG
+cat <<MSG
   Start your crew:
     cd ${WORKDIR}
     bash restart-caravel.sh
 
   Dashboard:
     http://127.0.0.1:4632
+
+MSG
+
+if [[ $PLUGIN_PRESENT -eq 0 ]]; then
+  cat <<MSG
+  Note: Claude Code plugin not found — the daemon will run from repo source directly.
+  This works fine for any agent CLI. If you later install the claudeclaw plugin
+  (/plugin install claudeclaw in a Claude Code session), the daemon will sync to
+  the plugin cache automatically on next start.
 
 MSG
 fi
