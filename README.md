@@ -48,6 +48,24 @@ The plugin install is an alternative deployment path — it is not required for 
 
 > Migrating from a ClaudeClaw install? The command namespace moves from `/claudeclaw:*` to `/caravel:*` on reinstall. Keep the old plugin installed alongside during transition if you rely on the old commands.
 
+## Remote access via Tailscale
+
+The dashboard binds to `http://127.0.0.1:4632` by default — localhost only. To access it from your phone, tablet, or any other machine on your [Tailscale](https://tailscale.com) network, run this once on the machine running the daemon:
+
+```bash
+tailscale serve http://127.0.0.1:4632
+```
+
+The dashboard is then available at `https://<machine-name>.<tailnet>.ts.net` from every device on your tailnet. Tailscale handles HTTPS automatically — no cert setup required.
+
+**Auto-connect before the daemon starts.** If you need Tailscale to reconnect on reboot before workers can reach the network, uncomment this line in your workspace `restart-caravel.sh`:
+
+```bash
+export CARAVEL_PRESTART_HOOK="tailscale up"
+```
+
+The pre-start hook runs once, before the daemon starts, every time you call `restart-caravel.sh`.
+
 ## Multi-agent mode
 
 This is Caravel's headline feature. Instead of one assistant, you define a roster of agents — each with its own identity, rules, and memory — and dispatch work to them as tasks. A coordinator agent triages requests, hands tasks to specialists, and consolidates the results. The dashboard shows every agent's queue, and tasks flow through `open → claimed → done/failed/waiting` buckets on disk.

@@ -172,6 +172,16 @@ cat <<MSG
 
 MSG
 
+cat <<'MSG'
+  Optional — access the dashboard from your phone or other devices:
+    tailscale serve http://127.0.0.1:4632
+
+  To auto-connect Tailscale before the daemon starts, uncomment this line
+  in your restart-caravel.sh:
+    export CARAVEL_PRESTART_HOOK="tailscale up"
+
+MSG
+
 if [[ $CLAUDE_MISSING -eq 1 ]]; then
   cat <<MSG
   ┌─ Claude Code CLI required ─────────────────────────────────────────────────┐
