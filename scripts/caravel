@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# caravel — start, stop, or restart the Caravel multi-agent daemon.
+# caravel — manage the Caravel multi-agent daemon.
 #
 # Usage:
+#   bash scripts/caravel install     # set up a workspace (run once after clone)
 #   bash scripts/caravel start       # start (or restart) the daemon
 #   bash scripts/caravel stop        # stop the daemon
 #   bash scripts/caravel --foreground  # start attached, streaming logs
 #   bash scripts/caravel --help
 #
 # Standalone-friendly: when run from within the cloned repo
-# (e.g. `bash scripts/caravel start` after `cd caravel`),
 # CARAVEL_PROJECT_DIR and CARAVEL_REPO_DIR default to the repo root.
-# For consuming projects, pass CARAVEL_PROJECT_DIR explicitly or via a thin
-# caller script — the same env vars supported by scripts/restart-claw.sh apply.
+# For workspaces set up by scripts/install.sh, use the generated
+# restart-caravel.sh / start-caravel.sh at the workspace root instead.
 
 set -euo pipefail
 
@@ -24,6 +24,7 @@ export CARAVEL_REPO_DIR="${CARAVEL_REPO_DIR:-$REPO_ROOT}"
 ARGS=()
 for arg in "$@"; do
   case "$arg" in
+    install) exec bash "$SCRIPT_DIR/install.sh" ;;
     start) ;;             # default behaviour — no-op flag
     stop) ARGS+=("--stop-only") ;;
     *) ARGS+=("$arg") ;;

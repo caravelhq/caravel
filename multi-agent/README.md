@@ -65,27 +65,66 @@ Full schema: `template/shared/task-envelope.md`.
 
 ## Install
 
-From the Caravel repo (or the thin wrapper in the consuming project):
+### Fresh setup (recommended)
+
+After cloning the Caravel repo, run the interactive installer:
 
 ```bash
-CARAVEL_PROJECT_DIR=/path/to/project bash scripts/install-multi-agent.sh
+git clone https://github.com/caravelhq/caravel.git
+cd caravel
+bun install
+bash scripts/install.sh     # or: bash scripts/caravel install
 ```
 
-The install script:
-1. (Optional) Pulls latest from the `local` branch of the Caravel repo.
-2. Copies `template/skills/task/` → `<project>/.claude/skills/task/`.
-3. Copies `template/shared/` → `<project>/agents/_shared/` (schema, examples, and shared rules).
-4. For each known agent, ensures `agents/<name>/tasks/{open,done,failed,waiting}/` exists and creates an empty `journal.ndjson` if missing.
-5. Seeds `agent.json` and `CLAUDE.md` from `template/agents/<name>/` for any agent that has a matching template but no existing profile — never overwrites existing profiles.
-6. Reports what changed.
+The installer asks for a workspace directory (default: `~/caravel-workspace`), then:
 
-The script is idempotent — re-running it after template edits just refreshes the skill and shared files.
+1. Creates the workspace directory (or uses an existing one).
+2. Links the Caravel repo into `<workspace>/repos/caravel/`.
+3. Seeds example agent profiles (`alice`, `bob`, `ray`) with task queues — never overwrites existing profiles.
+4. Installs the `/task` skill into `<workspace>/.claude/skills/`.
+5. Generates `restart-caravel.sh` and `start-caravel.sh` at the workspace root.
 
-Configuration env vars:
+After install, your workspace looks like:
+
+```
+~/caravel-workspace/
+  agents/
+    alice/         ← coordinator
+    bob/           ← specialist
+    ray/           ← researcher
+    _shared/       ← shared rules and envelope schema
+  .claude/
+    skills/
+      task/        ← the /task skill
+  repos/
+    caravel -> /path/to/cloned/repo    ← symlink
+  restart-caravel.sh   ← start / restart the daemon
+  start-caravel.sh     ← foreground mode (WSL auto-start)
+```
+
+Start the daemon from your workspace:
+
+```bash
+cd ~/caravel-workspace
+bash restart-caravel.sh
+# Dashboard: http://127.0.0.1:4632
+```
+
+### Refreshing the task system after a template update
+
+The low-level install script can be re-run at any time to refresh the skill and shared rules without touching your agent profiles:
+
+```bash
+CARAVEL_PROJECT_DIR=/path/to/workspace \
+CARAVEL_REPO_DIR=/path/to/workspace/repos/caravel \
+  bash scripts/install-multi-agent.sh --no-pull
+```
+
+The script is idempotent — it never overwrites existing `agent.json` or `CLAUDE.md` files. Configuration env vars:
 
 | Var | Default | Notes |
 |---|---|---|
-| `CARAVEL_PROJECT_DIR` | — | **Required.** Project root that receives the install. |
+| `CARAVEL_PROJECT_DIR` | — | **Required.** Workspace root that receives the install. |
 | `CARAVEL_REPO_DIR` | `<project>/repos/claudeclaw` | Path to the Caravel repo checkout. |
 | `CARAVEL_BRANCH` | `local` | Branch to pull from. |
 | `CARAVEL_AGENTS` | `alice bob ray` | Space-separated agent names to provision. |
@@ -94,13 +133,13 @@ Flags: `--no-pull` skips the git pull; `--dry-run` shows what would change witho
 
 ## Enabling the runner
 
-The multi-agent runner is a polling loop inside the Caravel daemon. It is **off by default**. To enable it, set the env var before starting the daemon:
+The multi-agent runner is a polling loop inside the Caravel daemon. It is **off by default**. The generated `restart-caravel.sh` script enables it automatically via:
 
 ```bash
 export CARAVEL_MULTI_AGENT_RUNNER=1
 ```
 
-The thin caller `setup/restart-claw.sh` in the consuming project can set this — uncomment the relevant `export` line in the wrapper.
+If you use a custom caller, add that export before starting the daemon.
 
 Optional overrides:
 
