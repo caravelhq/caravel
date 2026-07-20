@@ -22,20 +22,23 @@
     <circle cx="250" cy="20" r="0.8"/>
   </g>
 
-  <!-- ship -->
-  <g transform="translate(40 40)">
+  <!-- ship: caravela latina — three lateen sails, raked masts, high sterncastle. Bow left, stern right. -->
+  <g transform="translate(27 47)">
     <!-- masts -->
-    <path d="M45 8 V96 M18 24 V90 M72 24 V90" stroke="#eaf2ff" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
+    <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="#eaf2ff" stroke-width="1.6" stroke-linecap="round" opacity="0.6"/>
+    <!-- yards: long spars running low-forward to high-aft -->
+    <path d="M12 59 L52 24 M28 45 L80 6 M64 53 L102 22" stroke="#eaf2ff" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>
+    <!-- lateen sails -->
+    <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="url(#sail)" opacity="0.72"/>
+    <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="url(#sail)"/>
+    <path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="url(#sail)" opacity="0.85"/>
     <!-- pennant -->
-    <path d="M45 4 h18 l-5 4 l5 4 h-18 Z" fill="#eaf2ff"/>
-    <!-- sails -->
-    <path d="M45 10 C64 22 64 54 45 66 Z" fill="url(#sail)"/>
-    <path d="M45 10 C26 22 26 54 45 66 Z" fill="url(#sail)" opacity="0.82"/>
-    <path d="M18 26 C32 34 32 60 18 68 Z" fill="url(#sail)" opacity="0.9"/>
-    <path d="M72 26 C58 34 58 60 72 68 Z" fill="url(#sail)" opacity="0.9"/>
+    <path d="M58 14 h13 l-4 3 l4 3 h-13 Z" fill="#eaf2ff"/>
+    <!-- sterncastle -->
+    <path d="M82 70 V60 H102 L100 70 Z" fill="#eaf2ff" opacity="0.9"/>
     <!-- hull -->
-    <path d="M2 90 h86 l-13 20 a10 10 0 0 1 -8 4 H23 a10 10 0 0 1 -8 -4 Z" fill="#eaf2ff"/>
-    <path d="M2 90 h86 l-3 5 H5 Z" fill="#1E76FE" opacity="0.35"/>
+    <path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="#eaf2ff"/>
+    <path d="M16 70 H104 L101 75 H19 Z" fill="#1E76FE" opacity="0.35"/>
   </g>
 
   <!-- waves -->
