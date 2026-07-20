@@ -337,14 +337,11 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/icon.svg") {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 <rect width="512" height="512" rx="96" fill="#1E76FE"/>
-<g transform="translate(140 120)" fill="none">
-<path d="M116 24 V300 M56 84 V276 M176 84 V276" stroke="#eaf2ff" stroke-width="9" stroke-linecap="round" opacity="0.65"/>
-<path d="M116 12 h52 l-14 12 l14 12 h-52 Z" fill="#eaf2ff"/>
-<path d="M116 30 C168 62 168 176 116 208 Z" fill="#eaf2ff"/>
-<path d="M116 30 C64 62 64 176 116 208 Z" fill="#eaf2ff" opacity="0.8"/>
-<path d="M56 90 C96 110 96 190 56 210 Z" fill="#eaf2ff" opacity="0.9"/>
-<path d="M176 90 C136 110 136 190 176 210 Z" fill="#eaf2ff" opacity="0.9"/>
-<path d="M8 276 h216 l-34 52 a26 26 0 0 1 -20 10 H62 a26 26 0 0 1 -20 -10 Z" fill="#eaf2ff"/>
+<g transform="translate(39 90) scale(6.8)" fill="none">
+<path d="M31 34 V6 M48 34 V14" stroke="#eaf2ff" stroke-width="1.6" stroke-linecap="round" opacity="0.55"/>
+<path d="M36 25 L58 13 Q61 23 56 31 Q46 29 36 25 Z" fill="#eaf2ff" opacity="0.68"/>
+<path d="M12 20 L42 4 Q49 18 40 31 Q26 27 12 20 Z" fill="#eaf2ff"/>
+<path d="M6 34 H58 L52 43 Q49 45 45 45 H19 Q15 45 12 43 Z" fill="#eaf2ff"/>
 </g>
 </svg>`;
         return new Response(svg, { headers: { "Content-Type": "image/svg+xml" } });

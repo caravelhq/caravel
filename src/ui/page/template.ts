@@ -151,17 +151,23 @@ ${pageStyles}
     <section class="hero">
       <div class="logo-art" role="img" aria-label="Caravel ship logo">
         <svg class="logo-ship" viewBox="0 0 120 96" width="120" height="96" fill="none" aria-hidden="true">
+          <!-- Caravela latina: three lateen sails, raked masts, high sterncastle. Bow left, stern right. -->
           <!-- masts -->
-          <path d="M60 14 V70 M36 26 V66 M84 26 V66" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55" />
-          <!-- sails -->
-          <path d="M60 16 C74 24 74 44 60 52 Z" fill="currentColor" opacity="0.9" />
-          <path d="M60 16 C46 24 46 44 60 52 Z" fill="currentColor" opacity="0.65" />
-          <path d="M36 28 C46 33 46 49 36 54 Z" fill="currentColor" opacity="0.75" />
-          <path d="M84 28 C74 33 74 49 84 54 Z" fill="currentColor" opacity="0.75" />
+          <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.55" />
+          <!-- yards: long spars running low-forward to high-aft -->
+          <path d="M12 59 L52 24 M28 45 L80 6 M64 53 L102 22" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" opacity="0.5" />
+          <!-- mizzen lateen -->
+          <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" />
+          <!-- main lateen -->
+          <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" />
+          <!-- fore lateen -->
+          <path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" />
           <!-- pennant -->
-          <path d="M60 12 h14 l-4 3 l4 3 h-14 Z" fill="currentColor" opacity="0.9" />
+          <path d="M58 14 h12 l-3.5 3 l3.5 3 h-12 Z" fill="currentColor" opacity="0.9" />
+          <!-- sterncastle -->
+          <path d="M82 70 V60 H102 L100 70 Z" fill="currentColor" opacity="0.85" />
           <!-- hull -->
-          <path d="M22 66 h76 l-11 16 a8 8 0 0 1 -6 3 H39 a8 8 0 0 1 -6 -3 Z" fill="currentColor" />
+          <path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" />
         </svg>
       </div>
       <div class="brand-name" aria-label="Caravel">Caravel</div>
