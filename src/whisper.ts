@@ -1,6 +1,6 @@
 import { execSync, spawnSync } from "node:child_process";
 import { chmod, mkdir, rename, rm, stat, access, readdir, open, readFile } from "node:fs/promises";
-import { statSync } from "node:fs";
+import { statSync, readFileSync } from "node:fs";
 import { basename, extname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getSettings } from "./config";
@@ -25,8 +25,10 @@ interface BinarySource {
 }
 
 const BINARY_SOURCES: Record<string, BinarySource> = {
+  // v1.9.1 official build: multi-variant — ships libggml-cpu-{sse42,ivybridge,haswell,...}.so
+  // and selects the right one at runtime. Compatible with all x86-64 CPUs (no AVX2/FMA required).
   "linux-x64": {
-    url: "https://github.com/dscripka/whisper.cpp_binaries/releases/download/commit_3d42463/whisper-bin-linux-x64.tar.gz",
+    url: "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.1/whisper-bin-ubuntu-x64.tar.gz",
     format: "tar.gz",
   },
   "darwin-arm64": {
@@ -49,6 +51,16 @@ const BINARY_SOURCES: Record<string, BinarySource> = {
     format: "zip",
   },
 };
+
+function detectLinuxCpuFlags(): Set<string> {
+  try {
+    const text = readFileSync("/proc/cpuinfo", "utf8");
+    const match = text.match(/^flags\s*:(.+)$/m);
+    return new Set((match?.[1] ?? "").trim().split(/\s+/));
+  } catch {
+    return new Set();
+  }
+}
 
 let warmupPromise: Promise<void> | null = null;
 
@@ -203,15 +215,17 @@ async function downloadAndExtractBinary(): Promise<void> {
   await Bun.write(destBinary, Bun.file(found));
   await chmod(destBinary, 0o755);
 
-  // Copy any shared libraries (for Homebrew bottles)
+  // Copy all shared libraries into BIN_DIR alongside the binary.
+  // The binary uses RPATH=$ORIGIN so libs must be co-located with it.
+  // This handles both the multi-variant linux build (libggml-cpu-*.so) and Homebrew bottles.
   const entries = await readdir(extractDir, { withFileTypes: true, recursive: true }).catch(() => []);
   for (const entry of entries) {
     if (!entry.isFile()) continue;
     const name = entry.name;
-    if (name.includes("whisper") && (name.endsWith(".so") || name.endsWith(".dylib") || name.match(/\.so\.\d/))) {
+    if (name.endsWith(".so") || name.endsWith(".dylib") || /\.so\.\d/.test(name)) {
       const parentPath = entry.parentPath ?? entry.path ?? "";
       const srcPath = join(parentPath, name);
-      const destPath = join(LIB_DIR, name);
+      const destPath = join(BIN_DIR, name);
       await Bun.write(destPath, Bun.file(srcPath));
     }
   }
@@ -232,6 +246,48 @@ async function downloadModel(): Promise<void> {
   console.log("whisper: model ready");
 }
 
+async function smokeTestBinary(log: WhisperDebugLog): Promise<boolean> {
+  const binaryPath = getWhisperBinaryPath();
+  const modelPath = getModelPath();
+  log("whisper smoke-test: starting");
+
+  // 1-second silent WAV: RIFF/WAVE PCM 16-bit mono 16kHz
+  const sampleRate = 16000;
+  const pcmBytes = sampleRate * 2; // 1s * 2 bytes/sample
+  const buf = Buffer.alloc(44 + pcmBytes, 0);
+  buf.write("RIFF", 0); buf.writeUInt32LE(36 + pcmBytes, 4);
+  buf.write("WAVE", 8); buf.write("fmt ", 12); buf.writeUInt32LE(16, 16);
+  buf.writeUInt16LE(1, 20); buf.writeUInt16LE(1, 22); buf.writeUInt32LE(sampleRate, 24);
+  buf.writeUInt32LE(sampleRate * 2, 28); buf.writeUInt16LE(2, 32); buf.writeUInt16LE(16, 34);
+  buf.write("data", 36); buf.writeUInt32LE(pcmBytes, 40);
+
+  const testWavPath = join(TMP_FOLDER, "smoke-test.wav");
+  await Bun.write(testWavPath, buf);
+  try {
+    const proc = Bun.spawnSync(
+      [binaryPath, "-m", modelPath, "-f", testWavPath, "--no-timestamps"],
+      {
+        stdout: "pipe",
+        stderr: "pipe",
+        env: {
+          ...process.env,
+          LD_LIBRARY_PATH: [BIN_DIR, LIB_DIR, process.env.LD_LIBRARY_PATH].filter(Boolean).join(":"),
+          DYLD_LIBRARY_PATH: [BIN_DIR, LIB_DIR, process.env.DYLD_LIBRARY_PATH].filter(Boolean).join(":"),
+        },
+      }
+    );
+    if (proc.exitCode === 0) {
+      log("whisper smoke-test: passed");
+      return true;
+    }
+    const exitCode = proc.exitCode ?? "null (signal)";
+    log(`whisper smoke-test: failed exit=${exitCode}`);
+    return false;
+  } finally {
+    await rm(testWavPath, { force: true }).catch(() => {});
+  }
+}
+
 async function prepareWhisperAssets(printOutput: boolean): Promise<void> {
   const startedAt = Date.now();
   console.log(`whisper warmup: start root=${WHISPER_ROOT} model=${WHISPER_MODEL}`);
@@ -239,13 +295,34 @@ async function prepareWhisperAssets(printOutput: boolean): Promise<void> {
   await mkdir(TMP_FOLDER, { recursive: true });
 
   const binaryPath = getWhisperBinaryPath();
+  let freshInstall = false;
   if (!(await fileExists(binaryPath))) {
     await downloadAndExtractBinary();
+    freshInstall = true;
   } else {
     console.log("whisper warmup: binary exists");
   }
 
   await downloadModel();
+
+  if (freshInstall) {
+    console.log("whisper warmup: running smoke-test on fresh install...");
+    const ok = await smokeTestBinary(console.log);
+    if (!ok) {
+      const flags = process.platform === "linux" ? detectLinuxCpuFlags() : new Set<string>();
+      const hasAvx2 = flags.has("avx2");
+      const hasFma = flags.has("fma");
+      await rm(BIN_DIR, { recursive: true, force: true });
+      throw new Error(
+        `Whisper binary smoke-test failed — CPU incompatibility suspected.\n` +
+        `CPU: avx2=${hasAvx2} fma=${hasFma} (need >=ivybridge for the prebuilt)\n` +
+        `Fix: install build tools (cmake + gcc/g++) and run:\n` +
+        `  bash scripts/build-whisper.sh\n` +
+        `which compiles whisper.cpp from source and auto-targets this CPU.`
+      );
+    }
+  }
+
   console.log(`whisper warmup: complete in ${Date.now() - startedAt}ms`);
 }
 
@@ -402,8 +479,8 @@ export async function transcribeAudioToText(
         stderr: "pipe",
         env: {
           ...process.env,
-          LD_LIBRARY_PATH: [LIB_DIR, process.env.LD_LIBRARY_PATH].filter(Boolean).join(":"),
-          DYLD_LIBRARY_PATH: [LIB_DIR, process.env.DYLD_LIBRARY_PATH].filter(Boolean).join(":"),
+          LD_LIBRARY_PATH: [BIN_DIR, LIB_DIR, process.env.LD_LIBRARY_PATH].filter(Boolean).join(":"),
+          DYLD_LIBRARY_PATH: [BIN_DIR, LIB_DIR, process.env.DYLD_LIBRARY_PATH].filter(Boolean).join(":"),
         },
       }
     );
