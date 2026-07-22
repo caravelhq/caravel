@@ -1,3 +1,6 @@
+import { writeFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { htmlPage } from "./page/html";
 import { clampInt, json } from "./http";
 import type { StartWebUiOptions, WebServerHandle } from "./types";
@@ -23,6 +26,7 @@ import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
+import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -238,6 +242,10 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   // Then scan for any chats with pending user messages and kick a processor,
   // so messages queued during a restart actually get picked up rather than
   // sitting forever in the "pending" state.
+  // Warm up whisper assets in the background — downloads binary + model on
+  // first use so the initial /api/voice/transcribe request doesn't stall.
+  warmupWhisperAssets().catch(() => {});
+
   recoverStuckChats()
     .then(async (n) => {
       if (n > 0) console.log(`[chat] recovered ${n} stuck message${n === 1 ? "" : "s"}`);
@@ -974,6 +982,47 @@ self.addEventListener('fetch', e => {
           return json({ ok: true });
         } catch (err) {
           return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/voice/transcribe" && req.method === "POST") {
+        const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
+        try {
+          const contentLength = Number(req.headers.get("content-length") || 0);
+          if (contentLength > MAX_BYTES) {
+            return json({ ok: false, error: "Audio too large (max 10 MB)" });
+          }
+          let formData: FormData;
+          try {
+            formData = await req.formData();
+          } catch {
+            return json({ ok: false, error: "Expected multipart/form-data with an audio field" });
+          }
+          const audio = formData.get("audio");
+          if (!audio || !(audio instanceof Blob)) {
+            return json({ ok: false, error: "audio field (Blob) required" });
+          }
+          if (audio.size > MAX_BYTES) {
+            return json({ ok: false, error: "Audio too large (max 10 MB)" });
+          }
+          if (audio.size === 0) {
+            return json({ ok: false, error: "Audio blob is empty" });
+          }
+          const mimeType = audio.type || "audio/ogg";
+          const ext = mimeType.includes("webm") ? ".webm" : mimeType.includes("wav") ? ".wav" : ".ogg";
+          const tmpPath = join(tmpdir(), `caravel-voice-${Date.now()}${ext}`);
+          await writeFile(tmpPath, new Uint8Array(await audio.arrayBuffer()));
+          let text = "";
+          try {
+            text = await transcribeAudioToText(tmpPath);
+          } finally {
+            await rm(tmpPath, { force: true }).catch(() => {});
+          }
+          return json({ ok: true, text });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error("[voice] transcribe error:", msg);
+          return json({ ok: false, error: msg });
         }
       }
 

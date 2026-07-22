@@ -1973,6 +1973,127 @@
       });
     }
 
+    // ── Voice Recording ──
+    var chatMicBtn = $("chat-mic");
+    (function() {
+      if (!chatMicBtn) return;
+
+      // Feature detection — hide button if recording isn't available.
+      var micSupported = !!(
+        typeof MediaRecorder !== "undefined" &&
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+      );
+      var micMimeType = null;
+      if (micSupported) {
+        var candidates = [
+          "audio/ogg;codecs=opus",
+          "audio/ogg",
+          "audio/webm;codecs=opus",
+          "audio/webm",
+        ];
+        for (var ci = 0; ci < candidates.length; ci++) {
+          if (MediaRecorder.isTypeSupported(candidates[ci])) {
+            micMimeType = candidates[ci];
+            break;
+          }
+        }
+        if (!micMimeType) micSupported = false;
+      }
+
+      if (!micSupported) {
+        chatMicBtn.hidden = true;
+        return;
+      }
+
+      var micRecorder = null;
+      var micChunks = [];
+      var micStream = null;
+
+      function setMicState(state) {
+        chatMicBtn.classList.remove("recording", "transcribing");
+        chatMicBtn.disabled = false;
+        if (state === "recording") {
+          chatMicBtn.classList.add("recording");
+          chatMicBtn.textContent = "⏹";
+          chatMicBtn.title = "Stop recording";
+          chatMicBtn.setAttribute("aria-label", "Stop recording");
+        } else if (state === "transcribing") {
+          chatMicBtn.classList.add("transcribing");
+          chatMicBtn.textContent = "⏳";
+          chatMicBtn.title = "Transcribing…";
+          chatMicBtn.setAttribute("aria-label", "Transcribing");
+          chatMicBtn.disabled = true;
+        } else {
+          chatMicBtn.textContent = "🎤";
+          chatMicBtn.title = "Record voice message";
+          chatMicBtn.setAttribute("aria-label", "Record");
+        }
+      }
+
+      function stopMicStream() {
+        if (micStream) {
+          micStream.getTracks().forEach(function(t) { t.stop(); });
+          micStream = null;
+        }
+      }
+
+      function stopAndTranscribe() {
+        if (!micRecorder || micRecorder.state === "inactive") return;
+        micRecorder.onstop = async function() {
+          setMicState("transcribing");
+          var blob = new Blob(micChunks, { type: micMimeType });
+          micChunks = [];
+          micRecorder = null;
+          stopMicStream();
+          try {
+            var ext = (micMimeType || "").includes("webm") ? ".webm" : ".ogg";
+            var fd = new FormData();
+            fd.append("audio", blob, "recording" + ext);
+            var res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+            var data = await res.json();
+            if (data.ok && data.text && chatInput) {
+              chatInput.value = data.text;
+              autoResizeChatInput();
+              chatInput.focus();
+            } else if (!data.ok) {
+              console.error("[voice] transcription failed:", data.error);
+            }
+          } catch (err) {
+            console.error("[voice] transcribe request failed:", err);
+          }
+          setMicState("idle");
+        };
+        micRecorder.stop();
+      }
+
+      chatMicBtn.addEventListener("click", async function() {
+        if (micRecorder && micRecorder.state !== "inactive") {
+          stopAndTranscribe();
+          return;
+        }
+        try {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (err) {
+          console.error("[voice] getUserMedia failed:", err);
+          return;
+        }
+        micChunks = [];
+        try {
+          micRecorder = new MediaRecorder(micStream, { mimeType: micMimeType });
+        } catch (err) {
+          console.error("[voice] MediaRecorder init failed:", err);
+          stopMicStream();
+          return;
+        }
+        micRecorder.ondataavailable = function(e) {
+          if (e.data && e.data.size > 0) micChunks.push(e.data);
+        };
+        micRecorder.start(1000);
+        setMicState("recording");
+      });
+    })();
+
     // ── Files ──
     const tabFilesBtn = $("tab-files");
     const filesPanel = $("files-panel");
