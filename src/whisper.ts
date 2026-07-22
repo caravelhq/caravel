@@ -13,6 +13,7 @@ const LIB_DIR = join(WHISPER_ROOT, "lib");
 const MODEL_FOLDER = join(WHISPER_ROOT, "models");
 const TMP_FOLDER = join(WHISPER_ROOT, "tmp");
 const OGG_MJS_CONVERTER = fileURLToPath(new URL("./ogg.mjs", import.meta.url));
+const WEBM_MJS_CONVERTER = fileURLToPath(new URL("./webm.mjs", import.meta.url));
 const PLUGIN_ROOT = fileURLToPath(new URL("..", import.meta.url));
 
 const MODEL_URL = `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-${WHISPER_MODEL}.bin`;
@@ -281,17 +282,40 @@ function decodeOggOpusToWavViaNode(inputPath: string, wavPath: string, log: Whis
   log(`voice decode: node converter completed`);
 }
 
+function decodeWebmOpusToWavViaNode(inputPath: string, wavPath: string, log: WhisperDebugLog): void {
+  ensureOggDeps(); // webm.mjs also requires ogg-opus-decoder
+  log(`voice decode: running webm node converter`);
+  const result = spawnSync("node", [WEBM_MJS_CONVERTER, inputPath, wavPath], {
+    encoding: "utf8",
+  });
+
+  if (result.status !== 0) {
+    const stderr = result.stderr?.trim() || "";
+    const stdout = result.stdout?.trim() || "";
+    throw new Error(
+      `webm node decode failed (exit ${result.status ?? "unknown"})${stderr ? `: ${stderr}` : stdout ? `: ${stdout}` : ""}`
+    );
+  }
+
+  if (result.stderr?.trim()) log(`voice decode(webm): ${result.stderr.trim()}`);
+  log(`voice decode: webm node converter completed`);
+}
+
 async function ensureWavInput(inputPath: string, log: WhisperDebugLog): Promise<string> {
   const ext = extname(inputPath).toLowerCase();
   log(`voice input: path=${inputPath} ext=${ext || "(none)"}`);
   if (ext === ".wav") return inputPath;
 
-  if (ext !== ".ogg" && ext !== ".oga") {
-    throw new Error(`unsupported audio format "${ext || "(none)"}" without ffmpeg; supported: .oga, .ogg, .wav`);
+  if (ext !== ".ogg" && ext !== ".oga" && ext !== ".webm") {
+    throw new Error(`unsupported audio format "${ext || "(none)"}" without ffmpeg; supported: .oga, .ogg, .wav, .webm`);
   }
 
   const wavPath = join(TMP_FOLDER, `${basename(inputPath, extname(inputPath))}-${Date.now()}.wav`);
-  decodeOggOpusToWavViaNode(inputPath, wavPath, log);
+  if (ext === ".webm") {
+    decodeWebmOpusToWavViaNode(inputPath, wavPath, log);
+  } else {
+    decodeOggOpusToWavViaNode(inputPath, wavPath, log);
+  }
   return wavPath;
 }
 

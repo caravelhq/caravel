@@ -2038,6 +2038,15 @@
         }
       }
 
+      function setMicError(msg) {
+        chatMicBtn.classList.remove("recording", "transcribing");
+        chatMicBtn.disabled = false;
+        chatMicBtn.textContent = "❌";
+        chatMicBtn.title = msg;
+        chatMicBtn.setAttribute("aria-label", msg);
+        setTimeout(function() { setMicState("idle"); }, 3500);
+      }
+
       function stopAndTranscribe() {
         if (!micRecorder || micRecorder.state === "inactive") return;
         micRecorder.onstop = async function() {
@@ -2046,6 +2055,7 @@
           micChunks = [];
           micRecorder = null;
           stopMicStream();
+          var errored = false;
           try {
             var ext = (micMimeType || "").includes("webm") ? ".webm" : ".ogg";
             var fd = new FormData();
@@ -2058,11 +2068,15 @@
               chatInput.focus();
             } else if (!data.ok) {
               console.error("[voice] transcription failed:", data.error);
+              setMicError(data.error ? "Voice error: " + data.error : "Transcription failed");
+              errored = true;
             }
           } catch (err) {
             console.error("[voice] transcribe request failed:", err);
+            setMicError("Voice request failed");
+            errored = true;
           }
-          setMicState("idle");
+          if (!errored) setMicState("idle");
         };
         micRecorder.stop();
       }
