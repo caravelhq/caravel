@@ -27,6 +27,7 @@ import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiA
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
+import { getSettings } from "../config";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -1022,6 +1023,46 @@ self.addEventListener('fetch', e => {
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.error("[voice] transcribe error:", msg);
+          return json({ ok: false, error: msg });
+        }
+      }
+
+      if (url.pathname === "/api/voice/speak" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const text = typeof body?.text === "string" ? body.text.trim() : "";
+          if (!text) return json({ ok: false, error: "text required" });
+          const settings = getSettings();
+          const apiKey = settings.deepGram?.apiKey ?? "";
+          if (!apiKey) return json({ ok: false, error: "DeepGram API key not configured (set deepGram.apiKey in .caravel/settings.json)" });
+          const dgRes = await fetch(
+            "https://api.deepgram.com/v1/speak?model=aura-2-en-us&encoding=mp3",
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Token ${apiKey}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ text }),
+            }
+          );
+          if (!dgRes.ok) {
+            const errText = await dgRes.text().catch(() => "");
+            const msg = `DeepGram TTS error ${dgRes.status}${errText ? `: ${errText.slice(0, 200)}` : ""}`;
+            console.error("[voice] speak error:", msg);
+            return json({ ok: false, error: msg });
+          }
+          const audioBuffer = await dgRes.arrayBuffer();
+          return new Response(audioBuffer, {
+            status: 200,
+            headers: {
+              "Content-Type": dgRes.headers.get("Content-Type") || "audio/mpeg",
+              "Cache-Control": "no-store",
+            },
+          });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error("[voice] speak error:", msg);
           return json({ ok: false, error: msg });
         }
       }

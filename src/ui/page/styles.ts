@@ -1620,6 +1620,7 @@ export const pageStyles = String.raw`    :root {
 
     /* ── Chat panel ── */
     .chat-panel {
+      position: relative;
       display: flex;
       flex-direction: column;
       width: min(100%, 920px);
@@ -4793,4 +4794,143 @@ export const pageStyles = String.raw`    :root {
       .pill-value {
         font-size: 10px;
       }
+    }
+
+    /* ── Voice chat mode button ── */
+    .chat-voice-mode {
+      flex-shrink: 0;
+      flex-grow: 0;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #c07bff33;
+      background: #1a0a3333;
+      color: #c07bff;
+      transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-voice-mode:hover {
+      transform: translateY(-1px);
+      background: #2a104455;
+      border-color: #c07bff55;
+    }
+    .chat-voice-mode[hidden] { display: none; }
+
+    /* ── Voice mode overlay ── */
+    .voice-mode-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: rgba(6, 13, 26, 0.92);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+    .voice-mode-overlay[hidden] { display: none; }
+    .voice-mode-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.16s ease, color 0.16s ease;
+    }
+    .voice-mode-close:hover {
+      background: #ffffff18;
+      color: var(--text);
+    }
+    .voice-mode-status {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+      text-align: center;
+      min-height: 24px;
+    }
+    .voice-mode-btn {
+      width: 96px;
+      height: 96px;
+      border-radius: 50%;
+      border: 2px solid #c07bff66;
+      background: radial-gradient(circle at 40% 35%, #3a1a6688 0%, #1a0a3344 100%);
+      color: #e0b0ff;
+      font-size: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease, filter 0.14s ease;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .voice-mode-btn:hover {
+      border-color: #c07bff99;
+      background: radial-gradient(circle at 40% 35%, #4a2a7799 0%, #2a104455 100%);
+      transform: scale(1.04);
+    }
+    .voice-mode-btn.listening {
+      border-color: #ff6b6b99;
+      background: radial-gradient(circle at 40% 35%, #4a1a1a99 0%, #2a0a0a55 100%);
+      color: #ff9b9b;
+      animation: voice-pulse 1.1s ease-in-out infinite;
+    }
+    .voice-mode-btn.processing {
+      border-color: #ffb36666;
+      background: radial-gradient(circle at 40% 35%, #3a2a0099 0%, #1a150044 100%);
+      color: #ffd09b;
+      animation: none;
+      cursor: not-allowed;
+    }
+    .voice-mode-btn.speaking {
+      border-color: #67f0b566;
+      background: radial-gradient(circle at 40% 35%, #0a2a1a99 0%, #04140d44 100%);
+      color: #a0f8d0;
+      animation: voice-speak-pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes voice-pulse {
+      0%, 100% { filter: brightness(1); box-shadow: 0 0 0 0 #ff6b6b22; }
+      50% { filter: brightness(1.3); box-shadow: 0 0 0 18px #ff6b6b00; }
+    }
+    @keyframes voice-speak-pulse {
+      0%, 100% { filter: brightness(1); box-shadow: 0 0 0 0 #67f0b522; }
+      50% { filter: brightness(1.2); box-shadow: 0 0 0 14px #67f0b500; }
+    }
+    .voice-mode-transcript {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      max-width: 360px;
+      min-height: 40px;
+      padding: 0 20px;
+      line-height: 1.5;
+    }
+    .voice-mode-transcript .vm-heard {
+      color: var(--text);
+      font-style: italic;
+    }
+    .voice-mode-transcript .vm-reply {
+      color: var(--accent);
+      margin-top: 6px;
     }`;

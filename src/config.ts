@@ -62,6 +62,7 @@ const DEFAULT_SETTINGS: Settings = {
   security: { level: "moderate", allowedTools: [], disallowedTools: [] },
   web: { enabled: false, host: "127.0.0.1", port: 4632 },
   stt: { baseUrl: "", model: "" },
+  deepGram: { apiKey: "" },
 };
 
 export interface HeartbeatExcludeWindow {
@@ -114,6 +115,7 @@ export interface Settings {
   security: SecurityConfig;
   web: WebConfig;
   stt: SttConfig;
+  deepGram: DeepGramConfig;
 }
 
 export interface AgenticMode {
@@ -147,6 +149,11 @@ export interface SttConfig {
   baseUrl: string;
   /** Model name passed to the API (default: "Systran/faster-whisper-large-v3") */
   model: string;
+}
+
+export interface DeepGramConfig {
+  /** DeepGram API key (BYOK — stored in .caravel/settings.json, gitignored) */
+  apiKey: string;
 }
 
 let cached: Settings | null = null;
@@ -288,6 +295,9 @@ function parseSettings(raw: Record<string, any>): Settings {
     stt: {
       baseUrl: typeof raw.stt?.baseUrl === "string" ? raw.stt.baseUrl.trim() : "",
       model: typeof raw.stt?.model === "string" ? raw.stt.model.trim() : "",
+    },
+    deepGram: {
+      apiKey: typeof raw.deepGram?.apiKey === "string" ? raw.deepGram.apiKey.trim() : "",
     },
   };
 }

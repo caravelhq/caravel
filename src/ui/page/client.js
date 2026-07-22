@@ -1152,6 +1152,15 @@
             updateSendDisabled();
           }
           renderChatHistory();
+          // Voice mode: speak the last complete assistant message if it's new.
+          if (typeof window.__vmOnAssistantReply === "function") {
+            var lastMsg = chatHistory[chatHistory.length - 1];
+            if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
+              var st = lastMsg.state;
+              var isDone = !st || st === "done";
+              if (isDone) window.__vmOnAssistantReply(lastMsg.text);
+            }
+          }
         }
       } catch (_) {}
     }
@@ -2106,6 +2115,287 @@
         micRecorder.start(1000);
         setMicState("recording");
       });
+    })();
+
+    // ── Voice Mode (DeepGram TTS + auto-submit) ──
+    (function() {
+      var voiceModeOverlay = $("voice-mode-overlay");
+      var voiceModeCloseBtn = $("voice-mode-close");
+      var voiceModeBtn = $("voice-mode-btn");
+      var voiceModeStatus = $("voice-mode-status");
+      var voiceModeTranscript = $("voice-mode-transcript");
+      var voiceModeToggle = $("chat-voice-mode");
+
+      if (!voiceModeOverlay || !voiceModeBtn || !voiceModeToggle) return;
+
+      var vmActive = false;
+      var vmRecorder = null;
+      var vmChunks = [];
+      var vmStream = null;
+      var vmMimeType = null;
+      var vmBusy = false;
+      var vmLastSpokenText = "";
+      var vmCurrentAudio = null;
+
+      // Feature detect recording support (reuse same candidates as main mic).
+      var vmSupported = !!(
+        typeof MediaRecorder !== "undefined" &&
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+      );
+      if (vmSupported) {
+        var vmCandidates = [
+          "audio/ogg;codecs=opus", "audio/ogg",
+          "audio/webm;codecs=opus", "audio/webm",
+        ];
+        for (var vi = 0; vi < vmCandidates.length; vi++) {
+          if (MediaRecorder.isTypeSupported(vmCandidates[vi])) {
+            vmMimeType = vmCandidates[vi];
+            break;
+          }
+        }
+        if (!vmMimeType) vmSupported = false;
+      }
+
+      // Hide the toggle if recording isn't available.
+      if (!vmSupported) {
+        voiceModeToggle.hidden = true;
+        return;
+      }
+
+      function vmSetStatus(text, btnClass) {
+        voiceModeStatus.textContent = text;
+        voiceModeBtn.classList.remove("listening", "processing", "speaking");
+        if (btnClass) voiceModeBtn.classList.add(btnClass);
+      }
+
+      function vmSetTranscript(html) {
+        voiceModeTranscript.innerHTML = html;
+      }
+
+      function vmStopStream() {
+        if (vmStream) {
+          vmStream.getTracks().forEach(function(t) { t.stop(); });
+          vmStream = null;
+        }
+      }
+
+      function vmStopAudio() {
+        if (vmCurrentAudio) {
+          vmCurrentAudio.pause();
+          vmCurrentAudio.src = "";
+          vmCurrentAudio = null;
+        }
+      }
+
+      async function vmSpeakText(text) {
+        vmStopAudio();
+        vmSetStatus("Speaking…", "speaking");
+        try {
+          var res = await fetch("/api/voice/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text }),
+          });
+          if (!res.ok) {
+            var err = await res.json().catch(function() { return {}; });
+            console.error("[voice-mode] TTS error:", err.error || res.status);
+            vmSetStatus("Press and hold to talk", null);
+            vmBusy = false;
+            return;
+          }
+          var blob = await res.blob();
+          var url = URL.createObjectURL(blob);
+          var audio = new Audio(url);
+          vmCurrentAudio = audio;
+          audio.onended = function() {
+            URL.revokeObjectURL(url);
+            vmCurrentAudio = null;
+            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+          };
+          audio.onerror = function() {
+            URL.revokeObjectURL(url);
+            vmCurrentAudio = null;
+            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+          };
+          audio.play().catch(function(e) {
+            console.error("[voice-mode] Audio play failed:", e);
+            URL.revokeObjectURL(url);
+            vmCurrentAudio = null;
+            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+          });
+        } catch (e) {
+          console.error("[voice-mode] speakText failed:", e);
+          if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+        } finally {
+          vmBusy = false;
+        }
+      }
+
+      // Called from pollChat when voice mode is active and a new assistant
+      // message has fully arrived (state === "done" or absent).
+      function vmOnAssistantReply(text) {
+        if (!vmActive) return;
+        if (!text || text === vmLastSpokenText) return;
+        vmLastSpokenText = text;
+        vmBusy = true;
+        vmSetTranscript('<div class="vm-reply">' + esc(text.slice(0, 300)) + (text.length > 300 ? "…" : "") + "</div>");
+        vmSpeakText(text);
+      }
+
+      // Expose to pollChat so it can call us after receiving a new message.
+      window.__vmOnAssistantReply = vmOnAssistantReply;
+
+      async function vmRecordAndSubmit() {
+        if (vmBusy) return;
+        vmBusy = true;
+        vmStopAudio();
+        vmSetStatus("Requesting microphone…", null);
+        try {
+          vmStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          console.error("[voice-mode] getUserMedia failed:", e);
+          vmSetStatus("Microphone unavailable", null);
+          vmBusy = false;
+          return;
+        }
+        vmChunks = [];
+        try {
+          vmRecorder = new MediaRecorder(vmStream, { mimeType: vmMimeType });
+        } catch (e) {
+          console.error("[voice-mode] MediaRecorder init failed:", e);
+          vmStopStream();
+          vmSetStatus("Press and hold to talk", null);
+          vmBusy = false;
+          return;
+        }
+        vmRecorder.ondataavailable = function(e) {
+          if (e.data && e.data.size > 0) vmChunks.push(e.data);
+        };
+        vmSetStatus("Listening… (release to send)", "listening");
+        vmSetTranscript("");
+        voiceModeBtn.textContent = "⏹";
+        vmRecorder.start(200);
+      }
+
+      async function vmStopAndSubmit() {
+        if (!vmRecorder || vmRecorder.state === "inactive") return;
+        vmRecorder.onstop = async function() {
+          voiceModeBtn.textContent = "🎤";
+          vmSetStatus("Transcribing…", "processing");
+          var blob = new Blob(vmChunks, { type: vmMimeType });
+          vmChunks = [];
+          vmRecorder = null;
+          vmStopStream();
+          var text = "";
+          try {
+            var ext = (vmMimeType || "").includes("webm") ? ".webm" : ".ogg";
+            var fd = new FormData();
+            fd.append("audio", blob, "vm-recording" + ext);
+            var res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+            var data = await res.json();
+            if (data.ok && data.text) {
+              text = data.text.trim();
+            } else {
+              console.error("[voice-mode] transcription failed:", data.error);
+              vmSetStatus("Transcription failed — try again", null);
+              vmBusy = false;
+              return;
+            }
+          } catch (e) {
+            console.error("[voice-mode] transcribe request failed:", e);
+            vmSetStatus("Request failed — try again", null);
+            vmBusy = false;
+            return;
+          }
+          if (!text) {
+            vmSetStatus("Nothing heard — try again", null);
+            vmBusy = false;
+            return;
+          }
+          vmSetTranscript('<div class="vm-heard">"' + esc(text) + '"</div>');
+          vmSetStatus("Sending…", "processing");
+          // Auto-submit without review: put text into chatInput and call sendChat.
+          if (chatInput) {
+            chatInput.value = text;
+            autoResizeChatInput();
+          }
+          try {
+            await fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: text,
+                chatId: chatSessionId,
+                agentId: chatAgentLocked || pendingAgentId || undefined,
+              }),
+            });
+            if (chatInput) { chatInput.value = ""; autoResizeChatInput(); }
+            chatHistory.push({ role: "user", text: text, state: "pending" });
+            if (!chatAgentLocked && pendingAgentId) {
+              chatAgentLocked = pendingAgentId;
+              updateAgentBadge();
+              updateSendDisabled();
+            }
+            renderChatHistory();
+          } catch (e) {
+            console.error("[voice-mode] chat send failed:", e);
+          }
+          vmSetStatus("Waiting for reply…", "processing");
+          // vmBusy stays true; vmOnAssistantReply clears it when speaking starts.
+        };
+        vmRecorder.stop();
+      }
+
+      // Push-to-talk: mousedown/touchstart → record; mouseup/touchend → submit.
+      voiceModeBtn.addEventListener("mousedown", function(e) {
+        e.preventDefault();
+        vmRecordAndSubmit();
+      });
+      voiceModeBtn.addEventListener("touchstart", function(e) {
+        e.preventDefault();
+        vmRecordAndSubmit();
+      }, { passive: false });
+      voiceModeBtn.addEventListener("mouseup", function(e) {
+        e.preventDefault();
+        vmStopAndSubmit();
+      });
+      voiceModeBtn.addEventListener("touchend", function(e) {
+        e.preventDefault();
+        vmStopAndSubmit();
+      }, { passive: false });
+      voiceModeBtn.addEventListener("mouseleave", function() {
+        // If user drags out while holding, still stop recording.
+        if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
+      });
+
+      function vmOpen() {
+        vmActive = true;
+        voiceModeOverlay.hidden = false;
+        vmSetStatus("Press and hold to talk", null);
+        vmSetTranscript("");
+        vmLastSpokenText = "";
+        vmBusy = false;
+        voiceModeBtn.textContent = "🎤";
+        // Ensure overlay is positioned over the chat panel (chat-panel has position:relative).
+      }
+
+      function vmClose() {
+        vmActive = false;
+        voiceModeOverlay.hidden = true;
+        vmStopStream();
+        vmStopAudio();
+        vmBusy = false;
+        if (vmRecorder && vmRecorder.state !== "inactive") {
+          vmRecorder.stop();
+          vmRecorder = null;
+        }
+      }
+
+      voiceModeToggle.addEventListener("click", function() {
+        if (vmActive) vmClose(); else vmOpen();
+      });
+      voiceModeCloseBtn.addEventListener("click", vmClose);
     })();
 
     // ── Files ──
