@@ -1197,7 +1197,6 @@
     if (quickTaskBrief) quickTaskBrief.addEventListener("input", updateBriefCount);
     if (quickTaskRecurring) quickTaskRecurring.addEventListener("change", syncScheduleSection);
     if (quickTaskModeCron) quickTaskModeCron.addEventListener("change", syncCronIntervalSections);
-    const quickTaskModeInterval = $("quick-task-mode-interval");
     if (quickTaskModeInterval) quickTaskModeInterval.addEventListener("change", syncCronIntervalSections);
 
     syncScheduleSection();
