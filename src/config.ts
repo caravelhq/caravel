@@ -62,7 +62,7 @@ const DEFAULT_SETTINGS: Settings = {
   security: { level: "moderate", allowedTools: [], disallowedTools: [] },
   web: { enabled: false, host: "127.0.0.1", port: 4632 },
   stt: { baseUrl: "", model: "" },
-  deepGram: { apiKey: "", sttEnabled: false, sttModel: "nova-3", ttsModel: "aura-2-en-us" },
+  deepGram: { apiKey: "", sttEnabled: false, sttModel: "nova-3", ttsModel: "aura-2-thalia-en" },
 };
 
 export interface HeartbeatExcludeWindow {
@@ -158,7 +158,7 @@ export interface DeepGramConfig {
   sttEnabled: boolean;
   /** DeepGram STT model (default: "nova-3") */
   sttModel: string;
-  /** DeepGram TTS model (default: "aura-2-en-us") */
+  /** DeepGram TTS model (default: "aura-2-thalia-en") */
   ttsModel: string;
 }
 
@@ -306,7 +306,10 @@ function parseSettings(raw: Record<string, any>): Settings {
       apiKey: typeof raw.deepGram?.apiKey === "string" ? raw.deepGram.apiKey.trim() : "",
       sttEnabled: !!(raw.deepGram?.sttEnabled),
       sttModel: (typeof raw.deepGram?.sttModel === "string" && raw.deepGram.sttModel.trim()) || "nova-3",
-      ttsModel: (typeof raw.deepGram?.ttsModel === "string" && raw.deepGram.ttsModel.trim()) || "aura-2-en-us",
+      ttsModel: (() => {
+        const v = (typeof raw.deepGram?.ttsModel === "string" && raw.deepGram.ttsModel.trim()) || "aura-2-thalia-en";
+        return v === "aura-2-en-us" ? "aura-2-thalia-en" : v;
+      })(),
     },
   };
 }

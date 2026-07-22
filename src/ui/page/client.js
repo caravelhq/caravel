@@ -9,6 +9,7 @@
     const dateEl = $("date");
     const msgEl = $("message");
     const dockEl = $("dock");
+    const pillsEl = $("dock-pills");
     const settingsBtn = $("settings-btn");
     const settingsModal = $("settings-modal");
     const settingsClose = $("settings-close");
@@ -350,7 +351,7 @@
         const state = await res.json();
         stateOnline = true;
         const pills = buildPills(state);
-        dockEl.innerHTML = pills.map((p) =>
+        pillsEl.innerHTML = pills.map((p) =>
           '<div class="pill ' + p.cls + '">' +
             '<div class="pill-label"><span class="pill-icon">' + esc(p.icon || "") + "</span>" + esc(p.label) + '</div>' +
             '<div class="pill-value">' + esc(p.value) + '</div>' +
@@ -378,7 +379,7 @@
         }
       } catch (err) {
         stateOnline = false;
-        dockEl.innerHTML = '<div class="pill bad"><div class="pill-label"><span class="pill-icon">⚠️</span>Status</div><div class="pill-value">Offline</div></div>';
+        pillsEl.innerHTML = '<div class="pill bad"><div class="pill-label"><span class="pill-icon">⚠️</span>Status</div><div class="pill-value">Offline</div></div>';
         if (jobsBubbleEl) {
           jobsBubbleEl.innerHTML = '<div class="side-icon">🗂️</div><div class="side-value">-</div><div class="side-label">Jobs</div>';
         }
@@ -859,7 +860,7 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               sttModel: sttModel || "nova-3",
-              ttsModel: ttsModel || "aura-2-en-us",
+              ttsModel: ttsModel || "aura-2-thalia-en",
             }),
           });
         } catch (_) {}
@@ -2475,8 +2476,9 @@
           });
           if (!res.ok) {
             var err = await res.json().catch(function() { return {}; });
-            console.error("[voice-mode] TTS error:", err.error || res.status);
-            vmSetStatus("Press and hold to talk", null);
+            var errDetail = err.error || ("HTTP " + res.status);
+            console.error("[voice-mode] TTS error:", errDetail);
+            vmSetStatus("Voice playback failed — " + errDetail, null);
             vmBusy = false;
             return;
           }
@@ -2502,7 +2504,7 @@
           });
         } catch (e) {
           console.error("[voice-mode] speakText failed:", e);
-          if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+          if (vmActive && !vmBusy) vmSetStatus("Voice playback failed — " + (e.message || String(e)), null);
         } finally {
           vmBusy = false;
         }

@@ -1124,7 +1124,7 @@ self.addEventListener('fetch', e => {
           const settings = getSettings();
           const apiKey = settings.deepGram?.apiKey ?? "";
           if (!apiKey) return json({ ok: false, error: "DeepGram API key not configured (set deepGram.apiKey in .caravel/settings.json)" });
-          const ttsModel = settings.deepGram?.ttsModel || "aura-2-en-us";
+          const ttsModel = settings.deepGram?.ttsModel || "aura-2-thalia-en";
           const dgRes = await fetch(
             `https://api.deepgram.com/v1/speak?model=${encodeURIComponent(ttsModel)}&encoding=mp3`,
             {

@@ -109,7 +109,7 @@ ${pageStyles}
           <div class="settings-label">🔊 TTS model</div>
           <div class="settings-meta" id="voice-tts-meta">DeepGram TTS voice</div>
         </div>
-        <input class="hb-input voice-model-input" id="voice-tts-model-input" type="text" placeholder="aura-2-en-us" value="aura-2-en-us" title="DeepGram TTS model" />
+        <input class="hb-input voice-model-input" id="voice-tts-model-input" type="text" placeholder="aura-2-thalia-en" value="aura-2-thalia-en" title="DeepGram TTS model" />
       </div>
       <div class="setting-item">
         <div class="setting-main">
@@ -548,14 +548,14 @@ ${pageStyles}
       <div class="side-label">Tasks</div>
     </aside>
     <footer class="dock" id="dock" aria-live="polite">
-      <div class="pill">Connecting...</div>
+      <div id="dock-pills"><div class="pill">Connecting...</div></div>
+      <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate">🎤</button>
     </footer>
     <aside class="side-bubble" id="uptime-bubble" aria-live="polite">
       <div class="side-icon">⏱️</div>
       <div class="side-value">-</div>
       <div class="side-label">Uptime</div>
     </aside>
-    <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate">🎤</button>
   </div>
 
   <script src="/marked.js" defer></script>

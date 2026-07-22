@@ -4801,12 +4801,20 @@ export const pageStyles = String.raw`    :root {
       }
     }
 
+    /* ── Dock pills container — fills remaining space, mic sits alongside ── */
+    #dock-pills {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
     /* ── Global mic — dictate into any focused input ── */
     .global-mic {
-      position: fixed;
-      bottom: 70px;
-      right: 14px;
-      z-index: 10;
+      flex: 0 0 auto;
+      margin-left: 6px;
       width: 38px;
       height: 38px;
       border-radius: 50%;

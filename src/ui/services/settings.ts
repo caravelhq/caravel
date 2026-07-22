@@ -22,7 +22,7 @@ export async function readVoiceSettings(): Promise<VoiceSettingsData> {
     hasApiKey: typeof dg.apiKey === "string" && dg.apiKey.trim().length > 0,
     sttEnabled: Boolean(dg.sttEnabled),
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
-    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-en-us",
+    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
   };
 }
 
@@ -39,7 +39,7 @@ export async function updateVoiceSettings(patch: VoiceSettingsPatch): Promise<Vo
     hasApiKey: typeof dg.apiKey === "string" && dg.apiKey.trim().length > 0,
     sttEnabled: Boolean(dg.sttEnabled),
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
-    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-en-us",
+    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
   };
 }
 
