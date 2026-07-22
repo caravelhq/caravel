@@ -33,27 +33,38 @@
     const quickJobForm = $("quick-job-form");
     const quickOpenCreate = $("quick-open-create");
     const quickBackJobs = $("quick-back-jobs");
-    const quickJobOffset = $("quick-job-offset");
-    const quickJobRecurring = $("quick-job-recurring");
-    const quickJobPrompt = $("quick-job-prompt");
     const quickJobSubmit = $("quick-job-submit");
     const quickJobStatus = $("quick-job-status");
     const quickJobsStatus = $("quick-jobs-status");
     const quickJobsNext = $("quick-jobs-next");
-    const quickJobPreview = $("quick-job-preview");
     const quickJobCount = $("quick-job-count");
     const quickJobsList = $("quick-jobs-list");
     const jobsBubbleEl = $("jobs-bubble");
     const tasksBubbleEl = $("tasks-bubble");
     const uptimeBubbleEl = $("uptime-bubble");
+    // New task form fields
+    const quickTaskAgent = $("quick-task-agent");
+    const quickTaskProject = $("quick-task-project");
+    const quickTaskHeadline = $("quick-task-headline");
+    const quickTaskKind = $("quick-task-kind");
+    const quickTaskPriority = $("quick-task-priority");
+    const quickTaskBrief = $("quick-task-brief");
+    const quickTaskRecurring = $("quick-task-recurring");
+    const quickTaskScheduleSection = $("quick-task-schedule-section");
+    const quickTaskModeCron = $("quick-task-mode-cron");
+    const quickTaskModeInterval = $("quick-task-mode-interval");
+    const quickCronSection = $("quick-cron-section");
+    const quickIntervalSection = $("quick-interval-section");
+    const quickTaskCron = $("quick-task-cron");
+    const quickTaskIntervalStart = $("quick-task-interval-start");
+    const quickTaskIntervalHours = $("quick-task-interval-hours");
     let hbBusy = false;
     let hbSaveBusy = false;
     let use12Hour = localStorage.getItem("clock.format") === "12";
     let quickView = "jobs";
     let quickViewInitialized = false;
     let quickViewChosenByUser = false;
-    let expandedJobName = "";
-    let lastRenderedJobs = [];
+    let lastRenderedSchedules = [];
     let scrollAnimFrame = 0;
     let heartbeatTimezoneOffsetMinutes = 0;
     // Status-dock connectivity: drives an adaptive poll cadence (faster while
@@ -275,83 +286,61 @@
       });
     }
 
-    function renderJobsList(jobs) {
+    function renderSchedulesList(schedules) {
       if (!quickJobsList) return;
-      const items = Array.isArray(jobs) ? jobs.slice() : [];
-      const now = new Date();
+      const items = Array.isArray(schedules) ? schedules : [];
+      lastRenderedSchedules = items;
 
       if (!items.length) {
-        quickJobsList.innerHTML = '<div class="quick-jobs-empty">No jobs yet.</div>';
-        if (quickJobsNext) quickJobsNext.textContent = "Next job in --";
+        quickJobsList.innerHTML = '<div class="quick-jobs-empty">No scheduled tasks yet.</div>';
+        if (quickJobsNext) quickJobsNext.textContent = "No schedules";
         return;
       }
 
-      const withNext = items
-        .map((j) => ({
-          ...j,
-          _nextAt: nextRunAt(j.schedule, now),
-        }))
-        .sort((a, b) => {
-          const ta = a._nextAt ? a._nextAt.getTime() : Number.POSITIVE_INFINITY;
-          const tb = b._nextAt ? b._nextAt.getTime() : Number.POSITIVE_INFINITY;
-          return ta - tb;
-        });
+      if (quickJobsNext) quickJobsNext.textContent = items.length + " schedule" + (items.length === 1 ? "" : "s");
 
-      const nearest = withNext.find((j) => j._nextAt);
-      if (quickJobsNext) {
-        quickJobsNext.textContent = nearest && nearest._nextAt
-          ? ("Next job in " + fmtDur(nearest._nextAt.getTime() - now.getTime()))
-          : "Next job in --";
-      }
-
-      quickJobsList.innerHTML = withNext
-        .map((j) => {
-          const nextAt = j._nextAt;
-          const cooldown = nextAt ? fmtDur(nextAt.getTime() - now.getTime()) : "n/a";
-          const time = clockFromSchedule(j.schedule || "");
-          const expanded = expandedJobName && expandedJobName === (j.name || "");
-          const nextRunText = nextAt
-            ? formatOffsetDate(nextAt, {
-                weekday: "short",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: use12Hour,
-              })
-            : "--";
+      quickJobsList.innerHTML = items
+        .map((t) => {
+          const rec = t.recurrence || {};
+          const cadence = rec.cron ? "cron: " + rec.cron : (rec.interval_hours ? "every " + rec.interval_hours + "h" : "--");
+          const enabled = rec.enabled !== false;
+          const agent = t.agent || "--";
+          const headline = t.headline || t.title || t.id || "--";
+          const count = rec.count != null ? " (" + rec.count + " fired)" : "";
           return (
-          '<div class="quick-job-item">' +
-            '<div class="quick-job-item-main">' +
-              '<button class="quick-job-line" type="button" data-toggle-job="' + escAttr(j.name || "") + '">' +
-                '<span class="quick-job-item-name">' + esc(j.name || "job") + "</span>" +
-                '<span class="quick-job-item-time">' + esc(time || "--") + "</span>" +
-                '<span class="quick-job-item-cooldown">' + esc(cooldown) + "</span>" +
-              "</button>" +
-              (expanded ? (
-                '<div class="quick-job-item-details">' +
-                  '<div>Schedule: ' + esc(j.schedule || "--") + "</div>" +
-                  '<div>Next run: ' + esc(nextRunText) + "</div>" +
-                  '<div>Prompt:</div>' +
-                  '<pre class="quick-job-prompt-full">' + esc(String(j.prompt || "")) + "</pre>" +
-                "</div>"
-              ) : (
-                ""
-              )) +
-            "</div>" +
-            '<button class="quick-job-delete" type="button" data-delete-job="' + escAttr(j.name || "") + '">Delete</button>' +
-          "</div>"
+            '<div class="quick-job-item">' +
+              '<div class="quick-job-item-main">' +
+                '<div class="quick-job-line">' +
+                  '<span class="quick-job-item-name">' + esc(headline) + "</span>" +
+                  '<span class="quick-job-item-time">' + esc(agent) + "</span>" +
+                  '<span class="quick-job-item-cooldown">' + esc(cadence) + esc(count) + "</span>" +
+                "</div>" +
+                '<div style="font-size:11px;opacity:0.6;padding:2px 0 4px;">' +
+                  (enabled ? '<span style="color:#a8f1ca">● active</span>' : '<span style="color:#ffd39f">⏸ paused</span>') +
+                "</div>" +
+              "</div>" +
+              '<div style="display:flex;gap:6px;">' +
+                (enabled
+                  ? '<button class="quick-job-delete" type="button" data-pause-schedule="' + escAttr(t.agent || "") + '" data-schedule-id="' + escAttr(t.id || "") + '">Pause</button>'
+                  : '<button class="quick-job-delete" type="button" data-resume-schedule="' + escAttr(t.agent || "") + '" data-schedule-id="' + escAttr(t.id || "") + '">Resume</button>'
+                ) +
+                '<button class="quick-job-delete" type="button" data-delete-schedule="' + escAttr(t.agent || "") + '" data-schedule-id="' + escAttr(t.id || "") + '">Delete</button>' +
+              "</div>" +
+            "</div>"
           );
         })
         .join("");
     }
 
-    function rerenderJobsList() {
-      renderJobsList(lastRenderedJobs);
-    }
-
-    function toggleJobDetails(name) {
-      const jobName = String(name || "");
-      expandedJobName = expandedJobName === jobName ? "" : jobName;
-      rerenderJobsList();
+    async function loadAndRenderSchedules() {
+      try {
+        const res = await fetch("/api/tasks/scheduled", { cache: "no-store" });
+        if (!res.ok) throw new Error("status " + res.status);
+        const out = await res.json();
+        renderSchedulesList(Array.isArray(out.templates) ? out.templates : []);
+      } catch (_) {
+        renderSchedulesList([]);
+      }
     }
 
     async function refreshState() {
@@ -379,12 +368,8 @@
             '<div class="side-value">' + esc(String(state.tasksActive ?? 0)) + "</div>" +
             '<div class="side-label">Tasks</div>';
         }
-        lastRenderedJobs = Array.isArray(state.jobs) ? state.jobs : [];
-        if (expandedJobName && !lastRenderedJobs.some((job) => String(job.name || "") === expandedJobName)) {
-          expandedJobName = "";
-        }
-        renderJobsList(lastRenderedJobs);
-        syncQuickViewForJobs(state.jobs);
+        loadAndRenderSchedules();
+        syncQuickViewForSchedules();
         if (uptimeBubbleEl) {
           uptimeBubbleEl.innerHTML =
             '<div class="side-icon">⏱️</div>' +
@@ -400,10 +385,9 @@
         if (tasksBubbleEl) {
           tasksBubbleEl.innerHTML = '<div class="side-icon">📋</div><div class="side-value">-</div><div class="side-label">Tasks</div>';
         }
-        lastRenderedJobs = [];
-        expandedJobName = "";
-        renderJobsList([]);
-        syncQuickViewForJobs([]);
+        lastRenderedSchedules = [];
+        renderSchedulesList([]);
+        syncQuickViewForSchedules();
         if (uptimeBubbleEl) {
           uptimeBubbleEl.innerHTML = '<div class="side-icon">⏱️</div><div class="side-value">-</div><div class="side-label">Uptime</div>';
         }
@@ -449,8 +433,8 @@
       if (options && options.scroll) focusQuickView(quickView);
     }
 
-    function syncQuickViewForJobs(jobs) {
-      const count = Array.isArray(jobs) ? jobs.length : 0;
+    function syncQuickViewForSchedules() {
+      const count = lastRenderedSchedules.length;
       if (count === 0) {
         if (quickViewInitialized && quickView === "jobs" && quickViewChosenByUser) return;
         setQuickView("create");
@@ -479,8 +463,7 @@
         heartbeatTimezoneOffsetMinutes = clampTimezoneOffsetMinutes(data?.timezoneOffsetMinutes);
         setHeartbeatUi(on, undefined, intervalMinutes, prompt);
         renderClock();
-        rerenderJobsList();
-        updateQuickJobUi();
+        loadAndRenderSchedules();
       } catch (err) {
         hbToggle.textContent = "Error";
         hbToggle.className = "hb-toggle off";
@@ -723,7 +706,6 @@
         localStorage.setItem("clock.format", use12Hour ? "12" : "24");
         renderClockToggle();
         renderClock();
-        updateQuickJobUi();
       });
     }
 
@@ -1091,118 +1073,74 @@
       });
     })();
 
-    if (quickJobOffset && !quickJobOffset.value) {
-      quickJobOffset.value = "10";
-    }
-
-    function normalizeOffsetMinutes(value) {
-      const n = Number(String(value || "").trim());
-      if (!Number.isFinite(n)) return null;
-      const rounded = Math.round(n);
-      if (rounded < 1 || rounded > 1440) return null;
-      return rounded;
-    }
-
-    function computeTimeFromOffset(offsetMinutes) {
-      const targetInstant = new Date(Date.now() + offsetMinutes * 60_000);
-      const dt = toOffsetDate(targetInstant);
-      const hour = dt.getUTCHours();
-      const minute = dt.getUTCMinutes();
-      const time = String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
-      const dayLabel = isSameOffsetDay(targetInstant, new Date()) ? "Today" : "Tomorrow";
-      const human = formatOffsetDate(targetInstant, {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: use12Hour,
-      });
-      return { hour, minute, time, dayLabel, human };
-    }
-
-    function formatPreviewTime(hour, minute) {
-      const shiftedNow = toOffsetDate(new Date());
-      shiftedNow.setUTCHours(hour, minute, 0, 0);
-      const instant = new Date(shiftedNow.getTime() - heartbeatTimezoneOffsetMinutes * 60_000);
-      return formatOffsetDate(instant, {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: use12Hour,
-      });
-    }
-
-    function formatOffsetDuration(offsetMinutes) {
-      const total = Math.max(0, Math.round(offsetMinutes));
-      const hours = Math.floor(total / 60);
-      const minutes = total % 60;
-      if (hours <= 0) return minutes + "m";
-      if (minutes === 0) return hours + "h";
-      return hours + "h " + minutes + "m";
-    }
-
-    function updateQuickJobUi() {
-      if (quickJobPrompt && quickJobCount) {
-        const count = (quickJobPrompt.value || "").trim().length;
-        quickJobCount.textContent = String(count) + " chars";
-      }
-      if (quickJobOffset && quickJobPreview) {
-        const offset = normalizeOffsetMinutes(quickJobOffset.value || "");
-        if (!offset) {
-          quickJobPreview.textContent = "Use 1-1440 minutes";
-          quickJobPreview.style.color = "#ffd39f";
-          return;
-        }
-        const target = computeTimeFromOffset(offset);
-        const human = formatPreviewTime(target.hour, target.minute) || target.time;
-        quickJobPreview.textContent = "Runs in " + formatOffsetDuration(offset) + " (" + target.dayLabel + " " + human + ")";
-        quickJobPreview.style.color = "#a8f1ca";
-      }
-    }
-
-    if (quickJobOffset) quickJobOffset.addEventListener("input", updateQuickJobUi);
-    if (quickJobPrompt) quickJobPrompt.addEventListener("input", updateQuickJobUi);
-
-    document.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      const add = target.closest("[data-add-minutes]");
-      if (!add || !(add instanceof HTMLElement)) return;
-      if (!quickJobOffset) return;
-      const delta = Number(add.getAttribute("data-add-minutes") || "");
-      if (!Number.isFinite(delta)) return;
-      const current = normalizeOffsetMinutes(quickJobOffset.value) || 10;
-      const next = Math.min(1440, current + Math.round(delta));
-      quickJobOffset.value = String(next);
-      updateQuickJobUi();
-    });
-
-    document.addEventListener("click", (event) => {
-      const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
-      const row = target.closest("[data-toggle-job]");
-      if (!row || !(row instanceof HTMLElement)) return;
-      const name = row.getAttribute("data-toggle-job") || "";
-      if (!name) return;
-      toggleJobDetails(name);
-    });
-
+    // ── Schedule pause/resume/delete handlers ──
     document.addEventListener("click", async (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      const button = target.closest("[data-delete-job]");
-      if (!button || !(button instanceof HTMLButtonElement)) return;
-      const name = button.getAttribute("data-delete-job") || "";
-      if (!name) return;
-      button.disabled = true;
-      if (quickJobsStatus) quickJobsStatus.textContent = "Deleting job...";
-      try {
-        const res = await fetch("/api/jobs/" + encodeURIComponent(name), { method: "DELETE" });
-        const out = await res.json();
-        if (!out.ok) throw new Error(out.error || "delete failed");
-        if (quickJobsStatus) quickJobsStatus.textContent = "Deleted " + name;
-        await refreshState();
-      } catch (err) {
-        if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + String(err instanceof Error ? err.message : err);
-      } finally {
-        button.disabled = false;
+      const pauseBtn = target.closest("[data-pause-schedule]");
+      if (pauseBtn && pauseBtn instanceof HTMLButtonElement) {
+        const agent = pauseBtn.getAttribute("data-pause-schedule") || "";
+        const id = pauseBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        pauseBtn.disabled = true;
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/pause", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent }),
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "pause failed");
+          await loadAndRenderSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + String(err instanceof Error ? err.message : err);
+        } finally {
+          pauseBtn.disabled = false;
+        }
+        return;
+      }
+      const resumeBtn = target.closest("[data-resume-schedule]");
+      if (resumeBtn && resumeBtn instanceof HTMLButtonElement) {
+        const agent = resumeBtn.getAttribute("data-resume-schedule") || "";
+        const id = resumeBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        resumeBtn.disabled = true;
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent }),
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "resume failed");
+          await loadAndRenderSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + String(err instanceof Error ? err.message : err);
+        } finally {
+          resumeBtn.disabled = false;
+        }
+        return;
+      }
+      const deleteBtn = target.closest("[data-delete-schedule]");
+      if (deleteBtn && deleteBtn instanceof HTMLButtonElement) {
+        const agent = deleteBtn.getAttribute("data-delete-schedule") || "";
+        const id = deleteBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        deleteBtn.disabled = true;
+        if (quickJobsStatus) quickJobsStatus.textContent = "Deleting…";
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "?agent=" + encodeURIComponent(agent), { method: "DELETE" });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "delete failed");
+          if (quickJobsStatus) quickJobsStatus.textContent = "Deleted.";
+          await loadAndRenderSchedules();
+          syncQuickViewForSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + String(err instanceof Error ? err.message : err);
+        } finally {
+          deleteBtn.disabled = false;
+        }
+        return;
       }
     });
 
@@ -1214,36 +1152,119 @@
       quickBackJobs.addEventListener("click", () => setQuickView("jobs", { scroll: true, user: true }));
     }
 
-    if (quickJobForm && quickJobOffset && quickJobPrompt && quickJobSubmit && quickJobStatus) {
+    // ── Quick task create form ──
+    async function populateQuickTaskDropdowns() {
+      try {
+        const [agentsRes, projectsRes] = await Promise.all([
+          fetch("/api/agents", { cache: "no-store" }),
+          fetch("/api/projects", { cache: "no-store" }),
+        ]);
+        if (agentsRes.ok && quickTaskAgent) {
+          const data = await agentsRes.json();
+          const agents = Array.isArray(data.agents) ? data.agents : [];
+          quickTaskAgent.innerHTML = agents
+            .map((a) => '<option value="' + escAttr(a.name) + '"' + (a.name === "alice" ? " selected" : "") + '>' + esc((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>")
+            .join("");
+        }
+        if (projectsRes.ok && quickTaskProject) {
+          const data = await projectsRes.json();
+          const projects = Array.isArray(data.projects) ? data.projects : [];
+          quickTaskProject.innerHTML = '<option value="">— no project —</option>' +
+            projects.map((p) => '<option value="' + escAttr(p.slug || p.name || "") + '">' + esc(p.name || p.slug || "") + "</option>").join("");
+        }
+      } catch (_) {}
+    }
+
+    function updateBriefCount() {
+      if (quickTaskBrief && quickJobCount) {
+        quickJobCount.textContent = String((quickTaskBrief.value || "").trim().length) + " chars";
+      }
+    }
+
+    function syncScheduleSection() {
+      if (!quickTaskRecurring || !quickTaskScheduleSection) return;
+      quickTaskScheduleSection.style.display = quickTaskRecurring.checked ? "" : "none";
+    }
+
+    function syncCronIntervalSections() {
+      if (!quickTaskModeCron || !quickCronSection || !quickIntervalSection) return;
+      const isCron = quickTaskModeCron.checked;
+      quickCronSection.style.display = isCron ? "" : "none";
+      quickIntervalSection.style.display = isCron ? "none" : "";
+    }
+
+    if (quickTaskBrief) quickTaskBrief.addEventListener("input", updateBriefCount);
+    if (quickTaskRecurring) quickTaskRecurring.addEventListener("change", syncScheduleSection);
+    if (quickTaskModeCron) quickTaskModeCron.addEventListener("change", syncCronIntervalSections);
+    const quickTaskModeInterval = $("quick-task-mode-interval");
+    if (quickTaskModeInterval) quickTaskModeInterval.addEventListener("change", syncCronIntervalSections);
+
+    syncScheduleSection();
+    syncCronIntervalSections();
+    populateQuickTaskDropdowns();
+
+    if (quickJobForm && quickJobSubmit && quickJobStatus) {
       quickJobForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        const offset = normalizeOffsetMinutes(quickJobOffset.value || "");
-        const prompt = (quickJobPrompt.value || "").trim();
-        if (!offset || !prompt) {
-          quickJobStatus.textContent = "Use 1-1440 minutes and add a prompt.";
+        const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
+        const project = quickTaskProject ? (quickTaskProject.value || "").trim() : "";
+        const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
+        const kind = quickTaskKind ? (quickTaskKind.value || "task") : "task";
+        const priority = quickTaskPriority ? (quickTaskPriority.value || "normal") : "normal";
+        const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
+
+        if (!agent || !headline || !brief) {
+          quickJobStatus.textContent = "Agent, headline, and brief are required.";
           return;
         }
-        const target = computeTimeFromOffset(offset);
+
+        const isRecurring = quickTaskRecurring ? quickTaskRecurring.checked : false;
         quickJobSubmit.disabled = true;
-        quickJobStatus.textContent = "Saving job...";
+        quickJobStatus.textContent = isRecurring ? "Saving schedule…" : "Creating task…";
+
         try {
-          const res = await fetch("/api/jobs/quick", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              time: target.time,
-              prompt,
-              recurring: quickJobRecurring ? quickJobRecurring.checked : true,
-            }),
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "failed");
-          quickJobStatus.textContent = "Added to jobs list.";
-          if (quickJobsStatus) quickJobsStatus.textContent = "Added " + out.name;
-          quickJobPrompt.value = "";
-          updateQuickJobUi();
-          setQuickView("jobs", { scroll: true });
-          await refreshState();
+          if (isRecurring) {
+            const isCron = quickTaskModeCron ? quickTaskModeCron.checked : true;
+            const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
+            const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
+            const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
+            const cadence = isCron
+              ? { type: "cron", cron }
+              : { type: "interval", interval_hours: intervalHours, ...(intervalStart ? { start: intervalStart } : {}) };
+
+            if (isCron && !cron) {
+              quickJobStatus.textContent = "Enter a cron expression.";
+              return;
+            }
+
+            const res = await fetch("/api/tasks/schedule", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent, project: project || undefined, headline, kind, priority, brief, cadence }),
+            });
+            const out = await res.json();
+            if (!out.ok) throw new Error(out.error || "failed");
+            quickJobStatus.textContent = "Schedule created.";
+            if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "schedule");
+            if (quickTaskHeadline) quickTaskHeadline.value = "";
+            if (quickTaskBrief) quickTaskBrief.value = "";
+            setQuickView("jobs", { scroll: true });
+            await loadAndRenderSchedules();
+            syncQuickViewForSchedules();
+          } else {
+            const res = await fetch("/api/tasks/new", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ agent, project: project || undefined, headline, kind, priority, brief }),
+            });
+            const out = await res.json();
+            if (!out.ok) throw new Error(out.error || "failed");
+            quickJobStatus.textContent = "Task created.";
+            if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "task");
+            if (quickTaskHeadline) quickTaskHeadline.value = "";
+            if (quickTaskBrief) quickTaskBrief.value = "";
+            setQuickView("jobs", { scroll: true });
+          }
         } catch (err) {
           quickJobStatus.textContent = "Failed: " + String(err instanceof Error ? err.message : err);
         } finally {
@@ -1262,7 +1283,6 @@
 
     renderClock();
     setInterval(renderClock, 1000);
-    updateQuickJobUi();
     setQuickView(quickView);
 
     loadSettings();

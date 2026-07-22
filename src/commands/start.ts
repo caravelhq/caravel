@@ -6,6 +6,7 @@ import { isMultiAgentEnabled, startMultiAgentRunner } from "../multiAgent";
 import { writeState, type StateData } from "../statusline";
 import { cronMatches, nextCronMatch } from "../cron";
 import { clearJobSchedule, loadJobs } from "../jobs";
+import { tickScheduler } from "../scheduler";
 import { writePidFile, cleanupPidFile, checkExistingDaemon } from "../pid";
 import { initConfig, loadSettings, reloadSettings, resolvePrompt, type HeartbeatConfig, type Settings } from "../config";
 import { getDayAndMinuteAtOffset } from "../timezone";
@@ -734,6 +735,10 @@ export async function start(args: string[] = []) {
           });
       }
     }
+    // Recurring task scheduler tick (Jobs-to-Tasks merge, Phase 2).
+    tickScheduler(currentSettings.timezoneOffsetMinutes, now).catch((err) =>
+      console.error(`[${ts()}] Scheduler tick error:`, err)
+    );
     updateState();
   }, 60_000);
 }

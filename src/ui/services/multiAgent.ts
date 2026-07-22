@@ -14,10 +14,10 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set. Real deployments derive the roster from agents/<name>/.
 const EXAMPLE_AGENTS = ["alice", "bob", "ray"];
-const BUCKETS = ["open", "waiting", "done", "failed", "archived"] as const;
+const BUCKETS = ["open", "waiting", "done", "failed", "archived", "scheduled"] as const;
 type Bucket = (typeof BUCKETS)[number];
 
-type Counts = { open: number; waiting: number; done: number; failed: number; archived: number };
+type Counts = { open: number; waiting: number; done: number; failed: number; archived: number; scheduled: number };
 
 export interface MultiAgentSummary {
   enabled: boolean;
@@ -220,7 +220,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   const summary: MultiAgentSummary = {
     enabled: existsSync(AGENTS_DIR),
     byAgent: {},
-    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 },
+    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0 },
     waitingUser: [],
     escalated: [],
   };
@@ -228,7 +228,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   if (!summary.enabled) return summary;
 
   for (const agent of envAgents()) {
-    const counts: Counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0 };
+    const counts: Counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0 };
     for (const bucket of BUCKETS) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
@@ -404,10 +404,11 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   };
 }
 
-async function listAllTasks(includeArchived = false): Promise<TaskRow[]> {
+async function listAllTasks(includeArchived = false, includeScheduled = true): Promise<TaskRow[]> {
   if (!existsSync(AGENTS_DIR)) return [];
   const out: TaskRow[] = [];
-  const buckets = includeArchived ? BUCKETS : BUCKETS.filter((b) => b !== "archived");
+  let buckets = includeArchived ? BUCKETS : BUCKETS.filter((b) => b !== "archived");
+  if (!includeScheduled) buckets = buckets.filter((b) => b !== "scheduled") as typeof buckets;
   for (const agent of envAgents()) {
     for (const bucket of buckets) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
@@ -429,10 +430,57 @@ export async function listTasks(opts?: {
   since?: string;
   limit?: number;
   includeArchived?: boolean;
+  includeScheduled?: boolean;
 }): Promise<TaskRow[]> {
-  const all = await listAllTasks(opts?.includeArchived ?? false);
+  const all = await listAllTasks(opts?.includeArchived ?? false, opts?.includeScheduled ?? true);
   const filtered = opts?.since ? all.filter((t) => (t.updated ?? "") >= opts.since!) : all;
   return opts?.limit ? filtered.slice(0, opts.limit) : filtered;
+}
+
+// Convenience: return only scheduled templates (status: scheduled).
+export interface ScheduledTemplateRow extends TaskRow {
+  recurrence: {
+    cron?: string;
+    interval_hours?: number;
+    start?: string;
+    enabled: boolean;
+    skip_if_active: boolean;
+    count: number;
+    last_fired?: string | null;
+  } | null;
+}
+
+export async function listScheduledTemplates(): Promise<ScheduledTemplateRow[]> {
+  if (!existsSync(AGENTS_DIR)) return [];
+  const out: ScheduledTemplateRow[] = [];
+  for (const agent of envAgents()) {
+    const dir = join(AGENTS_DIR, agent, "tasks", "scheduled");
+    if (!existsSync(dir)) continue;
+    const files = (await readdir(dir).catch(() => [] as string[])).filter((f) => f.endsWith(".yaml"));
+    for (const f of files) {
+      const row = await readTaskFile(agent, "scheduled", f);
+      if (!row) continue;
+      let recurrence: ScheduledTemplateRow["recurrence"] = null;
+      try {
+        const raw = await readFile(join(dir, f), "utf-8");
+        const doc = yamlLoad(raw) as Record<string, any>;
+        if (doc?.recurrence && typeof doc.recurrence === "object") {
+          const r = doc.recurrence as Record<string, any>;
+          recurrence = {
+            cron: typeof r.cron === "string" ? r.cron : undefined,
+            interval_hours: typeof r.interval_hours === "number" ? r.interval_hours : undefined,
+            start: typeof r.start === "string" ? r.start : undefined,
+            enabled: r.enabled !== false,
+            skip_if_active: r.skip_if_active !== false,
+            count: typeof r.count === "number" ? r.count : 0,
+            last_fired: typeof r.last_fired === "string" ? r.last_fired : null,
+          };
+        }
+      } catch { /* ignore parse errors */ }
+      out.push({ ...row, recurrence });
+    }
+  }
+  return out;
 }
 
 export async function getTaskChain(taskId: string): Promise<TaskChain> {

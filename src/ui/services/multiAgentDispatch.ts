@@ -65,9 +65,9 @@ function escapeRegex(s: string): string {
 //   TSK-2026-05-04-0001 → TSK-2026-05-04-0001.01, .02, .03, ...
 // Top-level tasks (no parent) keep the flat date-prefixed counter.
 async function nextTaskId(parent: string | null): Promise<string> {
-  // Include `archived` so ids that were swept off the active dirs are still
-  // reserved and never reissued.
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
+  // Include `archived` and `scheduled` so ids that were swept off the active
+  // dirs (or are template envelopes) are still reserved and never reissued.
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived", "scheduled"];
 
   if (parent) {
     const root = parent.split(".")[0]!;
@@ -337,10 +337,11 @@ const TASK_BUCKETS = ["open", "waiting", "done", "failed"] as const;
 type TaskBucket = (typeof TASK_BUCKETS)[number];
 
 // Read a parent task's `project:` by id, scanning all agents + buckets
-// (incl. archived). Returns the trimmed slug, or null if absent/not found.
-// Lets a dispatched sub-task inherit its parent's project tag.
+// (incl. archived and scheduled). Returns the trimmed slug, or null if
+// absent/not found. Lets a dispatched sub-task inherit its parent's project
+// tag — including when the parent is a scheduled template.
 async function readParentProject(parentId: string): Promise<string | null> {
-  const buckets = [...TASK_BUCKETS, "archived"];
+  const buckets = [...TASK_BUCKETS, "archived", "scheduled"];
   for (const agent of knownAgents()) {
     for (const bucket of buckets) {
       const p = join(AGENTS_DIR, agent, "tasks", bucket, `${parentId}.yaml`);
@@ -1561,4 +1562,199 @@ export async function setTaskProject(input: SetTaskProjectInput): Promise<SetTas
   });
 
   return { ok: true, id: taskId, previous };
+}
+
+// === Scheduled template management (Jobs-to-Tasks merge, Phase 2) ===========
+//
+// Templates live in agents/<agent>/tasks/scheduled/<id>.yaml. They carry a
+// `recurrence:` block and status: scheduled. The daemon's scheduler tick
+// fires createTask() on each cron/interval match, spawning a child instance
+// in open/. Templates are never claimed by the runner.
+
+export interface CreateScheduledTemplateInput {
+  to?: string;
+  from?: string;
+  kind?: string;
+  priority?: string;
+  project?: string | null;
+  headline: string;
+  brief: string;
+  budget?: { max_turns?: number; max_subagents?: number; max_usd?: number | null };
+  recurrence: {
+    cron?: string;
+    interval?: { start: string; every_hours: number };
+    enabled?: boolean;
+    skip_if_active?: boolean;
+  };
+}
+
+export type CreateScheduledTemplateResult =
+  | { ok: true; id: string; path: string }
+  | { ok: false; error: string };
+
+export async function createScheduledTemplate(
+  input: CreateScheduledTemplateInput
+): Promise<CreateScheduledTemplateResult> {
+  const to = (input.to ?? "").trim();
+  const from = (input.from ?? "user").trim() || "user";
+  const kind = (input.kind ?? "other").trim();
+  const priority = (input.priority ?? "P2").trim();
+  const headline = (input.headline ?? "").trim();
+  const brief = (input.brief ?? "").trim();
+  const enabled = input.recurrence.enabled !== false;
+  const skipIfActive = input.recurrence.skip_if_active !== false;
+  const project = input.project === null
+    ? null
+    : ((input.project ?? "").trim() || null);
+
+  if (!knownAgents().includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
+  if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
+  if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
+  if (!headline) return { ok: false, error: "headline is required (≤10 words)" };
+  const headlineWords = headline.split(/\s+/).filter(Boolean).length;
+  if (headlineWords > 10) return { ok: false, error: `headline too long (${headlineWords} words; max 10)` };
+  if (!brief) return { ok: false, error: "brief is required" };
+
+  const { cron, interval } = input.recurrence;
+  if (!cron && !interval) return { ok: false, error: "recurrence requires either cron or interval" };
+  if (cron && !/^\S+ \S+ \S+ \S+ \S+$/.test(cron.trim())) {
+    return { ok: false, error: "cron must be a 5-field expression (min hour day month weekday)" };
+  }
+  if (interval) {
+    if (!/^\d{2}:\d{2}$/.test(interval.start)) return { ok: false, error: "interval.start must be HH:MM" };
+    if (!Number.isFinite(interval.every_hours) || interval.every_hours <= 0) {
+      return { ok: false, error: "interval.every_hours must be a positive number" };
+    }
+  }
+
+  const id = await nextTaskId(null);
+  const now = new Date().toISOString();
+
+  const budget = {
+    max_turns: input.budget?.max_turns ?? (kind === "code" ? 50 : kind === "decide" ? 10 : 30),
+    max_subagents: input.budget?.max_subagents ?? 0,
+    max_usd: input.budget?.max_usd ?? null,
+  };
+
+  let recurrenceBlock: string;
+  if (cron) {
+    recurrenceBlock = [
+      `recurrence:`,
+      `  cron: ${yamlEscape(cron.trim())}`,
+      `  enabled: ${enabled}`,
+      `  count: 0`,
+      `  last_fired: null`,
+      `  skip_if_active: ${skipIfActive}`,
+    ].join("\n");
+  } else {
+    recurrenceBlock = [
+      `recurrence:`,
+      `  interval:`,
+      `    start: ${yamlEscape(interval!.start)}`,
+      `    every_hours: ${interval!.every_hours}`,
+      `  enabled: ${enabled}`,
+      `  count: 0`,
+      `  last_fired: null`,
+      `  skip_if_active: ${skipIfActive}`,
+    ].join("\n");
+  }
+
+  const yaml = [
+    `id: ${id}`,
+    `headline: ${yamlEscape(headline)}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    ``,
+    `from: ${from}`,
+    `to: ${to}`,
+    `parent: null`,
+    `reply_to: ${from}`,
+    ``,
+    `kind: ${kind}`,
+    `priority: ${priority}`,
+    ...(project ? [`project: ${project}`] : []),
+    `deadline: null`,
+    ``,
+    `budget:`,
+    `  max_turns: ${budget.max_turns}`,
+    `  max_subagents: ${budget.max_subagents}`,
+    `  max_usd: ${budget.max_usd ?? "null"}`,
+    ``,
+    `brief: |`,
+    indent(brief, "  "),
+    ``,
+    recurrenceBlock,
+    ``,
+    `status: scheduled`,
+    ``,
+  ].join("\n");
+
+  const scheduledDir = join(AGENTS_DIR, to, "tasks", "scheduled");
+  await mkdir(scheduledDir, { recursive: true });
+  const outPath = join(scheduledDir, `${id}.yaml`);
+  await writeFile(outPath, yaml);
+
+  await appendJournal(to, {
+    ts: now,
+    id,
+    status: "scheduled",
+    kind,
+    from,
+    to,
+    parent: null,
+    summary: `scheduled template: ${cron ?? `every ${interval!.every_hours}h from ${interval!.start}`}`,
+  });
+
+  return { ok: true, id, path: outPath };
+}
+
+// Pause or resume a scheduled template by toggling recurrence.enabled.
+export type SetScheduledEnabledResult =
+  | { ok: true; id: string; enabled: boolean }
+  | { ok: false; error: string };
+
+export async function setScheduledTemplateEnabled(
+  agent: string,
+  templateId: string,
+  enabled: boolean
+): Promise<SetScheduledEnabledResult> {
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent}` };
+  if (!/^TSK-/.test(templateId)) return { ok: false, error: `invalid template id: ${templateId}` };
+
+  const path = join(AGENTS_DIR, agent, "tasks", "scheduled", `${templateId}.yaml`);
+  if (!existsSync(path)) return { ok: false, error: `template ${templateId} not found for agent ${agent}` };
+
+  let yaml: string;
+  try { yaml = await readFile(path, "utf-8"); } catch (err) {
+    return { ok: false, error: `failed to read template: ${String(err)}` };
+  }
+
+  const now = new Date().toISOString();
+  yaml = yaml.replace(/^(\s+enabled:\s*).*$/m, `$1${enabled}`);
+  yaml = yaml.replace(/^updated:\s*.*$/m, `updated: ${now}`);
+  await writeFile(path, yaml);
+
+  return { ok: true, id: templateId, enabled };
+}
+
+// Delete a scheduled template file.
+export type DeleteScheduledTemplateResult =
+  | { ok: true; id: string }
+  | { ok: false; error: string };
+
+export async function deleteScheduledTemplate(
+  agent: string,
+  templateId: string
+): Promise<DeleteScheduledTemplateResult> {
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent}` };
+  if (!/^TSK-/.test(templateId)) return { ok: false, error: `invalid template id: ${templateId}` };
+
+  const path = join(AGENTS_DIR, agent, "tasks", "scheduled", `${templateId}.yaml`);
+  if (!existsSync(path)) return { ok: false, error: `template ${templateId} not found for agent ${agent}` };
+
+  try { await unlink(path); } catch (err) {
+    return { ok: false, error: `failed to delete template: ${String(err)}` };
+  }
+
+  return { ok: true, id: templateId };
 }

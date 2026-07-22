@@ -23,8 +23,8 @@ import {
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath, isImage, readFileRaw } from "./services/files";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
-import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
+import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain } from "./services/multiAgent";
+import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
@@ -667,6 +667,71 @@ self.addEventListener('fetch', e => {
         try {
           const body = await req.json();
           const result = await createTask(body);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // List scheduled templates (status: scheduled from all agents).
+      if (url.pathname === "/api/tasks/scheduled" && req.method === "GET") {
+        try {
+          return json({ ok: true, templates: await listScheduledTemplates() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Create a new scheduled template.
+      if (url.pathname === "/api/tasks/schedule" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const result = await createScheduledTemplate(body);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Pause a scheduled template (set recurrence.enabled = false).
+      if (url.pathname.startsWith("/api/tasks/schedule/") && url.pathname.endsWith("/pause") && req.method === "POST") {
+        try {
+          const mid = url.pathname.slice("/api/tasks/schedule/".length, -"/pause".length);
+          const templateId = decodeURIComponent(mid);
+          if (!/^TSK-/.test(templateId)) return json({ ok: false, error: "invalid template id" });
+          const body = await req.json();
+          const result = await setScheduledTemplateEnabled(String(body?.agent ?? "").trim(), templateId, false);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, enabled: result.enabled });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Resume a paused scheduled template (set recurrence.enabled = true).
+      if (url.pathname.startsWith("/api/tasks/schedule/") && url.pathname.endsWith("/resume") && req.method === "POST") {
+        try {
+          const mid = url.pathname.slice("/api/tasks/schedule/".length, -"/resume".length);
+          const templateId = decodeURIComponent(mid);
+          if (!/^TSK-/.test(templateId)) return json({ ok: false, error: "invalid template id" });
+          const body = await req.json();
+          const result = await setScheduledTemplateEnabled(String(body?.agent ?? "").trim(), templateId, true);
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, enabled: result.enabled });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Delete a scheduled template.
+      if (url.pathname.startsWith("/api/tasks/schedule/") && req.method === "DELETE") {
+        try {
+          const templateId = decodeURIComponent(url.pathname.slice("/api/tasks/schedule/".length));
+          if (!/^TSK-/.test(templateId)) return json({ ok: false, error: "invalid template id" });
+          const agent = String(url.searchParams.get("agent") ?? "").trim();
+          const result = await deleteScheduledTemplate(agent, templateId);
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id });
         } catch (err) {

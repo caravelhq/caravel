@@ -287,6 +287,11 @@ export const pageStyles = String.raw`    :root {
       display: grid;
       gap: 8px;
     }
+    .quick-field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
     .quick-label {
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
