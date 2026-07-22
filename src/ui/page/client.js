@@ -2374,10 +2374,15 @@
         voiceModeOverlay.hidden = false;
         vmSetStatus("Press and hold to talk", null);
         vmSetTranscript("");
-        vmLastSpokenText = "";
         vmBusy = false;
         voiceModeBtn.textContent = "🎤";
-        // Ensure overlay is positioned over the chat panel (chat-panel has position:relative).
+        // Prime vmLastSpokenText so we don't re-speak messages already in history.
+        var primed = "";
+        if (typeof chatHistory !== "undefined" && chatHistory.length) {
+          var last = chatHistory[chatHistory.length - 1];
+          if (last && last.role === "assistant" && last.text) primed = last.text;
+        }
+        vmLastSpokenText = primed;
       }
 
       function vmClose() {
