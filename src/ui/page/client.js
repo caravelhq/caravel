@@ -1428,13 +1428,15 @@
             updateSendDisabled();
           }
           renderChatHistory();
-          // Voice mode: speak the last complete assistant message if it's new.
-          if (typeof window.__vmOnAssistantReply === "function") {
+          // Voice mode: speak assistant reply, streaming chunk-by-chunk as it arrives.
+          if (typeof window.__vmOnAssistantChunk === "function") {
             var lastMsg = chatHistory[chatHistory.length - 1];
             if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
               var st = lastMsg.state;
               var isDone = !st || st === "done";
-              if (isDone) window.__vmOnAssistantReply(lastMsg.text);
+              if (isDone || st === "streaming") {
+                window.__vmOnAssistantChunk(lastMsg.text, isDone);
+              }
             }
           }
         }
@@ -2410,8 +2412,11 @@
       var vmStream = null;
       var vmMimeType = null;
       var vmBusy = false;
-      var vmLastSpokenText = "";
       var vmCurrentAudio = null;
+      var vmAudioQueue = [];
+      var vmQueueRunning = false;
+      var vmQueueGen = 0;
+      var vmTurnCursor = 0;
 
       // Feature detect recording support (reuse same candidates as main mic).
       var vmSupported = !!(
@@ -2457,71 +2462,194 @@
       }
 
       function vmStopAudio() {
+        vmQueueGen++;
         if (vmCurrentAudio) {
           vmCurrentAudio.pause();
           vmCurrentAudio.src = "";
           vmCurrentAudio = null;
         }
+        vmAudioQueue = [];
+        vmQueueRunning = false;
       }
 
-      async function vmSpeakText(text) {
-        vmStopAudio();
-        vmSetStatus("Speaking…", "speaking");
-        try {
-          var res = await fetch("/api/voice/speak", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: text }),
-          });
-          if (!res.ok) {
-            var err = await res.json().catch(function() { return {}; });
-            var errDetail = err.error || ("HTTP " + res.status);
-            console.error("[voice-mode] TTS error:", errDetail);
-            vmSetStatus("Voice playback failed — " + errDetail, null);
-            vmBusy = false;
-            return;
+      // Strip markdown symbols before sending text to DeepGram TTS.
+      function vmStripMarkdown(text) {
+        return text
+          .replace(/```[\s\S]*?```/g, "")
+          .replace(/`[^`]+`/g, "")
+          .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+          .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+          .replace(/^#{1,6}\s+/gm, "")
+          .replace(/\*\*([^*]+)\*\*/g, "$1")
+          .replace(/\*([^*]+)\*/g, "$1")
+          .replace(/^[-*+]\s+/gm, "")
+          .replace(/^\d+\.\s+/gm, "")
+          .replace(/^>\s+/gm, "")
+          .replace(/~~([^~]+)~~/g, "$1")
+          .replace(/__([^_]+)__/g, "$1")
+          .replace(/_([^_]+)_/g, "$1")
+          .replace(/\|/g, "  ")
+          .replace(/^[-:|]+$/gm, "")
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
+      }
+
+      // Extract speakable chunks from pending text.
+      // A block is "complete" when it is followed by a \n\n separator (the server
+      // emits one per progress block) or when isDone=true (flush everything).
+      // Within a complete block longer than 250 chars, split at sentence terminators.
+      // During streaming, the last block may be incomplete — only dispatch sentences
+      // within it that end with ". " "! " or "? ".
+      function vmExtractChunks(pending, isDone) {
+        var chunks = [];
+        var consumed = 0;
+        var blocks = pending.split(/(\n\n+)/);
+        var pos = 0;
+        for (var b = 0; b < blocks.length; b++) {
+          var part = blocks[b];
+          if (/^\n\n+$/.test(part)) {
+            pos += part.length;
+            continue;
           }
-          var blob = await res.blob();
-          var url = URL.createObjectURL(blob);
-          var audio = new Audio(url);
-          vmCurrentAudio = audio;
-          audio.onended = function() {
-            URL.revokeObjectURL(url);
-            vmCurrentAudio = null;
-            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
-          };
-          audio.onerror = function() {
-            URL.revokeObjectURL(url);
-            vmCurrentAudio = null;
-            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
-          };
-          audio.play().catch(function(e) {
-            console.error("[voice-mode] Audio play failed:", e);
-            URL.revokeObjectURL(url);
-            vmCurrentAudio = null;
-            if (vmActive && !vmBusy) vmSetStatus("Press and hold to talk", null);
+          var hasTrailingSep = (b + 1 < blocks.length) && /^\n\n+$/.test(blocks[b + 1]);
+          var isComplete = hasTrailingSep || isDone;
+          if (isComplete) {
+            var trimmed = part.trim();
+            if (trimmed.length > 250) {
+              var re = /[.!?]\s+/g;
+              var m;
+              var sentStart = 0;
+              while ((m = re.exec(trimmed)) !== null) {
+                var end = m.index + m[0].length;
+                var sent = trimmed.slice(sentStart, end).trim();
+                if (sent) chunks.push(sent);
+                sentStart = end;
+              }
+              var tail = trimmed.slice(sentStart).trim();
+              if (tail) chunks.push(tail);
+            } else if (trimmed) {
+              chunks.push(trimmed);
+            }
+            pos += part.length;
+            consumed = pos;
+          } else {
+            // Incomplete last block — only dispatch complete sentences
+            var re2 = /[.!?]\s+/g;
+            var m2;
+            var sentStart2 = 0;
+            var lastSentEnd = 0;
+            while ((m2 = re2.exec(part)) !== null) {
+              var end2 = m2.index + m2[0].length;
+              var sent2 = part.slice(sentStart2, end2).trim();
+              if (sent2) chunks.push(sent2);
+              sentStart2 = end2;
+              lastSentEnd = end2;
+            }
+            consumed = pos + lastSentEnd;
+            break;
+          }
+        }
+        return { chunks: chunks, consumed: consumed };
+      }
+
+      // Sequential audio queue runner. Plays clips in submission order, one at a time.
+      // Uses vmQueueGen as a cancellation token — incremented by vmStopAudio() on barge-in.
+      async function vmRunQueue(gen) {
+        if (vmQueueRunning) return;
+        vmQueueRunning = true;
+        while (vmAudioQueue.length > 0 && vmActive && gen === vmQueueGen) {
+          var item = await vmAudioQueue.shift();
+          if (gen !== vmQueueGen || !item || !vmActive) {
+            if (item && item.url) URL.revokeObjectURL(item.url);
+            continue;
+          }
+          vmSetStatus("Speaking…", "speaking");
+          vmCurrentAudio = item.audio;
+          await new Promise(function(resolve) {
+            item.audio.onended = function() {
+              URL.revokeObjectURL(item.url);
+              vmCurrentAudio = null;
+              resolve();
+            };
+            item.audio.onerror = function() {
+              URL.revokeObjectURL(item.url);
+              vmCurrentAudio = null;
+              resolve();
+            };
+            item.audio.play().catch(function(e) {
+              console.error("[voice-mode] audio play failed:", e);
+              URL.revokeObjectURL(item.url);
+              vmCurrentAudio = null;
+              resolve();
+            });
           });
-        } catch (e) {
-          console.error("[voice-mode] speakText failed:", e);
-          if (vmActive && !vmBusy) vmSetStatus("Voice playback failed — " + (e.message || String(e)), null);
-        } finally {
+        }
+        if (gen === vmQueueGen) {
+          vmQueueRunning = false;
           vmBusy = false;
+          if (vmActive) vmSetStatus("Press and hold to talk", null);
         }
       }
 
-      // Called from pollChat when voice mode is active and a new assistant
-      // message has fully arrived (state === "done" or absent).
-      function vmOnAssistantReply(text) {
-        if (!vmActive) return;
-        if (!text || text === vmLastSpokenText) return;
-        vmLastSpokenText = text;
-        vmBusy = true;
-        vmSetTranscript('<div class="vm-reply">' + esc(text.slice(0, 300)) + (text.length > 300 ? "…" : "") + "</div>");
-        vmSpeakText(text);
+      // Fetch TTS for one chunk and push the result Promise to the queue.
+      // The queue runner awaits each Promise in order — so if chunk 2 fetches faster
+      // than chunk 1, it still waits behind chunk 1 in the queue.
+      function vmEnqueueChunk(chunkText) {
+        var text = vmStripMarkdown(chunkText).trim();
+        if (!text) return;
+        var gen = vmQueueGen;
+        var p = fetch("/api/voice/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text }),
+        }).then(function(res) {
+          if (gen !== vmQueueGen) return null;
+          if (!res.ok) {
+            return res.json().catch(function() { return {}; }).then(function(err) {
+              var detail = err.error || ("HTTP " + res.status);
+              console.error("[voice-mode] TTS chunk error:", detail);
+              if (gen === vmQueueGen) vmSetStatus("Voice playback failed — " + detail, null);
+              return null;
+            });
+          }
+          return res.blob().then(function(blob) {
+            if (gen !== vmQueueGen) return null;
+            var url = URL.createObjectURL(blob);
+            return { audio: new Audio(url), url: url };
+          });
+        }).catch(function(e) {
+          console.error("[voice-mode] TTS chunk fetch failed:", e);
+          return null;
+        });
+        vmAudioQueue.push(p);
+        if (!vmQueueRunning) vmRunQueue(vmQueueGen);
       }
 
-      // Expose to pollChat so it can call us after receiving a new message.
-      window.__vmOnAssistantReply = vmOnAssistantReply;
+      // Called from pollChat on each poll that sees assistant text (streaming or done).
+      // Tracks a cursor (vmTurnCursor) so only newly arrived text is dispatched.
+      function vmOnAssistantChunk(fullText, isDone) {
+        if (!vmActive) return;
+        if (!fullText) return;
+        // Safety: if text shrank (shouldn't happen mid-turn), reset
+        if (fullText.length < vmTurnCursor) {
+          vmTurnCursor = 0;
+          vmStopAudio();
+        }
+        var pending = fullText.slice(vmTurnCursor);
+        if (!pending) return;
+        var result = vmExtractChunks(pending, isDone);
+        if (result.consumed > 0) vmTurnCursor += result.consumed;
+        for (var i = 0; i < result.chunks.length; i++) {
+          var chunk = result.chunks[i].trim();
+          if (chunk) vmEnqueueChunk(chunk);
+        }
+        if (result.chunks.length) {
+          vmSetTranscript('<div class="vm-reply">' + esc(fullText.slice(0, 300)) + (fullText.length > 300 ? "…" : "") + "</div>");
+          vmBusy = true;
+        }
+      }
+
+      window.__vmOnAssistantChunk = vmOnAssistantChunk;
 
       async function vmRecordAndSubmit() {
         if (vmBusy) return;
@@ -2615,11 +2743,12 @@
               updateSendDisabled();
             }
             renderChatHistory();
+            vmTurnCursor = 0;  // Reset cursor — new assistant turn begins
           } catch (e) {
             console.error("[voice-mode] chat send failed:", e);
           }
           vmSetStatus("Waiting for reply…", "processing");
-          // vmBusy stays true; vmOnAssistantReply clears it when speaking starts.
+          // vmBusy stays true; vmOnAssistantChunk clears it when the queue drains.
         };
         vmRecorder.stop();
       }
@@ -2679,13 +2808,12 @@
         vmSetTranscript("");
         vmBusy = false;
         voiceModeBtn.textContent = "🎤";
-        // Prime vmLastSpokenText so we don't re-speak messages already in history.
-        var primed = "";
+        // Prime cursor to skip any assistant text already in history when voice mode opens.
+        vmTurnCursor = 0;
         if (typeof chatHistory !== "undefined" && chatHistory.length) {
           var last = chatHistory[chatHistory.length - 1];
-          if (last && last.role === "assistant" && last.text) primed = last.text;
+          if (last && last.role === "assistant" && last.text) vmTurnCursor = last.text.length;
         }
-        vmLastSpokenText = primed;
       }
 
       function vmClose() {
