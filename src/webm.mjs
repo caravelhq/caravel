@@ -205,10 +205,10 @@ function extractOpusFromWebm(buf) {
         tp = tEnd;
       }
     } else if (elId === ID_CLUSTER) {
-      // Walk cluster children; if size is unknown, stop at the next Segment-level ID
+      // Walk cluster children; stop at the next Segment-level ID (4-byte EBML ID).
       let cp = pos;
       while (cp < elEnd && cp < bufLen) {
-        // A 4-byte EBML ID at this level signals the start of the next Segment-level element
+        // A 4-byte EBML ID at cluster depth signals the next Segment-level element.
         const peek = buf[cp];
         if ((peek & 0xF0) === 0x10) break; // 4-byte ID (e.g. next Cluster)
 
@@ -262,6 +262,10 @@ function extractOpusFromWebm(buf) {
         }
         cp = cEnd;
       }
+      // KEY FIX: for unknown-size Clusters, elEnd === bufLen (Segment end), but the
+      // inner loop stopped at cp (start of the next Cluster). Advancing pos to elEnd
+      // would skip all remaining clusters. Use cp instead for unknown-size clusters.
+      if (elSize < 0) { pos = cp; continue; }
     }
 
     pos = elEnd;
