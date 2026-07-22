@@ -5,7 +5,7 @@ import { htmlPage } from "./page/html";
 import { clampInt, json } from "./http";
 import type { StartWebUiOptions, WebServerHandle } from "./types";
 import { buildState, buildTechnicalInfo, sanitizeSettings } from "./services/state";
-import { readHeartbeatSettings, updateHeartbeatSettings } from "./services/settings";
+import { readHeartbeatSettings, updateHeartbeatSettings, readVoiceSettings, updateVoiceSettings } from "./services/settings";
 import { createQuickJob, deleteJob } from "./services/jobs";
 import { readLogs } from "./services/logs";
 import {
@@ -27,7 +27,7 @@ import { getMultiAgentSummary, listTasks, getTaskChain } from "./services/multiA
 import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
-import { getSettings } from "../config";
+import { getSettings, reloadSettings } from "../config";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -1027,6 +1027,30 @@ self.addEventListener('fetch', e => {
         }
       }
 
+      if (url.pathname === "/api/settings/voice" && req.method === "GET") {
+        try {
+          return json({ ok: true, voice: await readVoiceSettings() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/settings/voice" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const patch: Record<string, any> = {};
+          if (typeof body?.sttEnabled === "boolean") patch.sttEnabled = body.sttEnabled;
+          if (typeof body?.sttModel === "string") patch.sttModel = body.sttModel;
+          if (typeof body?.ttsModel === "string") patch.ttsModel = body.ttsModel;
+          const updated = await updateVoiceSettings(patch);
+          // Reload cached settings so the new values take effect immediately.
+          await reloadSettings();
+          return json({ ok: true, voice: updated });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
       if (url.pathname === "/api/voice/speak" && req.method === "POST") {
         try {
           const body = await req.json();
@@ -1035,8 +1059,9 @@ self.addEventListener('fetch', e => {
           const settings = getSettings();
           const apiKey = settings.deepGram?.apiKey ?? "";
           if (!apiKey) return json({ ok: false, error: "DeepGram API key not configured (set deepGram.apiKey in .caravel/settings.json)" });
+          const ttsModel = settings.deepGram?.ttsModel || "aura-2-en-us";
           const dgRes = await fetch(
-            "https://api.deepgram.com/v1/speak?model=aura-2-en-us&encoding=mp3",
+            `https://api.deepgram.com/v1/speak?model=${encodeURIComponent(ttsModel)}&encoding=mp3`,
             {
               method: "POST",
               headers: {

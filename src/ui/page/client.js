@@ -835,6 +835,262 @@
       });
     }
 
+    // ── Voice Settings (STT toggle + model config in settings modal) ──
+    (function() {
+      var voiceSttToggle = $("voice-stt-toggle");
+      var voiceSttMeta = $("voice-stt-meta");
+      var voiceModelRow = $("voice-model-row");
+      var voiceSttModelInput = $("voice-stt-model-input");
+      var voiceTtsModelInput = $("voice-tts-model-input");
+      if (!voiceSttToggle) return;
+
+      var voiceSttEnabled = false;
+      var voiceModelSaveTimer = null;
+
+      function renderVoiceSttToggle() {
+        voiceSttToggle.textContent = voiceSttEnabled ? "DeepGram" : "Whisper";
+        voiceSttToggle.className = "hb-toggle " + (voiceSttEnabled ? "on" : "off");
+        if (voiceSttMeta) voiceSttMeta.textContent = voiceSttEnabled ? "DeepGram STT" : "Whisper (local)";
+        if (voiceModelRow) voiceModelRow.hidden = !voiceSttEnabled;
+      }
+
+      async function loadVoiceSettings() {
+        try {
+          var res = await fetch("/api/settings/voice");
+          var data = await res.json();
+          if (!data.ok) return;
+          var v = data.voice;
+          // Only allow enabling DeepGram STT if an API key is actually configured.
+          voiceSttEnabled = !!(v && v.sttEnabled && v.hasApiKey);
+          if (voiceSttModelInput && v && v.sttModel) voiceSttModelInput.value = v.sttModel;
+          if (voiceTtsModelInput && v && v.ttsModel) voiceTtsModelInput.value = v.ttsModel;
+          renderVoiceSttToggle();
+        } catch (_) {}
+      }
+
+      async function saveVoiceModels() {
+        var sttModel = voiceSttModelInput ? voiceSttModelInput.value.trim() : "";
+        var ttsModel = voiceTtsModelInput ? voiceTtsModelInput.value.trim() : "";
+        try {
+          await fetch("/api/settings/voice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              sttModel: sttModel || "nova-3",
+              ttsModel: ttsModel || "aura-2-en-us",
+            }),
+          });
+        } catch (_) {}
+      }
+
+      voiceSttToggle.addEventListener("click", async function() {
+        voiceSttEnabled = !voiceSttEnabled;
+        renderVoiceSttToggle();
+        try {
+          await fetch("/api/settings/voice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ sttEnabled: voiceSttEnabled }),
+          });
+        } catch (_) {}
+      });
+
+      function debounceSaveModels() {
+        if (voiceModelSaveTimer) clearTimeout(voiceModelSaveTimer);
+        voiceModelSaveTimer = setTimeout(saveVoiceModels, 800);
+      }
+
+      if (voiceSttModelInput) {
+        voiceSttModelInput.addEventListener("input", debounceSaveModels);
+        voiceSttModelInput.addEventListener("blur", saveVoiceModels);
+      }
+      if (voiceTtsModelInput) {
+        voiceTtsModelInput.addEventListener("input", debounceSaveModels);
+        voiceTtsModelInput.addEventListener("blur", saveVoiceModels);
+      }
+
+      // Refresh voice settings whenever the settings modal opens.
+      if (settingsBtn) settingsBtn.addEventListener("click", loadVoiceSettings);
+      loadVoiceSettings();
+    })();
+
+    // ── Global Mic — dictate into any focused input or textarea ──
+    (function() {
+      var globalMicBtn = $("global-mic");
+      if (!globalMicBtn) return;
+
+      var gmSupported = !!(
+        typeof MediaRecorder !== "undefined" &&
+        navigator.mediaDevices &&
+        navigator.mediaDevices.getUserMedia
+      );
+      var gmMimeType = null;
+      if (gmSupported) {
+        var gmCandidates = [
+          "audio/ogg;codecs=opus", "audio/ogg",
+          "audio/webm;codecs=opus", "audio/webm",
+        ];
+        for (var gmi = 0; gmi < gmCandidates.length; gmi++) {
+          if (MediaRecorder.isTypeSupported(gmCandidates[gmi])) {
+            gmMimeType = gmCandidates[gmi];
+            break;
+          }
+        }
+        if (!gmMimeType) gmSupported = false;
+      }
+      if (!gmSupported) { globalMicBtn.hidden = true; return; }
+
+      var gmRecorder = null;
+      var gmChunks = [];
+      var gmStream = null;
+      var gmLastFocus = null;  // Most recently focused text element.
+      var gmHoldMode = false;
+      var gmHoldTimer = null;
+      var gmPressStart = 0;
+      var GM_HOLD_MS = 250;
+
+      // Track the last focused text element so we know where to insert.
+      document.addEventListener("focusin", function(e) {
+        var t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t.id !== "global-mic") {
+          gmLastFocus = t;
+        }
+      }, true);
+
+      function insertTextAtCursor(el, text) {
+        if (!el) return;
+        if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA") return;
+        var start = typeof el.selectionStart === "number" ? el.selectionStart : el.value.length;
+        var end = typeof el.selectionEnd === "number" ? el.selectionEnd : el.value.length;
+        var before = el.value.slice(0, start);
+        var after = el.value.slice(end);
+        // Insert with a space separator if the preceding text is non-empty and not whitespace-terminated.
+        var prefix = (before.length > 0 && !/\s$/.test(before)) ? " " : "";
+        el.value = before + prefix + text + after;
+        var newPos = start + prefix.length + text.length;
+        try { el.selectionStart = el.selectionEnd = newPos; } catch (_) {}
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        // Resize if it's the chat input.
+        if (typeof autoResizeChatInput === "function" && el.id === "chat-input") {
+          autoResizeChatInput();
+        }
+      }
+
+      function gmSetState(state) {
+        globalMicBtn.classList.remove("recording", "transcribing");
+        globalMicBtn.disabled = false;
+        if (state === "recording") {
+          globalMicBtn.classList.add("recording");
+          globalMicBtn.textContent = "⏹";
+          globalMicBtn.title = "Stop recording";
+        } else if (state === "transcribing") {
+          globalMicBtn.classList.add("transcribing");
+          globalMicBtn.textContent = "⏳";
+          globalMicBtn.title = "Transcribing…";
+          globalMicBtn.disabled = true;
+        } else {
+          globalMicBtn.textContent = "🎤";
+          globalMicBtn.title = "Dictate into focused field";
+        }
+      }
+
+      function gmStopStream() {
+        if (gmStream) {
+          gmStream.getTracks().forEach(function(t) { t.stop(); });
+          gmStream = null;
+        }
+      }
+
+      async function gmStartRecording() {
+        if (gmRecorder && gmRecorder.state !== "inactive") return;
+        try {
+          gmStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        } catch (e) {
+          console.error("[global-mic] getUserMedia failed:", e);
+          return;
+        }
+        gmChunks = [];
+        try {
+          gmRecorder = new MediaRecorder(gmStream, { mimeType: gmMimeType });
+        } catch (e) {
+          console.error("[global-mic] MediaRecorder init failed:", e);
+          gmStopStream();
+          return;
+        }
+        gmRecorder.ondataavailable = function(e) {
+          if (e.data && e.data.size > 0) gmChunks.push(e.data);
+        };
+        gmRecorder.start(200);
+        gmSetState("recording");
+      }
+
+      async function gmStopAndInsert() {
+        if (!gmRecorder || gmRecorder.state === "inactive") return;
+        var target = gmLastFocus;  // Capture before async gap.
+        gmRecorder.onstop = async function() {
+          gmSetState("transcribing");
+          var blob = new Blob(gmChunks, { type: gmMimeType });
+          gmChunks = [];
+          gmRecorder = null;
+          gmStopStream();
+          try {
+            var ext = (gmMimeType || "").includes("webm") ? ".webm" : ".ogg";
+            var fd = new FormData();
+            fd.append("audio", blob, "gm-recording" + ext);
+            var res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+            var data = await res.json();
+            if (data.ok && data.text) {
+              insertTextAtCursor(target || chatInput, data.text.trim());
+            } else if (!data.ok) {
+              console.error("[global-mic] transcription failed:", data.error);
+            }
+          } catch (e) {
+            console.error("[global-mic] transcribe request failed:", e);
+          }
+          gmSetState("idle");
+        };
+        gmRecorder.stop();
+      }
+
+      function gmPressDown(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        gmPressStart = Date.now();
+        gmHoldTimer = setTimeout(function() {
+          gmHoldMode = true;
+          gmStartRecording();
+        }, GM_HOLD_MS);
+      }
+
+      function gmPressUp(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        clearTimeout(gmHoldTimer);
+        var duration = Date.now() - gmPressStart;
+        if (gmHoldMode) {
+          gmHoldMode = false;
+          gmStopAndInsert();
+        } else if (duration < GM_HOLD_MS) {
+          // Tap: toggle.
+          if (gmRecorder && gmRecorder.state !== "inactive") {
+            gmStopAndInsert();
+          } else {
+            gmStartRecording();
+          }
+        }
+      }
+
+      globalMicBtn.addEventListener("mousedown", gmPressDown);
+      globalMicBtn.addEventListener("touchstart", gmPressDown, { passive: false });
+      globalMicBtn.addEventListener("mouseup", gmPressUp);
+      globalMicBtn.addEventListener("touchend", gmPressUp, { passive: false });
+      globalMicBtn.addEventListener("mouseleave", function() {
+        if (gmHoldMode) {
+          gmHoldMode = false;
+          clearTimeout(gmHoldTimer);
+          gmStopAndInsert();
+        }
+      });
+    })();
+
     if (quickJobOffset && !quickJobOffset.value) {
       quickJobOffset.value = "10";
     }
@@ -2347,26 +2603,52 @@
         vmRecorder.stop();
       }
 
-      // Push-to-talk: mousedown/touchstart → record; mouseup/touchend → submit.
-      voiceModeBtn.addEventListener("mousedown", function(e) {
-        e.preventDefault();
-        vmRecordAndSubmit();
-      });
-      voiceModeBtn.addEventListener("touchstart", function(e) {
-        e.preventDefault();
-        vmRecordAndSubmit();
-      }, { passive: false });
-      voiceModeBtn.addEventListener("mouseup", function(e) {
-        e.preventDefault();
-        vmStopAndSubmit();
-      });
-      voiceModeBtn.addEventListener("touchend", function(e) {
-        e.preventDefault();
-        vmStopAndSubmit();
-      }, { passive: false });
+      // Tap = toggle (click to start, click to stop).
+      // Hold (≥250ms) = push-to-talk (record while held, submit on release).
+      var VM_HOLD_MS = 250;
+      var vmPressStart = 0;
+      var vmHoldMode = false;
+      var vmHoldTimer = null;
+
+      function vmPressDown(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        vmPressStart = Date.now();
+        vmHoldTimer = setTimeout(function() {
+          vmHoldMode = true;
+          if (!vmBusy && (!vmRecorder || vmRecorder.state === "inactive")) {
+            vmRecordAndSubmit();
+          }
+        }, VM_HOLD_MS);
+      }
+
+      function vmPressUp(e) {
+        if (e && e.preventDefault) e.preventDefault();
+        clearTimeout(vmHoldTimer);
+        var duration = Date.now() - vmPressStart;
+        if (vmHoldMode) {
+          vmHoldMode = false;
+          if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
+        } else if (duration < VM_HOLD_MS) {
+          // Tap: toggle record.
+          if (vmRecorder && vmRecorder.state !== "inactive") {
+            vmStopAndSubmit();
+          } else if (!vmBusy) {
+            vmRecordAndSubmit();
+          }
+        }
+      }
+
+      voiceModeBtn.addEventListener("mousedown", vmPressDown);
+      voiceModeBtn.addEventListener("touchstart", vmPressDown, { passive: false });
+      voiceModeBtn.addEventListener("mouseup", vmPressUp);
+      voiceModeBtn.addEventListener("touchend", vmPressUp, { passive: false });
       voiceModeBtn.addEventListener("mouseleave", function() {
-        // If user drags out while holding, still stop recording.
-        if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
+        // If dragged out while in hold mode, stop recording.
+        if (vmHoldMode) {
+          vmHoldMode = false;
+          clearTimeout(vmHoldTimer);
+          if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
+        }
       });
 
       function vmOpen() {

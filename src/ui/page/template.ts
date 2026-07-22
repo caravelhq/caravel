@@ -92,6 +92,27 @@ ${pageStyles}
       </div>
       <div class="setting-item">
         <div class="setting-main">
+          <div class="settings-label">🎙️ Voice — STT</div>
+          <div class="settings-meta" id="voice-stt-meta">Whisper (local)</div>
+        </div>
+        <button class="hb-toggle off" id="voice-stt-toggle" type="button">Whisper</button>
+      </div>
+      <div class="setting-item" id="voice-model-row" hidden>
+        <div class="setting-main">
+          <div class="settings-label">🎙️ STT model</div>
+          <div class="settings-meta">DeepGram model name</div>
+        </div>
+        <input class="hb-input voice-model-input" id="voice-stt-model-input" type="text" placeholder="nova-3" value="nova-3" title="DeepGram STT model" />
+      </div>
+      <div class="setting-item">
+        <div class="setting-main">
+          <div class="settings-label">🔊 TTS model</div>
+          <div class="settings-meta" id="voice-tts-meta">DeepGram TTS voice</div>
+        </div>
+        <input class="hb-input voice-model-input" id="voice-tts-model-input" type="text" placeholder="aura-2-en-us" value="aura-2-en-us" title="DeepGram TTS model" />
+      </div>
+      <div class="setting-item">
+        <div class="setting-main">
           <div class="settings-label">🧾 Advanced</div>
           <div class="settings-meta">Technical runtime and JSON files</div>
         </div>
@@ -275,7 +296,6 @@ ${pageStyles}
           <div class="chat-actions">
             <button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run; if the composer has text, send it as a new prompt" aria-label="Interrupt">✋</button>
             <button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button>
-            <button id="chat-mic" class="chat-mic" type="button" title="Record voice message" aria-label="Record">🎤</button>
             <button id="chat-voice-mode" class="chat-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat">🎙️</button>
           </div>
           <button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button>
@@ -475,6 +495,7 @@ ${pageStyles}
       <div class="side-value">-</div>
       <div class="side-label">Uptime</div>
     </aside>
+    <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate">🎤</button>
   </div>
 
   <script src="/marked.js" defer></script>

@@ -1,6 +1,48 @@
 import { readFile, writeFile } from "fs/promises";
 import { SETTINGS_FILE } from "../constants";
 
+export interface VoiceSettingsPatch {
+  sttEnabled?: boolean;
+  sttModel?: string;
+  ttsModel?: string;
+}
+
+export interface VoiceSettingsData {
+  hasApiKey: boolean;
+  sttEnabled: boolean;
+  sttModel: string;
+  ttsModel: string;
+}
+
+export async function readVoiceSettings(): Promise<VoiceSettingsData> {
+  const raw = await readFile(SETTINGS_FILE, "utf-8");
+  const data = JSON.parse(raw) as Record<string, any>;
+  const dg = data.deepGram ?? {};
+  return {
+    hasApiKey: typeof dg.apiKey === "string" && dg.apiKey.trim().length > 0,
+    sttEnabled: Boolean(dg.sttEnabled),
+    sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
+    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-en-us",
+  };
+}
+
+export async function updateVoiceSettings(patch: VoiceSettingsPatch): Promise<VoiceSettingsData> {
+  const raw = await readFile(SETTINGS_FILE, "utf-8");
+  const data = JSON.parse(raw) as Record<string, any>;
+  if (!data.deepGram || typeof data.deepGram !== "object") data.deepGram = {};
+  if (typeof patch.sttEnabled === "boolean") data.deepGram.sttEnabled = patch.sttEnabled;
+  if (typeof patch.sttModel === "string" && patch.sttModel.trim()) data.deepGram.sttModel = patch.sttModel.trim();
+  if (typeof patch.ttsModel === "string" && patch.ttsModel.trim()) data.deepGram.ttsModel = patch.ttsModel.trim();
+  await writeFile(SETTINGS_FILE, JSON.stringify(data, null, 2) + "\n");
+  const dg = data.deepGram;
+  return {
+    hasApiKey: typeof dg.apiKey === "string" && dg.apiKey.trim().length > 0,
+    sttEnabled: Boolean(dg.sttEnabled),
+    sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
+    ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-en-us",
+  };
+}
+
 export async function setHeartbeatEnabled(enabled: boolean): Promise<void> {
   await updateHeartbeatSettings({ enabled });
 }

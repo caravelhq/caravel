@@ -4796,6 +4796,58 @@ export const pageStyles = String.raw`    :root {
       }
     }
 
+    /* ── Global mic — dictate into any focused input ── */
+    .global-mic {
+      position: fixed;
+      bottom: 70px;
+      right: 14px;
+      z-index: 10;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #7dc5ff44;
+      background: #0b1828cc;
+      backdrop-filter: blur(8px);
+      color: #7dc5ff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-mic:hover {
+      transform: translateY(-2px);
+      background: #0f2340cc;
+      border-color: #7dc5ff77;
+    }
+    .global-mic.recording {
+      border-color: #ff6b6b88;
+      background: #2a0a0acc;
+      color: #ff9b9b;
+      animation: mic-pulse 1.1s ease-in-out infinite;
+    }
+    .global-mic.transcribing {
+      border-color: #ffb36655;
+      background: #1a0f00cc;
+      color: #ffd09b;
+      cursor: not-allowed;
+      animation: none;
+    }
+    .global-mic:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Voice model text inputs in settings ── */
+    .voice-model-input {
+      width: 120px;
+      font-size: 11px;
+      padding: 4px 8px;
+      height: 28px;
+    }
+
     /* ── Voice chat mode button ── */
     .chat-voice-mode {
       flex-shrink: 0;

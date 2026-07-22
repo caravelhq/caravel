@@ -62,7 +62,7 @@ const DEFAULT_SETTINGS: Settings = {
   security: { level: "moderate", allowedTools: [], disallowedTools: [] },
   web: { enabled: false, host: "127.0.0.1", port: 4632 },
   stt: { baseUrl: "", model: "" },
-  deepGram: { apiKey: "" },
+  deepGram: { apiKey: "", sttEnabled: false, sttModel: "nova-3", ttsModel: "aura-2-en-us" },
 };
 
 export interface HeartbeatExcludeWindow {
@@ -154,6 +154,12 @@ export interface SttConfig {
 export interface DeepGramConfig {
   /** DeepGram API key (BYOK — stored in .caravel/settings.json, gitignored) */
   apiKey: string;
+  /** Use DeepGram as the STT backend instead of local Whisper */
+  sttEnabled: boolean;
+  /** DeepGram STT model (default: "nova-3") */
+  sttModel: string;
+  /** DeepGram TTS model (default: "aura-2-en-us") */
+  ttsModel: string;
 }
 
 let cached: Settings | null = null;
@@ -298,6 +304,9 @@ function parseSettings(raw: Record<string, any>): Settings {
     },
     deepGram: {
       apiKey: typeof raw.deepGram?.apiKey === "string" ? raw.deepGram.apiKey.trim() : "",
+      sttEnabled: !!(raw.deepGram?.sttEnabled),
+      sttModel: (typeof raw.deepGram?.sttModel === "string" && raw.deepGram.sttModel.trim()) || "nova-3",
+      ttsModel: (typeof raw.deepGram?.ttsModel === "string" && raw.deepGram.ttsModel.trim()) || "aura-2-en-us",
     },
   };
 }

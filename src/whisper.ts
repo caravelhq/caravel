@@ -445,15 +445,54 @@ async function transcribeViaApi(
   return transcript;
 }
 
+async function transcribeWithDeepGram(
+  inputPath: string,
+  log: WhisperDebugLog
+): Promise<string> {
+  const settings = getSettings();
+  const apiKey = settings.deepGram?.apiKey ?? "";
+  if (!apiKey) throw new Error("DeepGram API key not configured");
+  const sttModel = settings.deepGram?.sttModel || "nova-3";
+  const audioBytes = await readFile(inputPath);
+  const ext = extname(inputPath).toLowerCase().replace(".", "") || "ogg";
+  const mimeMap: Record<string, string> = {
+    ogg: "audio/ogg", oga: "audio/ogg", wav: "audio/wav",
+    mp3: "audio/mpeg", m4a: "audio/mp4", webm: "audio/webm",
+  };
+  const mimeType = mimeMap[ext] ?? "audio/ogg";
+  const url = `https://api.deepgram.com/v1/listen?model=${encodeURIComponent(sttModel)}&smart_format=true`;
+  log(`voice transcribe: using DeepGram STT url=${url} model=${sttModel}`);
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Authorization": `Token ${apiKey}`,
+      "Content-Type": mimeType,
+    },
+    body: audioBytes,
+  });
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`DeepGram STT error (${response.status}): ${body.slice(0, 200)}`);
+  }
+  const data = (await response.json()) as any;
+  const transcript = (data?.results?.channels?.[0]?.alternatives?.[0]?.transcript ?? "").trim();
+  log(`voice transcribe: DeepGram transcript chars=${transcript.length}`);
+  return transcript;
+}
+
 export async function transcribeAudioToText(
   inputPath: string,
   options?: { debug?: boolean; log?: WhisperDebugLog }
 ): Promise<string> {
   const log = options?.debug ? (options?.log ?? console.log) : noopLog;
 
-  const stt = getSettings().stt;
+  const settings = getSettings();
+  const stt = settings.stt;
   if (stt?.baseUrl) {
     return transcribeViaApi(inputPath, stt.baseUrl, stt.model, log);
+  }
+  if (settings.deepGram?.sttEnabled && settings.deepGram.apiKey) {
+    return transcribeWithDeepGram(inputPath, log);
   }
   await warmupWhisperAssets();
   log(`voice transcribe: warmup ready cwd=${process.cwd()} input=${inputPath}`);
