@@ -300,7 +300,9 @@
       quickJobsList.innerHTML = items
         .map((t) => {
           const rec = t.recurrence || {};
-          const cadence = rec.cron ? "cron: " + rec.cron : (rec.interval_hours ? "every " + rec.interval_hours + "h" : "--");
+          const cadence = rec.cron
+            ? "cron: " + rec.cron
+            : (rec.interval ? "every " + rec.interval.every_hours + "h @ " + rec.interval.start : "--");
           const enabled = rec.enabled !== false;
           const agent = t.agent || "--";
           const headline = t.headline || t.title || t.id || "--";
@@ -1215,19 +1217,23 @@
             const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
             const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
             const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
-            const cadence = isInterval
-              ? { type: "interval", interval_hours: intervalHours, ...(intervalStart ? { start: intervalStart } : {}) }
-              : { type: "cron", cron };
 
             if (!isInterval && !cron) {
               quickJobStatus.textContent = "Enter a cron expression.";
               return;
             }
 
+            // Build the recurrence block matching createScheduledTemplate's expected shape:
+            // interval mode: { interval: { start, every_hours }, enabled, skip_if_active }
+            // cron mode:     { cron, enabled, skip_if_active }
+            const recurrence = isInterval
+              ? { interval: { start: intervalStart || "08:00", every_hours: intervalHours }, enabled: true, skip_if_active: true }
+              : { cron, enabled: true, skip_if_active: true };
+
             const res = await fetch("/api/tasks/schedule", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ agent, headline, kind: "other", priority: "P2", brief, cadence }),
+              body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief, recurrence }),
             });
             const out = await res.json();
             if (!out.ok) throw new Error(out.error || "failed");

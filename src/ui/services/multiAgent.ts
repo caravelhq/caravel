@@ -441,8 +441,7 @@ export async function listTasks(opts?: {
 export interface ScheduledTemplateRow extends TaskRow {
   recurrence: {
     cron?: string;
-    interval_hours?: number;
-    start?: string;
+    interval?: { start: string; every_hours: number };
     enabled: boolean;
     skip_if_active: boolean;
     count: number;
@@ -466,10 +465,10 @@ export async function listScheduledTemplates(): Promise<ScheduledTemplateRow[]> 
         const doc = yamlLoad(raw) as Record<string, any>;
         if (doc?.recurrence && typeof doc.recurrence === "object") {
           const r = doc.recurrence as Record<string, any>;
+          const iv = (r.interval && typeof r.interval === "object") ? r.interval as Record<string, any> : null;
           recurrence = {
             cron: typeof r.cron === "string" ? r.cron : undefined,
-            interval_hours: typeof r.interval_hours === "number" ? r.interval_hours : undefined,
-            start: typeof r.start === "string" ? r.start : undefined,
+            interval: iv ? { start: String(iv.start ?? ""), every_hours: Number(iv.every_hours) || 0 } : undefined,
             enabled: r.enabled !== false,
             skip_if_active: r.skip_if_active !== false,
             count: typeof r.count === "number" ? r.count : 0,

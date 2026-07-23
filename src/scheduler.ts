@@ -105,6 +105,7 @@ async function loadScheduledTemplates(): Promise<ScheduledTemplate[]> {
 
 // DEC-1: check if any child instance of this template is still in open/ or waiting/.
 // A "claimed" task lives in open/ with status: claimed, so scanning open/ covers it.
+// templateId must be a root ID (e.g. TSK-2026-07-23-0001) — no decimal component.
 async function hasActiveInstance(templateId: string): Promise<boolean> {
   const agents = listAgentNamesSync();
   const root = templateId.split(".")[0]!;
@@ -150,15 +151,25 @@ function intervalFiresNow(
 }
 
 // Bump count and last_fired in the template file using targeted line replacement
-// so the rest of the YAML formatting is preserved.
+// so the rest of the YAML formatting is preserved. Assumes createScheduledTemplate()
+// writes both fields indented inside the recurrence: block — if the format drifts, the
+// regex won't match and we bail rather than write back an unchanged (or corrupted) file.
 async function bumpTemplateFired(template: ScheduledTemplate, now: Date): Promise<void> {
   let content: string;
   try { content = await readFile(template.path, "utf-8"); } catch { return; }
   const nowIso = now.toISOString();
   const newCount = template.recurrence.count + 1;
-  content = content.replace(/^(\s+count:\s*).*$/m, `$1${newCount}`);
-  content = content.replace(/^(\s+last_fired:\s*).*$/m, `$1${nowIso}`);
-  try { await writeFile(template.path, content); } catch {}
+  const afterCount = content.replace(/^(\s+count:\s*).*$/m, `$1${newCount}`);
+  if (afterCount === content) {
+    console.error(`[scheduler] bumpTemplateFired: count line not found in ${template.path} — skipping write`);
+    return;
+  }
+  const afterFired = afterCount.replace(/^(\s+last_fired:\s*).*$/m, `$1${nowIso}`);
+  if (afterFired === afterCount) {
+    console.error(`[scheduler] bumpTemplateFired: last_fired line not found in ${template.path} — skipping write`);
+    return;
+  }
+  try { await writeFile(template.path, afterFired); } catch {}
 }
 
 async function writeSkipJournal(agent: string, templateId: string, reason: string, now: Date): Promise<void> {
