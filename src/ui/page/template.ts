@@ -98,19 +98,19 @@ ${pageStyles}
         </div>
         <button class="hb-toggle off" id="voice-stt-toggle" type="button">Whisper</button>
       </div>
-      <div class="setting-item" id="voice-model-row" hidden>
+      <div class="setting-item">
         <div class="setting-main">
-          <div class="settings-label">🎙️ STT model</div>
-          <div class="settings-meta">DeepGram model name</div>
+          <div class="settings-label">🎙️ Mic (STT)</div>
+          <div class="settings-meta">Dictate and voice chat</div>
         </div>
-        <input class="hb-input voice-model-input" id="voice-stt-model-input" type="text" placeholder="nova-3" value="nova-3" title="DeepGram STT model" />
+        <button class="hb-toggle on" id="voice-mic-toggle" type="button">On</button>
       </div>
       <div class="setting-item">
         <div class="setting-main">
-          <div class="settings-label">🔊 TTS model</div>
-          <div class="settings-meta" id="voice-tts-meta">DeepGram TTS voice</div>
+          <div class="settings-label">🔊 Speaker (TTS)</div>
+          <div class="settings-meta">Read aloud and voice replies</div>
         </div>
-        <input class="hb-input voice-model-input" id="voice-tts-model-input" type="text" placeholder="aura-2-thalia-en" value="aura-2-thalia-en" title="DeepGram TTS model" />
+        <button class="hb-toggle on" id="voice-tts-toggle" type="button">On</button>
       </div>
       <div class="setting-item">
         <div class="setting-main">

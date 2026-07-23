@@ -856,19 +856,50 @@
     (function() {
       var voiceSttToggle = $("voice-stt-toggle");
       var voiceSttMeta = $("voice-stt-meta");
-      var voiceModelRow = $("voice-model-row");
-      var voiceSttModelInput = $("voice-stt-model-input");
-      var voiceTtsModelInput = $("voice-tts-model-input");
+      var voiceMicToggle = $("voice-mic-toggle");
+      var voiceTtsToggle = $("voice-tts-toggle");
       if (!voiceSttToggle) return;
 
       var voiceSttEnabled = false;
-      var voiceModelSaveTimer = null;
+      var voiceMicEnabled = true;
+      var voiceTtsEnabled = true;
 
       function renderVoiceSttToggle() {
         voiceSttToggle.textContent = voiceSttEnabled ? "DeepGram" : "Whisper";
         voiceSttToggle.className = "hb-toggle " + (voiceSttEnabled ? "on" : "off");
         if (voiceSttMeta) voiceSttMeta.textContent = voiceSttEnabled ? "DeepGram STT" : "Whisper (local)";
-        if (voiceModelRow) voiceModelRow.hidden = !voiceSttEnabled;
+      }
+
+      function applyMicEnabled(enabled) {
+        voiceMicEnabled = enabled;
+        window.__micEnabled = enabled;
+        var micBtn = $("global-mic");
+        var vmBtn = $("global-voice-mode");
+        if (micBtn) micBtn.hidden = !enabled;
+        if (vmBtn) {
+          if (!enabled) {
+            vmBtn.hidden = true;
+          } else {
+            // Restore voice-mode visibility only when chat tab is active.
+            var cp = $("chat-panel");
+            vmBtn.hidden = !(cp && !cp.hidden);
+          }
+        }
+        if (voiceMicToggle) {
+          voiceMicToggle.textContent = enabled ? "On" : "Off";
+          voiceMicToggle.className = "hb-toggle " + (enabled ? "on" : "off");
+        }
+      }
+
+      function applyTtsEnabled(enabled) {
+        voiceTtsEnabled = enabled;
+        window.__ttsEnabled = enabled;
+        var spkBtn = $("global-speaker");
+        if (spkBtn) spkBtn.hidden = !enabled;
+        if (voiceTtsToggle) {
+          voiceTtsToggle.textContent = enabled ? "On" : "Off";
+          voiceTtsToggle.className = "hb-toggle " + (enabled ? "on" : "off");
+        }
       }
 
       async function loadVoiceSettings() {
@@ -879,24 +910,9 @@
           var v = data.voice;
           // Only allow enabling DeepGram STT if an API key is actually configured.
           voiceSttEnabled = !!(v && v.sttEnabled && v.hasApiKey);
-          if (voiceSttModelInput && v && v.sttModel) voiceSttModelInput.value = v.sttModel;
-          if (voiceTtsModelInput && v && v.ttsModel) voiceTtsModelInput.value = v.ttsModel;
           renderVoiceSttToggle();
-        } catch (_) {}
-      }
-
-      async function saveVoiceModels() {
-        var sttModel = voiceSttModelInput ? voiceSttModelInput.value.trim() : "";
-        var ttsModel = voiceTtsModelInput ? voiceTtsModelInput.value.trim() : "";
-        try {
-          await fetch("/api/settings/voice", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sttModel: sttModel || "nova-3",
-              ttsModel: ttsModel || "aura-2-thalia-en",
-            }),
-          });
+          applyMicEnabled(!(v && v.micEnabled === false));
+          applyTtsEnabled(!(v && v.ttsEnabled === false));
         } catch (_) {}
       }
 
@@ -912,18 +928,32 @@
         } catch (_) {}
       });
 
-      function debounceSaveModels() {
-        if (voiceModelSaveTimer) clearTimeout(voiceModelSaveTimer);
-        voiceModelSaveTimer = setTimeout(saveVoiceModels, 800);
+      if (voiceMicToggle) {
+        voiceMicToggle.addEventListener("click", async function() {
+          var newEnabled = !voiceMicEnabled;
+          applyMicEnabled(newEnabled);
+          try {
+            await fetch("/api/settings/voice", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ micEnabled: newEnabled }),
+            });
+          } catch (_) {}
+        });
       }
 
-      if (voiceSttModelInput) {
-        voiceSttModelInput.addEventListener("input", debounceSaveModels);
-        voiceSttModelInput.addEventListener("blur", saveVoiceModels);
-      }
-      if (voiceTtsModelInput) {
-        voiceTtsModelInput.addEventListener("input", debounceSaveModels);
-        voiceTtsModelInput.addEventListener("blur", saveVoiceModels);
+      if (voiceTtsToggle) {
+        voiceTtsToggle.addEventListener("click", async function() {
+          var newEnabled = !voiceTtsEnabled;
+          applyTtsEnabled(newEnabled);
+          try {
+            await fetch("/api/settings/voice", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ ttsEnabled: newEnabled }),
+            });
+          } catch (_) {}
+        });
       }
 
       // Refresh voice settings whenever the settings modal opens.
@@ -1871,9 +1901,9 @@
       if (tasksPnl) allPanels.push(tasksPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
-      // Voice-mode dock button only makes sense on the chat tab.
+      // Voice-mode dock button only makes sense on the chat tab, and requires mic to be enabled.
       var gvm = $("global-voice-mode");
-      if (gvm) gvm.hidden = (tab !== "chat");
+      if (gvm) gvm.hidden = (tab !== "chat") || (window.__micEnabled === false);
 
       if (tab === "dashboard") {
         tabDashboardBtn && tabDashboardBtn.classList.add("tab-btn-active");

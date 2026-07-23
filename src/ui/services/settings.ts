@@ -5,6 +5,8 @@ export interface VoiceSettingsPatch {
   sttEnabled?: boolean;
   sttModel?: string;
   ttsModel?: string;
+  micEnabled?: boolean;
+  ttsEnabled?: boolean;
 }
 
 export interface VoiceSettingsData {
@@ -12,6 +14,8 @@ export interface VoiceSettingsData {
   sttEnabled: boolean;
   sttModel: string;
   ttsModel: string;
+  micEnabled: boolean;
+  ttsEnabled: boolean;
 }
 
 export async function readVoiceSettings(): Promise<VoiceSettingsData> {
@@ -23,6 +27,8 @@ export async function readVoiceSettings(): Promise<VoiceSettingsData> {
     sttEnabled: Boolean(dg.sttEnabled),
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
     ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
+    micEnabled: dg.micEnabled !== false,
+    ttsEnabled: dg.ttsEnabled !== false,
   };
 }
 
@@ -33,6 +39,8 @@ export async function updateVoiceSettings(patch: VoiceSettingsPatch): Promise<Vo
   if (typeof patch.sttEnabled === "boolean") data.deepGram.sttEnabled = patch.sttEnabled;
   if (typeof patch.sttModel === "string" && patch.sttModel.trim()) data.deepGram.sttModel = patch.sttModel.trim();
   if (typeof patch.ttsModel === "string" && patch.ttsModel.trim()) data.deepGram.ttsModel = patch.ttsModel.trim();
+  if (typeof patch.micEnabled === "boolean") data.deepGram.micEnabled = patch.micEnabled;
+  if (typeof patch.ttsEnabled === "boolean") data.deepGram.ttsEnabled = patch.ttsEnabled;
   await writeFile(SETTINGS_FILE, JSON.stringify(data, null, 2) + "\n");
   const dg = data.deepGram;
   return {
@@ -40,6 +48,8 @@ export async function updateVoiceSettings(patch: VoiceSettingsPatch): Promise<Vo
     sttEnabled: Boolean(dg.sttEnabled),
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
     ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
+    micEnabled: dg.micEnabled !== false,
+    ttsEnabled: dg.ttsEnabled !== false,
   };
 }
 

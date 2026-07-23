@@ -1108,6 +1108,8 @@ self.addEventListener('fetch', e => {
           if (typeof body?.sttEnabled === "boolean") patch.sttEnabled = body.sttEnabled;
           if (typeof body?.sttModel === "string") patch.sttModel = body.sttModel;
           if (typeof body?.ttsModel === "string") patch.ttsModel = body.ttsModel;
+          if (typeof body?.micEnabled === "boolean") patch.micEnabled = body.micEnabled;
+          if (typeof body?.ttsEnabled === "boolean") patch.ttsEnabled = body.ttsEnabled;
           const updated = await updateVoiceSettings(patch);
           // Reload cached settings so the new values take effect immediately.
           await reloadSettings();
