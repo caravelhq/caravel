@@ -43,6 +43,41 @@
     const jobsBubbleEl = $("jobs-bubble");
     const tasksBubbleEl = $("tasks-bubble");
     const uptimeBubbleEl = $("uptime-bubble");
+
+    // ── Audio action modal — shared between global-mic and global-speaker ──
+    (function() {
+      var modal = $("audio-action-modal");
+      var iconEl = $("audio-action-icon");
+      var labelEl = $("audio-action-label");
+      var stopBtn = $("audio-action-stop");
+      var stopCb = null;
+
+      function showAudioModal(type, onStop) {
+        stopCb = onStop || null;
+        if (iconEl) {
+          iconEl.innerHTML = type === "playing"
+            ? '<i class="fa-solid fa-volume-high" style="color:#9be7ff"></i>'
+            : '<i class="fa-solid fa-microphone" style="color:#ff9b9b"></i>';
+        }
+        if (labelEl) labelEl.textContent = type === "playing" ? "Playing..." : "Recording...";
+        if (modal) modal.hidden = false;
+      }
+
+      function hideAudioModal() {
+        if (modal) modal.hidden = true;
+        stopCb = null;
+      }
+
+      if (stopBtn) {
+        stopBtn.addEventListener("click", function() {
+          if (typeof stopCb === "function") stopCb();
+          hideAudioModal();
+        });
+      }
+
+      window.__showAudioModal = showAudioModal;
+      window.__hideAudioModal = hideAudioModal;
+    })();
     // New task form fields
     const quickTaskAgent = $("quick-task-agent");
     const quickTaskHeadline = $("quick-task-headline");
@@ -931,11 +966,31 @@
       var gmPressStart = 0;
       var GM_HOLD_MS = 250;
 
-      // Track the last focused text element so we know where to insert.
+      // Track the last focused text element so we know where to insert,
+      // and enable the button when any input/textarea is focused.
       document.addEventListener("focusin", function(e) {
         var t = e.target;
         if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t.id !== "global-mic") {
           gmLastFocus = t;
+          // Enable the button when a text field gains focus (unless actively recording/transcribing).
+          if (!gmRecorder || gmRecorder.state === "inactive") {
+            globalMicBtn.disabled = false;
+          }
+        }
+      }, true);
+
+      // Disable the button when focus leaves all text fields (with a brief delay to let focusin fire first).
+      document.addEventListener("focusout", function(e) {
+        var t = e.target;
+        if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA") && t.id !== "global-mic") {
+          if (!gmRecorder || gmRecorder.state === "inactive") {
+            setTimeout(function() {
+              var active = document.activeElement;
+              if (!active || (active.tagName !== "INPUT" && active.tagName !== "TEXTAREA")) {
+                globalMicBtn.disabled = true;
+              }
+            }, 120);
+          }
         }
       }, true);
 
@@ -960,18 +1015,22 @@
 
       function gmSetState(state) {
         globalMicBtn.classList.remove("recording", "transcribing");
-        globalMicBtn.disabled = false;
+        // Keep disabled when idle unless a suitable field is focused.
         if (state === "recording") {
+          globalMicBtn.disabled = false;
           globalMicBtn.classList.add("recording");
-          globalMicBtn.textContent = "⏹";
+          globalMicBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
           globalMicBtn.title = "Stop recording";
         } else if (state === "transcribing") {
-          globalMicBtn.classList.add("transcribing");
-          globalMicBtn.textContent = "⏳";
-          globalMicBtn.title = "Transcribing…";
           globalMicBtn.disabled = true;
+          globalMicBtn.classList.add("transcribing");
+          globalMicBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+          globalMicBtn.title = "Transcribing…";
         } else {
-          globalMicBtn.textContent = "🎤";
+          // Return to enabled only if a suitable field is currently focused.
+          var active = document.activeElement;
+          globalMicBtn.disabled = !(active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA") && active !== globalMicBtn);
+          globalMicBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
           globalMicBtn.title = "Dictate into focused field";
         }
       }
@@ -1004,11 +1063,16 @@
         };
         gmRecorder.start(200);
         gmSetState("recording");
+        // Show the small audio modal so recording is visible even on mobile.
+        if (typeof window.__showAudioModal === "function") {
+          window.__showAudioModal("recording", function() { gmStopAndInsert(); });
+        }
       }
 
       async function gmStopAndInsert() {
         if (!gmRecorder || gmRecorder.state === "inactive") return;
         var target = gmLastFocus;  // Capture before async gap.
+        if (typeof window.__hideAudioModal === "function") window.__hideAudioModal();
         gmRecorder.onstop = async function() {
           gmSetState("transcribing");
           var blob = new Blob(gmChunks, { type: gmMimeType });
@@ -1807,6 +1871,9 @@
       if (tasksPnl) allPanels.push(tasksPnl);
       allBtns.forEach(b => { if (b) { b.classList.remove("tab-btn-active"); b.setAttribute("aria-selected", "false"); } });
       allPanels.forEach(p => { if (p) p.hidden = true; });
+      // Voice-mode dock button only makes sense on the chat tab.
+      var gvm = $("global-voice-mode");
+      if (gvm) gvm.hidden = (tab !== "chat");
 
       if (tab === "dashboard") {
         tabDashboardBtn && tabDashboardBtn.classList.add("tab-btn-active");
@@ -2395,7 +2462,7 @@
       var voiceModeBtn = $("voice-mode-btn");
       var voiceModeStatus = $("voice-mode-status");
       var voiceModeTranscript = $("voice-mode-transcript");
-      var voiceModeToggle = $("chat-voice-mode");
+      var voiceModeToggle = $("global-voice-mode");
 
       if (!voiceModeOverlay || !voiceModeBtn || !voiceModeToggle) return;
 
@@ -2834,7 +2901,7 @@
         vmSetTranscript("");
         vmSpokenChunks = [];
         vmBusy = false;
-        voiceModeBtn.textContent = "🎤";
+        voiceModeBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
         // Prime cursor to skip any assistant text already in history when voice mode opens.
         vmTurnCursor = 0;
         if (typeof chatHistory !== "undefined" && chatHistory.length) {
@@ -2873,7 +2940,26 @@
         speakerBtn.classList.toggle("is-playing", playing);
         speakerBtn.title = playing ? "Stop reading" : "Read page aloud";
         speakerBtn.setAttribute("aria-label", playing ? "Stop reading" : "Read page aloud");
-        speakerBtn.textContent = playing ? "⏹" : "🔊";
+        speakerBtn.innerHTML = playing
+          ? '<i class="fa-solid fa-stop"></i>'
+          : '<i class="fa-solid fa-volume-high"></i>';
+        if (playing) {
+          if (typeof window.__showAudioModal === "function") {
+            window.__showAudioModal("playing", function() {
+              if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+              window.__vmOnSpeaking = null;
+              window.__vmOnQueueEnd = null;
+              setSpeakerState(false);
+            });
+          }
+        } else {
+          if (typeof window.__hideAudioModal === "function") window.__hideAudioModal();
+        }
+      }
+
+      // Strip YAML frontmatter (--- ... ---) from the start of a string.
+      function stripFrontmatter(text) {
+        return text.replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "").trim();
       }
 
       // Resolve the primary readable text for the currently visible panel.
@@ -2899,7 +2985,9 @@
           if (fc) {
             var txt = (fc.innerText || "").trim();
             // Skip placeholder/error/loading states.
-            if (txt && !/^(Select a file|Loading\.|Error:)/.test(txt)) return txt;
+            if (txt && !/^(Select a file|Loading\.|Error:)/.test(txt)) {
+              return stripFrontmatter(txt) || null;
+            }
           }
           return null;
         }
@@ -2909,7 +2997,7 @@
           var tb = $("tasks-viewer-body");
           if (tv && !tv.hidden && tb) {
             var txt2 = (tb.innerText || "").trim();
-            if (txt2 && !/^Loading task/.test(txt2)) return txt2;
+            if (txt2 && !/^Loading task/.test(txt2)) return stripFrontmatter(txt2) || null;
           }
           return null;
         }

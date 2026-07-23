@@ -29,6 +29,7 @@ export function htmlPage(): string {
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" crossorigin="anonymous" />
   <style>
 ${pageStyles}
   </style>
@@ -325,7 +326,6 @@ ${pageStyles}
           <div class="chat-actions">
             <button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run; if the composer has text, send it as a new prompt" aria-label="Interrupt">✋</button>
             <button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button>
-            <button id="chat-voice-mode" class="chat-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat">🎙️</button>
           </div>
           <button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button>
         </form>
@@ -334,8 +334,8 @@ ${pageStyles}
         <div class="voice-mode-transcript" id="voice-mode-transcript"></div>
         <div class="vm-controls">
           <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
-          <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk">🎤</button>
-          <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode">✕</button>
+          <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk"><i class="fa-solid fa-microphone"></i></button>
+          <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode"><i class="fa-solid fa-xmark"></i></button>
         </div>
       </div>
     </div>
@@ -507,6 +507,17 @@ ${pageStyles}
     <iframe class="split-iframe" id="split-iframe" title="Caravel second pane" loading="lazy"></iframe>
   </aside>
 
+  <!-- Small modal shown when mic recording or speaker playback is active -->
+  <div id="audio-action-modal" class="audio-action-modal" hidden role="dialog" aria-modal="true">
+    <div class="audio-action-card">
+      <div class="audio-action-icon" id="audio-action-icon"></div>
+      <div class="audio-action-label" id="audio-action-label">Recording...</div>
+      <button class="audio-action-stop" id="audio-action-stop" type="button" aria-label="Stop">
+        <i class="fa-solid fa-stop"></i><span>Stop</span>
+      </button>
+    </div>
+  </div>
+
   <div class="dock-shell">
     <aside class="side-bubble" id="jobs-bubble" aria-live="polite">
       <div class="side-icon">🗂️</div>
@@ -520,8 +531,9 @@ ${pageStyles}
     </aside>
     <footer class="dock" id="dock" aria-live="polite">
       <div id="dock-pills"><div class="pill">Connecting...</div></div>
-      <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate">🎤</button>
-      <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud">🔊</button>
+      <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate" disabled><i class="fa-solid fa-microphone"></i></button>
+      <button id="global-voice-mode" class="global-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat mode" hidden><i class="fa-solid fa-microphone-lines"></i></button>
+      <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud"><i class="fa-solid fa-volume-high"></i></button>
     </footer>
     <aside class="side-bubble" id="uptime-bubble" aria-live="polite">
       <div class="side-icon">⏱️</div>

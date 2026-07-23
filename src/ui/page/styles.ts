@@ -4887,6 +4887,94 @@ export const pageStyles = String.raw`    :root {
       transform: none;
     }
 
+    /* ── Global voice-mode (fullscreen voice chat) — dock button ── */
+    .global-voice-mode {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #c07bff44;
+      background: #110820cc;
+      backdrop-filter: blur(8px);
+      color: #c07bff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-voice-mode:hover {
+      transform: translateY(-2px);
+      background: #1e0d3acc;
+      border-color: #c07bff77;
+    }
+    .global-voice-mode[hidden] { display: none; }
+
+    /* ── Audio action modal — small centered card for recording / playback ── */
+    .audio-action-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 190;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(6, 13, 26, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .audio-action-modal[hidden] { display: none; }
+    .audio-action-card {
+      background: var(--panel, #0f1e33);
+      border: 1px solid var(--border, #1e3a5f);
+      border-radius: 20px;
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      min-width: 200px;
+    }
+    .audio-action-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: audio-modal-pulse 1.2s ease-in-out infinite;
+    }
+    .audio-action-label {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .audio-action-stop {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+    .audio-action-stop:hover {
+      background: #ff6b6b22;
+      border-color: #ff6b6b55;
+      color: #ff9b9b;
+    }
+    @keyframes audio-modal-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
     /* ── Voice model text inputs in settings ── */
     .voice-model-input {
       width: 120px;
