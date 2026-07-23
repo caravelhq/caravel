@@ -4853,6 +4853,40 @@ export const pageStyles = String.raw`    :root {
       transform: none;
     }
 
+    .global-speaker {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #7dc5ff44;
+      background: #0b1828cc;
+      backdrop-filter: blur(8px);
+      color: #7dc5ff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-speaker:hover {
+      transform: translateY(-2px);
+      background: #0f2340cc;
+      border-color: #7dc5ff77;
+    }
+    .global-speaker.is-playing {
+      border-color: #9be7ff88;
+      background: #061830cc;
+      color: var(--accent);
+      animation: mic-pulse 1.4s ease-in-out infinite;
+    }
+    .global-speaker:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
     /* ── Voice model text inputs in settings ── */
     .voice-model-input {
       width: 120px;

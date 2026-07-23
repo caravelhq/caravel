@@ -2439,6 +2439,15 @@
         if (!vmMimeType) vmSupported = false;
       }
 
+      // Expose TTS playback functions for the global read-aloud button.
+      // Placed before the vmSupported guard so they're available even when
+      // MediaRecorder isn't supported (TTS only needs fetch + Audio).
+      window.__vmEnqueueChunk = vmEnqueueChunk;
+      window.__vmExtractChunks = vmExtractChunks;
+      window.__vmStripMarkdown = vmStripMarkdown;
+      window.__vmStopAudio = vmStopAudio;
+      window.__vmIsPlaying = function() { return vmQueueRunning; };
+
       // Hide the toggle if recording isn't available.
       if (!vmSupported) {
         voiceModeToggle.hidden = true;
@@ -2573,21 +2582,21 @@
       async function vmRunQueue(gen) {
         if (vmQueueRunning) return;
         vmQueueRunning = true;
-        while (vmAudioQueue.length > 0 && vmActive && gen === vmQueueGen) {
+        while (vmAudioQueue.length > 0 && gen === vmQueueGen) {
           var item = await vmAudioQueue.shift();
-          if (gen !== vmQueueGen || !vmActive) {
+          if (gen !== vmQueueGen) {
             if (item && item.url) URL.revokeObjectURL(item.url);
             continue;
           }
           if (!item) continue;  // fully stale (promise resolved null before gen bump)
           // Reveal this chunk's text in the transcript as it begins playing.
-          vmSpokenChunks.push(item.text);
-          vmRenderTranscript();
+          if (vmActive) { vmSpokenChunks.push(item.text); vmRenderTranscript(); }
           if (!item.audio) {
             // TTS fetch failed — text is shown, move on without waiting.
             continue;
           }
-          vmSetStatus("Speaking…", "speaking");
+          if (vmActive) vmSetStatus("Speaking…", "speaking");
+          if (typeof window.__vmOnSpeaking === "function") window.__vmOnSpeaking();
           vmCurrentAudio = item.audio;
           await new Promise(function(resolve) {
             item.audio.onended = function() {
@@ -2612,6 +2621,7 @@
           vmQueueRunning = false;
           vmBusy = false;
           if (vmActive) vmSetStatus("Press and hold to talk", null);
+          if (typeof window.__vmOnQueueEnd === "function") window.__vmOnQueueEnd();
         }
       }
 
@@ -2856,6 +2866,115 @@
         if (vmActive) vmClose(); else vmOpen();
       });
       voiceModeCloseBtn.addEventListener("click", vmClose);
+    })();
+
+    // ── Global read-aloud button ──
+    (function() {
+      var speakerBtn = $("global-speaker");
+      if (!speakerBtn) return;
+
+      var sbPlaying = false;
+
+      function setSpeakerState(playing) {
+        sbPlaying = playing;
+        speakerBtn.classList.toggle("is-playing", playing);
+        speakerBtn.title = playing ? "Stop reading" : "Read page aloud";
+        speakerBtn.setAttribute("aria-label", playing ? "Stop reading" : "Read page aloud");
+        speakerBtn.textContent = playing ? "⏹" : "🔊";
+      }
+
+      // Resolve the primary readable text for the currently visible panel.
+      function resolveReadAloudText() {
+        var chatPnl = $("chat-panel");
+        var filesPnl = $("files-panel");
+        var tasksPnl = $("tasks-panel");
+
+        if (chatPnl && !chatPnl.hidden) {
+          // Last assistant message with a done (or absent) state.
+          for (var i = chatHistory.length - 1; i >= 0; i--) {
+            var m = chatHistory[i];
+            if (m.role === "assistant") {
+              var s = m.state;
+              if (!s || s === "done") return m.text || null;
+            }
+          }
+          return null;
+        }
+
+        if (filesPnl && !filesPnl.hidden) {
+          var fc = $("files-content");
+          if (fc) {
+            var txt = (fc.innerText || "").trim();
+            // Skip placeholder/error/loading states.
+            if (txt && !/^(Select a file|Loading\.|Error:)/.test(txt)) return txt;
+          }
+          return null;
+        }
+
+        if (tasksPnl && !tasksPnl.hidden) {
+          var tv = $("tasks-viewer");
+          var tb = $("tasks-viewer-body");
+          if (tv && !tv.hidden && tb) {
+            var txt2 = (tb.innerText || "").trim();
+            if (txt2 && !/^Loading task/.test(txt2)) return txt2;
+          }
+          return null;
+        }
+
+        return null;
+      }
+
+      speakerBtn.addEventListener("click", function() {
+        // Toggle off if already playing.
+        var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
+        if (isPlaying) {
+          if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+          window.__vmOnSpeaking = null;
+          window.__vmOnQueueEnd = null;
+          setSpeakerState(false);
+          return;
+        }
+
+        if (typeof window.__vmEnqueueChunk !== "function") return;  // TTS not available
+
+        var text = resolveReadAloudText();
+        if (!text) return;  // nothing sensible in view
+
+        // Stop any in-flight voice-mode or previous speaker audio.
+        if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+
+        // Set up playback callbacks before enqueuing so they're in place
+        // when the first clip fires (queue is async).
+        window.__vmOnSpeaking = function() { setSpeakerState(true); };
+        window.__vmOnQueueEnd = function() {
+          setSpeakerState(false);
+          window.__vmOnSpeaking = null;
+          window.__vmOnQueueEnd = null;
+        };
+
+        // Text is fully available — extract all chunks at once (isDone=true).
+        var enqueued = 0;
+        if (typeof window.__vmExtractChunks === "function") {
+          var result = window.__vmExtractChunks(text, true);
+          if (result && result.chunks) {
+            for (var i = 0; i < result.chunks.length; i++) {
+              var chunk = result.chunks[i].trim();
+              if (chunk) { window.__vmEnqueueChunk(chunk); enqueued++; }
+            }
+          }
+        } else {
+          window.__vmEnqueueChunk(text);
+          enqueued = 1;
+        }
+
+        if (enqueued > 0) {
+          setSpeakerState(true);
+        } else {
+          // Nothing enqueued (empty extract) — clear callbacks and stay idle.
+          window.__vmOnSpeaking = null;
+          window.__vmOnQueueEnd = null;
+        }
+      });
     })();
 
     // ── Files ──

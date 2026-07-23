@@ -550,6 +550,7 @@ ${pageStyles}
     <footer class="dock" id="dock" aria-live="polite">
       <div id="dock-pills"><div class="pill">Connecting...</div></div>
       <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate">🎤</button>
+      <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud">🔊</button>
     </footer>
     <aside class="side-bubble" id="uptime-bubble" aria-live="polite">
       <div class="side-icon">⏱️</div>
