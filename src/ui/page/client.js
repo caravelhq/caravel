@@ -1895,6 +1895,7 @@
         if (tasksPnl) tasksPnl.hidden = false;
         if (typeof window.__ensureTasksLoaded === "function") window.__ensureTasksLoaded();
       }
+      if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
     }
 
     if (tabDashboardBtn) tabDashboardBtn.addEventListener("click", () => {
@@ -2081,6 +2082,7 @@
     }
 
     function renderChatHistory() {
+      if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
       updateChatTaskBtnVisibility();
       // Title-input visibility tracks chatHistory.length (toolbar input
       // for chats with messages, inline new-chat input for empty chats).
@@ -3004,6 +3006,12 @@
 
         return null;
       }
+
+      function updateSpeakerDisabled() {
+        if (!sbPlaying) speakerBtn.disabled = !resolveReadAloudText();
+      }
+      window.__updateSpeakerDisabled = updateSpeakerDisabled;
+      updateSpeakerDisabled();
 
       speakerBtn.addEventListener("click", function() {
         // Toggle off if already playing.
