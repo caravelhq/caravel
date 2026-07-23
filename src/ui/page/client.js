@@ -3398,6 +3398,7 @@
       // text reader below can't carry binary, so images route here first.
       if (isImageFile(filePath)) {
         renderImageFile(filePath);
+        if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
         return;
       }
 
@@ -3452,6 +3453,7 @@
       } catch (err) {
         filesContent.innerHTML = '<div class="files-empty">Error: ' + esc(String(err instanceof Error ? err.message : err)) + '</div>';
       }
+      if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
     }
 
     function detectLang(filePath) {
@@ -5216,6 +5218,8 @@
             '<div class="tasks-viewer-pane" data-pane="report"' + (currentViewMode === "report" ? '' : ' hidden') + '>' +
             reportParts.join("") +
             '</div>';
+
+          if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
 
           // Eagerly load every report node — the pane shows them inline by
           // default now (no <details> wrap), so flipping to the Report tab
