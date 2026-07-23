@@ -362,10 +362,12 @@ ${pageStyles}
         </form>
       </div>
       <div id="voice-mode-overlay" class="voice-mode-overlay" hidden aria-live="polite">
-        <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode">✕</button>
-        <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
-        <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk">🎤</button>
         <div class="voice-mode-transcript" id="voice-mode-transcript"></div>
+        <div class="vm-controls">
+          <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
+          <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk">🎤</button>
+          <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode">✕</button>
+        </div>
       </div>
     </div>
     <div id="files-panel" class="files-panel" hidden>
