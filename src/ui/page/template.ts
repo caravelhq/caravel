@@ -330,14 +330,6 @@ ${pageStyles}
           <button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button>
         </form>
       </div>
-      <div id="voice-mode-overlay" class="voice-mode-overlay" hidden aria-live="polite">
-        <div class="voice-mode-transcript" id="voice-mode-transcript"></div>
-        <div class="vm-controls">
-          <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
-          <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk"><i class="fa-solid fa-microphone"></i></button>
-          <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-      </div>
     </div>
     <div id="files-panel" class="files-panel" hidden>
       <div class="files-toolbar">
@@ -506,6 +498,16 @@ ${pageStyles}
     <button class="split-pane-close" id="split-pane-close" type="button" title="Close split view" aria-label="Close split view">×</button>
     <iframe class="split-iframe" id="split-iframe" title="Caravel second pane" loading="lazy"></iframe>
   </aside>
+
+  <!-- Fullscreen voice-chat overlay — hoisted outside .chat-panel to avoid backdrop-filter stacking context -->
+  <div id="voice-mode-overlay" class="voice-mode-overlay" hidden aria-live="polite">
+    <div class="voice-mode-transcript" id="voice-mode-transcript"></div>
+    <div class="vm-controls">
+      <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
+      <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk"><i class="fa-solid fa-microphone"></i></button>
+      <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+  </div>
 
   <!-- Small modal shown when mic recording or speaker playback is active -->
   <div id="audio-action-modal" class="audio-action-modal" hidden role="dialog" aria-modal="true">
