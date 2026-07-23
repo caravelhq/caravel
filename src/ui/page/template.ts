@@ -215,49 +215,18 @@ ${pageStyles}
           <div class="quick-job-sub">Dispatch a task to an agent</div>
         </div>
         <div class="quick-job-grid">
-          <div class="quick-field-row">
-            <div class="quick-field">
-              <div class="quick-label">Agent</div>
-              <select class="quick-input" id="quick-task-agent">
-                <option value="alice">alice</option>
-              </select>
-            </div>
-            <div class="quick-field">
-              <div class="quick-label">Project</div>
-              <select class="quick-input" id="quick-task-project">
-                <option value="">(auto)</option>
-                <option value="null">(none)</option>
-              </select>
-            </div>
+          <div class="quick-field">
+            <div class="quick-label">Agent</div>
+            <select class="quick-input" id="quick-task-agent">
+              <option value="alice">alice</option>
+            </select>
           </div>
           <div class="quick-field">
-            <div class="quick-label">Headline <span style="opacity:.45;font-size:.85em">≤10 words</span></div>
+            <div class="quick-label">Title</div>
             <input class="quick-input" id="quick-task-headline" type="text" maxlength="200" placeholder="Research X for Kelly" required />
           </div>
-          <div class="quick-field-row">
-            <div class="quick-field">
-              <div class="quick-label">Kind</div>
-              <select class="quick-input" id="quick-task-kind">
-                <option value="other" selected>other</option>
-                <option value="research">research</option>
-                <option value="code">code</option>
-                <option value="review">review</option>
-                <option value="summarise">summarise</option>
-                <option value="decide">decide</option>
-              </select>
-            </div>
-            <div class="quick-field">
-              <div class="quick-label">Priority</div>
-              <select class="quick-input" id="quick-task-priority">
-                <option value="P2" selected>P2</option>
-                <option value="P0">P0</option>
-                <option value="P1">P1</option>
-                <option value="P3">P3</option>
-              </select>
-            </div>
-          </div>
           <div class="quick-field">
-            <div class="quick-label">Brief</div>
+            <div class="quick-label">Description</div>
             <textarea class="quick-prompt" id="quick-task-brief" placeholder="What should the agent do?" required></textarea>
             <div class="quick-prompt-meta">
               <span id="quick-job-count">0 chars</span>
@@ -274,20 +243,16 @@ ${pageStyles}
               <div class="quick-label">Cadence</div>
               <div style="display:flex;gap:.75rem;margin-top:.25rem">
                 <label class="quick-check quick-check-inline">
-                  <input type="radio" name="quick-task-cron-mode" id="quick-task-mode-cron" value="cron" checked />
-                  <span>Cron expression</span>
+                  <input type="radio" name="quick-task-cron-mode" id="quick-task-mode-interval" value="interval" checked />
+                  <span>Interval</span>
                 </label>
                 <label class="quick-check quick-check-inline">
-                  <input type="radio" name="quick-task-cron-mode" id="quick-task-mode-interval" value="interval" />
-                  <span>Interval</span>
+                  <input type="radio" name="quick-task-cron-mode" id="quick-task-mode-cron" value="cron" />
+                  <span>Cron</span>
                 </label>
               </div>
             </div>
-            <div id="quick-cron-section" class="quick-field">
-              <div class="quick-label">Cron <span style="opacity:.45;font-size:.85em">min hour day month weekday</span></div>
-              <input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" />
-            </div>
-            <div id="quick-interval-section" class="quick-field quick-view-hidden">
+            <div id="quick-interval-section" class="quick-field">
               <div class="quick-field-row">
                 <div class="quick-field">
                   <div class="quick-label">Start time <span style="opacity:.45;font-size:.85em">HH:MM</span></div>
@@ -298,6 +263,10 @@ ${pageStyles}
                   <input class="quick-input" id="quick-task-interval-hours" type="number" min="1" max="24" step="1" placeholder="24" />
                 </div>
               </div>
+            </div>
+            <div id="quick-cron-section" class="quick-field quick-view-hidden">
+              <div class="quick-label">Cron <span style="opacity:.45;font-size:.85em">min hour day month weekday</span></div>
+              <input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" />
             </div>
           </div>
         </div>

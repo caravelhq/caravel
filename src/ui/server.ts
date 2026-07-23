@@ -646,6 +646,7 @@ self.addEventListener('fetch', e => {
               since,
               limit: Number.isFinite(limit) ? limit : undefined,
               includeArchived,
+              includeScheduled: false,
             }),
           });
         } catch (err) {

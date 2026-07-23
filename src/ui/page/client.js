@@ -45,10 +45,7 @@
     const uptimeBubbleEl = $("uptime-bubble");
     // New task form fields
     const quickTaskAgent = $("quick-task-agent");
-    const quickTaskProject = $("quick-task-project");
     const quickTaskHeadline = $("quick-task-headline");
-    const quickTaskKind = $("quick-task-kind");
-    const quickTaskPriority = $("quick-task-priority");
     const quickTaskBrief = $("quick-task-brief");
     const quickTaskRecurring = $("quick-task-recurring");
     const quickTaskScheduleSection = $("quick-task-schedule-section");
@@ -1156,22 +1153,13 @@
     // ── Quick task create form ──
     async function populateQuickTaskDropdowns() {
       try {
-        const [agentsRes, projectsRes] = await Promise.all([
-          fetch("/api/agents", { cache: "no-store" }),
-          fetch("/api/projects", { cache: "no-store" }),
-        ]);
+        const agentsRes = await fetch("/api/agents", { cache: "no-store" });
         if (agentsRes.ok && quickTaskAgent) {
           const data = await agentsRes.json();
           const agents = Array.isArray(data.agents) ? data.agents : [];
           quickTaskAgent.innerHTML = agents
             .map((a) => '<option value="' + escAttr(a.name) + '"' + (a.name === "alice" ? " selected" : "") + '>' + esc((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>")
             .join("");
-        }
-        if (projectsRes.ok && quickTaskProject) {
-          const data = await projectsRes.json();
-          const projects = Array.isArray(data.projects) ? data.projects : [];
-          quickTaskProject.innerHTML = '<option value="">— no project —</option>' +
-            projects.map((p) => '<option value="' + escAttr(p.slug || p.name || "") + '">' + esc(p.name || p.slug || "") + "</option>").join("");
         }
       } catch (_) {}
     }
@@ -1184,14 +1172,15 @@
 
     function syncScheduleSection() {
       if (!quickTaskRecurring || !quickTaskScheduleSection) return;
-      quickTaskScheduleSection.style.display = quickTaskRecurring.checked ? "" : "none";
+      quickTaskScheduleSection.classList.toggle("quick-view-hidden", !quickTaskRecurring.checked);
     }
 
     function syncCronIntervalSections() {
-      if (!quickTaskModeCron || !quickCronSection || !quickIntervalSection) return;
-      const isCron = quickTaskModeCron.checked;
-      quickCronSection.style.display = isCron ? "" : "none";
-      quickIntervalSection.style.display = isCron ? "none" : "";
+      // Interval is the default mode (id="quick-task-mode-interval" is checked by default)
+      const modeIntervalEl = document.getElementById("quick-task-mode-interval");
+      const isInterval = modeIntervalEl ? modeIntervalEl.checked : true;
+      if (quickCronSection) quickCronSection.classList.toggle("quick-view-hidden", isInterval);
+      if (quickIntervalSection) quickIntervalSection.classList.toggle("quick-view-hidden", !isInterval);
     }
 
     if (quickTaskBrief) quickTaskBrief.addEventListener("input", updateBriefCount);
@@ -1207,14 +1196,11 @@
       quickJobForm.addEventListener("submit", async (event) => {
         event.preventDefault();
         const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
-        const project = quickTaskProject ? (quickTaskProject.value || "").trim() : "";
         const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
-        const kind = quickTaskKind ? (quickTaskKind.value || "task") : "task";
-        const priority = quickTaskPriority ? (quickTaskPriority.value || "normal") : "normal";
         const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
 
         if (!agent || !headline || !brief) {
-          quickJobStatus.textContent = "Agent, headline, and brief are required.";
+          quickJobStatus.textContent = "Agent, title, and description are required.";
           return;
         }
 
@@ -1224,15 +1210,16 @@
 
         try {
           if (isRecurring) {
-            const isCron = quickTaskModeCron ? quickTaskModeCron.checked : true;
+            const modeIntervalEl = document.getElementById("quick-task-mode-interval");
+            const isInterval = modeIntervalEl ? modeIntervalEl.checked : true;
             const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
             const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
             const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
-            const cadence = isCron
-              ? { type: "cron", cron }
-              : { type: "interval", interval_hours: intervalHours, ...(intervalStart ? { start: intervalStart } : {}) };
+            const cadence = isInterval
+              ? { type: "interval", interval_hours: intervalHours, ...(intervalStart ? { start: intervalStart } : {}) }
+              : { type: "cron", cron };
 
-            if (isCron && !cron) {
+            if (!isInterval && !cron) {
               quickJobStatus.textContent = "Enter a cron expression.";
               return;
             }
@@ -1240,7 +1227,7 @@
             const res = await fetch("/api/tasks/schedule", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ agent, project: project || undefined, headline, kind, priority, brief, cadence }),
+              body: JSON.stringify({ agent, headline, kind: "other", priority: "P2", brief, cadence }),
             });
             const out = await res.json();
             if (!out.ok) throw new Error(out.error || "failed");
@@ -1255,7 +1242,7 @@
             const res = await fetch("/api/tasks/new", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ agent, project: project || undefined, headline, kind, priority, brief }),
+              body: JSON.stringify({ agent, headline, kind: "other", priority: "P2", brief }),
             });
             const out = await res.json();
             if (!out.ok) throw new Error(out.error || "failed");
@@ -5491,51 +5478,14 @@
           return;
         }
 
-        // Group by project.
-        var groups = {};
-        var order = [];
-        var UNASSIGNED = "__unassigned__";
-        for (var l = 0; l < leaves.length; l++) {
-          var leaf = leaves[l];
-          var key = leaf.project || UNASSIGNED;
-          if (!groups[key]) { groups[key] = []; order.push(key); }
-          groups[key].push(leaf);
-        }
-        // Within group: sort by updated desc.
-        Object.keys(groups).forEach(function (g) {
-          groups[g].sort(function (a, b) {
-            return (Date.parse(b.updated || 0) || 0) - (Date.parse(a.updated || 0) || 0);
-          });
-        });
-        // Order groups: most-recently-touched group first; unassigned last.
-        order.sort(function (a, b) {
-          if (a === UNASSIGNED && b !== UNASSIGNED) return 1;
-          if (b === UNASSIGNED && a !== UNASSIGNED) return -1;
-          var ta = groups[a][0] ? Date.parse(groups[a][0].updated || 0) || 0 : 0;
-          var tb = groups[b][0] ? Date.parse(groups[b][0].updated || 0) || 0 : 0;
-          return tb - ta;
+        // Sort all leaves by updated desc — strict recency, no project grouping.
+        leaves.sort(function (a, b) {
+          return (Date.parse(b.updated || 0) || 0) - (Date.parse(a.updated || 0) || 0);
         });
 
         var html = '<div class="tasks-current">';
-        for (var o = 0; o < order.length; o++) {
-          var groupKey = order[o];
-          var rows = groups[groupKey];
-          var displayName = groupKey === UNASSIGNED ? "Unassigned" : groupKey;
-          var collapsed = !!currentCollapsed[groupKey];
-          html += '<div class="tasks-current-group' + (collapsed ? ' is-collapsed' : '') + '" data-project-key="' + escapeHtml(groupKey) + '">';
-          html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
-          // Select-all checkbox for this group — click does NOT bubble to the
-          // toggle-group handler because the change event is intercepted first.
-          html += '<input type="checkbox" class="current-group-select-all" data-group-key="' + escapeHtml(groupKey) + '" title="Select all in group" tabindex="-1">';
-          html += '<span class="tasks-current-group-chevron"></span>';
-          html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + '</span>';
-          html += '<span class="tasks-current-group-count">' + rows.length + '</span>';
-          html += '</div>';
-          html += '<div class="tasks-current-group-body">';
-          for (var r = 0; r < rows.length; r++) {
-            html += renderCurrentRow(rows[r]);
-          }
-          html += '</div></div>';
+        for (var l2 = 0; l2 < leaves.length; l2++) {
+          html += renderCurrentRow(leaves[l2]);
         }
         html += '</div>';
         tasksTree.innerHTML = html;
