@@ -4988,8 +4988,11 @@ export const pageStyles = String.raw`    :root {
       text-align: center;
       max-width: 360px;
       min-height: 40px;
+      max-height: 220px;
+      overflow-y: auto;
       padding: 0 20px;
       line-height: 1.5;
+      scroll-behavior: smooth;
     }
     .voice-mode-transcript .vm-heard {
       color: var(--text);
@@ -4997,5 +5000,11 @@ export const pageStyles = String.raw`    :root {
     }
     .voice-mode-transcript .vm-reply {
       color: var(--accent);
+      opacity: 0.55;
       margin-top: 6px;
+    }
+    .voice-mode-transcript .vm-reply.vm-active {
+      color: var(--text);
+      opacity: 1;
+      font-weight: 500;
     }`;
