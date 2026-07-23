@@ -534,6 +534,7 @@ ${pageStyles}
     <footer class="dock" id="dock" aria-live="polite">
       <div id="dock-pills"><div class="pill">Connecting...</div></div>
       <button id="global-voice-mode" class="global-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat mode" hidden><i class="fa-solid fa-walkie-talkie"></i></button>
+      <button id="global-voice-task" class="global-voice-task" type="button" title="Voice task creator" aria-label="Voice task creator" hidden><i class="fa-solid fa-list-check"></i></button>
       <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate" disabled><i class="fa-solid fa-microphone"></i></button>
       <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud"><i class="fa-solid fa-volume-high"></i></button>
     </footer>
@@ -544,9 +545,14 @@ ${pageStyles}
     </aside>
   </div>
 
+  <!-- Vue 3 voice island mount point — overlays are teleported to <body> at runtime -->
+  <div id="voice-island-root"></div>
+  <link rel="stylesheet" href="/island/voice.css" />
+
   <script src="/marked.js" defer></script>
   <script src="/yaml.js" defer></script>
   <script src="/client.js" defer></script>
+  <script type="module" src="/island/voice.js"></script>
 </body>
 </html>`;
   return decodeUnicodeEscapes(html);

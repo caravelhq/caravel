@@ -1416,6 +1416,9 @@
     var CHAT_ID_KEY = "caravel.chat.id";
     let chatHistory = [];
     let chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
+    // Expose for Vue voice island (Stage 1 port needs chatSessionId to submit to active chat)
+    window.__chatSessionId = chatSessionId;
+    window.__chatHistory = chatHistory;
     let chatListCache = [];
     let chatServerUpdatedAt = null;
     let chatPollTimer = null;
@@ -1789,6 +1792,7 @@
 
     async function switchToChat(id) {
       chatSessionId = id;
+      window.__chatSessionId = id;
       localStorage.setItem(CHAT_ID_KEY, id);
       chatServerUpdatedAt = null;
       chatAgentLocked = null;
@@ -2958,6 +2962,21 @@
         if (vmActive) vmClose(); else vmOpen();
       });
       voiceModeCloseBtn.addEventListener("click", vmClose);
+    })();
+
+    // ── Voice Task button — opens Vue island Stage 2 task creator ──
+    (function() {
+      var voiceTaskBtn = $("global-voice-task");
+      if (!voiceTaskBtn) return;
+      voiceTaskBtn.addEventListener("click", function() {
+        document.dispatchEvent(new CustomEvent("voice:open-task-creator"));
+      });
+      // Show once island is ready (same mic-enabled guard as walkie-talkie)
+      function applyVoiceTaskVisibility() {
+        voiceTaskBtn.hidden = window.__micEnabled === false;
+      }
+      document.addEventListener("voice:island-ready", applyVoiceTaskVisibility);
+      applyVoiceTaskVisibility();
     })();
 
     // ── Global read-aloud button ──

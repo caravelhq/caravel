@@ -305,6 +305,20 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
         });
       }
 
+      if (url.pathname === "/island/voice.js") {
+        const file = Bun.file(new URL("./island-dist/voice-island.js", import.meta.url));
+        return new Response(file, {
+          headers: { "Content-Type": "application/javascript; charset=utf-8" },
+        });
+      }
+
+      if (url.pathname === "/island/voice.css") {
+        const file = Bun.file(new URL("./island-dist/voice-island.css", import.meta.url));
+        return new Response(file, {
+          headers: { "Content-Type": "text/css; charset=utf-8" },
+        });
+      }
+
       if (url.pathname === "/marked.js") {
         const bundled = await getMarkedBundle();
         if (bundled) {

@@ -4912,6 +4912,31 @@ export const pageStyles = String.raw`    :root {
     }
     .global-voice-mode[hidden] { display: none; }
 
+    /* ── Global voice-task (Vue island Stage 2) — dock button ── */
+    .global-voice-task {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #6ee7b744;
+      background: #071a1acc;
+      backdrop-filter: blur(8px);
+      color: #6ee7b7;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-voice-task:hover {
+      transform: translateY(-2px);
+      background: #0d2a2acc;
+      border-color: #6ee7b777;
+    }
+    .global-voice-task[hidden] { display: none; }
+
     /* ── Audio action modal — small centered card for recording / playback ── */
     .audio-action-modal {
       position: fixed;

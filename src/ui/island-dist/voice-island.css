@@ -1,0 +1,102 @@
+
+.vtc-overlay[data-v-16ffa83c] {
+  --vtc-accent: #6ee7b7;
+}
+.vtc-transcript[data-v-16ffa83c] {
+  padding: 20px 20px 8px;
+}
+.vtc-success[data-v-16ffa83c] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 40px 0;
+  color: var(--vtc-accent, #6ee7b7);
+  font-size: 17px;
+  font-weight: 500;
+}
+.vtc-success-icon[data-v-16ffa83c] { font-size: 48px;
+}
+.vtc-card[data-v-16ffa83c] {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.vtc-card-header[data-v-16ffa83c] {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--vtc-accent, #6ee7b7);
+  margin-bottom: 4px;
+}
+.vtc-field[data-v-16ffa83c] {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.vtc-field label[data-v-16ffa83c] {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted, #8a9ab0);
+}
+.vtc-input[data-v-16ffa83c] {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: var(--text, #e8edf4);
+  font-family: inherit;
+  font-size: 14px;
+  padding: 6px 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.vtc-input[data-v-16ffa83c]:focus { outline: none; border-color: var(--vtc-accent, #6ee7b7);
+}
+.vtc-select[data-v-16ffa83c] { cursor: pointer;
+}
+.vtc-textarea[data-v-16ffa83c] { resize: vertical; min-height: 70px;
+}
+.vtc-brief-field[data-v-16ffa83c] { flex: 1;
+}
+.vtc-error[data-v-16ffa83c] {
+  color: #f87171;
+  font-size: 13px;
+}
+.vtc-card-actions[data-v-16ffa83c] {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 4px;
+}
+.vtc-btn[data-v-16ffa83c] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s ease;
+}
+.vtc-btn[data-v-16ffa83c]:disabled { opacity: 0.5; cursor: not-allowed;
+}
+.vtc-btn-ghost[data-v-16ffa83c] {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--muted, #8a9ab0);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.vtc-btn-primary[data-v-16ffa83c] {
+  background: var(--vtc-accent, #6ee7b7);
+  color: #0a1a12;
+}
+.vtc-btn-primary[data-v-16ffa83c]:hover:not(:disabled) { opacity: 0.9;
+}
