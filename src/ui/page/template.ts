@@ -532,7 +532,7 @@ ${pageStyles}
     <footer class="dock" id="dock" aria-live="polite">
       <div id="dock-pills"><div class="pill">Connecting...</div></div>
       <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate" disabled><i class="fa-solid fa-microphone"></i></button>
-      <button id="global-voice-mode" class="global-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat mode" hidden><i class="fa-solid fa-microphone-lines"></i></button>
+      <button id="global-voice-mode" class="global-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat mode" hidden><i class="fa-solid fa-walkie-talkie"></i></button>
       <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud"><i class="fa-solid fa-volume-high"></i></button>
     </footer>
     <aside class="side-bubble" id="uptime-bubble" aria-live="polite">

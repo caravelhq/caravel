@@ -4894,10 +4894,10 @@ export const pageStyles = String.raw`    :root {
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      border: 1px solid #c07bff44;
-      background: #110820cc;
+      border: 1px solid #4ade8044;
+      background: #081a0dcc;
       backdrop-filter: blur(8px);
-      color: #c07bff;
+      color: #4ade80;
       font-size: 16px;
       cursor: pointer;
       display: flex;
@@ -4907,8 +4907,8 @@ export const pageStyles = String.raw`    :root {
     }
     .global-voice-mode:hover {
       transform: translateY(-2px);
-      background: #1e0d3acc;
-      border-color: #c07bff77;
+      background: #0d2a18cc;
+      border-color: #4ade8077;
     }
     .global-voice-mode[hidden] { display: none; }
 
