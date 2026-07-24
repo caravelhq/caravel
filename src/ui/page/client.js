@@ -175,33 +175,6 @@
     function buildPills(state) {
       const pills = [];
 
-      pills.push({
-        cls: state.security.level === "unrestricted" ? "warn" : "ok",
-        icon: "🛡️",
-        label: "Security",
-        value: cap(state.security.level),
-      });
-
-      if (state.heartbeat.enabled) {
-        const nextInMs = state.heartbeat.nextInMs;
-        const nextLabel = nextInMs == null
-          ? "Next run in --"
-          : ("Next run in " + fmtDur(nextInMs));
-        pills.push({
-          cls: "ok",
-          icon: "💓",
-          label: "Heartbeat",
-          value: nextLabel,
-        });
-      } else {
-        pills.push({
-          cls: "bad",
-          icon: "💓",
-          label: "Heartbeat",
-          value: "Disabled",
-        });
-      }
-
       if (state.telegram && state.telegram.configured) {
         pills.push({
           cls: "ok",

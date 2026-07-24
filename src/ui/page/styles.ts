@@ -1444,7 +1444,7 @@ export const pageStyles = String.raw`    :root {
       padding: 6px 8px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       flex-wrap: nowrap;
       gap: 0;
       border-radius: 26px;
@@ -4803,7 +4803,8 @@ export const pageStyles = String.raw`    :root {
 
     /* ── Dock pills container — fills remaining space, mic sits alongside ── */
     #dock-pills {
-      flex: 1;
+      flex: 0 0 auto;
+      margin-left: auto;
       display: flex;
       align-items: center;
       min-width: 0;
@@ -4890,7 +4891,7 @@ export const pageStyles = String.raw`    :root {
     /* ── Global voice-mode (fullscreen voice chat) — dock button ── */
     .global-voice-mode {
       flex: 0 0 auto;
-      margin-left: 4px;
+      margin-left: 0;
       width: 38px;
       height: 38px;
       border-radius: 50%;
