@@ -499,16 +499,6 @@ ${pageStyles}
     <iframe class="split-iframe" id="split-iframe" title="Caravel second pane" loading="lazy"></iframe>
   </aside>
 
-  <!-- Fullscreen voice-chat overlay — hoisted outside .chat-panel to avoid backdrop-filter stacking context -->
-  <div id="voice-mode-overlay" class="voice-mode-overlay" hidden aria-live="polite">
-    <div class="voice-mode-transcript" id="voice-mode-transcript"></div>
-    <div class="vm-controls">
-      <div class="voice-mode-status" id="voice-mode-status">Press and hold to talk</div>
-      <button id="voice-mode-btn" class="voice-mode-btn" type="button" aria-label="Push to talk"><i class="fa-solid fa-microphone"></i></button>
-      <button id="voice-mode-close" class="voice-mode-close" type="button" aria-label="Exit voice mode"><i class="fa-solid fa-xmark"></i></button>
-    </div>
-  </div>
-
   <!-- Small modal shown when mic recording or speaker playback is active -->
   <div id="audio-action-modal" class="audio-action-modal" hidden role="dialog" aria-modal="true">
     <div class="audio-action-card">
@@ -534,6 +524,7 @@ ${pageStyles}
     <footer class="dock" id="dock" aria-live="polite">
       <button id="global-voice-mode" class="global-voice-mode" type="button" title="Voice chat mode" aria-label="Voice chat mode" hidden><i class="fa-solid fa-walkie-talkie"></i></button>
       <button id="global-voice-task" class="global-voice-task" type="button" title="Voice task creator" aria-label="Voice task creator" hidden><i class="fa-solid fa-list-check"></i></button>
+      <div class="dock-spacer"></div>
       <button id="global-mic" class="global-mic" type="button" title="Dictate into focused field" aria-label="Dictate" disabled><i class="fa-solid fa-microphone"></i></button>
       <button id="global-speaker" class="global-speaker" type="button" title="Read page aloud" aria-label="Read page aloud"><i class="fa-solid fa-volume-high"></i></button>
       <div id="dock-pills"></div>

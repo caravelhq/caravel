@@ -4,6 +4,11 @@ import { resolve } from "path";
 
 export default defineConfig({
   plugins: [vue()],
+  define: {
+    // Replace process.env.NODE_ENV so the browser bundle doesn't throw
+    // ReferenceError when Vue/Pinia/BVN check it at runtime.
+    "process.env.NODE_ENV": JSON.stringify("production"),
+  },
   build: {
     outDir: "src/ui/island-dist",
     lib: {

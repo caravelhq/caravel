@@ -1102,6 +1102,7 @@
       }
 
       function gmPressDown(e) {
+        if (globalMicBtn.disabled) return;
         if (e && e.preventDefault) e.preventDefault();
         gmPressStart = Date.now();
         gmHoldTimer = setTimeout(function() {
@@ -1111,6 +1112,7 @@
       }
 
       function gmPressUp(e) {
+        if (globalMicBtn.disabled) return;
         if (e && e.preventDefault) e.preventDefault();
         clearTimeout(gmHoldTimer);
         var duration = Date.now() - gmPressStart;
@@ -2464,90 +2466,19 @@
       });
     })();
 
-    // ── Voice Mode (DeepGram TTS + auto-submit) ──
+    // ── TTS audio queue — used by the global speaker button ──
+    // The Vue island (VoiceModeOverlay) handles in-chat TTS. This block provides
+    // the window.__vm* functions that the read-aloud speaker button needs.
     (function() {
-      var voiceModeOverlay = $("voice-mode-overlay");
-      var voiceModeCloseBtn = $("voice-mode-close");
-      var voiceModeBtn = $("voice-mode-btn");
-      var voiceModeStatus = $("voice-mode-status");
-      var voiceModeTranscript = $("voice-mode-transcript");
-      var voiceModeToggle = $("global-voice-mode");
 
-      if (!voiceModeOverlay || !voiceModeBtn || !voiceModeToggle) return;
-
-      var vmActive = false;
-      var vmRecorder = null;
-      var vmChunks = [];
-      var vmStream = null;
-      var vmMimeType = null;
-      var vmBusy = false;
       var vmCurrentAudio = null;
       var vmAudioQueue = [];
       var vmQueueRunning = false;
       var vmQueueGen = 0;
-      var vmTurnCursor = 0;
-      var vmSpokenChunks = [];
-
-      // Feature detect recording support (reuse same candidates as main mic).
-      var vmSupported = !!(
-        typeof MediaRecorder !== "undefined" &&
-        navigator.mediaDevices &&
-        navigator.mediaDevices.getUserMedia
-      );
-      if (vmSupported) {
-        var vmCandidates = [
-          "audio/ogg;codecs=opus", "audio/ogg",
-          "audio/webm;codecs=opus", "audio/webm",
-        ];
-        for (var vi = 0; vi < vmCandidates.length; vi++) {
-          if (MediaRecorder.isTypeSupported(vmCandidates[vi])) {
-            vmMimeType = vmCandidates[vi];
-            break;
-          }
-        }
-        if (!vmMimeType) vmSupported = false;
-      }
-
-      // Expose TTS playback functions for the global read-aloud button.
-      // Placed before the vmSupported guard so they're available even when
-      // MediaRecorder isn't supported (TTS only needs fetch + Audio).
-      window.__vmEnqueueChunk = vmEnqueueChunk;
-      window.__vmExtractChunks = vmExtractChunks;
-      window.__vmStripMarkdown = vmStripMarkdown;
-      window.__vmStopAudio = vmStopAudio;
-      window.__vmIsPlaying = function() { return vmQueueRunning; };
-
-      // Hide the toggle if recording isn't available.
-      if (!vmSupported) {
-        voiceModeToggle.hidden = true;
-        return;
-      }
-
-      function vmSetStatus(text, btnClass) {
-        voiceModeStatus.textContent = text;
-        voiceModeBtn.classList.remove("listening", "processing", "speaking");
-        if (btnClass) voiceModeBtn.classList.add(btnClass);
-      }
-
-      function vmSetTranscript(html) {
-        voiceModeTranscript.innerHTML = html;
-      }
-
-      function vmStopStream() {
-        if (vmStream) {
-          vmStream.getTracks().forEach(function(t) { t.stop(); });
-          vmStream = null;
-        }
-      }
 
       function vmStopAudio() {
         vmQueueGen++;
-        vmSpokenChunks = [];
-        if (vmCurrentAudio) {
-          vmCurrentAudio.pause();
-          vmCurrentAudio.src = "";
-          vmCurrentAudio = null;
-        }
+        if (vmCurrentAudio) { vmCurrentAudio.pause(); vmCurrentAudio.src = ""; vmCurrentAudio = null; }
         vmAudioQueue = [];
         vmQueueRunning = false;
       }
@@ -2632,87 +2563,45 @@
         return { chunks: chunks, consumed: consumed };
       }
 
-      // Render the accumulated spoken chunks to the transcript area.
-      // The last chunk is styled as "active" (currently speaking); prior chunks are dimmed.
-      function vmRenderTranscript() {
-        if (!vmSpokenChunks.length) { voiceModeTranscript.innerHTML = ""; return; }
-        var html = "";
-        for (var i = 0; i < vmSpokenChunks.length; i++) {
-          var isActive = i === vmSpokenChunks.length - 1;
-          html += '<div class="vm-reply' + (isActive ? " vm-active" : "") + '">' + esc(vmSpokenChunks[i]) + "</div>";
-        }
-        voiceModeTranscript.innerHTML = html;
-        voiceModeTranscript.scrollTop = voiceModeTranscript.scrollHeight;
-      }
-
-      // Sequential audio queue runner. Plays clips in submission order, one at a time.
-      // Uses vmQueueGen as a cancellation token — incremented by vmStopAudio() on barge-in.
-      // Each queued item is {audio, url, text}; audio may be null if TTS fetch failed.
+      // Sequential audio queue runner (overlay-independent — for speaker button).
       async function vmRunQueue(gen) {
         if (vmQueueRunning) return;
         vmQueueRunning = true;
         while (vmAudioQueue.length > 0 && gen === vmQueueGen) {
           var item = await vmAudioQueue.shift();
-          if (gen !== vmQueueGen) {
-            if (item && item.url) URL.revokeObjectURL(item.url);
-            continue;
-          }
-          if (!item) continue;  // fully stale (promise resolved null before gen bump)
-          // Reveal this chunk's text in the transcript as it begins playing.
-          if (vmActive) { vmSpokenChunks.push(item.text); vmRenderTranscript(); }
-          if (!item.audio) {
-            // TTS fetch failed — text is shown, move on without waiting.
-            continue;
-          }
-          if (vmActive) vmSetStatus("Speaking…", "speaking");
+          if (gen !== vmQueueGen) { if (item && item.url) URL.revokeObjectURL(item.url); continue; }
+          if (!item || !item.audio) continue;
           if (typeof window.__vmOnSpeaking === "function") window.__vmOnSpeaking();
           vmCurrentAudio = item.audio;
           await new Promise(function(resolve) {
-            item.audio.onended = function() {
-              URL.revokeObjectURL(item.url);
-              vmCurrentAudio = null;
-              resolve();
-            };
-            item.audio.onerror = function() {
-              URL.revokeObjectURL(item.url);
-              vmCurrentAudio = null;
-              resolve();
-            };
+            item.audio.onended = function() { URL.revokeObjectURL(item.url); vmCurrentAudio = null; resolve(); };
+            item.audio.onerror = function() { URL.revokeObjectURL(item.url); vmCurrentAudio = null; resolve(); };
             item.audio.play().catch(function(e) {
-              console.error("[voice-mode] audio play failed:", e);
-              URL.revokeObjectURL(item.url);
-              vmCurrentAudio = null;
-              resolve();
+              console.error("[speaker] audio play failed:", e);
+              URL.revokeObjectURL(item.url); vmCurrentAudio = null; resolve();
             });
           });
         }
         if (gen === vmQueueGen) {
           vmQueueRunning = false;
-          vmBusy = false;
-          if (vmActive) vmSetStatus("Press and hold to talk", null);
           if (typeof window.__vmOnQueueEnd === "function") window.__vmOnQueueEnd();
         }
       }
 
-      // Fetch TTS for one chunk and push the result Promise to the queue.
-      // Each item resolves to {audio, url, text} — audio/url may be null if the fetch fails,
-      // but text is always carried through so the transcript can advance even on error.
       function vmEnqueueChunk(chunkText) {
         var stripped = vmStripMarkdown(chunkText).trim();
         if (!stripped) return;
-        var displayText = chunkText.trim();  // original (unstripped) for transcript display
+        var displayText = chunkText.trim();
         var gen = vmQueueGen;
         var p = fetch("/api/voice/speak", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: stripped }),
         }).then(function(res) {
-          if (gen !== vmQueueGen) return null;  // stale — discard entirely
+          if (gen !== vmQueueGen) return null;
           if (!res.ok) {
             return res.json().catch(function() { return {}; }).then(function(err) {
-              var detail = err.error || ("HTTP " + res.status);
-              console.error("[voice-mode] TTS chunk error:", detail);
-              if (gen === vmQueueGen) vmSetStatus("Voice playback failed — " + detail, null);
+              console.error("[speaker] TTS error:", err.error || ("HTTP " + res.status));
               return { audio: null, url: null, text: displayText };
             });
           }
@@ -2722,219 +2611,28 @@
             return { audio: new Audio(url), url: url, text: displayText };
           });
         }).catch(function(e) {
-          console.error("[voice-mode] TTS chunk fetch failed:", e);
+          console.error("[speaker] TTS fetch failed:", e);
           return { audio: null, url: null, text: displayText };
         });
         vmAudioQueue.push(p);
         if (!vmQueueRunning) vmRunQueue(vmQueueGen);
       }
 
-      // Called from pollChat on each poll that sees assistant text (streaming or done).
-      // Tracks a cursor (vmTurnCursor) so only newly arrived text is dispatched.
-      function vmOnAssistantChunk(fullText, isDone) {
-        if (!vmActive) return;
-        if (!fullText) return;
-        // Safety: if text shrank (shouldn't happen mid-turn), reset
-        if (fullText.length < vmTurnCursor) {
-          vmTurnCursor = 0;
-          vmStopAudio();
-        }
-        var pending = fullText.slice(vmTurnCursor);
-        if (!pending) return;
-        var result = vmExtractChunks(pending, isDone);
-        if (result.consumed > 0) vmTurnCursor += result.consumed;
-        for (var i = 0; i < result.chunks.length; i++) {
-          var chunk = result.chunks[i].trim();
-          if (chunk) vmEnqueueChunk(chunk);
-        }
-        if (result.chunks.length) vmBusy = true;
-      }
+      window.__vmEnqueueChunk = vmEnqueueChunk;
+      window.__vmExtractChunks = vmExtractChunks;
+      window.__vmStripMarkdown = vmStripMarkdown;
+      window.__vmStopAudio = vmStopAudio;
+      window.__vmIsPlaying = function() { return vmQueueRunning; };
+      window.__vmOnAssistantChunk = function() {}; // no-op: island handles voice-mode TTS
+    })();
 
-      window.__vmOnAssistantChunk = vmOnAssistantChunk;
-
-      async function vmRecordAndSubmit() {
-        if (vmBusy) return;
-        vmBusy = true;
-        vmStopAudio();
-        vmSetStatus("Requesting microphone…", null);
-        try {
-          vmStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        } catch (e) {
-          console.error("[voice-mode] getUserMedia failed:", e);
-          vmSetStatus("Microphone unavailable", null);
-          vmBusy = false;
-          return;
-        }
-        vmChunks = [];
-        try {
-          vmRecorder = new MediaRecorder(vmStream, { mimeType: vmMimeType });
-        } catch (e) {
-          console.error("[voice-mode] MediaRecorder init failed:", e);
-          vmStopStream();
-          vmSetStatus("Press and hold to talk", null);
-          vmBusy = false;
-          return;
-        }
-        vmRecorder.ondataavailable = function(e) {
-          if (e.data && e.data.size > 0) vmChunks.push(e.data);
-        };
-        vmSetStatus("Listening… (release to send)", "listening");
-        vmSetTranscript("");
-        voiceModeBtn.textContent = "⏹";
-        vmRecorder.start(200);
-      }
-
-      async function vmStopAndSubmit() {
-        if (!vmRecorder || vmRecorder.state === "inactive") return;
-        vmRecorder.onstop = async function() {
-          voiceModeBtn.textContent = "🎤";
-          vmSetStatus("Transcribing…", "processing");
-          var blob = new Blob(vmChunks, { type: vmMimeType });
-          vmChunks = [];
-          vmRecorder = null;
-          vmStopStream();
-          var text = "";
-          try {
-            var ext = (vmMimeType || "").includes("webm") ? ".webm" : ".ogg";
-            var fd = new FormData();
-            fd.append("audio", blob, "vm-recording" + ext);
-            var res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
-            var data = await res.json();
-            if (data.ok && data.text) {
-              text = data.text.trim();
-            } else {
-              console.error("[voice-mode] transcription failed:", data.error);
-              vmSetStatus("Transcription failed — try again", null);
-              vmBusy = false;
-              return;
-            }
-          } catch (e) {
-            console.error("[voice-mode] transcribe request failed:", e);
-            vmSetStatus("Request failed — try again", null);
-            vmBusy = false;
-            return;
-          }
-          if (!text) {
-            vmSetStatus("Nothing heard — try again", null);
-            vmBusy = false;
-            return;
-          }
-          vmSetTranscript('<div class="vm-heard">"' + esc(text) + '"</div>');
-          vmSetStatus("Sending…", "processing");
-          // Auto-submit without review: put text into chatInput and call sendChat.
-          if (chatInput) {
-            chatInput.value = text;
-            autoResizeChatInput();
-          }
-          try {
-            await fetch("/api/chat", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                message: text,
-                chatId: chatSessionId,
-                agentId: chatAgentLocked || pendingAgentId || undefined,
-              }),
-            });
-            if (chatInput) { chatInput.value = ""; autoResizeChatInput(); }
-            chatHistory.push({ role: "user", text: text, state: "pending" });
-            if (!chatAgentLocked && pendingAgentId) {
-              chatAgentLocked = pendingAgentId;
-              updateAgentBadge();
-              updateSendDisabled();
-            }
-            renderChatHistory();
-            vmTurnCursor = 0;   // Reset cursor — new assistant turn begins
-            vmSpokenChunks = []; // Clear accumulated transcript for new turn
-          } catch (e) {
-            console.error("[voice-mode] chat send failed:", e);
-          }
-          vmSetStatus("Waiting for reply…", "processing");
-          // vmBusy stays true; vmOnAssistantChunk clears it when the queue drains.
-        };
-        vmRecorder.stop();
-      }
-
-      // Tap = toggle (click to start, click to stop).
-      // Hold (≥250ms) = push-to-talk (record while held, submit on release).
-      var VM_HOLD_MS = 250;
-      var vmPressStart = 0;
-      var vmHoldMode = false;
-      var vmHoldTimer = null;
-
-      function vmPressDown(e) {
-        if (e && e.preventDefault) e.preventDefault();
-        vmPressStart = Date.now();
-        vmHoldTimer = setTimeout(function() {
-          vmHoldMode = true;
-          if (!vmBusy && (!vmRecorder || vmRecorder.state === "inactive")) {
-            vmRecordAndSubmit();
-          }
-        }, VM_HOLD_MS);
-      }
-
-      function vmPressUp(e) {
-        if (e && e.preventDefault) e.preventDefault();
-        clearTimeout(vmHoldTimer);
-        var duration = Date.now() - vmPressStart;
-        if (vmHoldMode) {
-          vmHoldMode = false;
-          if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
-        } else if (duration < VM_HOLD_MS) {
-          // Tap: toggle record.
-          if (vmRecorder && vmRecorder.state !== "inactive") {
-            vmStopAndSubmit();
-          } else if (!vmBusy) {
-            vmRecordAndSubmit();
-          }
-        }
-      }
-
-      voiceModeBtn.addEventListener("mousedown", vmPressDown);
-      voiceModeBtn.addEventListener("touchstart", vmPressDown, { passive: false });
-      voiceModeBtn.addEventListener("mouseup", vmPressUp);
-      voiceModeBtn.addEventListener("touchend", vmPressUp, { passive: false });
-      voiceModeBtn.addEventListener("mouseleave", function() {
-        // If dragged out while in hold mode, stop recording.
-        if (vmHoldMode) {
-          vmHoldMode = false;
-          clearTimeout(vmHoldTimer);
-          if (vmRecorder && vmRecorder.state !== "inactive") vmStopAndSubmit();
-        }
-      });
-
-      function vmOpen() {
-        vmActive = true;
-        voiceModeOverlay.hidden = false;
-        vmSetStatus("Press and hold to talk", null);
-        vmSetTranscript("");
-        vmSpokenChunks = [];
-        vmBusy = false;
-        voiceModeBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
-        // Prime cursor to skip any assistant text already in history when voice mode opens.
-        vmTurnCursor = 0;
-        if (typeof chatHistory !== "undefined" && chatHistory.length) {
-          var last = chatHistory[chatHistory.length - 1];
-          if (last && last.role === "assistant" && last.text) vmTurnCursor = last.text.length;
-        }
-      }
-
-      function vmClose() {
-        vmActive = false;
-        voiceModeOverlay.hidden = true;
-        vmStopStream();
-        vmStopAudio();
-        vmBusy = false;
-        if (vmRecorder && vmRecorder.state !== "inactive") {
-          vmRecorder.stop();
-          vmRecorder = null;
-        }
-      }
-
+    // ── Voice Mode button — dispatches to Vue island voice chat ──
+    (function() {
+      var voiceModeToggle = $("global-voice-mode");
+      if (!voiceModeToggle) return;
       voiceModeToggle.addEventListener("click", function() {
-        if (vmActive) vmClose(); else vmOpen();
+        document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
       });
-      voiceModeCloseBtn.addEventListener("click", vmClose);
     })();
 
     // ── Voice Task button — opens Vue island Stage 2 task creator ──
