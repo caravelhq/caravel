@@ -22,6 +22,7 @@ let holdTimer: ReturnType<typeof setTimeout> | null = null;
 let holdMode = false;
 let pressStart = 0;
 let prevVmChunk: ((text: string, isDone: boolean) => void) | undefined;
+let fastPollController: AbortController | null = null;
 
 // ── Template-reactive state ──────────────────────────────────────────────────
 const statusText = ref("Press and hold to talk");
@@ -47,6 +48,8 @@ function renderTranscript() {
 // ── TTS audio queue ──────────────────────────────────────────────────────────
 function stopAudio() {
   queueGen++;
+  // Cancel the fast-poll loop (queueGen bump already breaks it, but abort the fetch too)
+  if (fastPollController) { fastPollController.abort(); fastPollController = null; }
   spokenChunks = [];
   if (currentAudio) { currentAudio.pause(); currentAudio.src = ""; currentAudio = null; }
   audioQueue = [];
@@ -110,7 +113,9 @@ async function runQueue(gen: number) {
   }
 }
 
-// Called via window.__vmOnAssistantChunk hook from pollChat in client.js
+// Called either by the fast-poll loop or by the vanilla pollChat hook.
+// onAssistantChunk is idempotent: turnCursor tracks consumed characters,
+// so double-calls with the same fullText produce no duplicate chunks.
 function onAssistantChunk(fullText: string, isDone: boolean) {
   if (voice.mode !== "chat") return;
   if (fullText.length < turnCursor) { turnCursor = 0; stopAudio(); }
@@ -120,6 +125,46 @@ function onAssistantChunk(fullText: string, isDone: boolean) {
   if (result.consumed > 0) turnCursor += result.consumed;
   for (const chunk of result.chunks) { if (chunk.trim()) enqueueChunk(chunk); }
   if (result.chunks.length) busy = true;
+}
+
+// ── Dedicated fast-poll loop ─────────────────────────────────────────────────
+// Polls /api/chats/{chatId} at 200ms so interim streaming chunks reach TTS
+// without waiting for vanilla's 500ms pollChat interval. Vanilla hook remains
+// as belt-and-braces but this is the primary streaming path.
+async function streamChatReply(chatId: string) {
+  if (!chatId) return;
+  if (fastPollController) { fastPollController.abort(); }
+  const controller = new AbortController();
+  fastPollController = controller;
+  const gen = queueGen;
+
+  while (!controller.signal.aborted && gen === queueGen) {
+    await new Promise((r) => setTimeout(r, 200));
+    if (controller.signal.aborted || gen !== queueGen) break;
+    try {
+      const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) break;
+      const data: any = await res.json();
+      if (!data?.ok || !data?.chat?.messages) continue;
+      const msgs: any[] = data.chat.messages;
+      const lastAssistant = [...msgs].reverse().find((m: any) => m.role === "assistant");
+      if (!lastAssistant?.text) continue;
+      const st = lastAssistant.state;
+      const isDone = !st || st === "done";
+      if (isDone || st === "streaming") {
+        onAssistantChunk(lastAssistant.text, isDone);
+        if (isDone && voice.mode === "chat") setStatus("Press and hold to talk", "");
+      }
+      if (isDone) break;
+    } catch (e: any) {
+      if ((e as Error)?.name === "AbortError") break;
+      await new Promise((r) => setTimeout(r, 500));
+    }
+  }
+
+  if (fastPollController === controller) fastPollController = null;
 }
 
 // ── Recording / STT ──────────────────────────────────────────────────────────
@@ -193,8 +238,8 @@ async function stopAndSubmit() {
     if (!text) { setStatus("Nothing heard — try again", ""); busy = false; return; }
     transcriptHtml.value = `<div class="vm-heard">"${esc(text)}"</div>`;
     setStatus("Sending…", "processing");
+    const chatId = (window as any).__chatSessionId;
     try {
-      const chatId = (window as any).__chatSessionId;
       await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -202,6 +247,8 @@ async function stopAndSubmit() {
       });
       spokenChunks = [];
       turnCursor = 0;
+      // Start dedicated 200ms poll — don't wait for vanilla's 500ms pollChat
+      streamChatReply(chatId);
     } catch {
       console.error("[voice-island] chat send failed");
     }
@@ -259,7 +306,7 @@ function openMode() {
     const last = hist[hist.length - 1];
     if (last?.role === "assistant" && last.text) turnCursor = last.text.length;
   }
-  // Hook into pollChat's TTS dispatch
+  // Keep vanilla hook as belt-and-braces; primary streaming now via streamChatReply
   prevVmChunk = (window as any).__vmOnAssistantChunk;
   (window as any).__vmOnAssistantChunk = onAssistantChunk;
 }

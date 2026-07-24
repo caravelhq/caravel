@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@types/js-yaml": "^4.0.9",
+    "bootstrap": "^5.3.8",
+    "bootstrap-vue-next": "^0.45.8",
     "js-yaml": "^4.1.1",
     "marked": "^18.0.3",
     "ogg-opus-decoder": "^1.7.3",

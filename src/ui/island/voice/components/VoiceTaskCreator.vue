@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import {
+  BModal,
+  BFormGroup,
+  BFormInput,
+  BFormTextarea,
+  BFormSelect,
+  BFormSelectOption,
+  BButton,
+  BAlert,
+} from "bootstrap-vue-next";
 import { useVoiceStore } from "../store/voice";
 import { useTaskCreatorStore } from "../store/taskCreator";
 import { stripMarkdown, esc, detectMimeType } from "../utils";
@@ -21,6 +31,7 @@ let currentAudio: HTMLAudioElement | null = null;
 let pollTimer: ReturnType<typeof setTimeout> | null = null;
 
 // ── Reactive UI state ────────────────────────────────────────────────────────
+const showModal = ref(false);
 const statusText = ref("Describe the task you want to create");
 const isListening = ref(false);
 const isProcessing = ref(false);
@@ -39,6 +50,9 @@ const draftKind = ref("research");
 
 const hasDraft = computed(() => taskCreator.draft !== null);
 const isSubmitting = computed(() => taskCreator.submitting);
+
+const priorityOptions = ["P0", "P1", "P2", "P3"];
+const kindOptions = ["research", "code", "review", "summarise", "decide", "other"];
 
 // ── TTS for task creator replies ─────────────────────────────────────────────
 function stopAudio() {
@@ -89,10 +103,8 @@ async function runQueue(gen: number) {
 }
 
 function speakReply(fullReply: string) {
-  // Strip the <task> block before TTS — Claude's spoken ack is the text around it
   const spoken = fullReply.replace(/<task>[\s\S]*?<\/task>/gi, "").trim();
   if (!spoken) return;
-  // Split into sentences for sequential TTS
   const sentences = spoken.match(/[^.!?]+[.!?]+/g) ?? [spoken];
   for (const s of sentences) {
     if (s.trim()) enqueueChunk(s.trim());
@@ -177,8 +189,6 @@ async function stopAndExtract() {
 }
 
 // ── Task extraction via /api/chat ────────────────────────────────────────────
-// Uses an ephemeral chatId; the system prompt is embedded in the user message
-// so the regular chat endpoint handles it without server changes.
 async function extractTask(userText: string) {
   const ephemeralChatId = `voice-task-${Date.now()}`;
   const embeddedMessage = buildEmbeddedMessage(userText);
@@ -200,12 +210,9 @@ async function extractTask(userText: string) {
   statusText.value = "Thinking…";
   const reply = await pollForReply(ephemeralChatId);
   if (!reply) { statusText.value = "No reply — try again"; return; }
-  // Store in conversation
   taskCreator.addAssistantMessage(reply);
   replyText.value = reply;
-  // Speak the non-task part
   speakReply(reply);
-  // Parse task block
   const draft = taskCreator.parseTaskFromReply(reply);
   if (draft) {
     taskCreator.setDraft(draft);
@@ -268,7 +275,6 @@ async function submitTask() {
     submitted.value = true;
     document.dispatchEvent(new CustomEvent("voice:task-created", { detail: { id: result.id } }));
     speakReply("Task created — I've queued it for you.");
-    // Auto-close after speaking
     setTimeout(() => {
       if (voice.mode === "task-creator") voice.close();
     }, 3000);
@@ -332,17 +338,6 @@ function closeMode() {
   if (pollTimer) clearTimeout(pollTimer);
 }
 
-watch(
-  () => voice.mode,
-  (mode, prev) => {
-    if (mode === "task-creator" && prev !== "task-creator") openMode();
-    if (prev === "task-creator" && mode !== "task-creator") closeMode();
-  }
-);
-
-onMounted(() => { if (voice.mode === "task-creator") openMode(); });
-onBeforeUnmount(() => { closeMode(); });
-
 function cancel() { closeMode(); voice.close(); }
 function resetDraft() {
   taskCreator.reset();
@@ -351,199 +346,179 @@ function resetDraft() {
   submitted.value = false;
   statusText.value = "Describe the task you want to create";
 }
+
+// BModal @hide fires when user closes (X, Esc, backdrop). Guard against
+// double-calls when showModal is set to false externally.
+function onModalHide() {
+  if (voice.mode === "task-creator") cancel();
+}
+
+watch(
+  () => voice.mode,
+  (mode, prev) => {
+    if (mode === "task-creator" && prev !== "task-creator") {
+      openMode();
+      showModal.value = true;
+    }
+    if (prev === "task-creator" && mode !== "task-creator") {
+      showModal.value = false;
+      closeMode();
+    }
+  }
+);
+
+onMounted(() => {
+  if (voice.mode === "task-creator") {
+    openMode();
+    showModal.value = true;
+  }
+});
+onBeforeUnmount(() => { closeMode(); });
 </script>
 
 <template>
-  <!-- Stage 2: Voice Task Creator overlay -->
-  <div class="voice-mode-overlay vtc-overlay" role="dialog" aria-modal="true">
+  <BModal
+    v-model="showModal"
+    size="lg"
+    no-close-on-backdrop
+    hide-footer
+    scrollable
+    centered
+    @hide="onModalHide"
+  >
+    <template #title>
+      <span class="vtc-modal-title">
+        <i class="fa-solid fa-list-check me-2" style="color: #6ee7b7" />
+        Create a task from voice
+      </span>
+    </template>
 
-    <!-- Transcript / result area -->
-    <div class="voice-mode-transcript vtc-transcript">
-      <template v-if="submitted">
-        <div class="vtc-success">
-          <i class="fa-solid fa-circle-check vtc-success-icon" />
-          <div>Task created!</div>
-        </div>
-      </template>
-      <template v-else-if="hasDraft">
-        <!-- Confirmation card -->
-        <div class="vtc-card">
-          <div class="vtc-card-header">
-            <i class="fa-solid fa-clipboard-list" /> Review task
-          </div>
-          <div class="vtc-field">
-            <label>Agent</label>
-            <input v-model="draftTo" class="vtc-input" />
-          </div>
-          <div class="vtc-field">
-            <label>Priority</label>
-            <select v-model="draftPriority" class="vtc-input vtc-select">
-              <option>P0</option><option>P1</option><option>P2</option><option>P3</option>
-            </select>
-          </div>
-          <div class="vtc-field">
-            <label>Project</label>
-            <input v-model="draftProject" class="vtc-input" placeholder="(none)" />
-          </div>
-          <div class="vtc-field">
-            <label>Kind</label>
-            <select v-model="draftKind" class="vtc-input vtc-select">
-              <option>research</option><option>code</option><option>review</option>
-              <option>summarise</option><option>decide</option><option>other</option>
-            </select>
-          </div>
-          <div class="vtc-field">
-            <label>Headline</label>
-            <input v-model="draftHeadline" class="vtc-input" />
-          </div>
-          <div class="vtc-field vtc-brief-field">
-            <label>Brief</label>
-            <textarea v-model="draftBrief" class="vtc-input vtc-textarea" rows="4" />
-          </div>
-          <div v-if="submitError" class="vtc-error">{{ submitError }}</div>
-          <div class="vtc-card-actions">
-            <button class="vtc-btn vtc-btn-ghost" type="button" @click="resetDraft">
-              <i class="fa-solid fa-rotate-left" /> Redo
-            </button>
-            <button
-              class="vtc-btn vtc-btn-primary"
-              type="button"
-              :disabled="isSubmitting"
-              @click="submitTask"
-            >
-              <i class="fa-solid fa-paper-plane" />
-              {{ isSubmitting ? "Creating…" : "Create Task →" }}
-            </button>
-          </div>
-        </div>
-      </template>
-      <template v-else>
-        <!-- Before extraction: show heard text and status -->
-        <div v-if="heardText" class="vm-heard">"{{ heardText }}"</div>
-        <div v-if="replyText" class="vm-reply vm-active">{{ replyText }}</div>
-      </template>
-    </div>
+    <!-- ── Success state ───────────────────────────────────────────────── -->
+    <template v-if="submitted">
+      <div class="vtc-success text-center py-4">
+        <i class="fa-solid fa-circle-check vtc-success-icon mb-3" />
+        <div class="fw-medium fs-5">Task created!</div>
+        <div class="text-secondary mt-1">Closing in a moment…</div>
+      </div>
+    </template>
 
-    <!-- Controls -->
-    <div class="vm-controls">
-      <div class="voice-mode-status">{{ statusText }}</div>
-      <button
-        v-if="!hasDraft && !submitted"
-        class="voice-mode-btn"
-        :class="{ listening: isListening, processing: isProcessing }"
-        type="button"
-        aria-label="Hold to describe task"
-        @mousedown="pressDown"
-        @touchstart.prevent="pressDown"
-        @mouseup="pressUp"
-        @touchend.prevent="pressUp"
-        @mouseleave="pressLeave"
-      >
-        <i :class="isListening ? 'fa-solid fa-stop' : 'fa-solid fa-microphone'" />
-      </button>
-      <button class="voice-mode-close" type="button" aria-label="Cancel" @click="cancel">
-        <i class="fa-solid fa-xmark" />
-      </button>
-    </div>
-  </div>
+    <!-- ── Confirmation form ───────────────────────────────────────────── -->
+    <template v-else-if="hasDraft">
+      <div v-if="replyText" class="vtc-claude-reply mb-3 p-3 rounded">
+        <small class="text-secondary d-block mb-1">Claude said</small>
+        {{ replyText.replace(/<task>[\s\S]*?<\/task>/gi, "").trim() }}
+      </div>
+
+      <BFormGroup label="Agent" label-for="vtc-to" class="mb-2">
+        <BFormInput id="vtc-to" v-model="draftTo" size="sm" />
+      </BFormGroup>
+
+      <div class="row g-2 mb-2">
+        <div class="col-6">
+          <BFormGroup label="Priority" label-for="vtc-priority">
+            <BFormSelect id="vtc-priority" v-model="draftPriority" size="sm">
+              <BFormSelectOption v-for="p in priorityOptions" :key="p" :value="p">{{ p }}</BFormSelectOption>
+            </BFormSelect>
+          </BFormGroup>
+        </div>
+        <div class="col-6">
+          <BFormGroup label="Kind" label-for="vtc-kind">
+            <BFormSelect id="vtc-kind" v-model="draftKind" size="sm">
+              <BFormSelectOption v-for="k in kindOptions" :key="k" :value="k">{{ k }}</BFormSelectOption>
+            </BFormSelect>
+          </BFormGroup>
+        </div>
+      </div>
+
+      <BFormGroup label="Project" label-for="vtc-project" class="mb-2">
+        <BFormInput id="vtc-project" v-model="draftProject" size="sm" placeholder="(none)" />
+      </BFormGroup>
+
+      <BFormGroup label="Headline" label-for="vtc-headline" class="mb-2">
+        <BFormInput id="vtc-headline" v-model="draftHeadline" size="sm" />
+      </BFormGroup>
+
+      <BFormGroup label="Brief" label-for="vtc-brief" class="mb-3">
+        <BFormTextarea id="vtc-brief" v-model="draftBrief" rows="4" size="sm" />
+      </BFormGroup>
+
+      <BAlert v-if="submitError" variant="danger" :model-value="true" class="mb-3">
+        {{ submitError }}
+      </BAlert>
+
+      <div class="d-flex gap-2 justify-content-end">
+        <BButton variant="secondary" size="sm" @click="resetDraft">
+          <i class="fa-solid fa-rotate-left me-1" /> Redo
+        </BButton>
+        <BButton variant="success" size="sm" :disabled="isSubmitting" @click="submitTask">
+          <i class="fa-solid fa-paper-plane me-1" />
+          {{ isSubmitting ? "Creating…" : "Create Task" }}
+        </BButton>
+      </div>
+    </template>
+
+    <!-- ── Voice capture phase ─────────────────────────────────────────── -->
+    <template v-else>
+      <div class="vtc-capture text-center py-3">
+        <div class="voice-mode-status mb-4">{{ statusText }}</div>
+
+        <button
+          class="voice-mode-btn mx-auto mb-4"
+          :class="{ listening: isListening, processing: isProcessing }"
+          type="button"
+          aria-label="Hold to describe task"
+          @mousedown="pressDown"
+          @touchstart.prevent="pressDown"
+          @mouseup="pressUp"
+          @touchend.prevent="pressUp"
+          @mouseleave="pressLeave"
+        >
+          <i :class="isListening ? 'fa-solid fa-stop' : 'fa-solid fa-microphone'" />
+        </button>
+
+        <div v-if="heardText" class="vm-heard mt-2">"{{ heardText }}"</div>
+        <div v-if="replyText" class="vm-reply vm-active mt-2">{{ replyText }}</div>
+      </div>
+    </template>
+  </BModal>
 </template>
 
 <style scoped>
-.vtc-overlay {
-  --vtc-accent: #6ee7b7;
-}
-
-.vtc-transcript {
-  padding: 20px 20px 8px;
-}
-
-.vtc-success {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 40px 0;
-  color: var(--vtc-accent, #6ee7b7);
-  font-size: 17px;
-  font-weight: 500;
-}
-.vtc-success-icon { font-size: 48px; }
-
-.vtc-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.vtc-card-header {
-  font-size: 13px;
+.vtc-modal-title {
+  font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--vtc-accent, #6ee7b7);
-  margin-bottom: 4px;
 }
-.vtc-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+
+.vtc-success-icon {
+  font-size: 3rem;
+  color: #6ee7b7;
+  display: block;
 }
-.vtc-field label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--muted, #8a9ab0);
-}
-.vtc-input {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6px;
-  color: var(--text, #e8edf4);
-  font-family: inherit;
-  font-size: 14px;
-  padding: 6px 10px;
-  width: 100%;
-  box-sizing: border-box;
-}
-.vtc-input:focus { outline: none; border-color: var(--vtc-accent, #6ee7b7); }
-.vtc-select { cursor: pointer; }
-.vtc-textarea { resize: vertical; min-height: 70px; }
-.vtc-brief-field { flex: 1; }
-.vtc-error {
-  color: #f87171;
-  font-size: 13px;
-}
-.vtc-card-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  padding-top: 4px;
-}
-.vtc-btn {
+
+.vtc-capture .voice-mode-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-family: inherit;
+  justify-content: center;
+}
+
+.vtc-claude-reply {
   font-size: 14px;
+  background: rgba(110, 231, 183, 0.06);
+  border: 1px solid rgba(110, 231, 183, 0.15);
+  color: inherit;
+  font-style: italic;
+}
+
+/* Keep dark-context voice overlay styles working inside the modal body */
+.voice-mode-status {
+  color: var(--bs-secondary-color, #adb5bd);
+}
+.vm-heard {
+  font-style: italic;
+  color: var(--bs-body-color, #dee2e6);
+}
+.vm-reply.vm-active {
+  color: #6ee7b7;
   font-weight: 500;
-  cursor: pointer;
-  border: none;
-  transition: opacity 0.15s ease;
 }
-.vtc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.vtc-btn-ghost {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--muted, #8a9ab0);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.vtc-btn-primary {
-  background: var(--vtc-accent, #6ee7b7);
-  color: #0a1a12;
-}
-.vtc-btn-primary:hover:not(:disabled) { opacity: 0.9; }
 </style>

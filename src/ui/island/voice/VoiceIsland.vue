@@ -28,9 +28,10 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- Voice island root — overlays are teleported to <body> to escape
-       .chat-panel's backdrop-filter stacking context. -->
+       .chat-panel's backdrop-filter stacking context.
+       VoiceTaskCreator is always mounted so BModal controls its own visibility. -->
   <Teleport to="body">
     <VoiceModeOverlay v-if="voice.mode === 'chat'" />
-    <VoiceTaskCreator v-if="voice.mode === 'task-creator'" />
+    <VoiceTaskCreator />
   </Teleport>
 </template>

@@ -546,7 +546,7 @@ ${pageStyles}
   </div>
 
   <!-- Vue 3 voice island mount point — overlays are teleported to <body> at runtime -->
-  <div id="voice-island-root"></div>
+  <div id="voice-island-root" data-bs-theme="dark"></div>
   <link rel="stylesheet" href="/island/voice.css" />
 
   <script src="/marked.js" defer></script>
