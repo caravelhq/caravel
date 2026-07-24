@@ -122,6 +122,19 @@ See [docs/MULTI_SESSION.md](docs/MULTI_SESSION.md) for technical details.
 - **Security Levels:** Four access levels from read-only to full system access.
 - **Model Selection:** Switch models based on your workload.
 
+### Voice — STT and TTS
+
+The web dashboard ships four voice features accessible from the dock at the bottom of the screen:
+
+- **Dictation (mic button):** Hold to speak into any focused text field — compose messages, prompts, or notes hands-free.
+- **Two-way voice chat (walkie-talkie button):** A full-screen voice mode. Hold to speak, release to send. Claude replies by voice as it streams, sentence by sentence — a natural back-and-forth without touching the keyboard.
+- **Voice task creator (list-check button):** Describe a task by voice. Claude extracts the agent, priority, project, and brief from your spoken description, shows a confirmation card you can edit, and queues the task on confirmation.
+- **Read aloud (speaker button):** Reads any assistant message or report aloud.
+
+**Backends:** Transcription (STT) uses the bundled [whisper.cpp](https://github.com/ggml-org/whisper.cpp) binary out of the box — no account needed, downloads a `base.en` model on first use. Switching to [DeepGram](https://deepgram.com) (`nova-3`) gives notably better quality for accented speech and technical vocabulary. Text-to-speech (TTS) always uses DeepGram and requires an API key.
+
+The in-app settings modal lets you toggle STT provider (Whisper ↔ DeepGram), disable the mic entirely, or disable the speaker without editing any file. See [docs/voice.md](docs/voice.md) for full setup instructions including the `deepGram` config block and TTS model naming.
+
 ## Attribution
 
 Caravel is a fork of **[ClaudeClaw](https://github.com/moazbuilds/claudeclaw)** by **moazbuilds**, distributed under the MIT License. The upstream copyright notice is retained in [`LICENSE`](LICENSE). The multi-agent orchestration layer, provider routing, and the Caravel branding are additions made in this fork.
