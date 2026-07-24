@@ -4798,8 +4798,14 @@
         var projectPane = document.getElementById("tasks-project-pane");
         if (projectPane) projectPane.hidden = mode !== "project";
         if (newForm) {
-          if (mode === "new") newForm.removeAttribute("hidden");
-          else newForm.setAttribute("hidden", "");
+          if (mode === "new") {
+            newForm.removeAttribute("hidden");
+            // Repopulate the target-agent select each time the form opens.
+            // populateTaskTargetSelect() otherwise runs only once (in loadAgents);
+            // if that initial /api/agents fetch raced or failed, the select would
+            // stay empty forever → submit sends to:"" → "unknown target agent: (empty)".
+            populateTaskTargetSelect();
+          } else newForm.setAttribute("hidden", "");
         }
         // When the tasks panel is narrow (container-query threshold,
         // not viewport), switching the right pane to view/new/project
@@ -6797,6 +6803,14 @@
           }
           if (!brief) {
             if (newStatus) { newStatus.textContent = "Brief is required."; newStatus.classList.add("is-error"); }
+            return;
+          }
+          if (!to) {
+            // Guard: never dispatch with an empty target agent. Repopulate the
+            // select (in case the agents catalogue failed to load earlier) so the
+            // user can pick, and block — don't silently auto-send to a default.
+            populateTaskTargetSelect();
+            if (newStatus) { newStatus.textContent = "Pick a target agent."; newStatus.classList.add("is-error"); }
             return;
           }
           if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
