@@ -1851,21 +1851,21 @@ input[type=file].form-control-input-file-hide-button::file-selector-button {
       color: var(--text);
     }
 
-.vtc-modal-title[data-v-d872982b] {
+.vtc-modal-title[data-v-69969a68] {
   font-family: "Space Grotesk", sans-serif;
   font-weight: 600;
 }
-.vtc-success-icon[data-v-d872982b] {
+.vtc-success-icon[data-v-69969a68] {
   font-size: 3rem;
   color: #6ee7b7;
   display: block;
 }
-.vtc-capture .voice-mode-btn[data-v-d872982b] {
+.vtc-capture .voice-mode-btn[data-v-69969a68] {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.vtc-claude-reply[data-v-d872982b] {
+.vtc-claude-reply[data-v-69969a68] {
   font-size: 14px;
   background: rgba(110, 231, 183, 0.06);
   border: 1px solid rgba(110, 231, 183, 0.15);
@@ -1874,14 +1874,14 @@ input[type=file].form-control-input-file-hide-button::file-selector-button {
 }
 
 /* Keep dark-context voice overlay styles working inside the modal body */
-.voice-mode-status[data-v-d872982b] {
+.voice-mode-status[data-v-69969a68] {
   color: var(--bs-secondary-color, #adb5bd);
 }
-.vm-heard[data-v-d872982b] {
+.vm-heard[data-v-69969a68] {
   font-style: italic;
   color: var(--bs-body-color, #dee2e6);
 }
-.vm-reply.vm-active[data-v-d872982b] {
+.vm-reply.vm-active[data-v-69969a68] {
   color: #6ee7b7;
   font-weight: 500;
 }

@@ -17356,6 +17356,30 @@ function detectMimeType() {
   }
   return null;
 }
+const SPEAK_MAX_CONCURRENT = 2;
+let speakInFlight = 0;
+const speakWaiters = [];
+function speakFetch(text) {
+  return new Promise((resolve2) => {
+    if (speakInFlight < SPEAK_MAX_CONCURRENT) {
+      speakInFlight++;
+      resolve2();
+    } else speakWaiters.push(() => {
+      speakInFlight++;
+      resolve2();
+    });
+  }).then(
+    () => fetch("/api/voice/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    }).finally(() => {
+      speakInFlight--;
+      const next = speakWaiters.shift();
+      if (next) next();
+    })
+  );
+}
 const _hoisted_1$1 = {
   class: "voice-mode-overlay",
   role: "dialog",
@@ -17426,11 +17450,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
       if (!stripped) return;
       const displayText = chunkText.trim();
       const gen = queueGen;
-      const p2 = fetch("/api/voice/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: stripped })
-      }).then((res) => {
+      const p2 = speakFetch(stripped).then((res) => {
         if (gen !== queueGen) return null;
         if (!res.ok) {
           return res.json().catch(() => ({})).then(() => ({ audio: null, url: null, text: displayText }));
@@ -17935,11 +17955,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       const stripped = stripMarkdown(chunkText).trim();
       if (!stripped) return;
       const gen = queueGen;
-      const p2 = fetch("/api/voice/speak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: stripped })
-      }).then((res) => {
+      const p2 = speakFetch(stripped).then((res) => {
         if (gen !== queueGen) return null;
         if (!res.ok) return { audio: null, url: null, text: chunkText };
         return res.blob().then((blob) => {
@@ -18478,7 +18494,7 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-d872982b"]]);
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-69969a68"]]);
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {

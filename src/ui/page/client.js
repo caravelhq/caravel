@@ -2588,16 +2588,34 @@
         }
       }
 
+      // Concurrency-limited TTS fetch — caps concurrent /api/voice/speak calls so
+      // reading a long document/reply can't fire 100+ requests at once (DeepGram
+      // 429 flood + outbound-connection exhaustion that starved Claude workers).
+      var vmSpeakInFlight = 0;
+      var vmSpeakWaiters = [];
+      function vmSpeakFetch(text) {
+        return new Promise(function(resolve) {
+          if (vmSpeakInFlight < 2) { vmSpeakInFlight++; resolve(); }
+          else vmSpeakWaiters.push(function() { vmSpeakInFlight++; resolve(); });
+        }).then(function() {
+          return fetch("/api/voice/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: text }),
+          }).finally(function() {
+            vmSpeakInFlight--;
+            var next = vmSpeakWaiters.shift();
+            if (next) next();
+          });
+        });
+      }
+
       function vmEnqueueChunk(chunkText) {
         var stripped = vmStripMarkdown(chunkText).trim();
         if (!stripped) return;
         var displayText = chunkText.trim();
         var gen = vmQueueGen;
-        var p = fetch("/api/voice/speak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: stripped }),
-        }).then(function(res) {
+        var p = vmSpeakFetch(stripped).then(function(res) {
           if (gen !== vmQueueGen) return null;
           if (!res.ok) {
             return res.json().catch(function() { return {}; }).then(function(err) {

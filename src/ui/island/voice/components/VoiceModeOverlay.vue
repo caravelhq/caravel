@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useVoiceStore } from "../store/voice";
-import { stripMarkdown, esc, extractChunks, detectMimeType } from "../utils";
+import { stripMarkdown, esc, extractChunks, detectMimeType, speakFetch } from "../utils";
 
 const voice = useVoiceStore();
 const mimeType = detectMimeType();
@@ -63,11 +63,7 @@ function enqueueChunk(chunkText: string) {
   if (!stripped) return;
   const displayText = chunkText.trim();
   const gen = queueGen;
-  const p = fetch("/api/voice/speak", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: stripped }),
-  })
+  const p = speakFetch(stripped)
     .then((res) => {
       if (gen !== queueGen) return null;
       if (!res.ok) {

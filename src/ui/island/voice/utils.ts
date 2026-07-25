@@ -100,3 +100,29 @@ export function isRecordingSupported(): boolean {
     detectMimeType()
   );
 }
+
+// ── Concurrency-limited TTS fetch ────────────────────────────────────────────
+// enqueueChunk() used to fire its /api/voice/speak fetch eagerly, so a long
+// reply or a read-aloud of a long document enqueued ~100 chunks and fired ~100
+// concurrent TTS requests in one tick — flooding DeepGram (429) AND exhausting
+// the box's outbound connections, which starved the Claude workers' streaming
+// connections ("connection closed mid-response"). Cap concurrent speak fetches.
+const SPEAK_MAX_CONCURRENT = 2;
+let speakInFlight = 0;
+const speakWaiters: Array<() => void> = [];
+export function speakFetch(text: string): Promise<Response> {
+  return new Promise<void>((resolve) => {
+    if (speakInFlight < SPEAK_MAX_CONCURRENT) { speakInFlight++; resolve(); }
+    else speakWaiters.push(() => { speakInFlight++; resolve(); });
+  }).then(() =>
+    fetch("/api/voice/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text }),
+    }).finally(() => {
+      speakInFlight--;
+      const next = speakWaiters.shift();
+      if (next) next();
+    })
+  );
+}

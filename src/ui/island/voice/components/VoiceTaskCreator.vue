@@ -12,7 +12,7 @@ import {
 } from "bootstrap-vue-next";
 import { useVoiceStore } from "../store/voice";
 import { useTaskCreatorStore } from "../store/taskCreator";
-import { stripMarkdown, esc, detectMimeType } from "../utils";
+import { stripMarkdown, esc, detectMimeType, speakFetch } from "../utils";
 
 const voice = useVoiceStore();
 const taskCreator = useTaskCreatorStore();
@@ -66,11 +66,7 @@ function enqueueChunk(chunkText: string) {
   const stripped = stripMarkdown(chunkText).trim();
   if (!stripped) return;
   const gen = queueGen;
-  const p = fetch("/api/voice/speak", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: stripped }),
-  })
+  const p = speakFetch(stripped)
     .then((res) => {
       if (gen !== queueGen) return null;
       if (!res.ok) return { audio: null as HTMLAudioElement | null, url: null as string | null, text: chunkText };
