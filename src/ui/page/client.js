@@ -2172,6 +2172,9 @@
       chatInput.value = "";
       autoResizeChatInput();
 
+      // Stop current TTS and reset streaming cursor so the new reply starts fresh.
+      if (typeof window.__ttsResetAutoRead === "function") window.__ttsResetAutoRead();
+
       chatHistory.push({ role: "user", text: message, state: "pending" });
       // Optimistically lock the agent client-side so the picker disappears
       // before the server round-trip completes.
@@ -2475,6 +2478,13 @@
       var vmAudioQueue = [];
       var vmQueueRunning = false;
       var vmQueueGen = 0;
+      // Tracks how much of the current streaming assistant message has already
+      // been dispatched for TTS synthesis (chars consumed by vmExtractChunks).
+      // Reset to 0 when the user sends a new message or a shorter message arrives.
+      var ttsAutoReadCursor = 0;
+      // Set to true when the user explicitly stops the speaker (toggle-off) so
+      // auto-read doesn't restart mid-response. Cleared on new user message.
+      var ttsAutoReadStopped = false;
 
       function vmStopAudio() {
         vmQueueGen++;
@@ -2641,7 +2651,59 @@
       window.__vmStripMarkdown = vmStripMarkdown;
       window.__vmStopAudio = vmStopAudio;
       window.__vmIsPlaying = function() { return vmQueueRunning; };
-      window.__vmOnAssistantChunk = function() {}; // no-op: island handles voice-mode TTS
+
+      // Reset auto-read state when the user sends a new message.
+      // Called from sendChat() so TTS stops and the cursor is cleared for the new turn.
+      window.__ttsResetAutoRead = function() {
+        ttsAutoReadCursor = 0;
+        ttsAutoReadStopped = false;
+        vmStopAudio();
+      };
+
+      // Called by the speaker button toggle-off so auto-read stays quiet for
+      // the remainder of this response (until user sends next message).
+      window.__ttsSetAutoReadStopped = function(v) { ttsAutoReadStopped = !!v; };
+
+      // Baseline streaming TTS for typed chat when TTS is enabled.
+      // VoiceModeOverlay.openMode() overrides this in walkie-talkie mode
+      // (and restores it in closeMode via the prevVmChunk save/restore).
+      window.__vmOnAssistantChunk = function(fullText, isDone) {
+        if (!window.__ttsEnabled) return;
+        if (ttsAutoReadStopped) return;
+
+        // New turn detection: if incoming text is shorter than what we've consumed,
+        // a new assistant message started — reset and stop any lingering audio.
+        if (fullText.length < ttsAutoReadCursor) {
+          ttsAutoReadCursor = 0;
+          vmStopAudio();
+        }
+
+        var pending = fullText.slice(ttsAutoReadCursor);
+        if (!pending) return;
+
+        var result = vmExtractChunks(pending, isDone);
+        if (result.consumed > 0) ttsAutoReadCursor += result.consumed;
+        if (!result.chunks.length) return;
+
+        // Wire speaker-button UI callbacks before the first enqueue so they're
+        // in place when vmRunQueue fires the first clip (queue is async).
+        var isFirstChunk = vmAudioQueue.length === 0 && !vmQueueRunning;
+        if (isFirstChunk) {
+          window.__vmOnSpeaking = function() {
+            if (typeof window.__vmSetSpeakerPlaying === "function") window.__vmSetSpeakerPlaying(true);
+          };
+          window.__vmOnQueueEnd = function() {
+            if (typeof window.__vmSetSpeakerPlaying === "function") window.__vmSetSpeakerPlaying(false);
+            window.__vmOnSpeaking = null;
+            window.__vmOnQueueEnd = null;
+          };
+        }
+
+        for (var i = 0; i < result.chunks.length; i++) {
+          var chunk = result.chunks[i].trim();
+          if (chunk) vmEnqueueChunk(chunk);
+        }
+      };
     })();
 
     // ── Voice Mode button — dispatches to Vue island voice chat ──
@@ -2756,6 +2818,8 @@
         var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
         if (isPlaying) {
           if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+          // Prevent auto-read from restarting for this response after user stops it.
+          if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
           setSpeakerState(false);
@@ -2802,6 +2866,10 @@
           window.__vmOnQueueEnd = null;
         }
       });
+
+      // Expose state setter so __vmOnAssistantChunk (TTS auto-read) can sync
+      // the speaker button UI from outside this closure.
+      window.__vmSetSpeakerPlaying = function(playing) { setSpeakerState(playing); };
     })();
 
     // ── Files ──
