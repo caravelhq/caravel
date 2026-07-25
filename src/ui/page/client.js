@@ -2669,6 +2669,7 @@
       // (and restores it in closeMode via the prevVmChunk save/restore).
       window.__vmOnAssistantChunk = function(fullText, isDone) {
         if (!window.__ttsEnabled) return;
+        if (window.__ttsMuted) return;
         if (ttsAutoReadStopped) return;
 
         // New turn detection: if incoming text is shorter than what we've consumed,
@@ -2736,6 +2737,17 @@
       if (!speakerBtn) return;
 
       var sbPlaying = false;
+      var ttsGloballyMuted = false;
+
+      function applyIdleButtonState() {
+        speakerBtn.classList.remove("is-playing");
+        speakerBtn.classList.toggle("is-muted", ttsGloballyMuted);
+        speakerBtn.title = ttsGloballyMuted ? "Unmute TTS" : "Read page aloud";
+        speakerBtn.setAttribute("aria-label", ttsGloballyMuted ? "Unmute TTS" : "Read page aloud");
+        speakerBtn.innerHTML = ttsGloballyMuted
+          ? '<i class="fa-solid fa-volume-xmark"></i>'
+          : '<i class="fa-solid fa-volume-high"></i>';
+      }
 
       function setSpeakerState(playing) {
         sbPlaying = playing;
@@ -2808,42 +2820,23 @@
       }
 
       function updateSpeakerDisabled() {
+        if (ttsGloballyMuted) { speakerBtn.disabled = false; return; }
         if (!sbPlaying) speakerBtn.disabled = !resolveReadAloudText();
       }
       window.__updateSpeakerDisabled = updateSpeakerDisabled;
       updateSpeakerDisabled();
 
-      speakerBtn.addEventListener("click", function() {
-        // Toggle off if already playing.
-        var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
-        if (isPlaying) {
-          if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-          // Prevent auto-read from restarting for this response after user stops it.
-          if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
-          window.__vmOnSpeaking = null;
-          window.__vmOnQueueEnd = null;
-          setSpeakerState(false);
-          return;
-        }
-
-        if (typeof window.__vmEnqueueChunk !== "function") return;  // TTS not available
-
+      function sbDoReadAloud() {
+        if (typeof window.__vmEnqueueChunk !== "function") return;
         var text = resolveReadAloudText();
-        if (!text) return;  // nothing sensible in view
-
-        // Stop any in-flight voice-mode or previous speaker audio.
+        if (!text) return;
         if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-
-        // Set up playback callbacks before enqueuing so they're in place
-        // when the first clip fires (queue is async).
         window.__vmOnSpeaking = function() { setSpeakerState(true); };
         window.__vmOnQueueEnd = function() {
           setSpeakerState(false);
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
         };
-
-        // Text is fully available — extract all chunks at once (isDone=true).
         var enqueued = 0;
         if (typeof window.__vmExtractChunks === "function") {
           var result = window.__vmExtractChunks(text, true);
@@ -2857,19 +2850,71 @@
           window.__vmEnqueueChunk(text);
           enqueued = 1;
         }
-
         if (enqueued > 0) {
           setSpeakerState(true);
         } else {
-          // Nothing enqueued (empty extract) — clear callbacks and stay idle.
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
         }
-      });
+      }
 
-      // Expose state setter so __vmOnAssistantChunk (TTS auto-read) can sync
-      // the speaker button UI from outside this closure.
-      window.__vmSetSpeakerPlaying = function(playing) { setSpeakerState(playing); };
+      var sbHoldTimer = null;
+      var sbHoldFired = false;
+      var SB_HOLD_MS = 400;
+
+      function sbStartPress() {
+        sbHoldFired = false;
+        sbHoldTimer = setTimeout(function() {
+          sbHoldFired = true;
+          var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
+          if (!isPlaying) sbDoReadAloud();
+        }, SB_HOLD_MS);
+      }
+
+      function sbEndPress() {
+        if (sbHoldTimer) { clearTimeout(sbHoldTimer); sbHoldTimer = null; }
+        if (sbHoldFired) return;
+        var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
+        if (isPlaying) {
+          if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+          if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
+          window.__vmOnSpeaking = null;
+          window.__vmOnQueueEnd = null;
+          setSpeakerState(false);
+        } else {
+          ttsGloballyMuted = !ttsGloballyMuted;
+          window.__ttsMuted = ttsGloballyMuted;
+          if (ttsGloballyMuted) {
+            if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+            if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
+          } else {
+            if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(false);
+          }
+          applyIdleButtonState();
+          updateSpeakerDisabled();
+        }
+      }
+
+      speakerBtn.addEventListener("mousedown", sbStartPress);
+      speakerBtn.addEventListener("touchstart", function(e) { e.preventDefault(); sbStartPress(); }, { passive: false });
+      speakerBtn.addEventListener("mouseup", sbEndPress);
+      speakerBtn.addEventListener("touchend", function(e) { e.preventDefault(); sbEndPress(); }, { passive: false });
+      speakerBtn.addEventListener("mouseleave", function() { if (sbHoldTimer) { clearTimeout(sbHoldTimer); sbHoldTimer = null; } });
+
+      // Auto-read state setter — updates button only, no modal (chat must stay visible).
+      window.__vmSetSpeakerPlaying = function(playing) {
+        sbPlaying = playing;
+        speakerBtn.classList.toggle("is-playing", playing);
+        if (playing) {
+          speakerBtn.classList.remove("is-muted");
+          speakerBtn.title = "Stop reading";
+          speakerBtn.setAttribute("aria-label", "Stop reading");
+          speakerBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+          speakerBtn.disabled = false;
+        } else {
+          applyIdleButtonState();
+        }
+      };
     })();
 
     // ── Files ──
