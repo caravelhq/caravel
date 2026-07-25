@@ -17544,7 +17544,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
           if (!(lastAssistant == null ? void 0 : lastAssistant.text)) continue;
           const st = lastAssistant.state;
           const isDone = !st || st === "done";
-          if (isDone || st === "streaming") {
+          if (isDone || st === "streaming" || st === "background") {
             onAssistantChunk(lastAssistant.text, isDone);
             if (isDone && voice.mode === "chat") setStatus("Press and hold to talk", "");
           }

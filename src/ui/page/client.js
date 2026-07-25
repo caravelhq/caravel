@@ -1499,7 +1499,7 @@
             if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
               var st = lastMsg.state;
               var isDone = !st || st === "done";
-              if (isDone || st === "streaming") {
+              if (isDone || st === "streaming" || st === "background") {
                 window.__vmOnAssistantChunk(lastMsg.text, isDone);
               }
             }
