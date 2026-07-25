@@ -1,6 +1,7 @@
 import { writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createHash } from "node:crypto";
 import { htmlPage } from "./page/html";
 import { clampInt, json } from "./http";
 import type { StartWebUiOptions, WebServerHandle } from "./types";
@@ -60,6 +61,52 @@ async function buildBundle(entryRel: string, label: string): Promise<string> {
   }
   return await result.outputs[0]!.text();
 }
+
+// ── TTS audio cache ──────────────────────────────────────────────────────────
+// Server-side LRU cache for synthesised TTS audio. Keyed by SHA-256 of the
+// stripped text + TTS model name, so the same content always returns the same
+// mp3 without a DeepGram round-trip. Shared across all clients/components.
+//
+// Bounds: 256 entries OR 50 MB total (whichever hits first) — evicts the
+// least-recently-used entry. In-memory only; resets on daemon restart (that's
+// fine — the goal is deduping within a session, not persistence).
+const TTS_CACHE_MAX_ENTRIES = 256;
+const TTS_CACHE_MAX_BYTES   = 50 * 1024 * 1024; // 50 MB
+
+interface TtsCacheEntry { buf: ArrayBuffer; contentType: string }
+
+class TtsLruCache {
+  private map = new Map<string, TtsCacheEntry>();
+  private totalBytes = 0;
+
+  get(key: string): TtsCacheEntry | undefined {
+    const entry = this.map.get(key);
+    if (!entry) return undefined;
+    this.map.delete(key);   // move to tail (most-recently-used)
+    this.map.set(key, entry);
+    return entry;
+  }
+
+  set(key: string, entry: TtsCacheEntry): void {
+    const existing = this.map.get(key);
+    if (existing) { this.totalBytes -= existing.buf.byteLength; this.map.delete(key); }
+    this.map.set(key, entry);
+    this.totalBytes += entry.buf.byteLength;
+    // Evict LRU (Map head = oldest) until within bounds
+    while (this.map.size > TTS_CACHE_MAX_ENTRIES || this.totalBytes > TTS_CACHE_MAX_BYTES) {
+      const firstKey = this.map.keys().next().value as string | undefined;
+      if (firstKey === undefined) break;
+      const old = this.map.get(firstKey)!;
+      this.map.delete(firstKey);
+      this.totalBytes -= old.buf.byteLength;
+    }
+  }
+
+  get size() { return this.map.size; }
+  get bytes() { return this.totalBytes; }
+}
+
+const ttsCache = new TtsLruCache();
 
 // One processor per chatId — prevents concurrent assistant writes to the same
 // chat file when a second /api/chat POST arrives mid-stream. The processor
@@ -1142,6 +1189,21 @@ self.addEventListener('fetch', e => {
           const apiKey = settings.deepGram?.apiKey ?? "";
           if (!apiKey) return json({ ok: false, error: "DeepGram API key not configured (set deepGram.apiKey in .caravel/settings.json)" });
           const ttsModel = settings.deepGram?.ttsModel || "aura-2-thalia-en";
+
+          // Cache lookup — same text + model → same mp3, no DeepGram call.
+          const cacheKey = createHash("sha256").update(`${text}|${ttsModel}`).digest("hex");
+          const cached = ttsCache.get(cacheKey);
+          if (cached) {
+            return new Response(cached.buf, {
+              status: 200,
+              headers: {
+                "Content-Type": cached.contentType,
+                "Cache-Control": "no-store",
+                "X-TTS-Cache": "hit",
+              },
+            });
+          }
+
           const dgRes = await fetch(
             `https://api.deepgram.com/v1/speak?model=${encodeURIComponent(ttsModel)}&encoding=mp3`,
             {
@@ -1160,11 +1222,14 @@ self.addEventListener('fetch', e => {
             return json({ ok: false, error: msg });
           }
           const audioBuffer = await dgRes.arrayBuffer();
+          const contentType = dgRes.headers.get("Content-Type") || "audio/mpeg";
+          ttsCache.set(cacheKey, { buf: audioBuffer, contentType });
           return new Response(audioBuffer, {
             status: 200,
             headers: {
-              "Content-Type": dgRes.headers.get("Content-Type") || "audio/mpeg",
+              "Content-Type": contentType,
               "Cache-Control": "no-store",
+              "X-TTS-Cache": "miss",
             },
           });
         } catch (err) {
