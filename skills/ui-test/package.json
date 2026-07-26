@@ -1,0 +1,10 @@
+{
+  "name": "ui-test-skill",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Deterministic Playwright UI verification harness — assert expected geometry, not just presence.",
+  "dependencies": {
+    "playwright": "^1.55.0"
+  }
+}

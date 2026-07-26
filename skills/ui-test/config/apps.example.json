@@ -1,0 +1,11 @@
+{
+  "_comment": "Copy this to apps.json and edit. `app` is the default key runTest() uses when no `app` is given. URL + viewport defaults live here; per-app login credentials live in .claude/config.json#ui-test.<app> (keep secrets out of this file).",
+  "app": {
+    "name": "My App",
+    "url_local": "http://localhost:3000",
+    "url_dev": "https://dev.example.com",
+    "default_target": "local",
+    "viewport_mobile": { "width": 390, "height": 844, "deviceScaleFactor": 2, "isMobile": true, "hasTouch": true },
+    "viewport_desktop": { "width": 1440, "height": 900 }
+  }
+}

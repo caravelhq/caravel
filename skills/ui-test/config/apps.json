@@ -1,0 +1,9 @@
+{
+  "app": {
+    "name": "My App",
+    "url_local": "http://localhost:3000",
+    "default_target": "local",
+    "viewport_mobile": { "width": 390, "height": 844, "deviceScaleFactor": 2, "isMobile": true, "hasTouch": true },
+    "viewport_desktop": { "width": 1440, "height": 900 }
+  }
+}
