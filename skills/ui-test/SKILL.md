@@ -45,24 +45,45 @@ For a button, assert it's ~its design size (e.g. a 120×120 record button), not 
 - Regression check after a build/restart.
 - On demand ("does the task-creator modal still open?").
 
-## Layout
+## Two modes — pick based on where you're working
 
-```
-ui-test/
-├── SKILL.md
-├── package.json                # single dependency: playwright
-├── config/
-│   └── apps.example.json        # viewport defaults per app (copy to apps.json)
-└── playwright/                  # the harness — this is the whole thing
-    ├── lib/
-    │   ├── harness.mjs          # runTest(): launch, steps, screenshots, one JSON result
-    │   └── auth.mjs             # generic login() for apps that need it
-    ├── snippets/                # reusable, date-stamped flow fragments (SNIPPETS.md = index)
-    ├── specs/                   # authored specs (_example.smoke.mjs / _example.geometry.mjs = templates)
-    └── run.mjs                  # run spec(s) → results/*.json + report.md
+**Rule of thumb: writing tests for a product repo → scaffold into its `tests/ui/` and run from there. Running ad-hoc checks from the workspace → use the in-skill path.**
+
+### Mode A — Scaffolded (recommended for product repos)
+
+Run `init` once per repo. It copies a self-contained harness into `<repo>/tests/ui/`. After that, the repo's tests are fully portable — no dependency on the Caravel workspace or this skill.
+
+```bash
+# One-time: scaffold into a product repo
+node skills/ui-test/script/scaffold.mjs /path/to/repo
+
+# Or via the wrapper:
+bash skills/ui-test/script/ui-test.sh init /path/to/repo
+
+# Install deps in the scaffolded harness (one-time):
+cd /path/to/repo/tests/ui && npm install
+npx playwright install --with-deps chromium
+
+# Run from the repo root:
+node /path/to/repo/tests/ui/run.mjs \
+  --out /path/to/repo/tests/ui/.runs/smoke \
+  /path/to/repo/tests/ui/specs/_example.smoke.mjs
 ```
 
-## Invocation
+The scaffolded harness reads app URL + viewport from `tests/ui/config/apps.json` (checked in). Credentials come from env vars — they never enter the repo:
+
+```bash
+UITEST_APP_EMAIL=you@example.com UITEST_APP_PASSWORD=secret \
+  node tests/ui/run.mjs --out tests/ui/.runs/smoke tests/ui/specs/my-spec.mjs
+```
+
+Variable names: `UITEST_<APPKEY>_EMAIL` / `UITEST_<APPKEY>_PASSWORD` where `<APPKEY>` is the apps.json key uppercased. Generic fallbacks: `UITEST_EMAIL` / `UITEST_PASSWORD`.
+
+**Refresh lib on skill update:** re-run `init` — it updates `lib/` and `run.mjs` in-place and leaves your `specs/` and `config/apps.json` alone (unless you pass `--force`).
+
+### Mode B — In-skill (ad-hoc workspace checks)
+
+Run specs directly from the skill for quick checks that don't need to live in a product repo.
 
 ```bash
 # Run one spec against a live build:
@@ -75,7 +96,48 @@ node playwright/run.mjs --out .runs playwright/specs/_example.smoke.mjs
 node playwright/specs/my-test.mjs --out .runs/mytest --headed
 ```
 
-The target build must already be serving (your app's dev server, a preview build, or a deployed URL). Point the spec at that URL. Apps with no login can be driven directly; apps that need a login/URL/credentials are configured per the Config section below.
+The target build must already be serving. For apps that need login, configure per the Config section below.
+
+## Layout
+
+```
+ui-test/
+├── SKILL.md
+├── package.json                # single dependency: playwright
+├── script/
+│   ├── scaffold.mjs            # init command: copies harness into <repo>/tests/ui/
+│   ├── ui-test.sh              # thin wrapper — exposes the init subcommand
+│   └── config.mjs              # in-skill config: reads .claude/config.json#ui-test
+├── config/
+│   └── apps.example.json       # viewport defaults per app (copy to apps.json)
+└── playwright/                 # the in-skill harness
+    ├── lib/
+    │   ├── harness.mjs         # runTest(): launch, steps, screenshots, one JSON result
+    │   └── auth.mjs            # generic login() for apps that need it
+    ├── snippets/               # reusable, date-stamped flow fragments (SNIPPETS.md = index)
+    ├── specs/                  # authored specs (_example.smoke.mjs / _example.geometry.mjs = templates)
+    └── run.mjs                 # run spec(s) → results/*.json + report.md
+```
+
+**Scaffolded layout** (after `init <repo>` — portable, no skill dependency):
+
+```
+<repo>/tests/ui/
+├── lib/
+│   ├── harness.mjs             # generated: same as skill's harness, reads local config
+│   ├── config.mjs              # generated: reads config/apps.json + env-var credentials
+│   └── auth.mjs                # verbatim copy from skill
+├── run.mjs                     # verbatim copy from skill
+├── config/
+│   └── apps.json               # URL + viewport per app — edit for your dev server
+├── specs/
+│   ├── _example.smoke.mjs      # starter: page loads + body geometry check (no login)
+│   └── _example.geometry.mjs   # starter: body fills viewport
+├── snippets/                   # verbatim copies from skill
+├── package.json                # { "playwright": "..." }
+├── .gitignore                  # .runs/, node_modules/
+└── README.md                   # quick-start guide
+```
 
 ## How it works
 
@@ -84,9 +146,27 @@ The target build must already be serving (your app's dev server, a preview build
 3. **Report** — `run.mjs` aggregates into `report.md`; failures point at the failing step; PNGs land under the out dir.
 4. **Graduate snippets** — when a fresh flow passes live, distil the reusable part into a dated `verified:` snippet in `SNIPPETS.md` so authoring gets cheaper over time.
 
-## Config (apps that need login)
+## Config
 
-Per-app URL / run-command / credentials live in a project config file the harness reads. By default `harness.mjs` looks for `.claude/config.json` at the repo root under a `ui-test` key, and falls back to `config/apps.json` for the URL. Point either at your app:
+### Scaffolded mode (Mode A)
+
+App URL + viewport in `<repo>/tests/ui/config/apps.json` (safe to commit):
+
+```json
+{
+  "app": {
+    "url": "http://localhost:8080",
+    "viewport_mobile": { "width": 390, "height": 844, "deviceScaleFactor": 2, "isMobile": true, "hasTouch": true },
+    "viewport_desktop": { "width": 1440, "height": 900 }
+  }
+}
+```
+
+Credentials via env vars: `UITEST_APP_EMAIL` + `UITEST_APP_PASSWORD` (app-scoped) or `UITEST_EMAIL` + `UITEST_PASSWORD` (generic).
+
+### In-skill mode (Mode B)
+
+Per-app URL / run-command / credentials live in `.claude/config.json` at the repo root under a `ui-test` key, with `config/apps.json` as a URL fallback:
 
 ```jsonc
 "ui-test": {
@@ -99,7 +179,6 @@ Per-app URL / run-command / credentials live in a project config file the harnes
 ```
 
 - `--persona <x>` picks a credential by name/role; the password is injected at runtime only, never persisted or logged. Prefer sourcing passwords from environment variables over committing them.
-- `--start-app` launches `run` in `cwd`, waits for `url`, tears down on exit. Without it the app is assumed already serving.
 - No login? Just point the spec at the running URL — no credentials needed.
 
 The bundled `auth.mjs` is a tolerant generic login (email + password fields, a submit button, success detected by the password field disappearing). Adapt its selectors to your app's login markup, or replace it with your own snippet.

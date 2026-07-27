@@ -13,7 +13,29 @@ npm install
 npx playwright install --with-deps chromium   # --with-deps needs sudo for OS libs
 ```
 
-## Run the examples
+## Two modes
+
+### Mode A — Scaffold into a product repo (recommended)
+
+Run `init` once per repo to install a portable, self-contained harness with no ongoing skill dependency.
+
+```bash
+# Scaffold into a product repo:
+bash skills/ui-test/script/ui-test.sh init /path/to/repo
+
+# Or directly:
+node skills/ui-test/script/scaffold.mjs /path/to/repo
+
+# Then in the repo:
+cd /path/to/repo/tests/ui
+npm install
+npx playwright install --with-deps chromium
+node run.mjs --out .runs/smoke specs/_example.smoke.mjs
+```
+
+See `SKILL.md` → Mode A for credential env vars and update workflow.
+
+### Mode B — Run in-skill (ad-hoc)
 
 ```bash
 # App shell smoke test:
@@ -26,17 +48,19 @@ node playwright/specs/_example.geometry.mjs --out .runs/geom --headed
 node playwright/run.mjs --out .runs --dir playwright/specs
 ```
 
-Point specs at your app by editing `config/apps.json` (URL + viewport) and, for apps that need login, `.claude/config.json#ui-test.<app>` (credentials — keep secrets in env vars). See `SKILL.md` → Config.
+Point specs at your app by editing `config/apps.json` (URL + viewport). For apps that need login, configure credentials in `.claude/config.json#ui-test.<app>` or pass via env vars. See `SKILL.md` → Config.
 
 ## Files
 
 | Path | Purpose |
 |---|---|
-| `SKILL.md` | Full skill doc — the workflow, the geometry lesson, authoring gotchas. |
+| `SKILL.md` | Full skill doc — workflow, geometry lesson, both modes. |
+| `script/scaffold.mjs` | `init` command: scaffolds `tests/ui/` into a target repo. |
+| `script/ui-test.sh` | Thin wrapper — exposes `init` subcommand + batch runner passthrough. |
+| `script/config.mjs` | In-skill config: reads per-app URL/credentials from `.claude/config.json`. |
 | `playwright/lib/harness.mjs` | `runTest()` — launches Chromium, runs steps, screenshots, writes result JSON. |
 | `playwright/lib/auth.mjs` | Generic email/password login helper (adapt selectors to your app). |
 | `playwright/run.mjs` | Runs one or more specs, aggregates a `report.md`. |
 | `playwright/specs/_example.*.mjs` | Copy-me templates. |
 | `playwright/snippets/` | Reusable flow fragments + `SNIPPETS.md` index. |
-| `script/config.mjs` | Reads per-app URL/credentials from project config. |
-| `config/apps.json` | Per-app URL + viewport defaults. |
+| `config/apps.json` | Per-app URL + viewport defaults (in-skill mode). |
