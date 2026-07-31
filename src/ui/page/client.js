@@ -2826,9 +2826,33 @@
       window.__updateSpeakerDisabled = updateSpeakerDisabled;
       updateSpeakerDisabled();
 
-      function sbDoReadAloud() {
+      async function sbDoReadAloud() {
         if (typeof window.__vmEnqueueChunk !== "function") return;
-        var text = resolveReadAloudText();
+        var text = null;
+
+        // For markdown files in the files panel, try sidecar sanitization first.
+        var filesPnl = $("files-panel");
+        var activePath = window.__filesActivePath;
+        if (filesPnl && !filesPnl.hidden && activePath && /\.md$/i.test(activePath)) {
+          speakerBtn.disabled = true;
+          speakerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+          speakerBtn.title = "Preparing reading…";
+          try {
+            var resp = await fetch("/api/voice/sidecar", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ path: activePath })
+            });
+            if (resp.ok) {
+              var data = await resp.json();
+              if (data && data.text) text = data.text;
+            }
+          } catch (e) { /* fall through to resolveReadAloudText */ }
+          applyIdleButtonState();
+          updateSpeakerDisabled();
+        }
+
+        if (!text) text = resolveReadAloudText();
         if (!text) return;
         if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
         window.__vmOnSpeaking = function() { setSpeakerState(true); };
@@ -3124,6 +3148,7 @@
     async function loadDirectory(dirPath) {
       filesCurrentDir = dirPath || ".";
       filesActiveFile = "";
+      window.__filesActivePath = null;
       pushHistory(filesCurrentDir, "");
       renderBreadcrumb(filesCurrentDir);
       updatePickerToggleLabel();
@@ -3201,6 +3226,7 @@
 
     async function loadFile(filePath) {
       filesActiveFile = filePath;
+      window.__filesActivePath = filePath;
       pushHistory(filesCurrentDir, filePath);
       updatePickerToggleLabel();
       if (isMobileFiles()) setPickerCollapsed(true);

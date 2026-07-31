@@ -1,6 +1,6 @@
-import { writeFile, rm } from "node:fs/promises";
+import { writeFile, rm, mkdir, stat as statFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve, relative } from "node:path";
 import { createHash } from "node:crypto";
 import { htmlPage } from "./page/html";
 import { clampInt, json } from "./http";
@@ -22,6 +22,7 @@ import {
   type ChatMessageState,
 } from "./services/chats";
 import { listDirectory, readFileContent, isMarkdown, listBranchesForPath, isImage, readFileRaw } from "./services/files";
+import { SIDECARS_DIR } from "./constants";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain } from "./services/multiAgent";
@@ -293,6 +294,7 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   // Warm up whisper assets in the background — downloads binary + model on
   // first use so the initial /api/voice/transcribe request doesn't stall.
   warmupWhisperAssets().catch(() => {});
+  mkdir(SIDECARS_DIR, { recursive: true }).catch(() => {});
 
   recoverStuckChats()
     .then(async (n) => {
@@ -1235,6 +1237,92 @@ self.addEventListener('fetch', e => {
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           console.error("[voice] speak error:", msg);
+          return json({ ok: false, error: msg });
+        }
+      }
+
+      // Generate (or return cached) a readable sidecar for TTS — sanitizes
+      // code blocks, file paths, URLs, and markdown symbols so DeepGram reads
+      // natural prose instead of raw technical content. Uses `claude -p` so no
+      // Anthropic API credits are consumed (subscription-first deployment).
+      if (url.pathname === "/api/voice/sidecar" && req.method === "POST") {
+        try {
+          const body = await req.json();
+          const filePath = typeof body?.path === "string" ? body.path.trim() : "";
+          if (!filePath) return json({ ok: false, error: "path required" });
+
+          // Path safety — must resolve inside the workspace
+          const WORK_DIR = process.cwd();
+          const full = resolve(WORK_DIR, filePath);
+          if (!full.startsWith(WORK_DIR + "/") && full !== WORK_DIR) {
+            return json({ ok: false, error: "invalid path" });
+          }
+
+          // Get mtime for cache key — changes when file is saved
+          const st = await statFile(full);
+          if (!st.isFile()) return json({ ok: false, error: "not a file" });
+          const mtime = Math.floor(st.mtimeMs);
+
+          // Sidecar key: short path hash + mtime so we skip regeneration unless
+          // the file has changed. Old sidecars for the same path are orphaned
+          // and ignored (cleaned up at next startup sweep if added later).
+          const pathHash = createHash("sha256").update(filePath).digest("hex").slice(0, 16);
+          const sidecarName = `${pathHash}-${mtime}.md`;
+          const sidecarPath = join(SIDECARS_DIR, sidecarName);
+
+          // Return cached sidecar if present
+          try {
+            const cached = await Bun.file(sidecarPath).text();
+            if (cached.trim()) return json({ ok: true, text: cached.trim(), cached: true });
+          } catch { /* file not found — generate below */ }
+
+          // Read source, cap at 50 KB so the claude -p argument stays sane
+          const MAX_CHARS = 50_000;
+          const raw = await Bun.file(full).text();
+          const content = raw.length > MAX_CHARS
+            ? raw.slice(0, MAX_CHARS) + "\n\n[…content truncated for reading]"
+            : raw;
+
+          const prompt = `Convert this markdown document into a natural spoken reading script for text-to-speech.
+Rules:
+- Replace code blocks with "A code block that [brief description of what it does]."
+- Replace file paths and URLs with "the file path" or "a link to [description]"
+- Replace table content with a natural prose summary of the data
+- Remove markdown symbols (#, **, *, -, |, backticks) — speak the underlying text
+- Skip raw JSON or YAML blocks (say "a configuration block")
+- Keep the meaning: only clean the unreadable parts, do not summarise whole sections
+Return ONLY the cleaned readable text, nothing else.\n\nDocument:\n\n${content}`;
+
+          // Spawn claude -p — uses subscription, no API key required
+          const { CLAUDECODE: _cc, ...cleanEnv } = process.env as Record<string, string>;
+          const proc = Bun.spawn(["claude", "-p", prompt, "--output-format", "text"], {
+            stdout: "pipe",
+            stderr: "pipe",
+            env: cleanEnv,
+          });
+
+          const timeoutMs = 90_000; // 90s — large docs can take a while
+          const timeout = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("sidecar generation timed out")), timeoutMs)
+          );
+
+          const [text] = await Promise.race([
+            Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]),
+            timeout,
+          ]) as [string, string];
+          await proc.exited;
+
+          const cleaned = text.trim();
+          if (!cleaned) return json({ ok: false, error: "empty response from claude -p" });
+
+          // Persist to disk
+          await mkdir(SIDECARS_DIR, { recursive: true });
+          await writeFile(sidecarPath, cleaned, "utf-8");
+
+          return json({ ok: true, text: cleaned, cached: false });
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          console.error("[voice] sidecar error:", msg);
           return json({ ok: false, error: msg });
         }
       }
