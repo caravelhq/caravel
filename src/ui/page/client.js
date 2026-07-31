@@ -2830,10 +2830,18 @@
         if (typeof window.__vmEnqueueChunk !== "function") return;
         var text = null;
 
-        // For markdown files in the files panel, try sidecar sanitization first.
+        // Try sidecar sanitization for markdown files and completed chat messages.
         var filesPnl = $("files-panel");
+        var chatPnl = $("chat-panel");
         var activePath = window.__filesActivePath;
+        var sidecarBody = null;
         if (filesPnl && !filesPnl.hidden && activePath && /\.md$/i.test(activePath)) {
+          sidecarBody = { path: activePath };
+        } else if (chatPnl && !chatPnl.hidden) {
+          var rawText = resolveReadAloudText();
+          if (rawText) sidecarBody = { text: rawText };
+        }
+        if (sidecarBody) {
           speakerBtn.disabled = true;
           speakerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
           speakerBtn.title = "Preparing reading…";
@@ -2841,7 +2849,7 @@
             var resp = await fetch("/api/voice/sidecar", {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ path: activePath })
+              body: JSON.stringify(sidecarBody)
             });
             if (resp.ok) {
               var data = await resp.json();

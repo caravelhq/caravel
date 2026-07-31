@@ -1248,40 +1248,46 @@ self.addEventListener('fetch', e => {
       if (url.pathname === "/api/voice/sidecar" && req.method === "POST") {
         try {
           const body = await req.json();
+          const inputText = typeof body?.text === "string" ? body.text.trim() : null;
           const filePath = typeof body?.path === "string" ? body.path.trim() : "";
-          if (!filePath) return json({ ok: false, error: "path required" });
+          if (!inputText && !filePath) return json({ ok: false, error: "path or text required" });
 
-          // Path safety — must resolve inside the workspace
-          const WORK_DIR = process.cwd();
-          const full = resolve(WORK_DIR, filePath);
-          if (!full.startsWith(WORK_DIR + "/") && full !== WORK_DIR) {
-            return json({ ok: false, error: "invalid path" });
-          }
-
-          // Get mtime for cache key — changes when file is saved
-          const st = await statFile(full);
-          if (!st.isFile()) return json({ ok: false, error: "not a file" });
-          const mtime = Math.floor(st.mtimeMs);
-
-          // Sidecar key: short path hash + mtime so we skip regeneration unless
-          // the file has changed. Old sidecars for the same path are orphaned
-          // and ignored (cleaned up at next startup sweep if added later).
-          const pathHash = createHash("sha256").update(filePath).digest("hex").slice(0, 16);
-          const sidecarName = `${pathHash}-${mtime}.md`;
-          const sidecarPath = join(SIDECARS_DIR, sidecarName);
-
-          // Return cached sidecar if present
-          try {
-            const cached = await Bun.file(sidecarPath).text();
-            if (cached.trim()) return json({ ok: true, text: cached.trim(), cached: true });
-          } catch { /* file not found — generate below */ }
-
-          // Read source, cap at 50 KB so the claude -p argument stays sane
           const MAX_CHARS = 50_000;
-          const raw = await Bun.file(full).text();
-          const content = raw.length > MAX_CHARS
-            ? raw.slice(0, MAX_CHARS) + "\n\n[…content truncated for reading]"
-            : raw;
+          let content: string;
+          let sidecarPath: string;
+
+          if (inputText) {
+            // Text-based sidecar (chat messages): cache by content hash
+            const textHash = createHash("sha256").update(inputText).digest("hex").slice(0, 32);
+            sidecarPath = join(SIDECARS_DIR, `chat-${textHash}.md`);
+            try {
+              const cached = await Bun.file(sidecarPath).text();
+              if (cached.trim()) return json({ ok: true, text: cached.trim(), cached: true });
+            } catch { /* not found — generate below */ }
+            content = inputText.length > MAX_CHARS
+              ? inputText.slice(0, MAX_CHARS) + "\n\n[…content truncated for reading]"
+              : inputText;
+          } else {
+            // Path-based sidecar (markdown files): cache by path hash + mtime
+            const WORK_DIR = process.cwd();
+            const full = resolve(WORK_DIR, filePath);
+            if (!full.startsWith(WORK_DIR + "/") && full !== WORK_DIR) {
+              return json({ ok: false, error: "invalid path" });
+            }
+            const st = await statFile(full);
+            if (!st.isFile()) return json({ ok: false, error: "not a file" });
+            const mtime = Math.floor(st.mtimeMs);
+            const pathHash = createHash("sha256").update(filePath).digest("hex").slice(0, 16);
+            sidecarPath = join(SIDECARS_DIR, `${pathHash}-${mtime}.md`);
+            try {
+              const cached = await Bun.file(sidecarPath).text();
+              if (cached.trim()) return json({ ok: true, text: cached.trim(), cached: true });
+            } catch { /* not found — generate below */ }
+            const raw = await Bun.file(full).text();
+            content = raw.length > MAX_CHARS
+              ? raw.slice(0, MAX_CHARS) + "\n\n[…content truncated for reading]"
+              : raw;
+          }
 
           const prompt = `Convert this markdown document into a natural spoken reading script for text-to-speech.
 Rules:
@@ -1301,7 +1307,7 @@ Return ONLY the cleaned readable text, nothing else.\n\nDocument:\n\n${content}`
             env: cleanEnv,
           });
 
-          const timeoutMs = 90_000; // 90s — large docs can take a while
+          const timeoutMs = 90_000;
           const timeout = new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("sidecar generation timed out")), timeoutMs)
           );
@@ -1315,7 +1321,6 @@ Return ONLY the cleaned readable text, nothing else.\n\nDocument:\n\n${content}`
           const cleaned = text.trim();
           if (!cleaned) return json({ ok: false, error: "empty response from claude -p" });
 
-          // Persist to disk
           await mkdir(SIDECARS_DIR, { recursive: true });
           await writeFile(sidecarPath, cleaned, "utf-8");
 
