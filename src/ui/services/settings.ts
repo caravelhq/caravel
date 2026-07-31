@@ -28,7 +28,7 @@ export async function readVoiceSettings(): Promise<VoiceSettingsData> {
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
     ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
     micEnabled: dg.micEnabled !== false,
-    ttsEnabled: dg.ttsEnabled !== false,
+    ttsEnabled: Boolean(dg.ttsEnabled),
   };
 }
 
@@ -49,7 +49,7 @@ export async function updateVoiceSettings(patch: VoiceSettingsPatch): Promise<Vo
     sttModel: (typeof dg.sttModel === "string" && dg.sttModel.trim()) || "nova-3",
     ttsModel: (typeof dg.ttsModel === "string" && dg.ttsModel.trim()) || "aura-2-thalia-en",
     micEnabled: dg.micEnabled !== false,
-    ttsEnabled: dg.ttsEnabled !== false,
+    ttsEnabled: Boolean(dg.ttsEnabled),
   };
 }
 
