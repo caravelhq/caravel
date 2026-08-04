@@ -4867,7 +4867,7 @@ export const pageStyles = String.raw`    :root {
 
     .global-speaker {
       flex: 0 0 auto;
-      margin-left: 4px;
+      margin-left: 8px;
       width: 38px;
       height: 38px;
       border-radius: 50%;
@@ -4907,14 +4907,14 @@ export const pageStyles = String.raw`    :root {
     /* ── Global read-aloud (headphones) — explicit "read to me" button ── */
     .global-read-aloud {
       flex: 0 0 auto;
-      margin-right: 4px;
+      margin-right: 8px;
       width: 38px;
       height: 38px;
       border-radius: 50%;
-      border: 1px solid #7dc5ff44;
+      border: 1px solid #4ade8044;
       background: #0b1828cc;
       backdrop-filter: blur(8px);
-      color: #7dc5ff;
+      color: #4ade80;
       font-size: 16px;
       cursor: pointer;
       display: flex;
@@ -4925,7 +4925,7 @@ export const pageStyles = String.raw`    :root {
     .global-read-aloud:hover {
       transform: translateY(-2px);
       background: #0f2340cc;
-      border-color: #7dc5ff77;
+      border-color: #4ade8077;
     }
     .global-read-aloud.is-playing {
       border-color: #9be7ff88;

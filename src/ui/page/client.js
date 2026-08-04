@@ -2811,6 +2811,8 @@
         }
 
         if (filesPnl && !filesPnl.hidden) {
+          // Only enable when a file is actually open, not when browsing the directory.
+          if (!window.__filesActivePath) return null;
           var fc = $("files-content");
           if (fc) {
             var txt = (fc.innerText || "").trim();
@@ -2823,11 +2825,12 @@
 
         if (tasksPnl && !tasksPnl.hidden) {
           var tv = $("tasks-viewer");
-          var tb = $("tasks-viewer-body");
-          if (tv && !tv.hidden && tb) {
-            var txt2 = (tb.innerText || "").trim();
-            if (txt2 && !/^Loading task/.test(txt2)) return stripFrontmatter(txt2) || null;
-          }
+          if (!tv || tv.hidden) return null;
+          // Only enable on the Report sub-pane, not the Task (form) pane.
+          var reportPane = tv.querySelector('.tasks-viewer-pane[data-pane="report"]');
+          if (!reportPane || reportPane.hidden) return null;
+          var txt2 = (reportPane.innerText || "").trim();
+          if (txt2 && !/^(Loading task|No report yet)/.test(txt2)) return stripFrontmatter(txt2) || null;
           return null;
         }
 
