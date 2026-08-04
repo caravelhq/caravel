@@ -4867,7 +4867,7 @@ export const pageStyles = String.raw`    :root {
 
     .global-speaker {
       flex: 0 0 auto;
-      margin-left: 8px;
+      margin-left: 4px;
       width: 38px;
       height: 38px;
       border-radius: 50%;
@@ -4907,6 +4907,7 @@ export const pageStyles = String.raw`    :root {
     /* ── Global read-aloud (headphones) — explicit "read to me" button ── */
     .global-read-aloud {
       flex: 0 0 auto;
+      margin-left: 4px;
       margin-right: 8px;
       width: 38px;
       height: 38px;

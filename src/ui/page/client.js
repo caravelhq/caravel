@@ -1901,8 +1901,6 @@
       // Voice-mode dock button only makes sense on the chat tab, and requires mic to be enabled.
       var gvm = $("global-voice-mode");
       if (gvm) gvm.hidden = (tab !== "chat") || (window.__micEnabled === false);
-      // TTS buttons: speaker only on chat tab; read-aloud on all tabs. Both hidden when TTS off.
-      if (typeof window.__applyTtsButtonVisibility === "function") window.__applyTtsButtonVisibility();
 
       if (tab === "dashboard") {
         tabDashboardBtn && tabDashboardBtn.classList.add("tab-btn-active");
@@ -1925,6 +1923,8 @@
         if (typeof window.__ensureTasksLoaded === "function") window.__ensureTasksLoaded();
       }
       if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
+      // Called after panels are shown so chatPnl.hidden reflects the new active tab.
+      if (typeof window.__applyTtsButtonVisibility === "function") window.__applyTtsButtonVisibility();
     }
 
     if (tabDashboardBtn) tabDashboardBtn.addEventListener("click", () => {
