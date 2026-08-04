@@ -864,11 +864,22 @@
         }
       }
 
+      // Centralised TTS button visibility — respects TTS on/off AND active panel.
+      // Called from applyTtsEnabled() and setActiveTab().
+      window.__applyTtsButtonVisibility = function() {
+        var spkBtn = $("global-speaker");
+        var raBtn = $("global-read-aloud");
+        var chatPnl = $("chat-panel");
+        var chatActive = chatPnl && !chatPnl.hidden;
+        var on = !!window.__ttsEnabled;
+        if (spkBtn) spkBtn.hidden = !on || !chatActive;
+        if (raBtn) raBtn.hidden = !on;
+      };
+
       function applyTtsEnabled(enabled) {
         voiceTtsEnabled = enabled;
         window.__ttsEnabled = enabled;
-        var spkBtn = $("global-speaker");
-        if (spkBtn) spkBtn.hidden = !enabled;
+        if (typeof window.__applyTtsButtonVisibility === "function") window.__applyTtsButtonVisibility();
         if (voiceTtsToggle) {
           voiceTtsToggle.textContent = enabled ? "On" : "Off";
           voiceTtsToggle.className = "hb-toggle " + (enabled ? "on" : "off");
@@ -881,11 +892,18 @@
           var data = await res.json();
           if (!data.ok) return;
           var v = data.voice;
+          var hasApiKey = !!(v && v.hasApiKey);
+          // TTS: disable toggle with error note when DeepGram is not configured.
+          var ttsErrorNote = $("tts-error-note");
+          if (voiceTtsToggle) {
+            voiceTtsToggle.disabled = !hasApiKey;
+          }
+          if (ttsErrorNote) ttsErrorNote.hidden = hasApiKey;
           // Only allow enabling DeepGram STT if an API key is actually configured.
-          voiceSttEnabled = !!(v && v.sttEnabled && v.hasApiKey);
+          voiceSttEnabled = !!(v && v.sttEnabled && hasApiKey);
           renderVoiceSttToggle();
           applyMicEnabled(!(v && v.micEnabled === false));
-          applyTtsEnabled(!(v && v.ttsEnabled === false));
+          applyTtsEnabled(hasApiKey && !(v && v.ttsEnabled === false));
         } catch (_) {}
       }
 
@@ -1883,6 +1901,8 @@
       // Voice-mode dock button only makes sense on the chat tab, and requires mic to be enabled.
       var gvm = $("global-voice-mode");
       if (gvm) gvm.hidden = (tab !== "chat") || (window.__micEnabled === false);
+      // TTS buttons: speaker only on chat tab; read-aloud on all tabs. Both hidden when TTS off.
+      if (typeof window.__applyTtsButtonVisibility === "function") window.__applyTtsButtonVisibility();
 
       if (tab === "dashboard") {
         tabDashboardBtn && tabDashboardBtn.classList.add("tab-btn-active");
@@ -2731,59 +2751,55 @@
       applyVoiceTaskVisibility();
     })();
 
-    // ── Global read-aloud button ──
+    // ── Speaker button — toggle chat auto-read mode on/off ──
     (function() {
       var speakerBtn = $("global-speaker");
       if (!speakerBtn) return;
 
-      var sbPlaying = false;
-      var ttsGloballyMuted = false;
+      var ttsAutoRead = false; // OFF by default
 
-      function applyIdleButtonState() {
-        speakerBtn.classList.remove("is-playing");
-        speakerBtn.classList.toggle("is-muted", ttsGloballyMuted);
-        speakerBtn.title = ttsGloballyMuted ? "Unmute TTS" : "Read page aloud";
-        speakerBtn.setAttribute("aria-label", ttsGloballyMuted ? "Unmute TTS" : "Read page aloud");
-        speakerBtn.innerHTML = ttsGloballyMuted
-          ? '<i class="fa-solid fa-volume-xmark"></i>'
-          : '<i class="fa-solid fa-volume-high"></i>';
+      function applySpeakerToggleState() {
+        speakerBtn.classList.toggle("is-active", ttsAutoRead);
+        speakerBtn.innerHTML = ttsAutoRead
+          ? '<i class="fa-solid fa-volume-high"></i>'
+          : '<i class="fa-solid fa-volume-xmark"></i>';
+        speakerBtn.title = ttsAutoRead ? "Disable auto-read" : "Enable auto-read";
+        speakerBtn.setAttribute("aria-label", ttsAutoRead ? "Disable auto-read" : "Enable auto-read");
+        window.__ttsMuted = !ttsAutoRead;
+        if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(!ttsAutoRead);
       }
 
-      function setSpeakerState(playing) {
-        sbPlaying = playing;
-        speakerBtn.classList.toggle("is-playing", playing);
-        speakerBtn.title = playing ? "Stop reading" : "Read page aloud";
-        speakerBtn.setAttribute("aria-label", playing ? "Stop reading" : "Read page aloud");
-        speakerBtn.innerHTML = playing
-          ? '<i class="fa-solid fa-stop"></i>'
-          : '<i class="fa-solid fa-volume-high"></i>';
-        if (playing) {
-          if (typeof window.__showAudioModal === "function") {
-            window.__showAudioModal("playing", function() {
-              if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-              window.__vmOnSpeaking = null;
-              window.__vmOnQueueEnd = null;
-              setSpeakerState(false);
-            });
-          }
-        } else {
-          if (typeof window.__hideAudioModal === "function") window.__hideAudioModal();
+      applySpeakerToggleState(); // init: auto-read off, muted
+
+      speakerBtn.addEventListener("click", function() {
+        ttsAutoRead = !ttsAutoRead;
+        if (!ttsAutoRead) {
+          // Turning off: stop any audio that's currently playing from auto-read.
+          if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+          window.__vmOnSpeaking = null;
+          window.__vmOnQueueEnd = null;
         }
-      }
+        applySpeakerToggleState();
+      });
+    })();
 
-      // Strip YAML frontmatter (--- ... ---) from the start of a string.
+    // ── Headphones button — explicit "read to me" action ──
+    (function() {
+      var readAloudBtn = $("global-read-aloud");
+      if (!readAloudBtn) return;
+
+      var raPlaying = false;
+
       function stripFrontmatter(text) {
         return text.replace(/^---[\r\n][\s\S]*?[\r\n]---[\r\n]?/, "").trim();
       }
 
-      // Resolve the primary readable text for the currently visible panel.
       function resolveReadAloudText() {
         var chatPnl = $("chat-panel");
         var filesPnl = $("files-panel");
         var tasksPnl = $("tasks-panel");
 
         if (chatPnl && !chatPnl.hidden) {
-          // Last assistant message with a done (or absent) state.
           for (var i = chatHistory.length - 1; i >= 0; i--) {
             var m = chatHistory[i];
             if (m.role === "assistant") {
@@ -2798,7 +2814,6 @@
           var fc = $("files-content");
           if (fc) {
             var txt = (fc.innerText || "").trim();
-            // Skip placeholder/error/loading states.
             if (txt && !/^(Select a file|Loading\.|Error:)/.test(txt)) {
               return stripFrontmatter(txt) || null;
             }
@@ -2819,12 +2834,58 @@
         return null;
       }
 
-      function updateSpeakerDisabled() {
-        if (ttsGloballyMuted) { speakerBtn.disabled = false; return; }
-        if (!sbPlaying) speakerBtn.disabled = !resolveReadAloudText();
+      function applyIdleReadAloudState() {
+        raPlaying = false;
+        readAloudBtn.classList.remove("is-playing");
+        readAloudBtn.innerHTML = '<i class="fa-solid fa-headphones"></i>';
+        readAloudBtn.title = "Read to me";
+        readAloudBtn.setAttribute("aria-label", "Read to me");
       }
-      window.__updateSpeakerDisabled = updateSpeakerDisabled;
-      updateSpeakerDisabled();
+
+      function updateReadAloudEnabled() {
+        if (!raPlaying) readAloudBtn.disabled = !resolveReadAloudText();
+      }
+      window.__updateSpeakerDisabled = updateReadAloudEnabled;
+      updateReadAloudEnabled();
+
+      // Called by auto-read when it starts/stops — updates headphones button without modal.
+      window.__vmSetSpeakerPlaying = function(playing) {
+        raPlaying = playing;
+        if (playing) {
+          readAloudBtn.classList.add("is-playing");
+          readAloudBtn.title = "Stop reading";
+          readAloudBtn.setAttribute("aria-label", "Stop reading");
+          readAloudBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+          readAloudBtn.disabled = false;
+        } else {
+          applyIdleReadAloudState();
+          updateReadAloudEnabled();
+        }
+      };
+
+      // Explicit read: same visual + shows audio modal so user can follow along.
+      function setReadAloudState(playing) {
+        raPlaying = playing;
+        readAloudBtn.classList.toggle("is-playing", playing);
+        if (playing) {
+          readAloudBtn.title = "Stop reading";
+          readAloudBtn.setAttribute("aria-label", "Stop reading");
+          readAloudBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+          readAloudBtn.disabled = false;
+          if (typeof window.__showAudioModal === "function") {
+            window.__showAudioModal("playing", function() {
+              if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
+              window.__vmOnSpeaking = null;
+              window.__vmOnQueueEnd = null;
+              setReadAloudState(false);
+            });
+          }
+        } else {
+          if (typeof window.__hideAudioModal === "function") window.__hideAudioModal();
+          applyIdleReadAloudState();
+          updateReadAloudEnabled();
+        }
+      }
 
       async function sbDoReadAloud() {
         if (typeof window.__vmEnqueueChunk !== "function") return;
@@ -2842,9 +2903,9 @@
           if (rawText) sidecarBody = { text: rawText };
         }
         if (sidecarBody) {
-          speakerBtn.disabled = true;
-          speakerBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-          speakerBtn.title = "Preparing reading…";
+          readAloudBtn.disabled = true;
+          readAloudBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+          readAloudBtn.title = "Preparing reading…";
           try {
             var resp = await fetch("/api/voice/sidecar", {
               method: "POST",
@@ -2856,16 +2917,16 @@
               if (data && data.text) text = data.text;
             }
           } catch (e) { /* fall through to resolveReadAloudText */ }
-          applyIdleButtonState();
-          updateSpeakerDisabled();
+          applyIdleReadAloudState();
+          updateReadAloudEnabled();
         }
 
         if (!text) text = resolveReadAloudText();
         if (!text) return;
         if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-        window.__vmOnSpeaking = function() { setSpeakerState(true); };
+        window.__vmOnSpeaking = function() { setReadAloudState(true); };
         window.__vmOnQueueEnd = function() {
-          setSpeakerState(false);
+          setReadAloudState(false);
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
         };
@@ -2883,70 +2944,24 @@
           enqueued = 1;
         }
         if (enqueued > 0) {
-          setSpeakerState(true);
+          setReadAloudState(true);
         } else {
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
         }
       }
 
-      var sbHoldTimer = null;
-      var sbHoldFired = false;
-      var SB_HOLD_MS = 400;
-
-      function sbStartPress() {
-        sbHoldFired = false;
-        sbHoldTimer = setTimeout(function() {
-          sbHoldFired = true;
-          var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
-          if (!isPlaying) sbDoReadAloud();
-        }, SB_HOLD_MS);
-      }
-
-      function sbEndPress() {
-        if (sbHoldTimer) { clearTimeout(sbHoldTimer); sbHoldTimer = null; }
-        if (sbHoldFired) return;
-        var isPlaying = sbPlaying || (typeof window.__vmIsPlaying === "function" && window.__vmIsPlaying());
-        if (isPlaying) {
+      readAloudBtn.addEventListener("click", function() {
+        if (raPlaying) {
           if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
           if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
           window.__vmOnSpeaking = null;
           window.__vmOnQueueEnd = null;
-          setSpeakerState(false);
+          setReadAloudState(false);
         } else {
-          ttsGloballyMuted = !ttsGloballyMuted;
-          window.__ttsMuted = ttsGloballyMuted;
-          if (ttsGloballyMuted) {
-            if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-            if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
-          } else {
-            if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(false);
-          }
-          applyIdleButtonState();
-          updateSpeakerDisabled();
+          sbDoReadAloud();
         }
-      }
-
-      speakerBtn.addEventListener("mousedown", sbStartPress);
-      speakerBtn.addEventListener("touchstart", function(e) { e.preventDefault(); sbStartPress(); }, { passive: false });
-      speakerBtn.addEventListener("mouseup", sbEndPress);
-      speakerBtn.addEventListener("touchend", function(e) { e.preventDefault(); sbEndPress(); }, { passive: false });
-      speakerBtn.addEventListener("mouseleave", function() { if (sbHoldTimer) { clearTimeout(sbHoldTimer); sbHoldTimer = null; } });
-
-      // Auto-read state setter — updates button only, no modal (chat must stay visible).
-      window.__vmSetSpeakerPlaying = function(playing) {
-        sbPlaying = playing;
-        speakerBtn.classList.toggle("is-playing", playing);
-        if (playing) {
-          speakerBtn.classList.remove("is-muted");
-          speakerBtn.title = "Stop reading";
-          speakerBtn.setAttribute("aria-label", "Stop reading");
-          speakerBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
-          speakerBtn.disabled = false;
-        } else {
-          applyIdleButtonState();
-        }
-      };
+      });
     })();
 
     // ── Files ──
