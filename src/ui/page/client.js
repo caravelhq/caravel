@@ -47,24 +47,48 @@
     // ── Audio action modal — shared between global-mic and global-speaker ──
     (function() {
       var modal = $("audio-action-modal");
+      var card = $("audio-action-card");
       var iconEl = $("audio-action-icon");
       var labelEl = $("audio-action-label");
       var stopBtn = $("audio-action-stop");
+      var playerProgress = $("audio-player-progress");
+      var playerBar = $("audio-player-bar");
+      var playerCounter = $("audio-player-counter");
+      var playerTranscript = $("audio-player-transcript");
+      var skipBack = $("audio-skip-back");
+      var skipForward = $("audio-skip-forward");
+      var resumeEl = $("audio-player-resume");
+      var resumeMsg = $("audio-player-resume-msg");
+      var resumeRestartBtn = $("audio-resume-restart");
+      var resumeContinueBtn = $("audio-resume-continue");
       var stopCb = null;
+
+      function escHtml(s) {
+        return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
 
       function showAudioModal(type, onStop) {
         stopCb = onStop || null;
+        var isPlayer = type === "playing";
         if (iconEl) {
-          iconEl.innerHTML = type === "playing"
+          iconEl.innerHTML = isPlayer
             ? '<i class="fa-solid fa-volume-high" style="color:#9be7ff"></i>'
             : '<i class="fa-solid fa-microphone" style="color:#ff9b9b"></i>';
         }
-        if (labelEl) labelEl.textContent = type === "playing" ? "Playing..." : "Recording...";
+        if (labelEl) labelEl.textContent = isPlayer ? "Playing..." : "Recording...";
+        if (card) card.classList.toggle("is-player", isPlayer);
+        if (playerProgress) playerProgress.hidden = !isPlayer;
+        if (playerTranscript) playerTranscript.hidden = !isPlayer;
+        if (skipBack) { skipBack.hidden = !isPlayer; skipBack.disabled = true; }
+        if (skipForward) { skipForward.hidden = !isPlayer; skipForward.disabled = true; }
+        if (resumeEl) resumeEl.hidden = true;
+        if (stopBtn) stopBtn.hidden = false;
         if (modal) modal.hidden = false;
       }
 
       function hideAudioModal() {
         if (modal) modal.hidden = true;
+        if (card) card.classList.remove("is-player");
         stopCb = null;
       }
 
@@ -74,6 +98,79 @@
           hideAudioModal();
         });
       }
+
+      if (skipBack) {
+        skipBack.addEventListener("click", function() {
+          var info = typeof window.__vmGetChunks === "function" ? window.__vmGetChunks() : null;
+          if (!info || info.index <= 0) return;
+          if (typeof window.__vmSkipTo === "function") window.__vmSkipTo(info.index - 1);
+        });
+      }
+
+      if (skipForward) {
+        skipForward.addEventListener("click", function() {
+          var info = typeof window.__vmGetChunks === "function" ? window.__vmGetChunks() : null;
+          if (!info || info.index >= info.chunks.length - 1) return;
+          if (typeof window.__vmSkipTo === "function") window.__vmSkipTo(info.index + 1);
+        });
+      }
+
+      if (playerTranscript) {
+        playerTranscript.addEventListener("click", function(e) {
+          var p = e.target && e.target.closest && e.target.closest(".audio-transcript-line");
+          if (!p) return;
+          var idx = parseInt(p.getAttribute("data-idx"), 10);
+          if (isNaN(idx)) return;
+          if (typeof window.__vmSkipTo === "function") window.__vmSkipTo(idx);
+        });
+      }
+
+      // Called from headphones IIFE on each chunk start to update progress + transcript.
+      window.__updateAudioPlayer = function(index, total, chunks) {
+        if (playerCounter) playerCounter.textContent = (index + 1) + " / " + total;
+        if (playerBar) playerBar.style.width = total > 0 ? ((index + 1) / total * 100) + "%" : "0%";
+        if (skipBack) skipBack.disabled = index <= 0;
+        if (skipForward) skipForward.disabled = index >= total - 1;
+        if (playerTranscript && chunks) {
+          if (playerTranscript.childElementCount !== chunks.length) {
+            var html = "";
+            for (var i = 0; i < chunks.length; i++) {
+              var cls = "audio-transcript-line" + (i === index ? " audio-transcript-active" : "");
+              html += '<p class="' + cls + '" data-idx="' + i + '">' + escHtml(chunks[i].trim()) + "</p>";
+            }
+            playerTranscript.innerHTML = html;
+          } else {
+            var prev = playerTranscript.querySelector(".audio-transcript-active");
+            if (prev) prev.classList.remove("audio-transcript-active");
+            var active = playerTranscript.children[index];
+            if (active) active.classList.add("audio-transcript-active");
+          }
+          var activeEl = playerTranscript.querySelector(".audio-transcript-active");
+          if (activeEl) activeEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+      };
+
+      // Show resume prompt, resolve via callbacks rather than modal state.
+      window.__showResumePrompt = function(savedIndex, total, onResume, onRestart) {
+        if (iconEl) iconEl.innerHTML = '<i class="fa-solid fa-headphones" style="color:#9be7ff"></i>';
+        if (labelEl) labelEl.textContent = "Resume reading?";
+        if (card) card.classList.add("is-player");
+        if (resumeEl) resumeEl.hidden = false;
+        if (resumeMsg) resumeMsg.textContent = "Stopped at " + (savedIndex + 1) + " of " + total + ".";
+        if (playerProgress) playerProgress.hidden = true;
+        if (playerTranscript) playerTranscript.hidden = true;
+        if (skipBack) skipBack.hidden = true;
+        if (skipForward) skipForward.hidden = true;
+        if (stopBtn) stopBtn.hidden = true;
+        if (modal) modal.hidden = false;
+        function cleanup() {
+          if (stopBtn) stopBtn.hidden = false;
+          if (resumeEl) resumeEl.hidden = true;
+          hideAudioModal();
+        }
+        if (resumeRestartBtn) resumeRestartBtn.onclick = function() { cleanup(); if (onRestart) onRestart(); };
+        if (resumeContinueBtn) resumeContinueBtn.onclick = function() { cleanup(); if (onResume) onResume(); };
+      };
 
       window.__showAudioModal = showAudioModal;
       window.__hideAudioModal = hideAudioModal;
@@ -2505,6 +2602,10 @@
       // Set to true when the user explicitly stops the speaker (toggle-off) so
       // auto-read doesn't restart mid-response. Cleared on new user message.
       var ttsAutoReadStopped = false;
+      // Chunk array + index for the read-to-me player (headphones flow).
+      // vmEnqueueChunk (streaming auto-read) does NOT use these.
+      var vmChunksAll = [];
+      var vmChunkIndex = -1;
 
       function vmStopAudio() {
         vmQueueGen++;
@@ -2605,6 +2706,12 @@
           var item = await vmAudioQueue.shift();
           if (gen !== vmQueueGen) { if (item && item.url) URL.revokeObjectURL(item.url); continue; }
           if (!item || !item.audio) continue;
+          if (item.chunkIdx !== undefined) {
+            vmChunkIndex = item.chunkIdx;
+            if (typeof window.__vmOnChunkStart === "function") {
+              window.__vmOnChunkStart(vmChunkIndex, item.text || "", vmChunksAll.length);
+            }
+          }
           if (typeof window.__vmOnSpeaking === "function") window.__vmOnSpeaking();
           vmCurrentAudio = item.audio;
           await new Promise(function(resolve) {
@@ -2670,11 +2777,58 @@
         if (!vmQueueRunning) vmRunQueue(vmQueueGen);
       }
 
+      // Enqueue a specific chunk by index — used by vmSkipTo to re-fetch chunks
+      // from vmChunksAll without modifying vmChunksAll.
+      function vmEnqueueChunkAt(chunkText, chunkIdx) {
+        var stripped = vmStripMarkdown(chunkText).trim();
+        if (!stripped) return;
+        var displayText = chunkText.trim();
+        var gen = vmQueueGen;
+        var p = vmSpeakFetch(stripped).then(function(res) {
+          if (gen !== vmQueueGen) return null;
+          if (!res.ok) {
+            return res.json().catch(function() { return {}; }).then(function(err) {
+              console.error("[speaker] TTS error:", err.error || ("HTTP " + res.status));
+              return { audio: null, url: null, text: displayText, chunkIdx: chunkIdx };
+            });
+          }
+          return res.blob().then(function(blob) {
+            if (gen !== vmQueueGen) return null;
+            var url = URL.createObjectURL(blob);
+            return { audio: new Audio(url), url: url, text: displayText, chunkIdx: chunkIdx };
+          });
+        }).catch(function(e) {
+          console.error("[speaker] TTS fetch failed:", e);
+          return { audio: null, url: null, text: displayText, chunkIdx: chunkIdx };
+        });
+        vmAudioQueue.push(p);
+      }
+
+      // Jump to chunk n in vmChunksAll — stop current audio, re-fetch from n onwards.
+      function vmSkipTo(n) {
+        if (vmChunksAll.length === 0) return;
+        if (n < 0) n = 0;
+        if (n >= vmChunksAll.length) return;
+        vmQueueGen++;
+        if (vmCurrentAudio) { vmCurrentAudio.pause(); vmCurrentAudio.src = ""; vmCurrentAudio = null; }
+        vmAudioQueue = [];
+        vmQueueRunning = false;
+        vmSpeakWaiters = [];
+        for (var i = n; i < vmChunksAll.length; i++) {
+          vmEnqueueChunkAt(vmChunksAll[i], i);
+        }
+        if (vmAudioQueue.length > 0 && !vmQueueRunning) vmRunQueue(vmQueueGen);
+      }
+
       window.__vmEnqueueChunk = vmEnqueueChunk;
       window.__vmExtractChunks = vmExtractChunks;
       window.__vmStripMarkdown = vmStripMarkdown;
       window.__vmStopAudio = vmStopAudio;
       window.__vmIsPlaying = function() { return vmQueueRunning; };
+      // Reader-player chunk tracking
+      window.__vmSkipTo = vmSkipTo;
+      window.__vmSetChunks = function(chunks) { vmChunksAll = chunks.slice(); vmChunkIndex = -1; };
+      window.__vmGetChunks = function() { return { chunks: vmChunksAll, index: vmChunkIndex }; };
 
       // Reset auto-read state when the user sends a new message.
       // Called from sendChat() so TTS stops and the cursor is cleared for the new turn.
@@ -2883,6 +3037,7 @@
             window.__showAudioModal("playing", function() {
               if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
               window.__vmOnSpeaking = null;
+              window.__vmOnChunkStart = null;
               window.__vmOnQueueEnd = null;
               setReadAloudState(false);
             });
@@ -2895,18 +3050,16 @@
       }
 
       async function sbDoReadAloud() {
-        if (typeof window.__vmEnqueueChunk !== "function") return;
+        if (typeof window.__vmSkipTo !== "function") return;
         var text = null;
 
         // Try sidecar sanitization for markdown files and completed chat messages.
         var filesPnl = $("files-panel");
-        var chatPnl = $("chat-panel");
         var activePath = window.__filesActivePath;
         var sidecarBody = null;
         if (filesPnl && !filesPnl.hidden && activePath && /\.md$/i.test(activePath)) {
           sidecarBody = { path: activePath };
         } else {
-          // Chat, task reports, non-md files — all sanitized via content-hash cache.
           var rawText = resolveReadAloudText();
           if (rawText) sidecarBody = { text: rawText };
         }
@@ -2931,32 +3084,56 @@
 
         if (!text) text = resolveReadAloudText();
         if (!text) return;
-        if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
-        window.__vmOnSpeaking = function() { setReadAloudState(true); };
+
+        // Extract all chunks upfront so we know total count and can support skip.
+        var extractResult = typeof window.__vmExtractChunks === "function"
+          ? window.__vmExtractChunks(text, true)
+          : { chunks: [text], consumed: text.length };
+        var allChunks = (extractResult.chunks || []).filter(function(c) { return c && c.trim(); });
+        if (allChunks.length === 0) allChunks = [text.trim()];
+
+        // Resume key — stable identifier for this content across refreshes.
+        var resumeKey = text.slice(0, 80).trim() + "|" + text.length;
+        var startIndex = 0;
+
+        // Offer resume if the user previously stopped mid-read on the same content.
+        try {
+          var saved = JSON.parse(sessionStorage.getItem("ra_resume") || "null");
+          if (saved && saved.key === resumeKey && typeof saved.index === "number"
+              && saved.index > 0 && saved.index < allChunks.length
+              && typeof window.__showResumePrompt === "function") {
+            startIndex = await new Promise(function(resolve) {
+              window.__showResumePrompt(
+                saved.index, allChunks.length,
+                function() { resolve(saved.index); },
+                function() { resolve(0); }
+              );
+            });
+          }
+        } catch (e2) { /* sessionStorage unavailable or parse error */ }
+
+        // Pre-populate the chunk array for skip-back/skip-forward.
+        if (typeof window.__vmSetChunks === "function") window.__vmSetChunks(allChunks);
+
+        // Wire up callbacks before starting the queue.
+        window.__vmOnSpeaking = null; // modal shown immediately below — no need
+        window.__vmOnChunkStart = function(index, _chunkText, total) {
+          if (typeof window.__updateAudioPlayer === "function") {
+            window.__updateAudioPlayer(index, total, allChunks);
+          }
+          try { sessionStorage.setItem("ra_resume", JSON.stringify({ key: resumeKey, index: index })); } catch (e3) {}
+        };
         window.__vmOnQueueEnd = function() {
           setReadAloudState(false);
           window.__vmOnSpeaking = null;
+          window.__vmOnChunkStart = null;
           window.__vmOnQueueEnd = null;
+          try { sessionStorage.removeItem("ra_resume"); } catch (e3) {}
         };
-        var enqueued = 0;
-        if (typeof window.__vmExtractChunks === "function") {
-          var result = window.__vmExtractChunks(text, true);
-          if (result && result.chunks) {
-            for (var i = 0; i < result.chunks.length; i++) {
-              var chunk = result.chunks[i].trim();
-              if (chunk) { window.__vmEnqueueChunk(chunk); enqueued++; }
-            }
-          }
-        } else {
-          window.__vmEnqueueChunk(text);
-          enqueued = 1;
-        }
-        if (enqueued > 0) {
-          setReadAloudState(true);
-        } else {
-          window.__vmOnSpeaking = null;
-          window.__vmOnQueueEnd = null;
-        }
+
+        // Start the queue from startIndex and show the modal immediately.
+        window.__vmSkipTo(startIndex);
+        setReadAloudState(true);
       }
 
       readAloudBtn.addEventListener("click", function() {
@@ -2964,6 +3141,7 @@
           if (typeof window.__vmStopAudio === "function") window.__vmStopAudio();
           if (typeof window.__ttsSetAutoReadStopped === "function") window.__ttsSetAutoReadStopped(true);
           window.__vmOnSpeaking = null;
+          window.__vmOnChunkStart = null;
           window.__vmOnQueueEnd = null;
           setReadAloudState(false);
         } else {

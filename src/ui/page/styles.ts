@@ -5015,6 +5015,10 @@ export const pageStyles = String.raw`    :root {
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
       min-width: 200px;
     }
+    .audio-action-card.is-player {
+      min-width: min(420px, 90vw);
+      padding: 20px 24px 24px;
+    }
     .audio-action-icon {
       font-size: 32px;
       line-height: 1;
@@ -5048,6 +5052,128 @@ export const pageStyles = String.raw`    :root {
       border-color: #ff6b6b55;
       color: #ff9b9b;
     }
+    /* Player controls row (skip + stop + skip) */
+    .audio-player-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .audio-player-skip {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+    .audio-player-skip[hidden] { display: none !important; }
+    .audio-player-skip:hover { background: #7dc5ff22; border-color: #7dc5ff55; }
+    .audio-player-skip:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    /* Progress bar */
+    .audio-player-progress {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+    }
+    .audio-player-progress[hidden] { display: none; }
+    .audio-player-bar-wrap {
+      height: 3px;
+      background: var(--border, #1e3a5f);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .audio-player-bar {
+      height: 100%;
+      background: var(--accent, #9be7ff);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+    .audio-player-counter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    /* Read-along transcript pane */
+    .audio-player-transcript {
+      width: min(380px, 80vw);
+      max-height: 136px;
+      overflow-y: auto;
+      border: 1px solid var(--border, #1e3a5f);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.28);
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+      text-align: left;
+    }
+    .audio-player-transcript[hidden] { display: none; }
+    .audio-transcript-line {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 2px 4px;
+      transition: color 0.18s, background 0.18s;
+    }
+    .audio-transcript-line:last-child { margin-bottom: 0; }
+    .audio-transcript-line:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+    .audio-transcript-active {
+      color: var(--text) !important;
+      background: rgba(155, 231, 255, 0.13) !important;
+      border-left: 2px solid var(--accent, #9be7ff);
+      padding-left: 6px;
+    }
+    /* Resume prompt */
+    .audio-player-resume {
+      display: grid;
+      gap: 10px;
+      text-align: center;
+      width: 100%;
+    }
+    .audio-player-resume[hidden] { display: none; }
+    .audio-player-resume-msg {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+    .audio-player-resume-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .audio-player-resume-btn {
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.16s ease;
+    }
+    .audio-player-resume-btn.is-resume {
+      background: #0e2c4a;
+      border-color: #7dc5ff55;
+      color: #9be7ff;
+    }
+    .audio-player-resume-btn:hover { filter: brightness(1.14); }
     @keyframes audio-modal-pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
