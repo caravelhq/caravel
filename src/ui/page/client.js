@@ -2511,6 +2511,10 @@
         if (vmCurrentAudio) { vmCurrentAudio.pause(); vmCurrentAudio.src = ""; vmCurrentAudio = null; }
         vmAudioQueue = [];
         vmQueueRunning = false;
+        // Clear pending TTS fetch callbacks so a long-doc stop doesn't leave a backlog
+        // that blocks the next play. The 2 in-flight fetches finish and harmlessly
+        // decrement vmSpeakInFlight; their gen check will return null.
+        vmSpeakWaiters = [];
       }
 
       // Strip markdown symbols before sending text to DeepGram TTS.
@@ -2901,7 +2905,8 @@
         var sidecarBody = null;
         if (filesPnl && !filesPnl.hidden && activePath && /\.md$/i.test(activePath)) {
           sidecarBody = { path: activePath };
-        } else if (chatPnl && !chatPnl.hidden) {
+        } else {
+          // Chat, task reports, non-md files — all sanitized via content-hash cache.
           var rawText = resolveReadAloudText();
           if (rawText) sidecarBody = { text: rawText };
         }
