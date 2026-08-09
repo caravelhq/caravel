@@ -5198,6 +5198,7 @@
           tabs[j].classList.toggle("is-active", isActive);
           tabs[j].setAttribute("aria-selected", isActive ? "true" : "false");
         }
+        if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
       }
 
       async function openTaskPanel(taskId) {
