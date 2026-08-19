@@ -4324,6 +4324,7 @@
       var tasksNewBtn = document.getElementById("tasks-new-btn");
       var tasksPickerToggle = document.getElementById("tasks-picker-toggle");
       var tasksPickerToggleLabel = document.getElementById("tasks-picker-toggle-label");
+      var tasksProjectBtn = document.getElementById("tasks-project-btn");
       var tasksSidebar = document.getElementById("tasks-sidebar");
       var tasksContent = document.getElementById("tasks-content");
       var tasksViewer = document.getElementById("tasks-viewer");
@@ -4333,11 +4334,10 @@
       var newStatus = document.getElementById("multi-agent-new-status");
 
       var tasksFilter = "all";
-      // WAL-63 Phase 2: view selector — "current" (active leaves grouped by
-      // project, default landing), "projects" (Phase 4 placeholder), "all"
-      // (legacy flat picker with status filters). Status filter chips only
-      // apply to the "all" view.
-      var tasksView = "current";
+      // View selector: "projects" (default landing — project card grid),
+      // "all" (flat picker with status filters).
+      // "current" tab was removed — Projects and All are sufficient.
+      var tasksView = "projects";
       // Tracks the right-pane mode ("empty"|"view"|"new"|"project") so
       // navigation can reason about where we came from (see taskFromProjectSlug).
       var currentRightPaneMode = "empty";
@@ -4430,8 +4430,8 @@
       }
 
       // === Multi-select close bulk bar ======================================
-      // A sticky bar above the task list, shown only in the Current view when
-      // ≥1 task is selected. Persists across renderCurrentView() calls.
+      // A sticky bar above the task list, shown when ≥1 task is selected
+      // (project pane uses renderCurrentRow checkboxes). Persists across renders.
       var currentBulkBar = null;
       function getOrCreateBulkBar() {
         if (currentBulkBar) return currentBulkBar;
@@ -4477,7 +4477,7 @@
         var ids = Object.keys(currentSelected);
         // On mobile (touch), show the bar while multi-select mode is active
         // so the Done button is always reachable. On desktop, hide when empty.
-        if (tasksView !== "current" || (ids.length === 0 && !currentMultiSelectActive)) {
+        if (ids.length === 0 && !currentMultiSelectActive) {
           bar.hidden = true;
           return;
         }
@@ -4564,6 +4564,7 @@
       var taskPanelId = document.getElementById("tasks-viewer-id");
       var taskPanelStatus = document.getElementById("tasks-viewer-status");
       var currentTaskId = null;
+      var currentTaskProject = null; // project slug of the currently-viewed task
       var currentTaskChain = null;
       var currentViewMode = "task"; // "task" | "report"
 
@@ -5183,6 +5184,7 @@
             setTasksPickerCollapsed(mode !== "empty");
           }
         }
+        updateProjectBtn();
       }
 
       function setViewMode(mode) {
@@ -5201,6 +5203,18 @@
         if (typeof window.__updateSpeakerDisabled === "function") window.__updateSpeakerDisabled();
       }
 
+      function updateProjectBtn() {
+        if (!tasksProjectBtn) return;
+        var enabled = !!(currentRightPaneMode === "view" && currentTaskProject);
+        if (enabled) {
+          tasksProjectBtn.removeAttribute("disabled");
+          tasksProjectBtn.removeAttribute("aria-disabled");
+        } else {
+          tasksProjectBtn.setAttribute("disabled", "");
+          tasksProjectBtn.setAttribute("aria-disabled", "true");
+        }
+      }
+
       async function openTaskPanel(taskId) {
         if (!taskId || !taskPanelBody) return;
         // Back-stack bookkeeping (before currentTaskId is reassigned):
@@ -5212,6 +5226,7 @@
         if (prevPaneMode === "project") taskFromProjectSlug = currentProjectSlug;
         else if (!sameTask) taskFromProjectSlug = null;
         currentTaskId = taskId;
+        currentTaskProject = null; // reset until data loads; button stays disabled
         if (typeof setActiveTab === "function") setActiveTab("tasks");
         setRightPaneMode("view");
         if (taskPanelId) taskPanelId.textContent = taskId;
@@ -5244,6 +5259,8 @@
           currentTaskChain = c;
           var task = c.task;
           if (task) {
+            currentTaskProject = task.project || null;
+            updateProjectBtn();
             if (taskPanelHeadline) {
               taskPanelHeadline.textContent = task.headline || task.brief || "Task " + taskId;
               // Stash the task's agent + id on the headline so the
@@ -5551,10 +5568,8 @@
 
       function renderTaskPicker() {
         if (!tasksTree) return;
-        // WAL-63 Phase 2: dispatch by view. Filter chips only render results
-        // in the "all" view; current and projects compose their own lists.
+        // Filter chips only apply to the "all" view.
         if (tasksFilterChips) tasksFilterChips.hidden = (tasksView !== "all");
-        if (tasksView === "current") return renderCurrentView();
         if (tasksView === "projects") return renderProjectsView();
         return renderAllTasksView();
       }
@@ -6013,44 +6028,46 @@
       }
 
       // Picker click handlers.
-      if (tasksTree) {
-        // Multi-select: handle checkbox state changes before the click handler
-        // so selecting a task row doesn't also open the task panel.
-        tasksTree.addEventListener("change", function (ev) {
-          var cb = ev.target;
-          if (!cb || cb.type !== "checkbox") return;
+      // Shared checkbox change handler — bound to both tasksTree and projectPaneEl
+      // so multi-select works from both the sidebar list and the project detail pane.
+      function handleRowCheckboxChange(ev) {
+        var cb = ev.target;
+        if (!cb || cb.type !== "checkbox") return;
 
-          if (cb.classList.contains("current-row-select")) {
-            var cbTaskId = cb.getAttribute("data-task-id");
-            var cbAgent = cb.getAttribute("data-task-agent") || "";
-            var cbStatus = cb.getAttribute("data-task-default-status") || "cancelled";
-            if (cb.checked) currentSelected[cbTaskId] = { agent: cbAgent, defaultStatus: cbStatus };
-            else delete currentSelected[cbTaskId];
-            updateBulkBar();
-            updateGroupSelectAll(cb.closest("[data-project-key]"));
-            return;
-          }
+        if (cb.classList.contains("current-row-select")) {
+          var cbTaskId = cb.getAttribute("data-task-id");
+          var cbAgent = cb.getAttribute("data-task-agent") || "";
+          var cbStatus = cb.getAttribute("data-task-default-status") || "cancelled";
+          if (cb.checked) currentSelected[cbTaskId] = { agent: cbAgent, defaultStatus: cbStatus };
+          else delete currentSelected[cbTaskId];
+          updateBulkBar();
+          updateGroupSelectAll(cb.closest("[data-project-key]"));
+          return;
+        }
 
-          if (cb.classList.contains("current-group-select-all")) {
-            var groupEl = cb.closest("[data-project-key]");
-            var rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
-            for (var i = 0; i < rowCbs.length; i++) {
-              var rCb = rowCbs[i];
-              var rId = rCb.getAttribute("data-task-id");
-              var rAgent = rCb.getAttribute("data-task-agent") || "";
-              var rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
-              if (cb.checked) {
-                currentSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
-                rCb.checked = true;
-              } else {
-                delete currentSelected[rId];
-                rCb.checked = false;
-              }
+        if (cb.classList.contains("current-group-select-all")) {
+          var groupEl = cb.closest("[data-project-key]");
+          var rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
+          for (var i = 0; i < rowCbs.length; i++) {
+            var rCb = rowCbs[i];
+            var rId = rCb.getAttribute("data-task-id");
+            var rAgent = rCb.getAttribute("data-task-agent") || "";
+            var rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
+            if (cb.checked) {
+              currentSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
+              rCb.checked = true;
+            } else {
+              delete currentSelected[rId];
+              rCb.checked = false;
             }
-            updateBulkBar();
-            return;
           }
-        });
+          updateBulkBar();
+          return;
+        }
+      }
+
+      if (tasksTree) {
+        tasksTree.addEventListener("change", handleRowCheckboxChange);
 
         tasksTree.addEventListener("click", function (ev) {
           // Checkbox clicks are handled by the change event above — stop them
@@ -6229,19 +6246,15 @@
       }
       if (tasksPickerToggle) {
         tasksPickerToggle.addEventListener("click", function () {
-          if (!tasksSidebar) return;
-          var collapsed = tasksSidebar.classList.contains("tasks-sidebar-collapsed");
-          // Expanding out of a task detail that was reached via a project
-          // panel → pop ONE level back to that project panel rather than
-          // exposing the full projects list. (To then reach the list, use
-          // the Projects view-tab.)
-          if (collapsed && currentRightPaneMode === "view" && taskFromProjectSlug !== null) {
-            var slug = taskFromProjectSlug;
-            taskFromProjectSlug = null;
-            openProjectPanel(slug);
-            return;
-          }
-          setTasksPickerCollapsed(!collapsed);
+          // "List" always navigates to the top-level list view — never collapses.
+          setTasksPickerCollapsed(false);
+        });
+      }
+      if (tasksProjectBtn) {
+        tasksProjectBtn.addEventListener("click", function () {
+          // Real gate — disabled attribute blocks native UI, but guard in JS too.
+          if (tasksProjectBtn.disabled || !currentTaskProject) return;
+          openProjectPanel(currentTaskProject);
         });
       }
 
@@ -6319,11 +6332,56 @@
       // and posts to /api/tasks/<id>/next. Server-side, both branches call
       // spawnNextTask() — the parent envelope is left in place and a fresh
       // child is created with parent pointer + Kelly's instruction.
-      // Submit the chat-from-task mini-form. Replaces the pre-2026-05-19
-      // insta-switch behaviour (which got Kelly stuck mid-handoff when she
-      // wanted to switch agents). The form gives a moment to name the chat,
-      // pick the right agent, and stage an initial message before the chat
-      // tab opens.
+      // One-step chat launch from a task. Switches to the task's session
+      // thread, prefills "Continue after <taskId>", and auto-sends — no
+      // second press required. The hidden mini-form (submitChatFromTask) is
+      // kept but no longer reachable via the Chat button.
+      async function launchChatForTask(taskId, parentAgent) {
+        if (!taskId || !parentAgent) return;
+        var taskRoot = String(taskId).split(".")[0];
+        var threadId = "task-" + taskRoot + "-" + parentAgent;
+
+        var existing = Array.isArray(chatListCache)
+          ? chatListCache.find(function(c) { return c.id === threadId; })
+          : null;
+
+        if (existing) {
+          await switchToChat(threadId);
+        } else {
+          chatSessionId = threadId;
+          window.__chatSessionId = threadId;
+          try { localStorage.setItem(CHAT_ID_KEY, threadId); } catch (_) {}
+          chatHistory = [];
+          chatServerUpdatedAt = null;
+          chatAgentLocked = null;
+          pendingAgentId = parentAgent;
+          updateAgentBadge();
+          updateSendDisabled();
+          renderChatHistory();
+          schedulePoll();
+          loadChatList();
+        }
+
+        // Ensure the task's agent is active (override default when not locked)
+        if (!chatAgentLocked) {
+          pendingAgentId = parentAgent;
+          updateAgentBadge();
+          updateSendDisabled();
+        }
+
+        if (typeof setActiveTab === "function") setActiveTab("chat");
+
+        // Stage and auto-send the context message — no second press.
+        if (chatInput) {
+          chatInput.value = "Continue after " + taskId;
+          if (typeof autoResizeChatInput === "function") autoResizeChatInput();
+          await sendChat();
+        }
+      }
+
+      // Submit the chat-from-task mini-form. Kept for completeness but no
+      // longer invoked from the Chat button (which now calls launchChatForTask
+      // for a one-step flow). May be removed once the new flow is validated.
       async function submitChatFromTask(wrapper) {
         if (!wrapper) return;
         var taskId = wrapper.getAttribute("data-chat-task-id") || "";
@@ -6742,6 +6800,13 @@
           }
         });
         projectPaneEl.addEventListener("change", function (ev) {
+          // Checkbox multi-select rows — same handler as tasksTree.
+          if (ev.target && ev.target.type === "checkbox" &&
+              (ev.target.classList.contains("current-row-select") ||
+               ev.target.classList.contains("current-group-select-all"))) {
+            handleRowCheckboxChange(ev);
+            return;
+          }
           var toggle = ev.target.closest("[data-project-hide-closed]");
           if (toggle) {
             var s = toggle.getAttribute("data-project-hide-closed");
@@ -6960,10 +7025,24 @@
           var followonBtn = ev.target.closest("[data-followon-task]");
           if (followonBtn) {
             ev.preventDefault();
-            openFollowOnForm(
-              followonBtn.getAttribute("data-followon-task"),
-              followonBtn.getAttribute("data-followon-agent") || ""
-            );
+            // If the task panel already has a "⏳ Continue" form (waiting:on:user),
+            // scroll to it and focus the textarea rather than opening the create form.
+            var continueForm = taskPanelBody && taskPanelBody.querySelector(".task-panel-next");
+            if (continueForm) {
+              continueForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              var continueInput = continueForm.querySelector(".task-panel-next-input");
+              if (continueInput) {
+                continueInput.focus();
+                // Open the enclosing <details> if collapsed
+                var det = continueForm.closest("details");
+                if (det) det.open = true;
+              }
+            } else {
+              openFollowOnForm(
+                followonBtn.getAttribute("data-followon-task"),
+                followonBtn.getAttribute("data-followon-agent") || ""
+              );
+            }
             return;
           }
           var openTaskBtn = ev.target.closest("[data-open-task]");
@@ -7001,16 +7080,11 @@
           var toggleChatBtn = ev.target.closest("[data-toggle-chat]");
           if (toggleChatBtn) {
             ev.preventDefault();
+            // One-step launch: get agent from the (hidden) chat form on the same card.
             var chatCard = toggleChatBtn.closest(".task-panel-card");
-            if (chatCard) {
-              var chatForm = chatCard.querySelector(".task-panel-chat-form");
-              if (chatForm) {
-                chatForm.hidden = false;
-                var chatTa = chatForm.querySelector(".task-panel-chat-msg-input");
-                if (chatTa) chatTa.focus();
-                chatForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-              }
-            }
+            var chatFormEl = chatCard ? chatCard.querySelector(".task-panel-chat-form") : null;
+            var chatAgent = chatFormEl ? (chatFormEl.getAttribute("data-chat-parent-agent") || "") : "";
+            launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat"), chatAgent);
             return;
           }
           var chatSubmitBtn = ev.target.closest(".task-panel-chat-submit");

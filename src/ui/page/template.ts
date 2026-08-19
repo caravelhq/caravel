@@ -361,18 +361,15 @@ ${pageStyles}
       </div>
     </div>
     <div id="tasks-panel" class="tasks-panel" hidden>
-      <!-- WAL-63 Phase 2: view tabs replacing the single Tasks pane. Current
-           is the inbox of active leaves and the default landing view.
-           Projects is a placeholder for Phase 4. All tasks is the legacy
-           flat picker with status filter chips intact. -->
+      <!-- Tasks view tabs. Current tab removed — Projects and All are sufficient. -->
       <div class="tasks-view-tabs" id="tasks-view-tabs" role="tablist" aria-label="Tasks view">
-        <button type="button" class="tasks-view-tab is-active" data-view="current" role="tab" aria-selected="true">Current</button>
-        <button type="button" class="tasks-view-tab" data-view="projects" role="tab" aria-selected="false">Projects</button>
+        <button type="button" class="tasks-view-tab is-active" data-view="projects" role="tab" aria-selected="true">Projects</button>
         <button type="button" class="tasks-view-tab" data-view="all" role="tab" aria-selected="false">All</button>
       </div>
       <div class="tasks-toolbar">
         <div class="tasks-toolbar-left">
-          <button id="tasks-picker-toggle" class="tasks-toolbar-btn tasks-picker-toggle" type="button" aria-expanded="true" title="Show task list">Tasks</button>
+          <button id="tasks-picker-toggle" class="tasks-toolbar-btn tasks-picker-toggle" type="button" aria-expanded="true" title="Show task list">List</button>
+          <button id="tasks-project-btn" class="tasks-toolbar-btn" type="button" title="Go to project for this task" disabled aria-disabled="true">Project</button>
         </div>
         <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">
           <button type="button" class="tasks-filter-chip is-active" data-filter="all">All</button>
