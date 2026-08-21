@@ -7,6 +7,7 @@ import { writeState, type StateData } from "../statusline";
 import { cronMatches, nextCronMatch } from "../cron";
 import { clearJobSchedule, loadJobs } from "../jobs";
 import { tickScheduler } from "../scheduler";
+import { tickPocketSync } from "../pocketSync";
 import { writePidFile, cleanupPidFile, checkExistingDaemon } from "../pid";
 import { initConfig, loadSettings, reloadSettings, resolvePrompt, type HeartbeatConfig, type Settings } from "../config";
 import { getDayAndMinuteAtOffset } from "../timezone";
@@ -738,6 +739,11 @@ export async function start(args: string[] = []) {
     // Recurring task scheduler tick (Jobs-to-Tasks merge, Phase 2).
     tickScheduler(currentSettings.timezoneOffsetMinutes, now).catch((err) =>
       console.error(`[${ts()}] Scheduler tick error:`, err)
+    );
+    // Pocket recorder sync (Pocket FDP, Phase 3). No-op unless
+    // settings.pocketSync.enabled — see src/pocketSync.ts.
+    tickPocketSync(currentSettings.pocketSync, currentSettings.timezoneOffsetMinutes, now).catch((err) =>
+      console.error(`[${ts()}] Pocket sync tick error:`, err)
     );
     updateState();
   }, 60_000);

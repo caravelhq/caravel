@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { normalizeTimezoneName, resolveTimezoneOffsetMinutes } from "./timezone";
 import { resolveStateDir } from "./paths";
+import { DEFAULT_POCKET_SYNC, type PocketSyncConfig } from "./pocketSync";
 
 const HEARTBEAT_DIR = resolveStateDir();
 const SETTINGS_FILE = join(HEARTBEAT_DIR, "settings.json");
@@ -63,6 +64,7 @@ const DEFAULT_SETTINGS: Settings = {
   web: { enabled: false, host: "127.0.0.1", port: 4632 },
   stt: { baseUrl: "", model: "" },
   deepGram: { apiKey: "", sttEnabled: false, sttModel: "nova-3", ttsModel: "aura-2-thalia-en" },
+  pocketSync: DEFAULT_POCKET_SYNC,
 };
 
 export interface HeartbeatExcludeWindow {
@@ -116,6 +118,7 @@ export interface Settings {
   web: WebConfig;
   stt: SttConfig;
   deepGram: DeepGramConfig;
+  pocketSync: PocketSyncConfig;
 }
 
 export interface AgenticMode {
@@ -310,6 +313,11 @@ function parseSettings(raw: Record<string, any>): Settings {
         const v = (typeof raw.deepGram?.ttsModel === "string" && raw.deepGram.ttsModel.trim()) || "aura-2-thalia-en";
         return v === "aura-2-en-us" ? "aura-2-thalia-en" : v;
       })(),
+    },
+    pocketSync: {
+      enabled: !!(raw.pocketSync?.enabled),
+      cron: (typeof raw.pocketSync?.cron === "string" && raw.pocketSync.cron.trim()) || DEFAULT_POCKET_SYNC.cron,
+      timeoutMs: Number(raw.pocketSync?.timeoutMs) > 0 ? Number(raw.pocketSync.timeoutMs) : DEFAULT_POCKET_SYNC.timeoutMs,
     },
   };
 }
