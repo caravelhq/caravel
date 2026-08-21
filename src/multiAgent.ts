@@ -52,8 +52,25 @@ function knownAgents(): string[] {
 }
 
 const DEFAULT_TICK_MS = 30 * 1000;
-const DEFAULT_LEASE_MS = 10 * 60 * 1000;
+// Increased from 10 min to 30 min: real tasks routinely exceed 10 min, and
+// a too-short lease was the proximate cause of the 2026-08-21 duplicate-work
+// incident (TSK-2026-08-21-0001.04 / WAL-71 dimension 2). The inFlight check
+// below is the primary guard; the longer default is belt-and-suspenders and
+// also correctly signals "we expect workers to take up to 30 min" to operators.
+const DEFAULT_LEASE_MS = 30 * 60 * 1000;
 const DEFAULT_PER_AGENT_CONCURRENCY = 1;
+// Maximum age of an inflightWorkers entry before the sweep treats it as a
+// possible hang and proceeds with recovery anyway. Workers are expected to
+// finish within their lease window; this ceiling prevents a hung worker (one
+// that is technically alive but wedged) from blocking recovery indefinitely.
+// The Claude subprocess timeout in runner.ts is a separate, earlier bound —
+// this ceiling is a backstop for cases where that timeout itself hangs.
+function readMaxWorkerLifetimeMs(): number {
+  return readEnvNumber(
+    "CARAVEL_MAX_WORKER_LIFETIME_MS",
+    readEnvNumber("CLAUDECLAW_MAX_WORKER_LIFETIME_MS", 60 * 60 * 1000) // 1 hour default
+  );
+}
 // How long a terminal/waiting task lives in its bucket before being moved
 // to tasks/archived/<bucket>/. Keeps the working directories small without
 // losing history. Override via CARAVEL_MULTI_AGENT_ARCHIVE_DAYS.
@@ -77,7 +94,7 @@ const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
 // a claimed task. The runner stays the sole writer of the envelope: aborting
 // just kills the process and records intent; runWorker then returns a
 // cancellation directive and the normal transition path finalises the file.
-type InflightEntry = { controller: AbortController; aborted: boolean; by: string; reason: string };
+type InflightEntry = { controller: AbortController; aborted: boolean; by: string; reason: string; claimedAt: number };
 const inflightWorkers = new Map<string, InflightEntry>();
 
 function inflightKey(agent: string, taskId: string): string {
@@ -1668,7 +1685,7 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   // Register an AbortController so the dashboard can kill this worker
   // mid-turn (see abortInflightWorker). Cleared in the finally below.
   const key = inflightKey(agent, taskId);
-  const entry: InflightEntry = { controller: new AbortController(), aborted: false, by: "", reason: "" };
+  const entry: InflightEntry = { controller: new AbortController(), aborted: false, by: "", reason: "", claimedAt: Date.now() };
   inflightWorkers.set(key, entry);
 
   try {
@@ -1900,6 +1917,36 @@ async function sweepStaleClaims(
       if (!includeUnexpired && !expired) continue;
 
       const taskId = fname.replace(/\.yaml$/, "");
+
+      // Guard: skip envelopes whose worker is live on THIS daemon. The
+      // inflightWorkers map is populated by runWorker() and cleared in its
+      // finally block — so a present entry means the Claude subprocess is
+      // currently running. Without this check, the every-tick sweep re-opens
+      // a claimed envelope underneath its own still-running worker once the
+      // lease expires, producing a duplicate claim on the next tick. (WAL-71)
+      //
+      // At startup (includeUnexpired=true) inflightWorkers is empty because
+      // the new process has spawned no workers yet, so this check is a no-op
+      // and all pre-existing claims are still recovered correctly.
+      //
+      // Hang ceiling: if the entry has been alive past MAX_WORKER_LIFETIME_MS
+      // the worker may be wedged. Let recovery proceed — the subprocess timeout
+      // in runner.ts is the primary bound; this ceiling is the backstop.
+      const liveEntry = inflightWorkers.get(inflightKey(agent, taskId));
+      if (liveEntry) {
+        const ageMs = Date.now() - liveEntry.claimedAt;
+        const maxMs = readMaxWorkerLifetimeMs();
+        if (ageMs < maxMs) {
+          console.log(
+            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} lease expired but worker is live on this daemon (${Math.round(ageMs / 1000)}s / ${Math.round(maxMs / 1000)}s max) — skipping`
+          );
+          continue;
+        }
+        console.warn(
+          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} worker has been live for ${Math.round(ageMs / 1000)}s (max ${Math.round(maxMs / 1000)}s) — possible hang, proceeding with recovery`
+        );
+      }
+
       const fields = parseFields(yaml, taskId);
       const summaryResponseRaw = readNestedField(yaml, "summary", "response") ?? "";
       const summaryResponse = summaryResponseRaw.trim().replace(/^"|"$/g, "");
@@ -2291,4 +2338,6 @@ export const __testing = {
   checkDependencyResolved,
   sweepStaleClaims,
   readReportFile,
+  inflightWorkers,
+  readMaxWorkerLifetimeMs,
 };
