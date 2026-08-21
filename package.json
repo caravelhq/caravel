@@ -12,7 +12,8 @@
     "discord": "bun run src/index.ts discord",
     "status": "bun run src/index.ts status",
     "build:island": "vite build",
-    "dev:island": "vite build --watch"
+    "dev:island": "vite build --watch",
+    "test:stale-claim": "bun run test/stale-claim-replay.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",

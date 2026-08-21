@@ -1941,34 +1941,95 @@ async function sweepStaleClaims(
           `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (stale-claim recovery, summary populated)`
         );
       } else {
-        // No completion signal — reset to open so the runner re-claims.
-        let next = setField(yaml, "status", "open");
-        next = setField(next, "updated", now);
-        next = setNestedField(next, "lease", "holder", "null");
-        next = setNestedField(next, "lease", "expires", "null");
-        next = appendHistory(next, {
-          ts: now,
-          from: "claimed",
-          to: "open",
-          by: `runner-${process.pid}`,
-          note: includeUnexpired
-            ? "stale-claim recovery on startup: re-opening for fresh claim"
-            : "stale-claim recovery: lease expired with no completion signal — re-opening",
-        });
-        await writeFile(path, next);
-        await appendJournal(agent, {
-          ts: now,
-          id: taskId,
-          status: "open",
-          kind: fields.kind,
-          from: fields.from,
-          to: agent,
-          parent: fields.parent,
-          summary: "stale-claim recovery (re-opened for fresh claim)",
-        });
-        console.log(
-          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} stale claim → open (re-queued)`
-        );
+        // Before re-opening, check for a rendezvous file written by the worker
+        // before the daemon died. The file-as-output contract (task-output.md)
+        // requires workers to write agents/<agent>/tasks/<status>/<id>.md as
+        // their primary completion signal. reconcileWorkerResult reads that file
+        // via readReportFile() and then populates summary.response and moves the
+        // YAML. If the daemon died in the window between file-write and
+        // reconciliation, summary.response stays empty but the file is on disk.
+        // Without this check, sweepStaleClaims re-opens already-completed tasks
+        // and they run a second time against a codebase that has moved on. (WAL-71)
+        const fromReport = await readReportFile(agent, taskId);
+        if (fromReport) {
+          const termBucket: "done" | "failed" | "waiting" =
+            fromReport.kind === "done" ? "done"
+            : fromReport.kind === "failed" ? "failed"
+            : "waiting";
+          const termStatus =
+            fromReport.kind === "done" ? "done"
+            : fromReport.kind === "failed" ? `failed:${fromReport.reason ?? "other"}`
+            : `waiting:on:${fromReport.reason || "user"}`;
+          let next = setField(yaml, "status", termStatus);
+          next = setField(next, "updated", now);
+          next = setNestedField(next, "lease", "holder", "null");
+          next = setNestedField(next, "lease", "expires", "null");
+          if (fromReport.summary) {
+            next = setNestedField(next, "summary", "response", JSON.stringify(fromReport.summary));
+          }
+          if (fromReport.kind === "done" && fromReport.report) {
+            next = next.replace(/^report:[^\n]*(?:\n[ \t]+[^\n]*)*\n?/gm, "");
+            next = next.trimEnd() + `\nreport: ${JSON.stringify(fromReport.report)}\n`;
+          }
+          next = appendHistory(next, {
+            ts: now,
+            from: "claimed",
+            to: termStatus,
+            by: `runner-${process.pid}`,
+            note: includeUnexpired
+              ? `stale-claim recovery on startup: rendezvous file found in ${termBucket}/ — promoting without re-run`
+              : `stale-claim recovery: lease expired, rendezvous file found in ${termBucket}/ — promoting without re-run`,
+          });
+          const termDir = join(AGENTS_DIR, agent, "tasks", termBucket);
+          await mkdir(termDir, { recursive: true });
+          await writeFile(path, next);
+          try {
+            await rename(path, join(termDir, fname));
+          } catch {}
+          await cleanStaleRendezvous(agent, taskId, termBucket);
+          await appendJournal(agent, {
+            ts: now,
+            id: taskId,
+            status: termStatus,
+            kind: fields.kind,
+            from: fields.from,
+            to: agent,
+            parent: fields.parent,
+            summary: `stale-claim recovery (rendezvous file in ${termBucket}/)`,
+          });
+          console.log(
+            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${termBucket} (stale-claim recovery, rendezvous file found)`
+          );
+        } else {
+          // No completion signal, no rendezvous file — reset to open.
+          let next = setField(yaml, "status", "open");
+          next = setField(next, "updated", now);
+          next = setNestedField(next, "lease", "holder", "null");
+          next = setNestedField(next, "lease", "expires", "null");
+          next = appendHistory(next, {
+            ts: now,
+            from: "claimed",
+            to: "open",
+            by: `runner-${process.pid}`,
+            note: includeUnexpired
+              ? "stale-claim recovery on startup: re-opening for fresh claim"
+              : "stale-claim recovery: lease expired with no completion signal — re-opening",
+          });
+          await writeFile(path, next);
+          await appendJournal(agent, {
+            ts: now,
+            id: taskId,
+            status: "open",
+            kind: fields.kind,
+            from: fields.from,
+            to: agent,
+            parent: fields.parent,
+            summary: "stale-claim recovery (re-opened for fresh claim)",
+          });
+          console.log(
+            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} stale claim → open (re-queued)`
+          );
+        }
       }
     }
   }
@@ -2228,4 +2289,6 @@ export const __testing = {
   appendHistory,
   buildWorkerPrompt,
   checkDependencyResolved,
+  sweepStaleClaims,
+  readReportFile,
 };
