@@ -4,3 +4,4 @@ node_modules
 .codemachine
 AGENTS.md
 plugin-cache
+.caravel/

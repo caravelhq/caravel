@@ -109,15 +109,22 @@ export async function runSync(timeoutMs = DEFAULT_POCKET_SYNC.timeoutMs): Promis
   }
 
   const { filed, updated, skipped, errors } = report;
+  const suffix =
+    (report.dry_run ? " (dry run — pocket.sync.enabled is false)" : "") +
+    (report.more_pending ? " · more pending" : "");
+
+  // Always log, even on a no-op run. A silent success is indistinguishable
+  // from a schedule that never fired, which is exactly the ambiguity that
+  // sent Kelly digging through state.json on 2026-08-21.
   if (filed.length || updated.length || errors.length) {
     console.log(
       `[pocket] sync: ${filed.length} filed, ${updated.length} updated, ` +
-      `${skipped.length} skipped, ${errors.length} error(s)` +
-      (report.dry_run ? " (dry run — pocket.sync.enabled is false)" : "") +
-      (report.more_pending ? " · more pending" : "")
+      `${skipped.length} skipped, ${errors.length} error(s)${suffix}`
     );
     for (const f of filed) console.log(`[pocket]   + ${f.title || f.id} → ${f.transcript}`);
     for (const e of errors) console.error(`[pocket]   ! ${e.id}: ${e.error}`);
+  } else {
+    console.log(`[pocket] sync: nothing new (${skipped.length} known)${suffix}`);
   }
   return report;
 }
