@@ -59,6 +59,12 @@ const DEFAULT_TICK_MS = 30 * 1000;
 // also correctly signals "we expect workers to take up to 30 min" to operators.
 const DEFAULT_LEASE_MS = 30 * 60 * 1000;
 const DEFAULT_PER_AGENT_CONCURRENCY = 1;
+// How long a parked task's resolved dependency can go un-unblocked before the
+// sweep emits a staleness warning. 30 minutes is generous — the sweep runs
+// every DEFAULT_TICK_MS (30s), so a resolved-but-skipped task would normally
+// unblock within one tick. A gap > STALE_PARK_WARN_MINUTES strongly suggests
+// the task is orphaned.
+const STALE_PARK_WARN_MINUTES = 30;
 // Maximum age of an inflightWorkers entry before the sweep treats it as a
 // possible hang and proceeds with recovery anyway. Workers are expected to
 // finish within their lease window; this ceiling prevents a hung worker (one
@@ -1434,12 +1440,58 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       // parent here was the source of the duplicate-fire bug in
       // TSK-2026-05-28-0001.20 (Alice ran twice per sibling completion,
       // then had to mark each continuation a stand-down dup).
+      //
+      // 2026-08-22 fix (TSK-2026-08-22-0002): the tombstone must only block
+      // unblocking for Alice orchestration parents (to: alice). Worker tasks
+      // (to: bob, cliff, fabio, …) receive NO continuation from
+      // enqueueAliceContinuation — that function only writes to Alice's queue.
+      // A worker park-supersede is therefore a deadlock: the dependency
+      // resolves but the task never leaves waiting/. The fix: treat the
+      // auto-on-waiting-task stamp as a park marker (not a tombstone) when
+      // `to !== alice`, resolve the dependency, and clear the closed block on
+      // unblock so the task returns to active leaves.
+      //
+      // Why TSK-2026-05-28-0001.20 cannot recur:
+      //   - We ONLY allow unblocking when `to !== alice`.
+      //   - For Alice parents (to: alice), the skip is preserved exactly as
+      //     before. The continuation path is unchanged.
+      //   - Worker tasks have no continuation going to them; re-opening a
+      //     worker task cannot cause Alice to fire twice.
+      const closedBy = readNestedField(yaml, "closed", "by");
       const closedStatus = readNestedField(yaml, "closed", "status");
+      const taskTo = readField(yaml, "to");
+      // An Alice orchestration parent: continuation becomes the active leaf.
+      const isAliceOrchestrationPark =
+        closedBy === "auto-on-waiting-task" && taskTo === "alice";
       if (closedStatus) {
-        // Tombstoned task — dependency resolution is moot. Leave the
-        // file in waiting/; sweepArchive will fold it to archived/ once
-        // its closed.at ages past the threshold.
-        continue;
+        if (isAliceOrchestrationPark) {
+          // Alice orchestration parent — skip unblock, a continuation is the
+          // expected resolver. Safety net: if the dependency resolved more than
+          // STALE_PARK_WARN_MINUTES ago, log a warning so the orphan surfaces
+          // rather than silently ageing to archived.
+          const depResolved = await checkDependencyResolved(spec, opts.agents);
+          if (depResolved) {
+            const closedAt = readNestedField(yaml, "closed", "at");
+            if (closedAt) {
+              const ageMs = Date.now() - new Date(closedAt).getTime();
+              if (ageMs > STALE_PARK_WARN_MINUTES * 60_000) {
+                console.warn(
+                  `[multi-agent] STALE PARK: ${agent}/${taskId} waiting on ${spec} (dep resolved) — ` +
+                  `parked ${Math.round(ageMs / 60_000)}m ago with closed:superseded and no auto-unblock. ` +
+                  `Check agents/${agent}/tasks/waiting/${taskId}.yaml — may need manual reopen.`
+                );
+              }
+            }
+          }
+          continue;
+        }
+        if (closedBy !== "auto-on-waiting-task") {
+          // Some other tombstone (not our park marker) — leave for sweepArchive.
+          continue;
+        }
+        // Worker park (closedBy === "auto-on-waiting-task" && to !== "alice"):
+        // fall through to the dependency check. The closed block will be
+        // cleared on unblock so the task returns to active leaves.
       }
 
       let unblocked = false;
@@ -1460,6 +1512,12 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       const now = new Date().toISOString();
       let next = setField(yaml, "status", "open");
       next = setField(next, "updated", now);
+      // Clear the park-marker tombstone for worker tasks that were stamped by
+      // transitionToWaiting. Without this, the task returns to open/ but still
+      // carries closed.status:superseded — the active-leaves view would hide it.
+      if (closedBy === "auto-on-waiting-task") {
+        next = setClosedField(next, null);
+      }
       next = appendHistory(next, {
         ts: now,
         from: status,
@@ -2236,6 +2294,53 @@ async function tickOnce(
         );
       }
 
+      // Pre-claim depends_on gate: if the envelope carries a structured
+      // `depends_on: task:<id>` (or `depends_on: agent:<name>`) field that
+      // isn't yet resolved, park the task to waiting/ WITHOUT spawning a
+      // worker. sweepWaiting() unblocks it when the dependency lands, using
+      // the same path as a worker-emitted waiting:on: park. No tombstone is
+      // applied — the task is a normal waiting task and the sweep handles it.
+      // This prevents the wasted worker-turn pattern where a task is claimed,
+      // discovers its sibling isn't done, and self-parks.
+      const rawDependsOn = readField(yaml, "depends_on");
+      const dependsOn = rawDependsOn && rawDependsOn !== "null" ? rawDependsOn.trim() : null;
+      if (dependsOn) {
+        const depResolved = await checkDependencyResolved(dependsOn, opts.agents);
+        if (!depResolved) {
+          const now2 = new Date().toISOString();
+          const waitStatus = `waiting:on:${dependsOn}`;
+          let parkedYaml = setField(yaml, "status", waitStatus);
+          parkedYaml = setField(parkedYaml, "updated", now2);
+          parkedYaml = appendHistory(parkedYaml, {
+            ts: now2,
+            from: rawStatus,
+            to: waitStatus,
+            by: `runner-${process.pid}`,
+            note: `pre-claim gate: depends_on ${dependsOn} not yet resolved`,
+          });
+          const waitDirPath = join(AGENTS_DIR, agent, "tasks", "waiting");
+          await mkdir(waitDirPath, { recursive: true });
+          const waitTarget = join(waitDirPath, fname);
+          await writeFile(filePath, parkedYaml);
+          await rename(filePath, waitTarget);
+          await cleanStaleRendezvous(agent, taskId, "waiting");
+          await appendJournal(agent, {
+            ts: now2,
+            id: taskId,
+            status: waitStatus,
+            kind: readField(yaml, "kind") ?? "other",
+            from: readField(yaml, "from") ?? "unknown",
+            to: agent,
+            parent: readField(yaml, "parent") ?? null,
+            summary: `pre-claim park: depends_on ${dependsOn} not resolved`,
+          });
+          console.log(
+            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} pre-claim parked — depends_on ${dependsOn} not resolved`
+          );
+          continue;
+        }
+      }
+
       const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
       if (!fields) continue;
 
@@ -2337,6 +2442,7 @@ export const __testing = {
   buildWorkerPrompt,
   checkDependencyResolved,
   sweepStaleClaims,
+  sweepWaiting,
   readReportFile,
   inflightWorkers,
   readMaxWorkerLifetimeMs,
