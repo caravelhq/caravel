@@ -341,7 +341,11 @@ function readRevisits(yaml: string): { ts: string; by: string; instruction: stri
 }
 
 function setField(yaml: string, key: string, value: string): string {
-  const re = new RegExp(`^${key}:\\s*.*$`, "m");
+  // Match the key line plus any indented block children below it. Without
+  // stripping those children, writing a scalar over a block-mapping key
+  // leaves orphaned indented lines that produce invalid YAML (e.g. the
+  // `lease: null\n  holder: ...\n  expires: ...` corruption from WAL-63).
+  const re = new RegExp(`^${key}:[^\\n]*(?:\\n[ \\t]+[^\\n]*)*`, "m");
   if (re.test(yaml)) return yaml.replace(re, `${key}: ${value}`);
   return yaml + `\n${key}: ${value}\n`;
 }
@@ -387,10 +391,12 @@ function setNestedField(yaml: string, parent: string, key: string, value: string
   if (lineRe.test(yaml)) {
     return yaml.replace(lineRe, (_m, head: string) => `${head}  ${key}: ${value}`);
   }
-  // Parent exists but no key line — splice it in.
-  const parentRe = new RegExp(`^(${parent}:.*)$`, "m");
+  // Parent exists but no key line — splice it in. Strip any scalar/flow value
+  // on the parent line so we produce a clean block form instead of appending
+  // children under a scalar (e.g. `lease: null\n  holder: x` is invalid YAML).
+  const parentRe = new RegExp(`^${parent}:.*$`, "m");
   if (parentRe.test(yaml)) {
-    return yaml.replace(parentRe, (_m, head: string) => `${head}\n  ${key}: ${value}`);
+    return yaml.replace(parentRe, `${parent}:\n  ${key}: ${value}`);
   }
   return yaml;
 }

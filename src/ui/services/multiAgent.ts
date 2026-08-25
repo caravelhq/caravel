@@ -25,6 +25,7 @@ export interface MultiAgentSummary {
   totals: Counts;
   waitingUser: { agent: string; file: string; summary: string }[];
   escalated: { agent: string; file: string }[];
+  unreadable: { agent: string; file: string }[];
 }
 
 export interface TaskClosed {
@@ -110,7 +111,7 @@ function repairNullOverwrittenMappings(content: string): string {
 
 // The hand-rolled regex helpers above are still used as a last-resort fallback
 // when js-yaml gives up entirely.
-function parseEnvelope(content: string): Record<string, any> | null {
+function parseEnvelope(content: string, file?: string): Record<string, any> | null {
   const sanitized = repairNullOverwrittenMappings(
     content.replace(/^history:[\s\S]*?(?=^[a-z][a-z_]*:)/m, "history: []\n")
   );
@@ -118,22 +119,27 @@ function parseEnvelope(content: string): Record<string, any> | null {
   // `json: true` enables JSON-superset mode: duplicate mapping keys take
   // last-wins semantics instead of throwing. Some legacy envelopes have
   // duplicate `report:` keys from a runner write bug; we want to read them.
+  let lastErr: unknown;
   try {
     const doc = yamlLoad(sanitizedQuoted, { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
-  } catch {}
+  } catch (e) { lastErr = e; }
   try {
     const doc = yamlLoad(sanitized, { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
-  } catch {}
+  } catch (e) { lastErr = e; }
   try {
     const doc = yamlLoad(quoteReservedScalarStarts(content), { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
-  } catch {}
+  } catch (e) { lastErr = e; }
   try {
     const doc = yamlLoad(content, { json: true });
     if (doc && typeof doc === "object") return doc as Record<string, any>;
-  } catch {}
+  } catch (e) { lastErr = e; }
+  // All four strategies failed. Log so the failure is visible — a task that
+  // can't be parsed must be loud, not silently absent from every dashboard surface.
+  const errMsg = lastErr instanceof Error ? lastErr.message : String(lastErr ?? "unknown");
+  console.warn(`[dashboard] unparseable envelope${file ? `: ${file}` : ""}: ${errMsg}`);
   return null;
 }
 
@@ -223,6 +229,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
     totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0 },
     waitingUser: [],
     escalated: [],
+    unreadable: [],
   };
 
   if (!summary.enabled) return summary;
@@ -237,28 +244,27 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
       counts[bucket] = yamls.length;
       summary.totals[bucket] += yamls.length;
 
-      if (bucket === "waiting") {
+      if (bucket === "waiting" || bucket === "failed") {
         for (const f of yamls) {
           try {
-            const content = await readFile(join(dir, f), "utf-8");
-            const doc = parseEnvelope(content);
-            if (!doc) continue;
-            const status = asString(doc.status);
-            const brief = asString(doc.summary?.brief) || asString(doc.brief);
-            if (status === "waiting:on:user") {
-              summary.waitingUser.push({ agent, file: f, summary: brief.slice(0, 200) });
+            const filePath = join(dir, f);
+            const content = await readFile(filePath, "utf-8");
+            const doc = parseEnvelope(content, `${agent}/tasks/${bucket}/${f}`);
+            if (!doc) {
+              summary.unreadable.push({ agent, file: `${bucket}/${f}` });
+              continue;
             }
-          } catch {}
-        }
-      }
-      if (bucket === "failed") {
-        for (const f of yamls) {
-          try {
-            const content = await readFile(join(dir, f), "utf-8");
-            const doc = parseEnvelope(content);
-            if (!doc) continue;
-            if (asString(doc.status) === "escalated") {
-              summary.escalated.push({ agent, file: f });
+            if (bucket === "waiting") {
+              const status = asString(doc.status);
+              const brief = asString(doc.summary?.brief) || asString(doc.brief);
+              if (status === "waiting:on:user") {
+                summary.waitingUser.push({ agent, file: f, summary: brief.slice(0, 200) });
+              }
+            }
+            if (bucket === "failed") {
+              if (asString(doc.status) === "escalated") {
+                summary.escalated.push({ agent, file: f });
+              }
             }
           } catch {}
         }
@@ -278,7 +284,7 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   } catch {
     return null;
   }
-  const doc = parseEnvelope(content);
+  const doc = parseEnvelope(content, `${agent}/tasks/${bucket}/${file}`);
   if (!doc) return null;
 
   const id = asString(doc.id) || file.replace(/\.yaml$/, "");

@@ -729,6 +729,10 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-extras-line.escalated {
       border-left-color: #ff9a9a;
     }
+    .multi-agent-extras-line.unreadable {
+      border-left-color: #ffaa44;
+      color: #ffcc88;
+    }
     .multi-agent-head-actions {
       display: flex;
       gap: 6px;

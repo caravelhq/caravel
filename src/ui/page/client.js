@@ -4270,6 +4270,14 @@
               '<div class="multi-agent-extras-line escalated">↑ ' + escapeHtml(esc[e].agent) + ': ' + escapeHtml(esc[e].file) + '</div>'
             );
           }
+          var unreadable = s.unreadable || [];
+          if (unreadable.length > 0) {
+            var label = unreadable.length + ' envelope' + (unreadable.length === 1 ? '' : 's') + ' unreadable';
+            var listItems = unreadable.map(function(u) { return escapeHtml(u.agent) + '/' + escapeHtml(u.file); }).join(', ');
+            extraLines.push(
+              '<div class="multi-agent-extras-line unreadable" title="' + escapeHtml(listItems) + '">⚠ ' + escapeHtml(label) + '</div>'
+            );
+          }
           extras.innerHTML = extraLines.join("");
         } catch (err) {
           sub.textContent = "Error: " + (err && err.message || err);
