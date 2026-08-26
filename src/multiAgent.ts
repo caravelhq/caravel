@@ -2288,6 +2288,11 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
               : NaN;
             const ageMs = Number.isFinite(updatedMs) ? Date.now() - updatedMs : NaN;
             if (Number.isFinite(ageMs) && ageMs > AUTO_PAUSE_DAYS * 24 * 60 * 60 * 1000) {
+              // `taskId` is derived here — sweepArchive's loop variable is
+              // `fname`, and referencing an undeclared `taskId` threw on every
+              // tick, which killed the whole tickOnce chain before the claim
+              // pass ran (WAL-76 regression: no agent got any task claimed).
+              const taskId = fname.replace(/\.yaml$/, "");
               await autoPauseTask(agent, taskId, srcPath, fname, yaml, rawStatus);
             }
           }
