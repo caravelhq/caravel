@@ -14,16 +14,17 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set. Real deployments derive the roster from agents/<name>/.
 const EXAMPLE_AGENTS = ["alice", "bob", "ray"];
-const BUCKETS = ["open", "waiting", "done", "failed", "archived", "scheduled"] as const;
+const BUCKETS = ["open", "waiting", "done", "failed", "archived", "scheduled", "paused"] as const;
 type Bucket = (typeof BUCKETS)[number];
 
-type Counts = { open: number; waiting: number; done: number; failed: number; archived: number; scheduled: number };
+type Counts = { open: number; waiting: number; done: number; failed: number; archived: number; scheduled: number; paused: number };
 
 export interface MultiAgentSummary {
   enabled: boolean;
   byAgent: Record<string, Counts>;
   totals: Counts;
   waitingUser: { agent: string; file: string; summary: string }[];
+  paused: { agent: string; file: string; summary: string }[];
   escalated: { agent: string; file: string }[];
   unreadable: { agent: string; file: string }[];
 }
@@ -226,8 +227,9 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   const summary: MultiAgentSummary = {
     enabled: existsSync(AGENTS_DIR),
     byAgent: {},
-    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0 },
+    totals: { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0, paused: 0 },
     waitingUser: [],
+    paused: [],
     escalated: [],
     unreadable: [],
   };
@@ -235,7 +237,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
   if (!summary.enabled) return summary;
 
   for (const agent of envAgents()) {
-    const counts: Counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0 };
+    const counts: Counts = { open: 0, waiting: 0, done: 0, failed: 0, archived: 0, scheduled: 0, paused: 0 };
     for (const bucket of BUCKETS) {
       const dir = join(AGENTS_DIR, agent, "tasks", bucket);
       if (!existsSync(dir)) continue;
@@ -244,7 +246,7 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
       counts[bucket] = yamls.length;
       summary.totals[bucket] += yamls.length;
 
-      if (bucket === "waiting" || bucket === "failed") {
+      if (bucket === "waiting" || bucket === "failed" || bucket === "paused") {
         for (const f of yamls) {
           try {
             const filePath = join(dir, f);
@@ -260,6 +262,10 @@ export async function getMultiAgentSummary(): Promise<MultiAgentSummary> {
               if (status === "waiting:on:user") {
                 summary.waitingUser.push({ agent, file: f, summary: brief.slice(0, 200) });
               }
+            }
+            if (bucket === "paused") {
+              const headline = asString(doc.headline);
+              summary.paused.push({ agent, file: f, summary: headline.slice(0, 200) });
             }
             if (bucket === "failed") {
               if (asString(doc.status) === "escalated") {

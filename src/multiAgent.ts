@@ -85,10 +85,15 @@ function readMaxWorkerLifetimeMs(): number {
 // trail in the Project view, not just queue cleanup. Active tasks
 // (closed: null) never archive regardless of age.
 const DEFAULT_ARCHIVE_DAYS = 30;
+// Stale waiting:on:user tasks auto-transition to paused/ after this many days
+// with no movement. Named constant so the threshold appears in exactly one place.
+const AUTO_PAUSE_DAYS = 14;
 // Closed-task sweep scans every bucket — even `open` and `archived` are
 // candidates if some external process has retired them. The runner-owned
 // status is preserved in the envelope; bucket placement is just the file
 // home, and closed envelopes get folded to `archived/` once aged out.
+// `paused` is intentionally excluded — paused tasks are not archivable;
+// they stay visible until a human explicitly resumes or closes them.
 const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
 
 // === Mid-flight abort registry =============================================
@@ -1378,9 +1383,9 @@ async function transitionToWaiting(
 async function cleanStaleRendezvous(
   agent: string,
   taskId: string,
-  keepBucket: "open" | "waiting" | "done" | "failed"
+  keepBucket: "open" | "waiting" | "done" | "failed" | "paused"
 ): Promise<void> {
-  const buckets: Array<"open" | "waiting" | "done" | "failed"> = ["open", "waiting", "done", "failed"];
+  const buckets: Array<"open" | "waiting" | "done" | "failed" | "paused"> = ["open", "waiting", "done", "failed", "paused"];
   const keepDir = join(AGENTS_DIR, agent, "tasks", keepBucket);
   const keepPath = join(keepDir, `${taskId}.md`);
 
@@ -2187,6 +2192,56 @@ async function sweepStaleClaims(
   }
 }
 
+// Auto-pause a stale waiting:on:user task: stamp paused: block, record
+// paused_from:, move to tasks/paused/. Called by sweepArchive when the task
+// has no closed.status and its updated: timestamp exceeds AUTO_PAUSE_DAYS.
+async function autoPauseTask(
+  agent: string,
+  taskId: string,
+  srcPath: string,
+  fname: string,
+  yaml: string,
+  priorStatus: string
+): Promise<void> {
+  const now = new Date().toISOString();
+  let next = setField(yaml, "status", "paused");
+  next = setField(next, "updated", now);
+  next = setField(next, "paused_from", priorStatus);
+  // Add paused: null first so setNestedField can find the parent key and
+  // convert it to a block mapping. Without this, setNestedField is a no-op
+  // when the parent key is absent.
+  next = setField(next, "paused", "null");
+  next = setNestedField(next, "paused", "at", now);
+  next = setNestedField(next, "paused", "by", "runner-auto");
+  next = setNestedField(next, "paused", "reason", `no movement for ${AUTO_PAUSE_DAYS} days`);
+  next = appendHistory(next, {
+    ts: now,
+    from: priorStatus,
+    to: "paused",
+    by: "runner-auto",
+    note: `auto-paused: no movement for ${AUTO_PAUSE_DAYS} days`,
+  });
+
+  const pausedDir = join(AGENTS_DIR, agent, "tasks", "paused");
+  await mkdir(pausedDir, { recursive: true });
+  await writeFile(srcPath, next);
+  await rename(srcPath, join(pausedDir, fname));
+  await cleanStaleRendezvous(agent, taskId, "paused");
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    event: "auto-paused",
+    agent,
+    status: "paused",
+    paused_from: priorStatus,
+    note: `no movement for ${AUTO_PAUSE_DAYS} days`,
+  });
+  console.log(
+    `[${new Date().toLocaleTimeString()}] multi-agent: auto-paused ${agent}/waiting/${taskId} ` +
+    `(${AUTO_PAUSE_DAYS}d threshold, prior status: ${priorStatus})`
+  );
+}
+
 async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
   const days = readEnvNumber("CARAVEL_MULTI_AGENT_ARCHIVE_DAYS",
     readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS));
@@ -2206,7 +2261,23 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
         } catch { continue; }
 
         const closedStatus = readNestedField(yaml, "closed", "status");
-        if (!closedStatus) continue; // active — never archive
+        if (!closedStatus) {
+          // Active task — never archive. But if it's a stale waiting:on:user
+          // task, auto-pause it so it stays visible rather than sitting
+          // silently in waiting/. All other active tasks are left alone.
+          const rawStatus = readField(yaml, "status") ?? "";
+          if (rawStatus === "waiting:on:user" && bucket === "waiting") {
+            const updatedRaw = readField(yaml, "updated");
+            const updatedMs = updatedRaw
+              ? Date.parse(updatedRaw.replace(/^["']|["']$/g, ""))
+              : NaN;
+            const ageMs = Number.isFinite(updatedMs) ? Date.now() - updatedMs : NaN;
+            if (Number.isFinite(ageMs) && ageMs > AUTO_PAUSE_DAYS * 24 * 60 * 60 * 1000) {
+              await autoPauseTask(agent, taskId, srcPath, fname, yaml, rawStatus);
+            }
+          }
+          continue; // active — never archive
+        }
 
         const closedAtRaw = readNestedField(yaml, "closed", "at");
         let closedMs = NaN;

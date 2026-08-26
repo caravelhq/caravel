@@ -26,7 +26,7 @@ import { SIDECARS_DIR } from "./constants";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain } from "./services/multiAgent";
-import { createTask, unblockTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
@@ -818,6 +818,27 @@ self.addEventListener('fetch', e => {
           });
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Resume a `paused` task: move it back to the bucket recorded in
+      // paused_from: (open or waiting:on:user). No instruction needed —
+      // the task resumes exactly where it was when it was paused.
+      if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/resume") && req.method === "POST") {
+        try {
+          const middle = url.pathname.slice("/api/tasks/".length, -"/resume".length);
+          const taskId = decodeURIComponent(middle);
+          if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
+          const body = await req.json();
+          const result = await resumeTask({
+            agent: String(body?.agent ?? "").trim(),
+            taskId,
+            by: "user",
+          });
+          if (!result.ok) return json({ ok: false, error: result.error });
+          return json({ ok: true, id: result.id, resumedTo: result.resumedTo });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

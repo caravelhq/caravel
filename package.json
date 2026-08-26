@@ -15,6 +15,7 @@
     "dev:island": "vite build --watch",
     "test:stale-claim": "bun run test/stale-claim-replay.ts",
     "test:set-field": "bun run test/set-field.test.ts",
+    "test:paused-status": "bun run test/paused-status.test.ts",
     "validate-envelopes": "bun scripts/validate-envelopes.ts"
   },
   "devDependencies": {

@@ -333,7 +333,7 @@ export interface ClosedBlock {
   reason: string;
 }
 
-const TASK_BUCKETS = ["open", "waiting", "done", "failed"] as const;
+const TASK_BUCKETS = ["open", "waiting", "done", "failed", "paused"] as const;
 type TaskBucket = (typeof TASK_BUCKETS)[number];
 
 // Read a parent task's `project:` by id, scanning all agents + buckets
@@ -717,6 +717,95 @@ export async function reopenTask(input: ReopenTaskInput): Promise<ReopenTaskResu
   });
 
   return { ok: true, id: taskId, previousStatus: previousStatus as ClosedStatus };
+}
+
+// === Resume a paused task ===================================================
+//
+// Moves a `status: paused` envelope from tasks/paused/ back to the bucket
+// recorded in `paused_from:`. If paused_from is `waiting:on:user`, it returns
+// to tasks/waiting/; anything else (including `open`) returns to tasks/open/.
+// The runner picks it up on the next tick.
+
+export type ResumeTaskResult =
+  | { ok: true; id: string; resumedTo: "open" | "waiting" }
+  | { ok: false; error: string };
+
+export async function resumeTask(input: {
+  agent: string;
+  taskId: string;
+  by?: string;
+}): Promise<ResumeTaskResult> {
+  const agent = (input.agent ?? "").trim();
+  const taskId = (input.taskId ?? "").trim();
+  const by = (input.by ?? "user").trim() || "user";
+
+  if (!knownAgents().includes(agent)) {
+    return { ok: false, error: `unknown agent: ${agent || "(empty)"}` };
+  }
+  if (!/^TSK-/.test(taskId)) {
+    return { ok: false, error: `invalid task id: ${taskId}` };
+  }
+
+  const pausedPath = join(AGENTS_DIR, agent, "tasks", "paused", `${taskId}.yaml`);
+  if (!existsSync(pausedPath)) {
+    return { ok: false, error: `task ${taskId} not found in agents/${agent}/tasks/paused/` };
+  }
+
+  let yaml: string;
+  try {
+    yaml = await readFile(pausedPath, "utf-8");
+  } catch (err) {
+    return { ok: false, error: `failed to read envelope: ${String(err)}` };
+  }
+
+  const currentStatus = (/^status:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim();
+  if (currentStatus !== "paused") {
+    return { ok: false, error: `task status is "${currentStatus}", not "paused"` };
+  }
+
+  // Determine the target bucket from paused_from. Default to open if absent.
+  const pausedFrom = (/^paused_from:\s*(.*)$/m.exec(yaml)?.[1] ?? "").trim().replace(/^["']|["']$/g, "");
+  const resumeTo: "open" | "waiting" = pausedFrom === "waiting:on:user" ? "waiting" : "open";
+  const resumeStatus = pausedFrom === "waiting:on:user" ? "waiting:on:user" : "open";
+
+  const now = new Date().toISOString();
+  const targetPath = join(AGENTS_DIR, agent, "tasks", resumeTo, `${taskId}.yaml`);
+
+  let next = yaml;
+  next = setStatus(next, resumeStatus);
+  next = setUpdated(next, now);
+  next = appendHistoryEntry(next, {
+    ts: now,
+    from: "paused",
+    to: resumeStatus,
+    by,
+    note: `resumed from paused (paused_from: ${pausedFrom || "unknown"})`,
+  });
+
+  await mkdir(join(AGENTS_DIR, agent, "tasks", resumeTo), { recursive: true });
+  await writeFile(targetPath, next);
+  try {
+    await unlink(pausedPath);
+  } catch {}
+
+  // Move any rendezvous .md alongside the envelope.
+  const pausedMd = join(AGENTS_DIR, agent, "tasks", "paused", `${taskId}.md`);
+  if (existsSync(pausedMd)) {
+    try {
+      await rename(pausedMd, join(AGENTS_DIR, agent, "tasks", resumeTo, `${taskId}.md`));
+    } catch {}
+  }
+
+  await appendJournal(agent, {
+    ts: now,
+    id: taskId,
+    status: resumeStatus,
+    transition: `paused→${resumeStatus}`,
+    by,
+    note: `resumed from paused`,
+  });
+
+  return { ok: true, id: taskId, resumedTo: resumeTo };
 }
 
 // Pull the `closed.status` value from an envelope's YAML, returning null

@@ -4264,6 +4264,13 @@
               '<div class="multi-agent-extras-line">⏳ ' + escapeHtml(item.agent) + ': ' + escapeHtml(item.summary || item.file) + '</div>'
             );
           }
+          var pausedItems = s.paused || [];
+          for (var p = 0; p < pausedItems.length; p++) {
+            var pi = pausedItems[p];
+            extraLines.push(
+              '<div class="multi-agent-extras-line paused">⏸ ' + escapeHtml(pi.agent) + ': ' + escapeHtml(pi.summary || pi.file) + '</div>'
+            );
+          }
           var esc = s.escalated || [];
           for (var e = 0; e < esc.length; e++) {
             extraLines.push(
@@ -4385,6 +4392,7 @@
         if (!status) return "is-open";
         if (status === "open" || status === "claimed") return "is-open";
         if (status.indexOf("waiting:") === 0) return "is-waiting";
+        if (status === "paused") return "is-paused";
         if (status === "done") return "is-done";
         if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
         return "is-open";
@@ -4670,6 +4678,7 @@
         var isTerminal = statusLower.indexOf("done") === 0 || statusLower.indexOf("failed") === 0 || statusLower === "escalated";
         var isClaimed = card.status === "claimed";
         var isWaitingUser = card.status === "waiting:on:user";
+        var isPaused = card.status === "paused";
         var isClosed = !!(card.closed && card.closed.status);
         var envelopePath = card.envelopePath || ("agents/" + card.agent + "/tasks/" + card.bucket + "/" + card.id + ".yaml");
 
@@ -4767,6 +4776,9 @@
         }
         if (isCurrent && isClosed) {
           actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
+        }
+        if (isCurrent && isPaused && !isClosed) {
+          actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml(card.agent || "") + '" data-resume-task="' + escapeHtml(card.id) + '" type="button">▷ Resume</button>');
         }
         if (!isCurrent) {
           actions.push('<button class="task-panel-action" data-open-task="' + escapeHtml(card.id) + '" type="button">Open</button>');
@@ -5448,6 +5460,7 @@
         var rowClass = "tasks-tree-row";
         if (t.id === currentTaskId) rowClass += " is-active";
         if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+        if (t.status === "paused") rowClass += " is-paused";
         // WAL-63 Phase 1: greyed-out cue for closed tasks. Phase 4 will add
         // a per-project "Hide closed" toggle; for now closed rows still
         // render in the tree but visibly recede.
@@ -5484,6 +5497,7 @@
       function shortenStatusLabel(s) {
         if (!s) return "?";
         s = String(s);
+        if (s === "paused") return "paused";
         if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
         if (s.indexOf("failed:") === 0) {
           var rest = s.slice("failed:".length);
@@ -5588,28 +5602,46 @@
       }
 
       // WAL-76: persistent "Awaiting your input" widget. Shows all open
-      // waiting:on:user tasks across both the Projects and All views.
-      // Not one-click cancellable — each row opens the task panel only.
+      // waiting:on:user tasks, and a second "Paused" tier for auto-paused
+      // tasks. Neither is one-click cancellable — each row opens the task panel.
       function renderUserBlockedWidget() {
         var el = document.getElementById("tasks-user-blocked");
         if (!el) return;
         var blocked = tasksCache.filter(function (t) {
           return t.status === "waiting:on:user" && !(t.closed && t.closed.status);
         });
-        if (blocked.length === 0) {
+        var paused = tasksCache.filter(function (t) {
+          return t.status === "paused" && !(t.closed && t.closed.status);
+        });
+        if (blocked.length === 0 && paused.length === 0) {
           el.hidden = true;
           el.innerHTML = "";
           return;
         }
-        var html = '<div class="tasks-user-blocked-head">⏳ Awaiting your input (' + blocked.length + ')</div>';
-        for (var i = 0; i < blocked.length; i++) {
-          var t = blocked[i];
-          var id = escapeHtml(t.id || "");
-          var headline = escapeHtml((t.headline || t.id || "").slice(0, 60));
-          html += '<div class="tasks-user-blocked-row" data-open-task="' + id + '">' +
-            '<span class="tasks-user-blocked-id">' + id + '</span>' +
-            '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
-            '</div>';
+        var html = "";
+        if (blocked.length > 0) {
+          html += '<div class="tasks-user-blocked-head">⏳ Awaiting your input (' + blocked.length + ')</div>';
+          for (var i = 0; i < blocked.length; i++) {
+            var t = blocked[i];
+            var id = escapeHtml(t.id || "");
+            var headline = escapeHtml((t.headline || t.id || "").slice(0, 60));
+            html += '<div class="tasks-user-blocked-row" data-open-task="' + id + '">' +
+              '<span class="tasks-user-blocked-id">' + id + '</span>' +
+              '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
+              '</div>';
+          }
+        }
+        if (paused.length > 0) {
+          html += '<div class="tasks-user-paused-head">⏸ Paused (' + paused.length + ')</div>';
+          for (var j = 0; j < paused.length; j++) {
+            var pt = paused[j];
+            var pid = escapeHtml(pt.id || "");
+            var pheadline = escapeHtml((pt.headline || pt.id || "").slice(0, 60));
+            html += '<div class="tasks-user-paused-row" data-open-task="' + pid + '">' +
+              '<span class="tasks-user-blocked-id">' + pid + '</span>' +
+              '<span class="tasks-user-blocked-headline">' + pheadline + '</span>' +
+              '</div>';
+          }
         }
         el.innerHTML = html;
         el.hidden = false;
@@ -6795,6 +6827,35 @@
         }
       }
 
+      // Resume a paused task — moves it back to open or waiting:on:user,
+      // whichever it was before auto-pause. No confirmation needed.
+      async function submitResume(btn) {
+        if (!btn) return;
+        var agent = btn.getAttribute("data-resume-agent");
+        var taskId = btn.getAttribute("data-resume-task");
+        if (!agent || !taskId) return;
+        btn.disabled = true;
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent }),
+          });
+          var data = await res.json();
+          if (!data.ok) {
+            console.warn("Resume failed:", data.error);
+            btn.disabled = false;
+            return;
+          }
+          openTaskPanel(taskId);
+          fetchTasks();
+          fetchSummary();
+        } catch (err) {
+          console.warn("Resume error:", err);
+          btn.disabled = false;
+        }
+      }
+
       // (Removed: spawnFollowUp() — the old "↳ Next" button that opened the
       // full new-task form. Replaced by the unified "↳ Next" affordance on
       // the task card itself, which spawns a child via /api/tasks/<id>/next
@@ -7070,6 +7131,12 @@
           if (reopenBtn) {
             ev.preventDefault();
             submitReopen(reopenBtn);
+            return;
+          }
+          var resumeBtn = ev.target.closest("[data-resume-task]");
+          if (resumeBtn) {
+            ev.preventDefault();
+            submitResume(resumeBtn);
             return;
           }
           var followonBtn = ev.target.closest("[data-followon-task]");

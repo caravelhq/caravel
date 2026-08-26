@@ -733,6 +733,10 @@ export const pageStyles = String.raw`    :root {
       border-left-color: #ffaa44;
       color: #ffcc88;
     }
+    .multi-agent-extras-line.paused {
+      border-left-color: #7a9abf99;
+      color: #8ab0d0;
+    }
     .multi-agent-head-actions {
       display: flex;
       gap: 6px;
@@ -808,6 +812,7 @@ export const pageStyles = String.raw`    :root {
     }
     .multi-agent-task-status.is-open { color: #9be7ff; }
     .multi-agent-task-status.is-waiting { color: #f0c674; }
+    .multi-agent-task-status.is-paused { color: #7a9abf; }
     .multi-agent-task-status.is-done { color: #93e0a8; }
     .multi-agent-task-status.is-failed { color: #ff9a9a; }
     .multi-agent-task-summary {
@@ -3087,6 +3092,27 @@ export const pageStyles = String.raw`    :root {
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    .tasks-user-paused-head {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #7a9abf;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .tasks-user-paused-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 3px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #8ab0d0;
+    }
+    .tasks-user-paused-row:hover { background: #7a9abf14; }
     .tasks-tree {
       padding: 6px 4px;
       display: flex;
@@ -3126,6 +3152,12 @@ export const pageStyles = String.raw`    :root {
       background: #f0c67414;
       border-left: 2px solid #f0c674;
       padding-left: 6px;
+    }
+    .tasks-tree-row.is-paused {
+      background: #7a9abf14;
+      border-left: 2px solid #7a9abf;
+      padding-left: 6px;
+      opacity: 0.8;
     }
     /* WAL-63 Phase 1: closed tasks recede in the picker. The headline, ids,
        and status pill all fade so the user-attention overlay reads at a
@@ -3219,6 +3251,7 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-tree-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
     .tasks-tree-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-tree-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
     .tasks-tree-status.is-done { color: #93e0a8; border-color: #93e0a855; }
     .tasks-tree-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
     .tasks-tree-headline {
@@ -3353,6 +3386,7 @@ export const pageStyles = String.raw`    :root {
     }
     .tasks-viewer-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
     .tasks-viewer-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-viewer-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
     .tasks-viewer-status.is-done { color: #93e0a8; border-color: #93e0a855; }
     .tasks-viewer-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
     .tasks-viewer-tabs {
@@ -3535,6 +3569,7 @@ export const pageStyles = String.raw`    :root {
     }
     .task-panel-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
     .task-panel-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .task-panel-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
     .task-panel-status.is-done { color: #93e0a8; border-color: #93e0a855; }
     .task-panel-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
     .task-panel-body {
