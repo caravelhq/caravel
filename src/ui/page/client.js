@@ -5618,33 +5618,53 @@
           el.innerHTML = "";
           return;
         }
+        // Kelly 2026-08-26: on a phone the full `TSK-2026-08-26-0002` ate the
+        // row and the headline was unreadable. Drop the constant `TSK-` and the
+        // year — `08-26-0002` is still unique in practice and leaves room for
+        // the label. Full id stays in data-open-task and the title tooltip.
+        function shortId(id) {
+          return String(id || "").replace(/^TSK-\d{4}-/, "");
+        }
+        function widgetRow(cls, t) {
+          var full = escapeHtml(t.id || "");
+          var shrt = escapeHtml(shortId(t.id));
+          var headline = escapeHtml(t.headline || t.id || "");
+          return '<div class="' + cls + '" data-open-task="' + full + '" title="' + full + ' — ' + headline + '">' +
+            '<span class="tasks-user-blocked-id">' + shrt + '</span>' +
+            '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
+            '</div>';
+        }
         var html = "";
         if (blocked.length > 0) {
           html += '<div class="tasks-user-blocked-head">⏳ Awaiting your input (' + blocked.length + ')</div>';
           for (var i = 0; i < blocked.length; i++) {
-            var t = blocked[i];
-            var id = escapeHtml(t.id || "");
-            var headline = escapeHtml((t.headline || t.id || "").slice(0, 60));
-            html += '<div class="tasks-user-blocked-row" data-open-task="' + id + '">' +
-              '<span class="tasks-user-blocked-id">' + id + '</span>' +
-              '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
-              '</div>';
+            html += widgetRow("tasks-user-blocked-row", blocked[i]);
           }
         }
         if (paused.length > 0) {
           html += '<div class="tasks-user-paused-head">⏸ Paused (' + paused.length + ')</div>';
           for (var j = 0; j < paused.length; j++) {
-            var pt = paused[j];
-            var pid = escapeHtml(pt.id || "");
-            var pheadline = escapeHtml((pt.headline || pt.id || "").slice(0, 60));
-            html += '<div class="tasks-user-paused-row" data-open-task="' + pid + '">' +
-              '<span class="tasks-user-blocked-id">' + pid + '</span>' +
-              '<span class="tasks-user-blocked-headline">' + pheadline + '</span>' +
-              '</div>';
+            html += widgetRow("tasks-user-paused-row", paused[j]);
           }
         }
         el.innerHTML = html;
         el.hidden = false;
+      }
+
+      // Kelly 2026-08-26: widget rows did nothing when tapped. The only
+      // [data-open-task] handler is delegated from taskPanelBody, and this
+      // widget lives in #tasks-sidebar — so clicks never reached it, on any
+      // viewport. Bind our own. openTaskPanel() → setRightPaneMode("view")
+      // already collapses the picker below the 1199px container threshold,
+      // which is what makes the panel visible on a phone.
+      var tasksUserBlockedEl = document.getElementById("tasks-user-blocked");
+      if (tasksUserBlockedEl) {
+        tasksUserBlockedEl.addEventListener("click", function (ev) {
+          var row = ev.target.closest("[data-open-task]");
+          if (!row) return;
+          ev.preventDefault();
+          openTaskPanel(row.getAttribute("data-open-task"));
+        });
       }
 
       function renderTaskPicker() {

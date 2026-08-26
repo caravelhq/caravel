@@ -3092,6 +3092,22 @@ export const pageStyles = String.raw`    :root {
       white-space: nowrap;
       text-overflow: ellipsis;
     }
+    /* Kelly 2026-08-26: on a phone a single ellipsised line told you nothing.
+       Below the tasks-panel container threshold, let the label wrap to two
+       lines and pin the id to the top so the row still reads as id + label. */
+    @container tasks-panel (max-width: 1199px) {
+      .tasks-user-blocked-row,
+      .tasks-user-paused-row {
+        align-items: flex-start;
+      }
+      .tasks-user-blocked-headline {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.35;
+      }
+    }
     .tasks-user-paused-head {
       font-size: 10px;
       font-weight: 700;
