@@ -1108,9 +1108,24 @@ async function enqueueAliceContinuation(opts: {
   }
 
   const isMulti = siblings.length > 1;
-  const headline = isMulti
-    ? `Briefing — ${siblings.length} sibling tasks landed (parent ${orchParent ?? "?"})`
-    : `Continue after ${lastCompletedTaskId}`;
+  // Kelly 2026-08-26: "Continue after TSK-2026-08-05-0001.14" and "Briefing — 4
+  // sibling tasks landed (parent TSK-…)" tell a human nothing, and in the
+  // awaiting-input widget they were 7 of 10 rows. The child's own headline is
+  // already in hand here — it gets used a few lines below to build the brief —
+  // so name the work instead of restating an id the row already shows.
+  const clip = (text: string, max = 64) =>
+    text.length <= max ? text : text.slice(0, max - 1).trimEnd() + "…";
+  const firstHeadline = siblings.find((s) => s.headline)?.headline?.trim() || "";
+  let headline: string;
+  if (isMulti) {
+    headline = contProject
+      ? `Briefing — ${siblings.length} tasks landed · ${clip(contProject, 40)}`
+      : `Briefing — ${siblings.length} tasks landed`;
+  } else {
+    headline = firstHeadline
+      ? `Continue: ${clip(firstHeadline)}`
+      : `Continue after ${lastCompletedTaskId}`;
+  }
 
   const briefLines: string[] = [];
   briefLines.push(
