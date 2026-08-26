@@ -4800,13 +4800,26 @@
         // 4c. Close form — hidden until the Close button toggles it. Optional
         //     reason textarea + cascade checkbox (only shown when active
         //     descendants exist). Posts to /api/tasks/<id>/close.
+        //     WAL-76: for waiting:on:user tasks the prompt is outcome-focused
+        //     so Kelly records what the question was answered with (or why it
+        //     is no longer relevant) rather than leaving closed.reason empty.
         if (isCurrent && !isClaimed && !isClosed) {
           var defaultCloseStatus = (statusLower === "done") ? "closed" : "cancelled";
           var activeDescendantCount = (typeof countActiveDescendants === "function") ? countActiveDescendants(card.id) : 0;
+          var closeWarnSummary, closeWarnBody, closeReasonPlaceholder;
+          if (isWaitingUser) {
+            closeWarnSummary = 'Record the outcome and mark <strong>cancelled</strong>.';
+            closeWarnBody = 'This task was waiting for your input. Recording the outcome preserves the decision trail — what was answered, or why the question is no longer relevant. The runner state is kept and closure is reversible via ↻ Reopen.';
+            closeReasonPlaceholder = 'What was the outcome? e.g. “decided to use approach B”, “no longer needed after TPD-X landed” — optional but helps trace decisions';
+          } else {
+            closeWarnSummary = 'Marks <strong>' + defaultCloseStatus + '</strong> — reversible, runner state kept.';
+            closeWarnBody = 'Close marks this task <strong>' + defaultCloseStatus + '</strong> from your perspective. The runner state (' + escapeHtml(card.status || "?") + ') is preserved. You can <strong>↻ Reopen</strong> later — closure is reversible.';
+            closeReasonPlaceholder = "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
+          }
           sections +=
             '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultCloseStatus + '" hidden>' +
-            '<details class="task-panel-rework-warn"><summary>Marks <strong>' + defaultCloseStatus + '</strong> — reversible, runner state kept.</summary><p>Close marks this task <strong>' + defaultCloseStatus + '</strong> from your perspective. The runner state (' + escapeHtml(card.status || "?") + ') is preserved. You can <strong>↻ Reopen</strong> later — closure is reversible.</p></details>' +
-            '<textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="Optional reason (e.g. \'rolled into TSK-X\', \'no longer needed\')…"></textarea>' +
+            '<details class="task-panel-rework-warn"><summary>' + closeWarnSummary + '</summary><p>' + closeWarnBody + '</p></details>' +
+            '<textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml(closeReasonPlaceholder) + '"></textarea>' +
             (activeDescendantCount > 0
               ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" />' +
                 '<span>Close family — cancel ' + activeDescendantCount + ' active descendant' + (activeDescendantCount === 1 ? '' : 's') + ' too</span></label>'
@@ -5574,8 +5587,37 @@
         }
       }
 
+      // WAL-76: persistent "Awaiting your input" widget. Shows all open
+      // waiting:on:user tasks across both the Projects and All views.
+      // Not one-click cancellable — each row opens the task panel only.
+      function renderUserBlockedWidget() {
+        var el = document.getElementById("tasks-user-blocked");
+        if (!el) return;
+        var blocked = tasksCache.filter(function (t) {
+          return t.status === "waiting:on:user" && !(t.closed && t.closed.status);
+        });
+        if (blocked.length === 0) {
+          el.hidden = true;
+          el.innerHTML = "";
+          return;
+        }
+        var html = '<div class="tasks-user-blocked-head">⏳ Awaiting your input (' + blocked.length + ')</div>';
+        for (var i = 0; i < blocked.length; i++) {
+          var t = blocked[i];
+          var id = escapeHtml(t.id || "");
+          var headline = escapeHtml((t.headline || t.id || "").slice(0, 60));
+          html += '<div class="tasks-user-blocked-row" data-open-task="' + id + '">' +
+            '<span class="tasks-user-blocked-id">' + id + '</span>' +
+            '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
+            '</div>';
+        }
+        el.innerHTML = html;
+        el.hidden = false;
+      }
+
       function renderTaskPicker() {
         if (!tasksTree) return;
+        renderUserBlockedWidget();
         // Filter chips only apply to the "all" view.
         if (tasksFilterChips) tasksFilterChips.hidden = (tasksView !== "all");
         if (tasksView === "projects") return renderProjectsView();

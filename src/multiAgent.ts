@@ -1371,12 +1371,53 @@ async function transitionToWaiting(
 // alone outside their own bucket only when stale (the runner only writes
 // `<id>.md` to the bucket the YAML lands in, so any other bucket's `<id>.md`
 // is by definition from a prior turn).
+//
+// "archived" is intentionally excluded from the bucket list. That bucket is
+// managed exclusively by sweepArchive() and must not be touched during live
+// active-bucket transitions — including during a waiting→done move.
 async function cleanStaleRendezvous(
   agent: string,
   taskId: string,
   keepBucket: "open" | "waiting" | "done" | "failed"
 ): Promise<void> {
   const buckets: Array<"open" | "waiting" | "done" | "failed"> = ["open", "waiting", "done", "failed"];
+  const keepDir = join(AGENTS_DIR, agent, "tasks", keepBucket);
+  const keepPath = join(keepDir, `${taskId}.md`);
+
+  // If the report isn't in the keep bucket yet, find the best copy and promote
+  // it via rename (atomic, same filesystem). Without this step the old code
+  // would delete the only existing copy — the bug that destroyed nine reports.
+  if (!existsSync(keepPath)) {
+    const found: Array<{ bucket: string; path: string; mtime: number }> = [];
+    for (const b of buckets) {
+      if (b === keepBucket) continue;
+      const p = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.md`);
+      if (existsSync(p)) {
+        let mtime = 0;
+        try { mtime = (await stat(p)).mtimeMs; } catch {}
+        found.push({ bucket: b, path: p, mtime });
+      }
+    }
+    if (found.length > 0) {
+      found.sort((a, b) => b.mtime - a.mtime);
+      const winner = found[0]!;
+      const rest = found.slice(1);
+      if (rest.length > 0) {
+        console.warn(
+          `[rendezvous] ${taskId}: multiple copies (${found.map((c) => c.bucket).join(", ")}); ` +
+          `promoting ${winner.bucket} → ${keepBucket}, discarding ${rest.map((c) => c.bucket).join(", ")}`
+        );
+      }
+      await mkdir(keepDir, { recursive: true });
+      await rename(winner.path, keepPath);
+      for (const copy of rest) {
+        try { await unlink(copy.path); } catch {}
+      }
+    }
+  }
+
+  // Delete any remaining stale copies from non-keep buckets (handles the
+  // case where keepPath already existed and duplicates need clearing).
   for (const b of buckets) {
     if (b === keepBucket) continue;
     const stalePath = join(AGENTS_DIR, agent, "tasks", b, `${taskId}.md`);

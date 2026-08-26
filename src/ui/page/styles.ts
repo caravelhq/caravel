@@ -3051,6 +3051,42 @@ export const pageStyles = String.raw`    :root {
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
     }
+    .tasks-user-blocked {
+      border-bottom: 1px solid #f0c67430;
+      background: #1a150a;
+      padding: 8px 10px 6px;
+      flex-shrink: 0;
+    }
+    .tasks-user-blocked-head {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #f0c674;
+      margin-bottom: 4px;
+    }
+    .tasks-user-blocked-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 3px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #d4b87a;
+    }
+    .tasks-user-blocked-row:hover { background: #f0c67414; }
+    .tasks-user-blocked-id {
+      color: #f0c674;
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+    .tasks-user-blocked-headline {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
     .tasks-tree {
       padding: 6px 4px;
       display: flex;

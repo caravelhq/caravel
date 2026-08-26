@@ -385,6 +385,10 @@ ${pageStyles}
       </div>
       <div class="tasks-split">
         <div class="tasks-sidebar" id="tasks-sidebar">
+          <!-- WAL-76: persistent "Awaiting your input" widget — always visible
+               when any waiting:on:user tasks exist. Not one-click cancellable;
+               clicking a row opens the task panel. Hidden when empty. -->
+          <div id="tasks-user-blocked" class="tasks-user-blocked" hidden></div>
           <div class="tasks-tree" id="tasks-tree">
             <div class="tasks-loading">Loading…</div>
           </div>
