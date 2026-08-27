@@ -23,7 +23,7 @@
 import { mkdtemp, mkdir, writeFile } from "fs/promises";
 import { tmpdir } from "os";
 import { join } from "path";
-import { loadGraph, ready, readList } from "../src/multiAgent.ts";
+import { loadGraph, ready, readList, claimDecision } from "../src/multiAgent.ts";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
@@ -458,6 +458,77 @@ console.log("\nSection 7 — block-form needs/after:");
   const node = graph.nodes.get("BLK-B");
   assert(node?.needs[0] === "BLK-A", "block-form needs parses correctly");
   assert(ready("BLK-B", graph), "block-form needs satisfied → ready");
+}
+
+// ── section 10: claimDecision — four outcomes ──────────────────────────────────
+
+console.log("\nSection 10 — claimDecision: four outcomes:");
+
+{
+  // Fixture: DEP-X (done), CHILD-X (open, needs DEP-X), BLOCKED-X (open, needs
+  // MISSING-X which doesn't exist), ROOT-X (open, no deps).
+  const dir = join(fixtureRoot, "claim-decision");
+  const AGENTS = ["alice"];
+
+  await writeTask(dir, "alice", "done", "DEP-X",
+    makeEnvelope({ id: "DEP-X", status: "done", needs: [] }));
+  await writeTask(dir, "alice", "open", "CHILD-X",
+    makeEnvelope({ id: "CHILD-X", status: "open", needs: ["DEP-X"] }));
+  await writeTask(dir, "alice", "open", "BLOCKED-X",
+    makeEnvelope({ id: "BLOCKED-X", status: "open", needs: ["MISSING-X"] }));
+  await writeTask(dir, "alice", "open", "ROOT-X",
+    makeEnvelope({ id: "ROOT-X", status: "open" }));
+
+  const graph = await loadGraph(dir, AGENTS);
+
+  // Outcome 1: skip-claimed — status: claimed, any graph state.
+  const claimedYaml = makeEnvelope({ id: "ROOT-X", status: "claimed" });
+  assert(
+    claimDecision(claimedYaml, "ROOT-X", graph) === "skip-claimed",
+    "claimDecision: status: claimed → skip-claimed"
+  );
+
+  // Outcome 2a: skip-terminalish — done.
+  const doneYaml = makeEnvelope({ id: "DEP-X", status: "done" });
+  assert(
+    claimDecision(doneYaml, "DEP-X", graph) === "skip-terminalish",
+    "claimDecision: status: done → skip-terminalish"
+  );
+
+  // Outcome 2b: skip-terminalish — failed:*.
+  const failedYaml = makeEnvelope({ id: "DEP-X", status: "failed:other" });
+  assert(
+    claimDecision(failedYaml, "DEP-X", graph) === "skip-terminalish",
+    "claimDecision: status: failed:other → skip-terminalish"
+  );
+
+  // Outcome 2c: skip-terminalish — waiting:on:*.
+  const waitingYaml = makeEnvelope({ id: "DEP-X", status: "waiting:on:task:FOO" });
+  assert(
+    claimDecision(waitingYaml, "DEP-X", graph) === "skip-terminalish",
+    "claimDecision: status: waiting:on:task:FOO → skip-terminalish"
+  );
+
+  // Outcome 3: skip-not-ready — open but needs not satisfied (dep missing from graph).
+  const blockedYaml = makeEnvelope({ id: "BLOCKED-X", status: "open", needs: ["MISSING-X"] });
+  assert(
+    claimDecision(blockedYaml, "BLOCKED-X", graph) === "skip-not-ready",
+    "claimDecision: open with unsatisfied needs → skip-not-ready"
+  );
+
+  // Outcome 4a: claim — open with all needs satisfied.
+  const childYaml = makeEnvelope({ id: "CHILD-X", status: "open", needs: ["DEP-X"] });
+  assert(
+    claimDecision(childYaml, "CHILD-X", graph) === "claim",
+    "claimDecision: open with all needs done → claim"
+  );
+
+  // Outcome 4b: claim — open with no needs.
+  const rootYaml = makeEnvelope({ id: "ROOT-X", status: "open" });
+  assert(
+    claimDecision(rootYaml, "ROOT-X", graph) === "claim",
+    "claimDecision: open with no needs → claim"
+  );
 }
 
 // ── summary ────────────────────────────────────────────────────────────────────

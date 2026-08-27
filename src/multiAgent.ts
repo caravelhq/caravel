@@ -2560,6 +2560,38 @@ function readEnvNumber(key: string, fallback: number): number {
   return Number.isFinite(n) ? n : fallback;
 }
 
+// === Per-task claim decision (WAL-72 Phase 1) ==================================
+//
+// Pure, synchronous predicate: given the raw YAML of a task envelope, its id,
+// and the in-memory task graph, returns one of four outcomes:
+//
+//   skip-claimed     — status: claimed; another worker holds the lease.
+//   skip-terminalish — status: done|failed:*|waiting:on:*; stale file-move race.
+//   skip-not-ready   — open, but needs/after edges not yet satisfied.
+//   claim            — open and all edges satisfied; caller may claim.
+//
+// The async depends_on pre-park gate stays in tickOnce because it has file-move
+// side effects.  Everything else — the two earlier status guards and the Phase 1
+// ready() gate — lives here, exactly once.  Both tickOnce and
+// runClaimPassForTesting call this function; there is no second copy of the
+// guard logic anywhere in this file.
+
+export type ClaimDecision = "skip-claimed" | "skip-terminalish" | "skip-not-ready" | "claim";
+
+export function claimDecision(yaml: string, taskId: string, graph: TaskGraph): ClaimDecision {
+  const rawStatus = (readField(yaml, "status") ?? "open").trim();
+  if (rawStatus === "claimed") return "skip-claimed";
+  if (
+    rawStatus === "done" ||
+    rawStatus.startsWith("failed:") ||
+    rawStatus.startsWith("waiting:on:")
+  ) {
+    return "skip-terminalish";
+  }
+  if (!ready(taskId, graph)) return "skip-not-ready";
+  return "claim";
+}
+
 async function tickOnce(
   opts: Required<MultiAgentOptions>,
   inFlight: Map<string, number>,
@@ -2624,12 +2656,8 @@ async function tickOnce(
       // status as `open`. Stops envelopes from being stranded forever when
       // an agent writes a custom status manually in a chat session.
       const rawStatus = (readField(yaml, "status") ?? "open").trim();
-      const isClaimed = rawStatus === "claimed";
-      const isTerminalish =
-        rawStatus === "done" ||
-        rawStatus.startsWith("failed:") ||
-        rawStatus.startsWith("waiting:on:");
-      if (isClaimed || isTerminalish) {
+      const decision = claimDecision(yaml, taskId, graph);
+      if (decision === "skip-claimed" || decision === "skip-terminalish") {
         // `claimed` = worker mid-flight (lease check below handles re-claim).
         // Terminalish in open/ = stale file move race, sweep will reconcile.
         continue;
@@ -2687,10 +2715,9 @@ async function tickOnce(
         }
       }
 
-      // Phase 1: needs/after edge check.  Skip (don't park) tasks whose
-      // declared dependencies aren't satisfied yet.  The task stays in
-      // open/ and re-evaluated next tick — no wasted worker turn.
-      if (!ready(taskId, graph)) {
+      // Phase 1: needs/after edge check — decision already computed above by
+      // claimDecision().  No second copy of the ready() gate.
+      if (decision === "skip-not-ready") {
         continue;
       }
 
@@ -2742,23 +2769,21 @@ async function tickOnce(
 
 // === Testable claim pass (WAL-72 Phase 1 test export) =====================
 //
-// Exported via __testing for Jess's tick-level regression suite (TESTPLAN.md
-// Part 3). It runs only the graph-load → ready-check → claim-pass portion of
-// tickOnce. The three sweeps (sweepStaleClaims, sweepWaiting, sweepArchive)
-// are omitted — they use the module-level AGENTS_DIR and would contaminate a
-// fixture run. Tests that need to verify the sweeps independently can call
-// them via __testing.sweepWaiting etc. (those run against the live tree).
+// Thin wrapper for Jess's tick-level regression suite (TESTPLAN.md Part 3).
+// Drives graph-load → claimDecision() → claim-pass against an explicit
+// agentsDir without the three sweeps (sweepStaleClaims, sweepWaiting,
+// sweepArchive), which use the module-level AGENTS_DIR and would contaminate
+// a fixture run.
 //
-// Why not thread agentsDir through tickOnce itself: the four sweep helpers
-// each have a dozen AGENTS_DIR references; threading through all of them is
-// not a "small refactor" (brief: WAL-72). A focused export is the right shape.
+// All guard logic delegates to claimDecision() — the same function tickOnce
+// calls.  There is exactly one copy of the guard in this file.
 //
-// Signature Jess needs:
+// Signature:
 //   const { claimed, skippedNotReady } = await __testing.runClaimPassForTesting(
 //     fixtureDir, ["alice", "bob"]
 //   );
 //   // claimed: ids whose yaml is now `status: claimed` on disk
-//   // skippedNotReady: ids that were open but !ready(id, graph)
+//   // skippedNotReady: ids that were open but claimDecision returned skip-not-ready
 async function runClaimPassForTesting(
   agentsDir: string,
   agents: string[],
@@ -2784,18 +2809,11 @@ async function runClaimPassForTesting(
         yaml = await readFile(filePath, "utf-8");
       } catch { continue; }
 
-      // Mirror tickOnce's guards: skip claimed and terminalish envelopes.
-      const rawStatus = (readField(yaml, "status") ?? "open").trim();
-      const isClaimed = rawStatus === "claimed";
-      const isTerminalish =
-        rawStatus === "done" ||
-        rawStatus.startsWith("failed:") ||
-        rawStatus.startsWith("waiting:on:");
-      if (isClaimed || isTerminalish) continue;
-
-      // The wiring under test: tasks whose dependencies are not satisfied
-      // must not be claimed. This is the guard the regression case exercises.
-      if (!ready(taskId, graph)) {
+      // Delegate to claimDecision() — the same function tickOnce calls.
+      // No second copy of the guard logic.
+      const decision = claimDecision(yaml, taskId, graph);
+      if (decision === "skip-claimed" || decision === "skip-terminalish") continue;
+      if (decision === "skip-not-ready") {
         skippedNotReady.push(taskId);
         continue;
       }
@@ -2888,6 +2906,8 @@ export const __testing = {
   readList,
   loadGraph,
   ready,
+  // Per-task claim decision — pure function, single source of truth for the guard.
+  claimDecision,
   // Tick-level claim pass for WAL-72 Phase 1 regression suite (TESTPLAN.md Part 3).
   // Takes an explicit agentsDir so tests can drive it against a fixture directory.
   runClaimPassForTesting,
