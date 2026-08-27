@@ -18,7 +18,8 @@
     "test:paused-status": "bun run test/paused-status.test.ts",
     "validate-envelopes": "bun scripts/validate-envelopes.ts",
     "test:envelope-yaml": "bun run test/envelope-yaml-safety.test.ts",
-    "test:graph-ready": "bun run test/graph-ready.test.ts"
+    "test:graph-ready": "bun run test/graph-ready.test.ts",
+    "test:all": "bun run test/run-all.ts"
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",
