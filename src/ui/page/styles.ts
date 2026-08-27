@@ -3061,6 +3061,16 @@ export const pageStyles = String.raw`    :root {
       background: #1a150a;
       padding: 8px 10px 6px;
       flex-shrink: 0;
+      /* Auto-pause (DEC-0004) filled this to 47 rows on its first tick, and
+         with flex-shrink:0 and no cap the widget ate the whole sidebar — the
+         task tree below it became unreachable. Cap it and scroll internally so
+         it can never crowd out the tree it sits above. (2026-08-27) */
+      max-height: 40vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    @container tasks-panel (max-width: 1199px) {
+      .tasks-user-blocked { max-height: 45vh; }
     }
     .tasks-user-blocked-head {
       font-size: 10px;
