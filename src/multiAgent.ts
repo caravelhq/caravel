@@ -277,6 +277,9 @@ interface TaskFields {
   from: string;
   kind: string;
   parent: string | null;
+  needs: string[];   // Phase 1: ids that must be `done` before this task is ready
+  after: string[];   // Phase 1: ids that must be terminal (done|failed) before this task is ready
+  type: string | null; // Phase 1: reserved; carried, not branched on by the scheduler
 }
 
 // === YAML helpers (regex-based, mirrors task.mjs to avoid a YAML dep) =====
@@ -285,6 +288,36 @@ function readField(yaml: string, key: string): string | null {
   const re = new RegExp(`^${key}:\\s*(.*)$`, "m");
   const m = re.exec(yaml);
   return m ? m[1].trim() : null;
+}
+
+// Parse a YAML list field into its string items. Handles both inline form
+// (`key: [a, b]` or `key: []`) and block-sequence form:
+//   key:
+//     - a
+//     - b
+// Returns [] when the field is absent, empty, or explicitly `null`.
+export function readList(yaml: string, key: string): string[] {
+  // Inline form: key: [item1, item2] or key: []
+  const inlineRe = new RegExp(`^${key}:\\s*\\[([^\\]]*)\\]`, "m");
+  const inlineM = inlineRe.exec(yaml);
+  if (inlineM) {
+    const inner = (inlineM[1] ?? "").trim();
+    if (!inner) return [];
+    return inner
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  // Block-sequence form: key:\n  - item
+  const blockRe = new RegExp(`^${key}:\\s*\\n((?:[ \\t]+-[ \\t]+[^\\n]+\\n?)*)`, "m");
+  const blockM = blockRe.exec(yaml);
+  if (blockM) {
+    return (blockM[1] ?? "")
+      .split("\n")
+      .map((line) => /^[ \t]+-[ \t]+(.+)$/.exec(line)?.[1]?.trim() ?? "")
+      .filter(Boolean);
+  }
+  return [];
 }
 
 // Parses the `revisits:` block-form list into `{ ts, by, instruction }`
@@ -441,7 +474,11 @@ function parseFields(yaml: string, idFallback: string): TaskFields {
   const kind = readField(yaml, "kind") ?? "other";
   const parentRaw = readField(yaml, "parent");
   const parent = parentRaw && parentRaw !== "null" ? parentRaw : null;
-  return { id, status, to, from, kind, parent };
+  const needs = readList(yaml, "needs");
+  const after = readList(yaml, "after");
+  const typeRaw = readField(yaml, "type");
+  const type = typeRaw && typeRaw !== "null" ? typeRaw : null;
+  return { id, status, to, from, kind, parent, needs, after, type };
 }
 
 // Read `<parent>:` block's `<key>:` value. Returns null if either is absent or
@@ -768,6 +805,127 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "",
     "The file is preferred because it survives output-truncation; a directive at the end of a long response can get cut off and lost.",
   ].join("\n");
+}
+
+// === Phase 1: task graph + deterministic ready-set ========================
+//
+// One scan per tick builds an in-memory index of all known tasks.  The
+// reverse-index (dependants) lets the frontier check (Phase 2) be O(1)
+// instead of scanning every bucket on each termination.
+//
+// `ready()` is a pure function of the graph — testable with fixture dirs,
+// callable without spawning a worker.  Signature required by Jess's test
+// suite (TSK-2026-08-27-0001):
+//
+//   const graph = await loadGraph(fixtureDir, ["alice", "bob"]);
+//   ready("TSK-...", graph);  // → boolean
+
+interface GraphNode {
+  id: string;
+  rawStatus: string;   // value of the `status:` field
+  bucket: string;      // filesystem directory (open | waiting | done | failed | paused | archived)
+  isDone: boolean;     // rawStatus === "done"
+  isFailed: boolean;   // rawStatus starts with "failed:" (or === "failed")
+  isTerminal: boolean; // isDone || isFailed
+  needs: string[];
+  after: string[];
+}
+
+interface TaskGraph {
+  nodes: Map<string, GraphNode>;
+  dependants: Map<string, string[]>; // reverse index: depId → [ids that declare it in needs/after]
+}
+
+// Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
+// point at a fixture directory rather than the live agents/ tree.
+const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived"] as const;
+
+export async function loadGraph(agentsDir: string, agents: string[]): Promise<TaskGraph> {
+  const nodes = new Map<string, GraphNode>();
+  const dependants = new Map<string, string[]>();
+
+  for (const agent of agents) {
+    for (const bucket of GRAPH_SCAN_BUCKETS) {
+      const dir = join(agentsDir, agent, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        if (!fname.endsWith(".yaml")) continue;
+        const taskId = fname.replace(/\.yaml$/, "");
+        let content: string;
+        try {
+          content = await readFile(join(dir, fname), "utf-8");
+        } catch { continue; }
+
+        const rawStatus = (readField(content, "status") ?? "open").trim();
+        const isDone = rawStatus === "done";
+        const isFailed = rawStatus === "failed" || rawStatus.startsWith("failed:");
+        const needs = readList(content, "needs");
+        const after = readList(content, "after");
+
+        if (nodes.has(taskId)) {
+          // Duplicate across buckets — shouldn't happen; keep first (most
+          // recently scanned is not necessarily more authoritative).
+          console.warn(`[graph] ${taskId} found in multiple buckets; keeping first seen`);
+          continue;
+        }
+
+        const node: GraphNode = {
+          id: taskId,
+          rawStatus,
+          bucket,
+          isDone,
+          isFailed,
+          isTerminal: isDone || isFailed,
+          needs,
+          after,
+        };
+        nodes.set(taskId, node);
+
+        // Build reverse index from the declaring task's edges.
+        for (const depId of needs) {
+          if (!dependants.has(depId)) dependants.set(depId, []);
+          dependants.get(depId)!.push(taskId);
+        }
+        for (const depId of after) {
+          if (!dependants.has(depId)) dependants.set(depId, []);
+          dependants.get(depId)!.push(taskId);
+        }
+      }
+    }
+  }
+
+  return { nodes, dependants };
+}
+
+// Pure ready predicate — DEC-0004 and Phase 1 spec.
+//
+// ready = open ∧ ¬paused ∧ all needs done ∧ all after terminal
+//
+// "open" means the task is in the open/ bucket (not paused/, waiting/, etc.).
+// "¬paused" is an explicit guard: a paused task whose deps all resolved must
+// NEVER start itself — the whole point of DEC-0004 is that it surfaces for
+// a human first (auto-pause re-readies itself on resume, not on dep resolution).
+export function ready(taskId: string, graph: TaskGraph): boolean {
+  const node = graph.nodes.get(taskId);
+  if (!node) return false;
+
+  // Must be in open/ bucket and not paused (DEC-0004 — paused outranks edges).
+  if (node.bucket !== "open" || node.rawStatus === "paused") return false;
+
+  // All needs must be done.
+  for (const depId of node.needs) {
+    const dep = graph.nodes.get(depId);
+    if (!dep?.isDone) return false;
+  }
+
+  // All after must be terminal (done or failed).
+  for (const depId of node.after) {
+    const dep = graph.nodes.get(depId);
+    if (!dep?.isTerminal) return false;
+  }
+
+  return true;
 }
 
 // === Claim + transition =====================================================
@@ -2401,6 +2559,11 @@ async function tickOnce(
   // into tasks/archived/<bucket>/. Keeps the working dirs lean.
   await sweepArchive(opts);
 
+  // Phase 1: build the task graph once per tick.  `ready()` uses this to
+  // evaluate needs/after edges without re-reading the filesystem per task.
+  // The reverse index is carried for Phase 2 (frontier check).
+  const graph = await loadGraph(AGENTS_DIR, opts.agents);
+
   for (const agent of opts.agents) {
     const openDir = join(AGENTS_DIR, agent, "tasks", "open");
     if (!existsSync(openDir)) continue;
@@ -2488,6 +2651,13 @@ async function tickOnce(
           );
           continue;
         }
+      }
+
+      // Phase 1: needs/after edge check.  Skip (don't park) tasks whose
+      // declared dependencies aren't satisfied yet.  The task stays in
+      // open/ and re-evaluated next tick — no wasted worker turn.
+      if (!ready(taskId, graph)) {
+        continue;
       }
 
       const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
@@ -2595,4 +2765,8 @@ export const __testing = {
   readReportFile,
   inflightWorkers,
   readMaxWorkerLifetimeMs,
+  // Phase 1 graph engine — also exported top-level for direct use in tests.
+  readList,
+  loadGraph,
+  ready,
 };
