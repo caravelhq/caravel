@@ -1115,7 +1115,11 @@ async function enqueueAliceContinuation(opts: {
   // so name the work instead of restating an id the row already shows.
   const clip = (text: string, max = 64) =>
     text.length <= max ? text : text.slice(0, max - 1).trimEnd() + "…";
-  const firstHeadline = siblings.find((s) => s.headline)?.headline?.trim() || "";
+  // Child headlines from older envelopes are sometimes stored with their own
+  // wrapping quotes; unwrap so we don't emit Continue: "Re-run sc1xx…".
+  const unwrap = (v: string) =>
+    /^".*"$/.test(v) || /^'.*'$/.test(v) ? v.slice(1, -1) : v;
+  const firstHeadline = unwrap((siblings.find((s) => s.headline)?.headline || "").trim());
   let headline: string;
   if (isMulti) {
     headline = contProject
@@ -1168,9 +1172,16 @@ async function enqueueAliceContinuation(opts: {
     if (s.report) contextLines.push(`  - ${s.report}`);
   }
 
+  // Every free-text scalar goes through JSON.stringify. A headline is
+  // user/agent-authored prose and can contain any YAML metacharacter — a colon
+  // ("Continue: Re-run sc1xx"), an asterisk ("*Endpoint" reads as an alias), a
+  // leading quote. Written raw, the envelope stops parsing and the task
+  // vanishes from the dashboard with no error anywhere. That is exactly how
+  // nine envelopes were lost on 2026-08-26. (WAL-79)
+  const q = (v: string) => JSON.stringify(v);
   const body = [
     `id: ${id}`,
-    `headline: ${headline}`,
+    `headline: ${q(headline)}`,
     `created: ${now}`,
     `updated: ${now}`,
     "",
@@ -1181,7 +1192,7 @@ async function enqueueAliceContinuation(opts: {
     "",
     "kind: continuation",
     "priority: P2",
-    ...(contProject ? [`project: ${contProject}`] : []),
+    ...(contProject ? [`project: ${q(contProject)}`] : []),
     "deadline: null",
     "",
     "budget:",
