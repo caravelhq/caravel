@@ -297,6 +297,18 @@ function readField(yaml: string, key: string): string | null {
 //     - b
 // Returns [] when the field is absent, empty, or explicitly `null`.
 export function readList(yaml: string, key: string): string[] {
+  // Strip a matching pair of surrounding single or double quotes from a
+  // list item. Defensive against WAL-80: envelope writers that auto-quote
+  // scalars may quote list items too, producing `needs: ["TSK-X"]` where
+  // the intent is `TSK-X`. The literal `"TSK-X"` would never match the
+  // graph node keyed as `TSK-X`, silently parking the task forever.
+  function stripQuotes(s: string): string {
+    if (s.length >= 2 && ((s[0] === '"' && s[s.length - 1] === '"') || (s[0] === "'" && s[s.length - 1] === "'"))) {
+      return s.slice(1, -1);
+    }
+    return s;
+  }
+
   // Inline form: key: [item1, item2] or key: []
   const inlineRe = new RegExp(`^${key}:\\s*\\[([^\\]]*)\\]`, "m");
   const inlineM = inlineRe.exec(yaml);
@@ -305,7 +317,7 @@ export function readList(yaml: string, key: string): string[] {
     if (!inner) return [];
     return inner
       .split(",")
-      .map((s) => s.trim())
+      .map((s) => stripQuotes(s.trim()))
       .filter(Boolean);
   }
   // Block-sequence form: key:\n  - item
@@ -314,7 +326,10 @@ export function readList(yaml: string, key: string): string[] {
   if (blockM) {
     return (blockM[1] ?? "")
       .split("\n")
-      .map((line) => /^[ \t]+-[ \t]+(.+)$/.exec(line)?.[1]?.trim() ?? "")
+      .map((line) => {
+        const m = /^[ \t]+-[ \t]+(.+)$/.exec(line);
+        return m ? stripQuotes(m[1].trim()) : "";
+      })
       .filter(Boolean);
   }
   return [];
@@ -829,6 +844,12 @@ interface GraphNode {
   isTerminal: boolean; // isDone || isFailed
   needs: string[];
   after: string[];
+  // Phase 2 fields: continuation target (reply_to ?? from) and sibling joins
+  // (tasks sharing a parent) need these. Stored here so the graph is self-
+  // contained and Phase 2 doesn't have to re-read envelopes from disk.
+  to: string;
+  parent: string | null;
+  reply_to: string | null;
 }
 
 interface TaskGraph {
@@ -862,6 +883,9 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         const isFailed = rawStatus === "failed" || rawStatus.startsWith("failed:");
         const needs = readList(content, "needs");
         const after = readList(content, "after");
+        const toRaw = (readField(content, "to") ?? "").trim();
+        const parentRaw = readField(content, "parent");
+        const replyToRaw = readField(content, "reply_to");
 
         if (nodes.has(taskId)) {
           // Duplicate across buckets — shouldn't happen; keep first (most
@@ -879,15 +903,18 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           isTerminal: isDone || isFailed,
           needs,
           after,
+          to: toRaw,
+          parent: parentRaw && parentRaw !== "null" ? parentRaw : null,
+          reply_to: replyToRaw && replyToRaw !== "null" ? replyToRaw : null,
         };
         nodes.set(taskId, node);
 
-        // Build reverse index from the declaring task's edges.
-        for (const depId of needs) {
-          if (!dependants.has(depId)) dependants.set(depId, []);
-          dependants.get(depId)!.push(taskId);
-        }
-        for (const depId of after) {
+        // Build reverse index from the declaring task's edges — deduped.
+        // A task declaring the same dep in both `needs` and `after` would
+        // otherwise appear twice in dependants[dep], which Phase 2's
+        // sibling-join generator would double-count.
+        const allDeps = new Set([...needs, ...after]);
+        for (const depId of allDeps) {
           if (!dependants.has(depId)) dependants.set(depId, []);
           dependants.get(depId)!.push(taskId);
         }
@@ -906,6 +933,13 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
 // "¬paused" is an explicit guard: a paused task whose deps all resolved must
 // NEVER start itself — the whole point of DEC-0004 is that it surfaces for
 // a human first (auto-pause re-readies itself on resume, not on dep resolution).
+//
+// Caller invariant: the caller must ensure the task is not currently claimed
+// before calling this predicate. `ready()` does not check for claimed status.
+// In `tickOnce`, the `isClaimed || isTerminalish` guard runs before this call,
+// so claimed tasks never reach it. In tests, fixtures should only build
+// non-claimed tasks in open/. A future caller that skips the claim guard would
+// incorrectly double-claim a task — do not remove the guard from tickOnce.
 export function ready(taskId: string, graph: TaskGraph): boolean {
   const node = graph.nodes.get(taskId);
   if (!node) return false;
@@ -2706,6 +2740,91 @@ async function tickOnce(
   }
 }
 
+// === Testable claim pass (WAL-72 Phase 1 test export) =====================
+//
+// Exported via __testing for Jess's tick-level regression suite (TESTPLAN.md
+// Part 3). It runs only the graph-load → ready-check → claim-pass portion of
+// tickOnce. The three sweeps (sweepStaleClaims, sweepWaiting, sweepArchive)
+// are omitted — they use the module-level AGENTS_DIR and would contaminate a
+// fixture run. Tests that need to verify the sweeps independently can call
+// them via __testing.sweepWaiting etc. (those run against the live tree).
+//
+// Why not thread agentsDir through tickOnce itself: the four sweep helpers
+// each have a dozen AGENTS_DIR references; threading through all of them is
+// not a "small refactor" (brief: WAL-72). A focused export is the right shape.
+//
+// Signature Jess needs:
+//   const { claimed, skippedNotReady } = await __testing.runClaimPassForTesting(
+//     fixtureDir, ["alice", "bob"]
+//   );
+//   // claimed: ids whose yaml is now `status: claimed` on disk
+//   // skippedNotReady: ids that were open but !ready(id, graph)
+async function runClaimPassForTesting(
+  agentsDir: string,
+  agents: string[],
+  leaseMs = DEFAULT_LEASE_MS
+): Promise<{ claimed: string[]; skippedNotReady: string[] }> {
+  if (!existsSync(agentsDir)) return { claimed: [], skippedNotReady: [] };
+
+  const graph = await loadGraph(agentsDir, agents);
+  const claimed: string[] = [];
+  const skippedNotReady: string[] = [];
+
+  for (const agent of agents) {
+    const openDir = join(agentsDir, agent, "tasks", "open");
+    if (!existsSync(openDir)) continue;
+
+    const entries = await readdir(openDir).catch(() => [] as string[]);
+    for (const fname of entries.filter((e) => e.endsWith(".yaml")).sort()) {
+      const taskId = fname.replace(/\.yaml$/, "");
+      const filePath = join(openDir, fname);
+
+      let yaml: string;
+      try {
+        yaml = await readFile(filePath, "utf-8");
+      } catch { continue; }
+
+      // Mirror tickOnce's guards: skip claimed and terminalish envelopes.
+      const rawStatus = (readField(yaml, "status") ?? "open").trim();
+      const isClaimed = rawStatus === "claimed";
+      const isTerminalish =
+        rawStatus === "done" ||
+        rawStatus.startsWith("failed:") ||
+        rawStatus.startsWith("waiting:on:");
+      if (isClaimed || isTerminalish) continue;
+
+      // The wiring under test: tasks whose dependencies are not satisfied
+      // must not be claimed. This is the guard the regression case exercises.
+      if (!ready(taskId, graph)) {
+        skippedNotReady.push(taskId);
+        continue;
+      }
+
+      // Claim inline (without appendJournal, which uses the module-level
+      // AGENTS_DIR). Journal write is acceptable noise in live runs; for
+      // fixture-dir testing, the yaml claim is the observable.
+      const now = new Date().toISOString();
+      const expires = new Date(Date.now() + leaseMs).toISOString();
+      const holder = `runner-test-${process.pid}`;
+      let next = setField(yaml, "status", "claimed");
+      next = setField(next, "updated", now);
+      next = setNestedField(next, "lease", "holder", holder);
+      next = setNestedField(next, "lease", "expires", expires);
+      next = appendHistory(next, {
+        ts: now,
+        from: "open",
+        to: "claimed",
+        by: holder,
+        note: "claimed in test pass",
+      });
+      await writeFile(filePath, next);
+      claimed.push(taskId);
+    }
+  }
+
+  return { claimed, skippedNotReady };
+}
+
 // === Public API ============================================================
 
 export function startMultiAgentRunner(options: MultiAgentOptions = {}): MultiAgentHandle {
@@ -2769,4 +2888,7 @@ export const __testing = {
   readList,
   loadGraph,
   ready,
+  // Tick-level claim pass for WAL-72 Phase 1 regression suite (TESTPLAN.md Part 3).
+  // Takes an explicit agentsDir so tests can drive it against a fixture directory.
+  runClaimPassForTesting,
 };

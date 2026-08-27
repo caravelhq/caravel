@@ -327,8 +327,94 @@ console.log("\nSection 6 — reverse-index (dependants):");
   assert(deps.includes("R-B"), "R-A has B as dependant (via needs)");
   assert(deps.includes("R-C"), "R-A has C as dependant (via after)");
   assert(deps.includes("R-D"), "R-A has D as dependant (via both)");
-  // D appears once per edge (needs + after) — may be in the list twice; that's ok
-  // as long as it's present.
+  // D declares the same dep in both needs and after; dedup means it appears
+  // exactly once in the reverse index (F4 fix — duplicates would double-count
+  // it in Phase 2's sibling-join generator).
+  assert(deps.filter((d) => d === "R-D").length === 1, "R-D appears exactly once (deduped)");
+}
+
+// ── section 8: F4 — reverse-index dedup ──────────────────────────────────────
+
+console.log("\nSection 8 — F4: reverse-index dedup:");
+
+{
+  const dir = join(fixtureRoot, "dedup");
+  const AGENTS = ["alice"];
+
+  await writeTask(dir, "alice", "done", "DEP-A", makeEnvelope({ id: "DEP-A", status: "done" }));
+  // Task declares DEP-A in both needs and after — the deduped reverse index
+  // must show it exactly once, not twice.
+  await writeTask(dir, "alice", "open", "CHILD", makeEnvelope({ id: "CHILD", needs: ["DEP-A"], after: ["DEP-A"] }));
+
+  const graph = await loadGraph(dir, AGENTS);
+  const deps = graph.dependants.get("DEP-A") ?? [];
+
+  assert(deps.includes("CHILD"), "dedup: CHILD is in dependants[DEP-A]");
+  assert(deps.filter((d) => d === "CHILD").length === 1, "dedup: CHILD appears exactly once (not twice)");
+  // Sanity: CHILD is ready (DEP-A is done, satisfies both needs and after).
+  assert(ready("CHILD", graph), "dedup: CHILD is ready when DEP-A is done");
+}
+
+// ── section 9: F6 — readList strips quotes ────────────────────────────────────
+
+console.log("\nSection 9 — F6: readList strips surrounding quotes:");
+
+{
+  // Inline form with double-quoted items (WAL-80 collision path).
+  const inlineDoubleQuoted = readList('needs: ["TSK-X", "TSK-Y"]\n', "needs");
+  assert(
+    inlineDoubleQuoted.length === 2 && inlineDoubleQuoted[0] === "TSK-X" && inlineDoubleQuoted[1] === "TSK-Y",
+    "inline: double-quoted items → stripped"
+  );
+
+  // Inline form with single-quoted items.
+  const inlineSingleQuoted = readList("needs: ['TSK-A', 'TSK-B']\n", "needs");
+  assert(
+    inlineSingleQuoted.length === 2 && inlineSingleQuoted[0] === "TSK-A",
+    "inline: single-quoted items → stripped"
+  );
+
+  // Block form with double-quoted items.
+  const blockDoubleQuoted = readList('needs:\n  - "TSK-P"\n  - "TSK-Q"\n', "needs");
+  assert(
+    blockDoubleQuoted.length === 2 && blockDoubleQuoted[0] === "TSK-P" && blockDoubleQuoted[1] === "TSK-Q",
+    "block: double-quoted items → stripped"
+  );
+
+  // Block form with single-quoted items.
+  const blockSingleQuoted = readList("needs:\n  - 'TSK-R'\n", "needs");
+  assert(blockSingleQuoted.length === 1 && blockSingleQuoted[0] === "TSK-R", "block: single-quoted item → stripped");
+
+  // Unquoted items must be unaffected.
+  const unquoted = readList("needs: [TSK-1, TSK-2]\n", "needs");
+  assert(unquoted.length === 2 && unquoted[0] === "TSK-1", "unquoted items → unchanged");
+
+  // Quote stripping propagates to graph lookup: quoted dep id resolves correctly.
+  const dir = join(fixtureRoot, "quoted-deps");
+  const AGENTS = ["alice"];
+  const makeRaw = (id: string, status: string, needsLine: string) =>
+    [
+      `id: ${id}`,
+      `status: ${status}`,
+      "from: alice",
+      "to: bob",
+      "kind: code",
+      `headline: "${id}"`,
+      "created: 2026-08-27T00:00:00.000Z",
+      "updated: 2026-08-27T00:00:00.000Z",
+      needsLine,
+      "after: []",
+    ].join("\n") + "\n";
+
+  // Task done, dependency declared with quoted id — must resolve.
+  await writeTask(dir, "alice", "done", "QD", makeRaw("QD", "done", "needs: []"));
+  await writeTask(
+    dir, "alice", "open", "QC",
+    makeRaw("QC", "open", 'needs: ["QD"]')  // hand-written with quotes
+  );
+
+  const graph = await loadGraph(dir, AGENTS);
+  assert(ready("QC", graph), "F6: quoted dep id resolves correctly → QC ready");
 }
 
 // ── section 7: block-form needs/after in YAML ────────────────────────────────
@@ -374,7 +460,7 @@ console.log("\nSection 7 — block-form needs/after:");
   assert(ready("BLK-B", graph), "block-form needs satisfied → ready");
 }
 
-// ── summary ───────────────────────────────────────────────────────────────────
+// ── summary ────────────────────────────────────────────────────────────────────
 
 console.log(`\n${passed + failed} tests: ${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);
