@@ -1432,7 +1432,11 @@
             const res = await fetch("/api/tasks/new", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ agent, headline, kind: "other", priority: "P2", brief }),
+              // createTask reads `to`, not `agent`. Sending `agent` left `to`
+              // empty, so this form has never been able to create a task —
+              // it returned {ok:false,"unknown target agent: (empty)"} every
+              // time. The sibling schedule branch above already sends `to`.
+              body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief }),
             });
             const out = await res.json();
             if (!out.ok) throw new Error(out.error || "failed");
