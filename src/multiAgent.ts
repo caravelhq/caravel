@@ -39,6 +39,7 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 // Track graph errors already surfaced via console.warn — prevents a per-tick
 // log flood when a corrupt envelope or dangling edge persists across ticks.
 const warnedGraphErrors = new Set<string>();
+const warnedContSpawns = new Set<string>(); // contId → logged once when spawn is skipped
 
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set — keeps a fresh clone runnable for a demo. Real deployments
@@ -1933,6 +1934,26 @@ async function checkFrontierAndMaybeSpawnContinuation(
     return;
   }
 
+  // Deterministic id: derived from the completing task (FDP v1.11).
+  const id = `${taskId}-cont`;
+
+  // FDP v1.11 — "exactly one continuation" is a statement about executions,
+  // not files.  If the continuation already exists in ANY bucket (open as
+  // claimed, waiting, done, failed, paused, archived), skip the spawn.
+  // Overwriting would clobber a live lease (claimed) or re-execute a finished
+  // run (done/failed).  The graph is already loaded from all six buckets above.
+  if (graph.nodes.has(id)) {
+    const existing = graph.nodes.get(id)!;
+    if (!warnedContSpawns.has(id)) {
+      warnedContSpawns.add(id);
+      console.log(
+        `[multi-agent] ${agent}/${taskId}: continuation ${id} already exists` +
+          ` (bucket: ${existing.bucket}, status: ${existing.rawStatus}) — skipping spawn`
+      );
+    }
+    return;
+  }
+
   // Find siblings: tasks sharing the same parent as the completing task.
   // The continuation will list them in `needs:` so it only runs when all
   // sibling work has landed.
@@ -1940,15 +1961,10 @@ async function checkFrontierAndMaybeSpawnContinuation(
   const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
   const siblingIds: string[] = [];
   if (parent) {
-    for (const [id, node] of graph.nodes) {
-      if (id !== taskId && node.parent === parent) siblingIds.push(id);
+    for (const [sibId, node] of graph.nodes) {
+      if (sibId !== taskId && node.parent === parent) siblingIds.push(sibId);
     }
   }
-
-  // Deterministic id: derived from the completing task so a second terminal
-  // transition (WAL-71 stale-claim replay) overwrites rather than duplicates.
-  // `nextTaskId` is gone — this scheme is faster and survives daemon restarts.
-  const id = `${taskId}-cont`;
   const now = new Date().toISOString();
   const q = (v: string) => JSON.stringify(v);
   const firstHeadlineRaw = (readField(yaml, "headline") ?? "").trim();
