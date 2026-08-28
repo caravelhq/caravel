@@ -1058,7 +1058,7 @@ async function claimTask(
     ts: now,
     id: taskId,
     status: "claimed",
-    kind: fields.kind,
+    kind: readField(yaml, "kind") ?? "unknown",
     from: fields.from,
     to: agent,
     parent: fields.parent,
@@ -1632,7 +1632,7 @@ async function transitionToWaiting(
     ts: now,
     id: taskId,
     status: finalStatus,
-    kind: fields.kind,
+    kind: readField(yaml, "kind") ?? "unknown",
     from: fields.from,
     to: agent,
     parent: fields.parent,
@@ -1866,7 +1866,7 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
         ts: now,
         id: taskId,
         status: "open",
-        kind: fields.kind,
+        kind: readField(yaml, "kind") ?? "unknown",
         from: fields.from,
         to: agent,
         parent: fields.parent,
@@ -2124,7 +2124,7 @@ async function transitionToTerminal(
     ts: now,
     id: taskId,
     status: finalStatus,
-    kind: fields.kind,
+    kind: readField(yaml, "kind") ?? "unknown",
     from: fields.from,
     to: agent,
     parent: fields.parent,
@@ -2537,7 +2537,7 @@ async function sweepStaleClaims(
           ts: now,
           id: taskId,
           status: "done",
-          kind: fields.kind,
+          kind: readField(yaml, "kind") ?? "unknown",
           from: fields.from,
           to: agent,
           parent: fields.parent,
@@ -2597,7 +2597,7 @@ async function sweepStaleClaims(
             ts: now,
             id: taskId,
             status: termStatus,
-            kind: fields.kind,
+            kind: readField(yaml, "kind") ?? "unknown",
             from: fields.from,
             to: agent,
             parent: fields.parent,
@@ -2626,7 +2626,7 @@ async function sweepStaleClaims(
             ts: now,
             id: taskId,
             status: "open",
-            kind: fields.kind,
+            kind: readField(yaml, "kind") ?? "unknown",
             from: fields.from,
             to: agent,
             parent: fields.parent,
@@ -2991,7 +2991,7 @@ async function tickOnce(
       if (outcome !== "claimed") continue;
 
       inFlight.set(agent, active + 1);
-      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: claimed ${agent}/${taskId} (kind=${fields.kind})`);
+      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: claimed ${agent}/${taskId} (kind=${readField(yaml, "kind") ?? "unknown"})`);
 
       // Fire-and-forget the worker; record completion when it returns.
       runWorker(agent, taskId, claimedYaml)

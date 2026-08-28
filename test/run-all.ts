@@ -52,6 +52,7 @@ const SUITES: Suite[] = [
   { name: "frontier integrity: dup-spawn/siblings/reply_to (WAL-72 Ph2 review)", file: "scheduler/frontier-integrity.test.ts", timeoutMs: 120_000 },
   { name: "graph errors: F1/F2 direct + journal (WAL-72 Ph2 review)", file: "scheduler/graph-errors.test.ts", timeoutMs: 120_000 },
   { name: "continuation idempotency: claimed/done/failed (WAL-72 v1.11)", file: "scheduler/cont-idempotency.test.ts", timeoutMs: 120_000 },
+  { name: "type-check gate: src/+test/ errors (WAL-72 v1.12)", file: "type-check.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };
