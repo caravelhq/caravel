@@ -48,6 +48,7 @@ const SUITES: Suite[] = [
   { name: "graph-ready (WAL-72 Phase 1)", file: "graph-ready.test.ts", timeoutMs: 120_000 },
   { name: "scheduler ready-set, FDP oracle (WAL-72)", file: "scheduler/ready.test.ts", timeoutMs: 120_000 },
   { name: "tick-claim regression (WAL-72 Phase 1)", file: "scheduler/tick-claim.test.ts", timeoutMs: 120_000 },
+  { name: "frontier check + loop guard (WAL-72 Phase 2)", file: "scheduler/frontier.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };

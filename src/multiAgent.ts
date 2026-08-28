@@ -28,12 +28,17 @@
 import { readdir, readFile, writeFile, rename, mkdir, stat, unlink, rm } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import { load as yamlLoad } from "js-yaml";
 import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
 import { resolveStateDir } from "./paths";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
+
+// Track graph errors already surfaced via console.warn — prevents a per-tick
+// log flood when a corrupt envelope or dangling edge persists across ticks.
+const warnedGraphErrors = new Set<string>();
 
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set — keeps a fresh clone runnable for a demo. Real deployments
@@ -855,6 +860,7 @@ interface GraphNode {
 interface TaskGraph {
   nodes: Map<string, GraphNode>;
   dependants: Map<string, string[]>; // reverse index: depId → [ids that declare it in needs/after]
+  errors: { id: string; problem: string }[]; // F1 (unparseable) + F2 (dangling edge)
 }
 
 // Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
@@ -864,6 +870,7 @@ const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "arch
 export async function loadGraph(agentsDir: string, agents: string[]): Promise<TaskGraph> {
   const nodes = new Map<string, GraphNode>();
   const dependants = new Map<string, string[]>();
+  const errors: { id: string; problem: string }[] = [];
 
   for (const agent of agents) {
     for (const bucket of GRAPH_SCAN_BUCKETS) {
@@ -877,6 +884,24 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         try {
           content = await readFile(join(dir, fname), "utf-8");
         } catch { continue; }
+
+        // F1: validate parseability before extracting any fields.  A corrupt
+        // envelope whose `status:` line still regex-matches would otherwise
+        // enter the graph as a ready node (WAL-79 class — nine envelopes
+        // invisible for exactly this reason).  Parse-or-record-error, never
+        // parse-or-ignore.
+        try {
+          yamlLoad(content);
+        } catch (e) {
+          const problem = `unparseable YAML: ${(e as Error).message.split("\n")[0]}`;
+          errors.push({ id: taskId, problem });
+          const key = `${taskId}:${problem}`;
+          if (!warnedGraphErrors.has(key)) {
+            warnedGraphErrors.add(key);
+            console.warn(`[graph] ${taskId}: ${problem}`);
+          }
+          continue; // exclude from graph — never admit as ready
+        }
 
         const rawStatus = (readField(content, "status") ?? "open").trim();
         const isDone = rawStatus === "done";
@@ -908,21 +933,36 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           reply_to: replyToRaw && replyToRaw !== "null" ? replyToRaw : null,
         };
         nodes.set(taskId, node);
-
-        // Build reverse index from the declaring task's edges — deduped.
-        // A task declaring the same dep in both `needs` and `after` would
-        // otherwise appear twice in dependants[dep], which Phase 2's
-        // sibling-join generator would double-count.
-        const allDeps = new Set([...needs, ...after]);
-        for (const depId of allDeps) {
-          if (!dependants.has(depId)) dependants.set(depId, []);
-          dependants.get(depId)!.push(taskId);
-        }
       }
     }
   }
 
-  return { nodes, dependants };
+  // Second pass: build reverse index + F2 dangling-edge detection.
+  // Done after all nodes load so forward references resolve correctly.
+  for (const node of nodes.values()) {
+    const allDeps = new Set([...node.needs, ...node.after]);
+    for (const depId of allDeps) {
+      if (!nodes.has(depId)) {
+        // F2: dangling edge — the dep is not in the graph.  ready() already
+        // returns false for unknown deps, but the reason is now explicit.
+        const problem = `edge references unknown task ${depId}`;
+        errors.push({ id: node.id, problem });
+        const key = `${node.id}:${problem}`;
+        if (!warnedGraphErrors.has(key)) {
+          warnedGraphErrors.add(key);
+          console.warn(`[graph] ${node.id}: ${problem}`);
+        }
+        continue;
+      }
+      // Build reverse index — deduped.  A task declaring the same dep in
+      // both `needs` and `after` appears once in dependants[dep].
+      if (!dependants.has(depId)) dependants.set(depId, []);
+      const list = dependants.get(depId)!;
+      if (!list.includes(node.id)) list.push(node.id);
+    }
+  }
+
+  return { nodes, dependants, errors };
 }
 
 // Pure ready predicate — DEC-0004 and Phase 1 spec.
@@ -1820,6 +1860,177 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
   }
 }
 
+// Generate a child task id for any agent using the decimal sub-task scheme.
+// Mirrors nextAliceTaskId but works for any target agent.
+async function nextTaskId(targetAgent: string, parentId: string): Promise<string> {
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
+  const root = parentId.split(".")[0]!;
+  const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
+  let maxN = 0;
+  const roster = knownAgents();
+  for (const a of roster) {
+    for (const sub of SCAN_DIRS) {
+      const dir = join(AGENTS_DIR, a, "tasks", sub);
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        const m = childRe.exec(fname);
+        if (!m) continue;
+        const n = Number.parseInt(m[1] ?? "", 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+  }
+  void targetAgent; // only the parent root matters for the id scheme
+  return `${root}.${String(maxN + 1).padStart(2, "0")}`;
+}
+
+// Frontier check + general continuation (WAL-72 Phase 2).
+//
+// Called after every terminal transition.  If nothing downstream declares
+// `taskId` in `needs` or `after` (empty reverse index = frontier task), and
+// the task is not itself a continuation (DEC-12 loop guard), spawn a single
+// continuation envelope addressed to `target(t) := reply_to ?? from`.
+//
+// Currently gated: only fires when `from !== "alice"`.  The existing
+// notifyDispatchChat → enqueueAliceContinuation handles Alice tasks.  This
+// gate is removed when the Alice-specific machinery is retired.
+//
+// agentsDir defaults to the module-level AGENTS_DIR so the live path needs
+// no extra argument.  Tests pass an explicit fixture dir.
+async function checkFrontierAndMaybeSpawnContinuation(
+  yaml: string,
+  taskId: string,
+  agent: string,
+  agents: string[],
+  agentsDir: string = AGENTS_DIR
+): Promise<void> {
+  // Alice path handled by notifyDispatchChat until that machinery is retired.
+  const from = (readField(yaml, "from") ?? "").trim();
+  if (from === "alice") return;
+
+  const graph = await loadGraph(agentsDir, agents);
+  const downstreams = graph.dependants.get(taskId) ?? [];
+  if (downstreams.length > 0) return; // declared join covers it; no continuation needed
+
+  const replyToRaw = readField(yaml, "reply_to");
+  const fromRaw = readField(yaml, "from");
+  const target = (
+    (replyToRaw && replyToRaw !== "null" ? replyToRaw : null) ??
+    (fromRaw && fromRaw !== "null" ? fromRaw : null) ??
+    ""
+  ).trim();
+
+  const kind = (readField(yaml, "kind") ?? "").trim();
+
+  // DEC-12: a continuation must never spawn another continuation.
+  if (kind === "continuation") {
+    console.warn(
+      `[multi-agent] ${agent}/${taskId}: kind:continuation reached frontier with no downstream — NOT spawning (DEC-12 loop guard)`
+    );
+    return;
+  }
+
+  // If target is not a known spawnable agent, surface as waiting-on-user.
+  if (!target || target === "user" || target === "runner" || !agents.includes(target)) {
+    console.log(
+      `[multi-agent] ${agent}/${taskId}: frontier — target "${target}" is not a spawnable agent (waiting-on-user)`
+    );
+    return;
+  }
+
+  // Find siblings: tasks sharing the same parent as the completing task.
+  // The continuation will list them in `needs:` so it only runs when all
+  // sibling work has landed.
+  const parentRaw = readField(yaml, "parent");
+  const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
+  const siblingIds: string[] = [];
+  if (parent) {
+    for (const [id, node] of graph.nodes) {
+      if (id !== taskId && node.parent === parent) siblingIds.push(id);
+    }
+  }
+
+  const id = await nextTaskId(target, taskId);
+  const now = new Date().toISOString();
+  const q = (v: string) => JSON.stringify(v);
+  const firstHeadlineRaw = (readField(yaml, "headline") ?? "").trim();
+  const firstHeadline = /^".*"$/.test(firstHeadlineRaw)
+    ? firstHeadlineRaw.slice(1, -1)
+    : firstHeadlineRaw;
+  const headline = firstHeadline ? `Continue: ${firstHeadline.slice(0, 64)}` : `Continue after ${taskId}`;
+
+  const needsBlock =
+    siblingIds.length > 0
+      ? `\nneeds:\n${siblingIds.map((s) => `  - ${s}`).join("\n")}\n`
+      : "";
+
+  const body = [
+    `id: ${id}`,
+    `headline: ${q(headline)}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    "",
+    `from: runner`,
+    `to: ${target}`,
+    parent ? `parent: ${parent}` : `parent: ${taskId}`,
+    `reply_to: null`,
+    "",
+    `kind: continuation`,
+    `priority: P2`,
+    `deadline: null`,
+    "",
+    `budget:`,
+    `  max_turns: 6`,
+    `  max_subagents: 0`,
+    `  max_usd: null`,
+    "",
+    `brief: |`,
+    `  Sub-task ${taskId} (${agent}) has landed as terminal.`,
+    `  Read the report and write a consolidated briefing for the user, then emit`,
+    `  <task-done summary="..."> or surface a <task-waiting on="user" summary="...">.`,
+    needsBlock.trim() ? `\nneeds:${needsBlock.slice(7)}` : "",
+    "",
+    `context:`,
+    `  - agents/${agent}/tasks/done/${taskId}.yaml`,
+    "",
+    `status: open`,
+    `lease:`,
+    `  holder: null`,
+    `  expires: null`,
+    `history:`,
+    `  - ts: ${now}`,
+    `    from: null`,
+    `    to: open`,
+    `    by: runner`,
+    `    note: ${q(`frontier continuation after ${taskId}`)}`,
+    "",
+    `summary:`,
+    `  brief: ""`,
+    `  response: ""`,
+    `report: ""`,
+    "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const openDir = join(agentsDir, target, "tasks", "open");
+  await mkdir(openDir, { recursive: true });
+  await writeFile(join(openDir, `${id}.yaml`), body);
+
+  await appendJournal(target, {
+    ts: now,
+    id,
+    status: "open",
+    kind: "continuation",
+    from: "runner",
+    to: target,
+    parent: parent ?? taskId,
+    summary: `frontier continuation after ${taskId}`,
+  });
+
+  console.log(`[multi-agent] ${agent}/${taskId}: frontier → spawned continuation ${target}/${id}`);
+}
+
 async function transitionToTerminal(
   agent: string,
   taskId: string,
@@ -1907,6 +2118,12 @@ async function transitionToTerminal(
   });
 
   await notifyDispatchChat(next, agent, taskId, finalStatus, directive);
+
+  // Frontier check: spawn a continuation if nothing downstream declares this
+  // task and it is not itself a continuation (DEC-12 loop guard).
+  // Alice tasks are handled by notifyDispatchChat above; this gate is removed
+  // when the Alice-specific machinery is retired in a later commit.
+  await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents());
 
   // Auto-close parent if this was a `closes_parent_on_done` child landing as
   // done. Spawned by Kelly via the "Next" button on a waiting:on:user task —
@@ -2592,6 +2809,48 @@ export function claimDecision(yaml: string, taskId: string, graph: TaskGraph): C
   return "claim";
 }
 
+// ── Shared per-task claim-pass body (WAL-72 Phase 2) ──────────────────────
+//
+// Both tickOnce (production) and runClaimPassForTesting (test wrapper) call
+// this function.  The skip-not-ready enforcement lives here and exactly here —
+// deleting the return below must turn the tick-claim suite red.
+//
+// checkDependsOn is null in the test wrapper: the depends_on gate has
+// file-move side effects and belongs only in the live tick path.
+type ClaimPassItemOutcome =
+  | "skip-claimed"
+  | "skip-terminalish"
+  | "skip-not-ready"
+  | "parked"
+  | "claimed"
+  | "claim-failed";
+
+async function executeClaimPassItem(opts: {
+  yaml: string;
+  taskId: string;
+  graph: TaskGraph;
+  onUnrecognizedStatus?: (rawStatus: string) => void;
+  checkDependsOn?: () => Promise<"parked" | "proceed">;
+  doClaimFn: () => Promise<"claimed" | "claim-failed">;
+}): Promise<ClaimPassItemOutcome> {
+  const { yaml, taskId, graph } = opts;
+  const decision = claimDecision(yaml, taskId, graph);
+  if (decision === "skip-claimed" || decision === "skip-terminalish") return decision;
+  if (opts.onUnrecognizedStatus) {
+    const rawStatus = (readField(yaml, "status") ?? "open").trim();
+    if (rawStatus !== "open") opts.onUnrecognizedStatus(rawStatus);
+  }
+  if (opts.checkDependsOn) {
+    const gate = await opts.checkDependsOn();
+    if (gate === "parked") return "parked";
+  }
+  // THE KEY ENFORCEMENT: deleting this line must turn tick-claim suite red.
+  // Both tickOnce and runClaimPassForTesting reach this via doClaimFn — no
+  // second copy of the guard exists anywhere in this file.
+  if (decision === "skip-not-ready") return "skip-not-ready";
+  return opts.doClaimFn();
+}
+
 async function tickOnce(
   opts: Required<MultiAgentOptions>,
   inFlight: Map<string, number>,
@@ -2649,39 +2908,32 @@ async function tickOnce(
         yaml = await readFile(filePath, "utf-8");
       } catch { continue; }
 
-      // Bucket is the source of truth — file is in open/, so it's claimable.
-      // The `status:` field is metadata; tolerate worker-side typos and
-      // unrecognised values (e.g. "in_progress" — not part of the runner's
-      // taxonomy) by treating anything that isn't a recognised non-open
-      // status as `open`. Stops envelopes from being stranded forever when
-      // an agent writes a custom status manually in a chat session.
-      const rawStatus = (readField(yaml, "status") ?? "open").trim();
-      const decision = claimDecision(yaml, taskId, graph);
-      if (decision === "skip-claimed" || decision === "skip-terminalish") {
-        // `claimed` = worker mid-flight (lease check below handles re-claim).
-        // Terminalish in open/ = stale file move race, sweep will reconcile.
-        continue;
-      }
-      if (rawStatus !== "open") {
-        console.warn(
-          `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} has unrecognised status "${rawStatus}" in open/ — treating as open`
-        );
-      }
-
-      // Pre-claim depends_on gate: if the envelope carries a structured
-      // `depends_on: task:<id>` (or `depends_on: agent:<name>`) field that
-      // isn't yet resolved, park the task to waiting/ WITHOUT spawning a
-      // worker. sweepWaiting() unblocks it when the dependency lands, using
-      // the same path as a worker-emitted waiting:on: park. No tombstone is
-      // applied — the task is a normal waiting task and the sweep handles it.
-      // This prevents the wasted worker-turn pattern where a task is claimed,
-      // discovers its sibling isn't done, and self-parks.
-      const rawDependsOn = readField(yaml, "depends_on");
-      const dependsOn = rawDependsOn && rawDependsOn !== "null" ? rawDependsOn.trim() : null;
-      if (dependsOn) {
-        const depResolved = await checkDependencyResolved(dependsOn, opts.agents);
-        if (!depResolved) {
+      // Delegate the per-task claim decision to the shared function.
+      // The bucket (open/) is the source of truth; status: field is metadata.
+      // All guard logic — claimed/terminalish skip, unrecognised-status warn,
+      // depends_on pre-park, skip-not-ready enforcement — lives inside
+      // executeClaimPassItem; there is no second copy in this loop.
+      let claimedYaml = "";
+      const outcome = await executeClaimPassItem({
+        yaml,
+        taskId,
+        graph,
+        onUnrecognizedStatus: (rawStatus) => {
+          console.warn(
+            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} has unrecognised status "${rawStatus}" in open/ — treating as open`
+          );
+        },
+        checkDependsOn: async () => {
+          // Pre-claim depends_on gate: park to waiting/ without spawning a
+          // worker when the structured dependency isn't resolved yet.
+          // sweepWaiting() unblocks the task when the dependency lands.
+          const rawDependsOn = readField(yaml, "depends_on");
+          const dependsOn = rawDependsOn && rawDependsOn !== "null" ? rawDependsOn.trim() : null;
+          if (!dependsOn) return "proceed";
+          const depResolved = await checkDependencyResolved(dependsOn, opts.agents);
+          if (depResolved) return "proceed";
           const now2 = new Date().toISOString();
+          const rawStatus = (readField(yaml, "status") ?? "open").trim();
           const waitStatus = `waiting:on:${dependsOn}`;
           let parkedYaml = setField(yaml, "status", waitStatus);
           parkedYaml = setField(parkedYaml, "updated", now2);
@@ -2711,21 +2963,18 @@ async function tickOnce(
           console.log(
             `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} pre-claim parked — depends_on ${dependsOn} not resolved`
           );
-          continue;
-        }
-      }
-
-      // Phase 1: needs/after edge check — decision already computed above by
-      // claimDecision().  No second copy of the ready() gate.
-      if (decision === "skip-not-ready") {
-        continue;
-      }
-
-      const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
-      if (!fields) continue;
-
-      const claimedYaml = await readFile(filePath, "utf-8").catch(() => "");
-      if (!claimedYaml) continue;
+          return "parked";
+        },
+        doClaimFn: async () => {
+          const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
+          if (!fields) return "claim-failed";
+          const cy = await readFile(filePath, "utf-8").catch(() => "");
+          if (!cy) return "claim-failed";
+          claimedYaml = cy;
+          return "claimed";
+        },
+      });
+      if (outcome !== "claimed") continue;
 
       inFlight.set(agent, active + 1);
       console.log(`[${new Date().toLocaleTimeString()}] multi-agent: claimed ${agent}/${taskId} (kind=${fields.kind})`);
@@ -2809,34 +3058,36 @@ async function runClaimPassForTesting(
         yaml = await readFile(filePath, "utf-8");
       } catch { continue; }
 
-      // Delegate to claimDecision() — the same function tickOnce calls.
-      // No second copy of the guard logic.
-      const decision = claimDecision(yaml, taskId, graph);
-      if (decision === "skip-claimed" || decision === "skip-terminalish") continue;
-      if (decision === "skip-not-ready") {
-        skippedNotReady.push(taskId);
-        continue;
-      }
-
-      // Claim inline (without appendJournal, which uses the module-level
-      // AGENTS_DIR). Journal write is acceptable noise in live runs; for
-      // fixture-dir testing, the yaml claim is the observable.
-      const now = new Date().toISOString();
-      const expires = new Date(Date.now() + leaseMs).toISOString();
-      const holder = `runner-test-${process.pid}`;
-      let next = setField(yaml, "status", "claimed");
-      next = setField(next, "updated", now);
-      next = setNestedField(next, "lease", "holder", holder);
-      next = setNestedField(next, "lease", "expires", expires);
-      next = appendHistory(next, {
-        ts: now,
-        from: "open",
-        to: "claimed",
-        by: holder,
-        note: "claimed in test pass",
+      // Delegate to executeClaimPassItem() — the same function tickOnce calls.
+      // checkDependsOn is null here: the gate has file-move side effects and
+      // belongs only in the live tick path, not in fixture-dir tests.
+      const outcome = await executeClaimPassItem({
+        yaml,
+        taskId,
+        graph,
+        doClaimFn: async () => {
+          // Claim inline (without appendJournal, which uses module-level
+          // AGENTS_DIR).  The yaml claim is the observable in tests.
+          const now = new Date().toISOString();
+          const expires = new Date(Date.now() + leaseMs).toISOString();
+          const holder = `runner-test-${process.pid}`;
+          let next = setField(yaml, "status", "claimed");
+          next = setField(next, "updated", now);
+          next = setNestedField(next, "lease", "holder", holder);
+          next = setNestedField(next, "lease", "expires", expires);
+          next = appendHistory(next, {
+            ts: now,
+            from: "open",
+            to: "claimed",
+            by: holder,
+            note: "claimed in test pass",
+          });
+          await writeFile(filePath, next);
+          return "claimed";
+        },
       });
-      await writeFile(filePath, next);
-      claimed.push(taskId);
+      if (outcome === "skip-not-ready") { skippedNotReady.push(taskId); continue; }
+      if (outcome === "claimed") { claimed.push(taskId); continue; }
     }
   }
 
@@ -2911,4 +3162,6 @@ export const __testing = {
   // Tick-level claim pass for WAL-72 Phase 1 regression suite (TESTPLAN.md Part 3).
   // Takes an explicit agentsDir so tests can drive it against a fixture directory.
   runClaimPassForTesting,
+  // Frontier check — WAL-72 Phase 2.  Takes explicit agentsDir for fixture tests.
+  checkFrontierAndMaybeSpawnContinuation,
 };
