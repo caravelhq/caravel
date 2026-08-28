@@ -49,6 +49,8 @@ const SUITES: Suite[] = [
   { name: "scheduler ready-set, FDP oracle (WAL-72)", file: "scheduler/ready.test.ts", timeoutMs: 120_000 },
   { name: "tick-claim regression (WAL-72 Phase 1)", file: "scheduler/tick-claim.test.ts", timeoutMs: 120_000 },
   { name: "frontier check + loop guard (WAL-72 Phase 2)", file: "scheduler/frontier.test.ts", timeoutMs: 120_000 },
+  { name: "frontier integrity: dup-spawn/siblings/reply_to (WAL-72 Ph2 review)", file: "scheduler/frontier-integrity.test.ts", timeoutMs: 120_000 },
+  { name: "graph errors: F1/F2 direct + journal (WAL-72 Ph2 review)", file: "scheduler/graph-errors.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };

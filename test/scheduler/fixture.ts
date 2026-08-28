@@ -30,6 +30,8 @@ export type TaskDecl = {
   /** Envelope kind; "continuation" matters for the loop-guard cases. */
   kind?: string;
   from?: string;
+  /** Optional continuation-target override — emitted only when non-null. */
+  reply_to?: string | null;
   /** Node gate: "user" | "limits" | null. */
   gate?: string | null;
   parent?: string | null;
@@ -106,6 +108,7 @@ export async function buildFixture(root: string, decl: FixtureDecl): Promise<str
       // only emit the keys when they carry edges, like real dispatches will.
       if (t.needs && t.needs.length > 0) envelope.needs = t.needs;
       if (t.after && t.after.length > 0) envelope.after = t.after;
+      if (t.reply_to != null) envelope.reply_to = t.reply_to;
 
       await writeFile(join(dir, `${t.id}.yaml`), yamlDump(envelope));
     }
