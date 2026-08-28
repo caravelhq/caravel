@@ -684,6 +684,7 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
   // The worker has its own CLAUDE.md and rules already loaded by the runner.
   // The prompt is the brief itself plus the file-as-output contract.
   const brief = readField(yaml, "brief") ?? "";
+  const headline = readField(yaml, "headline") ?? taskId;
   const agent = readField(yaml, "to") ?? "<self>";
   const revisits = readRevisits(yaml);
   const sections: string[] = [
@@ -710,6 +711,18 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
   }
   return [
     ...sections,
+    "## Before you start",
+    "",
+    "Run this first, before reading anything in `context:`:",
+    "",
+    `    node .claude/skills/knowledge/script/knowledge.mjs query "${headline.replace(/"/g, '\\"')}"`,
+    "",
+    "This returns the most relevant documents and prior task reports in one call —",
+    "ranked by lexical match and structural proximity — including things the brief's",
+    "`context:` list does not mention. The `context:` array is written from memory;",
+    "this is not. Skim the results before opening any file.",
+    "See `agents/_shared/rules/context-discovery.md` for why this comes first.",
+    "",
     "## How to return your result (primary contract)",
     "",
     `Your final action MUST be a Write call that creates this file:`,
