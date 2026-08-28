@@ -874,6 +874,7 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
 //   ready("TSK-...", graph);  // → boolean
 
 interface GraphNode {
+  owner: string;        // which agent directory owns this envelope
   id: string;
   rawStatus: string;   // value of the `status:` field
   bucket: string;      // filesystem directory (open | waiting | done | failed | paused | archived)
@@ -899,7 +900,7 @@ interface TaskGraph {
 
 // Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
 // point at a fixture directory rather than the live agents/ tree.
-const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived"] as const;
+const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"] as const;
 
 export async function loadGraph(agentsDir: string, agents: string[]): Promise<TaskGraph> {
   const nodes = new Map<string, GraphNode>();
@@ -964,6 +965,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         const kindRaw = (readField(content, "kind") ?? "").trim();
         const node: GraphNode = {
           id: taskId,
+          owner: agent,
           rawStatus,
           bucket,
           isDone,
@@ -982,29 +984,36 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
     }
   }
 
-  // Second pass: build reverse index + F2 dangling-edge detection.
+  // Second pass: build reverse index + F2/F3 edge validation.
   // Done after all nodes load so forward references resolve correctly.
+  const graphRecordError = async (id: string, problem: string) => {
+    errors.push({ id, problem });
+    const key = `${id}:${problem}`;
+    if (!warnedGraphErrors.has(key)) {
+      warnedGraphErrors.add(key);
+      console.warn(`[graph] ${id}: ${problem}`);
+      const owner = nodeOwner.get(id);
+      if (owner) {
+        await writeFile(
+          join(agentsDir, owner, "tasks", "journal.ndjson"),
+          JSON.stringify({ ts: new Date().toISOString(), id, event: "graph-error", problem }) + "\n",
+          { flag: "a" }
+        ).catch(() => {});
+      }
+    }
+  };
+
   for (const node of nodes.values()) {
     const allDeps = new Set([...node.needs, ...node.after]);
     for (const depId of allDeps) {
+      // F3: self-reference — a task that depends on itself can never be ready.
+      if (depId === node.id) {
+        await graphRecordError(node.id, `self-reference in ${node.needs.includes(node.id) ? "needs" : "after"}`);
+        continue;
+      }
       if (!nodes.has(depId)) {
-        // F2: dangling edge — the dep is not in the graph.  ready() already
-        // returns false for unknown deps, but the reason is now explicit.
-        const problem = `edge references unknown task ${depId}`;
-        errors.push({ id: node.id, problem });
-        const key = `${node.id}:${problem}`;
-        if (!warnedGraphErrors.has(key)) {
-          warnedGraphErrors.add(key);
-          console.warn(`[graph] ${node.id}: ${problem}`);
-          const owner = nodeOwner.get(node.id);
-          if (owner) {
-            await writeFile(
-              join(agentsDir, owner, "tasks", "journal.ndjson"),
-              JSON.stringify({ ts: new Date().toISOString(), id: node.id, event: "graph-error", problem }) + "\n",
-              { flag: "a" }
-            ).catch(() => {});
-          }
-        }
+        // F2: dangling edge — the dep is not in the graph.
+        await graphRecordError(node.id, `edge references unknown task ${depId}`);
         continue;
       }
       // Build reverse index — deduped.  A task declaring the same dep in
@@ -1012,6 +1021,34 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
       if (!dependants.has(depId)) dependants.set(depId, []);
       const list = dependants.get(depId)!;
       if (!list.includes(node.id)) list.push(node.id);
+    }
+  }
+
+  // Third pass: cycle detection via DFS through forward edges.
+  // F4: a cycle means all tasks in it can never become ready.
+  {
+    const visited = new Set<string>();
+    const inStack = new Set<string>();
+
+    const dfs = async (id: string): Promise<void> => {
+      if (inStack.has(id)) {
+        await graphRecordError(id, `cycle detected: ${[...inStack, id].join(" → ")}`);
+        return;
+      }
+      if (visited.has(id)) return;
+      inStack.add(id);
+      const node = nodes.get(id);
+      if (node) {
+        for (const dep of [...node.needs, ...node.after]) {
+          if (nodes.has(dep)) await dfs(dep); // only traverse known nodes
+        }
+      }
+      inStack.delete(id);
+      visited.add(id);
+    };
+
+    for (const nodeId of nodes.keys()) {
+      if (!visited.has(nodeId)) await dfs(nodeId);
     }
   }
 
@@ -1941,7 +1978,7 @@ async function nextContTaskId(
   graph: TaskGraph,
   agentsDir: string
 ): Promise<string> {
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "archived"];
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"];
 
   if (parentId) {
     const root = parentId.split(".")[0]!;
@@ -2159,6 +2196,7 @@ async function checkFrontierAndMaybeSpawnContinuation(
   // must be updated — the dependants entry is what makes `downstreams.length > 0` fire.
   const newNode: GraphNode = {
     id,
+    owner: target,
     rawStatus: "open",
     bucket: "open",
     isDone: false,
@@ -2291,6 +2329,74 @@ async function transitionToTerminal(
   // envelope can transition out of waiting/.
   if (directive.kind === "done") {
     await maybeCloseParentOnUserUnblock(next, taskId);
+  }
+
+  // When a task fails, move its needs-dependants to blocked/ so they don't
+  // sit in open/ forever. Does not cascade — dependants of blocked tasks stay open.
+  if (directive.kind !== "done") {
+    await sweepBlockedDependants(taskId, graph, AGENTS_DIR);
+  }
+}
+
+// When a failed task has dependants that declared `needs:` on it (not `after:`),
+// those dependants can never become ready — move them to blocked/.
+// No auto-cascade: dependants of the blocked task stay in open/ (DEC-13/14).
+async function sweepBlockedDependants(
+  failedId: string,
+  graph: TaskGraph,
+  agentsDir: string
+): Promise<void> {
+  const deps = graph.dependants.get(failedId) ?? [];
+  for (const depId of deps) {
+    const node = graph.nodes.get(depId);
+    if (!node) continue;
+    if (!node.needs.includes(failedId)) continue; // after: doesn't block
+    if (node.bucket !== "open" && node.bucket !== "waiting") continue; // already terminal
+    if (node.rawStatus === "blocked") continue;
+
+    const srcPath = join(agentsDir, node.owner, "tasks", node.bucket, `${depId}.yaml`);
+    let yaml: string;
+    try {
+      yaml = await readFile(srcPath, "utf-8");
+    } catch { continue; }
+
+    const now = new Date().toISOString();
+    let next = setField(yaml, "status", "blocked");
+    next = setField(next, "updated", now);
+    next = setField(next, "blocked_by", failedId);
+    next = appendHistory(next, {
+      ts: now,
+      from: node.rawStatus,
+      to: "blocked",
+      by: `runner-${process.pid}`,
+      note: JSON.stringify(`needs: dep ${failedId} reached failed — task can never become ready`),
+    });
+
+    const blockedDir = join(agentsDir, node.owner, "tasks", "blocked");
+    await mkdir(blockedDir, { recursive: true });
+    const destPath = join(blockedDir, `${depId}.yaml`);
+    await writeFile(srcPath, next);
+    await rename(srcPath, destPath);
+
+    await appendJournal(node.owner, {
+      ts: now,
+      id: depId,
+      status: "blocked",
+      kind: node.kind || "unknown",
+      from: node.owner,
+      to: node.owner,
+      parent: node.parent ?? null,
+      summary: `blocked: needs dep ${failedId} failed`,
+      level: "error",
+    });
+
+    // Update in-memory graph so subsequent checks in this tick see the new state.
+    node.bucket = "blocked";
+    node.rawStatus = "blocked";
+
+    console.error(
+      `[multi-agent] ${node.owner}/${depId}: moved to blocked/ — needs dep ${failedId} reached failed`
+    );
   }
 }
 
