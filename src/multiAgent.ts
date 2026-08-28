@@ -768,6 +768,7 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
   // The worker has its own CLAUDE.md and rules already loaded by the runner.
   // The prompt is the brief itself plus the file-as-output contract.
   const brief = readField(yaml, "brief") ?? "";
+  const headline = readField(yaml, "headline") ?? taskId;
   const agent = readField(yaml, "to") ?? "<self>";
   const revisits = readRevisits(yaml);
   const sections: string[] = [
@@ -794,6 +795,19 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
   }
   return [
     ...sections,
+    "## Before you start",
+    "",
+    "Work out a search term for this task, then run:",
+    "",
+    "    node .claude/skills/knowledge/script/knowledge.mjs query \"<your search term>\"",
+    "",
+    `Derive the term from the **brief** — 3–8 content words naming what this task is about: the system, feature, ticket, or concept. The headline is: *"${headline.replace(/"/g, '\\"')}"*. Use it when it is descriptive. Skip it when it matches a boilerplate pattern — "Briefing — N tasks landed", "Continue after TSK-…", "Follow-on: …" — those describe the task's shape, not its subject, and return generic project docs with no structural links.`,
+    "",
+    "This returns the most relevant documents and prior task reports in one call,",
+    "including things the brief's `context:` list does not mention. The `context:`",
+    "array is written from memory; this is not. Skim before opening any file.",
+    "See `agents/_shared/rules/context-discovery.md` for why this comes first.",
+    "",
     "## How to return your result (primary contract)",
     "",
     `Your final action MUST be a Write call that creates this file:`,
