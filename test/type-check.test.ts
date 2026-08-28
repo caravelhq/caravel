@@ -74,8 +74,8 @@ const [stdout, stderr] = await Promise.all([
 ]);
 const exitCode = await proc.exited;
 
-// tsc exits 0 (clean) or 1 (errors found). Any other code means tsc itself
-// crashed or was killed — treat as gate failure.
+// tsc exits 0 (clean) or 1 (errors present). Any other code means tsc crashed
+// or was killed — treat as gate failure.
 if (exitCode !== 0 && exitCode !== 1) {
   console.error(`type-check: FAIL — tsc exited unexpectedly (code=${exitCode})`);
   if (stderr) console.error(stderr.trimEnd());
@@ -101,6 +101,37 @@ console.log(
 if (excluded.length > 0) {
   console.log("  pre-existing (excluded):");
   for (const l of excluded) console.log(`    [skip] ${l.split(":")[0]}`);
+}
+
+// ── Environment-broken guard ──────────────────────────────────────────────────
+//
+// A genuinely clean program exits 0. If tsc exits non-zero but zero diagnostics
+// were attributed to src/ or test/, it means tsc aborted before type-checking
+// the program — typically because a required type definition (e.g. bun-types)
+// couldn't be resolved in a worktree without node_modules. This is exactly the
+// failure the gate is supposed to prevent: a broken environment silently passing
+// as "0 new errors".
+if (exitCode !== 0 && srcTestLines.length === 0) {
+  const isMissingTypes =
+    output.includes("TS2688") ||
+    output.includes("TS6053") ||
+    output.includes("Cannot find type definition file") ||
+    output.includes("Cannot find module");
+  if (isMissingTypes) {
+    console.error(
+      "type-check: FAIL — tsc could not complete (missing type definitions).\n" +
+        "  In a worktree: run `bun install` or run this gate from the live checkout.\n" +
+        "  Raw tsc output (first 3 lines):\n" +
+        output.split("\n").slice(0, 3).map((l) => `    ${l}`).join("\n")
+    );
+  } else {
+    console.error(
+      `type-check: FAIL — tsc exited ${exitCode} but no src/+test/ diagnostics were attributed.\n` +
+        "  Environment may be broken. Raw tsc output (first 3 lines):\n" +
+        output.split("\n").slice(0, 3).map((l) => `    ${l}`).join("\n")
+    );
+  }
+  process.exit(1);
 }
 
 if (newErrors.length > 0) {
