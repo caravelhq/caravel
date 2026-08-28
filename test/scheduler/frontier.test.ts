@@ -41,30 +41,30 @@ function assert(condition: boolean, label: string, extra?: string) {
 const root = await mkdtemp(join(tmpdir(), "caravel-frontier-"));
 process.chdir(root);
 
+const ma = await import("../../src/multiAgent.ts");
+const t = (ma.__testing ?? {}) as Record<string, unknown>;
+
+if (typeof t.checkFrontierAndMaybeSpawnContinuation !== "function") {
+  console.error("SKIP: __testing.checkFrontierAndMaybeSpawnContinuation not available");
+  process.exit(0);
+}
+if (typeof t.loadGraph !== "function") {
+  console.error("SKIP: __testing.loadGraph not available");
+  process.exit(0);
+}
+
+type TaskGraph = Awaited<ReturnType<typeof ma.loadGraph>>;
 type FrontierFn = (
   yaml: string,
   taskId: string,
   agent: string,
   agents: string[],
+  graph: TaskGraph,
   agentsDir?: string
 ) => Promise<void>;
 
-let checkFrontier: FrontierFn | null = null;
-
-try {
-  const ma = await import("../../src/multiAgent.ts");
-  const t = (ma.__testing ?? {}) as Record<string, unknown>;
-  if (typeof t.checkFrontierAndMaybeSpawnContinuation === "function") {
-    checkFrontier = t.checkFrontierAndMaybeSpawnContinuation as FrontierFn;
-  }
-} catch (e) {
-  console.error("  import failed:", (e as Error).message);
-}
-
-if (!checkFrontier) {
-  console.error("SKIP: __testing.checkFrontierAndMaybeSpawnContinuation not available");
-  process.exit(0);
-}
+const checkFrontier = t.checkFrontierAndMaybeSpawnContinuation as FrontierFn;
+const loadGraphFn = t.loadGraph as (agentsDir: string, agents: string[]) => Promise<TaskGraph>;
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -110,8 +110,9 @@ try {
       parent: null,
     });
 
+    const graph1 = await loadGraphFn(agentsDir, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir, "bob");
-    await checkFrontier!(yaml, "TSK-CONT", "alice", agents, agentsDir);
+    await checkFrontier(yaml, "TSK-CONT", "alice", agents, graph1, agentsDir);
     const bobOpenAfter = await countOpenFiles(agentsDir, "bob");
 
     assert(
@@ -146,8 +147,9 @@ try {
       parent: null,
     });
 
+    const graph2 = await loadGraphFn(agentsDir2, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir2, "bob");
-    await checkFrontier!(yaml2, "TSK-WORK", "alice", agents, agentsDir2);
+    await checkFrontier(yaml2, "TSK-WORK", "alice", agents, graph2, agentsDir2);
     const bobOpenAfter = await countOpenFiles(agentsDir2, "bob");
 
     assert(
@@ -235,8 +237,9 @@ try {
       parent: null,
     });
 
+    const graph3 = await loadGraphFn(agentsDir3, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir3, "bob");
-    await checkFrontier!(yaml3, "TSK-WORK3", "alice", agents, agentsDir3);
+    await checkFrontier(yaml3, "TSK-WORK3", "alice", agents, graph3, agentsDir3);
     const bobOpenAfter = await countOpenFiles(agentsDir3, "bob");
 
     assert(
@@ -264,9 +267,10 @@ try {
       parent: null,
     });
 
+    const graph4 = await loadGraphFn(agentsDir4, agents);
     const aliceOpenBefore = await countOpenFiles(agentsDir4, "alice");
     const bobOpenBefore2 = await countOpenFiles(agentsDir4, "bob");
-    await checkFrontier!(yaml4, "TSK-KELLY", "alice", agents, agentsDir4);
+    await checkFrontier(yaml4, "TSK-KELLY", "alice", agents, graph4, agentsDir4);
     const aliceOpenAfter = await countOpenFiles(agentsDir4, "alice");
     const bobOpenAfter2 = await countOpenFiles(agentsDir4, "bob");
 

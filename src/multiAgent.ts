@@ -39,7 +39,6 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 // Track graph errors already surfaced via console.warn — prevents a per-tick
 // log flood when a corrupt envelope or dangling edge persists across ticks.
 const warnedGraphErrors = new Set<string>();
-const warnedContSpawns = new Set<string>(); // contId → logged once when spawn is skipped
 
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set — keeps a fresh clone runnable for a demo. Real deployments
@@ -147,6 +146,7 @@ export function abortInflightWorker(
 // stops claiming work until the reset time has passed. Stored at the project
 // root so it survives daemon restart and any worker can read it.
 const LIMITS_GATE_FILE = join(resolveStateDir(), "limits-gate.json");
+const HEALTH_FILE = join(resolveStateDir(), "runner-health.json");
 
 interface LimitsGate {
   reset_at: string; // ISO timestamp
@@ -192,6 +192,38 @@ async function clearLimitsGate(): Promise<void> {
     await rm(LIMITS_GATE_FILE, { force: true });
     console.log(`[${new Date().toLocaleTimeString()}] multi-agent: limits gate cleared`);
   } catch {}
+}
+
+// ── Tick health (Phase 4, pulled forward) ─────────────────────────────────────
+//
+// Records the outcome of each tick so a silent hang (sweep throws + claim pass
+// never runs) is detectable via GET /api/health/runner. The 2026-08-26 incident
+// — sweepArchive threw on every tick, nothing claimed, everything looked healthy
+// — is the prototype for this failure class.
+
+interface RunnerHealth {
+  last_tick_at: string | null;
+  last_tick_ok: boolean;
+  last_error: { message: string; fn: string } | null;
+  last_claim_at: string | null;
+}
+
+async function readRunnerHealth(): Promise<RunnerHealth> {
+  try {
+    const raw = await readFile(HEALTH_FILE, "utf-8");
+    return JSON.parse(raw) as RunnerHealth;
+  } catch {
+    return { last_tick_at: null, last_tick_ok: true, last_error: null, last_claim_at: null };
+  }
+}
+
+async function writeRunnerHealth(h: RunnerHealth): Promise<void> {
+  try {
+    await mkdir(resolveStateDir(), { recursive: true });
+    await writeFile(HEALTH_FILE, JSON.stringify(h, null, 2));
+  } catch (err) {
+    console.error(`[multi-agent] failed to write runner health:`, err);
+  }
 }
 
 // Find the timezone offset (in minutes east of UTC) for the named IANA zone
@@ -856,6 +888,7 @@ interface GraphNode {
   to: string;
   parent: string | null;
   reply_to: string | null;
+  kind: string;        // kind: field value — used by the continuation guard (Phase 3)
 }
 
 interface TaskGraph {
@@ -928,6 +961,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           continue;
         }
 
+        const kindRaw = (readField(content, "kind") ?? "").trim();
         const node: GraphNode = {
           id: taskId,
           rawStatus,
@@ -940,6 +974,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           to: toRaw,
           parent: parentRaw && parentRaw !== "null" ? parentRaw : null,
           reply_to: replyToRaw && replyToRaw !== "null" ? replyToRaw : null,
+          kind: kindRaw,
         };
         nodes.set(taskId, node);
         nodeOwner.set(taskId, agent);
@@ -1893,20 +1928,119 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
 //
 // agentsDir defaults to the module-level AGENTS_DIR so the live path needs
 // no extra argument.  Tests pass an explicit fixture dir.
+// Allocate a fresh task id for a frontier continuation.
+//
+// Uses the tick-scoped graph (which includes in-memory insertions from earlier
+// spawns in the same tick) plus a quick filesystem scan of the target agent's
+// open/ dir.  Graph-first means tests using fixture agentsDir get consistent ids.
+// Filesystem scan catches files written by the current tick that aren't yet
+// in the next tick's graph.
+async function nextContTaskId(
+  parentId: string | null,
+  targetAgent: string,
+  graph: TaskGraph,
+  agentsDir: string
+): Promise<string> {
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "archived"];
+
+  if (parentId) {
+    const root = parentId.split(".")[0]!;
+    const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)$`);
+    let maxN = 0;
+    // First: scan graph nodes (in-memory, includes this tick's spawned nodes)
+    for (const id of graph.nodes.keys()) {
+      const m = childRe.exec(id);
+      if (!m) continue;
+      const n = Number.parseInt(m[1] ?? "", 10);
+      if (Number.isFinite(n) && n > maxN) maxN = n;
+    }
+    // Then: filesystem scan for files written after the graph was loaded
+    for (const sub of SCAN_DIRS) {
+      const dir = join(agentsDir, targetAgent, "tasks", sub);
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        const m = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`).exec(fname);
+        if (!m) continue;
+        const n = Number.parseInt(m[1] ?? "", 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+    return `${root}.${String(maxN + 1).padStart(2, "0")}`;
+  }
+
+  // Top-level id: TSK-YYYY-MM-DD-NNNN, scoped across all agents
+  const d = new Date();
+  const datePart =
+    `${d.getFullYear()}-` +
+    `${String(d.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(d.getDate()).padStart(2, "0")}`;
+  const prefix = `TSK-${datePart}-`;
+  let maxN = 0;
+  for (const id of graph.nodes.keys()) {
+    if (!id.startsWith(prefix)) continue;
+    const tail = id.slice(prefix.length);
+    if (tail.includes(".")) continue;
+    const n = Number.parseInt(tail, 10);
+    if (Number.isFinite(n) && n > maxN) maxN = n;
+  }
+  // Filesystem scan across all agents for files written after graph load
+  const agentDirs = (await readdir(agentsDir).catch(() => [] as string[])).filter((a) => {
+    return !a.startsWith(".");
+  });
+  for (const a of agentDirs) {
+    for (const sub of SCAN_DIRS) {
+      const dir = join(agentsDir, a, "tasks", sub);
+      const entries = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of entries) {
+        if (!fname.startsWith(prefix) || !fname.endsWith(".yaml")) continue;
+        const tail = fname.slice(prefix.length, -5);
+        if (tail.includes(".")) continue;
+        const n = Number.parseInt(tail, 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+  }
+  return `${prefix}${String(maxN + 1).padStart(4, "0")}`;
+}
+
+// Continuation model — FDP v1.15 (Kelly, 2026-08-28).
+//
+// Spawn rule: when task `t` reaches a terminal state —
+//   1. target := t.reply_to ?? t.from.  If not a spawnable agent, surface and return.
+//   2. family := all tasks sharing t.parent (just {t} when parent is null).
+//   3. If a non-terminal continuation already exists with parent==t.parent and to==target, skip.
+//      (Non-terminal means bucket != done and bucket != failed.)
+//   4. Spawn with to:target, parent:t.parent, after:[every member of family INCLUDING t itself].
+//      The self-edge is what puts the continuation into dependants[t], which is what makes
+//      the existing `downstreams.length > 0` guard refuse a second spawn. Without it the
+//      guard is blind. This inverts Jess's assertion 2e (frontier-integrity.test.ts) —
+//      the completing task IS its own continuation dependency per v1.15.
+//
+// Uses after: not needs: — a continuation reports what happened, so a failed sibling must
+// not block the briefing that exists to surface that failure.
+//
+// The graph parameter is the tick-scoped graph, hoisted from tickOnce and passed through
+// transitionToTerminal. After spawning, the new node is inserted into graph (both nodes and
+// dependants) so a second transition in the same tick sees it and skips.
+//
+// DEC-12 guard: a kind:continuation node must never spawn another continuation.
+// Alice gate removed (Phase 3 deletion).
 async function checkFrontierAndMaybeSpawnContinuation(
   yaml: string,
   taskId: string,
   agent: string,
   agents: string[],
+  graph: TaskGraph,
   agentsDir: string = AGENTS_DIR
 ): Promise<void> {
-  // Alice path handled by notifyDispatchChat until that machinery is retired.
-  const from = (readField(yaml, "from") ?? "").trim();
-  if (from === "alice") return;
-
-  const graph = await loadGraph(agentsDir, agents);
-  const downstreams = graph.dependants.get(taskId) ?? [];
-  if (downstreams.length > 0) return; // declared join covers it; no continuation needed
+  // DEC-12: a continuation must never spawn another continuation.
+  const kind = (readField(yaml, "kind") ?? "").trim();
+  if (kind === "continuation") {
+    console.warn(
+      `[multi-agent] ${agent}/${taskId}: kind:continuation reached frontier with no downstream — NOT spawning (DEC-12 loop guard)`
+    );
+    return;
+  }
 
   const replyToRaw = readField(yaml, "reply_to");
   const fromRaw = readField(yaml, "from");
@@ -1916,16 +2050,6 @@ async function checkFrontierAndMaybeSpawnContinuation(
     ""
   ).trim();
 
-  const kind = (readField(yaml, "kind") ?? "").trim();
-
-  // DEC-12: a continuation must never spawn another continuation.
-  if (kind === "continuation") {
-    console.warn(
-      `[multi-agent] ${agent}/${taskId}: kind:continuation reached frontier with no downstream — NOT spawning (DEC-12 loop guard)`
-    );
-    return;
-  }
-
   // If target is not a known spawnable agent, surface as waiting-on-user.
   if (!target || target === "user" || target === "runner" || !agents.includes(target)) {
     console.log(
@@ -1934,37 +2058,38 @@ async function checkFrontierAndMaybeSpawnContinuation(
     return;
   }
 
-  // Deterministic id: derived from the completing task (FDP v1.11).
-  const id = `${taskId}-cont`;
-
-  // FDP v1.11 — "exactly one continuation" is a statement about executions,
-  // not files.  If the continuation already exists in ANY bucket (open as
-  // claimed, waiting, done, failed, paused, archived), skip the spawn.
-  // Overwriting would clobber a live lease (claimed) or re-execute a finished
-  // run (done/failed).  The graph is already loaded from all six buckets above.
-  if (graph.nodes.has(id)) {
-    const existing = graph.nodes.get(id)!;
-    if (!warnedContSpawns.has(id)) {
-      warnedContSpawns.add(id);
-      console.log(
-        `[multi-agent] ${agent}/${taskId}: continuation ${id} already exists` +
-          ` (bucket: ${existing.bucket}, status: ${existing.rawStatus}) — skipping spawn`
-      );
-    }
+  // Frontier guard: skip if T has any non-terminal downstream.
+  // "Non-terminal" for continuations means bucket != done/failed (v1.15: a terminal
+  // continuation does NOT block a new spawn — it may have failed and deserve a retry).
+  // Non-continuation downstreams (join tasks) always block regardless of status.
+  // After the first spawn, the newly inserted node populates graph.dependants[taskId],
+  // so a second call in the same tick sees a non-terminal downstream and skips.
+  const parentRaw = readField(yaml, "parent");
+  const downstreams = graph.dependants.get(taskId) ?? [];
+  const hasBlockingDownstream = downstreams.some((depId) => {
+    const node = graph.nodes.get(depId);
+    if (!node) return true; // unknown node — be conservative
+    return node.kind === "continuation" ? !node.isTerminal : true;
+  });
+  if (hasBlockingDownstream) {
+    console.log(
+      `[multi-agent] ${agent}/${taskId}: has non-terminal downstream — skipping continuation spawn`
+    );
     return;
   }
 
-  // Find siblings: tasks sharing the same parent as the completing task.
-  // The continuation will list them in `needs:` so it only runs when all
-  // sibling work has landed.
-  const parentRaw = readField(yaml, "parent");
+  // Build family = completing task + all siblings sharing the same parent.
+  // The after: block includes t (self-edge) — this populates dependants[t] and makes
+  // the downstreams guard above fire for any subsequent transition in the same tick.
   const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
-  const siblingIds: string[] = [];
+  const familyIds: string[] = [taskId]; // always includes the completing task (self-edge)
   if (parent) {
     for (const [sibId, node] of graph.nodes) {
-      if (sibId !== taskId && node.parent === parent) siblingIds.push(sibId);
+      if (sibId !== taskId && node.parent === parent) familyIds.push(sibId);
     }
   }
+
+  const id = await nextContTaskId(parent, target, graph, agentsDir);
   const now = new Date().toISOString();
   const q = (v: string) => JSON.stringify(v);
   const firstHeadlineRaw = (readField(yaml, "headline") ?? "").trim();
@@ -1973,10 +2098,8 @@ async function checkFrontierAndMaybeSpawnContinuation(
     : firstHeadlineRaw;
   const headline = firstHeadline ? `Continue: ${firstHeadline.slice(0, 64)}` : `Continue after ${taskId}`;
 
-  const needsBlock =
-    siblingIds.length > 0
-      ? `\nneeds:\n${siblingIds.map((s) => `  - ${s}`).join("\n")}\n`
-      : "";
+  // after: not needs: — a continuation reports what happened; failed siblings must not block it.
+  const afterBlock = `after:\n${familyIds.map((s) => `  - ${s}`).join("\n")}\n`;
 
   const body = [
     `id: ${id}`,
@@ -1990,7 +2113,6 @@ async function checkFrontierAndMaybeSpawnContinuation(
     `reply_to: null`,
     "",
     `kind: continuation`,
-    `priority: P2`,
     `deadline: null`,
     "",
     `budget:`,
@@ -2002,7 +2124,8 @@ async function checkFrontierAndMaybeSpawnContinuation(
     `  Sub-task ${taskId} (${agent}) has landed as terminal.`,
     `  Read the report and write a consolidated briefing for the user, then emit`,
     `  <task-done summary="..."> or surface a <task-waiting on="user" summary="...">.`,
-    needsBlock.trim() ? `\nneeds:${needsBlock.slice(7)}` : "",
+    "",
+    afterBlock.trimEnd(),
     "",
     `context:`,
     `  - agents/${agent}/tasks/done/${taskId}.yaml`,
@@ -2031,6 +2154,30 @@ async function checkFrontierAndMaybeSpawnContinuation(
   await mkdir(openDir, { recursive: true });
   await writeFile(join(openDir, `${id}.yaml`), body);
 
+  // Insert the new continuation node into the tick-scoped graph so subsequent
+  // transitions in the same tick see it and skip. Both nodes and dependants maps
+  // must be updated — the dependants entry is what makes `downstreams.length > 0` fire.
+  const newNode: GraphNode = {
+    id,
+    rawStatus: "open",
+    bucket: "open",
+    isDone: false,
+    isFailed: false,
+    isTerminal: false,
+    needs: [],
+    after: familyIds,
+    to: target,
+    parent: parent ?? taskId,
+    reply_to: null,
+    kind: "continuation",
+  };
+  graph.nodes.set(id, newNode);
+  for (const memberId of familyIds) {
+    const deps = graph.dependants.get(memberId) ?? [];
+    if (!deps.includes(id)) deps.push(id);
+    graph.dependants.set(memberId, deps);
+  }
+
   await appendJournal(target, {
     ts: now,
     id,
@@ -2049,7 +2196,8 @@ async function transitionToTerminal(
   agent: string,
   taskId: string,
   openPath: string,
-  directive: TaskDirective
+  directive: TaskDirective,
+  graph: TaskGraph
 ): Promise<void> {
   const subdir = directive.kind === "done" ? "done" : "failed";
   const finalStatus = directive.kind === "done" ? "done" : `failed:${directive.reason ?? "other"}`;
@@ -2135,9 +2283,7 @@ async function transitionToTerminal(
 
   // Frontier check: spawn a continuation if nothing downstream declares this
   // task and it is not itself a continuation (DEC-12 loop guard).
-  // Alice tasks are handled by notifyDispatchChat above; this gate is removed
-  // when the Alice-specific machinery is retired in a later commit.
-  await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents());
+  await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents(), graph);
 
   // Auto-close parent if this was a `closes_parent_on_done` child landing as
   // done. Spawned by Kelly via the "Next" button on a waiting:on:user task —
@@ -2884,19 +3030,31 @@ async function tickOnce(
     return;
   }
 
-  // Stale-claim recovery. On the first tick after daemon startup, any
-  // envelope still in `status: claimed` is from the prior process by
-  // definition — reset immediately regardless of lease window. On
-  // subsequent ticks, only recover claims whose lease has elapsed.
-  await sweepStaleClaims(opts, isFirstTick);
+  // Read prior health so we can carry last_claim_at forward across ticks.
+  const health = await readRunnerHealth();
+  health.last_tick_at = new Date().toISOString();
+  health.last_tick_ok = true;
+  health.last_error = null;
 
-  // Sweep waiting tasks first — any unblock will land them in tasks/open/ in
-  // time for the same tick's claim pass.
-  await sweepWaiting(opts);
-
-  // Archive old terminal tasks (done/failed/waiting older than the threshold)
-  // into tasks/archived/<bucket>/. Keeps the working dirs lean.
-  await sweepArchive(opts);
+  // Wrap each sweep so a throw in one is logged, recorded, and stepped over —
+  // the claim pass must still run even if a sweep fails. This is the 2026-08-26
+  // regression as a structural guarantee: a broken sweep degrades the system,
+  // it does not stop it.
+  const sweeps: Array<[string, () => Promise<void>]> = [
+    ["sweepStaleClaims", () => sweepStaleClaims(opts, isFirstTick)],
+    ["sweepWaiting", () => sweepWaiting(opts)],
+    ["sweepArchive", () => sweepArchive(opts)],
+  ];
+  for (const [name, fn] of sweeps) {
+    try {
+      await fn();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error(`[${new Date().toLocaleTimeString()}] multi-agent: ${name} threw — claim pass continues:`, err);
+      health.last_tick_ok = false;
+      health.last_error = { message, fn: name };
+    }
+  }
 
   // Phase 1: build the task graph once per tick.  `ready()` uses this to
   // evaluate needs/after edges without re-reading the filesystem per task.
@@ -2991,6 +3149,7 @@ async function tickOnce(
       if (outcome !== "claimed") continue;
 
       inFlight.set(agent, active + 1);
+      health.last_claim_at = new Date().toISOString();
       console.log(`[${new Date().toLocaleTimeString()}] multi-agent: claimed ${agent}/${taskId} (kind=${readField(yaml, "kind") ?? "unknown"})`);
 
       // Fire-and-forget the worker; record completion when it returns.
@@ -3016,7 +3175,7 @@ async function tickOnce(
             await transitionToWaiting(agent, taskId, filePath, effective);
             console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${effective.reason}`);
           } else {
-            await transitionToTerminal(agent, taskId, filePath, effective);
+            await transitionToTerminal(agent, taskId, filePath, effective, graph);
             console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
           }
         })
@@ -3026,6 +3185,26 @@ async function tickOnce(
         .finally(() => {
           inFlight.set(agent, Math.max(0, (inFlight.get(agent) ?? 1) - 1));
         });
+    }
+  }
+
+  // Persist health record and alert on claim drought.
+  await writeRunnerHealth(health);
+  if (health.last_claim_at) {
+    const droughtMs = Date.now() - Date.parse(health.last_claim_at);
+    if (droughtMs > opts.tickMs * 5) {
+      // Check if there are any ready tasks — if so, this is a real drought.
+      const graph2 = await loadGraph(AGENTS_DIR, opts.agents).catch(() => null);
+      if (graph2) {
+        const hasReady = [...graph2.nodes.values()].some(
+          (n) => n.bucket === "open" && n.rawStatus !== "paused" && ready(n.id, graph2)
+        );
+        if (hasReady) {
+          console.warn(
+            `[multi-agent] claim drought: last claim was ${Math.round(droughtMs / 1000)}s ago but ready tasks exist`
+          );
+        }
+      }
     }
   }
 }

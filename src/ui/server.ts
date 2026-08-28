@@ -423,6 +423,21 @@ self.addEventListener('fetch', e => {
         return json({ ok: true, now: Date.now() });
       }
 
+      if (url.pathname === "/api/health/runner") {
+        try {
+          const { readFile: rf } = await import("node:fs/promises");
+          const { resolveStateDir } = await import("../paths.ts");
+          const raw = await rf(join(resolveStateDir(), "runner-health.json"), "utf-8");
+          const h = JSON.parse(raw);
+          const staleThresholdMs = 5 * 60 * 1000; // 5 minutes
+          const lastTick = h.last_tick_at ? Date.parse(h.last_tick_at) : 0;
+          const isStale = lastTick > 0 && Date.now() - lastTick > staleThresholdMs;
+          return json({ ...h, is_stale: isStale });
+        } catch {
+          return json({ last_tick_at: null, last_tick_ok: null, last_error: null, last_claim_at: null, is_stale: null });
+        }
+      }
+
       if (url.pathname === "/api/state") {
         return json(await buildState(opts.getSnapshot()));
       }
