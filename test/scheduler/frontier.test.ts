@@ -164,15 +164,15 @@ try {
         fs.readFile(join(bobOpen, files[0]!), "utf-8")
       );
       assert(
-        content.includes("kind: continuation"),
+        content.includes("\nkind: continuation\n"),
         "2b: spawned envelope has kind: continuation"
       );
       assert(
-        content.includes("to: bob"),
+        content.includes("\nto: bob\n"),
         "2c: spawned envelope is addressed to bob"
       );
       assert(
-        content.includes("from: runner"),
+        content.includes("\nfrom: runner\n"),
         "2d: spawned envelope is from: runner"
       );
     }

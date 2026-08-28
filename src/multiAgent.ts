@@ -871,6 +871,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
   const nodes = new Map<string, GraphNode>();
   const dependants = new Map<string, string[]>();
   const errors: { id: string; problem: string }[] = [];
+  const nodeOwner = new Map<string, string>(); // taskId → agent, for journal writes
 
   for (const agent of agents) {
     for (const bucket of GRAPH_SCAN_BUCKETS) {
@@ -899,6 +900,13 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           if (!warnedGraphErrors.has(key)) {
             warnedGraphErrors.add(key);
             console.warn(`[graph] ${taskId}: ${problem}`);
+            // Journal for durable visibility (FDP §Graph errors). Must not
+            // throw — a journal failure must never abort the claim pass.
+            await writeFile(
+              join(agentsDir, agent, "tasks", "journal.ndjson"),
+              JSON.stringify({ ts: new Date().toISOString(), id: taskId, event: "graph-error", problem }) + "\n",
+              { flag: "a" }
+            ).catch(() => {});
           }
           continue; // exclude from graph — never admit as ready
         }
@@ -933,6 +941,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           reply_to: replyToRaw && replyToRaw !== "null" ? replyToRaw : null,
         };
         nodes.set(taskId, node);
+        nodeOwner.set(taskId, agent);
       }
     }
   }
@@ -951,6 +960,14 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         if (!warnedGraphErrors.has(key)) {
           warnedGraphErrors.add(key);
           console.warn(`[graph] ${node.id}: ${problem}`);
+          const owner = nodeOwner.get(node.id);
+          if (owner) {
+            await writeFile(
+              join(agentsDir, owner, "tasks", "journal.ndjson"),
+              JSON.stringify({ ts: new Date().toISOString(), id: node.id, event: "graph-error", problem }) + "\n",
+              { flag: "a" }
+            ).catch(() => {});
+          }
         }
         continue;
       }
@@ -1862,28 +1879,6 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
 
 // Generate a child task id for any agent using the decimal sub-task scheme.
 // Mirrors nextAliceTaskId but works for any target agent.
-async function nextTaskId(targetAgent: string, parentId: string): Promise<string> {
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived"];
-  const root = parentId.split(".")[0]!;
-  const childRe = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`);
-  let maxN = 0;
-  const roster = knownAgents();
-  for (const a of roster) {
-    for (const sub of SCAN_DIRS) {
-      const dir = join(AGENTS_DIR, a, "tasks", sub);
-      const entries = await readdir(dir).catch(() => [] as string[]);
-      for (const fname of entries) {
-        const m = childRe.exec(fname);
-        if (!m) continue;
-        const n = Number.parseInt(m[1] ?? "", 10);
-        if (Number.isFinite(n) && n > maxN) maxN = n;
-      }
-    }
-  }
-  void targetAgent; // only the parent root matters for the id scheme
-  return `${root}.${String(maxN + 1).padStart(2, "0")}`;
-}
-
 // Frontier check + general continuation (WAL-72 Phase 2).
 //
 // Called after every terminal transition.  If nothing downstream declares
@@ -1950,7 +1945,10 @@ async function checkFrontierAndMaybeSpawnContinuation(
     }
   }
 
-  const id = await nextTaskId(target, taskId);
+  // Deterministic id: derived from the completing task so a second terminal
+  // transition (WAL-71 stale-claim replay) overwrites rather than duplicates.
+  // `nextTaskId` is gone — this scheme is faster and survives daemon restarts.
+  const id = `${taskId}-cont`;
   const now = new Date().toISOString();
   const q = (v: string) => JSON.stringify(v);
   const firstHeadlineRaw = (readField(yaml, "headline") ?? "").trim();
