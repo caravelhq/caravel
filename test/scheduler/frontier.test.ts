@@ -59,7 +59,6 @@ type FrontierFn = (
   taskId: string,
   agent: string,
   agents: string[],
-  graph: TaskGraph,
   agentsDir?: string
 ) => Promise<void>;
 
@@ -110,9 +109,9 @@ try {
       parent: null,
     });
 
-    const graph1 = await loadGraphFn(agentsDir, agents);
+    await loadGraphFn(agentsDir, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir, "bob");
-    await checkFrontier(yaml, "TSK-CONT", "alice", agents, graph1, agentsDir);
+    await checkFrontier(yaml, "TSK-CONT", "alice", agents, agentsDir);
     const bobOpenAfter = await countOpenFiles(agentsDir, "bob");
 
     assert(
@@ -147,9 +146,9 @@ try {
       parent: null,
     });
 
-    const graph2 = await loadGraphFn(agentsDir2, agents);
+    await loadGraphFn(agentsDir2, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir2, "bob");
-    await checkFrontier(yaml2, "TSK-WORK", "alice", agents, graph2, agentsDir2);
+    await checkFrontier(yaml2, "TSK-WORK", "alice", agents, agentsDir2);
     const bobOpenAfter = await countOpenFiles(agentsDir2, "bob");
 
     assert(
@@ -237,9 +236,9 @@ try {
       parent: null,
     });
 
-    const graph3 = await loadGraphFn(agentsDir3, agents);
+    await loadGraphFn(agentsDir3, agents);
     const bobOpenBefore = await countOpenFiles(agentsDir3, "bob");
-    await checkFrontier(yaml3, "TSK-WORK3", "alice", agents, graph3, agentsDir3);
+    await checkFrontier(yaml3, "TSK-WORK3", "alice", agents, agentsDir3);
     const bobOpenAfter = await countOpenFiles(agentsDir3, "bob");
 
     assert(
@@ -258,7 +257,8 @@ try {
     await mkdir(join(agentsDir4, "alice", "tasks", "done"), { recursive: true });
 
     // from: kelly → target = kelly → not in ["alice", "bob"]
-    // F3 fix: spawns a kind:notification to alice so the completion is dashboard-visible.
+    // v1.19 DEC-23: user target + single frontier leaf → report-flag (no envelope spawned).
+    // spawnUnresolvableNotification() is deleted; this is a no-op on the filesystem.
     const yaml4 = makeYaml({
       id: "TSK-KELLY",
       from: "kelly",
@@ -268,33 +268,22 @@ try {
       parent: null,
     });
 
-    const graph4 = await loadGraphFn(agentsDir4, agents);
+    await loadGraphFn(agentsDir4, agents);
     const aliceOpenBefore = await countOpenFiles(agentsDir4, "alice");
     const bobOpenBefore2 = await countOpenFiles(agentsDir4, "bob");
-    await checkFrontier(yaml4, "TSK-KELLY", "alice", agents, graph4, agentsDir4);
+    await checkFrontier(yaml4, "TSK-KELLY", "alice", agents, agentsDir4);
     const aliceOpenAfter = await countOpenFiles(agentsDir4, "alice");
     const bobOpenAfter2 = await countOpenFiles(agentsDir4, "bob");
 
     assert(
-      aliceOpenAfter === aliceOpenBefore + 1,
-      "4a: unresolvable target → one notification envelope queued to alice (F3)",
+      aliceOpenAfter === aliceOpenBefore,
+      "4a: user target + single leaf → report-flag (DEC-23), no envelope spawned to alice",
       `alice open before=${aliceOpenBefore} after=${aliceOpenAfter}`
     );
     assert(
       bobOpenAfter2 === bobOpenBefore2,
       "4b: nothing spawned to bob (target is kelly, not bob)"
     );
-    // Verify the notification is kind:notification (not kind:continuation).
-    const aliceOpen = await readdir(join(agentsDir4, "alice", "tasks", "open")).catch(() => [] as string[]);
-    const notifFiles = aliceOpen.filter((f) => f.endsWith(".yaml"));
-    if (notifFiles.length === 1) {
-      const { readFile: rf } = await import("fs/promises");
-      const { load: yl } = await import("js-yaml");
-      const notifYaml = await rf(join(agentsDir4, "alice", "tasks", "open", notifFiles[0]!), "utf-8");
-      const notifDoc = yl(notifYaml) as Record<string, unknown>;
-      assert(notifDoc["kind"] === "notification", "4c: notification envelope has kind: notification");
-      assert(String(notifDoc["parent"] ?? "") === "TSK-KELLY", "4d: notification parent is the completing task");
-    }
   }
 
 } finally {
