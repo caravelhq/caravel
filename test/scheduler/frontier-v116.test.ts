@@ -1,23 +1,30 @@
 /**
- * v1.16 continuation guard tests + sweepBlockedDependants coverage (WAL-72 post-deploy).
+ * Continuation guard tests — v1.16 baseline, updated to v1.19 semantics (WAL-72).
  *
- * Proves the four defects fixed in the v1.16 batch:
+ * Tests 1–3 and 5–8 prove the four original v1.16 defects still fixed, re-pointed
+ * where DEC-20 (one-per-family) changes the expected outcome:
  *
- *   F1a (staggered family): A completes → C1 spawned. B completes later →
- *     findExistingContinuation finds C1, extends its after: to include B.
- *     Exactly ONE continuation in the end.
+ *   F1a (staggered family): A completes → C1 spawned. B completes later → reconcile
+ *     extends C1's after: to [A, B]. Exactly ONE continuation.
  *
- *   F1b (two-graph variant): same-parent siblings claimed on different ticks →
- *     two independent graph snapshots, each loaded fresh. The old graph.dependants
- *     guard was blind to cross-tick siblings. Filesystem scan fixes this.
+ *   F1b (two-graph replay): persistent currentGraph makes two-graph races moot.
+ *     Test stays as a regression guard — a refactor back to per-invocation loadGraph
+ *     turns it red.
  *
- *   F2 (different reply_to): X reply_to:alice, Y reply_to:bob, same parent.
- *     Must produce TWO continuations — one per target. Old guard saw X's
- *     continuation in dependants[Y] and dropped Y's silently.
+ *   F2 re-pointed (DEC-20): M reply_to:alice, N reply_to:cliff, same parent.
+ *     Under v1.19 one-per-family: ONE continuation to alice covering [M, N].
+ *     Previously asserted two; that assertion is withdrawn.
  *
- *   sweepBlockedDependants (#4 from FDP test plan): a failed task causes its
- *     needs-dependants to move to blocked/. after:-dependants are unaffected.
- *     First dedicated coverage for this sweep.
+ *   sweepBlockedDependants (#4): failed dep → needs-dependant to blocked/;
+ *     after:-dependant untouched. First dedicated coverage.
+ *
+ *   Tests 5–6: extension is unclaimed-only; paused/waiting continuations extended
+ *     without status change; claimed continuations not touched.
+ *
+ *   Test 7 (v1.18): ready() true, no self-reference, graph.errors clean after extend.
+ *
+ *   Test 8 re-pointed (DEC-20): multi-sibling, one continuation to alice covers
+ *     the whole family; cliff gets none. familyIds excludes kind:continuation nodes.
  *
  * Run with: bun run test/scheduler/frontier-v116.test.ts
  * Exits 0 on all pass, 1 on any failure.
@@ -60,12 +67,14 @@ if (
 }
 
 type TaskGraph = Awaited<ReturnType<typeof ma.loadGraph>>;
+// v1.19: graph parameter dropped from checkFrontierAndMaybeSpawnContinuation;
+// frontier checks now use module-level currentGraph (set by loadGraph as a side
+// effect). Call sites pass agentsDir directly where graph was.
 type FrontierFn = (
   yaml: string,
   taskId: string,
   agent: string,
   agents: string[],
-  graph: TaskGraph,
   agentsDir?: string
 ) => Promise<void>;
 type SweepBlockedFn = (
@@ -129,18 +138,18 @@ try {
     },
   });
 
-  // Step 1: A completes — load a fresh graph, call frontier.
-  const graphA = await loadGraphFn(agentsDir, agents);
+  // Step 1: A completes — rebuild currentGraph, call frontier.
+  await loadGraphFn(agentsDir, agents);
   const yamlA = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-A.yaml"), "utf-8");
-  await checkFrontier(yamlA, "TSK-A", "alice", agents, graphA, agentsDir);
+  await checkFrontier(yamlA, "TSK-A", "alice", agents, agentsDir);
 
   const afterA = await openEnvelopes("bob");
   assert(afterA.length === 1, "1a: A's completion spawns exactly one continuation");
 
-  // Step 2: B completes — load a NEW graph (different tick, doesn't see the insertion from graphA).
-  const graphB = await loadGraphFn(agentsDir, agents);
+  // Step 2: B completes — loadGraphFn sets currentGraph (simulates new tick rebuild).
+  await loadGraphFn(agentsDir, agents);
   const yamlB = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-B.yaml"), "utf-8");
-  await checkFrontier(yamlB, "TSK-B", "alice", agents, graphB, agentsDir);
+  await checkFrontier(yamlB, "TSK-B", "alice", agents, agentsDir);
 
   const afterB = await openEnvelopes("bob");
   assert(
@@ -149,12 +158,18 @@ try {
     `found ${afterB.length}: [${afterB.map((e) => e.id).join(", ")}]`
   );
   if (afterB.length === 1) {
-    const afterList = afterB[0]!.doc["after"] as string[] | undefined;
+    const c1 = afterB[0]!;
+    const afterList = c1.doc["after"] as string[] | undefined;
     assert(
       Array.isArray(afterList) && afterList.includes("TSK-A") && afterList.includes("TSK-B"),
       "1c: extended continuation lists both A and B in after:",
       `after: [${afterList?.join(", ") ?? ""}]`
     );
+    const gFinal1 = await loadGraphFn(agentsDir, agents);
+    const readyFn1 = t.ready as (id: string, graph: TaskGraph) => boolean;
+    assert(readyFn1(c1.id, gFinal1), "1d: continuation is ready() — A and B are terminal");
+    const errs1 = gFinal1.errors.filter((e) => e.id === c1.id);
+    assert(errs1.length === 0, "1e: graph.errors empty for continuation", `errors: [${errs1.map((e) => e.problem).join("; ")}]`);
   }
 
   // ── Test 2: F1b — two-graph variant (cross-tick blind spot) ───────────────
@@ -177,15 +192,15 @@ try {
     },
   });
 
-  // Both graphs loaded fresh — each snapshot is independent (no shared mutation).
-  const graphX = await loadGraphFn(agentsDir, agents);
-  const graphY = await loadGraphFn(agentsDir, agents); // separate object, same view
+  // Two-graph replay: under v1.19 the persistent graph makes this moot — X fires,
+  // inserts C1 into currentGraph; Y fires and sees dependants[Y]=C1 → skip.
+  // Test stays as a regression guard: a refactor back to per-invocation loadGraph turns it red.
+  await loadGraphFn(agentsDir, agents);
   const yamlX = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-X.yaml"), "utf-8");
   const yamlY = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Y.yaml"), "utf-8");
 
-  // Fire both transitions — different graph objects like different ticks would.
-  await checkFrontier(yamlX, "TSK-X", "alice", agents, graphX, agentsDir);
-  await checkFrontier(yamlY, "TSK-Y", "alice", agents, graphY, agentsDir);
+  await checkFrontier(yamlX, "TSK-X", "alice", agents, agentsDir);
+  await checkFrontier(yamlY, "TSK-Y", "alice", agents, agentsDir);
 
   const afterXY = await openEnvelopes("bob");
   assert(
@@ -194,21 +209,27 @@ try {
     `found ${afterXY.length}: [${afterXY.map((e) => e.id).join(", ")}]`
   );
   if (afterXY.length === 1) {
-    const afterList = afterXY[0]!.doc["after"] as string[] | undefined;
+    const c2 = afterXY[0]!;
+    const afterList = c2.doc["after"] as string[] | undefined;
     assert(
       Array.isArray(afterList) && afterList.includes("TSK-X") && afterList.includes("TSK-Y"),
       "2b: continuation lists both X and Y in after:",
       `after: [${afterList?.join(", ") ?? ""}]`
     );
+    const gFinal2 = await loadGraphFn(agentsDir, agents);
+    const readyFn2 = t.ready as (id: string, graph: TaskGraph) => boolean;
+    assert(readyFn2(c2.id, gFinal2), "2c: continuation is ready() — X and Y are terminal");
+    const errs2 = gFinal2.errors.filter((e) => e.id === c2.id);
+    assert(errs2.length === 0, "2d: graph.errors empty for continuation", `errors: [${errs2.map((e) => e.problem).join("; ")}]`);
   }
 
-  // ── Test 3: F2 — different reply_to targets → two continuations ───────────
+  // ── Test 3: F2 re-pointed — one continuation per family (DEC-20) ───────────
   //
-  // X has reply_to:alice, Y has reply_to:cliff, same parent.
-  // Must produce TWO continuations — one per target.
-  // Old guard: Y saw X's continuation in dependants[Y] and silently dropped Y's.
+  // M has reply_to:alice, N has reply_to:cliff, same parent TSK-PAR3.
+  // Under v1.19 one-per-family: M fires first → C1 to alice after:[M,N].
+  // N fires → dependants[N]={C1}, non-terminal → skip. Total: 1 continuation.
 
-  console.log("\nTest 3: F2 — different reply_to targets → two distinct continuations");
+  console.log("\nTest 3: F2 re-pointed — one per family (DEC-20), M fires first → alice only");
 
   await buildFixture(root, {
     agents: {
@@ -222,24 +243,29 @@ try {
     },
   });
 
-  // Use a single shared graph (the easy case) to verify per-target routing.
-  const graph3 = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const yamlM = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-M.yaml"), "utf-8");
   const yamlN = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-N.yaml"), "utf-8");
 
-  await checkFrontier(yamlM, "TSK-M", "alice", agents, graph3, agentsDir);
-  await checkFrontier(yamlN, "TSK-N", "alice", agents, graph3, agentsDir);
+  await checkFrontier(yamlM, "TSK-M", "alice", agents, agentsDir);
+  await checkFrontier(yamlN, "TSK-N", "alice", agents, agentsDir);
 
   // Filter by kind: continuation — alice's open/ also contains the fixture TSK-PAR3 task.
   const toAlice = (await openEnvelopes("alice")).filter((s) => s.doc["kind"] === "continuation");
   const toCliff = (await openEnvelopes("cliff")).filter((s) => s.doc["kind"] === "continuation");
-  assert(toAlice.length === 1, "3a: one continuation routed to alice (M's reply_to)", `alice got ${toAlice.length}`);
-  assert(toCliff.length === 1, "3b: one continuation routed to cliff (N's reply_to)", `cliff got ${toCliff.length}`);
+  assert(toAlice.length === 1, "3a: M fires first → exactly ONE continuation to alice", `alice got ${toAlice.length}`);
+  assert(toCliff.length === 0, "3b: N fires second → dependants[N] non-empty → no cliff continuation", `cliff got ${toCliff.length}`);
   if (toAlice.length === 1) {
-    assert(toAlice[0]!.doc["kind"] === "continuation", "3c: alice continuation has kind:continuation");
-  }
-  if (toCliff.length === 1) {
-    assert(toCliff[0]!.doc["kind"] === "continuation", "3d: cliff continuation has kind:continuation");
+    const c3 = toAlice[0]!;
+    assert(c3.doc["kind"] === "continuation", "3c: alice continuation has kind:continuation");
+    const af3 = c3.doc["after"] as string[] | undefined;
+    assert(Array.isArray(af3) && af3.includes("TSK-M") && af3.includes("TSK-N"),
+      "3d: alice continuation after: covers whole family [M, N]", `after: [${af3?.join(", ") ?? ""}]`);
+    const gFinal3 = await loadGraphFn(agentsDir, agents);
+    const readyFn3 = t.ready as (id: string, graph: TaskGraph) => boolean;
+    assert(readyFn3(c3.id, gFinal3), "3e: continuation is ready() — both M and N are terminal");
+    const errs3 = gFinal3.errors.filter((e) => e.id === c3.id);
+    assert(errs3.length === 0, "3f: graph.errors empty for continuation", `errors: [${errs3.map((e) => e.problem).join("; ")}]`);
   }
 
   // ── Test 4: sweepBlockedDependants ────────────────────────────────────────
@@ -333,9 +359,9 @@ try {
     });
 
     // Step 1: P1 completes → C1 spawned to bob's open/.
-    const graphP1 = await loadGraphFn(agentsDir, agents);
+    await loadGraphFn(agentsDir, agents);
     const yamlP1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-P1.yaml"), "utf-8");
-    await checkFrontier(yamlP1, "TSK-P1", "alice", agents, graphP1, agentsDir);
+    await checkFrontier(yamlP1, "TSK-P1", "alice", agents, agentsDir);
 
     const openAfterP1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
     assert(openAfterP1.length === 1, "5a: P1 completion spawns exactly one continuation to bob");
@@ -359,10 +385,10 @@ try {
       await fsWrite(c1OpenPath, c1Yaml); // write updated status before rename
       await fsRename(c1OpenPath, c1PausedPath);
 
-      // Step 3: P2 completes with a FRESH graph (cross-tick simulation).
-      const graphP2 = await loadGraphFn(agentsDir, agents);
+      // Step 3: P2 completes with a fresh currentGraph (cross-tick simulation).
+      await loadGraphFn(agentsDir, agents);
       const yamlP2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-P2.yaml"), "utf-8");
-      await checkFrontier(yamlP2, "TSK-P2", "alice", agents, graphP2, agentsDir);
+      await checkFrontier(yamlP2, "TSK-P2", "alice", agents, agentsDir);
 
       // Assert: no new continuation in bob's open/.
       const openAfterP2 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
@@ -388,6 +414,15 @@ try {
           "5e: paused C1 after: extended to include the late sibling TSK-P2",
           `after: [${afterList?.join(", ") ?? ""}]`
         );
+
+        // Assert all after: deps terminal and graph.errors clean — extension must not
+        // introduce a self-reference (which would prevent the task ever becoming ready).
+        const gFinal5 = await loadGraphFn(agentsDir, agents);
+        const c1Node5 = gFinal5.nodes.get(c1Id);
+        const allDepsTerminal5 = c1Node5?.after.every(dep => gFinal5.nodes.get(dep)?.isTerminal ?? false) ?? false;
+        assert(allDepsTerminal5, "5f: all after: deps are terminal (would be ready once paused hold lifted)");
+        const errs5 = gFinal5.errors.filter((e) => e.id === c1Id);
+        assert(errs5.length === 0, "5g: graph.errors empty for C1 (no self-reference)", `errors: [${errs5.map((e) => e.problem).join("; ")}]`);
       }
     }
   }
@@ -416,9 +451,9 @@ try {
     const { rename: fsRename, mkdir: fsMkdir, writeFile: fsWrite } = await import("fs/promises");
 
     // Step 1: W1 completes → C1 spawned to bob's open/.
-    const graphW1 = await loadGraphFn(agentsDir, agents);
+    await loadGraphFn(agentsDir, agents);
     const yamlW1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-W1.yaml"), "utf-8");
-    await checkFrontier(yamlW1, "TSK-W1", "alice", agents, graphW1, agentsDir);
+    await checkFrontier(yamlW1, "TSK-W1", "alice", agents, agentsDir);
 
     const openAfterW1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
     if (openAfterW1.length === 1) {
@@ -434,10 +469,10 @@ try {
       await fsWrite(c1OpenPath, c1Yaml);
       await fsRename(c1OpenPath, c1WaitPath);
 
-      // Step 3: W2 completes with a fresh graph.
-      const graphW2 = await loadGraphFn(agentsDir, agents);
+      // Step 3: W2 completes with a fresh currentGraph.
+      await loadGraphFn(agentsDir, agents);
       const yamlW2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-W2.yaml"), "utf-8");
-      await checkFrontier(yamlW2, "TSK-W2", "alice", agents, graphW2, agentsDir);
+      await checkFrontier(yamlW2, "TSK-W2", "alice", agents, agentsDir);
 
       const openAfterW2 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
       assert(
@@ -456,6 +491,12 @@ try {
           "6b: waiting C1 after: extended to include TSK-W2",
           `after: [${afterList?.join(", ") ?? ""}]`
         );
+        const gFinal6 = await loadGraphFn(agentsDir, agents);
+        const c1Node6 = gFinal6.nodes.get(c1Id);
+        const allDepsTerminal6 = c1Node6?.after.every(dep => gFinal6.nodes.get(dep)?.isTerminal ?? false) ?? false;
+        assert(allDepsTerminal6, "6c: all after: deps are terminal (would be ready once waiting hold lifted)");
+        const errs6 = gFinal6.errors.filter((e) => e.id === c1Id);
+        assert(errs6.length === 0, "6d: graph.errors empty for C1", `errors: [${errs6.map((e) => e.problem).join("; ")}]`);
       } else {
         assert(false, "6b: (waiting envelope not readable)");
       }
@@ -491,10 +532,10 @@ try {
   });
 
   {
-    // Q1 completes → C1 spawned. Q2 completes with fresh graph → C1 extended.
-    const gQ1 = await loadGraphFn(agentsDir, agents);
+    // Q1 completes → C1 spawned. Q2 completes with fresh currentGraph → C1 extended.
+    await loadGraphFn(agentsDir, agents);
     const yamlQ1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Q1.yaml"), "utf-8");
-    await checkFrontier(yamlQ1, "TSK-Q1", "alice", agents, gQ1, agentsDir);
+    await checkFrontier(yamlQ1, "TSK-Q1", "alice", agents, agentsDir);
 
     const envsAfterQ1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
     if (envsAfterQ1.length !== 1) {
@@ -505,9 +546,9 @@ try {
     } else {
       const contId = envsAfterQ1[0]!.id;
 
-      const gQ2 = await loadGraphFn(agentsDir, agents);
+      await loadGraphFn(agentsDir, agents);
       const yamlQ2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Q2.yaml"), "utf-8");
-      await checkFrontier(yamlQ2, "TSK-Q2", "alice", agents, gQ2, agentsDir);
+      await checkFrontier(yamlQ2, "TSK-Q2", "alice", agents, agentsDir);
 
       // Reload graph to reflect the extended after: on disk.
       const gFinal = await loadGraphFn(agentsDir, agents);
@@ -543,14 +584,15 @@ try {
     }
   }
 
-  // ── Test 8: multi-target — two continuations, late third sibling completes ──
+  // ── Test 8: re-pointed — one continuation per family, late third sibling ────
   //
-  // C_alice (for M's reply_to:alice) and C_cliff (for N's reply_to:cliff) share
-  // the same parent. After the v1.18 fix, building familyIds for the third sibling
-  // (TSK-Z) must NOT enrol C_alice or C_cliff in the family. Both continuations
-  // must be ready() and neither must reference the other.
+  // M8 fires first (reply_to:alice) → C1 spawned to alice after:[M8,N8,Z8].
+  // N8 fires → dependants[N8]={C1} non-terminal → skip.
+  // Z8 fires → dependants[Z8]={C1} non-terminal → skip.
+  // familyIds must exclude C1 (kind:continuation) — no self-reference.
+  // C1 must be ready() and graph.errors clean.
 
-  console.log("\nTest 8: multi-target — late sibling doesn't cross-contaminate continuations, both ready()");
+  console.log("\nTest 8: re-pointed — one per family (DEC-20), familyIds excludes continuations, C1 ready()");
 
   await buildFixture(root, {
     agents: {
@@ -568,19 +610,18 @@ try {
   {
     const readyFn = t.ready as (id: string, graph: TaskGraph) => boolean;
 
-    // M and N each spawn a continuation (different targets).
-    const gM = await loadGraphFn(agentsDir, agents);
+    // M8 fires first → C1 spawned. N8 and Z8 see dependants non-empty → skip.
+    await loadGraphFn(agentsDir, agents);
     const yamlM8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-M8.yaml"), "utf-8");
-    await checkFrontier(yamlM8, "TSK-M8", "alice", agents, gM, agentsDir);
+    await checkFrontier(yamlM8, "TSK-M8", "alice", agents, agentsDir);
 
-    const gN = await loadGraphFn(agentsDir, agents);
+    await loadGraphFn(agentsDir, agents);
     const yamlN8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-N8.yaml"), "utf-8");
-    await checkFrontier(yamlN8, "TSK-N8", "alice", agents, gN, agentsDir);
+    await checkFrontier(yamlN8, "TSK-N8", "alice", agents, agentsDir);
 
-    // Z completes — with its own fresh graph. Should extend BOTH continuations.
-    const gZ = await loadGraphFn(agentsDir, agents);
+    await loadGraphFn(agentsDir, agents);
     const yamlZ8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Z8.yaml"), "utf-8");
-    await checkFrontier(yamlZ8, "TSK-Z8", "alice", agents, gZ, agentsDir);
+    await checkFrontier(yamlZ8, "TSK-Z8", "alice", agents, agentsDir);
 
     // Reload graph for final assertions.
     const gFinal8 = await loadGraphFn(agentsDir, agents);
@@ -588,50 +629,37 @@ try {
     const aliceConts = (await openEnvelopes("alice")).filter((e) => e.doc["kind"] === "continuation");
     const cliffConts = (await openEnvelopes("cliff")).filter((e) => e.doc["kind"] === "continuation");
 
-    assert(aliceConts.length === 1, "8a: exactly one continuation to alice", `got ${aliceConts.length}`);
-    assert(cliffConts.length === 1, "8b: exactly one continuation to cliff", `got ${cliffConts.length}`);
+    assert(aliceConts.length === 1, "8a: M8 fires first → exactly one continuation to alice", `got ${aliceConts.length}`);
+    assert(cliffConts.length === 0, "8b: N8 fires second → dependants[N8] non-empty → no cliff continuation", `got ${cliffConts.length}`);
 
-    if (aliceConts.length === 1 && cliffConts.length === 1) {
+    if (aliceConts.length === 1) {
       const cAliceId = aliceConts[0]!.id;
-      const cCliffId = cliffConts[0]!.id;
-
-      // Neither continuation references the other.
       const cAliceNode = gFinal8.nodes.get(cAliceId);
-      const cCliffNode = gFinal8.nodes.get(cCliffId);
+
+      // Continuation must cover the whole family.
       assert(
-        cAliceNode !== undefined && !cAliceNode.after.includes(cCliffId),
-        "8c: alice continuation does NOT reference cliff continuation in after:",
-        `alice after: [${cAliceNode?.after.join(", ") ?? ""}]`
-      );
-      assert(
-        cCliffNode !== undefined && !cCliffNode.after.includes(cAliceId),
-        "8d: cliff continuation does NOT reference alice continuation in after:",
-        `cliff after: [${cCliffNode?.after.join(", ") ?? ""}]`
+        cAliceNode !== undefined &&
+          cAliceNode.after.includes("TSK-M8") &&
+          cAliceNode.after.includes("TSK-N8") &&
+          cAliceNode.after.includes("TSK-Z8"),
+        "8c: alice continuation after: covers whole family [M8, N8, Z8]",
+        `after: [${cAliceNode?.after.join(", ") ?? ""}]`
       );
 
-      // Both must be ready (all real siblings — M8, N8, Z8 — are terminal).
+      // Continuation must not reference itself (familyIds excludes kind:continuation).
+      assert(
+        cAliceNode !== undefined && !cAliceNode.after.includes(cAliceId),
+        "8d: alice continuation does NOT self-reference in after:",
+        `after: [${cAliceNode?.after.join(", ") ?? ""}]`
+      );
+
+      // Must be ready — all siblings are terminal.
       const aliceReady = readyFn(cAliceId, gFinal8);
-      const cliffReady = readyFn(cCliffId, gFinal8);
       assert(aliceReady, "8e: alice continuation is ready() — all after: deps terminal");
-      assert(cliffReady, "8f: cliff continuation is ready() — all after: deps terminal");
 
-      // No graph errors for either continuation.
+      // No graph errors.
       const aliceErrors = gFinal8.errors.filter((e) => e.id === cAliceId);
-      const cliffErrors = gFinal8.errors.filter((e) => e.id === cCliffId);
-      assert(aliceErrors.length === 0, "8g: no graph.errors for alice continuation");
-      assert(cliffErrors.length === 0, "8h: no graph.errors for cliff continuation");
-
-      // TSK-Z8 must appear in both continuations' after: lists.
-      assert(
-        cAliceNode?.after.includes("TSK-Z8") === true,
-        "8i: alice continuation after: includes late sibling TSK-Z8",
-        `alice after: [${cAliceNode?.after.join(", ") ?? ""}]`
-      );
-      assert(
-        cCliffNode?.after.includes("TSK-Z8") === true,
-        "8j: cliff continuation after: includes late sibling TSK-Z8",
-        `cliff after: [${cCliffNode?.after.join(", ") ?? ""}]`
-      );
+      assert(aliceErrors.length === 0, "8f: no graph.errors for alice continuation");
     }
   }
 

@@ -95,6 +95,15 @@ const AUTO_PAUSE_DAYS = 14;
 // they stay visible until a human explicitly resumes or closes them.
 const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
 
+// === Persistent graph + frontier serialisation (FDP v1.19 §1) ==============
+// One module-level graph, mutated by every tick rebuild and every spawn/extend
+// between rebuilds. Frontier checks read here instead of a per-tick snapshot,
+// so cross-tick sibling completions are visible without a filesystem scan.
+let currentGraph: TaskGraph = { nodes: new Map(), dependants: new Map(), errors: [] };
+// Serialises frontier checks — two near-simultaneous completions must not both
+// read currentGraph before either updates it.
+let frontierChain: Promise<void> = Promise.resolve();
+
 // === Mid-flight abort registry =============================================
 // In-flight workers register their AbortController here keyed by
 // `${agent}/${taskId}` while runWorker is awaiting the spawned Claude
@@ -898,6 +907,7 @@ interface GraphNode {
   parent: string | null;
   reply_to: string | null;
   kind: string;        // kind: field value — used by the continuation guard (Phase 3)
+  leaseHolder: string | null; // null = unclaimed; non-null = runner-<pid> while status: claimed
 }
 
 interface TaskGraph {
@@ -988,6 +998,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         }
 
         const kindRaw = (readField(content, "kind") ?? "").trim();
+        const leaseHolderRaw = readNestedField(content, "lease", "holder");
         const node: GraphNode = {
           id: taskId,
           owner: agent,
@@ -1002,6 +1013,7 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
           parent: parentRaw && parentRaw !== "null" ? parentRaw : null,
           reply_to: replyToRaw && replyToRaw !== "null" ? replyToRaw : null,
           kind: kindRaw,
+          leaseHolder: (leaseHolderRaw && leaseHolderRaw !== "null") ? leaseHolderRaw : null,
         };
         nodes.set(taskId, node);
         nodeOwner.set(taskId, agent);
@@ -1077,7 +1089,62 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
     }
   }
 
-  return { nodes, dependants, errors };
+  // Reconcile pass: heal unclaimed non-terminal continuations whose after: does
+  // not cover their current family. Covers hand-authored envelopes the runner
+  // never saw arrive, and late siblings dispatched after the last spawn.
+  //
+  // Runs inside loadGraph so currentGraph is self-consistent before the claim
+  // pass (FDP v1.19 §1 ordering invariant). Only extends unclaimed continuations
+  // (status ∈ {open, waiting, paused, blocked} ∧ leaseHolder == null) — a
+  // claimed continuation's after: must not be mutated while a worker reads it
+  // (FDP v1.19 §2, DEC-21).
+  for (const node of nodes.values()) {
+    if (node.kind !== "continuation") continue;
+    if (node.isTerminal) continue;
+    if (node.leaseHolder !== null) continue;
+    if (!node.parent) continue;
+
+    const familyIds: string[] = [];
+    for (const [sibId, sib] of nodes) {
+      if (sib.parent === node.parent && sib.kind !== "continuation") {
+        familyIds.push(sibId);
+      }
+    }
+
+    const missing = familyIds.filter((id) => !node.after.includes(id));
+    if (missing.length === 0) continue;
+
+    const contPath = join(agentsDir, node.owner, "tasks", node.bucket, `${node.id}.yaml`);
+    let contYaml: string;
+    try { contYaml = await readFile(contPath, "utf-8"); } catch { continue; }
+
+    await extendContinuationAfter(contPath, contYaml, familyIds);
+    for (const memberId of missing) {
+      if (!node.after.includes(memberId)) node.after.push(memberId);
+      if (!dependants.has(memberId)) dependants.set(memberId, []);
+      const deps = dependants.get(memberId)!;
+      if (!deps.includes(node.id)) deps.push(node.id);
+    }
+    const reconcileTs = new Date().toISOString();
+    const reconcileOwner = nodeOwner.get(node.id) ?? node.owner;
+    await writeFile(
+      join(agentsDir, reconcileOwner, "tasks", "journal.ndjson"),
+      JSON.stringify({
+        ts: reconcileTs,
+        id: node.id,
+        event: "reconcile",
+        summary: `extended after: to cover [${missing.join(", ")}]`,
+      }) + "\n",
+      { flag: "a" }
+    ).catch(() => {});
+    console.log(
+      `[multi-agent] reconcile: ${reconcileOwner}/${node.id} after: extended to cover [${missing.join(", ")}]`
+    );
+  }
+
+  const result = { nodes, dependants, errors };
+  currentGraph = result;
+  return result;
 }
 
 // Pure ready predicate — DEC-0004 and Phase 1 spec.
@@ -1536,55 +1603,23 @@ async function nextContTaskId(
   return `${prefix}${String(maxN + 1).padStart(4, "0")}`;
 }
 
-// Continuation model — FDP v1.15 (Kelly, 2026-08-28).
+// Continuation model — FDP v1.19 (Kelly, 2026-08-29). Supersedes v1.15–v1.18.
 //
 // Spawn rule: when task `t` reaches a terminal state —
-//   1. target := t.reply_to ?? t.from.  If not a spawnable agent, surface and return.
-//   2. family := all tasks sharing t.parent (just {t} when parent is null).
-//   3. If a non-terminal continuation already exists with parent==t.parent and to==target, skip.
-//      (Non-terminal means bucket != done and bucket != failed.)
-//   4. Spawn with to:target, parent:t.parent, after:[every member of family INCLUDING t itself].
-//      The self-edge is what puts the continuation into dependants[t], which is what makes
-//      the existing `downstreams.length > 0` guard refuse a second spawn. Without it the
-//      guard is blind. This inverts Jess's assertion 2e (frontier-integrity.test.ts) —
-//      the completing task IS its own continuation dependency per v1.15.
+//   1. Guard: dependants[t] in currentGraph contains any non-terminal node → skip.
+//      (currentGraph is persistent and updated at every spawn, reconcile, and
+//      tick rebuild, so this correctly sees continuations spawned on earlier ticks.)
+//   2. target := reply_to ?? from. If user/runner/unknown:
+//      a. kind:continuation → report flag (DEC-23; DEC-12 never fires for this case).
+//      b. count frontier leaves (family members with no non-continuation dependants).
+//         1 leaf → flag; 2+ leaves → spawn one consolidation to coordinator.
+//   3. Spawnable agent target:
+//      DEC-12 backstop: kind:continuation + spawnable target → warn + return (loop guard).
+//      Otherwise: build family (DEC-20 one per family), spawn one continuation.
 //
-// Uses after: not needs: — a continuation reports what happened, so a failed sibling must
-// not block the briefing that exists to surface that failure.
-//
-// The graph parameter is the tick-scoped graph, hoisted from tickOnce and passed through
-// transitionToTerminal. After spawning, the new node is inserted into graph (both nodes and
-// dependants) so a second transition in the same tick sees it and skips.
-//
-// DEC-12 guard: a kind:continuation node must never spawn another continuation.
-// Alice gate removed (Phase 3 deletion).
-
-// v1.16: scan target agent's open/ and waiting/ for a non-terminal continuation
-// whose parent matches familyParent. Used at transition time rather than relying
-// on the tick-scoped graph (F1b: graph is claim-tick-scoped, not transition-time).
-async function findExistingContinuation(
-  familyParent: string,
-  target: string,
-  agentsDir: string
-): Promise<{ id: string; path: string; yaml: string } | null> {
-  // paused/ and blocked/ are also non-terminal — DEC-0004 may auto-pause a stale
-  // continuation. Scanning all four ensures a paused hold is respected (extend +
-  // leave paused) rather than bypassed by a fresh open spawn (v1.17).
-  for (const bucket of ["open", "waiting", "paused", "blocked"] as const) {
-    const dir = join(agentsDir, target, "tasks", bucket);
-    let entries: string[];
-    try { entries = await readdir(dir); } catch { continue; }
-    for (const fname of entries.filter((f) => f.endsWith(".yaml"))) {
-      const path = join(dir, fname);
-      let yaml: string;
-      try { yaml = await readFile(path, "utf-8"); } catch { continue; }
-      if ((readField(yaml, "kind") ?? "").trim() !== "continuation") continue;
-      if ((readField(yaml, "parent") ?? "").trim() !== familyParent) continue;
-      return { id: fname.replace(/\.yaml$/, ""), path, yaml };
-    }
-  }
-  return null;
-}
+// familyIds excludes kind:continuation nodes (v1.18, load-bearing — including a
+// continuation in its own after: causes a self-reference that prevents ready()).
+// Frontier checks are serialised via frontierChain (§1 ordering).
 
 // v1.16: extend an existing continuation's after: to include late siblings.
 // When a sibling completes after the first continuation was already spawned,
@@ -1605,98 +1640,45 @@ async function extendContinuationAfter(
   await writeFile(contPath, next);
 }
 
-// F3: when the completing task has no spawnable target, write a notification
-// task to the coordinator (alice) so the completion is dashboard-visible.
-async function spawnUnresolvableNotification(
-  yaml: string,
-  taskId: string,
-  agent: string,
-  graph: TaskGraph,
-  agentsDir: string
-): Promise<void> {
-  const coordinator = "alice";
-  const openDir = join(agentsDir, coordinator, "tasks", "open");
-  try { await mkdir(openDir, { recursive: true }); } catch { return; }
-  const id = await nextContTaskId(null, coordinator, graph, agentsDir);
-  const now = new Date().toISOString();
-  const q = (v: string) => JSON.stringify(v);
-  const headlineRaw = (readField(yaml, "headline") ?? "").trim();
-  const headline = /^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw;
-  const fromRaw = (readField(yaml, "from") ?? "user").trim();
-  const body = [
-    `id: ${id}`,
-    `headline: ${q(`Completed: ${(headline || taskId).slice(0, 64)}`)}`,
-    `created: ${now}`,
-    `updated: ${now}`,
-    ``,
-    `from: runner`,
-    `to: ${coordinator}`,
-    `parent: ${taskId}`,
-    `reply_to: null`,
-    ``,
-    `kind: notification`,
-    `deadline: null`,
-    ``,
-    `budget:`,
-    `  max_turns: 2`,
-    `  max_subagents: 0`,
-    `  max_usd: null`,
-    ``,
-    `brief: |`,
-    `  Task ${taskId} (agent: ${agent}, dispatched by: ${fromRaw}) has reached a terminal state.`,
-    `  Read agents/${agent}/tasks/done/${taskId}.yaml and emit:`,
-    `  <task-done summary="one sentence"> or <task-waiting on="user" summary="...">`,
-    ``,
-    `context:`,
-    `  - agents/${agent}/tasks/done/${taskId}.yaml`,
-    ``,
-    `status: open`,
-    `lease:`,
-    `  holder: null`,
-    `  expires: null`,
-    `history:`,
-    `  - ts: ${now}`,
-    `    from: null`,
-    `    to: open`,
-    `    by: runner`,
-    `    note: ${q(`completion notification — ${agent}/${taskId} had unresolvable target`)}`,
-    ``,
-    `summary:`,
-    `  brief: ""`,
-    `  response: ""`,
-    `report: ""`,
-    ``,
-  ].join("\n");
-  await writeFile(join(openDir, `${id}.yaml`), body);
-  await appendJournal(coordinator, {
-    ts: now,
-    id,
-    status: "open",
-    kind: "notification",
-    from: "runner",
-    to: coordinator,
-    parent: taskId,
-    summary: `completion notification for ${agent}/${taskId}`,
-  });
-}
-
 async function checkFrontierAndMaybeSpawnContinuation(
   yaml: string,
   taskId: string,
   agent: string,
   agents: string[],
-  graph: TaskGraph,
   agentsDir: string = AGENTS_DIR
 ): Promise<void> {
-  // DEC-12: a continuation must never spawn another continuation.
-  const kind = (readField(yaml, "kind") ?? "").trim();
-  if (kind === "continuation") {
-    console.warn(
-      `[multi-agent] ${agent}/${taskId}: kind:continuation reached frontier with no downstream — NOT spawning (DEC-12 loop guard)`
+  let resolveMyTurn!: () => void;
+  const myTurn = new Promise<void>((r) => { resolveMyTurn = r; });
+  // .finally fires resolveMyTurn regardless of outcome; .catch absorbs so the chain never rejects.
+  frontierChain = frontierChain
+    .then(() => _doFrontierCheck(yaml, taskId, agent, agents, agentsDir))
+    .finally(resolveMyTurn)
+    .catch((e) => console.error("[frontier] uncaught error in _doFrontierCheck:", e));
+  return myTurn;
+}
+
+async function _doFrontierCheck(
+  yaml: string,
+  taskId: string,
+  agent: string,
+  agents: string[],
+  agentsDir: string
+): Promise<void> {
+  // Pure edge guard (FDP v1.19 §2, DEC-19): if currentGraph has any non-terminal
+  // node in dependants[t], something downstream is still pending — skip.
+  const downstreams = currentGraph.dependants.get(taskId) ?? [];
+  const hasNonTerminalDownstream = downstreams.some((depId) => {
+    const n = currentGraph.nodes.get(depId);
+    return n ? !n.isTerminal : false;
+  });
+  if (hasNonTerminalDownstream) {
+    console.log(
+      `[multi-agent] ${agent}/${taskId}: non-terminal downstream in currentGraph — skipping continuation spawn`
     );
     return;
   }
 
+  const kind = (readField(yaml, "kind") ?? "").trim();
   const replyToRaw = readField(yaml, "reply_to");
   const fromRaw = readField(yaml, "from");
   const target = (
@@ -1704,84 +1686,182 @@ async function checkFrontierAndMaybeSpawnContinuation(
     (fromRaw && fromRaw !== "null" ? fromRaw : null) ??
     ""
   ).trim();
-
-  // F3: if target is not a known spawnable agent, spawn a notification task to
-  // the coordinator (alice) so the completion is dashboard-visible rather than
-  // being a silent console.log.
-  if (!target || target === "user" || target === "runner" || !agents.includes(target)) {
-    await spawnUnresolvableNotification(yaml, taskId, agent, graph, agentsDir);
-    console.log(
-      `[multi-agent] ${agent}/${taskId}: frontier — unresolvable target "${target}" — completion notification queued`
-    );
-    return;
-  }
-
-  // Non-continuation join-task guard: if T has a downstream that is NOT a
-  // continuation, something else manages the flow — skip the spawn.
-  // Continuations are NOT checked here; they are scanned from the filesystem
-  // below (v1.16), avoiding the claim-tick-scoped graph blindspot (F1b).
   const parentRaw = readField(yaml, "parent");
   const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
-  const downstreams = graph.dependants.get(taskId) ?? [];
-  const hasJoinDownstream = downstreams.some((depId) => {
-    const node = graph.nodes.get(depId);
-    if (!node) return true;
-    return node.kind !== "continuation";
-  });
-  if (hasJoinDownstream) {
+  const isUserTarget = !target || target === "user" || target === "runner" || !agents.includes(target);
+
+  if (isUserTarget) {
+    // kind:continuation + user target → always report-flag, no spawn (DEC-23).
+    // The continuation IS the synthesis; its completion IS the report.
+    // DEC-12 never fires for this path.
+    if (kind === "continuation") {
+      console.log(
+        `[multi-agent] ${agent}/${taskId}: kind:continuation, user target — report-flag (DEC-23; DEC-12 not triggered)`
+      );
+      await appendJournal(agent, {
+        ts: new Date().toISOString(),
+        id: taskId,
+        status: "done",
+        kind: "continuation",
+        from: fromRaw ?? "runner",
+        to: agent,
+        parent,
+        summary: "frontier: report-flag — continuation IS the report, no further spawn",
+      });
+      return;
+    }
+
+    // Count frontier leaves: family members with no non-continuation dependants.
+    const familyIds: string[] = [];
+    if (parent) {
+      for (const [sibId, node] of currentGraph.nodes) {
+        if (node.parent === parent && node.kind !== "continuation") familyIds.push(sibId);
+      }
+    }
+    if (familyIds.length === 0) familyIds.push(taskId);
+
+    const frontierLeaves = familyIds.filter((sibId) => {
+      const deps = currentGraph.dependants.get(sibId) ?? [];
+      return !deps.some((depId) => {
+        const n = currentGraph.nodes.get(depId);
+        return n && !n.isTerminal && n.kind !== "continuation";
+      });
+    });
+
+    if (frontierLeaves.length <= 1) {
+      // Single leaf → flag as report, no spawn.
+      console.log(
+        `[multi-agent] ${agent}/${taskId}: frontier — user target, single leaf — report-flag (DEC-23)`
+      );
+      await appendJournal(agent, {
+        ts: new Date().toISOString(),
+        id: taskId,
+        status: "done",
+        kind: kind || "unknown",
+        from: fromRaw ?? "user",
+        to: agent,
+        parent,
+        summary: "frontier: report-flag — single leaf, no continuation spawned",
+      });
+      return;
+    }
+
+    // 2+ frontier leaves → spawn ONE consolidation continuation to coordinator.
+    const coordinator = (() => {
+      if (parent) {
+        const parentNode = currentGraph.nodes.get(parent);
+        if (parentNode?.reply_to && agents.includes(parentNode.reply_to)) return parentNode.reply_to;
+      }
+      return agents.includes("alice") ? "alice" : agents[0] ?? "alice";
+    })();
+
+    const id = await nextContTaskId(parent, coordinator, currentGraph, agentsDir);
+    const now = new Date().toISOString();
+    const q = (v: string) => JSON.stringify(v);
+    const headlineRaw = (readField(yaml, "headline") ?? "").trim();
+    const hl = (/^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw) || `Continue after ${taskId}`;
+    const afterBlock = `after:\n${familyIds.map((s) => `  - ${s}`).join("\n")}\n`;
+
+    const body = [
+      `id: ${id}`,
+      `headline: ${q(`Consolidate: ${hl.slice(0, 64)}`)}`,
+      `created: ${now}`,
+      `updated: ${now}`,
+      "",
+      `from: runner`,
+      `to: ${coordinator}`,
+      parent ? `parent: ${parent}` : `parent: ${taskId}`,
+      `reply_to: null`,
+      "",
+      `kind: continuation`,
+      `deadline: null`,
+      "",
+      `budget:`,
+      `  max_turns: 6`,
+      `  max_subagents: 0`,
+      `  max_usd: null`,
+      "",
+      `brief: |`,
+      `  Sub-task ${taskId} (${agent}) has landed as terminal.`,
+      `  Read the family reports and write a consolidated briefing for the user, then emit`,
+      `  <task-done summary="..."> or surface a <task-waiting on="user" summary="...">.`,
+      "",
+      afterBlock.trimEnd(),
+      "",
+      `context:`,
+      `  - agents/${agent}/tasks/done/${taskId}.yaml`,
+      "",
+      `status: open`,
+      `lease:`,
+      `  holder: null`,
+      `  expires: null`,
+      `history:`,
+      `  - ts: ${now}`,
+      `    from: null`,
+      `    to: open`,
+      `    by: runner`,
+      `    note: ${q(`consolidation continuation after ${taskId} (${frontierLeaves.length} frontier leaves)`)}`,
+      "",
+      `summary:`,
+      `  brief: ""`,
+      `  response: ""`,
+      `report: ""`,
+      "",
+    ].filter(Boolean).join("\n");
+
+    const openDir = join(agentsDir, coordinator, "tasks", "open");
+    await mkdir(openDir, { recursive: true });
+    await writeFile(join(openDir, `${id}.yaml`), body);
+
+    const newNode: GraphNode = {
+      id, owner: coordinator, rawStatus: "open", bucket: "open",
+      isDone: false, isFailed: false, isTerminal: false,
+      needs: [], after: familyIds, to: coordinator,
+      parent: parent ?? taskId, reply_to: null, kind: "continuation", leaseHolder: null,
+    };
+    currentGraph.nodes.set(id, newNode);
+    for (const memberId of familyIds) {
+      const deps = currentGraph.dependants.get(memberId) ?? [];
+      if (!deps.includes(id)) deps.push(id);
+      currentGraph.dependants.set(memberId, deps);
+    }
+    await appendJournal(coordinator, {
+      ts: now, id, status: "open", kind: "continuation", from: "runner", to: coordinator,
+      parent: parent ?? taskId,
+      summary: `consolidation continuation after ${taskId} (${frontierLeaves.length} frontier leaves)`,
+    });
     console.log(
-      `[multi-agent] ${agent}/${taskId}: has non-continuation downstream — skipping continuation spawn`
+      `[multi-agent] ${agent}/${taskId}: frontier — ${frontierLeaves.length} user-target leaves → consolidation ${coordinator}/${id}`
     );
     return;
   }
 
-  // Build family = completing task + all siblings sharing the same parent.
-  // Exclude kind:continuation nodes — a continuation is the join *over* the
-  // siblings, not one of them. Including it would add its own id to its own
-  // after:, creating a self-reference that permanently prevents ready() (v1.18).
-  const familyIds: string[] = [taskId]; // always includes the completing task (self-edge)
+  // Spawnable agent target.
+  // DEC-12 backstop: kind:continuation + spawnable target would create a chain loop.
+  // (Normal termination via user-target is handled above via the report-flag path.)
+  if (kind === "continuation") {
+    console.warn(
+      `[multi-agent] ${agent}/${taskId}: kind:continuation targeted at spawnable agent "${target}" — NOT spawning (DEC-12 backstop)`
+    );
+    return;
+  }
+
+  // Build family = all non-continuation nodes sharing the same parent (DEC-20 one per family).
+  // Excluding kind:continuation (v1.18, load-bearing — self-reference prevents ready()).
+  const familyIds: string[] = [];
   if (parent) {
-    for (const [sibId, node] of graph.nodes) {
-      if (sibId !== taskId && node.parent === parent && node.kind !== "continuation") {
-        familyIds.push(sibId);
-      }
+    for (const [sibId, node] of currentGraph.nodes) {
+      if (node.parent === parent && node.kind !== "continuation") familyIds.push(sibId);
     }
   }
+  if (familyIds.length === 0) familyIds.push(taskId);
 
-  // v1.16: scan filesystem for an existing non-terminal continuation with matching
-  // (parent, target) at transition time. This is correct across ticks (F1b) and
-  // across different-target siblings in the same family (F2).
-  const contParent = parent ?? taskId;
-  const existing = await findExistingContinuation(contParent, target, agentsDir);
-  if (existing) {
-    // Extend the existing continuation's after: to include the late sibling (F1a).
-    await extendContinuationAfter(existing.path, existing.yaml, familyIds);
-    // Reflect the extension in the tick-scoped graph so same-tick transitions see it.
-    const existingNode = graph.nodes.get(existing.id);
-    if (existingNode) {
-      for (const memberId of familyIds) {
-        if (!existingNode.after.includes(memberId)) existingNode.after.push(memberId);
-        const deps = graph.dependants.get(memberId) ?? [];
-        if (!deps.includes(existing.id)) deps.push(existing.id);
-        graph.dependants.set(memberId, deps);
-      }
-    }
-    console.log(
-      `[multi-agent] ${agent}/${taskId}: found existing continuation ${existing.id} — extended after: with [${familyIds.join(", ")}]`
-    );
-    return;
-  }
-
-  const id = await nextContTaskId(parent, target, graph, agentsDir);
+  const id = await nextContTaskId(parent, target, currentGraph, agentsDir);
   const now = new Date().toISOString();
   const q = (v: string) => JSON.stringify(v);
-  const firstHeadlineRaw = (readField(yaml, "headline") ?? "").trim();
-  const firstHeadline = /^".*"$/.test(firstHeadlineRaw)
-    ? firstHeadlineRaw.slice(1, -1)
-    : firstHeadlineRaw;
+  const headlineRaw = (readField(yaml, "headline") ?? "").trim();
+  const firstHeadline = /^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw;
   const headline = firstHeadline ? `Continue: ${firstHeadline.slice(0, 64)}` : `Continue after ${taskId}`;
-
-  // after: not needs: — a continuation reports what happened; failed siblings must not block it.
   const afterBlock = `after:\n${familyIds.map((s) => `  - ${s}`).join("\n")}\n`;
 
   const body = [
@@ -1829,50 +1909,30 @@ async function checkFrontierAndMaybeSpawnContinuation(
     `  response: ""`,
     `report: ""`,
     "",
-  ]
-    .filter(Boolean)
-    .join("\n");
+  ].filter(Boolean).join("\n");
 
   const openDir = join(agentsDir, target, "tasks", "open");
   await mkdir(openDir, { recursive: true });
   await writeFile(join(openDir, `${id}.yaml`), body);
 
-  // Insert the new continuation node into the tick-scoped graph so subsequent
-  // transitions in the same tick see it and skip. Both nodes and dependants maps
-  // must be updated — the dependants entry is what makes `downstreams.length > 0` fire.
+  // Insert into currentGraph so subsequent transitions in the same tick see it.
   const newNode: GraphNode = {
-    id,
-    owner: target,
-    rawStatus: "open",
-    bucket: "open",
-    isDone: false,
-    isFailed: false,
-    isTerminal: false,
-    needs: [],
-    after: familyIds,
-    to: target,
-    parent: parent ?? taskId,
-    reply_to: null,
-    kind: "continuation",
+    id, owner: target, rawStatus: "open", bucket: "open",
+    isDone: false, isFailed: false, isTerminal: false,
+    needs: [], after: familyIds, to: target,
+    parent: parent ?? taskId, reply_to: null, kind: "continuation", leaseHolder: null,
   };
-  graph.nodes.set(id, newNode);
+  currentGraph.nodes.set(id, newNode);
   for (const memberId of familyIds) {
-    const deps = graph.dependants.get(memberId) ?? [];
+    const deps = currentGraph.dependants.get(memberId) ?? [];
     if (!deps.includes(id)) deps.push(id);
-    graph.dependants.set(memberId, deps);
+    currentGraph.dependants.set(memberId, deps);
   }
 
   await appendJournal(target, {
-    ts: now,
-    id,
-    status: "open",
-    kind: "continuation",
-    from: "runner",
-    to: target,
-    parent: parent ?? taskId,
-    summary: `frontier continuation after ${taskId}`,
+    ts: now, id, status: "open", kind: "continuation", from: "runner", to: target,
+    parent: parent ?? taskId, summary: `frontier continuation after ${taskId}`,
   });
-
   console.log(`[multi-agent] ${agent}/${taskId}: frontier → spawned continuation ${target}/${id}`);
 }
 
@@ -1880,8 +1940,7 @@ async function transitionToTerminal(
   agent: string,
   taskId: string,
   openPath: string,
-  directive: TaskDirective,
-  graph: TaskGraph
+  directive: TaskDirective
 ): Promise<void> {
   const subdir = directive.kind === "done" ? "done" : "failed";
   const finalStatus = directive.kind === "done" ? "done" : `failed:${directive.reason ?? "other"}`;
@@ -1963,22 +2022,103 @@ async function transitionToTerminal(
     summary: directive.summary,
   });
 
-  // Frontier check: spawn a continuation if nothing downstream declares this
-  // task and it is not itself a continuation (DEC-12 loop guard).
-  await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents(), graph);
+  // Mark this task terminal in currentGraph before the frontier check reads
+  // dependants. The guard's correctness requires the completing task to be
+  // visible as terminal when sibling continuations look it up.
+  const completingNode = currentGraph.nodes.get(taskId);
+  if (completingNode) {
+    completingNode.rawStatus = finalStatus;
+    completingNode.isDone = directive.kind === "done";
+    completingNode.isFailed = directive.kind !== "done";
+    completingNode.isTerminal = true;
+    completingNode.bucket = subdir;
+  }
 
-  // Auto-close parent if this was a `closes_parent_on_done` child landing as
-  // done. Spawned by Kelly via the "Next" button on a waiting:on:user task —
-  // when the child succeeds, the parent question is answered and the parent
-  // envelope can transition out of waiting/.
+  // Frontier check: spawn a continuation if nothing downstream declares this task.
+  await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents(), AGENTS_DIR);
+
+  // Auto-close parent if this was a `closes_parent_on_done` child landing as done.
   if (directive.kind === "done") {
     await maybeCloseParentOnUserUnblock(next, taskId);
   }
 
-  // When a task fails, move its needs-dependants to blocked/ so they don't
-  // sit in open/ forever. Does not cascade — dependants of blocked tasks stay open.
+  // When a task fails, move its needs-dependants to blocked/.
   if (directive.kind !== "done") {
-    await sweepBlockedDependants(taskId, graph, AGENTS_DIR);
+    await sweepBlockedDependants(taskId, currentGraph, AGENTS_DIR);
+  }
+}
+
+// sweepBlocked: symmetric to sweepWaiting. A task in blocked/ whose `needs`
+// deps are now all `done` is re-opened so the work can proceed. This is the
+// "retry the upstream → the continuation proceeds as planned" path (FDP v1.19
+// §Failure, DEC-22). `after:` satisfaction is done|failed only — blocked is
+// strictly non-terminal; no special case in ready() (that strictness is the
+// decision, not an oversight).
+async function sweepBlocked(opts: Required<MultiAgentOptions>): Promise<void> {
+  for (const agent of opts.agents) {
+    const blockedDir = join(AGENTS_DIR, agent, "tasks", "blocked");
+    if (!existsSync(blockedDir)) continue;
+
+    const entries = await readdir(blockedDir).catch(() => [] as string[]);
+    for (const fname of entries.filter((e) => e.endsWith(".yaml")).sort()) {
+      const taskId = fname.replace(/\.yaml$/, "");
+      const filePath = join(blockedDir, fname);
+
+      let yaml: string;
+      try { yaml = await readFile(filePath, "utf-8"); } catch { continue; }
+
+      const needs = readList(yaml, "needs");
+      if (needs.length === 0) continue;
+
+      // All needs deps must be in done/ for some known agent.
+      let allDone = true;
+      for (const depId of needs) {
+        let found = false;
+        for (const a of opts.agents) {
+          if (existsSync(join(AGENTS_DIR, a, "tasks", "done", `${depId}.yaml`))) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) { allDone = false; break; }
+      }
+      if (!allDone) continue;
+
+      const fields = parseFields(yaml, taskId);
+      const prevStatus = (readField(yaml, "status") ?? "blocked").trim();
+      const now = new Date().toISOString();
+      let next = setField(yaml, "status", "open");
+      next = setField(next, "updated", now);
+      next = next.replace(/^blocked_by:[^\n]*\n?/m, "");
+      next = appendHistory(next, {
+        ts: now,
+        from: prevStatus,
+        to: "open",
+        by: `runner-${process.pid}`,
+        note: "sweepBlocked: all needs deps are done",
+      });
+
+      const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+      await mkdir(openDir, { recursive: true });
+      const targetPath = join(openDir, fname);
+      await writeFile(filePath, next);
+      await rename(filePath, targetPath);
+      await cleanStaleRendezvous(agent, taskId, "open");
+
+      await appendJournal(agent, {
+        ts: now,
+        id: taskId,
+        status: "open",
+        kind: readField(yaml, "kind") ?? "unknown",
+        from: fields.from,
+        to: agent,
+        parent: fields.parent,
+        summary: "sweepBlocked: all needs deps done → re-opened",
+      });
+      console.log(
+        `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} unblocked (sweepBlocked: all needs deps done)`
+      );
+    }
   }
 }
 
@@ -2782,6 +2922,7 @@ async function tickOnce(
     ["sweepStaleClaims", () => sweepStaleClaims(opts, isFirstTick)],
     ["sweepWaiting", () => sweepWaiting(opts)],
     ["sweepArchive", () => sweepArchive(opts)],
+    ["sweepBlocked", () => sweepBlocked(opts)],
   ];
   for (const [name, fn] of sweeps) {
     try {
@@ -2800,10 +2941,14 @@ async function tickOnce(
   // tick before health was written, leaving last_tick_ok: true from the prior tick.
   try {
 
-  // Phase 1: build the task graph once per tick.  `ready()` uses this to
-  // evaluate needs/after edges without re-reading the filesystem per task.
-  // The reverse index is carried for Phase 2 (frontier check).
-  const graph = await loadGraph(AGENTS_DIR, opts.agents);
+  // Rebuild + reconcile the graph. currentGraph is updated as a side effect of
+  // loadGraph (FDP v1.19 §1). The ordering invariant: this await must complete
+  // before the claim pass below. A newly dispatched sibling cannot terminate
+  // without first being claimed, and cannot be claimed before a rebuild has
+  // seen it — so the reconcile always runs before that sibling's terminal
+  // transition reads dependants. The sequential await here is the structural
+  // guarantee; moving the claim loop above this line silently regresses the guard.
+  currentGraph = await loadGraph(AGENTS_DIR, opts.agents);
 
   // Global rate-limit gate: skip the claim loop but let sweeps run.
   // readLimitsGate auto-clears when reset_at lapses so the runner self-recovers.
@@ -2843,7 +2988,7 @@ async function tickOnce(
       const outcome = await executeClaimPassItem({
         yaml,
         taskId,
-        graph,
+        graph: currentGraph,
         onUnrecognizedStatus: (rawStatus) => {
           console.warn(
             `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} has unrecognised status "${rawStatus}" in open/ — treating as open`
@@ -2929,7 +3074,7 @@ async function tickOnce(
             await transitionToWaiting(agent, taskId, filePath, effective);
             console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${effective.reason}`);
           } else {
-            await transitionToTerminal(agent, taskId, filePath, effective, graph);
+            await transitionToTerminal(agent, taskId, filePath, effective);
             console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
           }
         })
@@ -2942,20 +3087,17 @@ async function tickOnce(
     }
   }
 
-  // Alert on claim drought — inside the try so a loadGraph failure here is caught.
+  // Alert on claim drought — uses currentGraph (already rebuilt this tick).
   if (health.last_claim_at) {
     const droughtMs = Date.now() - Date.parse(health.last_claim_at);
     if (droughtMs > opts.tickMs * 5) {
-      const graph2 = await loadGraph(AGENTS_DIR, opts.agents).catch(() => null);
-      if (graph2) {
-        const hasReady = [...graph2.nodes.values()].some(
-          (n) => n.bucket === "open" && n.rawStatus !== "paused" && ready(n.id, graph2)
+      const hasReady = [...currentGraph.nodes.values()].some(
+        (n) => n.bucket === "open" && n.rawStatus !== "paused" && ready(n.id, currentGraph)
+      );
+      if (hasReady) {
+        console.warn(
+          `[multi-agent] claim drought: last claim was ${Math.round(droughtMs / 1000)}s ago but ready tasks exist`
         );
-        if (hasReady) {
-          console.warn(
-            `[multi-agent] claim drought: last claim was ${Math.round(droughtMs / 1000)}s ago but ready tasks exist`
-          );
-        }
       }
     }
   }
@@ -3117,11 +3259,13 @@ export const __testing = {
   // Tick-level claim pass for WAL-72 Phase 1 regression suite (TESTPLAN.md Part 3).
   // Takes an explicit agentsDir so tests can drive it against a fixture directory.
   runClaimPassForTesting,
-  // Frontier check — WAL-72 Phase 2.  Takes explicit agentsDir for fixture tests.
+  // Frontier check — WAL-72 Phase 2+.  Takes explicit agentsDir for fixture tests.
+  // v1.19: graph parameter dropped; uses module-level currentGraph.
   checkFrontierAndMaybeSpawnContinuation,
-  // v1.16 helpers — tested directly in frontier-v116.test.ts.
-  findExistingContinuation,
+  // v1.16 helper retained for reconcile (called from loadGraph) and direct tests.
   extendContinuationAfter,
-  // Blocked-dependant sweep — WAL-72 Phase 3.  No test coverage before v1.16 fix batch.
+  // Blocked-dependant sweep — WAL-72 Phase 3 (moves tasks TO blocked on failure).
   sweepBlockedDependants,
+  // v1.19: auto-reopen blocked tasks whose needs are all done.
+  sweepBlocked,
 };

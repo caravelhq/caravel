@@ -1,21 +1,20 @@
 /**
- * Frontier integrity tests (WAL-72 Phase 2 review, TSK-2026-08-27-0005.12).
- * Updated for FDP v1.15 continuation model (TSK-2026-08-27-0005.28):
- *   - checkFrontierAndMaybeSpawnContinuation now takes an explicit graph param
+ * Frontier integrity tests (WAL-72 Phase 2 review / v1.19 update).
+ * Updated for FDP v1.19 continuation model:
+ *   - checkFrontierAndMaybeSpawnContinuation uses module-level currentGraph (no graph param)
  *   - after: replaces needs: (a continuation reports what happened; failed
  *     siblings must not block it)
- *   - the completing task is in its own after: block (self-edge) — inverts
- *     assertion 2e from Jess's original suite per v1.15 spec
+ *   - the completing task is in its own after: block (self-edge)
+ *   - double transition idempotency: first spawn inserts C1 into currentGraph;
+ *     second call sees dependants[t] non-empty → skip
  *
  * Three behaviours Bob's frontier suite (frontier.test.ts, 8 assertions)
- * does not cover, checked against FDP v1.15 intent:
+ * does not cover, checked against FDP v1.19 intent:
  *
  *   1. Double terminal transition for the same task must still leave exactly
- *      ONE continuation. Guarded by the shared graph: when the first spawn
- *      inserts a node into graph.nodes and graph.dependants, the second call
- *      finds the non-terminal continuation and skips.
+ *      ONE continuation. Guarded by currentGraph.dependants[t] edge check.
  *   2. The spawned continuation's after: must cover every sibling sharing the
- *      parent (including the completing task itself — the v1.15 self-edge).
+ *      parent (including the completing task itself — self-edge).
  *   3. reply_to must actually override from (target := reply_to ?? from).
  *
  * Run with: bun run test/scheduler/frontier-integrity.test.ts
@@ -66,7 +65,6 @@ type FrontierFn = (
   taskId: string,
   agent: string,
   agents: string[],
-  graph: TaskGraph,
   agentsDir?: string
 ) => Promise<void>;
 
@@ -92,9 +90,8 @@ try {
 
   // ── Test 1: double terminal transition → exactly one continuation ─────────
   //
-  // Two calls with the SAME graph object. The first spawn inserts a node into
-  // graph.nodes; the second call finds it (non-terminal, matching family+target)
-  // and skips. This replaces the old warnedContSpawns set.
+  // Two calls for the same task. First spawn inserts C1 into currentGraph;
+  // second call sees dependants[t]={C1} non-terminal → skip. Idempotent.
 
   console.log("\nTest 1: double terminal transition → exactly one continuation");
 
@@ -105,11 +102,11 @@ try {
       cliff: [],
     },
   });
-  const graph1 = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const workYaml = await readTaskYaml("TSK-WORK", "done");
 
-  await checkFrontier(workYaml, "TSK-WORK", "alice", agents, graph1, agentsDir);
-  await checkFrontier(workYaml, "TSK-WORK", "alice", agents, graph1, agentsDir); // replay
+  await checkFrontier(workYaml, "TSK-WORK", "alice", agents, agentsDir);
+  await checkFrontier(workYaml, "TSK-WORK", "alice", agents, agentsDir); // replay — currentGraph already has C1
 
   const spawned = await openEnvelopes("bob");
   assert(
@@ -156,10 +153,10 @@ try {
       cliff: [],
     },
   });
-  const graph2 = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const work2Yaml = await readTaskYaml("TSK-WORK2", "done");
 
-  await checkFrontier(work2Yaml, "TSK-WORK2", "alice", agents, graph2, agentsDir);
+  await checkFrontier(work2Yaml, "TSK-WORK2", "alice", agents, agentsDir);
 
   const cont = (await openEnvelopes("bob")).filter((s) => s.doc["kind"] === "continuation");
   assert(cont.length === 1, "2a: exactly one continuation spawned");
@@ -200,10 +197,10 @@ try {
       cliff: [],
     },
   });
-  const graph3 = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const work5Yaml = await readTaskYaml("TSK-WORK5", "done");
 
-  await checkFrontier(work5Yaml, "TSK-WORK5", "alice", agents, graph3, agentsDir);
+  await checkFrontier(work5Yaml, "TSK-WORK5", "alice", agents, agentsDir);
 
   const toCliff = (await openEnvelopes("cliff")).filter((s) => s.doc["kind"] === "continuation");
   const toBob = (await openEnvelopes("bob")).filter((s) => s.doc["kind"] === "continuation");

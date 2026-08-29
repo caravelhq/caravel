@@ -1,29 +1,24 @@
 /**
- * Continuation idempotency tests (WAL-72 Phase 2 fix round, TSK-2026-08-27-0005.18).
- * Updated for FDP v1.15 continuation model (TSK-2026-08-27-0005.28).
+ * Continuation idempotency tests (WAL-72, updated for FDP v1.19).
  *
- * v1.15 changes the guard from deterministic-id existence check (v1.11) to a
- * shared tick-scoped graph mutation.  The semantics change accordingly:
+ * v1.19: guard is currentGraph.dependants[t] non-terminal check.  No graph param
+ * passed to checkFrontierAndMaybeSpawnContinuation — it reads module-level currentGraph.
  *
- *   - Within a tick (same graph object): a non-terminal continuation blocks
- *     re-spawn regardless of its status on disk.  The graph is the source of
- *     truth, not the filesystem.
+ *   - Within a tick (no loadGraph call between transitions): first spawn inserts C1
+ *     into currentGraph.dependants; second call finds non-terminal C1 → skips.
  *
- *   - Across ticks (fresh graph): a done or failed continuation does NOT block
- *     re-spawn.  This is intentional in v1.15 — the guard is about preventing
- *     double-dispatch within one tick, not across ticks.  In production,
- *     transitionToTerminal is called at most once per task, so cross-tick
- *     replay of the same terminal task ID cannot occur through normal paths.
+ *   - Across ticks (fresh loadGraph): a done or failed continuation is terminal in
+ *     currentGraph → guard does NOT block → new spawn allowed.
  *
  * Three cases:
  *
- *   1. Same graph, continuation already CLAIMED — spawn skipped because the
- *      graph still shows the node as open (non-terminal).
+ *   1. No rebuild between calls, continuation CLAIMED — spawn skipped: dependants
+ *      still holds C1 as non-terminal (bucket:open in currentGraph).
  *
- *   2. Fresh graph, continuation already DONE — NEW spawn is allowed.
- *      v1.15 makes this explicit: skip only when non-terminal.
+ *   2. Fresh loadGraph, continuation already DONE — NEW spawn is allowed.
+ *      Done is terminal → guard passes.
  *
- *   3. Fresh graph, continuation already FAILED — same; NEW spawn allowed.
+ *   3. Fresh loadGraph, continuation already FAILED — same; NEW spawn allowed.
  *
  * Run with: bun run test/scheduler/cont-idempotency.test.ts
  * Exits 0 on all pass, 1 on any failure.
@@ -73,7 +68,6 @@ type FrontierFn = (
   taskId: string,
   agent: string,
   agents: string[],
-  graph: TaskGraph,
   agentsDir?: string
 ) => Promise<void>;
 
@@ -104,15 +98,12 @@ async function findContYaml(agent: string): Promise<{ path: string; yaml: string
 try {
   const agents = ["alice", "bob"];
 
-  // ── Test 1: same-tick guard via shared graph — claimed continuation ────────
+  // ── Test 1: within-tick idempotency — claimed continuation ──────────────────
   //
-  // v1.15: the guard is graph mutation, not id existence. First spawn inserts
-  // the node into graph.nodes (bucket: open); second call finds it non-terminal
-  // and skips, regardless of the continuation's status on disk.
-  //
-  // This mirrors the WAL-71 replay class: stale-claim re-opens the original
-  // task mid-tick, firing transitionToTerminal a second time with the same
-  // tick graph. The graph (not the filesystem) is the authority.
+  // v1.19: first spawn inserts C1 into currentGraph.dependants[TSK-C1].
+  // Second call (no loadGraph rebuild between) finds C1 non-terminal → skips,
+  // regardless of the claimed status written to disk.
+  // Mirrors the WAL-71 replay class: stale-claim fires transitionToTerminal twice.
 
   console.log("\nTest 1: same-tick guard — continuation claimed in open/ → spawn skipped");
 
@@ -122,11 +113,11 @@ try {
       bob: [],
     },
   });
-  const graph1 = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const c1Yaml = await readTaskYaml("done", "TSK-C1");
 
   // First transition: spawns continuation in bob/open/
-  await checkFrontier(c1Yaml, "TSK-C1", "alice", agents, graph1, agentsDir);
+  await checkFrontier(c1Yaml, "TSK-C1", "alice", agents, agentsDir);
 
   // Simulate runner claiming the continuation.
   const cont1 = await findContYaml("bob");
@@ -141,9 +132,9 @@ try {
     };
     await writeFile(cont1.path, yamlDump(claimedDoc));
 
-    // Second transition (stale-claim replay) — same graph object. The graph
-    // already has the continuation node with bucket:open (non-terminal) → skip.
-    await checkFrontier(c1Yaml, "TSK-C1", "alice", agents, graph1, agentsDir);
+    // Second transition (stale-claim replay) — no loadGraph rebuild. currentGraph
+    // still has C1 with bucket:open (non-terminal) → skip.
+    await checkFrontier(c1Yaml, "TSK-C1", "alice", agents, agentsDir);
 
     const contAfter = yamlLoad(await readFile(cont1.path, "utf-8")) as Record<string, unknown>;
     const leaseAfter = contAfter["lease"] as Record<string, unknown> | null;
@@ -179,11 +170,11 @@ try {
       bob: [],
     },
   });
-  const graph2a = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const c2Yaml = await readTaskYaml("done", "TSK-C2");
 
   // First transition: spawns continuation
-  await checkFrontier(c2Yaml, "TSK-C2", "alice", agents, graph2a, agentsDir);
+  await checkFrontier(c2Yaml, "TSK-C2", "alice", agents, agentsDir);
 
   const cont2 = await findContYaml("bob");
   assert(cont2 !== null, "2a: first transition spawned a continuation");
@@ -196,12 +187,11 @@ try {
     await writeFile(join(doneDir, `${cont2.id}.yaml`), yamlDump(doneDoc));
     await rm(cont2.path);
 
-    // Load a fresh graph (new tick) — sees the continuation as done
-    const graph2b = await loadGraphFn(agentsDir, agents);
+    // Fresh loadGraph — currentGraph now sees the continuation as done (terminal).
+    await loadGraphFn(agentsDir, agents);
 
-    // Second transition with fresh graph — v1.15: done continuation is terminal,
-    // so the guard does NOT skip. A new continuation is spawned.
-    await checkFrontier(c2Yaml, "TSK-C2", "alice", agents, graph2b, agentsDir);
+    // Second transition — done continuation is terminal, guard does NOT skip.
+    await checkFrontier(c2Yaml, "TSK-C2", "alice", agents, agentsDir);
 
     const newFiles = await openFilesFor("bob");
     assert(
@@ -221,11 +211,11 @@ try {
       bob: [],
     },
   });
-  const graph3a = await loadGraphFn(agentsDir, agents);
+  await loadGraphFn(agentsDir, agents);
   const c3Yaml = await readTaskYaml("done", "TSK-C3");
 
   // First transition
-  await checkFrontier(c3Yaml, "TSK-C3", "alice", agents, graph3a, agentsDir);
+  await checkFrontier(c3Yaml, "TSK-C3", "alice", agents, agentsDir);
 
   const cont3 = await findContYaml("bob");
   assert(cont3 !== null, "3a: first transition spawned a continuation");
@@ -238,11 +228,11 @@ try {
     await writeFile(join(failedDir, `${cont3.id}.yaml`), yamlDump(failedDoc));
     await rm(cont3.path);
 
-    // Fresh graph
-    const graph3b = await loadGraphFn(agentsDir, agents);
+    // Fresh loadGraph — currentGraph now sees the continuation as failed (terminal).
+    await loadGraphFn(agentsDir, agents);
 
-    // Second transition with fresh graph — failed is terminal → new spawn allowed
-    await checkFrontier(c3Yaml, "TSK-C3", "alice", agents, graph3b, agentsDir);
+    // Second transition — failed is terminal → new spawn allowed.
+    await checkFrontier(c3Yaml, "TSK-C3", "alice", agents, agentsDir);
 
     const newFiles = await openFilesFor("bob");
     assert(
