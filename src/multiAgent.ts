@@ -964,10 +964,27 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         const replyToRaw = readField(content, "reply_to");
 
         if (nodes.has(taskId)) {
-          // Duplicate across buckets — shouldn't happen; keep first (most
-          // recently scanned is not necessarily more authoritative).
-          console.warn(`[graph] ${taskId} found in multiple buckets; keeping first seen`);
-          continue;
+          // Duplicate id across buckets (e.g. open/ + done/ after a crash between
+          // the write and the unlink). Prefer the terminal copy — the open/ copy
+          // is stale. Record in graph.errors so dependants don't block forever.
+          const incomingIsTerminal = isDone || isFailed;
+          const existing = nodes.get(taskId)!;
+          const problem = incomingIsTerminal
+            ? `duplicate id in ${existing.bucket}/ and ${bucket}/; preferring terminal ${bucket} copy`
+            : `duplicate id in ${existing.bucket}/ and ${bucket}/; keeping ${existing.bucket} copy`;
+          errors.push({ id: taskId, problem });
+          const errKey = `${taskId}:graph-dup`;
+          if (!warnedGraphErrors.has(errKey)) {
+            warnedGraphErrors.add(errKey);
+            console.warn(`[graph] ${taskId}: ${problem}`);
+            await writeFile(
+              join(agentsDir, agent, "tasks", "journal.ndjson"),
+              JSON.stringify({ ts: new Date().toISOString(), id: taskId, event: "graph-error", problem }) + "\n",
+              { flag: "a" }
+            ).catch(() => {});
+          }
+          if (!incomingIsTerminal) continue; // keep existing; incoming is stale
+          nodes.delete(taskId); // incoming is terminal — replace the stale non-terminal copy below
         }
 
         const kindRaw = (readField(content, "kind") ?? "").trim();
@@ -1541,6 +1558,128 @@ async function nextContTaskId(
 //
 // DEC-12 guard: a kind:continuation node must never spawn another continuation.
 // Alice gate removed (Phase 3 deletion).
+
+// v1.16: scan target agent's open/ and waiting/ for a non-terminal continuation
+// whose parent matches familyParent. Used at transition time rather than relying
+// on the tick-scoped graph (F1b: graph is claim-tick-scoped, not transition-time).
+async function findExistingContinuation(
+  familyParent: string,
+  target: string,
+  agentsDir: string
+): Promise<{ id: string; path: string; yaml: string } | null> {
+  // paused/ and blocked/ are also non-terminal — DEC-0004 may auto-pause a stale
+  // continuation. Scanning all four ensures a paused hold is respected (extend +
+  // leave paused) rather than bypassed by a fresh open spawn (v1.17).
+  for (const bucket of ["open", "waiting", "paused", "blocked"] as const) {
+    const dir = join(agentsDir, target, "tasks", bucket);
+    let entries: string[];
+    try { entries = await readdir(dir); } catch { continue; }
+    for (const fname of entries.filter((f) => f.endsWith(".yaml"))) {
+      const path = join(dir, fname);
+      let yaml: string;
+      try { yaml = await readFile(path, "utf-8"); } catch { continue; }
+      if ((readField(yaml, "kind") ?? "").trim() !== "continuation") continue;
+      if ((readField(yaml, "parent") ?? "").trim() !== familyParent) continue;
+      return { id: fname.replace(/\.yaml$/, ""), path, yaml };
+    }
+  }
+  return null;
+}
+
+// v1.16: extend an existing continuation's after: to include late siblings.
+// When a sibling completes after the first continuation was already spawned,
+// we add it to the existing continuation's after: list rather than spawning
+// a duplicate (F1a: staggered families).
+async function extendContinuationAfter(
+  contPath: string,
+  contYaml: string,
+  familyIds: string[]
+): Promise<void> {
+  const existing = readList(contYaml, "after");
+  const merged = [...new Set([...existing, ...familyIds])];
+  if (merged.length === existing.length && familyIds.every((id) => existing.includes(id))) return;
+  const newBlock = `after:\n${merged.map((id) => `  - ${id}`).join("\n")}\n`;
+  const afterRe = /^after:\s*\n(  - [^\n]+\n)*/m;
+  let next = afterRe.test(contYaml) ? contYaml.replace(afterRe, newBlock) : `${contYaml}\n${newBlock}`;
+  next = setField(next, "updated", new Date().toISOString());
+  await writeFile(contPath, next);
+}
+
+// F3: when the completing task has no spawnable target, write a notification
+// task to the coordinator (alice) so the completion is dashboard-visible.
+async function spawnUnresolvableNotification(
+  yaml: string,
+  taskId: string,
+  agent: string,
+  graph: TaskGraph,
+  agentsDir: string
+): Promise<void> {
+  const coordinator = "alice";
+  const openDir = join(agentsDir, coordinator, "tasks", "open");
+  try { await mkdir(openDir, { recursive: true }); } catch { return; }
+  const id = await nextContTaskId(null, coordinator, graph, agentsDir);
+  const now = new Date().toISOString();
+  const q = (v: string) => JSON.stringify(v);
+  const headlineRaw = (readField(yaml, "headline") ?? "").trim();
+  const headline = /^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw;
+  const fromRaw = (readField(yaml, "from") ?? "user").trim();
+  const body = [
+    `id: ${id}`,
+    `headline: ${q(`Completed: ${(headline || taskId).slice(0, 64)}`)}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    ``,
+    `from: runner`,
+    `to: ${coordinator}`,
+    `parent: ${taskId}`,
+    `reply_to: null`,
+    ``,
+    `kind: notification`,
+    `deadline: null`,
+    ``,
+    `budget:`,
+    `  max_turns: 2`,
+    `  max_subagents: 0`,
+    `  max_usd: null`,
+    ``,
+    `brief: |`,
+    `  Task ${taskId} (agent: ${agent}, dispatched by: ${fromRaw}) has reached a terminal state.`,
+    `  Read agents/${agent}/tasks/done/${taskId}.yaml and emit:`,
+    `  <task-done summary="one sentence"> or <task-waiting on="user" summary="...">`,
+    ``,
+    `context:`,
+    `  - agents/${agent}/tasks/done/${taskId}.yaml`,
+    ``,
+    `status: open`,
+    `lease:`,
+    `  holder: null`,
+    `  expires: null`,
+    `history:`,
+    `  - ts: ${now}`,
+    `    from: null`,
+    `    to: open`,
+    `    by: runner`,
+    `    note: ${q(`completion notification — ${agent}/${taskId} had unresolvable target`)}`,
+    ``,
+    `summary:`,
+    `  brief: ""`,
+    `  response: ""`,
+    `report: ""`,
+    ``,
+  ].join("\n");
+  await writeFile(join(openDir, `${id}.yaml`), body);
+  await appendJournal(coordinator, {
+    ts: now,
+    id,
+    status: "open",
+    kind: "notification",
+    from: "runner",
+    to: coordinator,
+    parent: taskId,
+    summary: `completion notification for ${agent}/${taskId}`,
+  });
+}
+
 async function checkFrontierAndMaybeSpawnContinuation(
   yaml: string,
   taskId: string,
@@ -1566,43 +1705,71 @@ async function checkFrontierAndMaybeSpawnContinuation(
     ""
   ).trim();
 
-  // If target is not a known spawnable agent, surface as waiting-on-user.
+  // F3: if target is not a known spawnable agent, spawn a notification task to
+  // the coordinator (alice) so the completion is dashboard-visible rather than
+  // being a silent console.log.
   if (!target || target === "user" || target === "runner" || !agents.includes(target)) {
+    await spawnUnresolvableNotification(yaml, taskId, agent, graph, agentsDir);
     console.log(
-      `[multi-agent] ${agent}/${taskId}: frontier — target "${target}" is not a spawnable agent (waiting-on-user)`
+      `[multi-agent] ${agent}/${taskId}: frontier — unresolvable target "${target}" — completion notification queued`
     );
     return;
   }
 
-  // Frontier guard: skip if T has any non-terminal downstream.
-  // "Non-terminal" for continuations means bucket != done/failed (v1.15: a terminal
-  // continuation does NOT block a new spawn — it may have failed and deserve a retry).
-  // Non-continuation downstreams (join tasks) always block regardless of status.
-  // After the first spawn, the newly inserted node populates graph.dependants[taskId],
-  // so a second call in the same tick sees a non-terminal downstream and skips.
+  // Non-continuation join-task guard: if T has a downstream that is NOT a
+  // continuation, something else manages the flow — skip the spawn.
+  // Continuations are NOT checked here; they are scanned from the filesystem
+  // below (v1.16), avoiding the claim-tick-scoped graph blindspot (F1b).
   const parentRaw = readField(yaml, "parent");
+  const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
   const downstreams = graph.dependants.get(taskId) ?? [];
-  const hasBlockingDownstream = downstreams.some((depId) => {
+  const hasJoinDownstream = downstreams.some((depId) => {
     const node = graph.nodes.get(depId);
-    if (!node) return true; // unknown node — be conservative
-    return node.kind === "continuation" ? !node.isTerminal : true;
+    if (!node) return true;
+    return node.kind !== "continuation";
   });
-  if (hasBlockingDownstream) {
+  if (hasJoinDownstream) {
     console.log(
-      `[multi-agent] ${agent}/${taskId}: has non-terminal downstream — skipping continuation spawn`
+      `[multi-agent] ${agent}/${taskId}: has non-continuation downstream — skipping continuation spawn`
     );
     return;
   }
 
   // Build family = completing task + all siblings sharing the same parent.
-  // The after: block includes t (self-edge) — this populates dependants[t] and makes
-  // the downstreams guard above fire for any subsequent transition in the same tick.
-  const parent = parentRaw && parentRaw !== "null" ? parentRaw.trim() : null;
+  // Exclude kind:continuation nodes — a continuation is the join *over* the
+  // siblings, not one of them. Including it would add its own id to its own
+  // after:, creating a self-reference that permanently prevents ready() (v1.18).
   const familyIds: string[] = [taskId]; // always includes the completing task (self-edge)
   if (parent) {
     for (const [sibId, node] of graph.nodes) {
-      if (sibId !== taskId && node.parent === parent) familyIds.push(sibId);
+      if (sibId !== taskId && node.parent === parent && node.kind !== "continuation") {
+        familyIds.push(sibId);
+      }
     }
+  }
+
+  // v1.16: scan filesystem for an existing non-terminal continuation with matching
+  // (parent, target) at transition time. This is correct across ticks (F1b) and
+  // across different-target siblings in the same family (F2).
+  const contParent = parent ?? taskId;
+  const existing = await findExistingContinuation(contParent, target, agentsDir);
+  if (existing) {
+    // Extend the existing continuation's after: to include the late sibling (F1a).
+    await extendContinuationAfter(existing.path, existing.yaml, familyIds);
+    // Reflect the extension in the tick-scoped graph so same-tick transitions see it.
+    const existingNode = graph.nodes.get(existing.id);
+    if (existingNode) {
+      for (const memberId of familyIds) {
+        if (!existingNode.after.includes(memberId)) existingNode.after.push(memberId);
+        const deps = graph.dependants.get(memberId) ?? [];
+        if (!deps.includes(existing.id)) deps.push(existing.id);
+        graph.dependants.set(memberId, deps);
+      }
+    }
+    console.log(
+      `[multi-agent] ${agent}/${taskId}: found existing continuation ${existing.id} — extended after: with [${familyIds.join(", ")}]`
+    );
+    return;
   }
 
   const id = await nextContTaskId(parent, target, graph, agentsDir);
@@ -2627,6 +2794,12 @@ async function tickOnce(
     }
   }
 
+  // Wrap loadGraph + claim loop so a throw records last_tick_ok: false and
+  // writeRunnerHealth still runs. This closes the F5 gap: previously a throw
+  // anywhere between loadGraph and the end of the claim loop would abort the
+  // tick before health was written, leaving last_tick_ok: true from the prior tick.
+  try {
+
   // Phase 1: build the task graph once per tick.  `ready()` uses this to
   // evaluate needs/after edges without re-reading the filesystem per task.
   // The reverse index is carried for Phase 2 (frontier check).
@@ -2639,8 +2812,7 @@ async function tickOnce(
     console.log(
       `[${new Date().toLocaleTimeString()}] multi-agent: limits gate active until ${gate.reset_at} — skipping claim pass`
     );
-    await writeRunnerHealth(health);
-    return;
+    return; // finally writes health
   }
 
   for (const agent of opts.agents) {
@@ -2770,12 +2942,10 @@ async function tickOnce(
     }
   }
 
-  // Persist health record and alert on claim drought.
-  await writeRunnerHealth(health);
+  // Alert on claim drought — inside the try so a loadGraph failure here is caught.
   if (health.last_claim_at) {
     const droughtMs = Date.now() - Date.parse(health.last_claim_at);
     if (droughtMs > opts.tickMs * 5) {
-      // Check if there are any ready tasks — if so, this is a real drought.
       const graph2 = await loadGraph(AGENTS_DIR, opts.agents).catch(() => null);
       if (graph2) {
         const hasReady = [...graph2.nodes.values()].some(
@@ -2788,6 +2958,16 @@ async function tickOnce(
         }
       }
     }
+  }
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[${new Date().toLocaleTimeString()}] multi-agent: tickOnce body threw:`, err);
+    health.last_tick_ok = false;
+    health.last_error = { message, fn: "tickOnce" };
+  } finally {
+    // Always persist health so last_tick_ok / last_error reflect this tick.
+    await writeRunnerHealth(health);
   }
 }
 
@@ -2939,4 +3119,9 @@ export const __testing = {
   runClaimPassForTesting,
   // Frontier check — WAL-72 Phase 2.  Takes explicit agentsDir for fixture tests.
   checkFrontierAndMaybeSpawnContinuation,
+  // v1.16 helpers — tested directly in frontier-v116.test.ts.
+  findExistingContinuation,
+  extendContinuationAfter,
+  // Blocked-dependant sweep — WAL-72 Phase 3.  No test coverage before v1.16 fix batch.
+  sweepBlockedDependants,
 };
