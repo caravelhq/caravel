@@ -251,13 +251,14 @@ try {
 
   // ── Test 4: Target not in agents list → no spawn ───────────────────────────
 
-  console.log("\nTest 4: Target not in agents list → no spawn (waiting-on-user)");
+  console.log("\nTest 4: Target not in agents list → completion notification queued to alice (F3)");
 
   {
     const agentsDir4 = join(root, "agents4");
     await mkdir(join(agentsDir4, "alice", "tasks", "done"), { recursive: true });
 
-    // from: kelly → target = kelly → not in ["alice", "bob"] → no spawn
+    // from: kelly → target = kelly → not in ["alice", "bob"]
+    // F3 fix: spawns a kind:notification to alice so the completion is dashboard-visible.
     const yaml4 = makeYaml({
       id: "TSK-KELLY",
       from: "kelly",
@@ -275,9 +276,25 @@ try {
     const bobOpenAfter2 = await countOpenFiles(agentsDir4, "bob");
 
     assert(
-      aliceOpenAfter === aliceOpenBefore && bobOpenAfter2 === bobOpenBefore2,
-      "4a: target 'kelly' not in agents list → no continuation spawned"
+      aliceOpenAfter === aliceOpenBefore + 1,
+      "4a: unresolvable target → one notification envelope queued to alice (F3)",
+      `alice open before=${aliceOpenBefore} after=${aliceOpenAfter}`
     );
+    assert(
+      bobOpenAfter2 === bobOpenBefore2,
+      "4b: nothing spawned to bob (target is kelly, not bob)"
+    );
+    // Verify the notification is kind:notification (not kind:continuation).
+    const aliceOpen = await readdir(join(agentsDir4, "alice", "tasks", "open")).catch(() => [] as string[]);
+    const notifFiles = aliceOpen.filter((f) => f.endsWith(".yaml"));
+    if (notifFiles.length === 1) {
+      const { readFile: rf } = await import("fs/promises");
+      const { load: yl } = await import("js-yaml");
+      const notifYaml = await rf(join(agentsDir4, "alice", "tasks", "open", notifFiles[0]!), "utf-8");
+      const notifDoc = yl(notifYaml) as Record<string, unknown>;
+      assert(notifDoc["kind"] === "notification", "4c: notification envelope has kind: notification");
+      assert(String(notifDoc["parent"] ?? "") === "TSK-KELLY", "4d: notification parent is the completing task");
+    }
   }
 
 } finally {
