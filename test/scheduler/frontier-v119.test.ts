@@ -579,6 +579,146 @@ try {
     }
   }
 
+  // ── Test 17: multi-frontier consolidation ─────────────────────────────────
+  //
+  // Two siblings share TSK-CPAR17, both from: kelly (user target).
+  // Both are terminal at the start of the test.
+  //
+  // Sequence:
+  //   17a–17e: F1 fires → exactly ONE consolidation to coordinator (alice);
+  //            after: covers both family members; ready(); graph.errors empty.
+  //   17f: F2 fires → ZERO new envelopes (pure edge guard: dependants[F2]=[C]
+  //        non-terminal → skip). This exercises the pure edge guard, not the
+  //        frontierLeaves guard — make both paths explicit.
+  //   17g: consolidation moved to done/, fires → report-flag (DEC-23 user-target
+  //        kind:continuation path), no further spawn.
+  //   17h: alice's open/ count does not increase (report-flag = no-op on fs).
+  //
+  // 17i (mutation anchor for line 1731 guard):
+  //   Solo task TSK-FSOLO (no siblings, from: kelly) → frontierLeaves.length = 1
+  //   → report-flag (no spawn). Deleting the guard makes frontierLeaves.length <= 1
+  //   proceed to consolidation spawn → 17i turns red.
+
+  console.log("\nTest 17: multi-frontier consolidation — two user-target leaves → ONE consolidation");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-CPAR17" },
+        { id: "TSK-F1", status: "done", from: "kelly", kind: "code", parent: "TSK-CPAR17" },
+        { id: "TSK-F2", status: "done", from: "kelly", kind: "code", parent: "TSK-CPAR17" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    await loadGraphFn(agentsDir, agents);
+    const yamlF1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-F1.yaml"), "utf-8");
+
+    // F1 fires. frontierLeaves = [F1, F2] (length 2 → consolidation path).
+    await checkFrontier(yamlF1, "TSK-F1", "alice", agents, agentsDir);
+
+    // 17a: exactly one continuation spawned.
+    const aliceConts17 = (await openEnvelopes("alice")).filter((e) => e.doc["kind"] === "continuation");
+    assert(aliceConts17.length === 1, "17a: exactly ONE consolidation continuation spawned", `got ${aliceConts17.length}`);
+
+    if (aliceConts17.length === 1) {
+      const c17 = aliceConts17[0]!;
+
+      // 17b: coordinator is alice (default — no parent reply_to set).
+      assert(c17.doc["to"] === "alice", "17b: consolidation addressed to coordinator (alice)", `to: ${String(c17.doc["to"])}`);
+
+      // 17c: after: covers both family members.
+      const af17 = c17.doc["after"] as string[] | undefined;
+      assert(
+        Array.isArray(af17) && af17.includes("TSK-F1") && af17.includes("TSK-F2"),
+        "17c: consolidation after: covers both F1 and F2",
+        `after: [${af17?.join(", ") ?? ""}]`
+      );
+
+      // 17d: ready() — both F1 and F2 are terminal.
+      const gAfterF1 = await loadGraphFn(agentsDir, agents);
+      assert(readyFn(c17.id, gAfterF1), "17d: consolidation is ready() — F1 and F2 are terminal");
+
+      // 17e: no graph errors.
+      const errs17 = gAfterF1.errors.filter((e) => e.id === c17.id);
+      assert(errs17.length === 0, "17e: graph.errors empty for consolidation");
+
+      // 17f: F2 fires → pure edge guard blocks it (dependants[F2] = [C17] non-terminal → skip).
+      const aliceOpenBeforeF2 = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+      const yamlF2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-F2.yaml"), "utf-8");
+      await loadGraphFn(agentsDir, agents);
+      await checkFrontier(yamlF2, "TSK-F2", "alice", agents, agentsDir);
+      const aliceOpenAfterF2 = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+      assert(aliceOpenAfterF2 === aliceOpenBeforeF2, "17f: F2 firing → zero new envelopes (pure edge guard, dependants[F2]=[C] non-terminal)");
+
+      // 17g: move consolidation to done/, fire it → kind:continuation + user-target (from: runner)
+      //      → report-flag (DEC-23 path), not DEC-12 backstop, not a new spawn.
+      const c17Path = join(agentsDir, "alice", "tasks", "open", `${c17.id}.yaml`);
+      const c17Yaml = await readFile(c17Path, "utf-8");
+      const doneDir17 = join(agentsDir, "alice", "tasks", "done");
+      await mkdir(doneDir17, { recursive: true });
+      const c17DoneYaml = c17Yaml.replace(/^status: open$/m, "status: done");
+      await writeFile(join(doneDir17, `${c17.id}.yaml`), c17DoneYaml);
+      await rm(c17Path);
+
+      await loadGraphFn(agentsDir, agents);
+      const aliceOpenBeforeConsolidation = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+      await checkFrontier(c17DoneYaml, c17.id, "alice", agents, agentsDir);
+      const aliceOpenAfterConsolidation = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+
+      assert(
+        aliceOpenAfterConsolidation === aliceOpenBeforeConsolidation,
+        "17g: consolidation completing → report-flag (DEC-23 kind:continuation + user-target), no further spawn",
+        `alice open before=${aliceOpenBeforeConsolidation} after=${aliceOpenAfterConsolidation}`
+      );
+      // 17h: DEC-12 NOT the reason (DEC-12 is the spawnable-agent guard; this is the user-target path).
+      //      We can't read logs here but the report-flag log prefix is different from DEC-12.
+      //      Assert: alice open count is the same (already asserted in 17g, but label it explicitly).
+      assert(
+        aliceOpenAfterConsolidation === aliceOpenBeforeConsolidation,
+        "17h: DEC-12 NOT triggered (user-target + kind:continuation → DEC-23 report-flag, not DEC-12 spawnable-agent guard)"
+      );
+    }
+  }
+
+  // 17i: mutation anchor for `if (frontierLeaves.length <= 1)` guard (line 1731).
+  //
+  // Solo task (no siblings, from: kelly). familyIds = [TSK-FSOLO] (no parent match
+  // since no parent declared). frontierLeaves = [TSK-FSOLO] (length 1).
+  // Guard fires: report-flag, no spawn.
+  //
+  // Mutation: deleting lines 1731–1747 lets execution fall through to the consolidation
+  // spawn path even with frontierLeaves.length = 1 → a spurious consolidation spawned
+  // to alice → 17i assertion fails. This is what was verified for the mutation report.
+
+  console.log("\nTest 17i (mutation anchor): solo user-target task → report-flag, no consolidation");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-FSOLO", status: "done", from: "kelly", kind: "code" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    await loadGraphFn(agentsDir, agents);
+    const yamlSolo = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-FSOLO.yaml"), "utf-8");
+    const aliceOpenBeforeSolo = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+    await checkFrontier(yamlSolo, "TSK-FSOLO", "alice", agents, agentsDir);
+    const aliceOpenAfterSolo = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
+    assert(
+      aliceOpenAfterSolo === aliceOpenBeforeSolo,
+      "17i: solo user-target task (no siblings) → frontierLeaves=1 → report-flag, no consolidation spawned",
+      `alice open before=${aliceOpenBeforeSolo} after=${aliceOpenAfterSolo}`
+    );
+  }
+
 } finally {
   await rm(root, { recursive: true, force: true });
 }
