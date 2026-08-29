@@ -1567,7 +1567,10 @@ async function findExistingContinuation(
   target: string,
   agentsDir: string
 ): Promise<{ id: string; path: string; yaml: string } | null> {
-  for (const bucket of ["open", "waiting"] as const) {
+  // paused/ and blocked/ are also non-terminal — DEC-0004 may auto-pause a stale
+  // continuation. Scanning all four ensures a paused hold is respected (extend +
+  // leave paused) rather than bypassed by a fresh open spawn (v1.17).
+  for (const bucket of ["open", "waiting", "paused", "blocked"] as const) {
     const dir = join(agentsDir, target, "tasks", bucket);
     let entries: string[];
     try { entries = await readdir(dir); } catch { continue; }

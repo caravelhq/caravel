@@ -305,6 +305,166 @@ try {
   const blockedCount = await countBucketFiles("alice", "blocked");
   assert(blockedCount === 1, "4j: exactly one file in alice blocked/", `found ${blockedCount}`);
 
+  // ── Test 5: v1.17 — paused continuation is extended, not bypassed ─────────
+  //
+  // DEC-0004 auto-pause moves idle continuations to paused/. Before v1.17,
+  // findExistingContinuation only scanned open/+waiting/, so a paused C1 was
+  // invisible: B's transition spawned a fresh C2 in open/ alongside the paused
+  // one, bypassing the human hold that pause was meant to enforce.
+  //
+  // After v1.17: bucket list = [open, waiting, paused, blocked].
+  // On a paused match, extend after: and leave it paused. Do not spawn C2.
+
+  console.log("\nTest 5: v1.17 — paused continuation is extended, NOT bypassed (DEC-0004 hold)");
+
+  {
+    const { rename: fsRename, mkdir: fsMkdir, writeFile: fsWrite } = await import("fs/promises");
+
+    await buildFixture(root, {
+      agents: {
+        alice: [
+          { id: "TSK-PAR5" },
+          { id: "TSK-P1", status: "done", from: "bob", kind: "code", parent: "TSK-PAR5" },
+          { id: "TSK-P2", status: "done", from: "bob", kind: "code", parent: "TSK-PAR5" },
+        ],
+        bob: [],
+        cliff: [],
+      },
+    });
+
+    // Step 1: P1 completes → C1 spawned to bob's open/.
+    const graphP1 = await loadGraphFn(agentsDir, agents);
+    const yamlP1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-P1.yaml"), "utf-8");
+    await checkFrontier(yamlP1, "TSK-P1", "alice", agents, graphP1, agentsDir);
+
+    const openAfterP1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
+    assert(openAfterP1.length === 1, "5a: P1 completion spawns exactly one continuation to bob");
+
+    if (openAfterP1.length !== 1) {
+      // Can't run the rest of the test without a continuation to move.
+      assert(false, "5b: (skipped — precondition 5a failed)");
+      assert(false, "5c: (skipped — precondition 5a failed)");
+      assert(false, "5d: (skipped — precondition 5a failed)");
+      assert(false, "5e: (skipped — precondition 5a failed)");
+    } else {
+      const c1Id = openAfterP1[0]!.id;
+      const c1OpenPath = join(agentsDir, "bob", "tasks", "open", `${c1Id}.yaml`);
+      const c1PausedDir = join(agentsDir, "bob", "tasks", "paused");
+      const c1PausedPath = join(c1PausedDir, `${c1Id}.yaml`);
+
+      // Step 2: DEC-0004 auto-pause — move C1 to paused/. Update its status field.
+      await fsMkdir(c1PausedDir, { recursive: true });
+      let c1Yaml = await readFile(c1OpenPath, "utf-8");
+      c1Yaml = c1Yaml.replace(/^status: open$/m, "status: paused");
+      await fsWrite(c1OpenPath, c1Yaml); // write updated status before rename
+      await fsRename(c1OpenPath, c1PausedPath);
+
+      // Step 3: P2 completes with a FRESH graph (cross-tick simulation).
+      const graphP2 = await loadGraphFn(agentsDir, agents);
+      const yamlP2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-P2.yaml"), "utf-8");
+      await checkFrontier(yamlP2, "TSK-P2", "alice", agents, graphP2, agentsDir);
+
+      // Assert: no new continuation in bob's open/.
+      const openAfterP2 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
+      assert(
+        openAfterP2.length === 0,
+        "5b: P2 completion does NOT spawn a fresh continuation alongside the paused one",
+        `bob open had ${openAfterP2.length} continuation(s): [${openAfterP2.map((e) => e.id).join(", ")}]`
+      );
+
+      // Assert: paused C1 still exists (not unpaused, not removed).
+      const pausedYaml = await readFile(c1PausedPath, "utf-8").catch(() => null);
+      assert(pausedYaml !== null, "5c: C1 remains in paused/ (human hold preserved)");
+
+      if (pausedYaml !== null) {
+        const { load: yl } = await import("js-yaml");
+        const pausedDoc = yl(pausedYaml) as Record<string, unknown>;
+        assert(pausedDoc["status"] === "paused", "5d: C1 status is still paused (not changed by extend)");
+
+        // Assert: after: in the paused envelope now includes P2.
+        const afterList = pausedDoc["after"] as string[] | undefined;
+        assert(
+          Array.isArray(afterList) && afterList.includes("TSK-P2"),
+          "5e: paused C1 after: extended to include the late sibling TSK-P2",
+          `after: [${afterList?.join(", ") ?? ""}]`
+        );
+      }
+    }
+  }
+
+  // ── Test 6: bucket list pinned — waiting/ is also scanned (not new, confirm) ─
+  //
+  // Pins waiting/ as a scanned bucket by test observation. The existing Test 1
+  // (staggered family) proves open/ is scanned. This confirms waiting/ is too.
+  // Uses a pre-placed waiting/ continuation — same probe shape as Test 5.
+
+  console.log("\nTest 6: waiting/ bucket scanned — pre-placed waiting continuation is extended");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-PAR6" },
+        { id: "TSK-W1", status: "done", from: "bob", kind: "code", parent: "TSK-PAR6" },
+        { id: "TSK-W2", status: "done", from: "bob", kind: "code", parent: "TSK-PAR6" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    const { rename: fsRename, mkdir: fsMkdir, writeFile: fsWrite } = await import("fs/promises");
+
+    // Step 1: W1 completes → C1 spawned to bob's open/.
+    const graphW1 = await loadGraphFn(agentsDir, agents);
+    const yamlW1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-W1.yaml"), "utf-8");
+    await checkFrontier(yamlW1, "TSK-W1", "alice", agents, graphW1, agentsDir);
+
+    const openAfterW1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
+    if (openAfterW1.length === 1) {
+      const c1Id = openAfterW1[0]!.id;
+      const c1OpenPath = join(agentsDir, "bob", "tasks", "open", `${c1Id}.yaml`);
+      const c1WaitDir = join(agentsDir, "bob", "tasks", "waiting");
+      const c1WaitPath = join(c1WaitDir, `${c1Id}.yaml`);
+
+      // Step 2: move C1 to waiting/ (e.g. waiting:on:user).
+      await fsMkdir(c1WaitDir, { recursive: true });
+      let c1Yaml = await readFile(c1OpenPath, "utf-8");
+      c1Yaml = c1Yaml.replace(/^status: open$/m, "status: waiting:on:user");
+      await fsWrite(c1OpenPath, c1Yaml);
+      await fsRename(c1OpenPath, c1WaitPath);
+
+      // Step 3: W2 completes with a fresh graph.
+      const graphW2 = await loadGraphFn(agentsDir, agents);
+      const yamlW2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-W2.yaml"), "utf-8");
+      await checkFrontier(yamlW2, "TSK-W2", "alice", agents, graphW2, agentsDir);
+
+      const openAfterW2 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
+      assert(
+        openAfterW2.length === 0,
+        "6a: W2 completion does NOT spawn alongside the waiting continuation",
+        `bob open had ${openAfterW2.length} continuation(s)`
+      );
+
+      const waitYaml = await readFile(c1WaitPath, "utf-8").catch(() => null);
+      if (waitYaml !== null) {
+        const { load: yl } = await import("js-yaml");
+        const waitDoc = yl(waitYaml) as Record<string, unknown>;
+        const afterList = waitDoc["after"] as string[] | undefined;
+        assert(
+          Array.isArray(afterList) && afterList.includes("TSK-W2"),
+          "6b: waiting C1 after: extended to include TSK-W2",
+          `after: [${afterList?.join(", ") ?? ""}]`
+        );
+      } else {
+        assert(false, "6b: (waiting envelope not readable)");
+      }
+    } else {
+      assert(false, "6a: (skipped — precondition: W1 did not spawn continuation)");
+      assert(false, "6b: (skipped — precondition)");
+    }
+  }
+
 } finally {
   await rm(root, { recursive: true, force: true });
 }
