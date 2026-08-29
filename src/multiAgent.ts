@@ -1736,11 +1736,15 @@ async function checkFrontierAndMaybeSpawnContinuation(
   }
 
   // Build family = completing task + all siblings sharing the same parent.
-  // The after: block includes t (self-edge).
+  // Exclude kind:continuation nodes — a continuation is the join *over* the
+  // siblings, not one of them. Including it would add its own id to its own
+  // after:, creating a self-reference that permanently prevents ready() (v1.18).
   const familyIds: string[] = [taskId]; // always includes the completing task (self-edge)
   if (parent) {
     for (const [sibId, node] of graph.nodes) {
-      if (sibId !== taskId && node.parent === parent) familyIds.push(sibId);
+      if (sibId !== taskId && node.parent === parent && node.kind !== "continuation") {
+        familyIds.push(sibId);
+      }
     }
   }
 

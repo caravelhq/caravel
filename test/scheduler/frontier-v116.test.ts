@@ -465,6 +465,176 @@ try {
     }
   }
 
+  // ── Test 7: ready() + no self-reference + graph.errors clean (v1.18) ────────
+  //
+  // The v1.18 bug: familyIds included kind:continuation nodes sharing the same
+  // parent. The spawned continuation enrolled itself in its own after:, creating
+  // a permanent self-referencing deadlock (ready() = false forever).
+  //
+  // This test asserts the three invariants that would have caught it:
+  //   a) ready(contId, graph) === true after all real siblings are terminal.
+  //   b) The continuation's own id is NOT in its after: list.
+  //   c) graph.errors is empty for the continuation (no self-reference or cycle).
+
+  console.log("\nTest 7: v1.18 — ready() true after extend, no self-ref, graph.errors clean");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-PAR7" },
+        { id: "TSK-Q1", status: "done", from: "bob", kind: "code", parent: "TSK-PAR7" },
+        { id: "TSK-Q2", status: "done", from: "bob", kind: "code", parent: "TSK-PAR7" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    // Q1 completes → C1 spawned. Q2 completes with fresh graph → C1 extended.
+    const gQ1 = await loadGraphFn(agentsDir, agents);
+    const yamlQ1 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Q1.yaml"), "utf-8");
+    await checkFrontier(yamlQ1, "TSK-Q1", "alice", agents, gQ1, agentsDir);
+
+    const envsAfterQ1 = (await openEnvelopes("bob")).filter((e) => e.doc["kind"] === "continuation");
+    if (envsAfterQ1.length !== 1) {
+      assert(false, "7a: (skipped — Q1 did not spawn exactly one continuation)");
+      assert(false, "7b: (skipped)");
+      assert(false, "7c: (skipped)");
+      assert(false, "7d: (skipped)");
+    } else {
+      const contId = envsAfterQ1[0]!.id;
+
+      const gQ2 = await loadGraphFn(agentsDir, agents);
+      const yamlQ2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Q2.yaml"), "utf-8");
+      await checkFrontier(yamlQ2, "TSK-Q2", "alice", agents, gQ2, agentsDir);
+
+      // Reload graph to reflect the extended after: on disk.
+      const gFinal = await loadGraphFn(agentsDir, agents);
+
+      // 7a: continuation is schedulable after extend (all real siblings are terminal).
+      const readyFn = t.ready as (id: string, graph: TaskGraph) => boolean;
+      const isReady = readyFn(contId, gFinal);
+      assert(isReady, "7a: ready(contId, graph) === true — continuation is schedulable after extend");
+
+      // 7b: continuation's own id is NOT in its after: list.
+      const contNode = gFinal.nodes.get(contId);
+      assert(
+        contNode !== undefined && !contNode.after.includes(contId),
+        "7b: continuation's own id is NOT in its after: list (no self-reference)",
+        `after: [${contNode?.after.join(", ") ?? ""}]`
+      );
+
+      // 7c: graph.errors has no entry for the continuation (no self-ref or cycle detected).
+      const contErrors = gFinal.errors.filter((e) => e.id === contId);
+      assert(
+        contErrors.length === 0,
+        "7c: graph.errors is empty for the continuation (no self-ref or cycle)",
+        `errors: [${contErrors.map((e) => e.problem).join("; ")}]`
+      );
+
+      // 7d: after: contains exactly the real siblings (Q1 self-edge + Q2), not the cont.
+      const afterList = contNode?.after ?? [];
+      assert(
+        afterList.includes("TSK-Q1") && afterList.includes("TSK-Q2") && !afterList.includes(contId),
+        "7d: after: = [TSK-Q1, TSK-Q2] — real siblings only, no continuation id",
+        `after: [${afterList.join(", ")}]`
+      );
+    }
+  }
+
+  // ── Test 8: multi-target — two continuations, late third sibling completes ──
+  //
+  // C_alice (for M's reply_to:alice) and C_cliff (for N's reply_to:cliff) share
+  // the same parent. After the v1.18 fix, building familyIds for the third sibling
+  // (TSK-Z) must NOT enrol C_alice or C_cliff in the family. Both continuations
+  // must be ready() and neither must reference the other.
+
+  console.log("\nTest 8: multi-target — late sibling doesn't cross-contaminate continuations, both ready()");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-PAR8" },
+        { id: "TSK-M8", status: "done", from: "bob", kind: "code", reply_to: "alice", parent: "TSK-PAR8" },
+        { id: "TSK-N8", status: "done", from: "bob", kind: "code", reply_to: "cliff", parent: "TSK-PAR8" },
+        { id: "TSK-Z8", status: "done", from: "bob", kind: "code", parent: "TSK-PAR8" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    const readyFn = t.ready as (id: string, graph: TaskGraph) => boolean;
+
+    // M and N each spawn a continuation (different targets).
+    const gM = await loadGraphFn(agentsDir, agents);
+    const yamlM8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-M8.yaml"), "utf-8");
+    await checkFrontier(yamlM8, "TSK-M8", "alice", agents, gM, agentsDir);
+
+    const gN = await loadGraphFn(agentsDir, agents);
+    const yamlN8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-N8.yaml"), "utf-8");
+    await checkFrontier(yamlN8, "TSK-N8", "alice", agents, gN, agentsDir);
+
+    // Z completes — with its own fresh graph. Should extend BOTH continuations.
+    const gZ = await loadGraphFn(agentsDir, agents);
+    const yamlZ8 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-Z8.yaml"), "utf-8");
+    await checkFrontier(yamlZ8, "TSK-Z8", "alice", agents, gZ, agentsDir);
+
+    // Reload graph for final assertions.
+    const gFinal8 = await loadGraphFn(agentsDir, agents);
+
+    const aliceConts = (await openEnvelopes("alice")).filter((e) => e.doc["kind"] === "continuation");
+    const cliffConts = (await openEnvelopes("cliff")).filter((e) => e.doc["kind"] === "continuation");
+
+    assert(aliceConts.length === 1, "8a: exactly one continuation to alice", `got ${aliceConts.length}`);
+    assert(cliffConts.length === 1, "8b: exactly one continuation to cliff", `got ${cliffConts.length}`);
+
+    if (aliceConts.length === 1 && cliffConts.length === 1) {
+      const cAliceId = aliceConts[0]!.id;
+      const cCliffId = cliffConts[0]!.id;
+
+      // Neither continuation references the other.
+      const cAliceNode = gFinal8.nodes.get(cAliceId);
+      const cCliffNode = gFinal8.nodes.get(cCliffId);
+      assert(
+        cAliceNode !== undefined && !cAliceNode.after.includes(cCliffId),
+        "8c: alice continuation does NOT reference cliff continuation in after:",
+        `alice after: [${cAliceNode?.after.join(", ") ?? ""}]`
+      );
+      assert(
+        cCliffNode !== undefined && !cCliffNode.after.includes(cAliceId),
+        "8d: cliff continuation does NOT reference alice continuation in after:",
+        `cliff after: [${cCliffNode?.after.join(", ") ?? ""}]`
+      );
+
+      // Both must be ready (all real siblings — M8, N8, Z8 — are terminal).
+      const aliceReady = readyFn(cAliceId, gFinal8);
+      const cliffReady = readyFn(cCliffId, gFinal8);
+      assert(aliceReady, "8e: alice continuation is ready() — all after: deps terminal");
+      assert(cliffReady, "8f: cliff continuation is ready() — all after: deps terminal");
+
+      // No graph errors for either continuation.
+      const aliceErrors = gFinal8.errors.filter((e) => e.id === cAliceId);
+      const cliffErrors = gFinal8.errors.filter((e) => e.id === cCliffId);
+      assert(aliceErrors.length === 0, "8g: no graph.errors for alice continuation");
+      assert(cliffErrors.length === 0, "8h: no graph.errors for cliff continuation");
+
+      // TSK-Z8 must appear in both continuations' after: lists.
+      assert(
+        cAliceNode?.after.includes("TSK-Z8") === true,
+        "8i: alice continuation after: includes late sibling TSK-Z8",
+        `alice after: [${cAliceNode?.after.join(", ") ?? ""}]`
+      );
+      assert(
+        cCliffNode?.after.includes("TSK-Z8") === true,
+        "8j: cliff continuation after: includes late sibling TSK-Z8",
+        `cliff after: [${cCliffNode?.after.join(", ") ?? ""}]`
+      );
+    }
+  }
+
 } finally {
   await rm(root, { recursive: true, force: true });
 }
