@@ -646,13 +646,16 @@ try {
       const errs17 = gAfterF1.errors.filter((e) => e.id === c17.id);
       assert(errs17.length === 0, "17e: graph.errors empty for consolidation");
 
-      // 17f: F2 fires → pure edge guard blocks it (dependants[F2] = [C17] non-terminal → skip).
+      // 17f: F2 fires → pure edge guard blocks it. Note: loadGraphFn is called between
+      // the consolidation spawn and F2's transition, so dependants[F2]=[C17] is populated
+      // by the disk rebuild (reading C17's on-disk after:), not by the in-memory insertion.
+      // 17f verifies post-rebuild edge resolution. Test 17j pins the in-memory insertion.
       const aliceOpenBeforeF2 = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
       const yamlF2 = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-F2.yaml"), "utf-8");
       await loadGraphFn(agentsDir, agents);
       await checkFrontier(yamlF2, "TSK-F2", "alice", agents, agentsDir);
       const aliceOpenAfterF2 = (await readdir(join(agentsDir, "alice", "tasks", "open")).catch(() => [])).length;
-      assert(aliceOpenAfterF2 === aliceOpenBeforeF2, "17f: F2 firing → zero new envelopes (pure edge guard, dependants[F2]=[C] non-terminal)");
+      assert(aliceOpenAfterF2 === aliceOpenBeforeF2, "17f: F2 firing (post-rebuild) → zero new envelopes (dependants[F2]=[C] from disk-rebuilt graph)");
 
       // 17g: move consolidation to done/, fire it → kind:continuation + user-target (from: runner)
       //      → report-flag (DEC-23 path), not DEC-12 backstop, not a new spawn.
@@ -681,6 +684,82 @@ try {
         aliceOpenAfterConsolidation === aliceOpenBeforeConsolidation,
         "17h: DEC-12 NOT triggered (user-target + kind:continuation → DEC-23 report-flag, not DEC-12 spawnable-agent guard)"
       );
+    }
+  }
+
+  // ── Test 17j: same-tick consolidation — in-memory dependants insertion ────────
+  //
+  // This is the mutation anchor for the `currentGraph.dependants` insertion loop
+  // at lines 1823–1827. After the consolidation is spawned, the loop immediately
+  // inserts the consolidation id into `dependants[F1J]` and `dependants[F2J]`
+  // in the module-level currentGraph — WITHOUT waiting for a disk rebuild.
+  //
+  // Mutation: deleting lines 1823–1827 means the in-memory dependants stay empty.
+  // When F2J fires (with NO loadGraphFn between F1J and F2J), the pure edge guard
+  // reads `currentGraph.dependants["TSK-F2J"]` = [] → no non-terminal downstream →
+  // F2J passes the guard → a SECOND consolidation is spawned → assertion 17j-1 fails.
+  //
+  // With the insertion: `currentGraph.dependants["TSK-F2J"]` = [C.id] → C is
+  // non-terminal → pure edge guard blocks F2J → exactly ONE consolidation. ✓
+  //
+  // The loadGraphFn after F1J fires (17j-3) is ONLY for the ready() check, not for
+  // the same-tick protection. The protection is purely in-memory.
+
+  console.log("\nTest 17j: same-tick consolidation — in-memory dependants insertion (no rebuild between F1J and F2J)");
+
+  await buildFixture(root, {
+    agents: {
+      alice: [
+        { id: "TSK-CPAR17J" },
+        { id: "TSK-F1J", status: "done", from: "kelly", kind: "code", parent: "TSK-CPAR17J" },
+        { id: "TSK-F2J", status: "done", from: "kelly", kind: "code", parent: "TSK-CPAR17J" },
+      ],
+      bob: [],
+      cliff: [],
+    },
+  });
+
+  {
+    await loadGraphFn(agentsDir, agents);
+    const yamlF1J = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-F1J.yaml"), "utf-8");
+    const yamlF2J = await readFile(join(agentsDir, "alice", "tasks", "done", "TSK-F2J.yaml"), "utf-8");
+
+    // F1J fires → consolidation C spawned; insertion loop populates
+    // currentGraph.dependants["TSK-F2J"] = [C.id] in-memory.
+    await checkFrontier(yamlF1J, "TSK-F1J", "alice", agents, agentsDir);
+
+    // F2J fires IMMEDIATELY — no loadGraphFn between the two transitions.
+    // The pure edge guard must read the in-memory dependants, not a disk rebuild.
+    await checkFrontier(yamlF2J, "TSK-F2J", "alice", agents, agentsDir);
+
+    // 17j-1: exactly ONE consolidation (in-memory insertion blocked F2J via pure edge guard).
+    // Mutation: deleting the insertion loop → dependants[F2J]={} in-memory → F2J passes
+    // guard → second consolidation spawned → count becomes 2 → this fails.
+    const aliceConts17j = (await openEnvelopes("alice")).filter((e) => e.doc["kind"] === "continuation");
+    assert(
+      aliceConts17j.length === 1,
+      "17j-1: same-tick — exactly ONE consolidation (in-memory dependants insertion blocked F2J)",
+      `got ${aliceConts17j.length}`
+    );
+
+    if (aliceConts17j.length === 1) {
+      const c17j = aliceConts17j[0]!;
+
+      // 17j-2: after: covers both family members.
+      const af17j = c17j.doc["after"] as string[] | undefined;
+      assert(
+        Array.isArray(af17j) && af17j.includes("TSK-F1J") && af17j.includes("TSK-F2J"),
+        "17j-2: consolidation after: covers F1J and F2J",
+        `after: [${af17j?.join(", ") ?? ""}]`
+      );
+
+      // 17j-3: ready() after disk rebuild.
+      const gFinal17j = await loadGraphFn(agentsDir, agents);
+      assert(readyFn(c17j.id, gFinal17j), "17j-3: consolidation is ready() — F1J and F2J are terminal");
+
+      // 17j-4: graph.errors empty.
+      const errs17j = gFinal17j.errors.filter((e) => e.id === c17j.id);
+      assert(errs17j.length === 0, "17j-4: graph.errors empty for consolidation");
     }
   }
 
