@@ -151,9 +151,13 @@ console.log("\n── failed rendezvous file → promote to failed");
   assert(yaml.includes("rendezvous file found"), "history note mentions rendezvous file");
 }
 
-// ── case 3: waiting rendezvous → promote to waiting ─────────────────────────
+// ── case 3: waiting:on:user rendezvous → Phase 3W straggler, convert to done ──
+//
+// Phase 3W (WAL-72): a worker-written rendezvous file with status:waiting:on:user
+// is a straggler. sweepStaleClaims converts it to done (journal-warns, then moves
+// to done/) rather than promoting to waiting/. waiting:on:limits is still valid.
 
-console.log("\n── waiting rendezvous file → promote to waiting");
+console.log("\n── waiting:on:user rendezvous file → Phase 3W straggler → done (not waiting)");
 {
   const agent = "agent-waiting";
   const taskId = "TSK-wal71-waiting-0001";
@@ -165,12 +169,12 @@ console.log("\n── waiting rendezvous file → promote to waiting");
   await sweepStaleClaims(SWEEP_OPTS, true);
 
   assert(!existsSync(join(agentsDir, agent, "tasks", "open", `${taskId}.yaml`)), "envelope not in open/");
-  assert(existsSync(join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`)), "envelope in waiting/");
-  assert(existsSync(join(agentsDir, agent, "tasks", "waiting", `${taskId}.md`)), "rendezvous .md preserved");
+  // Phase 3W: straggler converted to done, NOT promoted to waiting/.
+  assert(existsSync(join(agentsDir, agent, "tasks", "done", `${taskId}.yaml`)), "envelope in done/ (straggler converted)");
+  assert(!existsSync(join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`)), "envelope NOT in waiting/ (straggler, not a real park)");
 
-  const yaml = await readFile(join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`), "utf-8");
-  assert(yaml.includes("status: waiting:on:user"), 'YAML status is "waiting:on:user"');
-  assert(yaml.includes("rendezvous file found"), "history note mentions rendezvous file");
+  const yaml = await readFile(join(agentsDir, agent, "tasks", "done", `${taskId}.yaml`), "utf-8");
+  assert(yaml.includes("status: done"), 'YAML status is "done" (straggler converted)');
 }
 
 // ── case 4: expired lease, no rendezvous → re-open (unchanged behaviour) ────

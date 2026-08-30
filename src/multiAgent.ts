@@ -861,9 +861,10 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "",
     `**DO NOT touch the YAML envelope** at \`agents/${agent}/tasks/open/${taskId}.yaml\`. The runner owns it — it will update the status field, append the history entry, and move the file to the matching bucket once it sees your .md report. If you move, rename, or rewrite the .yaml yourself, the runner's transition silently fails: no chat notification, no journal entry, no Alice continuation. Just write the .md and stop.`,
     "",
-    "Use `waiting` when you cannot proceed because you need another task's output, another agent's work, or the user's input. The runner parks your envelope and re-claims when the dependency clears. NEVER use `failed: dependency` — that's a worker bug; use `waiting` instead.",
-    "",
-    "Delegation: if your brief requires inputs you don't have (deeper research, code review, etc.) you can dispatch sub-tasks via the `/task` skill. After dispatching, write a `waiting` file with `waiting_on: task:TSK-...`. The runner re-claims your envelope when the sub-task lands in `done/`.",
+    // Phase 3W: a question for Kelly is a done report that asks it; a dependency
+    // is an edge declared at dispatch (needs:/after:), not a park. Workers no
+    // longer emit `waiting` for these; the runner converts any straggler to done.
+    "**A question for Kelly is a `done` report that asks it; a dependency is an edge declared at dispatch (`needs:`/`after:`), not a park.**",
     "",
     "## Fallback (legacy)",
     "",
@@ -871,7 +872,6 @@ function buildWorkerPrompt(yaml: string, taskId: string): string {
     "",
     `  <task-done summary="..." report="path/to/produced/file.md">…optional inline body…</task-done>`,
     `  <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>`,
-    `  <task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>`,
     "",
     "The file is preferred because it survives output-truncation; a directive at the end of a long response can get cut off and lost.",
   ].join("\n");
@@ -969,6 +969,17 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
         const isFailed = rawStatus === "failed" || rawStatus.startsWith("failed:");
         const needs = readList(content, "needs");
         const after = readList(content, "after");
+        // Phase 3W: depends_on → needs shim for legacy envelopes that pre-date
+        // the graph-edge contract. A bare `depends_on: task:X` with no `needs:` is
+        // treated as `needs: [X]` at load time — no file move to waiting/.
+        if (needs.length === 0) {
+          const rawDep = readField(content, "depends_on");
+          if (rawDep && rawDep !== "null") {
+            const trimmed = rawDep.trim();
+            const depId = trimmed.startsWith("task:") ? trimmed.slice(5) : trimmed;
+            if (depId) needs.push(depId);
+          }
+        }
         const toRaw = (readField(content, "to") ?? "").trim();
         const parentRaw = readField(content, "parent");
         const replyToRaw = readField(content, "reply_to");
@@ -1277,6 +1288,15 @@ async function transitionToWaiting(
   openPath: string,
   directive: TaskDirective
 ): Promise<void> {
+  // Phase 3W: only waiting:on:limits is a valid runner-owned park. Workers may no
+  // longer emit waiting:on:task or waiting:on:user — those are converted to done
+  // at the call site before this function is reached.
+  const onSpec = (directive.reason ?? "limits").trim() || "limits";
+  if (onSpec !== "limits") {
+    console.error(`[multi-agent] ${agent}/${taskId}: transitionToWaiting called with non-limits spec "${onSpec}" — BUG; straggler conversion should have fired at the call site`);
+    return;
+  }
+
   const targetDir = join(AGENTS_DIR, agent, "tasks", "waiting");
   await mkdir(targetDir, { recursive: true });
   const targetPath = join(targetDir, `${taskId}.yaml`);
@@ -1291,7 +1311,6 @@ async function transitionToWaiting(
   const { path: sourcePath, yaml } = located;
   const fields = parseFields(yaml, taskId);
   const now = new Date().toISOString();
-  const onSpec = (directive.reason ?? "user").trim() || "user";
   const finalStatus = `waiting:on:${onSpec}`;
 
   const sm = (directive.summary || "").replace(/\s+/g, " ").trim().slice(0, 120);
@@ -1305,14 +1324,12 @@ async function transitionToWaiting(
   if (directive.summary) {
     next = setNestedField(next, "summary", "response", JSON.stringify(directive.summary));
   }
-  // For `waiting:on:limits`, stamp the time the limit was hit and bump the
-  // retry counter so sweepWaiting can decide when to auto-retry and when to
-  // give up. limits_retry_count caps the bounce loop.
-  if (onSpec === "limits") {
-    next = setField(next, "limits_hit_at", now);
-    const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
-    next = setField(next, "limits_retry_count", String(prevCount + 1));
-  }
+  // Stamp the time the limit was hit and bump the retry counter so sweepWaiting
+  // can decide when to auto-retry and when to give up. limits_retry_count caps
+  // the bounce loop. (onSpec === "limits" is the only valid spec after Phase 3W.)
+  next = setField(next, "limits_hit_at", now);
+  const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
+  next = setField(next, "limits_retry_count", String(prevCount + 1));
   next = appendHistory(next, {
     ts: now,
     from: "claimed",
@@ -1405,33 +1422,10 @@ async function cleanStaleRendezvous(
   }
 }
 
-// Resolve a `waiting:on:<spec>` dependency. Returns true when the task can be
-// moved back to `tasks/open/` for re-claim. Spec types:
-//   task:<id>      → resolved iff that exact task id is in any agent's done/
-//   agent:<name>   → resolved iff <name> has any task in their done/ (heuristic;
-//                    refined later by claim-time filter if needed)
-//   user           → never auto-resolves; only Kelly (or Alice acting on his
-//                    behalf) can move it back
-async function checkDependencyResolved(
-  spec: string,
-  knownAgents: string[]
-): Promise<boolean> {
-  if (spec === "user") return false;
-  const colon = spec.indexOf(":");
-  if (colon === -1) return false;
-  const type = spec.slice(0, colon);
-  const value = spec.slice(colon + 1);
-  if (!type || !value) return false;
-
-  if (type === "task") {
-    for (const a of knownAgents) {
-      if (existsSync(join(AGENTS_DIR, a, "tasks", "done", `${value}.yaml`))) return true;
-    }
-    return false;
-  }
-  return false;
-}
-
+// Phase 3W: sweepWaiting handles ONLY waiting:on:limits — the sole runner-owned
+// infrastructure park. All other waiting:on:* specs were either converted to done
+// at the call site (worker stragglers) or are bugs. Any non-limits spec found in
+// waiting/ is logged as a warning and skipped.
 async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
   for (const agent of opts.agents) {
     const waitDir = join(AGENTS_DIR, agent, "tasks", "waiting");
@@ -1451,41 +1445,26 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       if (!status.startsWith("waiting:on:")) continue;
       const spec = status.slice("waiting:on:".length);
 
-      const closedBy = readNestedField(yaml, "closed", "by");
-      const closedStatus = readNestedField(yaml, "closed", "status");
-      if (closedStatus) {
-        if (closedBy !== "auto-on-waiting-task") {
-          // Some other tombstone — leave for sweepArchive.
-          continue;
-        }
-        // Park marker (closedBy === "auto-on-waiting-task"): fall through to
-        // the dependency check. The closed block is cleared on unblock so the
-        // task returns to active leaves.
+      // Any non-limits spec in waiting/ is unexpected after Phase 3W.
+      if (spec !== "limits") {
+        console.warn(`[multi-agent] sweepWaiting: ${agent}/${taskId} has unexpected spec "${spec}" — only limits expected after Phase 3W; skipping`);
+        continue;
       }
 
-      let unblocked = false;
-      if (spec === "limits") {
-        // Check the limits gate directly; sweeps now run regardless of gate state.
-        const limitsGate = await readLimitsGate();
-        unblocked = limitsGate === null;
-        if (unblocked) {
-          console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} limits gate clear — unblocking`);
-        }
-      } else {
-        unblocked = await checkDependencyResolved(spec, opts.agents);
-      }
+      // Skip tasks with a closed.status — leave for sweepArchive.
+      const closedStatus = readNestedField(yaml, "closed", "status");
+      if (closedStatus) continue;
+
+      // Check the limits gate directly; sweeps now run regardless of gate state.
+      const limitsGate = await readLimitsGate();
+      const unblocked = limitsGate === null;
       if (!unblocked) continue;
+      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} limits gate clear — unblocking`);
 
       const fields = parseFields(yaml, taskId);
       const now = new Date().toISOString();
       let next = setField(yaml, "status", "open");
       next = setField(next, "updated", now);
-      // Clear the park-marker tombstone for worker tasks that were stamped by
-      // transitionToWaiting. Without this, the task returns to open/ but still
-      // carries closed.status:superseded — the active-leaves view would hide it.
-      if (closedBy === "auto-on-waiting-task") {
-        next = setClosedField(next, null);
-      }
       next = appendHistory(next, {
         ts: now,
         from: status,
@@ -1634,8 +1613,20 @@ async function extendContinuationAfter(
   const merged = [...new Set([...existing, ...familyIds])];
   if (merged.length === existing.length && familyIds.every((id) => existing.includes(id))) return;
   const newBlock = `after:\n${merged.map((id) => `  - ${id}`).join("\n")}\n`;
-  const afterRe = /^after:\s*\n(  - [^\n]+\n)*/m;
-  let next = afterRe.test(contYaml) ? contYaml.replace(afterRe, newBlock) : `${contYaml}\n${newBlock}`;
+  // R02-F2: normalise via readList and replace whichever form exists — block or
+  // inline. The old regex matched only block form (`after:\n  - id`), so an
+  // inline `after: [TSK-A]` didn't match and a second `after:` key was appended,
+  // producing a duplicate mapping key and making the envelope unparseable.
+  const blockRe = /^after:\s*\n(?:[ \t]+-[^\n]*\n)*/m;
+  const inlineRe = /^after:[^\n]*\n/m;
+  let next: string;
+  if (blockRe.test(contYaml)) {
+    next = contYaml.replace(blockRe, newBlock);
+  } else if (inlineRe.test(contYaml)) {
+    next = contYaml.replace(inlineRe, newBlock);
+  } else {
+    next = `${contYaml}\n${newBlock}`;
+  }
   next = setField(next, "updated", new Date().toISOString());
   await writeFile(contPath, next);
 }
@@ -1701,7 +1692,8 @@ async function _doFrontierCheck(
       await appendJournal(agent, {
         ts: new Date().toISOString(),
         id: taskId,
-        status: "done",
+        // R02-F4: use the actual terminal status from the envelope, not a hardcoded "done".
+        status: readField(yaml, "status") ?? "done",
         kind: "continuation",
         from: fromRaw ?? "runner",
         to: agent,
@@ -1722,9 +1714,13 @@ async function _doFrontierCheck(
 
     const frontierLeaves = familyIds.filter((sibId) => {
       const deps = currentGraph.dependants.get(sibId) ?? [];
+      // R02-F3: disqualify ALL non-continuation dependants, regardless of
+      // terminal status. The old predicate excluded terminal ones (`!n.isTerminal`),
+      // which made interior nodes count as leaves once the family was fully
+      // terminal — causing a needless consolidation on linear chains.
       return !deps.some((depId) => {
         const n = currentGraph.nodes.get(depId);
-        return n && !n.isTerminal && n.kind !== "continuation";
+        return n && n.kind !== "continuation";
       });
     });
 
@@ -1736,7 +1732,8 @@ async function _doFrontierCheck(
       await appendJournal(agent, {
         ts: new Date().toISOString(),
         id: taskId,
-        status: "done",
+        // R02-F4: use the actual terminal status, not a hardcoded "done".
+        status: readField(yaml, "status") ?? "done",
         kind: kind || "unknown",
         from: fromRaw ?? "user",
         to: agent,
@@ -1784,7 +1781,7 @@ async function _doFrontierCheck(
       `brief: |`,
       `  Sub-task ${taskId} (${agent}) has landed as terminal.`,
       `  Read the family reports and write a consolidated briefing for the user, then emit`,
-      `  <task-done summary="..."> or surface a <task-waiting on="user" summary="...">.`,
+      `  <task-done summary="...">. A question for Kelly is a done report that asks it.`,
       "",
       afterBlock.trimEnd(),
       "",
@@ -1886,7 +1883,7 @@ async function _doFrontierCheck(
     `brief: |`,
     `  Sub-task ${taskId} (${agent}) has landed as terminal.`,
     `  Read the report and write a consolidated briefing for the user, then emit`,
-    `  <task-done summary="..."> or surface a <task-waiting on="user" summary="...">.`,
+    `  <task-done summary="...">. A question for Kelly is a done report that asks it.`,
     "",
     afterBlock.trimEnd(),
     "",
@@ -2184,11 +2181,11 @@ async function sweepBlockedDependants(
   }
 }
 
-// When a child task tagged `closes_parent_on_done: true` lands as done,
-// transition its parent waiting:on:user envelope to `done`. Search all known
-// agents' `waiting/` buckets so cross-agent parenting still resolves. No-op
-// if the field is absent, the parent isn't in waiting/, or parent status
-// isn't waiting:on:user.
+// When a child task tagged `closes_parent_on_done: true` lands as done, write a
+// `closed` overlay on the parent if it is in `done/` with `closed: null` (the
+// Phase 3W "report awaiting review" state). Search all known agents' `done/`
+// buckets so cross-agent parenting still resolves. No-op if the field is absent,
+// the parent isn't in done/, or the parent already has a closed.status.
 async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string): Promise<void> {
   const closesField = (readField(childYaml, "closes_parent_on_done") ?? "").trim().toLowerCase();
   if (closesField !== "true") return;
@@ -2197,49 +2194,38 @@ async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string)
 
   const agents = knownAgents();
   for (const a of agents) {
-    const parentPath = join(AGENTS_DIR, a, "tasks", "waiting", `${parentId}.yaml`);
+    // Phase 3W: parent is now done ∧ closed:null (report-state), not waiting:on:user.
+    const parentPath = join(AGENTS_DIR, a, "tasks", "done", `${parentId}.yaml`);
     if (!existsSync(parentPath)) continue;
     let parentYaml: string;
     try {
       parentYaml = await readFile(parentPath, "utf-8");
     } catch { continue; }
     const parentStatus = (readField(parentYaml, "status") ?? "").trim();
-    if (parentStatus !== "waiting:on:user") {
-      console.warn(`[multi-agent] auto-close: parent ${a}/${parentId} status is "${parentStatus}", not waiting:on:user — skipping`);
+    const parentClosedStatus = readNestedField(parentYaml, "closed", "status");
+    if (parentStatus !== "done" || parentClosedStatus !== null) {
+      if (parentStatus !== "done") {
+        console.warn(`[multi-agent] auto-close: parent ${a}/${parentId} status is "${parentStatus}", not done — skipping`);
+      }
       return;
     }
     const now = new Date().toISOString();
-    let next = setField(parentYaml, "status", "done");
-    next = setField(next, "updated", now);
-    // WAL-63 Phase 1: also flip the user-attention overlay to `closed`.
-    // The runner status transition (waiting:on:user → done) is preserved
-    // unchanged; this is the additional user-attention closure that puts
-    // the parent in the audit trail rather than leaving it as a stale
-    // "done but not triaged" leaf in the Current view.
-    next = setClosedField(next, {
+    // Stamp the closed overlay in place — parent is already in done/.
+    let next = setClosedField(parentYaml, {
       status: "closed",
       at: now,
       by: "runner",
-      reason: `auto-closed by child ${childId} (waiting:on:user resolved)`,
+      reason: `auto-closed by child ${childId} (closes_parent_on_done)`,
     });
+    next = setField(next, "updated", now);
     next = appendHistory(next, {
       ts: now,
-      from: "waiting:on:user",
+      from: "done",
       to: "done",
       by: `runner-${process.pid}`,
-      note: `auto-closed by child ${childId} (closes_parent_on_done)`,
+      note: `closed overlay written by child ${childId} (closes_parent_on_done)`,
     });
-    const doneDir = join(AGENTS_DIR, a, "tasks", "done");
-    await mkdir(doneDir, { recursive: true });
-    const targetPath = join(doneDir, `${parentId}.yaml`);
     await writeFile(parentPath, next);
-    try {
-      await rename(parentPath, targetPath);
-    } catch {
-      // If the rename fails (rare — same fs), the file is already updated
-      // in place. The picker will still show status=done via readField.
-    }
-    await cleanStaleRendezvous(a, parentId, "done");
     const parentFields = parseFields(parentYaml, parentId);
     await appendJournal(a, {
       ts: now,
@@ -2251,12 +2237,11 @@ async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string)
       parent: parentFields.parent,
       summary: `auto-closed by child ${childId}`,
     });
-    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${a}/${parentId} → done (auto-closed by child ${childId})`);
+    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${a}/${parentId} — closed overlay written (auto-closed by child ${childId})`);
     return;
   }
-  // Parent not in any waiting/ bucket — already terminal, or never was a
-  // waiting:on:user. Silent no-op; this code path runs for every done child,
-  // most of which don't have parents in waiting/.
+  // Parent not in any done/ bucket — already had a closed overlay, or was
+  // never a report-state parent. Silent no-op; runs for every done child.
 }
 
 // === Worker invocation =====================================================
@@ -2594,14 +2579,39 @@ async function sweepStaleClaims(
         // and they run a second time against a codebase that has moved on. (WAL-71)
         const fromReport = await readReportFile(agent, taskId);
         if (fromReport) {
-          const termBucket: "done" | "failed" | "waiting" =
-            fromReport.kind === "done" ? "done"
-            : fromReport.kind === "failed" ? "failed"
-            : "waiting";
+          // Phase 3W straggler: a report file with status:waiting (non-limits) from
+          // a pre-cutover worker is converted to done. waiting:on:limits is still
+          // valid — honour it by calling transitionToWaiting and moving on.
+          if (fromReport.kind === "waiting") {
+            const onSpec = (fromReport.reason ?? "user").trim() || "user";
+            if (onSpec !== "limits") {
+              const stragglerSpec = `waiting:on:${onSpec}`;
+              console.warn(`[multi-agent] ${agent}/${taskId} stale-claim: report file has ${stragglerSpec} — Phase 3W straggler, converting to done`);
+              await appendJournal(agent, {
+                ts: now,
+                id: taskId,
+                status: stragglerSpec,
+                level: "warn",
+                kind: readField(yaml, "kind") ?? "unknown",
+                from: fields.from,
+                to: agent,
+                parent: fields.parent,
+                summary: `Phase 3W straggler (stale-claim): converted ${stragglerSpec} to done — ${fromReport.summary || ""}`,
+              });
+              fromReport.kind = "done";
+            } else {
+              // limits: park via transitionToWaiting (uses the open/ path directly).
+              const dummyDirective: TaskDirective = { kind: "waiting", reason: "limits", summary: fromReport.summary || "", body: "", report: null };
+              await transitionToWaiting(agent, taskId, path, dummyDirective);
+              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:limits (stale-claim recovery, limits park)`);
+              continue;
+            }
+          }
+          const termBucket: "done" | "failed" =
+            fromReport.kind === "done" ? "done" : "failed";
           const termStatus =
             fromReport.kind === "done" ? "done"
-            : fromReport.kind === "failed" ? `failed:${fromReport.reason ?? "other"}`
-            : `waiting:on:${fromReport.reason || "user"}`;
+            : `failed:${fromReport.reason ?? "other"}`;
           let next = setField(yaml, "status", termStatus);
           next = setField(next, "updated", now);
           next = setNestedField(next, "lease", "holder", "null");
@@ -2677,55 +2687,6 @@ async function sweepStaleClaims(
   }
 }
 
-// Auto-pause a stale waiting:on:user task: stamp paused: block, record
-// paused_from:, move to tasks/paused/. Called by sweepArchive when the task
-// has no closed.status and its updated: timestamp exceeds AUTO_PAUSE_DAYS.
-async function autoPauseTask(
-  agent: string,
-  taskId: string,
-  srcPath: string,
-  fname: string,
-  yaml: string,
-  priorStatus: string
-): Promise<void> {
-  const now = new Date().toISOString();
-  let next = setField(yaml, "status", "paused");
-  next = setField(next, "updated", now);
-  next = setField(next, "paused_from", priorStatus);
-  // Add paused: null first so setNestedField can find the parent key and
-  // convert it to a block mapping. Without this, setNestedField is a no-op
-  // when the parent key is absent.
-  next = setField(next, "paused", "null");
-  next = setNestedField(next, "paused", "at", now);
-  next = setNestedField(next, "paused", "by", "runner-auto");
-  next = setNestedField(next, "paused", "reason", `no movement for ${AUTO_PAUSE_DAYS} days`);
-  next = appendHistory(next, {
-    ts: now,
-    from: priorStatus,
-    to: "paused",
-    by: "runner-auto",
-    note: `auto-paused: no movement for ${AUTO_PAUSE_DAYS} days`,
-  });
-
-  const pausedDir = join(AGENTS_DIR, agent, "tasks", "paused");
-  await mkdir(pausedDir, { recursive: true });
-  await writeFile(srcPath, next);
-  await rename(srcPath, join(pausedDir, fname));
-  await cleanStaleRendezvous(agent, taskId, "paused");
-  await appendJournal(agent, {
-    ts: now,
-    id: taskId,
-    event: "auto-paused",
-    agent,
-    status: "paused",
-    paused_from: priorStatus,
-    note: `no movement for ${AUTO_PAUSE_DAYS} days`,
-  });
-  console.log(
-    `[${new Date().toLocaleTimeString()}] multi-agent: auto-paused ${agent}/waiting/${taskId} ` +
-    `(${AUTO_PAUSE_DAYS}d threshold, prior status: ${priorStatus})`
-  );
-}
 
 async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
   const days = readEnvNumber("CARAVEL_MULTI_AGENT_ARCHIVE_DAYS",
@@ -2747,26 +2708,8 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
 
         const closedStatus = readNestedField(yaml, "closed", "status");
         if (!closedStatus) {
-          // Active task — never archive. But if it's a stale waiting:on:user
-          // task, auto-pause it so it stays visible rather than sitting
-          // silently in waiting/. All other active tasks are left alone.
-          const rawStatus = readField(yaml, "status") ?? "";
-          if (rawStatus === "waiting:on:user" && bucket === "waiting") {
-            const updatedRaw = readField(yaml, "updated");
-            const updatedMs = updatedRaw
-              ? Date.parse(updatedRaw.replace(/^["']|["']$/g, ""))
-              : NaN;
-            const ageMs = Number.isFinite(updatedMs) ? Date.now() - updatedMs : NaN;
-            if (Number.isFinite(ageMs) && ageMs > AUTO_PAUSE_DAYS * 24 * 60 * 60 * 1000) {
-              // `taskId` is derived here — sweepArchive's loop variable is
-              // `fname`, and referencing an undeclared `taskId` threw on every
-              // tick, which killed the whole tickOnce chain before the claim
-              // pass ran (WAL-76 regression: no agent got any task claimed).
-              const taskId = fname.replace(/\.yaml$/, "");
-              await autoPauseTask(agent, taskId, srcPath, fname, yaml, rawStatus);
-            }
-          }
-          continue; // active — never archive
+          // Active task — never archive.
+          continue;
         }
 
         const closedAtRaw = readNestedField(yaml, "closed", "at");
@@ -2843,7 +2786,7 @@ function readEnvNumber(key: string, fallback: number): number {
 // runClaimPassForTesting call this function; there is no second copy of the
 // guard logic anywhere in this file.
 
-export type ClaimDecision = "skip-claimed" | "skip-terminalish" | "skip-not-ready" | "claim";
+export type ClaimDecision = "skip-claimed" | "skip-terminalish" | "skip-not-ready" | "skip-closed" | "claim";
 
 export function claimDecision(yaml: string, taskId: string, graph: TaskGraph): ClaimDecision {
   const rawStatus = (readField(yaml, "status") ?? "open").trim();
@@ -2855,6 +2798,10 @@ export function claimDecision(yaml: string, taskId: string, graph: TaskGraph): C
   ) {
     return "skip-terminalish";
   }
+  // Phase 3W: a task cancelled (or otherwise closed) while still in open/ must not
+  // be claimed — the cancellation is a human decision and the runner must honour it.
+  const closedStatus = readNestedField(yaml, "closed", "status");
+  if (closedStatus !== null) return "skip-closed";
   if (!ready(taskId, graph)) return "skip-not-ready";
   return "claim";
 }
@@ -2865,13 +2812,12 @@ export function claimDecision(yaml: string, taskId: string, graph: TaskGraph): C
 // this function.  The skip-not-ready enforcement lives here and exactly here —
 // deleting the return below must turn the tick-claim suite red.
 //
-// checkDependsOn is null in the test wrapper: the depends_on gate has
-// file-move side effects and belongs only in the live tick path.
+// Phase 3W: checkDependsOn removed — depends_on handled at graph-load time (needs shim).
 type ClaimPassItemOutcome =
   | "skip-claimed"
   | "skip-terminalish"
   | "skip-not-ready"
-  | "parked"
+  | "skip-closed"
   | "claimed"
   | "claim-failed";
 
@@ -2880,19 +2826,14 @@ async function executeClaimPassItem(opts: {
   taskId: string;
   graph: TaskGraph;
   onUnrecognizedStatus?: (rawStatus: string) => void;
-  checkDependsOn?: () => Promise<"parked" | "proceed">;
   doClaimFn: () => Promise<"claimed" | "claim-failed">;
 }): Promise<ClaimPassItemOutcome> {
   const { yaml, taskId, graph } = opts;
   const decision = claimDecision(yaml, taskId, graph);
-  if (decision === "skip-claimed" || decision === "skip-terminalish") return decision;
+  if (decision === "skip-claimed" || decision === "skip-terminalish" || decision === "skip-closed") return decision;
   if (opts.onUnrecognizedStatus) {
     const rawStatus = (readField(yaml, "status") ?? "open").trim();
     if (rawStatus !== "open") opts.onUnrecognizedStatus(rawStatus);
-  }
-  if (opts.checkDependsOn) {
-    const gate = await opts.checkDependsOn();
-    if (gate === "parked") return "parked";
   }
   // THE KEY ENFORCEMENT: deleting this line must turn tick-claim suite red.
   // Both tickOnce and runClaimPassForTesting reach this via doClaimFn — no
@@ -2994,48 +2935,6 @@ async function tickOnce(
             `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} has unrecognised status "${rawStatus}" in open/ — treating as open`
           );
         },
-        checkDependsOn: async () => {
-          // Pre-claim depends_on gate: park to waiting/ without spawning a
-          // worker when the structured dependency isn't resolved yet.
-          // sweepWaiting() unblocks the task when the dependency lands.
-          const rawDependsOn = readField(yaml, "depends_on");
-          const dependsOn = rawDependsOn && rawDependsOn !== "null" ? rawDependsOn.trim() : null;
-          if (!dependsOn) return "proceed";
-          const depResolved = await checkDependencyResolved(dependsOn, opts.agents);
-          if (depResolved) return "proceed";
-          const now2 = new Date().toISOString();
-          const rawStatus = (readField(yaml, "status") ?? "open").trim();
-          const waitStatus = `waiting:on:${dependsOn}`;
-          let parkedYaml = setField(yaml, "status", waitStatus);
-          parkedYaml = setField(parkedYaml, "updated", now2);
-          parkedYaml = appendHistory(parkedYaml, {
-            ts: now2,
-            from: rawStatus,
-            to: waitStatus,
-            by: `runner-${process.pid}`,
-            note: `pre-claim gate: depends_on ${dependsOn} not yet resolved`,
-          });
-          const waitDirPath = join(AGENTS_DIR, agent, "tasks", "waiting");
-          await mkdir(waitDirPath, { recursive: true });
-          const waitTarget = join(waitDirPath, fname);
-          await writeFile(filePath, parkedYaml);
-          await rename(filePath, waitTarget);
-          await cleanStaleRendezvous(agent, taskId, "waiting");
-          await appendJournal(agent, {
-            ts: now2,
-            id: taskId,
-            status: waitStatus,
-            kind: readField(yaml, "kind") ?? "other",
-            from: readField(yaml, "from") ?? "unknown",
-            to: agent,
-            parent: readField(yaml, "parent") ?? null,
-            summary: `pre-claim park: depends_on ${dependsOn} not resolved`,
-          });
-          console.log(
-            `[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} pre-claim parked — depends_on ${dependsOn} not resolved`
-          );
-          return "parked";
-        },
         doClaimFn: async () => {
           const fields = await claimTask(agent, taskId, filePath, opts.leaseMs);
           if (!fields) return "claim-failed";
@@ -3063,7 +2962,7 @@ async function tickOnce(
           const effective: TaskDirective = directive ?? {
             kind: "failed",
             reason: "other",
-            summary: "worker completed but emitted no directive — likely forgot the closing <task-done>/<task-failed>/<task-waiting> tag. The deliverable (if any) may still be on disk; check the worker's output destination before re-dispatching.",
+            summary: "worker completed but emitted no directive — likely forgot the closing <task-done>/<task-failed> tag. The deliverable (if any) may still be on disk; check the worker's output destination before re-dispatching.",
             body: "",
             report: null,
           };
@@ -3071,8 +2970,31 @@ async function tickOnce(
             console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — synthesising failed:other`);
           }
           if (effective.kind === "waiting") {
-            await transitionToWaiting(agent, taskId, filePath, effective);
-            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${effective.reason}`);
+            const onSpec = (effective.reason ?? "user").trim() || "user";
+            if (onSpec !== "limits") {
+              // Phase 3W straggler conversion: a worker that still emits waiting:on:task
+              // or waiting:on:user predates the cutover. Convert to done so it surfaces
+              // as a report (terminal ∧ closed:null) rather than parking invisibly.
+              const stragglerSpec = `waiting:on:${onSpec}`;
+              console.warn(`[multi-agent] ${agent}/${taskId} emitted ${stragglerSpec} — Phase 3W straggler, converting to done`);
+              await appendJournal(agent, {
+                ts: new Date().toISOString(),
+                id: taskId,
+                status: stragglerSpec,
+                level: "warn",
+                kind: readField(claimedYaml, "kind") ?? "unknown",
+                from: readField(claimedYaml, "from") ?? "unknown",
+                to: agent,
+                parent: readField(claimedYaml, "parent") ?? null,
+                summary: `Phase 3W straggler: converted ${stragglerSpec} to done — ${effective.summary || ""}`,
+              });
+              const converted: TaskDirective = { kind: "done", reason: null, summary: effective.summary, body: effective.body ?? "", report: effective.report };
+              await transitionToTerminal(agent, taskId, filePath, converted);
+              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (straggler from ${stragglerSpec})`);
+            } else {
+              await transitionToWaiting(agent, taskId, filePath, effective);
+              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:limits`);
+            }
           } else {
             await transitionToTerminal(agent, taskId, filePath, effective);
             console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
@@ -3244,7 +3166,6 @@ export const __testing = {
   readNestedField,
   appendHistory,
   buildWorkerPrompt,
-  checkDependencyResolved,
   sweepStaleClaims,
   sweepWaiting,
   readReportFile,
@@ -3268,4 +3189,6 @@ export const __testing = {
   sweepBlockedDependants,
   // v1.19: auto-reopen blocked tasks whose needs are all done.
   sweepBlocked,
+  // Phase 3W: parent auto-close on done∧closed:null shape. Exported for direct unit testing.
+  maybeCloseParentOnUserUnblock,
 };

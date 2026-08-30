@@ -54,6 +54,7 @@ const SUITES: Suite[] = [
   { name: "continuation idempotency: claimed/done/failed (WAL-72 v1.11)", file: "scheduler/cont-idempotency.test.ts", timeoutMs: 120_000 },
   { name: "v1.16 guard: staggered/two-graph/multi-target/sweepBlocked (WAL-72 post-deploy)", file: "scheduler/frontier-v116.test.ts", timeoutMs: 120_000 },
   { name: "v1.19: replay/extension/claimed-spawn/sweepBlocked/report-flag/T1-T5 (WAL-72 v1.19)", file: "scheduler/frontier-v119.test.ts", timeoutMs: 120_000 },
+  { name: "Phase 3W: straggler/limits/depends_on-shim/auto-close/skip-closed/F2/F3 (WAL-72 Ph3W)", file: "scheduler/phase3w.test.ts", timeoutMs: 120_000 },
   { name: "type-check gate: src/+test/ errors (WAL-72 v1.12)", file: "type-check.test.ts", timeoutMs: 120_000 },
 ];
 
