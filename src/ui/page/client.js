@@ -4378,6 +4378,11 @@
       // re-renders within the page lifetime (no localStorage).
       var tasksExpanded = {};
 
+      // Measure F: per-render byParent index for non-terminal descendant
+      // counting. Reset at the top of renderTaskPicker so all renderTreeBranch
+      // calls in one paint share the same snapshot.
+      var _tierByParent = null;
+
       function timeAgo(iso) {
         if (!iso) return "";
         var t = Date.parse(iso);
@@ -4443,6 +4448,46 @@
             if (seen[kid.id]) continue;
             seen[kid.id] = true;
             if (!kid.closed || !kid.closed.status) count++;
+            queue.push(kid.id);
+          }
+        }
+        return count;
+      }
+
+      // Measure F: build the byParent index once per render cycle. Called
+      // from countNonTerminalDescendants; reset by renderTaskPicker.
+      function ensureTierByParent() {
+        if (_tierByParent) return _tierByParent;
+        var bp = {};
+        for (var i = 0; i < tasksCache.length; i++) {
+          var t = tasksCache[i];
+          var p = (t.parent && t.parent !== "null") ? t.parent : null;
+          if (!p) continue;
+          (bp[p] = bp[p] || []).push(t);
+        }
+        _tierByParent = bp;
+        return bp;
+      }
+
+      // Measure F: count non-terminal (open/claimed/paused) descendants of
+      // taskId, walking the full tasksCache (not just the filtered tree).
+      // Used to suppress the done-style and inject the queued badge.
+      function countNonTerminalDescendants(taskId) {
+        var bp = ensureTierByParent();
+        var queue = [taskId];
+        var seen = {};
+        seen[taskId] = true;
+        var count = 0;
+        while (queue.length > 0) {
+          var cur = queue.shift();
+          var kids = bp[cur] || [];
+          for (var k = 0; k < kids.length; k++) {
+            var kid = kids[k];
+            if (seen[kid.id]) continue;
+            seen[kid.id] = true;
+            var s = kid.status || "";
+            var terminal = s === "done" || s.indexOf("failed:") === 0;
+            if (!terminal) count++;
             queue.push(kid.id);
           }
         }
@@ -5457,7 +5502,7 @@
         return { roots: roots, childrenOf: childrenOf };
       }
 
-      function renderTreeRow(t, depth, hasChildren, expanded) {
+      function renderTreeRow(t, depth, hasChildren, expanded, queuedCount) {
         var status = statusClass(t.status);
         var marker = depth === 0 ? "●" : "└";
         var headline = t.headline || (t.summary && t.summary.brief) || t.brief || "(no headline)";
@@ -5472,6 +5517,14 @@
         // Kelly 2026-05-20: top-level parent rows read with a lighter
         // background so the family hierarchy is easier to scan.
         if (depth === 0) rowClass += " is-root";
+        // Measure F: if this node has non-terminal descendants it is not
+        // truly done — suppress the done pill and show a queued badge.
+        var queuedBadge = "";
+        if (queuedCount > 0) {
+          rowClass += " has-queued";
+          status = "is-open"; // override green/red pill with open-blue
+          queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + ' queued</span>';
+        }
         var indent = '<span class="tasks-tree-indent" style="width:' + (depth * 14) + 'px"></span>';
         var chevron = hasChildren
           ? '<button class="tasks-tree-chevron' + (expanded ? ' is-expanded' : '') + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? 'Collapse' : 'Expand') + '">' + (expanded ? '▾' : '▸') + '</button>'
@@ -5488,7 +5541,7 @@
           '<div class="tasks-tree-meta">' +
           '<span class="tasks-tree-id">' + escapeHtml(t.id) + '</span>' +
           '<span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + '</span>' +
-          '<span class="tasks-tree-status ' + status + '" title="' + escapeHtml(rawStatus) + '">' + escapeHtml(shortStatus) + '</span>' +
+          (queuedBadge || '<span class="tasks-tree-status ' + status + '" title="' + escapeHtml(rawStatus) + '">' + escapeHtml(shortStatus) + '</span>') +
           '</div>' +
           '</div>' +
           '</div>'
@@ -5558,8 +5611,16 @@
         seen[node.id] = true;
         var kids = tree.childrenOf[node.id] || [];
         var hasChildren = kids.length > 0;
+        // Measure F: count non-terminal descendants across all tasksCache
+        // (not just the visible tree) — .06's hiding parent was two levels up.
+        var queuedCount = countNonTerminalDescendants(node.id);
+        // Measure F: default-expand done parents with queued children.
+        // Only auto-set if the user hasn't touched this node's toggle.
+        if (queuedCount > 0 && hasChildren && !(node.id in tasksExpanded)) {
+          tasksExpanded[node.id] = true;
+        }
         var expanded = !!tasksExpanded[node.id];
-        out.push(renderTreeRow(node, depth, hasChildren, expanded));
+        out.push(renderTreeRow(node, depth, hasChildren, expanded, queuedCount));
         if (!hasChildren || !expanded) return;
         for (var i = 0; i < kids.length; i++) {
           renderTreeBranch(tree, kids[i], depth + 1, out, seen);
@@ -5605,52 +5666,89 @@
         }
       }
 
-      // WAL-76: persistent "Awaiting your input" widget. Shows all open
-      // waiting:on:user tasks, and a second "Paused" tier for auto-paused
-      // tasks. Neither is one-click cancellable — each row opens the task panel.
-      function renderUserBlockedWidget() {
+      // Measure A′ (WAL-72 Phase 3W): four attention tiers replacing the
+      // single "Awaiting your input" widget. Each tier has its own heading,
+      // count, colour, and glyph. A task appears in exactly one tier:
+      //   Precedence: Failed → Blocked → Paused → Reports
+      // This order is explicit in the code so it doesn't grow back silently.
+      // No one-click action — every row opens the task panel first.
+      function renderAttentionTiers() {
         var el = document.getElementById("tasks-user-blocked");
         if (!el) return;
-        var blocked = tasksCache.filter(function (t) {
-          return t.status === "waiting:on:user" && !(t.closed && t.closed.status);
-        });
-        var paused = tasksCache.filter(function (t) {
-          return t.status === "paused" && !(t.closed && t.closed.status);
-        });
-        if (blocked.length === 0 && paused.length === 0) {
+
+        function isClosed(t) { return !!(t.closed && t.closed.status); }
+
+        // Classify. Mutually exclusive — precedence enforced by the order
+        // of the if-else chain: Failed → Blocked → Paused → Reports.
+        var failed = [];
+        var blocked = [];
+        var paused = [];
+        var reports = [];
+        for (var i = 0; i < tasksCache.length; i++) {
+          var t = tasksCache[i];
+          if (isClosed(t)) continue;
+          var st = t.status || "";
+          if (st.indexOf("failed:") === 0) {
+            failed.push(t);                       // Failed beats Reports
+          } else if (t.bucket === "blocked") {
+            blocked.push(t);
+          } else if (st === "paused") {
+            paused.push(t);
+          } else if (st === "done") {
+            reports.push(t);                      // done only (failed already claimed)
+          }
+        }
+
+        if (failed.length === 0 && blocked.length === 0 && paused.length === 0 && reports.length === 0) {
           el.hidden = true;
           el.innerHTML = "";
           return;
         }
-        // Kelly 2026-08-26: on a phone the full `TSK-2026-08-26-0002` ate the
-        // row and the headline was unreadable. Drop the constant `TSK-` and the
-        // year — `08-26-0002` is still unique in practice and leaves room for
-        // the label. Full id stays in data-open-task and the title tooltip.
+
+        // Kelly 2026-08-26: drop TSK-YYYY- prefix on phone — too wide.
         function shortId(id) {
           return String(id || "").replace(/^TSK-\d{4}-/, "");
         }
-        function widgetRow(cls, t) {
+
+        // Measure E: report rows show the worker-written summary, not the
+        // envelope headline (which names the trigger, not the ask).
+        function tierRow(rowCls, t, useSummary) {
           var full = escapeHtml(t.id || "");
           var shrt = escapeHtml(shortId(t.id));
           var headline = escapeHtml(t.headline || t.id || "");
-          return '<div class="' + cls + '" data-open-task="' + full + '" title="' + full + ' — ' + headline + '">' +
-            '<span class="tasks-user-blocked-id">' + shrt + '</span>' +
-            '<span class="tasks-user-blocked-headline">' + headline + '</span>' +
+          var label;
+          if (useSummary) {
+            var resp = t.summary && t.summary.response ? String(t.summary.response).trim() : "";
+            // Strip YAML single-quote literals that yamlDump emits for "".
+            resp = resp.replace(/^'|'$/g, "").trim();
+            if (!resp) resp = t.summary && t.summary.brief ? String(t.summary.brief).trim() : "";
+            if (!resp) resp = t.headline || t.id || "";
+            label = escapeHtml(shorten(resp, 120));
+          } else {
+            label = escapeHtml(shorten(t.headline || t.id || "", 120));
+          }
+          return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + ' — ' + headline + '">' +
+            '<span class="tasks-tier-id">' + shrt + '</span>' +
+            '<span class="tasks-tier-label">' + label + '</span>' +
             '</div>';
         }
+
+        function renderTierSection(tasks, headCls, rowCls, glyph, verb, useSummary) {
+          if (tasks.length === 0) return "";
+          var h = '<div class="tasks-tier-head ' + headCls + '">' + glyph + ' ' + verb + ' (' + tasks.length + ')</div>';
+          for (var ti = 0; ti < tasks.length; ti++) {
+            h += tierRow(rowCls, tasks[ti], !!useSummary);
+          }
+          return h;
+        }
+
         var html = "";
-        if (blocked.length > 0) {
-          html += '<div class="tasks-user-blocked-head">⏳ Awaiting your input (' + blocked.length + ')</div>';
-          for (var i = 0; i < blocked.length; i++) {
-            html += widgetRow("tasks-user-blocked-row", blocked[i]);
-          }
-        }
-        if (paused.length > 0) {
-          html += '<div class="tasks-user-paused-head">⏸ Paused (' + paused.length + ')</div>';
-          for (var j = 0; j < paused.length; j++) {
-            html += widgetRow("tasks-user-paused-row", paused[j]);
-          }
-        }
+        // Precedence: Failed → Blocked → Paused → Reports
+        html += renderTierSection(failed,  "tasks-tier-head-failed",  "tasks-tier-row-failed",  "✗", "Triage",  false);
+        html += renderTierSection(blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
+        html += renderTierSection(paused,  "tasks-tier-head-paused",  "tasks-tier-row-paused",  "⏸", "Paused",  false);
+        html += renderTierSection(reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read",    true);
+
         el.innerHTML = html;
         el.hidden = false;
       }
@@ -5673,7 +5771,8 @@
 
       function renderTaskPicker() {
         if (!tasksTree) return;
-        renderUserBlockedWidget();
+        _tierByParent = null; // reset Measure-F byParent cache for this render cycle
+        renderAttentionTiers();
         // Filter chips only apply to the "all" view.
         if (tasksFilterChips) tasksFilterChips.hidden = (tasksView !== "all");
         if (tasksView === "projects") return renderProjectsView();
@@ -5686,24 +5785,10 @@
           tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
           return;
         }
-        // Surface waiting:on:user as a jump-list at the top so Kelly sees
-        // parked tasks before scrolling. Kelly's 2026-05-20 note: same
-        // tasks should ALSO appear in the project tree below so it's clear
-        // where they sit in the workstream. So the top section is a
-        // shortcut, not a filter — `rest` is the full filtered set, not
-        // `filtered minus blocked`.
-        var blocked = filtered.filter(function (t) { return t.status === "waiting:on:user"; });
-
+        // Phase 3W: the "⏳ Waiting on you" in-tree jump-list for
+        // waiting:on:user tasks is retired — the four-tier widget in the
+        // sidebar sidebar (renderAttentionTiers) surfaces all attention items.
         var html = "";
-        if (blocked.length > 0 && tasksFilter !== "waiting") {
-          html += '<div class="tasks-tree-section">⏳ Waiting on you (' + blocked.length + ')</div>';
-          var blockedTree = buildTaskTree(blocked);
-          var blockedOut = [];
-          for (var b = 0; b < blockedTree.roots.length; b++) {
-            renderTreeBranch(blockedTree, blockedTree.roots[b], 0, blockedOut);
-          }
-          html += blockedOut.join("");
-        }
 
         // Group by project for the main tree. Same shape as the Current
         // view's grouping: collapsible header per project, "Unassigned"
@@ -5723,10 +5808,6 @@
           var bLatest = groups[b].reduce(function (m, t) { return Math.max(m, Date.parse(t.updated || 0) || 0); }, 0);
           return bLatest - aLatest;
         });
-
-        if (blocked.length > 0 && tasksFilter !== "waiting") {
-          html += '<div class="tasks-tree-section">All tasks (' + filtered.length + ')</div>';
-        }
 
         for (var pk = 0; pk < projectKeys.length; pk++) {
           var groupKey = projectKeys[pk];
