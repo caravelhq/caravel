@@ -117,7 +117,32 @@ async function hasActiveInstance(templateId: string): Promise<boolean> {
       if (!existsSync(dir)) continue;
       const files = await readdir(dir).catch(() => [] as string[]);
       for (const f of files) {
-        if (childRe.test(f)) return true;
+        if (!childRe.test(f)) continue;
+        // Presence in open/ or waiting/ is NOT activity on its own.
+        //
+        // Two ways a finished instance stays in the bucket:
+        //   1. WAL-72 Phase 3W writes a `closed:` overlay in place rather than
+        //      moving the envelope between buckets.
+        //   2. Legacy `waiting:on:user` / `waiting:on:task` envelopes predate
+        //      Phase 3W, which retired those specs from the runner — sweepWaiting
+        //      is limits-only and autoPauseTask was deleted, so nothing will ever
+        //      resolve them.
+        // Either way, treating the file as an active instance blocks the schedule
+        // permanently: TSK-SCHED-DAILY.03 parked on waiting:on:user and skipped
+        // every daily fire from 2026-08-25 onward.
+        let yaml: string;
+        try {
+          yaml = await readFile(join(dir, f), "utf-8");
+        } catch {
+          return true; // unreadable — assume active, safer than double-firing
+        }
+        const closed = /^closed:\s*\n\s+status:\s*(\S+)/m.exec(yaml)?.[1];
+        if (closed && closed !== "null") continue;
+        const status = (/^status:\s*(.+)$/m.exec(yaml)?.[1] ?? "").trim();
+        if (status === "done" || status.startsWith("failed:") || status === "paused") continue;
+        // waiting:on:limits is still live; every other waiting: spec is retired.
+        if (status.startsWith("waiting:on:") && status !== "waiting:on:limits") continue;
+        return true;
       }
     }
   }
