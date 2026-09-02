@@ -4299,6 +4299,12 @@
       fetchSummary();
       setInterval(fetchSummary, 30000);
 
+      // Poll the attention-tiers endpoint every 60s, independent of the
+      // task-list poll. The server caches it for 5s, so two tabs don't
+      // re-walk the corpus back-to-back. Initial load happens via
+      // renderAttentionTiers() → fetchAndRenderAttentionTiers() on first render.
+      setInterval(fetchAndRenderAttentionTiers, 60000);
+
       // Click a count badge → switch to files tab and open
       // agents/<agent>/tasks/<status>/. Status `open` and `waiting` map to
       // the same-named directories; `done`/`failed`/`archived` likewise.
@@ -4351,6 +4357,18 @@
       var newForm = document.getElementById("multi-agent-new");
       var newCancelBtn = document.getElementById("multi-agent-new-cancel");
       var newStatus = document.getElementById("multi-agent-new-status");
+
+      // Persist the Advanced disclosure open/closed state across opens (session).
+      var newAdvanced = document.getElementById("multi-agent-new-advanced");
+      var ADVANCED_OPEN_KEY = "caravel-new-task-advanced-open";
+      if (newAdvanced) {
+        try {
+          if (localStorage.getItem(ADVANCED_OPEN_KEY) === "1") newAdvanced.setAttribute("open", "");
+        } catch (_) {}
+        newAdvanced.addEventListener("toggle", function () {
+          try { localStorage.setItem(ADVANCED_OPEN_KEY, newAdvanced.open ? "1" : "0"); } catch (_) {}
+        });
+      }
 
       var tasksFilter = "all";
       // View selector: "projects" (default landing — project card grid),
@@ -4751,26 +4769,25 @@
 
         var sections = "";
 
-        // 1. Unblock — top priority when worker is parked on user input.
-        //    Submits via /next with source=unblock, which spawns a child
-        //    task carrying Kelly's answer. The parent stays in
-        //    waiting:on:user; the runner auto-closes it to `done` when the
-        //    child lands successfully.
-        if (isCurrent && isWaitingUser) {
+        // 1. Continue — shown for terminal (done/failed) tasks that haven't been closed
+        //    yet (i.e., the report is awaiting review or the failure needs a follow-up).
+        //    Submits via /next with source=continue, which spawns a child task and
+        //    writes the parent's closed overlay synchronously at dispatch.
+        if (isCurrent && isTerminal && !isClosed) {
           var unblockTargetPicker = renderNextTargetPicker(card.agent || "");
-          var unblockHeadlineSuggest = suggestChildHeadline(card.headline || card.id, "unblock");
+          var unblockHeadlineSuggest = suggestChildHeadline(card.headline || card.id, "continue");
           var unblockHtml =
-            '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="unblock">' +
-            '<div class="task-panel-unblock-hint">The worker is parked waiting for your input. Type your response; a child task will pick up on the same session and continue from where the worker stopped. When the child completes, this task auto-closes as done.</div>' +
+            '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="continue">' +
+            '<div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div>' +
             '<input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(unblockHeadlineSuggest) + '" />' +
-            '<textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="Your response (the agent will continue with your answer)…"></textarea>' +
+            '<textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea>' +
             '<div class="task-panel-unblock-actions">' +
             unblockTargetPicker +
             '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button>' +
             '<span class="task-panel-unblock-status task-panel-next-status"></span>' +
             '</div>' +
             '</div>';
-          sections += renderSection("⏳ Continue — your response", unblockHtml, true);
+          sections += renderSection("⏳ Continue", unblockHtml, true);
         }
 
         // 2. Brief (always open if non-empty).
@@ -4811,11 +4828,13 @@
         // Chat is always present for current tasks; render before Close/Abort.
         actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
         if (isCurrent && !isClaimed && !isClosed) {
-          // "Close" reads clean on done tasks; non-done closures are really
-          // cancellations — surface that in the label so Kelly doesn't think
-          // she's marking a stuck task as resolved.
-          var closeLabel = (statusLower === "done") ? "✓ Close" : "✕ Close";
-          actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">' + closeLabel + '</button>');
+          if (isTerminal) {
+            // One-click clear for reports — posts directly, no form required.
+            // Full form still available via the section below if a reason is wanted.
+            actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml(card.agent || "") + '" data-done-reading-id="' + escapeHtml(card.id) + '" type="button">✓ Done reading</button>');
+          } else {
+            actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">✕ Cancel</button>');
+          }
         }
         // Claimed = worker mid-flight. Close refuses these; Abort kills the
         // live worker process (behind a confirm step) and lands the task as
@@ -5666,91 +5685,87 @@
         }
       }
 
-      // Measure A′ (WAL-72 Phase 3W): four attention tiers replacing the
-      // single "Awaiting your input" widget. Each tier has its own heading,
-      // count, colour, and glyph. A task appears in exactly one tier:
-      //   Precedence: Failed → Blocked → Paused → Reports
-      // This order is explicit in the code so it doesn't grow back silently.
-      // No one-click action — every row opens the task panel first.
+      // WAL-84 Phase 1b: five attention tiers from the server-side computation
+      // endpoint (GET /api/tasks/attention). Each tier has a true count over the
+      // whole corpus (not bounded by the 120-row task-cache window), a bounded
+      // row list (ATTENTION_TIER_BOUND = 8), and a "+ N more" link when the
+      // true count exceeds the row list. Headings are drawn even at zero — absence
+      // is stated, not implied (DEC-0007). The Reports tier rows carry checkboxes
+      // wired to the existing bulk-close path; no other tier has checkboxes (DEC-0006).
+      var _attentionTiers = null; // last received payload
+      async function fetchAndRenderAttentionTiers() {
+        try {
+          var res = await fetch("/api/tasks/attention");
+          if (!res.ok) return;
+          var data = await res.json();
+          if (data && data.ok && data.tiers) {
+            _attentionTiers = data.tiers;
+            renderAttentionTiers();
+          }
+        } catch (_) {}
+      }
+
       function renderAttentionTiers() {
         var el = document.getElementById("tasks-user-blocked");
         if (!el) return;
-
-        function isClosed(t) { return !!(t.closed && t.closed.status); }
-
-        // Classify. Mutually exclusive — precedence enforced by the order
-        // of the if-else chain: Failed → Blocked → Paused → Reports.
-        var failed = [];
-        var blocked = [];
-        var paused = [];
-        var reports = [];
-        for (var i = 0; i < tasksCache.length; i++) {
-          var t = tasksCache[i];
-          if (isClosed(t)) continue;
-          var st = t.status || "";
-          if (st.indexOf("failed:") === 0) {
-            failed.push(t);                       // Failed beats Reports
-          } else if (t.bucket === "blocked") {
-            blocked.push(t);
-          } else if (st === "paused") {
-            paused.push(t);
-          } else if (st === "done") {
-            reports.push(t);                      // done only (failed already claimed)
-          }
-        }
-
-        if (failed.length === 0 && blocked.length === 0 && paused.length === 0 && reports.length === 0) {
-          el.hidden = true;
-          el.innerHTML = "";
+        if (!_attentionTiers) {
+          // Haven't received a payload yet — trigger a fetch but leave widget hidden.
+          fetchAndRenderAttentionTiers();
           return;
         }
+
+        var tiers = _attentionTiers;
 
         // Kelly 2026-08-26: drop TSK-YYYY- prefix on phone — too wide.
         function shortId(id) {
           return String(id || "").replace(/^TSK-\d{4}-/, "");
         }
 
-        // Measure E: report rows show the worker-written summary, not the
-        // envelope headline (which names the trigger, not the ask).
-        function tierRow(rowCls, t, useSummary) {
-          var full = escapeHtml(t.id || "");
-          var shrt = escapeHtml(shortId(t.id));
-          var headline = escapeHtml(t.headline || t.id || "");
-          var label;
-          if (useSummary) {
-            var resp = t.summary && t.summary.response ? String(t.summary.response).trim() : "";
-            // Strip YAML single-quote literals that yamlDump emits for "".
-            resp = resp.replace(/^'|'$/g, "").trim();
-            if (!resp) resp = t.summary && t.summary.brief ? String(t.summary.brief).trim() : "";
-            if (!resp) resp = t.headline || t.id || "";
-            label = escapeHtml(shorten(resp, 120));
-          } else {
-            label = escapeHtml(shorten(t.headline || t.id || "", 120));
-          }
+        function tierRow(rowCls, row, showCheckbox) {
+          var full = escapeHtml(row.id || "");
+          var shrt = escapeHtml(shortId(row.id));
+          var headline = escapeHtml(row.headline || row.id || "");
+          var label = escapeHtml(shorten(row.label || row.headline || row.id || "", 120));
+          var checkbox = showCheckbox
+            ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml(row.agent || "") + '" aria-label="Select ' + full + '" />'
+            : '';
           return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + ' — ' + headline + '">' +
+            checkbox +
             '<span class="tasks-tier-id">' + shrt + '</span>' +
             '<span class="tasks-tier-label">' + label + '</span>' +
             '</div>';
         }
 
-        function renderTierSection(tasks, headCls, rowCls, glyph, verb, useSummary) {
-          if (tasks.length === 0) return "";
-          var h = '<div class="tasks-tier-head ' + headCls + '">' + glyph + ' ' + verb + ' (' + tasks.length + ')</div>';
-          for (var ti = 0; ti < tasks.length; ti++) {
-            h += tierRow(rowCls, tasks[ti], !!useSummary);
+        // Render one tier section. Heading always drawn (zero-state). Rows bounded.
+        // "+ N more →" link when true count exceeds the rows array.
+        function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
+          var count = (tier && tier.count) || 0;
+          var rows = (tier && tier.rows) || [];
+          var selectAll = (showCheckbox && count > 0)
+            ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />'
+            : '';
+          var h = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + ' ' + verb + ' (' + count + ')</div>';
+          for (var ti = 0; ti < rows.length; ti++) {
+            h += tierRow(rowCls, rows[ti], !!showCheckbox);
+          }
+          if (count > rows.length) {
+            var more = count - rows.length;
+            h += '<div class="tasks-tier-more tasks-tier-row-' + rowCls.replace('tasks-tier-row-', '') + '">' +
+              '+ ' + more + ' more — open Tasks to see all</div>';
           }
           return h;
         }
 
         var html = "";
-        // Precedence: Failed → Blocked → Paused → Reports
-        html += renderTierSection(failed,  "tasks-tier-head-failed",  "tasks-tier-row-failed",  "✗", "Triage",  false);
-        html += renderTierSection(blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
-        html += renderTierSection(paused,  "tasks-tier-head-paused",  "tasks-tier-row-paused",  "⏸", "Paused",  false);
-        html += renderTierSection(reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read",    true);
+        // Precedence: Unclassified → Failed → Blocked → Paused → Reports
+        html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
+        html += renderTierSection(tiers.failed,       "tasks-tier-head-failed",       "tasks-tier-row-failed",       "✗", "Triage",       false);
+        html += renderTierSection(tiers.blocked,      "tasks-tier-head-blocked",      "tasks-tier-row-blocked",      "⊘", "Unblock",      false);
+        html += renderTierSection(tiers.paused,       "tasks-tier-head-paused",       "tasks-tier-row-paused",       "⏸", "Paused",       false);
+        html += renderTierSection(tiers.reports,      "tasks-tier-head-reports",      "tasks-tier-row-reports",      "▶", "Read",         true);
 
         el.innerHTML = html;
-        el.hidden = false;
+        el.hidden = (html === "");
       }
 
       // Kelly 2026-08-26: widget rows did nothing when tapped. The only
@@ -6513,27 +6528,33 @@
         }
       };
 
-      // Unified Next-task submitter. Replaces the prior submitUnblock /
-      // submitRevisit pair. Reads source from `data-next-source` ("revisit"
-      // for done/failed parents, "unblock" for waiting:on:user parents)
-      // and posts to /api/tasks/<id>/next. Server-side, both branches call
-      // spawnNextTask() — the parent envelope is left in place and a fresh
-      // child is created with parent pointer + Kelly's instruction.
-      // One-step chat launch from a task. Switches to the task's session
-      // thread, prefills "Continue after <taskId>", and auto-sends — no
-      // second press required. The hidden mini-form (submitChatFromTask) is
-      // kept but no longer reachable via the Chat button.
-      async function launchChatForTask(taskId, parentAgent) {
-        if (!taskId || !parentAgent) return;
+      // One-step chat launch from a task panel card. Reads the typed message
+      // from the card's message textarea (prefixed "Continue after <id>"),
+      // switches to the task's session thread, and sends. An empty parentAgent
+      // surfaces an error rather than silently no-oping.
+      async function launchChatForTask(taskId, parentAgent, msgEl) {
+        if (!taskId) return;
+        if (!parentAgent) {
+          // Surface the error on the card's status span if present.
+          var errSpan = msgEl ? msgEl.closest(".task-panel-card") : null;
+          var errEl = errSpan ? errSpan.querySelector(".task-panel-chat-status") : null;
+          if (errEl) {
+            errEl.textContent = "No agent — pick one in the card picker.";
+            errEl.className = "task-panel-unblock-status task-panel-chat-status is-error";
+          }
+          return;
+        }
         var taskRoot = String(taskId).split(".")[0];
         var threadId = "task-" + taskRoot + "-" + parentAgent;
+        var typedMsg = (msgEl && msgEl.value) ? String(msgEl.value).trim() : "";
+        var initialMsg = typedMsg ? "Continue after " + taskId + " — " + typedMsg : "Continue after " + taskId;
 
         var existing = Array.isArray(chatListCache)
           ? chatListCache.find(function(c) { return c.id === threadId; })
           : null;
 
         if (existing) {
-          await switchToChat(threadId);
+          await switchToChat(threadId); // waits for history load
         } else {
           chatSessionId = threadId;
           window.__chatSessionId = threadId;
@@ -6558,86 +6579,11 @@
 
         if (typeof setActiveTab === "function") setActiveTab("chat");
 
-        // Stage and auto-send the context message — no second press.
+        // Stage the context message and auto-send — no second press.
         if (chatInput) {
-          chatInput.value = "Continue after " + taskId;
+          chatInput.value = initialMsg;
           if (typeof autoResizeChatInput === "function") autoResizeChatInput();
           await sendChat();
-        }
-      }
-
-      // Submit the chat-from-task mini-form. Kept for completeness but no
-      // longer invoked from the Chat button (which now calls launchChatForTask
-      // for a one-step flow). May be removed once the new flow is validated.
-      async function submitChatFromTask(wrapper) {
-        if (!wrapper) return;
-        var taskId = wrapper.getAttribute("data-chat-task-id") || "";
-        var parentAgent = wrapper.getAttribute("data-chat-parent-agent") || "";
-        var titleEl = wrapper.querySelector(".task-panel-chat-title-input");
-        var msgEl = wrapper.querySelector(".task-panel-chat-msg-input");
-        var targetSel = wrapper.querySelector(".task-panel-next-target-select");
-        var statusEl = wrapper.querySelector(".task-panel-chat-status");
-        var btn = wrapper.querySelector(".task-panel-chat-submit");
-        var title = (titleEl && titleEl.value) ? String(titleEl.value).trim() : "";
-        var initialMsg = (msgEl && msgEl.value) ? String(msgEl.value) : "";
-        var pickedAgent = (targetSel && targetSel.value) ? String(targetSel.value).trim() : parentAgent;
-        if (!taskId || !pickedAgent) {
-          if (statusEl) {
-            statusEl.textContent = "Missing task id or agent.";
-            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-error";
-          }
-          return;
-        }
-        if (btn) btn.disabled = true;
-        try {
-          // Compute the threadId for the picked agent. Shares with the
-          // task worker only when the picked agent === parent's agent.
-          // For a different agent the threadId is task-<root>-<other>,
-          // which starts a fresh session for that role.
-          var taskRoot = String(taskId).split(".")[0];
-          var sharedThreadId = "task-" + taskRoot + "-" + pickedAgent;
-          var existing = Array.isArray(chatListCache)
-            ? chatListCache.find(function (c) { return c.id === sharedThreadId; })
-            : null;
-          if (existing) {
-            await switchToChat(sharedThreadId);
-          } else {
-            chatSessionId = sharedThreadId;
-            try { localStorage.setItem(CHAT_ID_KEY, sharedThreadId); } catch (_) {}
-            chatHistory = [];
-            chatServerUpdatedAt = null;
-            chatAgentLocked = null;
-            pendingAgentId = pickedAgent;
-            updateAgentBadge();
-            updateSendDisabled();
-            renderChatHistory();
-            schedulePoll();
-            loadChatList();
-          }
-          // Rename if a title was supplied (or if the user kept the
-          // pre-filled headline — that's still better than auto).
-          if (title) {
-            try { await submitChatRename(sharedThreadId, title); } catch (_) {}
-          }
-          if (typeof setActiveTab === "function") setActiveTab("chat");
-          if (chatInput) {
-            chatInput.value = initialMsg || "";
-            chatInput.focus();
-          }
-          if (statusEl) {
-            statusEl.textContent = existing ? "Switched to existing chat." : "New chat ready — send when you're set.";
-            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-ok";
-          }
-          // Collapse the form back so it's tidy if Kelly returns to the task.
-          wrapper.hidden = true;
-          if (msgEl) msgEl.value = "";
-        } catch (err) {
-          if (statusEl) {
-            statusEl.textContent = "Error: " + (err && err.message || err);
-            statusEl.className = "task-panel-unblock-status task-panel-chat-status is-error";
-          }
-        } finally {
-          if (btn) btn.disabled = false;
         }
       }
 
@@ -6749,6 +6695,7 @@
           openTaskPanel(taskId); // refresh viewer with new closed state
           fetchTasks();
           fetchSummary();
+          fetchAndRenderAttentionTiers();
         } catch (err) {
           if (statusEl) {
             statusEl.textContent = "Error: " + (err && err.message || err);
@@ -6756,6 +6703,25 @@
           }
           if (btn) btn.disabled = false;
         }
+      }
+
+      // One-click close for terminal tasks (✓ Done reading button).
+      // Posts to /close with status:"closed" and no required reason.
+      async function submitDoneReading(agent, taskId) {
+        if (!agent || !taskId) return;
+        try {
+          var res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent: agent, reason: "", status: "closed", cascade: false }),
+          });
+          var data = await res.json();
+          if (!data.ok) return; // leave button enabled; error visible on next open
+          openTaskPanel(taskId);
+          fetchTasks();
+          fetchSummary();
+          fetchAndRenderAttentionTiers();
+        } catch (_) {}
       }
 
       // Open the new-task form pre-populated for a follow-on task. Sets the
@@ -6973,6 +6939,12 @@
       // Files panel), hide-closed toggle, and "+ New task here" button.
       if (projectPaneEl) {
         projectPaneEl.addEventListener("click", function (ev) {
+          // Checkbox clicks handled by the change event — stop them from
+          // bubbling into the row/task-panel handlers below (mirrors tasksTree).
+          if (ev.target && ev.target.type === "checkbox") {
+            ev.stopPropagation();
+            return;
+          }
           // Doc card opens the file in the Files tab.
           var docBtn = ev.target.closest("[data-open-file]");
           if (docBtn) {
@@ -7174,6 +7146,16 @@
             });
             return;
           }
+          // WAL-84 Phase 1b: one-click "Done reading" for terminal tasks.
+          var doneReadingBtn = ev.target.closest("[data-done-reading-id]");
+          if (doneReadingBtn) {
+            ev.preventDefault();
+            var drAgent = doneReadingBtn.getAttribute("data-done-reading-agent") || "";
+            var drId = doneReadingBtn.getAttribute("data-done-reading-id") || "";
+            doneReadingBtn.disabled = true;
+            submitDoneReading(drAgent, drId).finally(function () { doneReadingBtn.disabled = false; });
+            return;
+          }
           // WAL-63 Phase 1: Close / Reopen handlers.
           var toggleCloseBtn = ev.target.closest("[data-toggle-close]");
           if (toggleCloseBtn) {
@@ -7302,17 +7284,12 @@
           var toggleChatBtn = ev.target.closest("[data-toggle-chat]");
           if (toggleChatBtn) {
             ev.preventDefault();
-            // One-step launch: get agent from the (hidden) chat form on the same card.
+            // One-step launch: get agent and message box from the card.
             var chatCard = toggleChatBtn.closest(".task-panel-card");
             var chatFormEl = chatCard ? chatCard.querySelector(".task-panel-chat-form") : null;
             var chatAgent = chatFormEl ? (chatFormEl.getAttribute("data-chat-parent-agent") || "") : "";
-            launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat"), chatAgent);
-            return;
-          }
-          var chatSubmitBtn = ev.target.closest(".task-panel-chat-submit");
-          if (chatSubmitBtn) {
-            ev.preventDefault();
-            submitChatFromTask(chatSubmitBtn.closest(".task-panel-chat-form"));
+            var chatMsgEl = chatFormEl ? chatFormEl.querySelector(".task-panel-chat-msg-input") : null;
+            launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat"), chatAgent, chatMsgEl);
             return;
           }
           // (Legacy: spawn-agent was instant chat-switch; now superseded by
@@ -7448,12 +7425,13 @@
           var headline = ((document.getElementById("multi-agent-new-headline") || {}).value || "").trim();
           var to = (document.getElementById("multi-agent-new-to") || {}).value || "";
           var kind = (document.getElementById("multi-agent-new-kind") || {}).value || "";
-          var priority = (document.getElementById("multi-agent-new-priority") || {}).value || "";
           var from = ((document.getElementById("multi-agent-new-from") || {}).value || "user").trim() || "user";
           var brief = ((document.getElementById("multi-agent-new-brief") || {}).value || "").trim();
           var output = ((document.getElementById("multi-agent-new-output") || {}).value || "").trim();
           var contextRaw = ((document.getElementById("multi-agent-new-context") || {}).value || "").trim();
           var context = contextRaw ? contextRaw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+          var needsRaw = ((document.getElementById("multi-agent-new-needs") || {}).value || "").trim();
+          var needs = needsRaw ? needsRaw.split(/\r?\n/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
 
           var headlineWords = headline ? headline.split(/\s+/).filter(Boolean).length : 0;
           if (!headline) {
@@ -7478,7 +7456,8 @@
           }
           if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.classList.remove("is-error"); }
           try {
-            var payload = { headline: headline, to: to, from: from, kind: kind, priority: priority, brief: brief, output_format: output, context: context };
+            var payload = { headline: headline, to: to, from: from, kind: kind, brief: brief, output_format: output, context: context };
+            if (needs.length > 0) payload.needs = needs;
             // WAL-63 Phase 3: forward the project dropdown selection. Empty
             // string = "(auto from context)" — omit so the service infers.
             // "__none__" = explicit no-project — send null so the service

@@ -436,30 +436,6 @@ ${pageStyles}
                      populateTaskTargetSelect in client.js). -->
                 <select id="multi-agent-new-to"></select>
               </label>
-              <label class="multi-agent-new-field">
-                <span>Kind</span>
-                <select id="multi-agent-new-kind">
-                  <option value="research">research</option>
-                  <option value="code">code</option>
-                  <option value="review">review</option>
-                  <option value="summarise">summarise</option>
-                  <option value="decide">decide</option>
-                  <option value="other">other</option>
-                </select>
-              </label>
-              <label class="multi-agent-new-field">
-                <span>Priority</span>
-                <select id="multi-agent-new-priority">
-                  <option value="P0">P0</option>
-                  <option value="P1">P1</option>
-                  <option value="P2" selected>P2</option>
-                  <option value="P3">P3</option>
-                </select>
-              </label>
-              <label class="multi-agent-new-field">
-                <span>From</span>
-                <input id="multi-agent-new-from" type="text" value="user" />
-              </label>
               <!-- WAL-63 Phase 3: project tag dropdown. Populated at panel
                    open from /api/projects (Notes/Projects/<slug>/ directory
                    scan). "(auto)" means: leave the field absent and let the
@@ -478,13 +454,39 @@ ${pageStyles}
               <textarea id="multi-agent-new-brief" rows="4" placeholder="Why and what — specific enough that two workers wouldn't duplicate effort." required></textarea>
             </label>
             <label class="multi-agent-new-block">
-              <span>Output format</span>
-              <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like. Required for code/review/summarise."></textarea>
+              <span>Depends on <em class="multi-agent-new-hint">(task IDs, one per line — this task waits until all are done)</em></span>
+              <textarea id="multi-agent-new-needs" rows="2" placeholder="TSK-2026-08-01-0001&#10;TSK-2026-08-01-0002"></textarea>
             </label>
-            <label class="multi-agent-new-block">
-              <span>Context (one per line — file path, jira:KEY, or URL)</span>
-              <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
-            </label>
+            <details class="multi-agent-new-advanced" id="multi-agent-new-advanced">
+              <summary class="multi-agent-new-advanced-toggle">▸ Advanced</summary>
+              <div class="multi-agent-new-advanced-body">
+                <div class="multi-agent-new-grid">
+                  <label class="multi-agent-new-field">
+                    <span>Kind</span>
+                    <select id="multi-agent-new-kind">
+                      <option value="research">research</option>
+                      <option value="code">code</option>
+                      <option value="review">review</option>
+                      <option value="summarise">summarise</option>
+                      <option value="decide">decide</option>
+                      <option value="other">other</option>
+                    </select>
+                  </label>
+                  <label class="multi-agent-new-field">
+                    <span>From</span>
+                    <input id="multi-agent-new-from" type="text" value="user" />
+                  </label>
+                </div>
+                <label class="multi-agent-new-block">
+                  <span>Output format</span>
+                  <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like. Required for code/review/summarise."></textarea>
+                </label>
+                <label class="multi-agent-new-block">
+                  <span>Context (one per line — file path, jira:KEY, or URL)</span>
+                  <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
+                </label>
+              </div>
+            </details>
             <div class="multi-agent-new-actions">
               <span class="multi-agent-new-status" id="multi-agent-new-status"></span>
               <button class="multi-agent-new-cancel" id="multi-agent-new-cancel" type="button">Cancel</button>

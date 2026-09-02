@@ -1039,6 +1039,40 @@ export const pageStyles = String.raw`    :root {
     }
     .multi-agent-new-cancel:hover { background: #14223680; }
     .multi-agent-new-submit:hover { background: #355a8a; }
+    /* ▸ Advanced disclosure — remembered open/closed per session via JS */
+    .multi-agent-new-advanced {
+      margin-top: 4px;
+    }
+    .multi-agent-new-advanced-toggle {
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      user-select: none;
+      list-style: none;
+      padding: 4px 0;
+    }
+    .multi-agent-new-advanced-toggle::-webkit-details-marker { display: none; }
+    .multi-agent-new-advanced[open] .multi-agent-new-advanced-toggle { color: #9ab0cc; }
+    .multi-agent-new-advanced-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 6px;
+    }
+    /* Ligature suppression on JetBrains Mono prose-input surfaces.
+       Code blocks (pre, code) deliberately excluded — ligatures are useful there.
+       Defect 5 (WAL-84): JetBrains Mono calt ligatures mangle ... <= >= => during
+       live typing in textarea inputs. */
+    .multi-agent-new-block textarea,
+    .multi-agent-new-block input,
+    .multi-agent-new-field input,
+    .multi-agent-new-field select,
+    #chat-input {
+      font-variant-ligatures: none;
+    }
     .settings-btn {
       /* now rendered inside .tab-nav as gear icon — keep for ID reference */
       display: none;
@@ -3085,10 +3119,13 @@ export const pageStyles = String.raw`    :root {
     }
     /* Add top gap when a tier-head follows tier rows */
     .tasks-tier-row + .tasks-tier-head { margin-top: 8px; }
+    .tasks-tier-head-unclassified { color: #e8c87a; }
     .tasks-tier-head-failed  { color: #ff9a9a; }
     .tasks-tier-head-blocked { color: #e8a44a; }
     .tasks-tier-head-paused  { color: #7a9abf; }
     .tasks-tier-head-reports { color: #93e0a8; }
+    /* Tier head always rendered (even at zero) — gap between tiers */
+    .tasks-tier-head + .tasks-tier-head { margin-top: 8px; }
     /* Shared tier-row base */
     .tasks-tier-row {
       display: flex;
@@ -3100,6 +3137,8 @@ export const pageStyles = String.raw`    :root {
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
     }
+    .tasks-tier-row-unclassified { color: #d4b870; }
+    .tasks-tier-row-unclassified:hover { background: #e8c87a14; }
     .tasks-tier-row-failed  { color: #e8b0b0; }
     .tasks-tier-row-failed:hover  { background: #ff9a9a14; }
     .tasks-tier-row-blocked { color: #d4a86a; }
@@ -3108,6 +3147,22 @@ export const pageStyles = String.raw`    :root {
     .tasks-tier-row-paused:hover  { background: #7a9abf14; }
     .tasks-tier-row-reports { color: #a0d8b0; }
     .tasks-tier-row-reports:hover { background: #93e0a814; }
+    /* "+ N more" link row */
+    .tasks-tier-more {
+      font-size: 10px;
+      opacity: 0.6;
+      padding: 2px 4px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    /* Reports tier: per-row checkbox + select-all in the heading */
+    .tasks-tier-row input[type="checkbox"].tier-report-select,
+    .tasks-tier-head input[type="checkbox"].tier-report-select-all {
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #93e0a8;
+      margin-right: 2px;
+      pointer-events: all;
+    }
     .tasks-tier-id {
       opacity: 0.7;
       flex-shrink: 0;
