@@ -6547,7 +6547,11 @@
         var taskRoot = String(taskId).split(".")[0];
         var threadId = "task-" + taskRoot + "-" + parentAgent;
         var typedMsg = (msgEl && msgEl.value) ? String(msgEl.value).trim() : "";
-        var initialMsg = typedMsg ? "Continue after " + taskId + " — " + typedMsg : "Continue after " + taskId;
+        // Seeded as the FIRST LINE, with a trailing newline, so anything the
+        // user types lands beneath it rather than running on.
+        var initialMsg = typedMsg
+          ? "Continue after " + taskId + "\n" + typedMsg
+          : "Continue after " + taskId + "\n";
 
         var existing = Array.isArray(chatListCache)
           ? chatListCache.find(function(c) { return c.id === threadId; })
@@ -6579,11 +6583,21 @@
 
         if (typeof setActiveTab === "function") setActiveTab("chat");
 
-        // Stage the context message and auto-send — no second press.
+        // Prefill only — NEVER send. Kelly's contract, 2026-09-03: the Chat
+        // button opens the relevant thread and seeds the first line; the user
+        // adds their instruction and presses Send themselves. Auto-sending
+        // burns an agent turn on a contentless prompt, which is exactly how
+        // this shipped inverted as TSK-2026-08-18-0001 issue 7. Do not
+        // reintroduce a sendChat() call here.
         if (chatInput) {
           chatInput.value = initialMsg;
           if (typeof autoResizeChatInput === "function") autoResizeChatInput();
-          await sendChat();
+          if (typeof updateSendDisabled === "function") updateSendDisabled();
+          chatInput.focus();
+          // Caret to the end so typing continues on the line below the seed.
+          try {
+            chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+          } catch (_) {}
         }
       }
 
