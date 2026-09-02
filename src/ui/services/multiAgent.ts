@@ -494,6 +494,74 @@ export async function listScheduledTemplates(): Promise<ScheduledTemplateRow[]> 
   return out;
 }
 
+// === Attention tiers (WAL-84 Phase 1) ======================================
+
+const ATTENTION_TIER_BOUND = 8; // named constant — change here to change everywhere
+
+// Buckets scanned for attention; excludes archived/ (half the corpus for zero
+// signal) and scheduled/ (templates carry no status: field).
+const ATTENTION_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "blocked"] as const;
+
+export interface AttentionTierEntry {
+  count: number;
+  rows: TaskRow[];
+}
+
+export interface AttentionTiers {
+  unclassified: AttentionTierEntry;
+  failed: AttentionTierEntry;
+  blocked: AttentionTierEntry;
+  paused: AttentionTierEntry;
+  reports: AttentionTierEntry;
+}
+
+// Classify a non-closed envelope into its attention tier. Returns the tier name
+// or null when the envelope is runnable (open/claimed) — runnables are not surfaced.
+function classifyTier(bucket: string, status: string): keyof AttentionTiers | null {
+  // Runnable: open/ bucket with open or claimed status
+  if (bucket === "open" && (status === "open" || status === "claimed")) return null;
+  if (status.startsWith("failed:") || status === "failed") return "failed";
+  if (bucket === "blocked") return "blocked";
+  if (status === "paused") return "paused";
+  if (status === "done") return "reports";
+  // Anything else non-closed: unclassified (raw status carried through)
+  return "unclassified";
+}
+
+export async function computeAttentionTiers(): Promise<AttentionTiers> {
+  const result: AttentionTiers = {
+    unclassified: { count: 0, rows: [] },
+    failed:       { count: 0, rows: [] },
+    blocked:      { count: 0, rows: [] },
+    paused:       { count: 0, rows: [] },
+    reports:      { count: 0, rows: [] },
+  };
+
+  if (!existsSync(AGENTS_DIR)) return result;
+
+  for (const agent of envAgents()) {
+    for (const bucket of ATTENTION_SCAN_BUCKETS) {
+      const dir = join(AGENTS_DIR, agent, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const files = (await readdir(dir).catch(() => [] as string[]))
+        .filter((e) => e.endsWith(".yaml"));
+      for (const f of files) {
+        const row = await readTaskFile(agent, bucket as any, f);
+        if (!row) continue;
+        // Skip closed envelopes — they've been triaged.
+        if (row.closed?.status) continue;
+        const tier = classifyTier(bucket, row.status);
+        if (tier === null) continue; // runnable — not an attention item
+        const entry = result[tier];
+        entry.count++;
+        if (entry.rows.length < ATTENTION_TIER_BOUND) entry.rows.push(row);
+      }
+    }
+  }
+
+  return result;
+}
+
 export async function getTaskChain(taskId: string): Promise<TaskChain> {
   // Include archived so links to older tasks (parent/children) still resolve.
   const all = await listAllTasks(true);

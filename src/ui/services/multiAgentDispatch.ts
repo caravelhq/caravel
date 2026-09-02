@@ -7,7 +7,7 @@ import { mkdir, readdir, readFile, rename, unlink, writeFile } from "fs/promises
 import { existsSync } from "fs";
 import { join } from "path";
 import { loadChat } from "./chats";
-import { abortInflightWorker } from "../../multiAgent";
+import { abortInflightWorker, loadGraph, detectCycles } from "../../multiAgent";
 import { listAgentNamesSync } from "../../agents";
 
 const PROJECT_DIR = process.cwd();
@@ -21,7 +21,7 @@ function knownAgents(): string[] {
   return listAgentNamesSync();
 }
 const KNOWN_KINDS = ["research", "code", "review", "summarise", "decide", "other"];
-const KNOWN_PRIORITIES = ["P0", "P1", "P2", "P3"];
+const KNOWN_PRIORITIES = ["P0", "P1", "P2", "P3"]; // used by createScheduledTemplate only
 
 interface CreateTaskInput {
   to?: string;
@@ -29,11 +29,12 @@ interface CreateTaskInput {
   parent?: string | null;
   reply_to?: string;
   kind?: string;
-  priority?: string;
   headline?: string;
   brief?: string;
   output_format?: string;
   context?: string[];
+  needs?: string[];
+  after?: string[];
   budget?: { max_turns?: number; max_subagents?: number; max_usd?: number | null };
   chat_id?: string | null;
   auto_resume?: boolean;
@@ -158,7 +159,6 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   const to = (input.to ?? "").trim();
   const from = (input.from ?? "user").trim() || "user";
   const kind = (input.kind ?? "other").trim();
-  const priority = (input.priority ?? "P2").trim();
   const brief = (input.brief ?? "").trim();
   const outputFormat = (input.output_format ?? "").trim();
   const replyTo = (input.reply_to ?? from).trim() || from;
@@ -189,9 +189,11 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
 
   const headline = (input.headline ?? "").trim();
 
+  const needsRaw = Array.isArray(input.needs) ? input.needs.map((s) => String(s).trim()).filter(Boolean) : [];
+  const afterRaw = Array.isArray(input.after) ? input.after.map((s) => String(s).trim()).filter(Boolean) : [];
+
   if (!knownAgents().includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
   if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
-  if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
   if (!headline) return { ok: false, error: "headline is required (≤10 words)" };
   const headlineWords = headline.split(/\s+/).filter(Boolean).length;
   if (headlineWords > 10) return { ok: false, error: `headline too long (${headlineWords} words; max 10)` };
@@ -201,6 +203,43 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
   }
 
   const id = await nextTaskId(parent);
+
+  // Edge validation: self-reference, dangling id, cycle. Runs loadGraph to
+  // get the current corpus, inserts a synthetic node for this candidate, then
+  // calls detectCycles. loadGraph's reconcile pass mutates continuation
+  // envelopes — those are the runner's own writes, equivalent to a tick, and
+  // acceptable at dispatch frequency (~645 files, low hundreds of ms).
+  const allEdges = [...needsRaw, ...afterRaw];
+  if (allEdges.length > 0) {
+    for (const depId of allEdges) {
+      if (depId === id) return { ok: false, error: `self-reference: ${depId}` };
+    }
+    const graph = await loadGraph(AGENTS_DIR, knownAgents());
+    for (const depId of needsRaw) {
+      // An archived task is a valid (immediately-satisfied) dep; non-existent is not.
+      if (!graph.nodes.has(depId)) {
+        return { ok: false, error: `dangling needs: reference — task ${depId} does not exist` };
+      }
+    }
+    for (const depId of afterRaw) {
+      if (!graph.nodes.has(depId)) {
+        return { ok: false, error: `dangling after: reference — task ${depId} does not exist` };
+      }
+    }
+    // Insert synthetic candidate node, then cycle-check.
+    graph.nodes.set(id, {
+      id, owner: to, rawStatus: "open", bucket: "open",
+      isDone: false, isFailed: false, isTerminal: false,
+      needs: needsRaw, after: afterRaw, to, parent: parent ?? null,
+      reply_to: null, kind, leaseHolder: null,
+    });
+    const cycles = detectCycles(graph.nodes);
+    graph.nodes.delete(id);
+    if (cycles.length > 0) {
+      const c = cycles[0]!;
+      return { ok: false, error: `cycle: ${c.problem}` };
+    }
+  }
   const now = new Date().toISOString();
 
   const budget = {
@@ -249,7 +288,6 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
     `reply_to: ${replyTo}`,
     ``,
     `kind: ${kind}`,
-    `priority: ${priority}`,
     ...(project ? [`project: ${project}`] : []),
     `deadline: null`,
     ``,
@@ -266,6 +304,8 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
       : `output_format: ""`,
     ``,
     contextBlock,
+    ...(needsRaw.length > 0 ? [`needs:\n${needsRaw.map((d) => `  - ${d}`).join("\n")}`] : []),
+    ...(afterRaw.length > 0 ? [`after:\n${afterRaw.map((d) => `  - ${d}`).join("\n")}`] : []),
     ``,
     `status: open`,
     `lease:`,
@@ -1301,34 +1341,32 @@ export async function unblockTask(input: UnblockTaskInput): Promise<UnblockTaskR
 // on:user) and create a fresh child task with:
 //
 //   - parent: <parent id>
-//   - to: same worker agent as parent
-//   - brief: a tight envelope that says "continuation/rework of <parent>"
+//   - to: same worker agent as parent (or target when re-routing)
+//   - brief: a tight envelope that says "continuation of <parent>"
 //     plus Kelly's instruction, with cross-links to the parent's report
 //     and envelope for the agent's reference
-//   - kind / priority / budget / dispatch: copied from parent
+//   - kind / budget / dispatch: copied from parent
 //   - context: empty (the agent's session thread already has the full
 //     prior reasoning + file reads in cache, no need to re-prime)
-//   - closes_parent_on_done: true when source=="unblock" — the runner
-//     auto-closes the parent waiting:on:user envelope when this child
-//     completes successfully
+//
+// The parent's `closed` overlay is written synchronously at dispatch
+// (`closed.status: superseded`, reason: "continued as <child-id>"). If the
+// parent already carries a closed block, it is left untouched.
 //
 // The parent envelope gets a single history entry pointing at the child;
-// its status, brief, and report are unchanged.
+// its runner status, brief, and report are unchanged.
 
 export type SpawnNextTaskInput = {
   agent: string;          // parent envelope's owning agent (where to find the file)
   taskId: string;
   instruction: string;
-  source: "revisit" | "unblock";
+  source: "continue";     // unified continuation source (replaces revisit/unblock)
   target?: string;        // optional destination agent for the child. Defaults to parent's
                           // agent. Allows re-routing (e.g. ray finishes research → bob takes
                           // over implementation). When target !== agent, the child starts on
                           // a fresh session thread; the brief links back to the parent's
                           // report so the new agent picks up the context.
-  headline?: string;      // optional override for the child's headline. Defaults to
-                          // "<parent headline> — continue with response" (unblock) or
-                          // "<parent headline> — rework" (revisit). Set when the next step
-                          // is materially different from the parent.
+  headline?: string;      // optional override for the child's headline.
 };
 
 export type SpawnNextTaskResult =
@@ -1348,7 +1386,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   if (!knownAgents().includes(targetAgent)) return { ok: false, error: `unknown target agent: ${targetAgent || "(empty)"}` };
   if (!/^TSK-/.test(taskId)) return { ok: false, error: `invalid task id: ${taskId}` };
   if (!instruction) return { ok: false, error: "instruction is required" };
-  if (source !== "revisit" && source !== "unblock") return { ok: false, error: `invalid source: ${source}` };
+  if (source !== "continue") return { ok: false, error: `source must be 'continue'` };
 
   // Locate parent envelope across the three terminal-ish buckets.
   const buckets = ["waiting", "done", "failed"] as const;
@@ -1376,29 +1414,12 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
 
   const parentStatus = (/^status:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim();
 
-  // Validate source against parent's bucket / status.
-  if (source === "unblock") {
-    if (parentBucket !== "waiting" || parentStatus !== "waiting:on:user") {
-      return { ok: false, error: `unblock requires parent status waiting:on:user (got status="${parentStatus}", bucket=${parentBucket})` };
-    }
-  } else {
-    if (parentBucket === "waiting") {
-      return { ok: false, error: `revisit requires parent in done/failed (parent is in waiting/${parentStatus})` };
-    }
-  }
-
   const childId = await nextTaskId(taskId);
   const now = new Date().toISOString();
 
-  // Copy across kind / priority / budget / dispatch from parent.
+  // Copy across kind / budget / dispatch from parent. Priority is not propagated.
   const kind = (/^kind:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "other").trim() || "other";
-  const priority = (/^priority:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "P2").trim() || "P2";
-  // Inherit the parent's project tag so the child lands in the same
-  // workstream. The runner's auto-infer can't catch this case — child
-  // envelopes are seeded with `context: []` (deliberate, since the
-  // session thread carries the prior context). Without explicit
-  // inheritance the child renders untagged in the Current view's
-  // project groups.
+  // Inherit the parent's project tag so the child lands in the same workstream.
   const parentProject = (/^project:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim();
   const budgetBlock = parentYaml.match(/^budget:\s*\n((?:[ \t]+[^\n]+\n?)+)/m)?.[1]
     ?? "  max_turns: 30\n  max_subagents: 0\n  max_usd: null\n";
@@ -1412,54 +1433,28 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
 
   const parentHeadline = ((/^headline:\s*(.*)$/m.exec(parentYaml)?.[1] ?? "").trim() || taskId).slice(0, 56);
   const headlineOverride = (input.headline ?? "").trim();
-  const autoHeadline = source === "unblock"
-    ? `${parentHeadline} — continue with response`
-    : `${parentHeadline} — rework`;
-  const childHeadline = headlineOverride || autoHeadline;
+  const childHeadline = headlineOverride || `${parentHeadline} — continue`;
 
   const root = taskId.split(".")[0];
   const sessionHint = isReroute
     ? `**Re-routed to you from ${agent}.** This is a fresh session — ${agent}'s prior reasoning is in their report (link below). Read it before starting.`
     : `Same session thread \`task-${root}-${agent}\` is resumed — your prior reasoning, file reads, and context remain in cache.`;
 
-  // When the parent task itself was a continuation of an earlier worker
-  // ("you previously parked"), but this child is being handed to a NEW
-  // agent, the second-person framing doesn't fit. Open the brief with a
-  // handoff line so the new agent doesn't think they parked on something
-  // they've never seen.
-  const continuationOpener = source === "unblock"
-    ? (isReroute
-        ? `**${taskId}** was waiting on the user; they have now responded and the continuation is being handed to you (re-routed from ${agent}).`
-        : `Continuation of **${taskId}** — you previously parked on \`waiting:on:user\` and the user has now responded.`)
-    : (isReroute
-        ? `**${taskId}** (was status \`${parentStatus}\`) is being re-worked. The user is handing this to you (re-routed from ${agent}) with new instructions below.`
-        : `Rework of **${taskId}** (was status \`${parentStatus}\`). The user has new instructions below.`);
+  const continuationOpener = isReroute
+    ? `**${taskId}** (was status \`${parentStatus}\`) is being continued. The user is handing this to you (re-routed from ${agent}) with new instructions below.`
+    : `Continuation of **${taskId}** (was status \`${parentStatus}\`). The user has new instructions below.`;
 
-  const briefBody = source === "unblock"
-    ? [
-        continuationOpener,
-        ``,
-        sessionHint,
-        ``,
-        parentReport ? `Prior report: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
-        ``,
-        `### User's response`,
-        ``,
-        instruction,
-      ].filter((l) => l !== undefined).join("\n")
-    : [
-        continuationOpener,
-        ``,
-        sessionHint,
-        ``,
-        parentReport ? `Prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
-        ``,
-        `### User's rework instruction`,
-        ``,
-        instruction,
-      ].filter((l) => l !== undefined).join("\n");
-
-  const closesParent = source === "unblock";
+  const briefBody = [
+    continuationOpener,
+    ``,
+    sessionHint,
+    ``,
+    parentReport ? `Prior deliverable: \`${parentReport}\`` : `Parent envelope: \`${parentEnvelopePath}\``,
+    ``,
+    `### User's instruction`,
+    ``,
+    instruction,
+  ].join("\n");
 
   const childYaml = [
     `id: ${childId}`,
@@ -1473,7 +1468,6 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `reply_to: user`,
     ``,
     `kind: ${kind}`,
-    `priority: ${priority}`,
     ...(parentProject ? [`project: ${parentProject}`] : []),
     `deadline: null`,
     ``,
@@ -1486,9 +1480,6 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `output_format: ""`,
     `context: []`,
     ``,
-    `closes_parent_on_done: ${closesParent ? "true" : "false"}`,
-    `parent_source: ${source}`,
-    ``,
     `status: open`,
     `lease:`,
     `  holder: null`,
@@ -1499,8 +1490,8 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     `    to: open`,
     `    by: user`,
     `    note: ${yamlEscape(isReroute
-      ? `spawned as ${source} child of ${taskId} — re-routed from ${agent} to ${targetAgent}`
-      : `spawned as ${source} child of ${taskId}`)}`,
+      ? `spawned as continue child of ${taskId} — re-routed from ${agent} to ${targetAgent}`
+      : `spawned as continue child of ${taskId}`)}`,
     ``,
     `summary:`,
     `  brief: ""`,
@@ -1525,24 +1516,25 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     to: parentStatus || parentBucket,
     by: "user",
     note: isReroute
-      ? `spawned ${source} child ${childId} → re-routed to ${targetAgent}`
-      : `spawned ${source} child ${childId}`,
+      ? `spawned continue child ${childId} → re-routed to ${targetAgent}`
+      : `spawned continue child ${childId}`,
   });
   // Bump updated so the picker re-sorts the parent.
   const bumpedParentYaml = setUpdated(updatedParentYaml, now);
-  // WAL-63 Phase 1: auto-close-on-next. The child has taken over the
-  // workflow slot, so the parent moves to `closed.status: superseded`
-  // unconditionally — across all Next sources. The parent's runner status
-  // is unchanged; this is purely a user-attention transition. If Kelly
-  // later decides the child was the wrong direction, the Reopen button
-  // drops the closed block and the parent re-surfaces as an active leaf.
-  const supersededParentYaml = setClosedField(bumpedParentYaml, {
-    status: "superseded",
-    at: now,
-    by: "auto-on-next",
-    reason: `spawned child ${childId} via ${source}`,
-  });
-  await writeFile(parentPath, supersededParentYaml);
+  // Write parent's closed overlay synchronously at dispatch — child has taken
+  // over the workflow slot. No-overwrite guard: if the parent already has a
+  // closed block (e.g. already-closed parent being continued), leave it untouched
+  // so its existing reason and status are preserved.
+  const existingClosedStatus = /^closed:\s*\n\s+status:/m.test(bumpedParentYaml);
+  const finalParentYaml = existingClosedStatus
+    ? bumpedParentYaml
+    : setClosedField(bumpedParentYaml, {
+        status: "superseded",
+        at: now,
+        by: "auto-on-next",
+        reason: `continued as ${childId}`,
+      });
+  await writeFile(parentPath, finalParentYaml);
 
   // Journal entry lands in the TARGET agent's journal (that's whose queue
   // owns the child now). Summary names the re-route when present so the
@@ -1556,8 +1548,8 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
     to: targetAgent,
     parent: taskId,
     summary: isReroute
-      ? `${source} child of ${taskId} — re-routed from ${agent}`
-      : `${source} child of ${taskId}`,
+      ? `continue child of ${taskId} — re-routed from ${agent}`
+      : `continue child of ${taskId}`,
   });
 
   return { ok: true, id: childId, path: childPath, parentId: taskId };

@@ -25,7 +25,7 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath, isImag
 import { SIDECARS_DIR } from "./constants";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
-import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain } from "./services/multiAgent";
+import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain, computeAttentionTiers, type AttentionTiers } from "./services/multiAgent";
 import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
@@ -134,6 +134,26 @@ export function triggerChatProcessor(chatId: string): void {
   ensureChatProcessor(chatId, registeredOnChat).catch((err) =>
     console.error(`[chat] processor trigger failed for ${chatId}:`, err)
   );
+}
+
+// Attention-tier cache — brief TTL prevents corpus re-walk on back-to-back
+// polls from multiple tabs; invalidated explicitly on close/reopen/next writes
+// so UI state stays accurate within a poll cycle.
+let attentionCache: { result: AttentionTiers; ts: number } | null = null;
+const ATTENTION_CACHE_TTL_MS = 5_000;
+
+function invalidateAttentionCache(): void {
+  attentionCache = null;
+}
+
+async function getAttentionTiers(): Promise<AttentionTiers> {
+  const now = Date.now();
+  if (attentionCache && now - attentionCache.ts < ATTENTION_CACHE_TTL_MS) {
+    return attentionCache.result;
+  }
+  const result = await computeAttentionTiers();
+  attentionCache = { result, ts: now };
+  return result;
 }
 
 const PERSIST_THROTTLE_MS = 300;
@@ -712,6 +732,15 @@ self.addEventListener('fetch', e => {
         }
       }
 
+      // WAL-84 Phase 1: server-side attention tiers over the full corpus.
+      if (url.pathname === "/api/tasks/attention" && req.method === "GET") {
+        try {
+          return json({ ok: true, tiers: await getAttentionTiers() });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
       if (url.pathname === "/api/tasks" && req.method === "GET") {
         try {
           const since = url.searchParams.get("since") ?? undefined;
@@ -881,13 +910,9 @@ self.addEventListener('fetch', e => {
         }
       }
 
-      // Spawn a "Next" child task. Unified successor to /unblock + /revisit:
-      // leaves the parent envelope in place (status unchanged for done/failed,
-      // status unchanged for waiting:on:user until the child completes), and
-      // creates a fresh child envelope with parent pointer + Kelly's
-      // instruction woven into the brief. For waiting:on:user parents, the
-      // child carries closes_parent_on_done=true so the runner auto-closes
-      // the parent when the child lands as done.
+      // Spawn a "Next" child task. Creates a fresh child with parent pointer +
+      // Kelly's instruction; writes the parent's closed overlay synchronously
+      // at dispatch (continued as <child-id>). Unified source: "continue".
       if (url.pathname.startsWith("/api/tasks/") && url.pathname.endsWith("/next") && req.method === "POST") {
         try {
           const middle = url.pathname.slice("/api/tasks/".length, -"/next".length);
@@ -895,18 +920,19 @@ self.addEventListener('fetch', e => {
           if (!/^TSK-/.test(taskId)) return json({ ok: false, error: "invalid task id" });
           const body = await req.json();
           const sourceRaw = String(body?.source ?? "").trim();
-          if (sourceRaw !== "revisit" && sourceRaw !== "unblock") {
-            return json({ ok: false, error: "source must be 'revisit' or 'unblock'" });
+          if (sourceRaw !== "continue") {
+            return json({ ok: false, error: "source must be 'continue'" });
           }
           const result = await spawnNextTask({
             agent: String(body?.agent ?? "").trim(),
             taskId,
             instruction: String(body?.instruction ?? ""),
-            source: sourceRaw,
+            source: "continue",
             target: body?.target ? String(body.target).trim() : undefined,
             headline: body?.headline ? String(body.headline).trim() : undefined,
           });
           if (!result.ok) return json({ ok: false, error: result.error });
+          invalidateAttentionCache();
           return json({ ok: true, id: result.id, parentId: result.parentId });
         } catch (err) {
           return json({ ok: false, error: String(err) });
@@ -939,6 +965,7 @@ self.addEventListener('fetch', e => {
             cascade: Boolean(body?.cascade),
           });
           if (!result.ok) return json({ ok: false, error: result.error });
+          invalidateAttentionCache();
           return json({ ok: true, id: result.id, closed: result.closed, cascaded: result.cascaded });
         } catch (err) {
           return json({ ok: false, error: String(err) });
@@ -984,6 +1011,7 @@ self.addEventListener('fetch', e => {
             by: typeof body?.by === "string" ? body.by : undefined,
           });
           if (!result.ok) return json({ ok: false, error: result.error });
+          invalidateAttentionCache();
           return json({ ok: true, id: result.id, previousStatus: result.previousStatus });
         } catch (err) {
           return json({ ok: false, error: String(err) });

@@ -17,10 +17,10 @@
  *       ready() returns false when X is open; true when X is done.
  *       Mutation: delete the shim block → dep never seen → task ready prematurely → fails 19a.
  *
- *   20. Parent auto-close on new Phase 3W shape.
- *       Child with closes_parent_on_done:true lands done. Parent is in done/ with closed:null.
- *       maybeCloseParentOnUserUnblock writes closed overlay (parent stays in done/).
- *       Mutation: revert parentPath to waiting/ → parent not found → no overlay → fails 20b.
+ *   20. Parent closed overlay written at dispatch — Phase 3W pin.
+ *       spawnNextTask writes closed.status:"superseded" on the parent synchronously at
+ *       dispatch, before the child terminates. Parent stays in done/; child starts in open/.
+ *       Mutation: remove setClosedField call in spawnNextTask → no overlay → fails 20b.
  *
  *   21. No-claim of a cancelled task.
  *       Task has status:open but closed.status != null → claimDecision returns "skip-closed".
@@ -116,8 +116,7 @@ if (
   typeof t.loadGraph !== "function" ||
   typeof t.ready !== "function" ||
   typeof t.runClaimPassForTesting !== "function" ||
-  typeof t.checkFrontierAndMaybeSpawnContinuation !== "function" ||
-  typeof t.maybeCloseParentOnUserUnblock !== "function"
+  typeof t.checkFrontierAndMaybeSpawnContinuation !== "function"
 ) {
   console.error("SKIP: required __testing exports not available");
   process.exit(0);
@@ -130,7 +129,6 @@ type LoadGraphFn = (agentsDir: string, agents: string[]) => Promise<TaskGraph>;
 type ReadyFn = (id: string, graph: TaskGraph) => boolean;
 type RunClaimPassFn = (agentsDir: string, agents: string[], leaseMs?: number) => Promise<{ claimed: string[]; skippedNotReady: string[] }>;
 type FrontierFn = (yaml: string, taskId: string, agent: string, agents: string[], agentsDir?: string) => Promise<void>;
-type MaybeCloseParentFn = (childYaml: string, childId: string) => Promise<void>;
 
 const sweepStaleClaims = t.sweepStaleClaims as SweepStaleClaimsFn;
 const claimDecisionFn = t.claimDecision as ClaimDecisionFn;
@@ -138,7 +136,6 @@ const loadGraphFn = t.loadGraph as LoadGraphFn;
 const readyFn = t.ready as ReadyFn;
 const runClaimPass = t.runClaimPassForTesting as RunClaimPassFn;
 const checkFrontier = t.checkFrontierAndMaybeSpawnContinuation as FrontierFn;
-const maybeCloseParent = t.maybeCloseParentOnUserUnblock as MaybeCloseParentFn;
 
 const agents = ["alice", "bob", "cliff"];
 const testOpts = { agents, tickMs: 5000, leaseMs: 60_000, perAgentConcurrency: 4 };
@@ -342,19 +339,24 @@ try {
     assert(g.errors.filter((e) => e.id === "TSK-DOWN19").length === 0, "19c: no graph errors for downstream");
   }
 
-  // ── Test 20: parent auto-close on Phase 3W shape ─────────────────────────────
+  // ── Test 20: parent closed overlay written at dispatch (not on child termination) ────────────
   //
-  // Child TSK-CHILD20 has closes_parent_on_done: true and parent: TSK-PAR20.
+  // New pin: spawnNextTask writes the parent's `closed` overlay synchronously at
+  // dispatch time — before the child terminates or transitions at all.
+  //
   // TSK-PAR20 is in done/ with status:done and no closed block (report-state).
-  // When checkFrontierAndMaybeSpawnContinuation fires for the child, the runner
-  // calls maybeCloseParentOnUserUnblock, which must stamp a closed overlay on
-  // the parent in-place (parent stays in done/).
+  // spawnNextTask({ agent:"alice", taskId:"TSK-PAR20", instruction:"...", source:"continue" })
+  // must:
+  //   a) return { ok: true } with a child id matching TSK-PAR20.*
+  //   b) write closed.status:"superseded" on the parent immediately (dispatch-time)
+  //   c) put the child id in closed.reason
+  //   d) child is in open/ (not terminal) when parent's closed overlay is checked —
+  //      proving the overlay predates child termination
   //
-  // Mutation anchor: in maybeCloseParentOnUserUnblock, if the lookup changes back
-  // to waiting/ (pre-Phase-3W shape), parentPath won't exist → no overlay written
-  // → 20b fails.
+  // Mutation anchor: remove setClosedField call from spawnNextTask → no closed block
+  // written → 20b fails.
 
-  console.log("\nTest 20: parent auto-close — done∧closed:null parent gets closed overlay");
+  console.log("\nTest 20: parent closed overlay written at dispatch — before child terminates");
 
   await buildFixture(root, { agents: { alice: [], bob: [], cliff: [] } });
 
@@ -364,10 +366,13 @@ try {
     await mkdir(aliceDone, { recursive: true });
     await mkdir(aliceOpen, { recursive: true });
 
+    // listAgentNamesSync() requires agents/<name>/agent.json — write a minimal stub.
+    await writeFile(join(agentsDir, "alice", "agent.json"), "{}");
+
     // Parent: done, no closed block (report-state = "report awaiting review").
     const parentEnv: Record<string, unknown> = {
       id: "TSK-PAR20",
-      headline: "parent",
+      headline: "parent task",
       created: "2026-08-30T00:00:01.000Z",
       updated: "2026-08-30T00:00:01.000Z",
       from: "kelly",
@@ -383,48 +388,41 @@ try {
     };
     await writeFile(join(aliceDone, "TSK-PAR20.yaml"), yamlDump(parentEnv));
 
-    // Child: done, closes_parent_on_done: true.
-    const childEnv: Record<string, unknown> = {
-      id: "TSK-CHILD20",
-      headline: "child",
-      created: "2026-08-30T00:00:02.000Z",
-      updated: "2026-08-30T00:00:02.000Z",
-      from: "alice",
-      to: "alice",
-      kind: "code",
-      parent: "TSK-PAR20",
-      gate: null,
-      status: "done",
-      closes_parent_on_done: true,
-      lease: { holder: null, expires: null },
-      history: [],
-      summary: { brief: "", response: "child done" },
-      report: "",
-    };
-    await writeFile(join(aliceDone, "TSK-CHILD20.yaml"), yamlDump(childEnv));
+    // Dynamic import of spawnNextTask (dispatch module pins AGENTS_DIR at load; chdir
+    // already happened at the top of this file, so the path is correct here).
+    const dispatch = await import("../../src/ui/services/multiAgentDispatch.ts");
+    const result = await dispatch.spawnNextTask({
+      agent: "alice",
+      taskId: "TSK-PAR20",
+      instruction: "Continue the work.",
+      source: "continue",
+    });
 
-    await loadGraphFn(agentsDir, agents);
-    const childYaml = await readFile(join(aliceDone, "TSK-CHILD20.yaml"), "utf-8");
+    assert(result.ok === true, "20a: spawnNextTask returns ok:true", `result: ${JSON.stringify(result)}`);
 
-    // Call maybeCloseParentOnUserUnblock directly — it's the function under test.
-    // (It is called inside transitionToTerminal when kind=done; exported for direct testing.)
-    await maybeCloseParent(childYaml, "TSK-CHILD20");
+    const childId = result.ok ? result.id : "";
 
-    // The parent should now have a closed overlay.
+    // Child must exist in open/ immediately (not terminal — proving closed overlay predates termination).
+    assert(
+      existsSync(join(aliceOpen, `${childId}.yaml`)),
+      "20b: child exists in alice/tasks/open/ (not yet terminated)",
+      `childId: ${childId}`
+    );
+
+    // Parent should have a closed overlay written synchronously by spawnNextTask.
     const parentYaml = await readFile(join(aliceDone, "TSK-PAR20.yaml"), "utf-8").catch(() => "");
     const parentDoc = yamlLoad(parentYaml) as Record<string, unknown>;
 
-    assert(existsSync(join(aliceDone, "TSK-PAR20.yaml")), "20a: parent stays in done/ (closed overlay, not moved)");
     const closedBlock = parentDoc["closed"] as Record<string, unknown> | null | undefined;
     assert(
-      typeof closedBlock === "object" && closedBlock !== null && closedBlock["status"] === "closed",
-      "20b: parent has closed.status = closed (overlay written)",
+      typeof closedBlock === "object" && closedBlock !== null && closedBlock["status"] === "superseded",
+      "20c: parent has closed.status:superseded (overlay written at dispatch)",
       `closed: ${JSON.stringify(closedBlock)}`
     );
     assert(
-      String(closedBlock?.["reason"] ?? "").includes("TSK-CHILD20"),
-      "20c: closed.reason references the child id",
-      `reason: ${String(closedBlock?.["reason"])}`
+      String(closedBlock?.["reason"] ?? "").includes(childId),
+      "20d: closed.reason references the child id",
+      `reason: ${String(closedBlock?.["reason"])}, childId: ${childId}`
     );
   }
 

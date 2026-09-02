@@ -255,7 +255,6 @@ export async function tickScheduler(tzOffsetMinutes: number, now: Date): Promise
         from: template.from,
         parent: template.id,
         kind: template.kind,
-        priority: template.priority,
         headline: template.headline,
         brief: template.brief,
         budget: template.budget,

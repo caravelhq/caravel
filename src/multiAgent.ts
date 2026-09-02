@@ -906,6 +906,37 @@ interface TaskGraph {
   errors: { id: string; problem: string }[]; // F1 (unparseable) + F2 (dangling edge)
 }
 
+// Pure cycle detector over a nodes map — sync, no journal writes. Used by
+// both loadGraph (which pipes results through graphRecordError) and
+// createTask in multiAgentDispatch (dispatch-time validation before write).
+export function detectCycles(nodes: Map<string, GraphNode>): { id: string; problem: string }[] {
+  const errors: { id: string; problem: string }[] = [];
+  const visited = new Set<string>();
+  const inStack = new Set<string>();
+
+  function dfs(id: string): void {
+    if (inStack.has(id)) {
+      errors.push({ id, problem: `cycle detected: ${[...inStack, id].join(" → ")}` });
+      return;
+    }
+    if (visited.has(id)) return;
+    inStack.add(id);
+    const node = nodes.get(id);
+    if (node) {
+      for (const dep of [...node.needs, ...node.after]) {
+        if (nodes.has(dep)) dfs(dep);
+      }
+    }
+    inStack.delete(id);
+    visited.add(id);
+  }
+
+  for (const nodeId of nodes.keys()) {
+    if (!visited.has(nodeId)) dfs(nodeId);
+  }
+  return errors;
+}
+
 // Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
 // point at a fixture directory rather than the live agents/ tree.
 const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"] as const;
@@ -1064,30 +1095,8 @@ export async function loadGraph(agentsDir: string, agents: string[]): Promise<Ta
 
   // Third pass: cycle detection via DFS through forward edges.
   // F4: a cycle means all tasks in it can never become ready.
-  {
-    const visited = new Set<string>();
-    const inStack = new Set<string>();
-
-    const dfs = async (id: string): Promise<void> => {
-      if (inStack.has(id)) {
-        await graphRecordError(id, `cycle detected: ${[...inStack, id].join(" → ")}`);
-        return;
-      }
-      if (visited.has(id)) return;
-      inStack.add(id);
-      const node = nodes.get(id);
-      if (node) {
-        for (const dep of [...node.needs, ...node.after]) {
-          if (nodes.has(dep)) await dfs(dep); // only traverse known nodes
-        }
-      }
-      inStack.delete(id);
-      visited.add(id);
-    };
-
-    for (const nodeId of nodes.keys()) {
-      if (!visited.has(nodeId)) await dfs(nodeId);
-    }
+  for (const { id, problem } of detectCycles(nodes)) {
+    await graphRecordError(id, problem);
   }
 
   // Reconcile pass: heal unclaimed non-terminal continuations whose after: does
@@ -2024,11 +2033,6 @@ async function transitionToTerminal(
   // Frontier check: spawn a continuation if nothing downstream declares this task.
   await checkFrontierAndMaybeSpawnContinuation(next, taskId, agent, knownAgents(), AGENTS_DIR);
 
-  // Auto-close parent if this was a `closes_parent_on_done` child landing as done.
-  if (directive.kind === "done") {
-    await maybeCloseParentOnUserUnblock(next, taskId);
-  }
-
   // When a task fails, move its needs-dependants to blocked/.
   if (directive.kind !== "done") {
     await sweepBlockedDependants(taskId, currentGraph, AGENTS_DIR);
@@ -2169,69 +2173,6 @@ async function sweepBlockedDependants(
       `[multi-agent] ${node.owner}/${depId}: moved to blocked/ — needs dep ${failedId} reached failed`
     );
   }
-}
-
-// When a child task tagged `closes_parent_on_done: true` lands as done, write a
-// `closed` overlay on the parent if it is in `done/` with `closed: null` (the
-// Phase 3W "report awaiting review" state). Search all known agents' `done/`
-// buckets so cross-agent parenting still resolves. No-op if the field is absent,
-// the parent isn't in done/, or the parent already has a closed.status.
-async function maybeCloseParentOnUserUnblock(childYaml: string, childId: string): Promise<void> {
-  const closesField = (readField(childYaml, "closes_parent_on_done") ?? "").trim().toLowerCase();
-  if (closesField !== "true") return;
-  const parentId = readField(childYaml, "parent");
-  if (!parentId || parentId === "null") return;
-
-  const agents = knownAgents();
-  for (const a of agents) {
-    // Phase 3W: parent is now done ∧ closed:null (report-state), not waiting:on:user.
-    const parentPath = join(AGENTS_DIR, a, "tasks", "done", `${parentId}.yaml`);
-    if (!existsSync(parentPath)) continue;
-    let parentYaml: string;
-    try {
-      parentYaml = await readFile(parentPath, "utf-8");
-    } catch { continue; }
-    const parentStatus = (readField(parentYaml, "status") ?? "").trim();
-    const parentClosedStatus = readNestedField(parentYaml, "closed", "status");
-    if (parentStatus !== "done" || parentClosedStatus !== null) {
-      if (parentStatus !== "done") {
-        console.warn(`[multi-agent] auto-close: parent ${a}/${parentId} status is "${parentStatus}", not done — skipping`);
-      }
-      return;
-    }
-    const now = new Date().toISOString();
-    // Stamp the closed overlay in place — parent is already in done/.
-    let next = setClosedField(parentYaml, {
-      status: "closed",
-      at: now,
-      by: "runner",
-      reason: `auto-closed by child ${childId} (closes_parent_on_done)`,
-    });
-    next = setField(next, "updated", now);
-    next = appendHistory(next, {
-      ts: now,
-      from: "done",
-      to: "done",
-      by: `runner-${process.pid}`,
-      note: `closed overlay written by child ${childId} (closes_parent_on_done)`,
-    });
-    await writeFile(parentPath, next);
-    const parentFields = parseFields(parentYaml, parentId);
-    await appendJournal(a, {
-      ts: now,
-      id: parentId,
-      status: "done",
-      kind: parentFields.kind,
-      from: parentFields.from,
-      to: a,
-      parent: parentFields.parent,
-      summary: `auto-closed by child ${childId}`,
-    });
-    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${a}/${parentId} — closed overlay written (auto-closed by child ${childId})`);
-    return;
-  }
-  // Parent not in any done/ bucket — already had a closed overlay, or was
-  // never a report-state parent. Silent no-op; runs for every done child.
 }
 
 // === Worker invocation =====================================================
@@ -3179,6 +3120,4 @@ export const __testing = {
   sweepBlockedDependants,
   // v1.19: auto-reopen blocked tasks whose needs are all done.
   sweepBlocked,
-  // Phase 3W: parent auto-close on done∧closed:null shape. Exported for direct unit testing.
-  maybeCloseParentOnUserUnblock,
 };
