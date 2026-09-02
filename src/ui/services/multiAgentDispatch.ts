@@ -9,6 +9,7 @@ import { join } from "path";
 import { loadChat } from "./chats";
 import { abortInflightWorker, loadGraph, detectCycles } from "../../multiAgent";
 import { listAgentNamesSync } from "../../agents";
+import { inferProjectFromContext, readParentProject as _readParentProject } from "../../projectUtils";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -118,32 +119,12 @@ function indent(text: string, prefix: string): string {
     .join("\n");
 }
 
-// WAL-63 Phase 3: infer a project tag from context entries by picking the
-// most-frequently-cited `Notes/Projects/<X>/` path. Stable on ties
-// (first-seen wins). Returns null when no context path resolves into a
-// project folder. Mirrors the read-time inference in services/multiAgent.ts
-// so the field a worker reads matches what would be inferred lazily.
-const CTX_PROJECT_RE = /^Notes\/Projects\/([^/]+)\//;
-function inferProjectFromContext(context: string[]): string | null {
-  if (!context.length) return null;
-  const order: string[] = [];
-  const counts = new Map<string, number>();
-  for (const entry of context) {
-    const m = CTX_PROJECT_RE.exec(entry);
-    if (!m) continue;
-    const project = m[1];
-    if (!counts.has(project)) order.push(project);
-    counts.set(project, (counts.get(project) ?? 0) + 1);
-  }
-  if (counts.size === 0) return null;
-  let best = order[0]!;
-  let bestCount = counts.get(best)!;
-  for (const name of order) {
-    const c = counts.get(name)!;
-    if (c > bestCount) { best = name; bestCount = c; }
-  }
-  return best;
-}
+// inferProjectFromContext and readParentProject live in src/projectUtils.ts so
+// both this module and multiAgent.ts (the runner) can share the same
+// implementation without a circular import (multiAgentDispatch already imports
+// loadGraph/detectCycles from multiAgent). Re-exported here as-is; the import
+// at the top of this file is the single source of truth.
+export { inferProjectFromContext };
 
 function yamlEscape(value: string): string {
   return JSON.stringify(value);
@@ -376,26 +357,10 @@ export interface ClosedBlock {
 const TASK_BUCKETS = ["open", "waiting", "done", "failed", "paused"] as const;
 type TaskBucket = (typeof TASK_BUCKETS)[number];
 
-// Read a parent task's `project:` by id, scanning all agents + buckets
-// (incl. archived and scheduled). Returns the trimmed slug, or null if
-// absent/not found. Lets a dispatched sub-task inherit its parent's project
-// tag — including when the parent is a scheduled template.
-async function readParentProject(parentId: string): Promise<string | null> {
-  const buckets = [...TASK_BUCKETS, "archived", "scheduled"];
-  for (const agent of knownAgents()) {
-    for (const bucket of buckets) {
-      const p = join(AGENTS_DIR, agent, "tasks", bucket, `${parentId}.yaml`);
-      if (!existsSync(p)) continue;
-      try {
-        const m = /^project:\s*(.*)$/m.exec(await readFile(p, "utf-8"));
-        const proj = (m?.[1] ?? "").trim();
-        return proj && proj !== "null" ? proj : null;
-      } catch {
-        return null;
-      }
-    }
-  }
-  return null;
+// Thin wrapper so callers in this module don't need to pass agentsDir/agents
+// explicitly — they're already in scope here.
+function readParentProject(parentId: string): Promise<string | null> {
+  return _readParentProject(parentId, AGENTS_DIR, knownAgents());
 }
 
 // Strip any existing `closed:` field from the YAML. Handles three shapes:

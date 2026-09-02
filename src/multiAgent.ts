@@ -32,6 +32,7 @@ import { load as yamlLoad } from "js-yaml";
 import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
 import { resolveStateDir } from "./paths";
+import { inferProjectFromContext, readParentProject } from "./projectUtils";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -1757,6 +1758,14 @@ async function _doFrontierCheck(
     const headlineRaw = (readField(yaml, "headline") ?? "").trim();
     const hl = (/^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw) || `Continue after ${taskId}`;
     const afterBlock = `after:\n${familyIds.map((s) => `  - ${s}`).join("\n")}\n`;
+    // Inherit project tag: read from the current task's envelope first; fall
+    // back to the parent's envelope; fall back to context inference.
+    const projRaw = readField(yaml, "project");
+    const ctxEntries = readList(yaml, "context");
+    const project = (projRaw && projRaw !== "null")
+      ? projRaw
+      : (await readParentProject(parent ?? taskId, agentsDir, knownAgents()))
+        ?? inferProjectFromContext(ctxEntries);
 
     const body = [
       `id: ${id}`,
@@ -1770,6 +1779,7 @@ async function _doFrontierCheck(
       `reply_to: null`,
       "",
       `kind: continuation`,
+      ...(project ? [`project: ${project}`] : []),
       `deadline: null`,
       "",
       `budget:`,
@@ -1859,6 +1869,14 @@ async function _doFrontierCheck(
   const firstHeadline = /^".*"$/.test(headlineRaw) ? headlineRaw.slice(1, -1) : headlineRaw;
   const headline = firstHeadline ? `Continue: ${firstHeadline.slice(0, 64)}` : `Continue after ${taskId}`;
   const afterBlock = `after:\n${familyIds.map((s) => `  - ${s}`).join("\n")}\n`;
+  // Inherit project tag: read from the current task's envelope first; fall
+  // back to the parent's envelope; fall back to context inference.
+  const projRaw = readField(yaml, "project");
+  const ctxEntries = readList(yaml, "context");
+  const project = (projRaw && projRaw !== "null")
+    ? projRaw
+    : (await readParentProject(parent ?? taskId, agentsDir, knownAgents()))
+      ?? inferProjectFromContext(ctxEntries);
 
   const body = [
     `id: ${id}`,
@@ -1872,6 +1890,7 @@ async function _doFrontierCheck(
     `reply_to: null`,
     "",
     `kind: continuation`,
+    ...(project ? [`project: ${project}`] : []),
     `deadline: null`,
     "",
     `budget:`,
