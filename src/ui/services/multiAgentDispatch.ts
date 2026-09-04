@@ -67,9 +67,13 @@ function escapeRegex(s: string): string {
 //   TSK-2026-05-04-0001 → TSK-2026-05-04-0001.01, .02, .03, ...
 // Top-level tasks (no parent) keep the flat date-prefixed counter.
 async function nextTaskId(parent: string | null): Promise<string> {
-  // Include `archived` and `scheduled` so ids that were swept off the active
-  // dirs (or are template envelopes) are still reserved and never reissued.
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "archived", "scheduled"];
+  // Reserve ids from EVERY bucket an envelope can occupy, including `archived`
+  // and `scheduled` (swept-off / template envelopes) and `paused` + `blocked`
+  // (added by WAL-76 / WAL-72). A bucket missing here is not a display gap —
+  // its ids become invisible to the allocator and get REISSUED. That is how
+  // TSK-2026-07-08-0001.08 was handed to jess on 2026-09-04 while alice
+  // already held a paused continuation with the same id.
+  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "blocked", "archived", "scheduled"];
 
   if (parent) {
     const root = parent.split(".")[0]!;
@@ -874,7 +878,7 @@ export async function renameTask(input: RenameTaskInput): Promise<RenameTaskResu
 
   // Locate envelope across all active + archived buckets so closed tasks
   // (and even archived) can be renamed.
-  const buckets = ["open", "waiting", "done", "failed", "archived"] as const;
+  const buckets = ["open", "waiting", "done", "failed", "paused", "blocked", "archived"] as const;
   let path: string | null = null;
   let bucket: (typeof buckets)[number] | null = null;
   for (const b of buckets) {
@@ -1553,7 +1557,7 @@ export async function setTaskProject(input: SetTaskProjectInput): Promise<SetTas
   }
 
   // Locate envelope across all buckets including archived (audit-rewrite is OK).
-  const buckets = ["open", "waiting", "done", "failed", "archived"] as const;
+  const buckets = ["open", "waiting", "done", "failed", "paused", "blocked", "archived"] as const;
   let path: string | null = null;
   let bucket: (typeof buckets)[number] | null = null;
   for (const b of buckets) {
