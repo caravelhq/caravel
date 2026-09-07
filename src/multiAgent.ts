@@ -604,7 +604,11 @@ function parseAttrs(s: string): Record<string, string> {
 //
 // Looked-for paths (in order): done/<id>.md, failed/<id>.md, waiting/<id>.md.
 // The first one that exists wins. Multiple is a worker bug — log and use done.
-async function readReportFile(agent: string, taskId: string): Promise<TaskDirective | null> {
+async function readReportFile(
+  agent: string,
+  taskId: string,
+  unusable?: { path?: string }
+): Promise<TaskDirective | null> {
   const buckets: Array<"done" | "failed" | "waiting"> = ["done", "failed", "waiting"];
   for (const bucket of buckets) {
     const path = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.md`);
@@ -619,7 +623,8 @@ async function readReportFile(agent: string, taskId: string): Promise<TaskDirect
 
     const fm = extractFrontmatter(content);
     if (!fm) {
-      console.warn(`[multi-agent] ${agent}/${taskId}: report file at ${path} has no frontmatter — skipping`);
+      console.warn(`[multi-agent] ${agent}/${taskId}: report file at ${path} has no parseable frontmatter — skipping`);
+      if (unusable) unusable.path = path;
       continue;
     }
 
@@ -671,10 +676,30 @@ async function readReportFile(agent: string, taskId: string): Promise<TaskDirect
 // from a `---`-fenced block at the start of a markdown file. Quotes are
 // stripped; nested structures are ignored (return null for the key).
 function extractFrontmatter(content: string): Record<string, string> | null {
+  let block: string | null = null;
   const m = content.match(/^---\s*\n([\s\S]*?)\n---\s*(\n|$)/);
-  if (!m) return null;
+  if (m) {
+    block = m[1]!;
+  } else if (/^---\s*\n/.test(content)) {
+    // Lenient fallback: the worker opened a frontmatter block and never closed
+    // it. Strict parsing would return null, the caller would log "no
+    // frontmatter — skipping", and a task whose report says `status: done`
+    // would be recorded as failed:other — a formatting slip erasing a real
+    // delivery (TSK-2026-08-20-0001.21, 2026-09-07: four commits and 20/20
+    // tests, filed as failed). Take the leading `key: value` run instead;
+    // that is where status/summary/reason live.
+    const rest = content.replace(/^---\s*\n/, "");
+    const head: string[] = [];
+    for (const line of rest.split("\n")) {
+      if (/^[A-Za-z_][\w-]*\s*:/.test(line) || line.trim() === "") head.push(line);
+      else break;
+    }
+    block = head.join("\n");
+    if (!/^[A-Za-z_][\w-]*\s*:/m.test(block)) return null;
+  }
+  if (block === null) return null;
   const out: Record<string, string> = {};
-  for (const line of m[1].split("\n")) {
+  for (const line of block.split("\n")) {
     const kv = line.match(/^([A-Za-z_][\w-]*)\s*:\s*(.*)$/);
     if (!kv) continue;
     let value = kv[2].trim();
@@ -2289,7 +2314,8 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
 
   // Primary contract: a report file at agents/<agent>/tasks/<status>/<id>.md.
   // Survives output truncation; the file is what the runner trusts first.
-  const fromFile = await readReportFile(agent, taskId);
+  const unusableReport: { path?: string } = {};
+  const fromFile = await readReportFile(agent, taskId, unusableReport);
   if (fromFile) {
     console.log(`[multi-agent] ${agent}/${taskId}: read result from report file (status=${fromFile.kind})`);
     return fromFile;
@@ -2341,7 +2367,13 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   // failed:other with this richer one.)
   const diagTail = diag.slice(-600).trim();
   const capTail = captured.slice(-400).trim();
-  const respondedNote = capTail
+  // A report file that EXISTS but cannot be parsed is a formatting fault, not a
+  // work failure — never fold it into "no directive/report", which reads as a
+  // silent crash and buries a delivery that may well have succeeded. Name it,
+  // and name the file so it can be repaired.
+  const respondedNote = unusableReport.path
+    ? `report file present but unreadable at ${unusableReport.path} — worker completed, its report is malformed (repair the file and reopen; the work itself may be fine)`
+    : capTail
     ? `worker emitted ${captured.length} chars of text but no directive/report (likely forgot the closing tag)`
     : `worker emitted NO text and no directive/report (silent turn — possible undetected limit/error)`;
   console.warn(
@@ -2351,7 +2383,7 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   );
   return {
     kind: "failed",
-    reason: "other",
+    reason: unusableReport.path ? "report-malformed" : "other",
     summary: `${respondedNote}. Diagnostic tail: ${diagTail || "(none — no stderr/result/exit signal)"}`,
     body: "",
     report: null,
