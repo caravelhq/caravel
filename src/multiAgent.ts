@@ -1656,6 +1656,26 @@ async function extendContinuationAfter(
   await writeFile(contPath, next);
 }
 
+// Returns true if parentId is the id of a recurring schedule template, i.e. its
+// envelope lives in any agent's tasks/scheduled/ directory. Scheduled instances
+// share the same parent but are consecutive occurrences, not orchestration peers —
+// they must not be collected into a single family (v1.19 guard).
+async function isScheduledTemplateParent(parentId: string, agentsDir: string): Promise<boolean> {
+  let agentDirs: string[];
+  try { agentDirs = await readdir(agentsDir); } catch { return false; }
+  for (const ag of agentDirs) {
+    const schedDir = join(agentsDir, ag, "tasks", "scheduled");
+    let files: string[];
+    try { files = await readdir(schedDir); } catch { continue; }
+    for (const fname of files.filter((f) => f.endsWith(".yaml"))) {
+      let content: string;
+      try { content = await readFile(join(schedDir, fname), "utf-8"); } catch { continue; }
+      if ((readField(content, "id") ?? "").trim() === parentId) return true;
+    }
+  }
+  return false;
+}
+
 async function checkFrontierAndMaybeSpawnContinuation(
   yaml: string,
   taskId: string,
@@ -1729,8 +1749,13 @@ async function _doFrontierCheck(
     }
 
     // Count frontier leaves: family members with no non-continuation dependants.
+    // v1.19: Skip sibling collection when the parent is a recurring schedule template.
+    // Template instances share the same parent id but are consecutive independent
+    // occurrences, not orchestration peers. Collecting them inflates the family by
+    // one leaf per scheduled run, producing a consolidation that grows unboundedly.
+    const parentIsScheduled = parent ? await isScheduledTemplateParent(parent, agentsDir) : false;
     const familyIds: string[] = [];
-    if (parent) {
+    if (parent && !parentIsScheduled) {
       for (const [sibId, node] of currentGraph.nodes) {
         if (node.parent === parent && node.kind !== "continuation") familyIds.push(sibId);
       }
