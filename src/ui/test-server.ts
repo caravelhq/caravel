@@ -19,6 +19,25 @@ const server = Bun.serve({
   async fetch(req) {
     const url = new URL(req.url);
 
+    // Stub API endpoints so dock components can poll without error
+    if (url.pathname === "/api/state") {
+      const now = Date.now();
+      const stub = {
+        daemon: { running: true, pid: 0, startedAt: now - 60000, uptimeMs: 60000 },
+        tasksActive: 0,
+        heartbeat: { enabled: false, intervalMinutes: 60, nextAt: null, nextInMs: null },
+        jobs: [],
+        security: { enableApiKey: false, apiKey: "" },
+        telegram: { configured: false, allowedUserCount: 0 },
+        discord: { configured: false, allowedUserCount: 0 },
+        session: null,
+        web: { port: 4633, enabled: true },
+      };
+      return new Response(JSON.stringify(stub), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+      });
+    }
+
     // Route everything to index.html for SPA routing (except explicit files)
     let pathname = url.pathname;
 

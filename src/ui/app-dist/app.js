@@ -19853,329 +19853,735 @@ const _hoisted_1$c = {
   id: "chat-panel",
   class: "chat-panel"
 };
-function _sfc_render$3(_ctx, _cache) {
+function _sfc_render$2(_ctx, _cache) {
   return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
     createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
   ])]);
 }
-const ChatPage = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$3]]);
-const _sfc_main$c = {};
-const _hoisted_1$b = {
-  id: "tasks-panel",
-  class: "tasks-panel"
-};
-function _sfc_render$2(_ctx, _cache) {
-  return openBlock(), createElementBlock("div", _hoisted_1$b, [..._cache[0] || (_cache[0] = [
-    createBaseVNode("div", {
-      class: "tasks-view-tabs",
-      id: "tasks-view-tabs",
-      role: "tablist",
-      "aria-label": "Tasks view"
-    }, [
-      createBaseVNode("button", {
-        type: "button",
-        class: "tasks-view-tab is-active",
-        "data-view": "projects",
-        role: "tab",
-        "aria-selected": "true"
-      }, "Projects"),
-      createBaseVNode("button", {
-        type: "button",
-        class: "tasks-view-tab",
-        "data-view": "all",
-        role: "tab",
-        "aria-selected": "false"
-      }, "All")
-    ], -1),
-    createBaseVNode("div", { class: "tasks-toolbar" }, [
-      createBaseVNode("div", { class: "tasks-toolbar-left" }, [
-        createBaseVNode("button", {
-          id: "tasks-picker-toggle",
-          class: "tasks-toolbar-btn tasks-picker-toggle",
-          type: "button",
-          "aria-expanded": "true",
-          title: "Show task list"
-        }, "List"),
-        createBaseVNode("button", {
-          id: "tasks-project-btn",
-          class: "tasks-toolbar-btn",
-          type: "button",
-          title: "Go to project for this task",
-          disabled: "",
-          "aria-disabled": "true"
-        }, "Project")
-      ]),
-      createBaseVNode("div", {
-        class: "tasks-filter-chips",
-        id: "tasks-filter-chips",
-        role: "tablist",
-        "aria-label": "Filter tasks by status"
-      }, [
-        createBaseVNode("button", {
-          type: "button",
-          class: "tasks-filter-chip is-active",
-          "data-filter": "all"
-        }, "All"),
-        createBaseVNode("button", {
-          type: "button",
-          class: "tasks-filter-chip",
-          "data-filter": "open"
-        }, "Open"),
-        createBaseVNode("button", {
-          type: "button",
-          class: "tasks-filter-chip",
-          "data-filter": "waiting"
-        }, "Waiting"),
-        createBaseVNode("button", {
-          type: "button",
-          class: "tasks-filter-chip",
-          "data-filter": "done"
-        }, "Done"),
-        createBaseVNode("button", {
-          type: "button",
-          class: "tasks-filter-chip",
-          "data-filter": "failed"
-        }, "Failed")
-      ]),
-      createBaseVNode("div", { class: "tasks-toolbar-right" }, [
-        createBaseVNode("button", {
-          id: "tasks-new-btn",
-          class: "tasks-toolbar-btn",
-          type: "button",
-          title: "Create a new task"
-        }, "+ New"),
-        createBaseVNode("button", {
-          id: "tasks-refresh",
-          class: "tasks-toolbar-btn",
-          type: "button",
-          title: "Refresh",
-          "aria-label": "Refresh"
-        }, "↻")
-      ])
-    ], -1),
-    createBaseVNode("div", { class: "tasks-split" }, [
-      createBaseVNode("div", {
-        class: "tasks-sidebar",
-        id: "tasks-sidebar"
-      }, [
-        createBaseVNode("div", {
-          id: "tasks-user-blocked",
-          class: "tasks-user-blocked",
-          hidden: ""
-        }),
-        createBaseVNode("div", {
-          class: "tasks-tree",
-          id: "tasks-tree"
-        }, [
-          createBaseVNode("div", { class: "tasks-loading" }, "Loading…")
-        ])
-      ]),
-      createBaseVNode("div", {
-        class: "tasks-content",
-        id: "tasks-content"
-      }, [
-        createBaseVNode("div", {
-          class: "tasks-viewer",
-          id: "tasks-viewer",
-          hidden: ""
-        }, [
-          createBaseVNode("div", { class: "tasks-viewer-head" }, [
-            createBaseVNode("div", { class: "tasks-viewer-headline-wrap" }, [
-              createBaseVNode("div", {
-                class: "tasks-viewer-id",
-                id: "tasks-viewer-id"
-              }),
-              createBaseVNode("div", {
-                class: "tasks-viewer-headline",
-                id: "tasks-viewer-headline"
-              }, "Task")
-            ]),
-            createBaseVNode("div", { class: "tasks-viewer-status-wrap" }, [
-              createBaseVNode("span", {
-                class: "tasks-viewer-status",
-                id: "tasks-viewer-status"
-              })
-            ])
-          ]),
-          createBaseVNode("div", {
-            class: "tasks-viewer-tabs",
-            role: "tablist",
-            "aria-label": "Task views"
-          }, [
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-viewer-tab is-active",
-              "data-view": "task",
-              role: "tab",
-              "aria-selected": "true"
-            }, "Task"),
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-viewer-tab",
-              "data-view": "report",
-              role: "tab",
-              "aria-selected": "false"
-            }, "Report")
-          ]),
-          createBaseVNode("div", {
-            class: "tasks-viewer-body",
-            id: "tasks-viewer-body"
-          }, [
-            createBaseVNode("div", { class: "task-panel-loading" }, "Loading task…")
-          ])
-        ]),
-        createBaseVNode("div", {
-          class: "tasks-project-pane",
-          id: "tasks-project-pane",
-          hidden: ""
-        }),
-        createBaseVNode("div", {
-          class: "tasks-empty",
-          id: "tasks-empty"
-        }, [
-          createTextVNode("Select a task on the left, or click "),
-          createBaseVNode("strong", null, "+ New"),
-          createTextVNode(" to create one.")
-        ]),
-        createBaseVNode("form", {
-          class: "multi-agent-new tasks-new-form",
-          id: "multi-agent-new",
-          hidden: ""
-        }, [
-          createBaseVNode("div", { class: "multi-agent-new-head" }, "Create task"),
-          createBaseVNode("div", {
-            class: "multi-agent-new-parent",
-            id: "multi-agent-new-parent-chip",
-            hidden: ""
-          }, [
-            createBaseVNode("span", null, [
-              createTextVNode("↳ child of "),
-              createBaseVNode("strong", { id: "multi-agent-new-parent-id" })
-            ]),
-            createBaseVNode("button", {
-              type: "button",
-              class: "multi-agent-new-parent-clear",
-              id: "multi-agent-new-parent-clear",
-              title: "Clear parent"
-            }, "✕")
-          ]),
-          createBaseVNode("label", { class: "multi-agent-new-block" }, [
-            createBaseVNode("span", null, [
-              createTextVNode("Headline "),
-              createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
-            ]),
-            createBaseVNode("input", {
-              id: "multi-agent-new-headline",
-              type: "text",
-              maxlength: "120",
-              placeholder: "BLE plugin survey",
-              required: ""
-            }),
-            createBaseVNode("span", {
-              class: "multi-agent-new-counter",
-              id: "multi-agent-new-headline-count"
-            }, "0 / 10 words")
-          ]),
-          createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-            createBaseVNode("label", { class: "multi-agent-new-field" }, [
-              createBaseVNode("span", null, "Target"),
-              createBaseVNode("select", { id: "multi-agent-new-to" })
-            ]),
-            createBaseVNode("label", { class: "multi-agent-new-field" }, [
-              createBaseVNode("span", null, "Project"),
-              createBaseVNode("select", { id: "multi-agent-new-project" }, [
-                createBaseVNode("option", { value: "" }, "(auto from context)"),
-                createBaseVNode("option", { value: "__none__" }, "(none / unassigned)")
-              ])
-            ])
-          ]),
-          createBaseVNode("label", { class: "multi-agent-new-block" }, [
-            createBaseVNode("span", null, "Brief"),
-            createBaseVNode("textarea", {
-              id: "multi-agent-new-brief",
-              rows: "4",
-              placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
-              required: ""
-            })
-          ]),
-          createBaseVNode("label", { class: "multi-agent-new-block" }, [
-            createBaseVNode("span", null, [
-              createTextVNode("Depends on "),
-              createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
-            ]),
-            createBaseVNode("textarea", {
-              id: "multi-agent-new-needs",
-              rows: "2",
-              placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
-            })
-          ]),
-          createBaseVNode("details", {
-            class: "multi-agent-new-advanced",
-            id: "multi-agent-new-advanced"
-          }, [
-            createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced"),
-            createBaseVNode("div", { class: "multi-agent-new-advanced-body" }, [
-              createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "Kind"),
-                  createBaseVNode("select", { id: "multi-agent-new-kind" }, [
-                    createBaseVNode("option", { value: "research" }, "research"),
-                    createBaseVNode("option", { value: "code" }, "code"),
-                    createBaseVNode("option", { value: "review" }, "review"),
-                    createBaseVNode("option", { value: "summarise" }, "summarise"),
-                    createBaseVNode("option", { value: "decide" }, "decide"),
-                    createBaseVNode("option", { value: "other" }, "other")
-                  ])
-                ]),
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "From"),
-                  createBaseVNode("input", {
-                    id: "multi-agent-new-from",
-                    type: "text",
-                    value: "user"
-                  })
-                ])
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, "Output format"),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-output",
-                  rows: "2",
-                  placeholder: "What 'done' looks like."
-                })
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, "Context (one per line — file path, jira:KEY, or URL)"),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-context",
-                  rows: "2",
-                  placeholder: "Notes/Projects/...\njira:WAL-XX"
-                })
-              ])
-            ])
-          ]),
-          createBaseVNode("div", { class: "multi-agent-new-actions" }, [
-            createBaseVNode("span", {
-              class: "multi-agent-new-status",
-              id: "multi-agent-new-status"
-            }),
-            createBaseVNode("button", {
-              class: "multi-agent-new-cancel",
-              id: "multi-agent-new-cancel",
-              type: "button"
-            }, "Cancel"),
-            createBaseVNode("button", {
-              class: "multi-agent-new-submit",
-              id: "multi-agent-new-submit",
-              type: "submit"
-            }, "Dispatch")
-          ])
-        ])
-      ])
-    ], -1)
-  ])]);
+const ChatPage = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$2]]);
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref("projects");
+  const filter = /* @__PURE__ */ ref("all");
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const pane = /* @__PURE__ */ ref("empty");
+  const pickerCollapsed = /* @__PURE__ */ ref(false);
+  const currentTaskId = /* @__PURE__ */ ref(null);
+  const currentTaskProject = /* @__PURE__ */ ref(null);
+  const currentViewMode = /* @__PURE__ */ ref("task");
+  const currentProjectSlug = /* @__PURE__ */ ref(null);
+  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
+  const loaded = /* @__PURE__ */ ref(false);
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    pane,
+    pickerCollapsed,
+    currentTaskId,
+    currentTaskProject,
+    currentViewMode,
+    currentProjectSlug,
+    taskFromProjectSlug,
+    loaded
+  };
+});
+const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
+  const tiers = /* @__PURE__ */ ref(null);
+  const lastFetch = /* @__PURE__ */ ref(0);
+  async function fetch2() {
+    try {
+      const res = await window.fetch("/api/tasks/attention");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.ok && data.tiers) {
+        tiers.value = data.tiers;
+        lastFetch.value = Date.now();
+      }
+    } catch (_2) {
+    }
+  }
+  return { tiers, lastFetch, fetch: fetch2 };
+});
+function escapeHtml$1(s) {
+  return escHtml(String(s == null ? "" : s));
 }
-const TasksPage = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$2]]);
+function timeAgo(iso) {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
+  const mins = Math.floor(diff / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
+function statusClass(status) {
+  if (!status) return "is-open";
+  if (status === "open" || status === "claimed") return "is-open";
+  if (status.indexOf("waiting:") === 0) return "is-waiting";
+  if (status === "paused") return "is-paused";
+  if (status === "done") return "is-done";
+  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
+  return "is-open";
+}
+function shorten(s, n) {
+  const str2 = String(s || "");
+  if (str2.length <= n) return str2;
+  return str2.slice(0, n - 1) + "…";
+}
+function shortenStatusLabel(s) {
+  if (!s) return "?";
+  if (s === "paused") return "paused";
+  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
+  if (s.indexOf("failed:") === 0) {
+    const rest = s.slice("failed:".length);
+    return rest === "other" ? "failed" : "fail " + rest;
+  }
+  return s;
+}
+function fmtDaysHours(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  const seconds = Math.floor(ms / 1e3);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  if (days > 0) return days + "d " + hours + "h";
+  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
+}
+function suggestChildHeadline(parentHeadline, source) {
+  const base = String(parentHeadline || "").slice(0, 56);
+  return base + " — rework";
+}
+function renderNextTargetPicker(currentAgent, agentsCache) {
+  let options = "";
+  const agents = Array.isArray(agentsCache) ? agentsCache : [];
+  for (const a of agents) {
+    if (!a || !a.name) continue;
+    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+    const selected = a.name === currentAgent ? " selected" : "";
+    options += '<option value="' + escapeHtml$1(a.name) + '"' + selected + ">" + escapeHtml$1(label) + "</option>";
+  }
+  if (!options && currentAgent) {
+    options = '<option value="' + escapeHtml$1(currentAgent) + '" selected>' + escapeHtml$1(currentAgent) + "</option>";
+  }
+  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
+}
+function countActiveDescendants(taskId, cache) {
+  if (!taskId || !cache.length) return 0;
+  const byParent = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (byParent[p2] = byParent[p2] || []).push(t);
+  }
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      if (!kid.closed || !kid.closed.status) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function shortId(id) {
+  return String(id || "").replace(/^TSK-\d{4}-/, "");
+}
+function tierRow(rowCls, row, showCheckbox) {
+  const full = escapeHtml$1(row.id || "");
+  const shrt = escapeHtml$1(shortId(row.id));
+  const headline = escapeHtml$1(row.headline || row.id || "");
+  const label = escapeHtml$1(shorten(row.label || row.headline || row.id || "", 120));
+  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml$1(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
+  return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
+}
+function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
+  const count = tier && tier.count || 0;
+  const rows = tier && tier.rows || [];
+  const selectAll = showCheckbox && count > 0 ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />' : "";
+  let h2 = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
+  for (const row of rows) {
+    h2 += tierRow(rowCls, row, showCheckbox);
+  }
+  if (count > rows.length) {
+    h2 += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
+  }
+  return h2;
+}
+function renderAttentionTiers(el, tiers) {
+  if (!el) return;
+  if (!tiers) {
+    el.hidden = true;
+    return;
+  }
+  let html = "";
+  html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
+  html += renderTierSection(tiers.failed, "tasks-tier-head-failed", "tasks-tier-row-failed", "✗", "Triage", false);
+  html += renderTierSection(tiers.blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
+  html += renderTierSection(tiers.paused, "tasks-tier-head-paused", "tasks-tier-row-paused", "⏸", "Paused", false);
+  html += renderTierSection(tiers.reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read", true);
+  el.innerHTML = html;
+  el.hidden = html === "";
+}
+function passesFilter(t, filter) {
+  if (filter === "all") return true;
+  const s = (t.status || "").toLowerCase();
+  if (filter === "open") return s === "open" || s === "claimed";
+  if (filter === "waiting") return s.indexOf("waiting:") === 0;
+  if (filter === "done") return s === "done";
+  if (filter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
+  return true;
+}
+function buildTaskTree(tasks) {
+  const byId = {};
+  for (const t of tasks) byId[t.id] = t;
+  function idDerivedAncestor(id) {
+    let cur = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur);
+      if (!m2) return null;
+      cur = m2[1];
+      if (byId[cur]) return cur;
+    }
+  }
+  function dotDepth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function effectiveParent(t) {
+    const pid = t.parent && t.parent !== "null" ? t.parent : null;
+    if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
+      const idAnc = idDerivedAncestor(t.id);
+      if (idAnc) return idAnc;
+    }
+    if (pid && pid !== t.id && byId[pid]) {
+      const seen = { [t.id]: true };
+      let cur = byId[pid];
+      let cyclic = false;
+      while (cur) {
+        if (seen[cur.id]) {
+          cyclic = true;
+          break;
+        }
+        seen[cur.id] = true;
+        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+        if (!nextId || nextId === cur.id || !byId[nextId]) break;
+        cur = byId[nextId];
+      }
+      if (!cyclic) return pid;
+    }
+    return idDerivedAncestor(t.id);
+  }
+  const roots = [];
+  const childrenOf = {};
+  for (const t of tasks) {
+    const parentId = effectiveParent(t);
+    if (parentId) {
+      (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
+    } else {
+      roots.push(t);
+    }
+  }
+  function byUpdatedDesc(a, b2) {
+    return (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0);
+  }
+  function byIdAsc(a, b2) {
+    return String(a.id).localeCompare(String(b2.id));
+  }
+  roots.sort(byUpdatedDesc);
+  Object.keys(childrenOf).forEach((k) => childrenOf[k].sort(byIdAsc));
+  return { roots, childrenOf };
+}
+function buildByParent(cache) {
+  const bp = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (bp[p2] = bp[p2] || []).push(t);
+  }
+  return bp;
+}
+function countNonTerminalDescendants(taskId, byParent) {
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      const s = kid.status || "";
+      const terminal = s === "done" || s.indexOf("failed:") === 0;
+      if (!terminal) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTaskId) {
+  let rowStatus = statusClass(t.status);
+  const marker = depth === 0 ? "●" : "└";
+  const headline = t.headline || t.summary && t.summary.brief || t.brief || "(no headline)";
+  let rowClass = "tasks-tree-row";
+  if (t.id === currentTaskId) rowClass += " is-active";
+  if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+  if (t.status === "paused") rowClass += " is-paused";
+  if (t.closed && t.closed.status) rowClass += " is-closed";
+  if (depth === 0) rowClass += " is-root";
+  let queuedBadge = "";
+  if (queuedCount > 0) {
+    rowClass += " has-queued";
+    rowStatus = "is-open";
+    queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
+  }
+  const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
+  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml$1(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
+  const rawStatus = t.status || "?";
+  const shortStatus = shortenStatusLabel(rawStatus);
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml$1(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml$1(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml$1(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml$1(rawStatus) + '">' + escapeHtml$1(shortStatus) + "</span>") + "</div></div></div>";
+}
+function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
+  if (seen[node.id] || depth > 32) return;
+  seen[node.id] = true;
+  const kids = tree.childrenOf[node.id] || [];
+  const hasChildren = kids.length > 0;
+  const queuedCount = countNonTerminalDescendants(node.id, byParent);
+  if (queuedCount > 0 && hasChildren && !(node.id in expanded)) {
+    expanded[node.id] = true;
+  }
+  const isExpanded = !!expanded[node.id];
+  out.push(renderTreeRow(node, depth, hasChildren, isExpanded, queuedCount, currentTaskId));
+  if (!hasChildren || !isExpanded) return;
+  for (const kid of kids) {
+    renderTreeBranch(tree, kid, depth + 1, out, expanded, byParent, currentTaskId, seen);
+  }
+}
+function expandAncestors(taskId, cache, expanded) {
+  if (!taskId) return;
+  const byId = {};
+  for (const t of cache) byId[t.id] = t;
+  function depth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function idDerived(id) {
+    let cur2 = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur2);
+      if (!m2) return null;
+      cur2 = m2[1];
+      if (byId[cur2]) return cur2;
+    }
+  }
+  function ancestorOf(id) {
+    const t = byId[id];
+    if (t) {
+      const p2 = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
+      if (p2 && byId[p2] && depth(p2) >= depth(id)) {
+        const derived = idDerived(id);
+        if (derived) return derived;
+      }
+      if (p2 && byId[p2]) return p2;
+    }
+    return idDerived(id);
+  }
+  const seen = {};
+  let cur = ancestorOf(taskId);
+  while (cur && !seen[cur]) {
+    seen[cur] = true;
+    expanded[cur] = true;
+    cur = ancestorOf(cur);
+  }
+}
+function currentStatusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "done") return "status-done";
+  if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
+  if (s === "waiting:on:user") return "status-waiting-user";
+  if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
+  if (s === "waiting:on:limits") return "status-waiting-limits";
+  if (s.indexOf("waiting:") === 0) return "status-waiting-other";
+  if (s === "claimed") return "status-claimed";
+  return "status-open";
+}
+function renderCurrentRow(task, currentTaskId, currentSelected) {
+  const sc = currentStatusClass(task.status);
+  const isClaimed = task.status === "claimed";
+  const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
+  const meta = [
+    escapeHtml$1(task.agent || task.to || "?"),
+    escapeHtml$1(shortenStatusLabel(task.status || "?")),
+    ...task.updated ? [escapeHtml$1(timeAgo(task.updated))] : []
+  ];
+  let rowClass = "tasks-current-row " + sc;
+  if (task.id === currentTaskId) rowClass += " is-active";
+  const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
+  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml$1(task.id) + '" data-task-agent="' + escapeHtml$1(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml$1(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml$1(task.id) + '">' + escapeHtml$1(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml$1(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
+}
+function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
+  const filtered = cache.filter((t) => passesFilter(t, filter));
+  if (filtered.length === 0) {
+    tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
+    return;
+  }
+  const groups = {};
+  for (const t of filtered) {
+    const key = t.project || "__unassigned";
+    (groups[key] = groups[key] || []).push(t);
+  }
+  const projectKeys = Object.keys(groups).sort((a, b2) => {
+    if (a === "__unassigned" && b2 !== "__unassigned") return 1;
+    if (b2 === "__unassigned" && a !== "__unassigned") return -1;
+    const aLatest = groups[a].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    const bLatest = groups[b2].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    return bLatest - aLatest;
+  });
+  let html = "";
+  const byParent = buildByParent(filtered);
+  for (const groupKey of projectKeys) {
+    const rows = groups[groupKey];
+    const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
+    const isCollapsed = !!collapsed[groupKey];
+    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml$1(groupKey) + '">';
+    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml$1(groupKey) + '">';
+    html += '<span class="tasks-current-group-chevron"></span>';
+    html += '<span class="tasks-current-group-name">' + escapeHtml$1(displayName) + "</span>";
+    html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
+    html += '<div class="tasks-current-group-body">';
+    const tree = buildTaskTree(rows);
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    html += out.join("") + "</div></div>";
+  }
+  tasksTree.innerHTML = html;
+}
+function updateGroupSelectAll(groupEl) {
+  if (!groupEl) return;
+  const allCb = groupEl.querySelector(".current-group-select-all");
+  if (!allCb) return;
+  const rowCbs = groupEl.querySelectorAll(".current-row-select");
+  if (rowCbs.length === 0) return;
+  let checkedCount = 0;
+  rowCbs.forEach((cb) => {
+    if (cb.checked) checkedCount++;
+  });
+  if (checkedCount === 0) {
+    allCb.checked = false;
+    allCb.indeterminate = false;
+  } else if (checkedCount === rowCbs.length) {
+    allCb.checked = true;
+    allCb.indeterminate = false;
+  } else {
+    allCb.checked = false;
+    allCb.indeterminate = true;
+  }
+}
+function handleRowCheckboxChange(ev, bulkSelected, updateBulkBar) {
+  const cb = ev.target;
+  if (!cb || cb.type !== "checkbox") return;
+  if (cb.classList.contains("current-row-select")) {
+    const taskId = cb.getAttribute("data-task-id") || "";
+    const agent = cb.getAttribute("data-task-agent") || "";
+    const defaultStatus = cb.getAttribute("data-task-default-status") || "cancelled";
+    if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
+    else delete bulkSelected[taskId];
+    updateBulkBar();
+    updateGroupSelectAll(cb.closest("[data-project-key]"));
+    return;
+  }
+  if (cb.classList.contains("current-group-select-all")) {
+    const groupEl = cb.closest("[data-project-key]");
+    const rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
+    rowCbs.forEach((rCb) => {
+      const rId = rCb.getAttribute("data-task-id") || "";
+      const rAgent = rCb.getAttribute("data-task-agent") || "";
+      const rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
+      if (cb.checked) {
+        bulkSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
+        rCb.checked = true;
+      } else {
+        delete bulkSelected[rId];
+        rCb.checked = false;
+      }
+    });
+    updateBulkBar();
+  }
+}
+function createBulkBar(tasksTreeEl, getBulkSelected, getMultiSelectActive, setMultiSelectActive, clearSelection, rerenderPicker, fetchTasks) {
+  const bar = document.createElement("div");
+  bar.className = "tasks-bulk-bar";
+  bar.hidden = true;
+  bar.innerHTML = '<span class="bulk-bar-count"></span><input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…"><button type="button" class="bulk-bar-close is-primary"></button><button type="button" class="bulk-bar-clear">Clear</button><button type="button" class="bulk-bar-done">Done</button><span class="bulk-bar-status"></span>';
+  const closeBtn = bar.querySelector(".bulk-bar-close");
+  const clearBtn = bar.querySelector(".bulk-bar-clear");
+  const doneBtn = bar.querySelector(".bulk-bar-done");
+  const statusEl = bar.querySelector(".bulk-bar-status");
+  const reasonEl = bar.querySelector(".bulk-bar-reason");
+  async function submitBulkClose() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    if (ids.length === 0) return;
+    const reason = (reasonEl ? reasonEl.value : "").trim();
+    if (closeBtn) closeBtn.disabled = true;
+    if (statusEl) {
+      statusEl.textContent = "Closing…";
+      statusEl.className = "bulk-bar-status";
+    }
+    let closed = 0, failed = 0;
+    for (const id of ids) {
+      const sel = selected[id];
+      if (!sel) continue;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(id) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent: sel.agent, reason, status: sel.defaultStatus })
+        });
+        const data = await res.json();
+        if (data && data.ok) closed++;
+        else failed++;
+      } catch (_2) {
+        failed++;
+      }
+    }
+    clearSelection();
+    if (statusEl) {
+      statusEl.textContent = failed > 0 ? "Closed " + closed + " · " + failed + " failed." : "Closed " + closed + ".";
+      statusEl.className = "bulk-bar-status is-ok";
+    }
+    if (closeBtn) closeBtn.disabled = false;
+    fetchTasks();
+  }
+  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    clearSelection();
+    rerenderPicker();
+  });
+  if (doneBtn) doneBtn.addEventListener("click", () => {
+    setMultiSelectActive(false);
+    clearSelection();
+    tasksTreeEl.classList.remove("is-multiselect-active");
+    updateBar();
+    rerenderPicker();
+  });
+  function updateBar() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    const multiActive = getMultiSelectActive();
+    if (ids.length === 0 && !multiActive) {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    const countEl = bar.querySelector(".bulk-bar-count");
+    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
+    if (closeBtn) {
+      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
+      closeBtn.hidden = ids.length === 0;
+    }
+    if (clearBtn) clearBtn.hidden = ids.length === 0;
+    if (statusEl) statusEl.textContent = "";
+  }
+  bar.update = updateBar;
+  if (tasksTreeEl.parentNode) {
+    tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);
+  }
+  return bar;
+}
+function hideClosedKey(slug) {
+  return "caravel.project.hideClosed." + (slug || "__unassigned__");
+}
+function getProjectHideClosed(slug) {
+  try {
+    return !!(window.localStorage && window.localStorage.getItem(hideClosedKey(slug)) === "1");
+  } catch (_2) {
+    return false;
+  }
+}
+function setProjectHideClosed(slug, hide) {
+  try {
+    if (!window.localStorage) return;
+    if (hide) window.localStorage.setItem(hideClosedKey(slug), "1");
+    else window.localStorage.removeItem(hideClosedKey(slug));
+  } catch (_2) {
+  }
+}
+let projectsOverviewCache = null;
+function invalidateProjectsCache() {
+  projectsOverviewCache = null;
+}
+async function loadProjectsOverview() {
+  if (projectsOverviewCache !== null) return projectsOverviewCache;
+  try {
+    const res = await fetch("/api/projects?counts=1", { cache: "no-store" });
+    const data = await res.json();
+    projectsOverviewCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsOverviewCache = [];
+  }
+  return projectsOverviewCache;
+}
+function renderProjectCard(card, currentProjectSlug) {
+  const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
+  const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
+  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml$1(card.jira) + "</span>" : "";
+  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml$1(card.status) + "</span>" : "";
+  const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
+  const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
+  const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
+  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml$1(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml$1(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml$1(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml$1(touched) + "</span></div></div>";
+}
+function renderProjectsView(tasksTreeEl, currentProjectSlug) {
+  tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
+  loadProjectsOverview().then((cards) => {
+    if (!cards.length) {
+      tasksTreeEl.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
+      return;
+    }
+    cards.sort((a, b2) => {
+      if (a.slug === "" && b2.slug !== "") return 1;
+      if (b2.slug === "" && a.slug !== "") return -1;
+      const ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
+      const tb = b2.lastTouched ? Date.parse(b2.lastTouched) || 0 : 0;
+      if (tb !== ta) return tb - ta;
+      return a.slug.localeCompare(b2.slug);
+    });
+    let html = '<div class="tasks-projects-grid">';
+    for (const card of cards) html += renderProjectCard(card, currentProjectSlug);
+    html += "</div>";
+    tasksTreeEl.innerHTML = html;
+  }).catch((err) => {
+    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml$1(String(err.message || err)) + "</div>";
+  });
+}
+function renderDocCard(doc2, kind) {
+  const title = doc2.title || doc2.filename || "(untitled)";
+  const desc = doc2.description ? escapeHtml$1(shorten(doc2.description, 140)) : "";
+  const meta = [];
+  if (doc2.doc_type) meta.push(escapeHtml$1(doc2.doc_type));
+  if (doc2.last_updated) meta.push(escapeHtml$1(doc2.last_updated));
+  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml$1(kind || "other") + '" data-open-file="' + escapeHtml$1(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml$1(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
+}
+function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
+  var _a2, _b;
+  const { slug } = summary;
+  const displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
+  const hideClosed = getProjectHideClosed(slug);
+  let headParts = '<div class="tasks-project-head">';
+  headParts += '<div class="tasks-project-head-row">';
+  headParts += '<div class="tasks-project-title">' + escapeHtml$1(displayName) + "</div>";
+  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml$1(summary.jira) + "</span>";
+  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml$1(summary.status) + "</span>";
+  headParts += "</div>";
+  if (summary.title && slug && slug !== "") {
+    headParts += '<div class="tasks-project-slug">' + escapeHtml$1(slug) + "</div>";
+  }
+  const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
+  const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
+  headParts += '<div class="tasks-project-metrics">';
+  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml$1(medClose) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml$1(medAge) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
+  headParts += "</div>";
+  headParts += '<div class="tasks-project-actions">';
+  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml$1(slug) + '">+ New task here</button>';
+  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml$1(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
+  headParts += "</div></div>";
+  const docs = summary.docs || { primary: [], fdps: [], other: [] };
+  let docsHtml = "";
+  if (docs.primary.length || docs.fdps.length || docs.other.length) {
+    docsHtml += '<div class="tasks-project-docs"><div class="tasks-project-docs-head">Documents</div><div class="tasks-project-docs-grid">';
+    for (const d2 of docs.primary) docsHtml += renderDocCard(d2, "primary");
+    for (const d2 of docs.fdps) docsHtml += renderDocCard(d2, "fdp");
+    docsHtml += "</div>";
+    if (docs.other.length) {
+      docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ")</summary>";
+      docsHtml += '<div class="tasks-project-docs-grid">';
+      for (const d2 of docs.other) docsHtml += renderDocCard(d2, "other");
+      docsHtml += "</div></details>";
+    }
+    docsHtml += "</div>";
+  }
+  let leavesHtml = '<div class="tasks-project-section"><div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ")</div>";
+  if (summary.leaves.length === 0) {
+    leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
+  } else {
+    leavesHtml += '<div class="tasks-current">';
+    const sorted = summary.leaves.slice().sort((a, b2) => (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0));
+    for (const t of sorted) leavesHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    leavesHtml += "</div>";
+  }
+  leavesHtml += "</div>";
+  const familiesScoped = hideClosed ? summary.families.filter((t) => !(t.closed && t.closed.status)) : summary.families;
+  let familiesHtml = "";
+  if (familiesScoped.length > 0) {
+    familiesHtml += '<div class="tasks-project-section"><div class="tasks-project-section-head">Family trees</div><div class="tasks-project-trees">';
+    const tree = buildTaskTree(familiesScoped);
+    const byParent = {};
+    for (const t of familiesScoped) {
+      const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+      if (!p2) continue;
+      (byParent[p2] = byParent[p2] || []).push(t);
+    }
+    for (const root of tree.roots) expanded[root.id] = true;
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    familiesHtml += out.join("") + "</div></div>";
+  }
+  let closedHtml = "";
+  if (summary.closedTasks.length > 0 && !hideClosed) {
+    closedHtml += '<details class="tasks-project-section tasks-project-closed">';
+    closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ")</summary>";
+    closedHtml += '<div class="tasks-current">';
+    for (const t of summary.closedTasks) closedHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    closedHtml += "</div></details>";
+  }
+  projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
+}
+let projectsCache = null;
+async function ensureProjectsLoaded(select) {
+  if (!select) return;
+  if (projectsCache !== null) {
+    populateProjectSelect(select, projectsCache);
+    return;
+  }
+  try {
+    const res = await fetch("/api/projects", { cache: "no-store" });
+    const data = await res.json();
+    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsCache = [];
+  }
+  populateProjectSelect(select, projectsCache);
+}
+function populateProjectSelect(select, projects) {
+  const current = select.value;
+  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
+  for (const p2 of projects) {
+    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
+    html += '<option value="' + escapeHtml$1(p2.slug) + '">' + escapeHtml$1(label) + "</option>";
+  }
+  select.innerHTML = html;
+  if (current && Array.from(select.options).some((o) => o.value === current)) {
+    select.value = current;
+  }
+}
 function z() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
@@ -21359,6 +21765,1621 @@ function stripFrontmatter(src) {
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
 }
+function renderSection(title, bodyHtml, openByDefault) {
+  if (!bodyHtml) return "";
+  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml$1(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
+}
+function renderPanelCard(card, isCurrent, currentTaskId, cache) {
+  var _a2;
+  if (!card) return "";
+  const brief = (card.brief || "").trim();
+  const summaryResponse = ((_a2 = card.summary) == null ? void 0 : _a2.response) ? String(card.summary.response).trim() : "";
+  const ctx = card.context || [];
+  const statusLower = (card.status || "").toLowerCase();
+  const isTerminal = statusLower.startsWith("done") || statusLower.startsWith("failed") || statusLower === "escalated";
+  const isClaimed = card.status === "claimed";
+  const isWaitingUser = card.status === "waiting:on:user";
+  const isPaused = card.status === "paused";
+  const isClosed = !!(card.closed && card.closed.status);
+  const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
+  const ctxLines = ctx.map((c) => {
+    const safe = escapeHtml$1(c);
+    if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
+    if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
+    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
+  }).join("");
+  const metaParts = [];
+  metaParts.push(escapeHtml$1(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml$1(card.to || "?"));
+  if (card.kind) metaParts.push(escapeHtml$1(card.kind));
+  if (card.priority) metaParts.push(escapeHtml$1(card.priority));
+  const projectLabel = card.project ? card.project : "Unassigned";
+  metaParts.push(
+    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml$1(card.id) + '" data-project-agent="' + escapeHtml$1(card.agent || card.to || "") + '" data-project-current="' + escapeHtml$1(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml$1(projectLabel) + "</span>"
+  );
+  if (card.updated) metaParts.push(escapeHtml$1(timeAgo(card.updated)));
+  const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
+  let sections = "";
+  if (isTerminal && !isClosed) {
+    const picker = renderNextTargetPicker(card.agent || "", []);
+    const suggest = suggestChildHeadline(card.headline || card.id);
+    sections += renderSection(
+      "⏳ Continue",
+      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml$1(card.agent || "") + '" data-next-id="' + escapeHtml$1(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml$1(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
+      true
+    );
+  }
+  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml$1(brief) + "</div>", true);
+  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml$1(summaryResponse) + "</div>", true);
+  if (isClosed) {
+    const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
+    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml$1(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml$1(card.closed.by || "?") + (closedAt ? " · " + escapeHtml$1(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml$1(card.closed.reason) + "</div>" : "") + "</div>";
+  }
+  const actions = [];
+  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml$1(card.id) + '" data-followon-agent="' + escapeHtml$1(card.agent || card.to || "") + '" type="button">↳ Next</button>');
+  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml$1(card.id) + '" type="button">💬 Chat</button>');
+  if (!isClaimed && !isClosed) {
+    if (isTerminal) {
+      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml$1(card.agent || "") + '" data-done-reading-id="' + escapeHtml$1(card.id) + '" type="button">✓ Done reading</button>');
+    } else {
+      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml$1(card.id) + '" type="button">✕ Cancel</button>');
+    }
+  }
+  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml$1(card.id) + '" type="button">✕ Abort</button>');
+  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml$1(card.agent || "") + '" data-reopen-task="' + escapeHtml$1(card.id) + '" type="button">↻ Reopen</button>');
+  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml$1(card.agent || "") + '" data-resume-task="' + escapeHtml$1(card.id) + '" type="button">▷ Resume</button>');
+  sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
+  {
+    const chatPicker = renderNextTargetPicker(card.agent || "", []);
+    const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
+    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml$1(card.id) + '" data-chat-parent-agent="' + escapeHtml$1(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml$1(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
+  }
+  if (!isClaimed && !isClosed) {
+    const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
+    const activeCount = countActiveDescendants(card.id, cache);
+    const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
+    const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
+    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml$1(card.agent || "") + '" data-close-id="' + escapeHtml$1(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml$1(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
+  }
+  if (isClaimed && !isClosed) {
+    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml$1(card.agent || "") + '" data-abort-id="' + escapeHtml$1(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
+  }
+  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(envelopePath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(envelopePath) + "</button></div>";
+  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(card.reportPath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(card.reportPath) + "</button></div>";
+  sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
+  if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
+  return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
+}
+function renderReportPane(card) {
+  if (!card || !card.reportPath) return "";
+  const safeTaskId = escapeHtml$1(card.id || "");
+  const allPaths = [card.reportPath];
+  for (const d2 of card.deliverables || []) {
+    if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
+  }
+  function docNode(path, isActive, scanExtras) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const sp = escapeHtml$1(path);
+    const sFolder = escapeHtml$1(folder);
+    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
+  }
+  const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
+  const pillsHidden = allPaths.length <= 1;
+  const pillsHtml = pillsHidden ? "" : allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + "</button>"
+  ).join("");
+  return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
+}
+const KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
+function resolveReportPath(primaryPath, href) {
+  if (!href) return null;
+  let clean = href.split("#")[0].split("?")[0];
+  if (!clean) return null;
+  if (/^https?:/i.test(clean) || clean.startsWith("mailto:")) return null;
+  if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
+  const parts = clean.split("/");
+  for (let k = parts.length - 1; k >= 0; k--) {
+    if (KNOWN_TOP_DIRS.includes(parts[k]) && k < parts.length - 1) return parts.slice(k).join("/");
+  }
+  const lead = clean.replace(/^\.\//, "");
+  const primaryDir = primaryPath.includes("/") ? primaryPath.substring(0, primaryPath.lastIndexOf("/")) : "";
+  const baseParts = primaryDir.split("/").filter(Boolean);
+  for (const p2 of lead.split("/")) {
+    if (!p2 || p2 === ".") continue;
+    if (p2 === "..") {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+      continue;
+    }
+    baseParts.push(p2);
+  }
+  return baseParts.length ? baseParts.join("/") : null;
+}
+function appendReportExtras(primaryNode) {
+  const primaryPath = primaryNode.getAttribute("data-report-path") || "";
+  const doc2 = primaryNode.closest(".task-panel-report-doc");
+  if (!doc2) return;
+  const pane = doc2.closest(".task-panel-report-pane");
+  if (!pane) return;
+  const docsHost = pane.querySelector(".task-panel-report-docs");
+  const pills = pane.querySelector(".task-panel-doc-pills");
+  if (!docsHost || !pills) return;
+  const seen = { [primaryPath]: true };
+  const anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
+  const paths = [];
+  for (const a of Array.from(anchors)) {
+    const href = a.getAttribute("href") || "";
+    if (!href || href.startsWith("#")) continue;
+    const resolved = resolveReportPath(primaryPath, href);
+    if (!resolved) continue;
+    if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
+    a.setAttribute("href", "#" + resolved);
+    a.setAttribute("data-open-file", resolved);
+    if (seen[resolved]) continue;
+    seen[resolved] = true;
+    paths.push(resolved);
+  }
+  if (!paths.length) return;
+  for (const path of paths) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const node = document.createElement("div");
+    node.className = "task-panel-report-doc";
+    node.setAttribute("data-doc-path", path);
+    node.hidden = true;
+    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml$1(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml$1(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
+    docsHost.appendChild(node);
+  }
+  const allPaths = [primaryPath, ...paths];
+  pills.innerHTML = allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + "</button>"
+  ).join("");
+  pills.hidden = false;
+  for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
+    loadReportNode(reportEl);
+  }
+}
+function setActiveReportDoc(pane, path) {
+  if (!pane || !path) return;
+  pane.querySelectorAll(".task-panel-report-doc").forEach((d2) => {
+    const match = d2.getAttribute("data-doc-path") === path;
+    d2.classList.toggle("is-active", match);
+    d2.hidden = !match;
+  });
+  pane.querySelectorAll(".task-panel-doc-pill").forEach((p2) => {
+    p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
+  });
+}
+function loadReportNode(node) {
+  if (!node || node.getAttribute("data-loaded") !== "false") return;
+  node.setAttribute("data-loaded", "loading");
+  node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
+  const path = node.getAttribute("data-report-path") || "";
+  fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
+    if (!data.ok) throw new Error(data.error || "failed");
+    node.setAttribute("data-loaded", "true");
+    if (data.markdown) {
+      const raw = data.content || "";
+      const body = stripFrontmatter(raw);
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml$1(fmMatch[1]) + "</pre>" : "";
+      node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
+    } else {
+      const pre = document.createElement("pre");
+      pre.className = "task-panel-report-raw";
+      pre.textContent = data.content;
+      node.innerHTML = "";
+      node.appendChild(pre);
+    }
+    if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
+  }).catch((err) => {
+    node.setAttribute("data-loaded", "false");
+    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
+  });
+}
+const _hoisted_1$b = {
+  id: "tasks-panel",
+  class: "tasks-panel"
+};
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  __name: "TasksPage",
+  setup(__props) {
+    const tasksStore = useTasksStore();
+    const attentionStore = useAttentionStore();
+    let tasksTreeEl = null;
+    let tasksViewTabsEl = null;
+    let tasksFilterChipsEl = null;
+    let tasksSidebarEl = null;
+    let tasksPickerToggleEl = null;
+    let tasksProjectBtnEl = null;
+    let tasksRefreshBtnEl = null;
+    let tasksNewBtnEl = null;
+    let tasksViewerEl = null;
+    let tasksProjectPaneEl = null;
+    let tasksEmptyEl = null;
+    let tasksNewFormEl = null;
+    let tasksUserBlockedEl = null;
+    let bulkBarEl = null;
+    let taskPanelBodyEl = null;
+    let taskPanelHeadlineEl = null;
+    let taskPanelIdEl = null;
+    let taskPanelStatusEl = null;
+    let attentionIntervalId = null;
+    let longPressTimer = null;
+    let lpStartX = 0, lpStartY = 0;
+    const router2 = useRouter();
+    let currentTaskChain = null;
+    function setRightPaneMode(mode) {
+      tasksStore.pane = mode;
+      if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
+      if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
+      if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
+      if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
+      if (mode === "view" || mode === "project" || mode === "new") {
+        const panel = document.getElementById("tasks-panel");
+        if (panel) panel.classList.add("tasks-list-hidden");
+      } else {
+        const panel = document.getElementById("tasks-panel");
+        if (panel) panel.classList.remove("tasks-list-hidden");
+      }
+    }
+    function updateBulkBar() {
+      if (bulkBarEl && typeof bulkBarEl.update === "function") {
+        bulkBarEl.update();
+      }
+    }
+    function renderTaskPicker() {
+      if (!tasksTreeEl) return;
+      const view = tasksStore.view;
+      const filter = tasksStore.filter;
+      const expanded = tasksStore.expanded;
+      const collapsed = tasksStore.collapsed;
+      const currentTaskId = tasksStore.currentTaskId;
+      const bulkSelected = tasksStore.bulkSelected;
+      tasksStore.multiSelectActive;
+      if (view === "projects") {
+        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
+      } else if (view === "all") {
+        renderAllTasksView(tasksTreeEl, tasksStore.cache, filter, currentTaskId, bulkSelected, expanded, collapsed);
+      } else {
+        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
+      }
+      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, attentionStore.tiers);
+      if (tasksProjectBtnEl) {
+        const hasProject = !!tasksStore.currentTaskProject;
+        tasksProjectBtnEl.disabled = !hasProject;
+        tasksProjectBtnEl.setAttribute("aria-disabled", hasProject ? "false" : "true");
+      }
+    }
+    async function fetchTasks() {
+      if (!tasksTreeEl) return;
+      tasksTreeEl.innerHTML = '<div class="tasks-loading">Loading…</div>';
+      try {
+        const res = await fetch("/api/tasks?limit=120", { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !Array.isArray(data.tasks)) {
+          tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Unable to load tasks.</div>';
+          return;
+        }
+        tasksStore.cache = data.tasks;
+        tasksStore.loaded = true;
+        renderTaskPicker();
+      } catch (err) {
+        tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    async function openTaskPanel(taskId) {
+      if (!taskId || !taskPanelBodyEl) return;
+      const prevPane = tasksStore.pane;
+      const sameTask = taskId === tasksStore.currentTaskId;
+      if (prevPane === "project") tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
+      else if (!sameTask) tasksStore.taskFromProjectSlug = null;
+      tasksStore.currentTaskId = taskId;
+      tasksStore.currentTaskProject = null;
+      setRightPaneMode("view");
+      if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
+      if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";
+      if (taskPanelStatusEl) {
+        taskPanelStatusEl.textContent = "";
+        taskPanelStatusEl.className = "tasks-viewer-status";
+      }
+      taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
+      expandAncestors(taskId, tasksStore.cache, tasksStore.expanded);
+      renderTaskPicker();
+      if (tasksTreeEl) {
+        tasksTreeEl.querySelectorAll(".tasks-tree-row, .tasks-current-row").forEach((r) => {
+          r.classList.toggle("is-active", r.getAttribute("data-task-id") === taskId);
+        });
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !data.chain) {
+          taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Unable to load task.</div>';
+          return;
+        }
+        currentTaskChain = data.chain;
+        const task = data.chain.task;
+        if (task) {
+          tasksStore.currentTaskProject = task.project || null;
+          if (tasksProjectBtnEl) {
+            tasksProjectBtnEl.disabled = !task.project;
+            tasksProjectBtnEl.setAttribute("aria-disabled", task.project ? "false" : "true");
+          }
+          if (taskPanelHeadlineEl) {
+            taskPanelHeadlineEl.textContent = task.headline || task.brief || "Task " + taskId;
+            taskPanelHeadlineEl.dataset.taskId = task.id || "";
+            taskPanelHeadlineEl.dataset.agent = task.agent || task.to || "";
+            taskPanelHeadlineEl.dataset.locked = task.status === "claimed" ? "true" : "false";
+            taskPanelHeadlineEl.title = task.status === "claimed" ? "Cannot rename while the worker is claimed" : "Click to rename — Enter to save, Esc to cancel";
+            taskPanelHeadlineEl.classList.toggle("is-editable", task.status !== "claimed");
+          }
+          if (taskPanelStatusEl) {
+            taskPanelStatusEl.textContent = task.status || "?";
+            taskPanelStatusEl.className = "tasks-viewer-status " + statusClass(task.status);
+          }
+        }
+        const viewMode = tasksStore.currentViewMode;
+        const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
+        const reportHtml = (task == null ? void 0 : task.reportPath) ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
+        taskPanelBodyEl.innerHTML = '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + '</div><div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
+        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => loadReportNode(rn));
+      } catch (err) {
+        taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    async function openProjectPanel(slug) {
+      tasksStore.currentProjectSlug = slug;
+      setRightPaneMode("project");
+      if (!tasksProjectPaneEl) return;
+      tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Loading project…</div>';
+      if (tasksTreeEl) {
+        tasksTreeEl.querySelectorAll(".tasks-project-card").forEach((card) => {
+          card.classList.toggle("is-active", card.getAttribute("data-project-slug") === slug);
+        });
+      }
+      try {
+        const res = await fetch("/api/projects/" + encodeURIComponent(slug || ""), { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !data.summary) {
+          tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Unable to load project.</div>';
+          return;
+        }
+        renderProjectPage(
+          tasksProjectPaneEl,
+          data.summary,
+          tasksStore.expanded,
+          tasksStore.currentTaskId,
+          tasksStore.bulkSelected
+        );
+      } catch (err) {
+        tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    function setViewMode(mode) {
+      tasksStore.currentViewMode = mode;
+      taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelectorAll(".tasks-viewer-pane").forEach((p2) => {
+        p2.hidden = p2.getAttribute("data-pane") !== mode;
+      });
+      document.querySelectorAll(".tasks-viewer-tab").forEach((t) => {
+        const isActive = t.getAttribute("data-view") === mode;
+        t.classList.toggle("is-active", isActive);
+        t.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+    async function submitNext(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-next-agent") || "";
+      const taskId = wrapper.getAttribute("data-next-id") || "";
+      const source = wrapper.getAttribute("data-next-source") || "revisit";
+      const input = wrapper.querySelector(".task-panel-next-input");
+      const btn = wrapper.querySelector(".task-panel-next-submit");
+      const statusEl = wrapper.querySelector(".task-panel-next-status");
+      const targetSel = wrapper.querySelector(".task-panel-next-target-select");
+      const headlineEl = wrapper.querySelector(".task-panel-next-headline-input");
+      const instruction = ((input == null ? void 0 : input.value) || "").trim();
+      if (!instruction) {
+        if (statusEl) {
+          statusEl.textContent = "Type an instruction first.";
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+        }
+        return;
+      }
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Spawning child…";
+        statusEl.className = "task-panel-unblock-status task-panel-next-status";
+      }
+      try {
+        const payload = { agent, instruction, source };
+        const target = targetSel == null ? void 0 : targetSel.value;
+        if (target && target !== agent) payload.target = target;
+        const headline = ((headlineEl == null ? void 0 : headlineEl.value) || "").trim();
+        if (headline) payload.headline = headline;
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = "Child " + (data.id || "?") + " queued.";
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-ok";
+        }
+        if (data.id) openTaskPanel(data.id);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitClose(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-close-agent") || "";
+      const taskId = wrapper.getAttribute("data-close-id") || "";
+      const defaultStatus = wrapper.getAttribute("data-close-default-status") || "closed";
+      const input = wrapper.querySelector(".task-panel-close-input");
+      const cascadeBox = wrapper.querySelector(".task-panel-close-cascade-checkbox");
+      const btn = wrapper.querySelector(".task-panel-close-submit");
+      const statusEl = wrapper.querySelector(".task-panel-close-status");
+      if (!agent || !taskId) return;
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Closing…";
+        statusEl.className = "task-panel-close-status task-panel-unblock-status";
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim(), status: defaultStatus, cascade: !!(cascadeBox == null ? void 0 : cascadeBox.checked) })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = "Closed.";
+          statusEl.className = "task-panel-close-status task-panel-unblock-status is-ok";
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitDoneReading(agent, taskId, btn) {
+      if (!agent || !taskId) return;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: "", status: "closed", cascade: false })
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitAbort(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-abort-agent") || "";
+      const taskId = wrapper.getAttribute("data-abort-id") || "";
+      const input = wrapper.querySelector(".task-panel-abort-input");
+      const btn = wrapper.querySelector(".task-panel-abort-submit");
+      const statusEl = wrapper.querySelector(".task-panel-abort-status");
+      if (!agent || !taskId) return;
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Killing worker…";
+        statusEl.className = "task-panel-abort-status task-panel-unblock-status";
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/abort", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim() })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = data.mode === "stale" ? "Cancelled (stale claim cleared)." : "Worker killed — finalising…";
+          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-ok";
+        }
+        setTimeout(() => {
+          openTaskPanel(taskId);
+          fetchTasks();
+          attentionStore.fetch();
+        }, data.mode === "stale" ? 0 : 1200);
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitReopen(btn) {
+      if (!btn) return;
+      const agent = btn.getAttribute("data-reopen-agent") || "";
+      const taskId = btn.getAttribute("data-reopen-task") || "";
+      if (!agent || !taskId) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/reopen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+        const data = await res.json();
+        if (!data.ok) {
+          btn.disabled = false;
+          return;
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+        btn.disabled = false;
+      }
+    }
+    async function submitResume(btn) {
+      if (!btn) return;
+      const agent = btn.getAttribute("data-resume-agent") || "";
+      const taskId = btn.getAttribute("data-resume-task") || "";
+      if (!agent || !taskId) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/resume", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+        const data = await res.json();
+        if (!data.ok) {
+          btn.disabled = false;
+          return;
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+        btn.disabled = false;
+      }
+    }
+    function launchChatForTask(taskId, parentAgent, msgEl) {
+      if (!taskId) return;
+      if (!parentAgent) return;
+      const taskRoot = String(taskId).split(".")[0];
+      const threadId = "task-" + taskRoot + "-" + parentAgent;
+      const typedMsg = ((msgEl == null ? void 0 : msgEl.value) || "").trim();
+      const initialMsg = typedMsg ? "Continue after " + taskId + "\n" + typedMsg : "Continue after " + taskId + "\n";
+      window.__chatSessionId = threadId;
+      window.__pendingAgentId = parentAgent;
+      router2.push("/chat").then(() => {
+        setTimeout(() => {
+          const chatInput = document.getElementById("chat-input");
+          if (!chatInput) return;
+          chatInput.value = initialMsg;
+          try {
+            chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+          } catch (_2) {
+          }
+          chatInput.focus();
+          chatInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }, 50);
+      });
+    }
+    function openFollowOnForm(sourceTaskId, sourceAgent) {
+      var _a2;
+      if (!tasksNewFormEl || !sourceTaskId) return;
+      const chain = currentTaskChain;
+      let sourceCard = null;
+      const childReviewPaths = [];
+      if (chain) {
+        if (((_a2 = chain.task) == null ? void 0 : _a2.id) === sourceTaskId) {
+          sourceCard = chain.task;
+          for (const ch of chain.children || []) {
+            const rp = ch.reportPath;
+            if (rp) childReviewPaths.push(rp);
+          }
+        } else {
+          const all = [...chain.ancestors || [], ...chain.children || []];
+          sourceCard = all.find((a) => a.id === sourceTaskId) || null;
+        }
+      }
+      const contextLines = [];
+      if (sourceCard == null ? void 0 : sourceCard.reportPath) {
+        contextLines.push(sourceCard.reportPath);
+        for (const d2 of sourceCard.deliverables || []) contextLines.push(d2);
+      }
+      for (const rp of childReviewPaths) {
+        if (!contextLines.includes(rp)) contextLines.push(rp);
+      }
+      const srcHeadline = String((sourceCard == null ? void 0 : sourceCard.headline) || sourceTaskId);
+      const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
+      const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
+      tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
+      const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
+      const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
+      if (parentChipEl) parentChipEl.removeAttribute("hidden");
+      if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
+      const headlineEl = document.getElementById("multi-agent-new-headline");
+      if (headlineEl) headlineEl.value = headlineSuggest;
+      const briefEl = document.getElementById("multi-agent-new-brief");
+      if (briefEl) briefEl.value = briefSuggest;
+      const ctxEl = document.getElementById("multi-agent-new-context");
+      if (ctxEl) ctxEl.value = contextLines.join("\n");
+      if (sourceCard == null ? void 0 : sourceCard.project) {
+        const projEl = document.getElementById("multi-agent-new-project");
+        if (projEl) ensureProjectsLoaded(projEl).then(() => {
+          if (projEl) projEl.value = sourceCard.project;
+        });
+      }
+      setRightPaneMode("new");
+      headlineEl == null ? void 0 : headlineEl.focus();
+    }
+    function onPanelBodyClick(ev) {
+      var _a2, _b, _c, _d, _e2;
+      const t = ev.target;
+      const nextBtn = t.closest(".task-panel-next-submit");
+      if (nextBtn) {
+        ev.preventDefault();
+        submitNext(nextBtn.closest(".task-panel-next"));
+        return;
+      }
+      const pillBtn = t.closest("[data-doc-pill]");
+      if (pillBtn) {
+        ev.preventDefault();
+        setActiveReportDoc(pillBtn.closest(".task-panel-report-pane"), pillBtn.getAttribute("data-doc-pill") || "");
+        return;
+      }
+      const doneReadingBtn = t.closest("[data-done-reading-id]");
+      if (doneReadingBtn) {
+        ev.preventDefault();
+        doneReadingBtn.disabled = true;
+        submitDoneReading(doneReadingBtn.getAttribute("data-done-reading-agent") || "", doneReadingBtn.getAttribute("data-done-reading-id") || "", doneReadingBtn);
+        return;
+      }
+      const toggleCloseBtn = t.closest("[data-toggle-close]");
+      if (toggleCloseBtn) {
+        ev.preventDefault();
+        const closeForm = (_a2 = toggleCloseBtn.closest(".task-panel-card")) == null ? void 0 : _a2.querySelector(".task-panel-close-form");
+        if (closeForm) {
+          closeForm.hidden = false;
+          (_b = closeForm.querySelector(".task-panel-close-input")) == null ? void 0 : _b.focus();
+          closeForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
+      const closeSubmitBtn = t.closest(".task-panel-close-submit");
+      if (closeSubmitBtn) {
+        ev.preventDefault();
+        submitClose(closeSubmitBtn.closest(".task-panel-close-form"));
+        return;
+      }
+      const closeCancelBtn = t.closest(".task-panel-close-cancel");
+      if (closeCancelBtn) {
+        ev.preventDefault();
+        const f = closeCancelBtn.closest(".task-panel-close-form");
+        if (f) f.hidden = true;
+        return;
+      }
+      const toggleAbortBtn = t.closest("[data-toggle-abort]");
+      if (toggleAbortBtn) {
+        ev.preventDefault();
+        const abortForm = (_c = toggleAbortBtn.closest(".task-panel-card")) == null ? void 0 : _c.querySelector(".task-panel-abort-form");
+        if (abortForm) {
+          abortForm.hidden = false;
+          (_d = abortForm.querySelector(".task-panel-abort-input")) == null ? void 0 : _d.focus();
+          abortForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
+      const abortSubmitBtn = t.closest(".task-panel-abort-submit");
+      if (abortSubmitBtn) {
+        ev.preventDefault();
+        submitAbort(abortSubmitBtn.closest(".task-panel-abort-form"));
+        return;
+      }
+      const abortCancelBtn = t.closest(".task-panel-abort-cancel");
+      if (abortCancelBtn) {
+        ev.preventDefault();
+        const f = abortCancelBtn.closest(".task-panel-abort-form");
+        if (f) f.hidden = true;
+        return;
+      }
+      const reopenBtn = t.closest("[data-reopen-task]");
+      if (reopenBtn) {
+        ev.preventDefault();
+        submitReopen(reopenBtn);
+        return;
+      }
+      const resumeBtn = t.closest("[data-resume-task]");
+      if (resumeBtn) {
+        ev.preventDefault();
+        submitResume(resumeBtn);
+        return;
+      }
+      const followonBtn = t.closest("[data-followon-task]");
+      if (followonBtn) {
+        ev.preventDefault();
+        const continueForm = taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelector(".task-panel-next");
+        if (continueForm) {
+          continueForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          (_e2 = continueForm.querySelector(".task-panel-next-input")) == null ? void 0 : _e2.focus();
+          const det = continueForm.closest("details");
+          if (det) det.open = true;
+        } else {
+          openFollowOnForm(followonBtn.getAttribute("data-followon-task") || "", followonBtn.getAttribute("data-followon-agent") || "");
+        }
+        return;
+      }
+      const openTaskBtn = t.closest("[data-open-task]");
+      if (openTaskBtn) {
+        ev.preventDefault();
+        openTaskPanel(openTaskBtn.getAttribute("data-open-task") || "");
+        return;
+      }
+      const openFileBtn = t.closest("[data-open-file]");
+      if (openFileBtn) {
+        ev.preventDefault();
+        const filePath = openFileBtn.getAttribute("data-open-file");
+        if (filePath && window.__loadFile) window.__loadFile(filePath);
+        return;
+      }
+      const openFolderBtn = t.closest("[data-open-folder]");
+      if (openFolderBtn) {
+        ev.preventDefault();
+        const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
+        if (window.__loadDirectory) window.__loadDirectory(folderPath);
+        return;
+      }
+      const toggleChatBtn = t.closest("[data-toggle-chat]");
+      if (toggleChatBtn) {
+        ev.preventDefault();
+        const chatCard = toggleChatBtn.closest(".task-panel-card");
+        const chatFormEl = chatCard == null ? void 0 : chatCard.querySelector(".task-panel-chat-form");
+        const chatAgent = (chatFormEl == null ? void 0 : chatFormEl.getAttribute("data-chat-parent-agent")) || "";
+        const chatMsgEl = (chatFormEl == null ? void 0 : chatFormEl.querySelector(".task-panel-chat-msg-input")) || null;
+        launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat") || "", chatAgent, chatMsgEl);
+        return;
+      }
+    }
+    let agentsCache = [];
+    async function loadAgentsForForm() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if ((data == null ? void 0 : data.ok) && Array.isArray(data.agents)) agentsCache = data.agents;
+      } catch (_2) {
+      }
+      populateTaskTargetSelect();
+    }
+    function populateTaskTargetSelect() {
+      const sel = document.getElementById("multi-agent-new-to");
+      if (!sel) return;
+      const prev = sel.value;
+      const coord = agentsCache.find((a) => a.name === "alice");
+      const rest = agentsCache.filter((a) => a.name !== "alice");
+      const ordered = coord ? [coord, ...rest] : rest;
+      sel.innerHTML = ordered.map((a) => {
+        const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+        return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
+      }).join("");
+      if (prev) sel.value = prev;
+    }
+    function updateHeadlineCount() {
+      const input = document.getElementById("multi-agent-new-headline");
+      const counter = document.getElementById("multi-agent-new-headline-count");
+      if (!input || !counter) return;
+      const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
+      counter.textContent = words + " / 10 words";
+      counter.classList.toggle("is-over", words > 10);
+    }
+    function clearParentChip() {
+      if (!tasksNewFormEl) return;
+      tasksNewFormEl.removeAttribute("data-parent");
+      const chipEl = document.getElementById("multi-agent-new-parent-chip");
+      const chipIdEl = document.getElementById("multi-agent-new-parent-id");
+      if (chipEl) chipEl.setAttribute("hidden", "");
+      if (chipIdEl) chipIdEl.textContent = "";
+    }
+    async function submitNewTask(ev) {
+      var _a2, _b, _c, _d, _e2, _f, _g, _h;
+      ev.preventDefault();
+      const headline = ((_a2 = document.getElementById("multi-agent-new-headline")) == null ? void 0 : _a2.value.trim()) || "";
+      const to = ((_b = document.getElementById("multi-agent-new-to")) == null ? void 0 : _b.value) || "";
+      const kind = ((_c = document.getElementById("multi-agent-new-kind")) == null ? void 0 : _c.value) || "";
+      const from = ((_d = document.getElementById("multi-agent-new-from")) == null ? void 0 : _d.value.trim()) || "user";
+      const brief = ((_e2 = document.getElementById("multi-agent-new-brief")) == null ? void 0 : _e2.value.trim()) || "";
+      const output = ((_f = document.getElementById("multi-agent-new-output")) == null ? void 0 : _f.value.trim()) || "";
+      const contextRaw = ((_g = document.getElementById("multi-agent-new-context")) == null ? void 0 : _g.value.trim()) || "";
+      const context = contextRaw ? contextRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
+      const needsRaw = ((_h = document.getElementById("multi-agent-new-needs")) == null ? void 0 : _h.value.trim()) || "";
+      const needs = needsRaw ? needsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
+      const newStatus = document.getElementById("multi-agent-new-status");
+      const submitBtn = document.getElementById("multi-agent-new-submit");
+      const headlineWords = headline.split(/\s+/).filter(Boolean).length;
+      if (!headline) {
+        if (newStatus) {
+          newStatus.textContent = "Headline is required (≤10 words).";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (headlineWords > 10) {
+        if (newStatus) {
+          newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`;
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (!brief) {
+        if (newStatus) {
+          newStatus.textContent = "Brief is required.";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (!to) {
+        populateTaskTargetSelect();
+        if (newStatus) {
+          newStatus.textContent = "Pick a target agent.";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (newStatus) {
+        newStatus.textContent = "Dispatching…";
+        newStatus.className = "multi-agent-new-status";
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        const payload = { headline, to, from: from || "user", kind, brief, output_format: output, context };
+        if (needs.length > 0) payload.needs = needs;
+        const projectEl = document.getElementById("multi-agent-new-project");
+        if (projectEl) {
+          const projVal = (projectEl.value || "").trim();
+          if (projVal === "__none__") payload.project = null;
+          else if (projVal) payload.project = projVal;
+        }
+        const parentAttr = tasksNewFormEl == null ? void 0 : tasksNewFormEl.getAttribute("data-parent");
+        if (parentAttr) payload.parent = parentAttr;
+        const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.ok) {
+          if (newStatus) {
+            newStatus.textContent = "Error: " + (data.error || "unknown");
+            newStatus.className = "multi-agent-new-status is-error";
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          return;
+        }
+        if (newStatus) {
+          newStatus.textContent = "Dispatched " + data.id;
+          newStatus.className = "multi-agent-new-status is-ok";
+        }
+        ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        clearParentChip();
+        updateHeadlineCount();
+        if (submitBtn) submitBtn.disabled = false;
+        fetchTasks();
+        attentionStore.fetch();
+        if (data.id) openTaskPanel(data.id);
+        else setRightPaneMode("empty");
+      } catch (err) {
+        if (newStatus) {
+          newStatus.textContent = "Error: " + String(err.message || err);
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+    function onTreeChange(ev) {
+      handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
+    }
+    function onTreeClick(ev) {
+      const target = ev.target;
+      if (target && target.type === "checkbox") {
+        ev.stopPropagation();
+        return;
+      }
+      const groupHead = target.closest("[data-toggle-group]");
+      if (groupHead) {
+        ev.preventDefault();
+        const gk = groupHead.getAttribute("data-toggle-group");
+        if (gk) {
+          if (tasksStore.collapsed[gk]) delete tasksStore.collapsed[gk];
+          else tasksStore.collapsed[gk] = true;
+          renderTaskPicker();
+        }
+        return;
+      }
+      const projectCard = target.closest(".tasks-project-card");
+      if (projectCard) {
+        ev.preventDefault();
+        const slug = projectCard.getAttribute("data-project-slug");
+        if (slug !== null) {
+          tasksStore.taskFromProjectSlug = null;
+          openProjectPanel(slug);
+        }
+        return;
+      }
+      const tierRow2 = target.closest("[data-open-task]");
+      if (tierRow2) {
+        ev.preventDefault();
+        const taskId = tierRow2.getAttribute("data-open-task");
+        if (taskId) openTaskPanel(taskId);
+        return;
+      }
+      const chevron = target.closest("[data-toggle-expand]");
+      if (chevron) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const pid = chevron.getAttribute("data-toggle-expand");
+        if (pid) {
+          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
+          else tasksStore.expanded[pid] = true;
+          renderTaskPicker();
+        }
+        return;
+      }
+      const row = target.closest(".tasks-tree-row, .tasks-current-row");
+      if (row) {
+        const taskId = row.getAttribute("data-task-id");
+        if (taskId) openTaskPanel(taskId);
+      }
+    }
+    function onTreeKeydown(ev) {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      if (ev.target.type === "checkbox") return;
+      const row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
+      if (!row) return;
+      ev.preventDefault();
+      const taskId = row.getAttribute("data-task-id");
+      if (taskId) openTaskPanel(taskId);
+    }
+    function onProjectPaneClick(ev) {
+      const target = ev.target;
+      if (target.type === "checkbox") {
+        ev.stopPropagation();
+        return;
+      }
+      const docBtn = target.closest("[data-open-file]");
+      if (docBtn) {
+        ev.preventDefault();
+        const path = docBtn.getAttribute("data-open-file");
+        if (path && window.__loadFile) window.__loadFile(path);
+        return;
+      }
+      const newHere = target.closest("[data-project-new-task]");
+      if (newHere) {
+        ev.preventDefault();
+        const newSlug = newHere.getAttribute("data-project-new-task");
+        if (newSlug) openNewTaskFormForProject(newSlug);
+        return;
+      }
+      const chevron = target.closest("[data-toggle-expand]");
+      if (chevron) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const pid = chevron.getAttribute("data-toggle-expand");
+        if (pid && tasksStore.currentProjectSlug !== null) {
+          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
+          else tasksStore.expanded[pid] = true;
+          openProjectPanel(tasksStore.currentProjectSlug);
+        }
+        return;
+      }
+      const row = target.closest(".tasks-tree-row, .tasks-current-row");
+      if (row) {
+        const taskId = row.getAttribute("data-task-id");
+        if (taskId) {
+          tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
+          openTaskPanel(taskId);
+        }
+      }
+    }
+    function onProjectPaneChange(ev) {
+      const target = ev.target;
+      if (target.type === "checkbox" && (target.classList.contains("current-row-select") || target.classList.contains("current-group-select-all"))) {
+        handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
+        return;
+      }
+      const toggle = target.closest ? target.closest("[data-project-hide-closed]") : null;
+      if (toggle) {
+        const s = toggle.getAttribute("data-project-hide-closed") || "";
+        setProjectHideClosed(s, toggle.checked);
+        if (tasksStore.currentProjectSlug !== null) openProjectPanel(tasksStore.currentProjectSlug);
+      }
+    }
+    function openNewTaskFormForProject(slug) {
+      if (!tasksNewFormEl) return;
+      tasksNewFormEl.removeAttribute("data-parent");
+      const chip = document.getElementById("multi-agent-new-parent-chip");
+      const chipId = document.getElementById("multi-agent-new-parent-id");
+      if (chip) chip.setAttribute("hidden", "");
+      if (chipId) chipId.textContent = "";
+      const projectSelect = document.getElementById("multi-agent-new-project");
+      if (projectSelect) {
+        ensureProjectsLoaded(projectSelect).then(() => {
+          if (slug && slug !== "__none__") projectSelect.value = slug;
+        });
+      }
+      setRightPaneMode("new");
+      const headlineEl = document.getElementById("multi-agent-new-headline");
+      if (headlineEl) headlineEl.focus();
+    }
+    onMounted(() => {
+      tasksTreeEl = document.getElementById("tasks-tree");
+      tasksViewTabsEl = document.getElementById("tasks-view-tabs");
+      tasksFilterChipsEl = document.getElementById("tasks-filter-chips");
+      tasksSidebarEl = document.getElementById("tasks-sidebar");
+      tasksPickerToggleEl = document.getElementById("tasks-picker-toggle");
+      tasksProjectBtnEl = document.getElementById("tasks-project-btn");
+      tasksRefreshBtnEl = document.getElementById("tasks-refresh");
+      tasksNewBtnEl = document.getElementById("tasks-new-btn");
+      tasksViewerEl = document.getElementById("tasks-viewer");
+      tasksProjectPaneEl = document.getElementById("tasks-project-pane");
+      tasksEmptyEl = document.getElementById("tasks-empty");
+      tasksNewFormEl = document.getElementById("multi-agent-new");
+      tasksUserBlockedEl = document.getElementById("tasks-user-blocked");
+      taskPanelBodyEl = document.getElementById("tasks-viewer-body");
+      taskPanelHeadlineEl = document.getElementById("tasks-viewer-headline");
+      taskPanelIdEl = document.getElementById("tasks-viewer-id");
+      taskPanelStatusEl = document.getElementById("tasks-viewer-status");
+      document.querySelectorAll(".tasks-viewer-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const v2 = btn.getAttribute("data-view");
+          if (v2) setViewMode(v2);
+        });
+      });
+      if (taskPanelBodyEl) {
+        taskPanelBodyEl.addEventListener("click", onPanelBodyClick);
+      }
+      if (taskPanelHeadlineEl) {
+        taskPanelHeadlineEl.addEventListener("click", async () => {
+          const el = taskPanelHeadlineEl;
+          if (el.dataset.locked === "true") return;
+          const taskId = el.dataset.taskId;
+          if (!taskId) return;
+          const current = el.textContent || "";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "tasks-viewer-headline-input";
+          input.value = current;
+          input.style.width = "100%";
+          el.replaceWith(input);
+          input.focus();
+          input.select();
+          const restore = () => {
+            if (!input.isConnected) return;
+            input.replaceWith(el);
+          };
+          input.addEventListener("keydown", async (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const next = input.value.trim();
+              if (!next || next === current) {
+                restore();
+                return;
+              }
+              try {
+                await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/rename", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ headline: next })
+                });
+                el.textContent = next;
+              } catch (_2) {
+              }
+              if (input.isConnected) restore();
+            } else if (e.key === "Escape") {
+              restore();
+            }
+          });
+          input.addEventListener("blur", restore);
+        });
+      }
+      window.__loadTaskDetail = (taskId) => {
+        if (taskId) openTaskPanel(taskId);
+      };
+      if (tasksTreeEl) {
+        bulkBarEl = createBulkBar(
+          tasksTreeEl,
+          () => tasksStore.bulkSelected,
+          () => tasksStore.multiSelectActive,
+          (v2) => {
+            tasksStore.multiSelectActive = v2;
+          },
+          () => {
+            tasksStore.bulkSelected = {};
+          },
+          renderTaskPicker,
+          fetchTasks
+        );
+        tasksTreeEl.addEventListener("change", onTreeChange);
+        tasksTreeEl.addEventListener("click", onTreeClick);
+        tasksTreeEl.addEventListener("keydown", onTreeKeydown);
+        tasksTreeEl.addEventListener("pointerdown", (ev) => {
+          if (ev.pointerType !== "touch") return;
+          if (ev.target.type === "checkbox") return;
+          const row = ev.target.closest(".tasks-current-row");
+          if (!row) return;
+          lpStartX = ev.clientX;
+          lpStartY = ev.clientY;
+          longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            tasksStore.multiSelectActive = true;
+            tasksTreeEl.classList.add("is-multiselect-active");
+            updateBulkBar();
+            if (navigator.vibrate) navigator.vibrate(40);
+          }, 500);
+        });
+        tasksTreeEl.addEventListener("pointermove", (ev) => {
+          if (!longPressTimer) return;
+          const dx = ev.clientX - lpStartX, dy = ev.clientY - lpStartY;
+          if (dx * dx + dy * dy > 64) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          }
+        });
+        const cancelLP = () => {
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          }
+        };
+        tasksTreeEl.addEventListener("pointerup", cancelLP);
+        tasksTreeEl.addEventListener("pointercancel", cancelLP);
+      }
+      if (tasksProjectPaneEl) {
+        tasksProjectPaneEl.addEventListener("click", onProjectPaneClick);
+        tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
+      }
+      if (tasksViewTabsEl) {
+        tasksViewTabsEl.addEventListener("click", (ev) => {
+          const btn = ev.target.closest(".tasks-view-tab");
+          if (!btn) return;
+          const v2 = btn.getAttribute("data-view");
+          if (!v2 || v2 === tasksStore.view) return;
+          tasksStore.view = v2;
+          tasksStore.taskFromProjectSlug = null;
+          tasksViewTabsEl.querySelectorAll(".tasks-view-tab").forEach((t) => {
+            const isActive = t === btn;
+            t.classList.toggle("is-active", isActive);
+            t.setAttribute("aria-selected", isActive ? "true" : "false");
+          });
+          if (v2 === "projects") invalidateProjectsCache();
+          else if (tasksProjectPaneEl && !tasksProjectPaneEl.hidden) {
+            setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
+          }
+          renderTaskPicker();
+        });
+      }
+      if (tasksFilterChipsEl) {
+        tasksFilterChipsEl.addEventListener("click", (ev) => {
+          const chip = ev.target.closest(".tasks-filter-chip");
+          if (!chip) return;
+          const f = chip.getAttribute("data-filter");
+          if (!f) return;
+          tasksStore.filter = f;
+          tasksFilterChipsEl.querySelectorAll(".tasks-filter-chip").forEach((c) => {
+            c.classList.toggle("is-active", c === chip);
+          });
+          renderTaskPicker();
+        });
+      }
+      if (tasksRefreshBtnEl) {
+        tasksRefreshBtnEl.addEventListener("click", () => {
+          invalidateProjectsCache();
+          fetchTasks();
+        });
+      }
+      if (tasksPickerToggleEl) {
+        tasksPickerToggleEl.addEventListener("click", () => {
+          if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
+          if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
+          const panel = document.getElementById("tasks-panel");
+          if (panel) panel.classList.remove("tasks-list-hidden");
+        });
+      }
+      if (tasksProjectBtnEl) {
+        tasksProjectBtnEl.addEventListener("click", () => {
+          if (tasksProjectBtnEl.disabled || !tasksStore.currentTaskProject) return;
+          openProjectPanel(tasksStore.currentTaskProject);
+        });
+      }
+      if (tasksNewBtnEl && tasksNewFormEl) {
+        tasksNewBtnEl.addEventListener("click", () => {
+          tasksNewFormEl.removeAttribute("data-parent");
+          const chip = document.getElementById("multi-agent-new-parent-chip");
+          const chipId = document.getElementById("multi-agent-new-parent-id");
+          if (chip) chip.setAttribute("hidden", "");
+          if (chipId) chipId.textContent = "";
+          const projectSelect = document.getElementById("multi-agent-new-project");
+          if (projectSelect) ensureProjectsLoaded(projectSelect);
+          setRightPaneMode("new");
+          const hl = document.getElementById("multi-agent-new-headline");
+          if (hl) hl.focus();
+        });
+      }
+      const cancelBtn = document.getElementById("multi-agent-new-cancel");
+      if (cancelBtn) cancelBtn.addEventListener("click", () => {
+        clearParentChip();
+        const newStatusEl = document.getElementById("multi-agent-new-status");
+        if (newStatusEl) newStatusEl.textContent = "";
+        setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
+      });
+      const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
+      if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
+      const headlineInput = document.getElementById("multi-agent-new-headline");
+      if (headlineInput) {
+        headlineInput.addEventListener("input", updateHeadlineCount);
+        updateHeadlineCount();
+      }
+      if (tasksNewFormEl) {
+        tasksNewFormEl.addEventListener("submit", submitNewTask);
+      }
+      loadAgentsForForm();
+      attentionStore.fetch();
+      attentionIntervalId = setInterval(() => attentionStore.fetch(), 3e4);
+      window.__ensureTasksLoaded = () => {
+        if (!tasksStore.loaded) fetchTasks();
+        else fetchTasks();
+      };
+      if (!tasksStore.loaded) fetchTasks();
+      else renderTaskPicker();
+    });
+    onBeforeUnmount(() => {
+      if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
+      if (longPressTimer !== null) clearTimeout(longPressTimer);
+      if (typeof window.__ensureTasksLoaded !== "undefined") {
+        delete window.__ensureTasksLoaded;
+      }
+      if (typeof window.__loadTaskDetail !== "undefined") {
+        delete window.__loadTaskDetail;
+      }
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$b, [..._cache[0] || (_cache[0] = [
+        createBaseVNode("div", {
+          class: "tasks-view-tabs",
+          id: "tasks-view-tabs",
+          role: "tablist",
+          "aria-label": "Tasks view"
+        }, [
+          createBaseVNode("button", {
+            type: "button",
+            class: "tasks-view-tab is-active",
+            "data-view": "projects",
+            role: "tab",
+            "aria-selected": "true"
+          }, "Projects"),
+          createBaseVNode("button", {
+            type: "button",
+            class: "tasks-view-tab",
+            "data-view": "all",
+            role: "tab",
+            "aria-selected": "false"
+          }, "All")
+        ], -1),
+        createBaseVNode("div", { class: "tasks-toolbar" }, [
+          createBaseVNode("div", { class: "tasks-toolbar-left" }, [
+            createBaseVNode("button", {
+              id: "tasks-picker-toggle",
+              class: "tasks-toolbar-btn tasks-picker-toggle",
+              type: "button",
+              "aria-expanded": "true",
+              title: "Show task list"
+            }, "List"),
+            createBaseVNode("button", {
+              id: "tasks-project-btn",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Go to project for this task",
+              disabled: "",
+              "aria-disabled": "true"
+            }, "Project")
+          ]),
+          createBaseVNode("div", {
+            class: "tasks-filter-chips",
+            id: "tasks-filter-chips",
+            role: "tablist",
+            "aria-label": "Filter tasks by status"
+          }, [
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip is-active",
+              "data-filter": "all"
+            }, "All"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "open"
+            }, "Open"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "waiting"
+            }, "Waiting"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "done"
+            }, "Done"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "failed"
+            }, "Failed")
+          ]),
+          createBaseVNode("div", { class: "tasks-toolbar-right" }, [
+            createBaseVNode("button", {
+              id: "tasks-new-btn",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Create a new task"
+            }, "+ New"),
+            createBaseVNode("button", {
+              id: "tasks-refresh",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Refresh",
+              "aria-label": "Refresh"
+            }, "↻")
+          ])
+        ], -1),
+        createBaseVNode("div", { class: "tasks-split" }, [
+          createBaseVNode("div", {
+            class: "tasks-sidebar",
+            id: "tasks-sidebar"
+          }, [
+            createBaseVNode("div", {
+              id: "tasks-user-blocked",
+              class: "tasks-user-blocked",
+              hidden: ""
+            }),
+            createBaseVNode("div", {
+              class: "tasks-tree",
+              id: "tasks-tree"
+            }, [
+              createBaseVNode("div", { class: "tasks-loading" }, "Loading…")
+            ])
+          ]),
+          createBaseVNode("div", {
+            class: "tasks-content",
+            id: "tasks-content"
+          }, [
+            createBaseVNode("div", {
+              class: "tasks-viewer",
+              id: "tasks-viewer",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "tasks-viewer-head" }, [
+                createBaseVNode("div", { class: "tasks-viewer-headline-wrap" }, [
+                  createBaseVNode("div", {
+                    class: "tasks-viewer-id",
+                    id: "tasks-viewer-id"
+                  }),
+                  createBaseVNode("div", {
+                    class: "tasks-viewer-headline",
+                    id: "tasks-viewer-headline"
+                  }, "Task")
+                ]),
+                createBaseVNode("div", { class: "tasks-viewer-status-wrap" }, [
+                  createBaseVNode("span", {
+                    class: "tasks-viewer-status",
+                    id: "tasks-viewer-status"
+                  })
+                ])
+              ]),
+              createBaseVNode("div", {
+                class: "tasks-viewer-tabs",
+                role: "tablist",
+                "aria-label": "Task views"
+              }, [
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "tasks-viewer-tab is-active",
+                  "data-view": "task",
+                  role: "tab",
+                  "aria-selected": "true"
+                }, "Task"),
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "tasks-viewer-tab",
+                  "data-view": "report",
+                  role: "tab",
+                  "aria-selected": "false"
+                }, "Report")
+              ]),
+              createBaseVNode("div", {
+                class: "tasks-viewer-body",
+                id: "tasks-viewer-body"
+              }, [
+                createBaseVNode("div", { class: "task-panel-loading" }, "Loading task…")
+              ])
+            ]),
+            createBaseVNode("div", {
+              class: "tasks-project-pane",
+              id: "tasks-project-pane",
+              hidden: ""
+            }),
+            createBaseVNode("div", {
+              class: "tasks-empty",
+              id: "tasks-empty"
+            }, [
+              createTextVNode("Select a task on the left, or click "),
+              createBaseVNode("strong", null, "+ New"),
+              createTextVNode(" to create one.")
+            ]),
+            createBaseVNode("form", {
+              class: "multi-agent-new tasks-new-form",
+              id: "multi-agent-new",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "multi-agent-new-head" }, "Create task"),
+              createBaseVNode("div", {
+                class: "multi-agent-new-parent",
+                id: "multi-agent-new-parent-chip",
+                hidden: ""
+              }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("↳ child of "),
+                  createBaseVNode("strong", { id: "multi-agent-new-parent-id" })
+                ]),
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "multi-agent-new-parent-clear",
+                  id: "multi-agent-new-parent-clear",
+                  title: "Clear parent"
+                }, "✕")
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("Headline "),
+                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
+                ]),
+                createBaseVNode("input", {
+                  id: "multi-agent-new-headline",
+                  type: "text",
+                  maxlength: "120",
+                  placeholder: "BLE plugin survey",
+                  required: ""
+                }),
+                createBaseVNode("span", {
+                  class: "multi-agent-new-counter",
+                  id: "multi-agent-new-headline-count"
+                }, "0 / 10 words")
+              ]),
+              createBaseVNode("div", { class: "multi-agent-new-grid" }, [
+                createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                  createBaseVNode("span", null, "Target"),
+                  createBaseVNode("select", { id: "multi-agent-new-to" })
+                ]),
+                createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                  createBaseVNode("span", null, "Project"),
+                  createBaseVNode("select", { id: "multi-agent-new-project" }, [
+                    createBaseVNode("option", { value: "" }, "(auto from context)"),
+                    createBaseVNode("option", { value: "__none__" }, "(none / unassigned)")
+                  ])
+                ])
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, "Brief"),
+                createBaseVNode("textarea", {
+                  id: "multi-agent-new-brief",
+                  rows: "4",
+                  placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
+                  required: ""
+                })
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("Depends on "),
+                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
+                ]),
+                createBaseVNode("textarea", {
+                  id: "multi-agent-new-needs",
+                  rows: "2",
+                  placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
+                })
+              ]),
+              createBaseVNode("details", {
+                class: "multi-agent-new-advanced",
+                id: "multi-agent-new-advanced"
+              }, [
+                createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced"),
+                createBaseVNode("div", { class: "multi-agent-new-advanced-body" }, [
+                  createBaseVNode("div", { class: "multi-agent-new-grid" }, [
+                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                      createBaseVNode("span", null, "Kind"),
+                      createBaseVNode("select", { id: "multi-agent-new-kind" }, [
+                        createBaseVNode("option", { value: "research" }, "research"),
+                        createBaseVNode("option", { value: "code" }, "code"),
+                        createBaseVNode("option", { value: "review" }, "review"),
+                        createBaseVNode("option", { value: "summarise" }, "summarise"),
+                        createBaseVNode("option", { value: "decide" }, "decide"),
+                        createBaseVNode("option", { value: "other" }, "other")
+                      ])
+                    ]),
+                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                      createBaseVNode("span", null, "From"),
+                      createBaseVNode("input", {
+                        id: "multi-agent-new-from",
+                        type: "text",
+                        value: "user"
+                      })
+                    ])
+                  ]),
+                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                    createBaseVNode("span", null, "Output format"),
+                    createBaseVNode("textarea", {
+                      id: "multi-agent-new-output",
+                      rows: "2",
+                      placeholder: "What 'done' looks like."
+                    })
+                  ]),
+                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                    createBaseVNode("span", null, "Context (one per line — file path, jira:KEY, or URL)"),
+                    createBaseVNode("textarea", {
+                      id: "multi-agent-new-context",
+                      rows: "2",
+                      placeholder: "Notes/Projects/...\njira:WAL-XX"
+                    })
+                  ])
+                ])
+              ]),
+              createBaseVNode("div", { class: "multi-agent-new-actions" }, [
+                createBaseVNode("span", {
+                  class: "multi-agent-new-status",
+                  id: "multi-agent-new-status"
+                }),
+                createBaseVNode("button", {
+                  class: "multi-agent-new-cancel",
+                  id: "multi-agent-new-cancel",
+                  type: "button"
+                }, "Cancel"),
+                createBaseVNode("button", {
+                  class: "multi-agent-new-submit",
+                  id: "multi-agent-new-submit",
+                  type: "submit"
+                }, "Dispatch")
+              ])
+            ])
+          ])
+        ], -1)
+      ])]);
+    };
+  }
+});
 /*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT */
 function isNothing(subject) {
   return typeof subject === "undefined" || subject === null;
@@ -23966,7 +25987,7 @@ const router = createRouter({
   routes: [
     { path: "/dashboard", component: _sfc_main$e },
     { path: "/chat", component: ChatPage },
-    { path: "/tasks", component: TasksPage },
+    { path: "/tasks", component: _sfc_main$c },
     { path: "/files", component: _sfc_main$a },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
@@ -25705,6 +27726,5321 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const pageStyles = String.raw`    :root {
+      /* Primary accent (#1E76FE) grading to dark navy. */
+      --bg-top: #1E76FE;
+      --bg-bottom: #060d1a;
+      --bg-spot-a: #1e76fe3d;
+      --bg-spot-b: #4a9bff33;
+      --text: #f0f4fb;
+      --muted: #a8b4c5;
+      --panel: #0b1220aa;
+      --border: #d8e4ff1f;
+      --accent: #9be7ff;
+      --good: #67f0b5;
+      --bad: #ff7f7f;
+      --warn: #ffc276;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html, body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    body {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1400px 700px at 15% -10%, var(--bg-spot-a), transparent 60%),
+        radial-gradient(900px 500px at 85% 10%, var(--bg-spot-b), transparent 65%),
+        linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: relative;
+      transition: background 320ms ease;
+    }
+
+    body.day-mode {
+      --bg-top: #1E76FE;
+      --bg-bottom: #060d1a;
+      --bg-spot-a: #1e76fe3d;
+      --bg-spot-b: #4a9bff33;
+    }
+
+    body.night-mode {
+      --bg-top: #0f3a80;
+      --bg-bottom: #02040a;
+      --bg-spot-a: #1e76fe24;
+      --bg-spot-b: #3a78c828;
+    }
+
+    body.night-mode .message {
+      color: #d2ddef;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      background-image: radial-gradient(#fff 0.5px, transparent 0.5px);
+      background-size: 3px 3px;
+      animation: drift 16s linear infinite;
+    }
+
+    @keyframes drift {
+      from { transform: translateY(0); }
+      to { transform: translateY(-12px); }
+    }
+
+    .stage {
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 42px 16px 90px;
+      position: relative;
+      z-index: 1;
+      overflow: hidden;
+      transition: width 180ms ease;
+    }
+    body.hide-header .repo-cta { display: none; }
+    body.hide-header .stage { padding-top: 12px; }
+
+    .hero {
+      text-align: center;
+      width: min(820px, 100%);
+      animation: rise 700ms ease-out both;
+    }
+
+    .logo-art {
+      margin: 0 auto 10px;
+      color: #dbe7ff;
+      filter: drop-shadow(0 8px 20px #00000040);
+    }
+    .logo-ship {
+      display: block;
+      margin: 0 auto;
+      color: #eaf2ff;
+      animation: bob 4s ease-in-out infinite;
+    }
+    .brand-name {
+      margin: 4px 0 16px;
+      text-align: center;
+      font-family: "Fraunces", Georgia, serif;
+      font-weight: 500;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      letter-spacing: 0.04em;
+      color: #eaf2ff;
+    }
+
+    @keyframes bob {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(18px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .time {
+      display: block;
+      width: 100%;
+      font-family: serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      font-feature-settings: "tnum";
+      text-align: center;
+      text-shadow: 0 10px 35px #00000055;
+      transition: text-shadow 280ms ease;
+    }
+
+    .time.ms-pulse {
+      text-shadow: 0 10px 40px #7dc5ff4d;
+    }
+
+    .date {
+      margin-top: 14px;
+      font-size: clamp(1rem, 2.4vw, 1.3rem);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .message {
+      margin-top: 28px;
+      font-size: clamp(1rem, 2.1vw, 1.35rem);
+      color: #e4ecf8;
+      font-weight: 500;
+    }
+    .quick-job {
+      margin: 20px auto 0;
+      width: min(720px, 100%);
+      max-width: 100%;
+      padding: 14px;
+      border: 1px solid #ffffff22;
+      border-radius: 16px;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff1a, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      display: grid;
+      gap: 12px;
+      text-align: left;
+    }
+    .quick-job-head {
+      display: grid;
+      gap: 3px;
+    }
+    .quick-job-head-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+    .quick-job-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.1rem, 2.2vw, 1.4rem);
+      letter-spacing: 0.01em;
+      color: #f4f8ff;
+      line-height: 1.1;
+    }
+    .quick-job-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c9daef;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .quick-jobs-next {
+      margin-top: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9fd6ff;
+      letter-spacing: 0.03em;
+    }
+    .quick-job-grid {
+      display: grid;
+      grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+    .quick-field {
+      border: 1px solid #ffffff1c;
+      border-radius: 12px;
+      background: #0c1624a6;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+    .quick-field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .quick-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #bfd4ef;
+    }
+    .quick-input,
+    .quick-prompt,
+    .quick-submit {
+      border: 0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      color: #eef4ff;
+      background: transparent;
+    }
+    .quick-input {
+      height: 42px;
+      width: 100%;
+      padding: 0 11px;
+      border-radius: 10px;
+      border: 1px solid #ffffff2e;
+      background: #ffffff09;
+      appearance: textfield;
+      -moz-appearance: textfield;
+    }
+    .quick-input::-webkit-outer-spin-button,
+    .quick-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    .quick-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+      padding: 0 6px 0 11px;
+      border-radius: 10px;
+      border: 1px solid #ffffff2e;
+      background: #ffffff09;
+    }
+    .quick-input-wrap .quick-input {
+      height: 100%;
+      flex: 1 1 auto;
+      min-width: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0;
+    }
+    .quick-input:focus-visible,
+    .quick-prompt:focus-visible {
+      outline: 1px solid #7dc5ff88;
+      outline-offset: 1px;
+    }
+    .quick-input-wrap:focus-within {
+      outline: 1px solid #7dc5ff88;
+      outline-offset: 1px;
+    }
+    .quick-input-wrap .quick-input:focus-visible {
+      outline: none;
+    }
+    .quick-time-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .quick-add {
+      height: 27px;
+      padding: 0 10px;
+      border: 1px solid #ffffff2c;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      color: #daebff;
+      background: #ffffff12;
+      cursor: pointer;
+      transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+    }
+    .quick-add:hover {
+      background: #ffffff22;
+      border-color: #ffffff44;
+      transform: translateY(-1px);
+    }
+    .quick-preview {
+      min-height: 1.2em;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #a8f1ca;
+    }
+    .quick-check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: fit-content;
+      min-height: 29px;
+      padding: 0 12px;
+      border: 1px solid #ff7f7f55;
+      border-radius: 999px;
+      background: #34181855;
+      color: #ff9b9b;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+      user-select: none;
+    }
+    .quick-check-inline {
+      position: static;
+      min-height: 28px;
+      padding: 0 10px;
+      flex: 0 0 auto;
+    }
+    .quick-check:hover {
+      transform: translateY(-1px);
+    }
+    .quick-check-inline:hover {
+      transform: none;
+    }
+    .quick-check:has(input:checked) {
+      background: #11342455;
+      border-color: #67f0b560;
+      color: #67f0b5;
+    }
+    .quick-check input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .quick-check:focus-within {
+      outline: 1px solid #7dc5ff88;
+      outline-offset: 2px;
+    }
+    .quick-prompt {
+      width: 100%;
+      min-height: 106px;
+      padding: 10px 11px;
+      resize: vertical;
+      border: 1px solid #ffffff2e;
+      border-radius: 10px;
+      background: #ffffff09;
+      line-height: 1.4;
+    }
+    .quick-prompt-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c3d6ef;
+    }
+    .quick-job-actions {
+      display: grid;
+      grid-template-columns: 170px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+    .quick-submit {
+      height: 42px;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid #3cb87980;
+      background: linear-gradient(180deg, #1f6f47d4 0%, #18563ace 100%);
+      color: #c8f8de;
+      font-weight: 600;
+      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease;
+    }
+    .quick-submit:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+    .quick-submit:disabled {
+      opacity: 0.72;
+      cursor: wait;
+      transform: none;
+      filter: none;
+    }
+    .quick-status {
+      min-height: 1.2em;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #cde0f7;
+      opacity: 0.95;
+    }
+    .quick-open-create,
+    .quick-back-jobs {
+      height: 33px;
+      padding: 0 12px;
+      border: 1px solid #ffffff2c;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      color: #daebff;
+      background: #ffffff12;
+      cursor: pointer;
+      transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+    }
+    .quick-open-create:hover,
+    .quick-back-jobs:hover {
+      background: #ffffff22;
+      border-color: #ffffff44;
+      transform: translateY(-1px);
+    }
+    .quick-form-foot {
+      border-top: 1px solid #ffffff1a;
+      padding-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .quick-jobs-list {
+      display: grid;
+      gap: 6px;
+      max-height: 170px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+    .quick-jobs-list-main {
+      max-height: 280px;
+    }
+    .quick-job-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      padding: 8px 10px;
+      border: 1px solid #ffffff1d;
+      border-radius: 10px;
+      background: #0b1422a8;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .quick-job-item-main {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+    .quick-job-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+      border: 0;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+      color: inherit;
+      cursor: pointer;
+    }
+    .quick-job-item-time {
+      color: #bde8ff;
+      white-space: nowrap;
+    }
+    .quick-job-item-name {
+      color: #d8e4f7;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      text-align: left;
+    }
+    .quick-job-item-cooldown {
+      color: #a8f1ca;
+      white-space: nowrap;
+    }
+    .quick-job-item-details {
+      border-top: 1px solid #ffffff17;
+      margin-top: 2px;
+      padding-top: 8px;
+      display: grid;
+      gap: 6px;
+      color: #c7d8ee;
+    }
+    .quick-job-prompt-full {
+      margin: 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: #070f1a;
+      border: 1px solid #ffffff14;
+      color: #e4eefb;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 180px;
+      overflow: auto;
+    }
+    .quick-job-delete {
+      align-self: center;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid #ff7f7f40;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #ffadad;
+      background: #3a141455;
+      cursor: pointer;
+      transition: background 0.16s ease, transform 0.16s ease, border-color 0.16s ease;
+    }
+    .quick-job-delete:hover {
+      background: #4d191970;
+      border-color: #ff8f8f6b;
+      transform: translateY(-1px);
+    }
+    .quick-job-delete:disabled {
+      opacity: 0.65;
+      cursor: wait;
+      transform: none;
+    }
+    .quick-jobs-empty {
+      padding: 8px 10px;
+      border: 1px dashed #ffffff22;
+      border-radius: 10px;
+      color: #b8cae3;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .quick-view-hidden {
+      display: none;
+    }
+    .multi-agent-panel {
+      margin: 16px auto 0;
+      width: min(720px, 100%);
+      padding: 14px;
+      border: 1px solid #ffffff22;
+      border-radius: 16px;
+      background:
+        radial-gradient(120% 100% at 0% 0%, #ffd07a18, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      display: grid;
+      gap: 12px;
+      text-align: left;
+    }
+    .multi-agent-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      gap: 10px;
+    }
+    .multi-agent-title {
+      font-family: "Fraunces", serif;
+      font-size: clamp(1.05rem, 2vw, 1.25rem);
+      color: #f4f8ff;
+      letter-spacing: 0.01em;
+    }
+    .multi-agent-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c9daef;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+    .multi-agent-refresh {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 10px;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 120ms;
+    }
+    .multi-agent-refresh:hover {
+      background: #14223680;
+    }
+    .multi-agent-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .multi-agent-cell {
+      border: 1px solid #ffffff1c;
+      border-radius: 10px;
+      background: #0c1624a6;
+      padding: 8px 10px;
+      display: grid;
+      gap: 4px;
+    }
+    .multi-agent-cell-name {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #d6e6ff;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .multi-agent-cell-counts {
+      display: flex;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    .multi-agent-count-open { color: #9be7ff; }
+    .multi-agent-count-waiting { color: #ffd58a; }
+    .multi-agent-count-done { color: #93e0a8; }
+    .multi-agent-count-failed { color: #ff9a9a; }
+    .multi-agent-count-archived { color: #b8a8d8; }
+    .multi-agent-count-zero { color: #5a6b85; }
+    .multi-agent-count-link {
+      cursor: pointer;
+      padding: 1px 4px;
+      margin: -1px -4px;
+      border-radius: 4px;
+      transition: background 100ms ease, filter 100ms ease;
+    }
+    .multi-agent-count-link:hover,
+    .multi-agent-count-link:focus-visible {
+      background: #ffffff10;
+      filter: brightness(1.15);
+      outline: none;
+    }
+    .multi-agent-extras {
+      display: grid;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #b8cae3;
+    }
+    .multi-agent-extras-line {
+      padding: 4px 8px;
+      border-left: 2px solid #ffd07a99;
+      background: #0c162466;
+      border-radius: 4px;
+    }
+    .multi-agent-extras-line.escalated {
+      border-left-color: #ff9a9a;
+    }
+    .multi-agent-extras-line.unreadable {
+      border-left-color: #ffaa44;
+      color: #ffcc88;
+    }
+    .multi-agent-extras-line.paused {
+      border-left-color: #7a9abf99;
+      color: #8ab0d0;
+    }
+    .multi-agent-head-actions {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .multi-agent-action {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 10px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 120ms;
+    }
+    .multi-agent-action:hover {
+      background: #14223680;
+    }
+    .multi-agent-action.is-active {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .multi-agent-tasks {
+      display: grid;
+      gap: 6px;
+    }
+    .multi-agent-tasks-head {
+      display: flex;
+      justify-content: space-between;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9daef;
+      padding: 0 4px;
+    }
+    .multi-agent-tasks-list {
+      display: grid;
+      gap: 4px;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .multi-agent-task-row {
+      border: 1px solid #ffffff1c;
+      border-radius: 8px;
+      background: #0c1624a6;
+      padding: 6px 10px;
+      cursor: pointer;
+      display: grid;
+      gap: 2px;
+      transition: background 120ms;
+    }
+    .multi-agent-task-row:hover {
+      background: #14223680;
+    }
+    .multi-agent-task-row-head {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .multi-agent-task-id { color: #d6e6ff; }
+    .multi-agent-task-agent { color: #ffd07a; }
+    .multi-agent-task-status {
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .multi-agent-task-status.is-open { color: #9be7ff; }
+    .multi-agent-task-status.is-waiting { color: #f0c674; }
+    .multi-agent-task-status.is-paused { color: #7a9abf; }
+    .multi-agent-task-status.is-done { color: #93e0a8; }
+    .multi-agent-task-status.is-failed { color: #ff9a9a; }
+    .multi-agent-task-summary {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.4;
+    }
+    .multi-agent-task-headline {
+      font-family: "Fraunces", serif;
+      font-size: 13px;
+      color: #f4f8ff;
+      line-height: 1.35;
+    }
+    .multi-agent-task-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .multi-agent-task-chat {
+      font-size: 11px;
+      color: #9bb1d0;
+      margin-top: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .multi-agent-task-time {
+      margin-left: auto;
+      color: #6a7e9b;
+    }
+    .multi-agent-task-row[role="button"]:focus-visible {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+    }
+    .multi-agent-task-row.is-expanded {
+      background: #14223680;
+      border-color: #ffd07a55;
+    }
+    .multi-agent-task-row.is-waiting-user {
+      border-left: 3px solid #f0c674;
+      background: #1c1d10b3;
+    }
+    .multi-agent-task-row.is-waiting-user:hover {
+      background: #25260fb3;
+    }
+    .multi-agent-tasks-section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #f0c674;
+      padding: 6px 4px 2px;
+    }
+    .multi-agent-tasks-section-label + .multi-agent-tasks-section-label,
+    .multi-agent-task-row + .multi-agent-tasks-section-label {
+      color: #6a7e9b;
+      margin-top: 4px;
+    }
+    .multi-agent-chain {
+      margin-top: 6px;
+      padding-top: 8px;
+      border-top: 1px dashed #ffffff1c;
+      display: grid;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c9daef;
+    }
+    .multi-agent-chain-card {
+      background: #0a1220a8;
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      padding: 6px 8px;
+      display: grid;
+      gap: 3px;
+    }
+    .multi-agent-chain-card.is-current {
+      border-color: #ffd07a99;
+      background: #1a2a44a8;
+    }
+    .multi-agent-chain-card-head {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .multi-agent-chain-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .multi-agent-chain-card-actions a,
+    .multi-agent-chain-card-actions button {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      padding: 3px 8px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: background 120ms;
+    }
+    .multi-agent-chain-card-actions a:hover,
+    .multi-agent-chain-card-actions button:hover {
+      background: #14223680;
+    }
+    .multi-agent-chain-section-label {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      margin-top: 4px;
+    }
+    .multi-agent-new {
+      display: grid;
+      gap: 8px;
+      padding: 0;
+      border: none;
+      background: transparent;
+    }
+    .multi-agent-new-head {
+      font-family: "Fraunces", serif;
+      color: #f4f8ff;
+      font-size: 14px;
+    }
+    .multi-agent-new-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 8px;
+    }
+    .multi-agent-new-field,
+    .multi-agent-new-block {
+      display: grid;
+      gap: 3px;
+    }
+    .multi-agent-new-field span,
+    .multi-agent-new-block span {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #c9daef;
+    }
+    .multi-agent-new-field input,
+    .multi-agent-new-field select,
+    .multi-agent-new-block textarea {
+      border: 1px solid #ffffff2a;
+      background: #0a1220a8;
+      color: #f4f8ff;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .multi-agent-new-block textarea,
+    .multi-agent-new-block input {
+      border: 1px solid #ffffff2a;
+      background: #0a1220a8;
+      color: #f4f8ff;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .multi-agent-new-block textarea {
+      resize: vertical;
+      min-height: 36px;
+    }
+    .multi-agent-new-hint {
+      text-transform: none;
+      letter-spacing: 0;
+      font-style: italic;
+      color: #6a7e9b;
+      margin-left: 4px;
+    }
+    .multi-agent-new-counter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+      align-self: flex-end;
+      margin-top: 2px;
+    }
+    .multi-agent-new-counter.is-over {
+      color: #ff9a9a;
+    }
+    .multi-agent-new-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    .multi-agent-new-status {
+      flex: 1;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9be7ff;
+    }
+    .multi-agent-new-status.is-error { color: #ff9a9a; }
+    .multi-agent-new-cancel,
+    .multi-agent-new-submit {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      transition: background 120ms;
+    }
+    .multi-agent-new-submit {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .multi-agent-new-cancel:hover { background: #14223680; }
+    .multi-agent-new-submit:hover { background: #355a8a; }
+    /* ▸ Advanced disclosure — remembered open/closed per session via JS */
+    .multi-agent-new-advanced {
+      margin-top: 4px;
+    }
+    .multi-agent-new-advanced-toggle {
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      user-select: none;
+      list-style: none;
+      padding: 4px 0;
+    }
+    .multi-agent-new-advanced-toggle::-webkit-details-marker { display: none; }
+    .multi-agent-new-advanced[open] .multi-agent-new-advanced-toggle { color: #9ab0cc; }
+    .multi-agent-new-advanced-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 6px;
+    }
+    /* Ligature suppression on JetBrains Mono prose-input surfaces.
+       Code blocks (pre, code) deliberately excluded — ligatures are useful there.
+       Defect 5 (WAL-84): JetBrains Mono calt ligatures mangle ... <= >= => during
+       live typing in textarea inputs. */
+    .multi-agent-new-block textarea,
+    .multi-agent-new-block input,
+    .multi-agent-new-field input,
+    .multi-agent-new-field select,
+    #chat-input {
+      font-variant-ligatures: none;
+    }
+    .settings-btn {
+      /* now rendered inside .tab-nav as gear icon — keep for ID reference */
+      display: none;
+    }
+    #dashboard-panel {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-bottom: 120px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .repo-cta {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 0 12px;
+      border-radius: 0;
+      text-decoration: none;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #f1f6ff;
+      background: linear-gradient(180deg, #ffffff18, #ffffff0d);
+      backdrop-filter: blur(6px);
+      border-bottom: 1px solid #ffffff22;
+      animation: ctaEnter 420ms ease-out both;
+      transition: background 0.18s ease;
+    }
+    .repo-cta:hover {
+      background: linear-gradient(180deg, #ffffff22, #ffffff12);
+    }
+    .repo-text {
+      opacity: 0.92;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .repo-star {
+      color: #ffe08f;
+      animation: starPulse 1.8s ease-in-out infinite;
+    }
+    @keyframes ctaEnter {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes starPulse {
+      0%, 100% { opacity: 0.78; }
+      50% { opacity: 1; }
+    }
+    .settings-modal {
+      position: fixed;
+      top: 94px;
+      right: 18px;
+      width: min(320px, calc(100vw - 36px));
+      z-index: 6;
+      border: 1px solid #d8e4ff20;
+      border-radius: 14px;
+      background: #0b1220b8;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 18px 36px #0000005a;
+      padding: 12px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: translateY(-8px) scale(0.98);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+    }
+    .settings-modal.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s;
+    }
+    .settings-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9eb5d6;
+      margin-bottom: 6px;
+    }
+    .settings-close {
+      border: none;
+      background: transparent;
+      color: #9eb5d6;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+    }
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 2px;
+      border-top: 1px solid #ffffff12;
+    }
+    .settings-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .setting-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      min-width: 0;
+    }
+    .setting-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .settings-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #c8d4e8;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .settings-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9eb5d6;
+      opacity: 0.9;
+      letter-spacing: 0.03em;
+    }
+    .settings-error-note {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #ff9b9b;
+      letter-spacing: 0.03em;
+      margin-top: 2px;
+    }
+    .hb-toggle {
+      border: 1px solid #ffffff2a;
+      background: transparent;
+      color: #dce7f8;
+      border-radius: 999px;
+      min-width: 92px;
+      padding: 7px 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.16s ease, opacity 0.16s ease;
+    }
+    .hb-toggle:hover {
+      transform: translateY(-1px);
+    }
+    .hb-toggle:disabled {
+      cursor: wait;
+      opacity: 0.72;
+      transform: none;
+    }
+    .hb-toggle.on {
+      background: #11342455;
+      border-color: #67f0b560;
+      color: #67f0b5;
+    }
+    .hb-toggle.off {
+      background: #34181855;
+      border-color: #ff7f7f55;
+      color: #ff9b9b;
+    }
+    .hb-config {
+      border: 1px solid #ffffff2a;
+      background: #ffffff0f;
+      color: #dce7f8;
+      border-radius: 999px;
+      min-width: 92px;
+      padding: 7px 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+    }
+    .hb-config:hover {
+      transform: translateY(-1px);
+      background: #ffffff1d;
+      border-color: #ffffff42;
+    }
+    .hb-card {
+      width: min(700px, 100%);
+      border: 1px solid #d8e4ff20;
+      border-radius: 16px;
+      background: #0b1220f2;
+      box-shadow: 0 20px 44px #00000066;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .hb-form {
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+    .hb-field {
+      display: grid;
+      gap: 6px;
+    }
+    .hb-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #bfd4ef;
+    }
+    .hb-input,
+    .hb-textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid #ffffff2e;
+      background: #ffffff09;
+      color: #eef4ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      padding: 10px 11px;
+    }
+    .hb-textarea {
+      min-height: 190px;
+      resize: vertical;
+      line-height: 1.4;
+    }
+    .hb-input:focus-visible,
+    .hb-textarea:focus-visible {
+      outline: 1px solid #7dc5ff88;
+      outline-offset: 1px;
+    }
+    .hb-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid #ffffff12;
+      padding-top: 12px;
+      flex-wrap: wrap;
+    }
+    .hb-status {
+      min-height: 1.2em;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #cde0f7;
+      opacity: 0.95;
+    }
+    .hb-buttons {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .hb-btn {
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .hb-btn:hover {
+      transform: translateY(-1px);
+    }
+    .hb-btn:disabled {
+      opacity: 0.7;
+      cursor: wait;
+      transform: none;
+      filter: none;
+    }
+    .hb-btn.ghost {
+      border: 1px solid #ffffff2c;
+      background: #ffffff10;
+      color: #daebff;
+    }
+    .hb-btn.solid {
+      border: 1px solid #3cb87980;
+      background: linear-gradient(180deg, #1f6f47d4 0%, #18563ace 100%);
+      color: #c8f8de;
+      font-weight: 600;
+    }
+    .hb-btn.solid:hover {
+      filter: brightness(1.06);
+    }
+    .info-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 7;
+      display: grid;
+      place-items: center;
+      background: #02050db0;
+      padding: 18px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+    }
+    .info-modal.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transition: opacity 0.18s ease, visibility 0s linear 0s;
+    }
+    .info-card {
+      width: min(980px, 100%);
+      max-height: min(82vh, 900px);
+      border: 1px solid #d8e4ff20;
+      border-radius: 16px;
+      background: #0b1220f2;
+      box-shadow: 0 20px 44px #00000066;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .info-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid #ffffff12;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #b8c9e5;
+      font-size: 12px;
+    }
+    .info-body {
+      padding: 10px 14px 14px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      scrollbar-width: thin;
+      scrollbar-color: #7fa6d5 #091222;
+    }
+    .info-section {
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      overflow: visible;
+      background: #0a1321;
+    }
+    .info-title {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ffffff12;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #9db4d6;
+    }
+    .info-json {
+      margin: 0;
+      padding: 10px;
+      max-height: none;
+      min-height: 0;
+      overflow: visible;
+      display: block;
+      white-space: pre;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #d7e3f5;
+      background: #060d18;
+      line-height: 1.5;
+      overscroll-behavior: auto;
+    }
+    .info-body::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+    .info-body::-webkit-scrollbar-track {
+      background: #091222;
+      border-radius: 999px;
+    }
+    .info-body::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #93c6ff, #668ebf);
+      border-radius: 999px;
+      border: 2px solid #091222;
+    }
+    .info-body::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, #a9d4ff, #789fce);
+    }
+
+    .dock-shell {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      width: min(1140px, calc(100% - 24px));
+      display: grid;
+      grid-template-columns: 84px 84px minmax(0, 1fr) 84px;
+      gap: 12px;
+      align-items: center;
+      z-index: 2;
+    }
+
+    .dock {
+      width: 100%;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      gap: 0;
+      border-radius: 26px;
+      border: 0;
+      background: #ffffff08;
+      backdrop-filter: blur(10px);
+      box-shadow: none;
+    }
+
+    .pill {
+      min-height: 54px;
+      flex: 1 1 0;
+      padding: 8px 10px;
+      border-radius: 0;
+      border: 0;
+      border-right: 0;
+      background: transparent;
+      color: #e7f0ff;
+      font-size: 12px;
+      letter-spacing: 0.01em;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 3px;
+    }
+    .pill:last-child {
+      border-right: 0;
+    }
+    .side-bubble {
+      width: 74px;
+      height: 74px;
+      border-radius: 999px;
+      background: #ffffff08;
+      backdrop-filter: blur(10px);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      color: #eef4ff;
+      line-height: 1.1;
+      padding: 8px;
+    }
+    .side-icon {
+      font-size: 13px;
+      opacity: 0.85;
+    }
+    .side-value {
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+    .side-label {
+      font-size: 10px;
+      opacity: 0.75;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 2px;
+    }
+    .pill-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #d6e2f5;
+      opacity: 0.75;
+    }
+    .pill-icon {
+      width: 14px;
+      min-width: 14px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1;
+      opacity: 0.9;
+    }
+    .pill-value {
+      font-size: 12px;
+      color: #f3f7ff;
+      font-weight: 500;
+      text-shadow: none;
+    }
+
+    .pill.ok { border-color: #67f0b542; }
+    .pill.ok .pill-value { color: #8bf7c6; }
+    .pill.warn { border-color: #ffc27652; }
+    .pill.warn .pill-value { color: #ffd298; }
+    .pill.bad { border-color: #ff7f7f47; }
+    .pill.bad .pill-value { color: #ffacac; }
+
+    /* ── Tab navigation ── */
+    .tab-nav {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-shrink: 0;
+      background: #ffffff08;
+      backdrop-filter: blur(8px);
+      border: 1px solid #ffffff14;
+      border-radius: 999px;
+      padding: 4px;
+      width: fit-content;
+    }
+    .tab-btn {
+      height: 32px;
+      padding: 0 18px;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #a8b8d0;
+      background: transparent;
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    }
+    .tab-btn:hover {
+      color: #d6e6f8;
+      background: #ffffff10;
+    }
+    .tab-btn-active {
+      background: #0e2040cc;
+      border-color: #ffffff22;
+      color: #eef4ff;
+    }
+    /* Must come AFTER .tab-btn / .tab-btn-active so the settings cog
+       overrides the shared sizing rather than being clobbered by it. */
+    .tab-btn-settings {
+      font-size: 22px;
+      padding: 0 12px;
+      line-height: 32px;
+      border-left: 1px solid #ffffff12;
+      margin-left: 2px;
+      border-radius: 0 999px 999px 0;
+    }
+    .tab-btn-split {
+      font-size: 18px;
+      padding: 0 12px;
+      line-height: 32px;
+      border-left: 1px solid #ffffff12;
+    }
+    .tab-btn-split[aria-pressed="true"] {
+      color: #7dc5ff;
+      background: #0e2040cc;
+      border-color: #ffffff22;
+    }
+    /* Default: show full label, hide short. Mobile media query swaps these. */
+    .tab-btn-label-short { display: none; }
+    @media (max-width: 640px) {
+      .tab-nav {
+        gap: 3px;
+        padding: 4px;
+        margin-bottom: 8px;
+      }
+      .tab-btn {
+        height: 36px;
+        padding: 0 14px;
+        font-size: 12px;
+        letter-spacing: 0.04em;
+      }
+      .tab-btn-settings {
+        font-size: 22px;
+        padding: 0 12px;
+        line-height: 36px;
+      }
+      .tab-btn-split {
+        font-size: 18px;
+        padding: 0 11px;
+        line-height: 36px;
+      }
+      .tab-btn-label-full { display: none; }
+      .tab-btn-label-short { display: inline; }
+    }
+
+    /* ── Chat panel ── */
+    .chat-panel {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 920px);
+      min-width: min(680px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+    }
+    .chat-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 10px;
+      border-bottom: 1px solid #ffffff12;
+      position: relative;
+    }
+    .chat-toolbar-left {
+      display: flex;
+      gap: 6px;
+    }
+    .chat-toolbar-btn {
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: transparent;
+      color: #a8b4c5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .chat-toolbar-btn:hover {
+      background: #ffffff10;
+      color: #eef4ff;
+    }
+    /* Toolbar chat-title input — sits inside
+       .chat-toolbar-left, immediately after the agent badge, so the
+       title reads alongside the agent. Hidden for empty chats — those
+       use #chat-new-title-input above the message box instead. The
+       placeholder mirrors what the chat WOULD auto-name to (preview
+       text, or "Untitled chat") so it reads like a suggestion. */
+    .chat-name-input {
+      flex: 0 1 240px;
+      min-width: 0;
+      max-width: 320px;
+      background: transparent;
+      color: #cfe3ff;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .chat-name-input::placeholder {
+      color: #5a7a9a;
+      font-style: italic;
+    }
+    .chat-name-input:hover {
+      border-color: #ffffff14;
+    }
+    .chat-name-input:focus {
+      outline: none;
+      border-color: #ffd07a99;
+      background: #0c1624a6;
+    }
+    /* New-chat title input — sits above the message textarea, only
+       visible while the chat has no messages. Commits via the same
+       submitChatRename mechanism. */
+    .chat-new-title-input {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff22;
+      border-radius: 8px;
+      padding: 6px 12px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 13px;
+    }
+    .chat-new-title-input::placeholder {
+      color: #6a7e9b;
+      font-style: italic;
+    }
+    .chat-new-title-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
+    }
+    /* Title input inside the chat-from-task mini-form on the task viewer.
+       Same shape as the Next form's headline input — single-line, full-
+       width, accent on focus. */
+    .task-panel-chat-title-input {
+      display: block;
+      width: 100%;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    .task-panel-chat-title-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
+    }
+    .chat-session-badge {
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      background: transparent;
+      color: #7a8698;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.02em;
+      padding: 3px 8px;
+      margin-left: auto;
+      margin-right: 6px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .chat-session-badge:hover {
+      background: #ffffff10;
+      color: #a8b4c5;
+    }
+    @media (max-width: 600px) {
+      .chat-session-badge { max-width: 140px; font-size: 9px; }
+    }
+    .chat-history-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 10px;
+      right: 10px;
+      background: #1a1e2a;
+      border: 1px solid #ffffff1a;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      z-index: 50;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .chat-history-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 8px 10px 8px 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6b7a90;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid #ffffff0d;
+    }
+    .chat-history-new {
+      border: 1px solid #ffffff1f;
+      background: #ffffff08;
+      color: #c8d4e5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      text-transform: none;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .chat-history-new:hover {
+      background: #ffffff14;
+      border-color: #ffffff33;
+    }
+    .chat-history-list {
+      padding: 4px;
+    }
+    .chat-history-row {
+      display: flex;
+      align-items: stretch;
+      gap: 4px;
+      border-radius: 6px;
+    }
+    .chat-history-row-active {
+      background: #ffffff08;
+      border-left: 2px solid #6e8efb;
+    }
+    .chat-history-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      padding: 8px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #c8d4e5;
+      text-align: left;
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 12px;
+      transition: background 0.12s;
+    }
+    .chat-history-item:hover {
+      background: #ffffff0d;
+    }
+    .chat-history-row-active .chat-history-item {
+      background: transparent;
+    }
+    .chat-history-active {
+      background: transparent;
+    }
+    .chat-history-sync-btn {
+      flex: 0 0 auto;
+      align-self: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 4px;
+      padding: 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: #ffffff05;
+      color: #c8d4e5;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      transition: background 0.12s, transform 0.12s;
+    }
+    .chat-history-sync-btn:hover {
+      background: #ffffff12;
+    }
+    .chat-history-sync-btn.is-syncing {
+      opacity: 0.6;
+      animation: chat-history-sync-spin 0.8s linear infinite;
+    }
+    .chat-history-rename-btn {
+      flex: 0 0 auto;
+      align-self: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 4px;
+      padding: 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: #ffffff05;
+      color: #c8d4e5;
+      cursor: pointer;
+      font-size: 13px;
+      line-height: 1;
+      opacity: 0;
+      transition: opacity 0.12s, background 0.12s;
+    }
+    .chat-history-row:hover .chat-history-rename-btn,
+    .chat-history-row-active .chat-history-rename-btn {
+      opacity: 1;
+    }
+    .chat-history-rename-btn:hover {
+      background: #ffffff12;
+    }
+    .chat-history-rename-input {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 4px 4px 4px 10px;
+      padding: 6px 8px;
+      border: 1px solid var(--accent, #7bd88f);
+      border-radius: 6px;
+      background: #0d1117;
+      color: #e5eaf3;
+      font: inherit;
+      outline: none;
+    }
+    @keyframes chat-history-sync-spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .chat-history-preview {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .chat-history-meta {
+      font-size: 10px;
+      color: #5a6a7e;
+    }
+    .chat-history-empty {
+      padding: 12px;
+      text-align: center;
+      font-size: 11px;
+      color: #5a6a7e;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: #7fa6d5 #091222;
+      position: relative;
+    }
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: #3a5a80;
+      border-radius: 999px;
+    }
+    .chat-empty {
+      margin: auto;
+      text-align: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #5a7a9a;
+      padding: 40px 20px;
+    }
+    .chat-picker-head {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: #c7d1e0;
+      margin-bottom: 4px;
+    }
+    .chat-picker-sub {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.02em;
+      text-transform: none;
+      color: #6a7c91;
+      margin-bottom: 16px;
+    }
+    .chat-picker-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .chat-picker-item {
+      text-align: left;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      background: #ffffff06;
+      color: #c7d1e0;
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      text-transform: none;
+      letter-spacing: 0;
+      transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+    }
+    .chat-picker-item:hover {
+      background: #ffffff0e;
+      border-color: #ffffff26;
+    }
+    .chat-picker-item-active {
+      background: linear-gradient(180deg, #2f5486, #24406a);
+      border-color: #7fb1f0;
+      color: #eef4ff;
+      box-shadow: 0 0 0 1px #7fb1f055, 0 6px 20px #1a3b6a55;
+    }
+    .chat-picker-item-title {
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    .chat-picker-item-desc {
+      font-size: 11px;
+      color: #8892a4;
+      line-height: 1.4;
+    }
+    .chat-picker-item-active .chat-picker-item-desc { color: #b8c7dc; }
+    .chat-picker-actions {
+      max-width: 480px;
+      margin: 18px auto 0;
+      padding-top: 14px;
+      border-top: 1px dashed #ffffff14;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .chat-picker-actions-hint {
+      font-size: 12px;
+      color: #6a7c91;
+      font-family: "Space Grotesk", sans-serif;
+    }
+    .chat-picker-task-btn {
+      padding: 8px 14px;
+      border: 1px solid #ffffff1f;
+      border-radius: 8px;
+      background: #ffffff0a;
+      color: #c7d1e0;
+      cursor: pointer;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.02em;
+      transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+    }
+    .chat-picker-task-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #2f5486, #24406a);
+      border-color: #7fb1f0;
+      color: #eef4ff;
+    }
+    .chat-picker-task-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .chat-agent-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border: 1px solid #ffffff14;
+      border-radius: 6px;
+      background: #ffffff06;
+      color: #a8b4c5;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
+    .chat-agent-badge[data-locked="0"] {
+      color: #7a8698;
+      border-style: dashed;
+    }
+    @media (max-width: 600px) {
+      .chat-agent-badge { max-width: 120px; font-size: 10px; }
+    }
+    .chat-send:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .chat-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      animation: rise 200ms ease-out both;
+    }
+    .chat-msg-text {
+      max-width: 88%;
+    }
+    .chat-msg-user {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .chat-msg-assistant {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+    .chat-msg-role {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      opacity: 0.55;
+      padding: 0 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chat-msg-pill {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #ffffff14;
+      border: 1px solid #ffffff22;
+      color: #9ab6d6;
+      opacity: 0.9;
+    }
+    .chat-msg-user-pending .chat-msg-text {
+      opacity: 0.6;
+    }
+    .chat-msg-text {
+      padding: 10px 14px;
+      border-radius: 14px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      word-break: break-word;
+    }
+    .chat-msg-user .chat-msg-text {
+      background: linear-gradient(135deg, #1a4a7a, #0f3060);
+      border: 1px solid #2a6aaa44;
+      color: #d8eeff;
+      border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .chat-msg-assistant .chat-msg-text {
+      background: #0b1828cc;
+      border: 1px solid #ffffff18;
+      color: #e4eefb;
+      border-bottom-left-radius: 4px;
+    }
+    .chat-msg-text code {
+      background: #ffffff15;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    .chat-msg-text pre {
+      background: #00000040;
+      padding: 8px 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 6px 0;
+    }
+    .chat-msg-text pre code {
+      background: none;
+      padding: 0;
+    }
+    .chat-msg-text strong { color: #fff; }
+    .chat-msg-text h3, .chat-msg-text h4, .chat-msg-text h5 {
+      margin: 8px 0 4px;
+      font-size: 13px;
+      color: #fff;
+    }
+    .chat-msg-text ul {
+      margin: 4px 0;
+      padding-left: 18px;
+    }
+    .chat-msg-text li { margin: 2px 0; }
+    .chat-msg-text ul.chat-msg-bullets {
+      margin: 2px 0;
+      padding-left: 20px;
+      list-style: disc;
+    }
+    .chat-msg-text ul.chat-msg-bullets > li {
+      margin: 6px 0;
+      line-height: 1.45;
+    }
+    .chat-msg-text ul.chat-msg-bullets > li.chat-msg-bullet-raw {
+      list-style: none;
+      margin-left: -20px;
+    }
+    .chat-msg-streaming .chat-msg-text::after {
+      content: "▋";
+      display: inline-block;
+      color: var(--accent);
+      animation: caret 0.8s step-end infinite;
+      margin-left: 2px;
+    }
+    .chat-input-area {
+      flex-shrink: 0;
+      padding: 10px 12px 12px;
+      border-top: 1px solid #ffffff12;
+      background: #080f1c66;
+    }
+    .chat-task-host {
+      flex-shrink: 0;
+      max-height: 50%;
+      overflow-y: auto;
+      padding: 8px 12px;
+      border-top: 1px solid #ffffff12;
+      background: #050b16;
+    }
+    .chat-task-host .multi-agent-new.is-in-chat {
+      margin: 0;
+      border: 1px solid #ffffff14;
+    }
+    .chat-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      border: 1px solid #ffffff2e;
+      border-radius: 14px;
+      background: #ffffff09;
+      padding: 8px 8px 8px 12px;
+      transition: border-color 0.18s ease;
+    }
+    .chat-form:focus-within {
+      border-color: #7dc5ff55;
+    }
+    .chat-input {
+      flex: 1;
+      border: 0;
+      background: transparent;
+      color: #eef4ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.5;
+      resize: none;
+      max-height: 160px;
+      overflow-y: auto;
+      padding: 2px 0;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .chat-input::placeholder {
+      color: #4a6a8a;
+    }
+    .chat-input:focus {
+      outline: none;
+    }
+    .chat-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+      align-items: stretch;
+    }
+    .chat-send,
+    .chat-cancel,
+    .chat-interrupt,
+    .chat-mic {
+      flex-shrink: 0;
+      flex-grow: 0;
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-send {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 15px;
+      line-height: 1;
+      font-weight: 700;
+    }
+    .chat-send[hidden],
+    .chat-cancel[hidden],
+    .chat-interrupt[hidden],
+    .chat-mic[hidden] {
+      display: none;
+    }
+    .chat-interrupt {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
+      border: 1px solid #ffb36655;
+      background: #3a220055;
+      color: #ffcf99;
+    }
+    .chat-interrupt:hover {
+      transform: translateY(-1px);
+      background: #4a2a0070;
+      border-color: #ffcf9966;
+    }
+    .chat-interrupt:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .chat-send {
+      border: 1px solid #3cb87980;
+      background: linear-gradient(180deg, #1f6f47d4 0%, #18563ace 100%);
+      color: #c8f8de;
+      font-weight: 600;
+    }
+    .chat-send:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.06);
+    }
+    .chat-send:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+      filter: none;
+    }
+    .chat-cancel {
+      border: 1px solid #ff7f7f55;
+      background: #34181855;
+      color: #ff9b9b;
+    }
+    .chat-cancel:hover {
+      transform: translateY(-1px);
+      background: #4d191970;
+      border-color: #ff9b9b66;
+    }
+    .chat-mic {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+      border: 1px solid #7dc5ff33;
+      background: #0a1f3533;
+      color: #7dc5ff;
+    }
+    .chat-mic:hover {
+      transform: translateY(-1px);
+      background: #0f2a4a55;
+      border-color: #7dc5ff55;
+    }
+    .chat-mic.recording {
+      border-color: #ff6b6b88;
+      background: #3a111155;
+      color: #ff9b9b;
+      animation: mic-pulse 1.2s ease-in-out infinite;
+    }
+    .chat-mic.transcribing {
+      border-color: #ffb36644;
+      background: #2a1a0044;
+      color: #ffd09b;
+      cursor: not-allowed;
+      animation: none;
+    }
+    .chat-mic:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.45); }
+    }
+    .chat-msg-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: #7a9aba;
+      padding: 2px 4px;
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      justify-content: space-between;
+    }
+    .chat-msg-meta-label {
+      display: inline-flex;
+      align-items: center;
+    }
+    .chat-msg-thinking .chat-msg-meta-label {
+      animation: caret 1.4s step-end infinite;
+    }
+    .chat-msg-background .chat-msg-meta-label {
+      animation: caret 2s step-end infinite;
+    }
+    .chat-msg-thinking { color: #9ab6d6; }
+    .chat-msg-error .chat-msg-text {
+      border-color: #ff7f7f55;
+      background: #2b141466;
+      color: #ffc2c2;
+    }
+    .chat-msg-stop-inline {
+      appearance: none;
+      cursor: pointer;
+      padding: 2px 10px;
+      border-radius: 4px;
+      background: #3a121266;
+      color: #ff8a8a;
+      border: 1px solid #ff4d4d88;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      line-height: 1.4;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      transition: transform 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+    }
+    .chat-msg-stop-inline:hover {
+      background: #5a1a1a90;
+      border-color: #ff4d4d;
+      transform: translateY(-1px);
+    }
+    .chat-msg-stop-inline:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Files panel ── */
+    /* Width matches the Tasks panel. Both pages share the same
+       picker-on-left, viewer-on-right shape, so they render at the
+       same width on large screens. The min/max-width rules below clamp
+       identically.
+
+       container-type: inline-size lets the inner split-collapse rules
+       react to THIS panel's width rather than the viewport — so a
+       split-screen or sidebar browser window collapses the picker
+       correctly even when the OS viewport is wide. */
+    .files-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1300px);
+      min-width: min(680px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+      container-type: inline-size;
+      container-name: files-panel;
+    }
+    /* ── Tasks panel ── */
+    .tasks-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1300px);
+      min-width: min(680px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      container-type: inline-size;
+      container-name: tasks-panel;
+      overflow: hidden;
+    }
+    /* WAL-63 Phase 2: top-level Tasks view tabs (Current / Projects / All
+       tasks). Sits above the existing status-filter chip row. Active tab
+       carries a brighter underline so the structural split between view
+       (which list) and filter (what's in this list) reads at a glance. */
+    .tasks-view-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 10px 0;
+      border-bottom: 1px solid #ffffff10;
+    }
+    .tasks-view-tab {
+      border: none;
+      background: transparent;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      padding: 6px 14px 8px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: color 120ms, border-color 120ms;
+    }
+    .tasks-view-tab:hover { color: #cfe3ff; }
+    .tasks-view-tab.is-active {
+      color: #ffe7b8;
+      border-bottom-color: #ffd07a;
+    }
+    /* Current view: project group cards. Each project is a collapsible
+       section; rows inside carry status colour dots so the inbox reads at a
+       glance. Grouping by project replaces the flat picker for the Current
+       inbox; the All-tasks view still uses the legacy tree. */
+    .tasks-current {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 10px 12px;
+      overflow-y: auto;
+    }
+    .tasks-current-empty {
+      padding: 24px;
+      text-align: center;
+      color: #5a7a9a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .tasks-current-group {
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      background: #0c1624a6;
+      overflow: hidden;
+    }
+    .tasks-current-group-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #14223680;
+      border-bottom: 1px solid #ffffff12;
+      cursor: pointer;
+      user-select: none;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #cfe3ff;
+    }
+    .tasks-current-group-name {
+      flex: 1;
+      letter-spacing: 0.04em;
+    }
+    .tasks-current-group-count {
+      color: #8aa0bd;
+      font-size: 10px;
+    }
+    .tasks-current-group-chevron {
+      color: #8aa0bd;
+      font-size: 11px;
+    }
+    .tasks-current-group.is-collapsed .tasks-current-group-body { display: none; }
+    .tasks-current-group.is-collapsed .tasks-current-group-chevron::before { content: "▸"; }
+    .tasks-current-group:not(.is-collapsed) .tasks-current-group-chevron::before { content: "▾"; }
+    .tasks-current-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #ffffff08;
+      transition: background 120ms;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+    }
+    .tasks-current-row:last-child { border-bottom: none; }
+    .tasks-current-row:hover { background: #ffffff0a; }
+    .tasks-current-row.is-active {
+      background: #1c3a644d;
+      border-left: 2px solid #9be7ff;
+      padding-left: 10px;
+    }
+    .tasks-current-row-dot {
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #5a7a9a;
+      margin-top: 5px; /* align with the title baseline on the first line */
+    }
+    .tasks-current-row-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-current-row-sub {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .tasks-current-row-id {
+      flex-shrink: 0;
+      color: #6a8cb0;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .tasks-current-row.status-done .tasks-current-row-dot { background: #6fcf97; }
+    .tasks-current-row.status-failed .tasks-current-row-dot { background: #eb5757; }
+    .tasks-current-row.status-waiting-user .tasks-current-row-dot { background: #f0c674; }
+    .tasks-current-row.status-waiting-task .tasks-current-row-dot { background: #f2994a; }
+    .tasks-current-row.status-waiting-limits .tasks-current-row-dot { background: #e0e0e0; }
+    .tasks-current-row.status-waiting-other .tasks-current-row-dot { background: #b0b0b0; }
+    .tasks-current-row.status-claimed .tasks-current-row-dot { background: #56ccf2; }
+    .tasks-current-row.status-open .tasks-current-row-dot { background: #4a5668; }
+    .tasks-current-row-title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #e4eefb;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+    .tasks-current-row-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      color: #8aa0bd;
+      font-size: 10px;
+      text-align: right;
+      white-space: nowrap;
+    }
+    /* Multi-select close: per-row checkbox and group-head select-all.
+       On touch/coarse-pointer devices (mobile) hide checkboxes by default;
+       they appear only when long-press activates multi-select mode. */
+    .current-row-select, .current-group-select-all {
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      margin-top: 3px;
+      cursor: pointer;
+      accent-color: #56ccf2;
+    }
+    @media (pointer: coarse) {
+      .current-row-select, .current-group-select-all { display: none; }
+      #tasks-tree.is-multiselect-active .current-row-select,
+      #tasks-tree.is-multiselect-active .current-group-select-all { display: block; }
+    }
+    /* Bulk-action bar — sticks above the task list when ≥1 row is selected. */
+    .tasks-bulk-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: #1c3a64cc;
+      border-bottom: 1px solid #9be7ff40;
+      flex-wrap: wrap;
+    }
+    .bulk-bar-count {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9be7ff;
+      flex-shrink: 0;
+    }
+    .bulk-bar-reason {
+      flex: 1;
+      min-width: 140px;
+      background: #0c1624;
+      border: 1px solid #2d4a6a;
+      border-radius: 4px;
+      color: #c8d4e5;
+      font-size: 11px;
+      padding: 3px 7px;
+    }
+    .bulk-bar-close {
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+    .bulk-bar-clear, .bulk-bar-done {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: transparent;
+      border: 1px solid #2d4a6a;
+      border-radius: 4px;
+      color: #8aa0bd;
+      cursor: pointer;
+    }
+    .bulk-bar-clear:hover, .bulk-bar-done:hover { background: #ffffff0a; }
+    /* Done button only appears on touch/mobile to exit multi-select mode. */
+    .bulk-bar-done { display: none; }
+    @media (pointer: coarse) { .bulk-bar-done { display: inline-block; } }
+    .bulk-bar-status {
+      font-size: 11px;
+      color: #8aa0bd;
+    }
+    .bulk-bar-status.is-ok { color: #6fcf97; }
+    .bulk-bar-status.is-error { color: #eb5757; }
+    /* Projects placeholder — kept for compatibility but unused after Phase 4
+       replaced the placeholder with the live card grid below. */
+    .tasks-projects-placeholder {
+      padding: 32px 24px;
+      text-align: center;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      line-height: 1.6;
+    }
+    .tasks-projects-placeholder strong { color: #cfe3ff; }
+    /* WAL-63 Phase 4: project card grid in the Projects view sidebar. One
+       card per Notes/Projects/<slug>/ folder (plus an Unassigned card when
+       un-tagged tasks exist). Counts row mirrors the plan's legend. */
+    .tasks-projects-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 10px 12px;
+      overflow-y: auto;
+    }
+    .tasks-project-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      background: #0c1624a6;
+      cursor: pointer;
+      text-align: left;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+      transition: background 120ms, border-color 120ms;
+    }
+    .tasks-project-card:hover {
+      background: #14223680;
+      border-color: #ffffff22;
+    }
+    .tasks-project-card.is-active {
+      background: #1c3a644d;
+      border-color: #9be7ff;
+    }
+    .tasks-project-card-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-card-name {
+      flex: 1;
+      color: #ffe7b8;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+    }
+    .tasks-project-card-jira, .tasks-project-card-status {
+      padding: 1px 6px;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tasks-project-card-jira {
+      background: #2a4972;
+      color: #cfe3ff;
+    }
+    .tasks-project-card-status {
+      background: #1a3322;
+      color: #6fcf97;
+    }
+    .tasks-project-card-slug {
+      color: #8aa0bd;
+      font-size: 10px;
+    }
+    .tasks-project-card-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .tasks-project-card-counts .count {
+      font-size: 10px;
+      letter-spacing: 0.03em;
+      color: #8aa0bd;
+    }
+    .tasks-project-card-counts .count-active { color: #56ccf2; }
+    .tasks-project-card-counts .count-done { color: #6fcf97; }
+    .tasks-project-card-counts .count-stuck { color: #eb5757; }
+    .tasks-project-card-counts .count-closed { color: #5a7a9a; }
+    .tasks-project-card-foot {
+      display: flex;
+      justify-content: flex-end;
+      color: #5a7a9a;
+      font-size: 10px;
+    }
+    /* Project page right-pane container — replaces the task viewer when
+       the user drills into a project card. */
+    .tasks-project-pane {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 20px;
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      color: #cfe3ff;
+    }
+    .tasks-project-head {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #ffffff14;
+    }
+    .tasks-project-head-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-title {
+      flex: 1;
+      font-family: "Fraunces", serif;
+      font-size: 22px;
+      color: #ffe7b8;
+      letter-spacing: 0.01em;
+    }
+    .tasks-project-jira, .tasks-project-status {
+      padding: 2px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .tasks-project-jira { background: #2a4972; color: #cfe3ff; }
+    .tasks-project-status { background: #1a3322; color: #6fcf97; }
+    .tasks-project-slug {
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .tasks-project-metrics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 6px;
+    }
+    .tasks-project-metrics .metric {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-project-metrics .metric-label {
+      font-size: 10px;
+      color: #5a7a9a;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .tasks-project-metrics .metric-value {
+      color: #ffe7b8;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+    }
+    .tasks-project-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .tasks-project-hide-toggle {
+      cursor: pointer;
+      gap: 6px;
+    }
+    /* WAL-63 Phase 4a: documents shelf — sits between header and leaves. */
+    .tasks-project-docs {
+      margin: 14px 0;
+    }
+    .tasks-project-docs-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #5a7a9a;
+      margin-bottom: 8px;
+    }
+    .tasks-project-docs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 10px;
+    }
+    .tasks-project-doc-card {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 12px;
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      cursor: pointer;
+      text-align: left;
+      font-family: "Space Grotesk", -apple-system, sans-serif;
+      font-size: 12px;
+      transition: background 120ms, border-color 120ms;
+    }
+    .tasks-project-doc-card:hover {
+      background: #14223680;
+      border-color: #ffd07a55;
+    }
+    .tasks-project-doc-card.kind-primary { border-left: 3px solid #9be7ff; }
+    .tasks-project-doc-card.kind-fdp { border-left: 3px solid #ffd07a; }
+    .tasks-project-doc-card.kind-other { border-left: 3px solid #5a7a9a; }
+    .tasks-project-doc-card-title {
+      font-family: "Fraunces", serif;
+      font-size: 14px;
+      color: #ffe7b8;
+    }
+    .tasks-project-doc-card-desc {
+      color: #b8cae3;
+      line-height: 1.45;
+    }
+    .tasks-project-doc-card-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #8aa0bd;
+    }
+    .tasks-project-docs-other {
+      margin-top: 10px;
+    }
+    .tasks-project-docs-other > summary {
+      cursor: pointer;
+      color: #8aa0bd;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 6px 0;
+    }
+    .tasks-project-docs-other > summary:hover { color: #cfe3ff; }
+    .tasks-project-docs-other[open] > summary { color: #cfe3ff; }
+    /* Project page sections — leaves, families, closed. */
+    .tasks-project-section {
+      margin-top: 18px;
+    }
+    .tasks-project-section-head {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #ffd07a;
+      margin-bottom: 8px;
+    }
+    .tasks-project-trees {
+      border: 1px solid #ffffff14;
+      border-radius: 8px;
+      padding: 6px 8px;
+      background: #0c1624a6;
+    }
+    .tasks-project-closed > summary {
+      cursor: pointer;
+    }
+    .tasks-project-closed[open] > summary {
+      margin-bottom: 8px;
+    }
+    .tasks-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      border-bottom: 1px solid #ffffff12;
+      flex-wrap: wrap;
+    }
+    .tasks-toolbar-left {
+      display: flex;
+      gap: 6px;
+    }
+    .tasks-toolbar-right {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      margin-left: auto;
+    }
+    .tasks-toolbar-btn {
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: transparent;
+      color: #a8b4c5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      padding: 3px 10px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .tasks-toolbar-btn:hover {
+      background: #ffffff10;
+      color: #eef4ff;
+    }
+    .tasks-filter-chips {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
+    .tasks-filter-chip {
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: transparent;
+      color: #7a8698;
+      padding: 3px 9px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .tasks-filter-chip:hover {
+      background: #ffffff10;
+      color: #eef4ff;
+    }
+    .tasks-filter-chip.is-active {
+      background: #1c3a64aa;
+      color: #f4f8ff;
+      border-color: #9be7ff66;
+    }
+    /* Picker toggle is just another toolbar button — desktop hides it
+       (both panes are always side-by-side); mobile shows it as the way
+       back to the list when the viewer is full-width. */
+    .tasks-picker-toggle {
+      display: none;
+    }
+    .tasks-split {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .tasks-sidebar {
+      width: 320px;
+      min-width: 240px;
+      border-right: 1px solid #ffffff12;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    /* ── Four attention tiers (Measure A′, WAL-72 Phase 3W) ────────────────
+       Replaces the single "Awaiting your input" widget. Each tier has its
+       own accent colour and glyph; counts are never summed. The container
+       (#tasks-user-blocked) is shared; the content is regenerated by
+       renderAttentionTiers(). Same max-height / overflow guard as before. */
+    .tasks-user-blocked {
+      border-bottom: 1px solid #ffffff14;
+      background: #141820;
+      padding: 8px 10px 6px;
+      flex-shrink: 0;
+      /* Same guard as WAL-76: cap height so the widget never crowds the
+         task tree below it. (2026-08-27) */
+      max-height: 40vh;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+    @container tasks-panel (max-width: 1199px) {
+      .tasks-user-blocked { max-height: 45vh; }
+    }
+    /* Shared tier-head base */
+    .tasks-tier-head {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    /* Add top gap when a tier-head follows tier rows */
+    .tasks-tier-row + .tasks-tier-head { margin-top: 8px; }
+    .tasks-tier-head-unclassified { color: #e8c87a; }
+    .tasks-tier-head-failed  { color: #ff9a9a; }
+    .tasks-tier-head-blocked { color: #e8a44a; }
+    .tasks-tier-head-paused  { color: #7a9abf; }
+    .tasks-tier-head-reports { color: #93e0a8; }
+    /* Tier head always rendered (even at zero) — gap between tiers */
+    .tasks-tier-head + .tasks-tier-head { margin-top: 8px; }
+    /* Shared tier-row base */
+    .tasks-tier-row {
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+      padding: 3px 2px;
+      cursor: pointer;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .tasks-tier-row-unclassified { color: #d4b870; }
+    .tasks-tier-row-unclassified:hover { background: #e8c87a14; }
+    .tasks-tier-row-failed  { color: #e8b0b0; }
+    .tasks-tier-row-failed:hover  { background: #ff9a9a14; }
+    .tasks-tier-row-blocked { color: #d4a86a; }
+    .tasks-tier-row-blocked:hover { background: #e8a44a14; }
+    .tasks-tier-row-paused  { color: #8ab0d0; }
+    .tasks-tier-row-paused:hover  { background: #7a9abf14; }
+    .tasks-tier-row-reports { color: #a0d8b0; }
+    .tasks-tier-row-reports:hover { background: #93e0a814; }
+    /* "+ N more" link row */
+    .tasks-tier-more {
+      font-size: 10px;
+      opacity: 0.6;
+      padding: 2px 4px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    /* Reports tier: per-row checkbox + select-all in the heading */
+    .tasks-tier-row input[type="checkbox"].tier-report-select,
+    .tasks-tier-head input[type="checkbox"].tier-report-select-all {
+      flex-shrink: 0;
+      cursor: pointer;
+      accent-color: #93e0a8;
+      margin-right: 2px;
+      pointer-events: all;
+    }
+    .tasks-tier-id {
+      opacity: 0.7;
+      flex-shrink: 0;
+    }
+    .tasks-tier-label {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    /* Kelly 2026-08-26: on a phone a single ellipsised line told you nothing.
+       Let labels wrap to two lines on narrow viewports. */
+    @container tasks-panel (max-width: 1199px) {
+      .tasks-tier-row { align-items: flex-start; }
+      .tasks-tier-label {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.35;
+      }
+    }
+    /* Measure F: queued-children badge — replaces the status pill for done
+       parents that have non-terminal descendants. */
+    .tasks-tree-queued-badge {
+      flex-shrink: 0;
+      font-size: 9px;
+      font-weight: 600;
+      color: #9be7ff;
+      border: 1px solid #9be7ff44;
+      border-radius: 999px;
+      padding: 1px 6px;
+      white-space: nowrap;
+    }
+    /* Measure F: node that has queued descendants — highlight the border
+       like an active leaf so the queued work is visually prominent. */
+    .tasks-tree-row.has-queued {
+      border-left: 2px solid #9be7ff66;
+      padding-left: 6px;
+    }
+    .tasks-tree {
+      padding: 6px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .tasks-loading {
+      padding: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #5a7a9a;
+    }
+    .tasks-tree-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #c8d4e5;
+      transition: background 0.12s;
+    }
+    .tasks-tree-row:hover { background: #ffffff0d; }
+    /* Top-level parent rows in the picker tree get a lighter background
+       so the family hierarchy is easier to scan. */
+    .tasks-tree-row.is-root {
+      background: #ffffff05;
+    }
+    .tasks-tree-row.is-active {
+      background: #1c3a644d;
+      border-left: 2px solid #9be7ff;
+      padding-left: 6px;
+    }
+    .tasks-tree-row.is-waiting-user {
+      background: #f0c67414;
+      border-left: 2px solid #f0c674;
+      padding-left: 6px;
+    }
+    .tasks-tree-row.is-paused {
+      background: #7a9abf14;
+      border-left: 2px solid #7a9abf;
+      padding-left: 6px;
+      opacity: 0.8;
+    }
+    /* WAL-63 Phase 1: closed tasks recede in the picker. The headline, ids,
+       and status pill all fade so the user-attention overlay reads at a
+       glance without an extra column. Hover and active highlights still
+       override so the row stays interactive. */
+    .tasks-tree-row.is-closed {
+      opacity: 0.45;
+    }
+    .tasks-tree-row.is-closed .tasks-tree-headline {
+      text-decoration: line-through;
+      text-decoration-color: #5a7a9a99;
+    }
+    .tasks-tree-row.is-closed:hover { opacity: 0.75; }
+    /* Selected-closed rows: keep the muted look so the user-attention
+       overlay still reads when a closed task is open in the viewer.
+       The .is-active border + background still apply for affordance. */
+    .tasks-tree-row.is-closed.is-active { opacity: 0.55; }
+    .tasks-tree-indent {
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .tasks-tree-chevron {
+      flex-shrink: 0;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      border: none;
+      background: transparent;
+      color: #8aa0bd;
+      font-size: 14px;
+      line-height: 24px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: color 120ms, background 120ms;
+    }
+    .tasks-tree-chevron:hover {
+      color: #cfe3ff;
+      background: #ffffff14;
+    }
+    .tasks-tree-chevron.is-expanded {
+      color: #ffd07a;
+    }
+    .tasks-tree-chevron-spacer {
+      display: inline-block;
+      flex-shrink: 0;
+      width: 24px;
+    }
+    .tasks-tree-marker {
+      flex-shrink: 0;
+      width: 12px;
+      color: #5a7a9a;
+      text-align: center;
+    }
+    .tasks-tree-titlecol {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1px;
+      overflow: hidden;
+    }
+    .tasks-tree-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .tasks-tree-id {
+      flex-shrink: 0;
+      color: #6a8cb0;
+      font-size: 10px;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+    .tasks-tree-agent {
+      flex-shrink: 0;
+      color: #c8a3ff;
+      font-size: 10px;
+    }
+    .tasks-tree-status {
+      flex-shrink: 0;
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 1px 6px;
+      border-radius: 999px;
+      border: 1px solid #ffffff22;
+      white-space: nowrap;
+    }
+    .tasks-tree-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .tasks-tree-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-tree-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
+    .tasks-tree-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .tasks-tree-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .tasks-tree-headline {
+      flex: 1 1 auto;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: #e4eefb;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+    }
+    @media (max-width: 640px) {
+      .tasks-tree-id {
+        font-size: 9px;
+      }
+      .tasks-tree-agent { display: none; }
+    }
+    .tasks-tree-empty {
+      padding: 16px;
+      color: #5a7a9a;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      text-align: center;
+    }
+    .tasks-tree-section {
+      padding: 10px 10px 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .tasks-content {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+    .tasks-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 32px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #5a7a9a;
+      text-align: center;
+      letter-spacing: 0.03em;
+    }
+    .tasks-empty strong { color: #cfe3ff; }
+    .tasks-viewer {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+    }
+    .tasks-viewer-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-bottom: 1px solid #ffffff12;
+    }
+    .tasks-viewer-headline-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      overflow: hidden;
+    }
+    .tasks-viewer-id {
+      flex-shrink: 0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .tasks-viewer-headline {
+      flex: 1;
+      min-width: 0;
+      font-family: "Fraunces", serif;
+      font-size: 15px;
+      color: #f4f8ff;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      border-radius: 4px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background 120ms;
+    }
+    .tasks-viewer-headline.is-editable {
+      cursor: text;
+    }
+    .tasks-viewer-headline.is-editable:hover {
+      background: #ffffff0a;
+    }
+    .tasks-viewer-headline-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0c1624a6;
+      color: #f4f8ff;
+      border: 1px solid #ffd07a99;
+      border-radius: 4px;
+      padding: 1px 4px;
+      font-family: "Fraunces", serif;
+      font-size: 15px;
+      line-height: 1.25;
+    }
+    .tasks-viewer-headline-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px #ffd07a55;
+    }
+    .tasks-viewer-status-wrap { flex: 0 0 auto; }
+    .tasks-viewer-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0c1624a6;
+      border: 1px solid #ffffff22;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .tasks-viewer-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .tasks-viewer-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .tasks-viewer-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
+    .tasks-viewer-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .tasks-viewer-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .tasks-viewer-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 8px 12px 0;
+      border-bottom: 1px solid #ffffff12;
+    }
+    .tasks-viewer-tab {
+      border: none;
+      background: transparent;
+      color: #8aa2c1;
+      padding: 8px 14px;
+      border-bottom: 2px solid transparent;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s;
+    }
+    .tasks-viewer-tab:hover { color: #e4eefb; }
+    .tasks-viewer-tab.is-active {
+      color: #9be7ff;
+      border-bottom-color: #9be7ff;
+    }
+    .tasks-viewer-body {
+      padding: 0;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .tasks-viewer-pane[data-pane="task"] {
+      padding: 14px;
+    }
+    .tasks-viewer-pane[data-pane="report"] {
+      padding: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-pane {
+      gap: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc {
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      margin: 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc-head {
+      padding: 8px 12px;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-doc-pills {
+      padding: 8px 12px 0;
+    }
+    .tasks-viewer-pane[data-pane="report"] .task-panel-report-doc .task-panel-report {
+      padding: 8px 12px 14px;
+      max-height: none;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+    }
+    .task-panel-report-frontmatter,
+    .files-md-frontmatter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      line-height: 1.4;
+      color: #8a96a8;
+      background: rgba(0, 0, 0, 0.22);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      padding: 6px 8px;
+      margin: 0 0 14px;
+      overflow-x: auto;
+      white-space: pre;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .task-panel-folder-btn {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      width: 32px;
+      height: 28px;
+      font-size: 14px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .task-panel-folder-btn:hover {
+      background: #14223680;
+    }
+    .tasks-new-form {
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .task-panel {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 1100px);
+      min-width: min(320px, 100%);
+      max-width: 100%;
+      flex: 1;
+      min-height: 0;
+      text-align: left;
+      border: 1px solid #ffffff22;
+      border-radius: 16px 16px 0 0;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
+        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 14px 34px #00000045;
+      overflow: hidden;
+    }
+    .task-panel-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid #ffffff12;
+      flex-wrap: wrap;
+    }
+    .task-panel-back {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      width: 36px;
+      height: 36px;
+      font-size: 16px;
+      cursor: pointer;
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .task-panel-back:hover { background: #14223680; }
+    .task-panel-headline-wrap {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .task-panel-id {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+    }
+    .task-panel-headline {
+      font-family: "Fraunces", serif;
+      font-size: 18px;
+      color: #f4f8ff;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+    .task-panel-status-wrap {
+      flex: 0 0 auto;
+    }
+    .task-panel-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #0c1624a6;
+      border: 1px solid #ffffff22;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .task-panel-status.is-open { color: #9be7ff; border-color: #9be7ff55; }
+    .task-panel-status.is-waiting { color: #f0c674; border-color: #f0c67455; }
+    .task-panel-status.is-paused { color: #7a9abf; border-color: #7a9abf55; }
+    .task-panel-status.is-done { color: #93e0a8; border-color: #93e0a855; }
+    .task-panel-status.is-failed { color: #ff9a9a; border-color: #ff9a9a55; }
+    .task-panel-body {
+      padding: 14px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .task-panel-loading {
+      color: #6a7e9b;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-align: center;
+      padding: 40px;
+    }
+    .task-panel-section-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6a7e9b;
+      margin-bottom: 4px;
+    }
+    .task-tree {
+      background: #07101da6;
+      border: 1px solid #ffffff14;
+      border-radius: 10px;
+      padding: 8px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-family: "JetBrains Mono", monospace;
+    }
+    .task-tree-node {
+      display: grid;
+      grid-template-columns: auto auto auto auto 1fr;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 120ms;
+      font-size: 11px;
+      color: #cfe3ff;
+    }
+    .task-tree-node:hover {
+      background: #14223666;
+    }
+    .task-tree-node.is-current {
+      background: #1a2a44a8;
+      border: 1px solid #ffd07a99;
+      cursor: default;
+      padding: 4px 7px;
+    }
+    .task-tree-node.is-current:hover {
+      background: #1a2a44a8;
+    }
+    .task-tree-indent {
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    .task-tree-marker {
+      color: #6a7e9b;
+      font-size: 11px;
+      width: 14px;
+      display: inline-block;
+      text-align: center;
+    }
+    .task-tree-node.is-current .task-tree-marker {
+      color: #ffd07a;
+    }
+    .task-tree-id {
+      color: #d6e6ff;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .task-tree-agent {
+      color: #ffd07a;
+      font-size: 10px;
+    }
+    .task-tree-status {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9be7ff;
+    }
+    .task-tree-status.is-waiting { color: #f0c674; }
+    .task-tree-status.is-done { color: #93e0a8; }
+    .task-tree-status.is-failed { color: #ff9a9a; }
+    .task-tree-headline {
+      color: #b8cae3;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    @media (max-width: 640px) {
+      .task-tree-node {
+        grid-template-columns: auto auto auto 1fr;
+        gap: 6px;
+      }
+      .task-tree-agent { display: none; }
+    }
+    .task-panel-card {
+      display: grid;
+      gap: 8px;
+      padding: 0;
+      background: transparent;
+      border: none;
+    }
+    .task-panel-card.is-current {
+      background: transparent;
+    }
+    .task-panel-card-head {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: baseline;
+    }
+    .task-panel-card-id {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #d6e6ff;
+    }
+    .task-panel-card-agent {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #ffd07a;
+    }
+    .task-panel-card-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #9be7ff;
+    }
+    .task-panel-card-status.is-waiting { color: #f0c674; }
+    .task-panel-card-status.is-done { color: #93e0a8; }
+    .task-panel-card-status.is-failed { color: #ff9a9a; }
+    .task-panel-card-headline {
+      font-family: "Fraunces", serif;
+      font-size: 14px;
+      color: #f4f8ff;
+      line-height: 1.3;
+    }
+    .task-panel-card-summary {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+    .task-panel-card-meta {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #6a7e9b;
+    }
+    .task-panel-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    .task-panel-action {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 8px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms;
+    }
+    .task-panel-action:hover {
+      background: #14223680;
+    }
+    .task-panel-action.is-primary {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .task-panel-action.is-primary:hover {
+      background: #355a8a;
+    }
+    /* Danger variant — Abort (kills a live worker). Red-tinted so the
+       irreversible action reads distinctly from Close. */
+    .task-panel-action-danger {
+      border-color: #ff6b6b66;
+      color: #ffb3b3;
+    }
+    .task-panel-action-danger:hover {
+      background: #3a1620;
+    }
+    .task-panel-action.is-primary.task-panel-action-danger {
+      background: #6b2330;
+      border-color: #ff6b6baa;
+      color: #ffd9d9;
+    }
+    .task-panel-action.is-primary.task-panel-action-danger:hover {
+      background: #842b3b;
+    }
+    .task-panel-abort-warn {
+      color: #ff9d9d;
+    }
+    .task-panel-abort-warn strong {
+      color: #ffd9d9;
+    }
+    .task-panel-meta {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      color: #8a96a8;
+      letter-spacing: 0.04em;
+      padding: 2px 0 6px;
+    }
+    .task-panel-meta-arrow {
+      color: #ffd07a;
+      margin: 0 2px;
+    }
+    .task-panel-meta-sep {
+      color: #4a5668;
+      margin: 0 4px;
+    }
+    /* Project chip in the task panel meta line. Click to swap to a
+       dropdown of known projects. Distinct from other meta entries —
+       border + folder icon advertise the affordance. */
+    .task-panel-project-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 8px;
+      border: 1px solid #ffffff22;
+      border-radius: 999px;
+      background: #0c1624a6;
+      cursor: pointer;
+      color: #cfe3ff;
+      transition: border-color 120ms, background 120ms;
+    }
+    .task-panel-project-chip:hover {
+      border-color: #ffd07a99;
+      background: #14223680;
+    }
+    .task-panel-project-chip.is-unassigned {
+      color: #6a7e9b;
+      font-style: italic;
+    }
+    .task-panel-project-select {
+      background: transparent;
+      color: #cfe3ff;
+      border: none;
+      font-family: inherit;
+      font-size: inherit;
+      cursor: pointer;
+    }
+    .task-panel-project-select:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 2px;
+    }
+    .task-panel-unblock {
+      display: grid;
+      gap: 8px;
+    }
+    .task-panel-rework {
+      display: grid;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      border: 1px solid #ffd07a55;
+      border-radius: 8px;
+      background: rgba(240, 198, 116, 0.06);
+    }
+    .task-panel-rework-warn {
+      font-size: 12px;
+      color: #f0c674;
+      line-height: 1.45;
+    }
+    .task-panel-rework-warn strong {
+      color: #ffe7b8;
+    }
+    /* Expand-on-click: rework-warn is a <details> — terse summary visible by
+       default, full explanation revealed on click. */
+    details.task-panel-rework-warn summary {
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+    }
+    details.task-panel-rework-warn summary::after {
+      content: " ⓘ";
+      opacity: 0.6;
+      font-size: 10px;
+    }
+    details.task-panel-rework-warn[open] summary::after { content: ""; }
+    details.task-panel-rework-warn p {
+      margin: 6px 0 2px;
+      color: #c8a84a;
+    }
+    /* WAL-63 Phase 1: closed-task banner — sits between Result and the
+       action row. Surfaces the closed.status + by + reason at a glance so
+       the Reopen affordance reads as the natural escape hatch. */
+    .task-panel-closed-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      padding: 8px 12px;
+      border: 1px solid #ffffff1f;
+      border-left: 3px solid #8aa0bd;
+      border-radius: 8px;
+      background: #0c1624a6;
+      color: #b8cae3;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-closed-pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: #2c3a55;
+      color: #cfe3ff;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .task-panel-closed-meta {
+      color: #8a96a8;
+    }
+    .task-panel-closed-reason {
+      flex-basis: 100%;
+      color: #cfe3ff;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    /* WAL-63 Phase 1: close form — borrows the rework warning chrome (same
+       collapse/expand toggle pattern as Next) but reuses unblock-input
+       styling for the textarea + actions row. */
+    .task-panel-close-form {
+      /* inherits .task-panel-rework layout (set in markup) — only overrides
+         that diverge from the rework variant live here. */
+    }
+    .task-panel-close-cascade {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #f0c674;
+      cursor: pointer;
+    }
+    .task-panel-close-cascade input[type="checkbox"] {
+      accent-color: #f0c674;
+    }
+    .task-panel-close-cancel {
+      border: 1px solid #ffffff2a;
+      background: transparent;
+      color: #8aa0bd;
+      border-radius: 6px;
+      padding: 6px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-close-cancel:hover {
+      background: #ffffff0d;
+      color: #cfe3ff;
+    }
+    .task-panel-unblock-hint {
+      font-size: 12px;
+      color: #b8cae3;
+      line-height: 1.45;
+    }
+    .task-panel-unblock-input {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0a1220;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 8px 10px;
+      color: #f4f8ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.45;
+      resize: vertical;
+    }
+    .task-panel-unblock-input:focus {
+      outline: none;
+      border-color: #ffd07a99;
+    }
+    .task-panel-unblock-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    /* Editable child-headline field at the top of the Next form. Pre-filled
+       with the parent's headline + a suffix; user can override before
+       submitting if the next step is materially different. */
+    .task-panel-next-headline-input {
+      display: block;
+      width: 100%;
+      background: #0c1624a6;
+      color: #e4eefb;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-bottom: 8px;
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 12px;
+      box-sizing: border-box;
+    }
+    .task-panel-next-headline-input:focus {
+      outline: 2px solid #ffd07a99;
+      outline-offset: 1px;
+      border-color: #ffd07a99;
+    }
+    /* Re-route picker inside the Next form. Compact arrow + native select
+       so handing the child off to a different agent stays a one-click
+       affordance. Defaults to the parent's agent — picking another agent
+       lights up the submit button with the new destination. */
+    .task-panel-next-target {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #b8cae3;
+    }
+    .task-panel-next-target-label {
+      color: #6a7e9b;
+    }
+    .task-panel-next-target-select {
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border: 1px solid #ffffff2a;
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .task-panel-next-target-select:hover { border-color: #ffd07a99; }
+    .task-panel-next-target-select:focus { outline: 2px solid #ffd07a99; outline-offset: 1px; }
+    .task-panel-unblock-submit {
+      border: 1px solid #ffd07a99;
+      background: #2a4972;
+      color: #ffe7b8;
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms;
+    }
+    .task-panel-unblock-submit:hover { background: #355a8a; }
+    .task-panel-unblock-submit:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .task-panel-unblock-status {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #9bb1d0;
+    }
+    .task-panel-unblock-status.is-error { color: #ff9a9a; }
+    .task-panel-unblock-status.is-ok { color: #93e0a8; }
+    .task-panel-revisit { /* shares .task-panel-unblock styling */ }
+    .multi-agent-new-parent {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      margin: 0 0 10px 0;
+      background: #173255;
+      border: 1px solid #2a4f80;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #cfe1ff;
+    }
+    .multi-agent-new-parent strong {
+      font-family: "JetBrains Mono", monospace;
+      color: #fff;
+    }
+    .multi-agent-new-parent-clear {
+      margin-left: auto;
+      background: transparent;
+      border: 0;
+      color: #cfe1ff;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 0 4px;
+    }
+    .multi-agent-new-parent-clear:hover { color: #fff; }
+    .task-panel-section {
+      border: 1px solid #ffffff10;
+      border-radius: 8px;
+      background: #07101da6;
+      padding: 0;
+      overflow: hidden;
+    }
+    .task-panel-section[open] {
+      background: #0a1424b8;
+      border-color: #ffffff1e;
+    }
+    .task-panel-section-summary {
+      cursor: pointer;
+      padding: 7px 10px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #a8b8cf;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      user-select: none;
+    }
+    .task-panel-section-summary::-webkit-details-marker { display: none; }
+    .task-panel-section-summary::before {
+      content: "▸";
+      font-size: 10px;
+      color: #6a7e9b;
+      transition: transform 120ms;
+      display: inline-block;
+    }
+    .task-panel-section[open] > .task-panel-section-summary::before {
+      transform: rotate(90deg);
+    }
+    .task-panel-section-summary:hover {
+      color: #d6e6ff;
+      background: #14223644;
+    }
+    .task-panel-section-body {
+      padding: 4px 12px 10px;
+    }
+    .task-panel-context-list {
+      display: grid;
+      gap: 4px;
+      margin-top: 4px;
+    }
+    .task-panel-context-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+    }
+    .task-panel-context-item button {
+      border: none;
+      background: none;
+      color: #9be7ff;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      font-size: inherit;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .task-panel-context-item button:hover {
+      color: #cfe3ff;
+    }
+    .task-panel-report-doc {
+      margin: 0 0 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.18);
+      overflow: hidden;
+    }
+    .task-panel-report-doc-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .task-panel-report-doc-title {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #cfe3ff;
+      letter-spacing: 0.04em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .task-panel-report-doc .task-panel-report {
+      max-height: none;
+      border: none;
+      border-radius: 0;
+      background: transparent;
+      padding: 12px 14px;
+    }
+    .task-panel-report-pane {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .task-panel-doc-pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 0 0 4px;
+    }
+    .task-panel-doc-pill {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #b8cae3;
+      border-radius: 999px;
+      padding: 4px 12px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      transition: background 120ms, color 120ms, border-color 120ms;
+    }
+    .task-panel-doc-pill:hover {
+      background: #14223680;
+      color: #cfe3ff;
+    }
+    .task-panel-doc-pill.is-active {
+      background: #2a4972;
+      border-color: #ffd07a99;
+      color: #ffe7b8;
+    }
+    .task-panel-report {
+      max-height: 480px;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 6px;
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+    .task-panel-report-md {
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .task-panel-report-md p,
+    .task-panel-report-md ul,
+    .task-panel-report-md ol,
+    .task-panel-report-md pre {
+      margin: 0 0 8px;
+    }
+    .task-panel-report-md h1,
+    .task-panel-report-md h2,
+    .task-panel-report-md h3 {
+      margin: 14px 0 6px;
+    }
+    .task-panel-report-md pre {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6px 8px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    .task-panel-report-raw {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+    .task-panel-report-loading {
+      font-size: 12px;
+      color: #8a96a8;
+      font-style: italic;
+    }
+    .task-panel-report-loading.is-error { color: #ff9a9a; }
+    @media (max-width: 640px) {
+      .task-panel-toolbar {
+        padding: 8px 10px;
+        gap: 8px;
+      }
+      .task-panel-headline {
+        font-size: 16px;
+      }
+      .task-panel-status {
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+      .task-panel-body {
+        padding: 10px;
+      }
+      .task-panel-card {
+        padding: 0;
+      }
+    }
+    .files-toolbar {
+      display: flex;
+      flex-direction: column;
+      padding: 8px 12px;
+      border-bottom: 1px solid #ffffff12;
+      gap: 6px;
+    }
+    .files-toolbar-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .files-toolbar-row-branch {
+      justify-content: flex-end;
+    }
+    .files-toolbar-row-crumb {
+      justify-content: flex-start;
+    }
+    .files-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #a8b4c5;
+      overflow-x: auto;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+    .files-breadcrumb button {
+      border: none;
+      background: transparent;
+      color: #9be7ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: background 0.12s;
+    }
+    .files-breadcrumb button:hover {
+      background: #ffffff10;
+    }
+    .files-breadcrumb span {
+      color: #5a6a7e;
+    }
+    .files-branch-select {
+      background: #0d1117;
+      color: #e5eaf3;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      max-width: 140px;
+      min-width: 90px;
+    }
+    .files-branch-select:focus {
+      outline: 1px solid var(--accent, #7bd88f);
+      border-color: transparent;
+    }
+    .files-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .files-nav-btn {
+      background: #0d1117;
+      color: #c8d4e5;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      width: 26px;
+      height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+      padding: 0;
+    }
+    .files-nav-btn:hover:not(:disabled) {
+      background: #ffffff0d;
+      color: #9be7ff;
+    }
+    .files-nav-btn:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .files-code {
+      margin: 0;
+      padding: 0;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: #d7e3f5;
+      white-space: pre;
+      tab-size: 2;
+    }
+
+    /* === YAML rendered view (file viewer + task view) ==================== */
+    .files-yaml { font-size: 13px; line-height: 1.5; color: #d7e3f5; }
+    .yaml-doc { display: flex; flex-direction: column; gap: 6px; }
+    .yaml-object { display: flex; flex-direction: column; gap: 4px; }
+    .yaml-row { padding: 2px 0; }
+    .yaml-row-simple { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+    .yaml-row-complex { display: flex; flex-direction: column; gap: 4px; }
+    .yaml-key-line { display: flex; align-items: baseline; }
+    .yaml-key { color: #9be7ff; font-weight: 500; }
+    .yaml-colon { color: #6a7f94; margin-right: 0; }
+    .yaml-str { color: #d7e3f5; }
+    .yaml-num { color: #f4b678; }
+    .yaml-bool { color: #c792ea; }
+    .yaml-null { color: #c792ea; font-style: italic; }
+    .yaml-empty { color: #6a7f94; font-style: italic; }
+    .yaml-error {
+      background: #3a1a1a;
+      border: 1px solid #6e2828;
+      color: #ffb3b3;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .yaml-raw {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #6a7f94;
+      white-space: pre-wrap;
+    }
+    .yaml-block {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: #c8d6e8;
+      background: #0f1620;
+      border-left: 2px solid #2a3950;
+      padding: 8px 12px;
+      margin: 4px 0 4px 14px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-radius: 0 4px 4px 0;
+    }
+    .yaml-array {
+      list-style: none;
+      margin: 4px 0 4px 14px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .yaml-item {
+      position: relative;
+      padding-left: 14px;
+    }
+    .yaml-item::before {
+      content: "·";
+      position: absolute;
+      left: 0;
+      color: #6a7f94;
+    }
+    .yaml-value-block {
+      margin-left: 14px;
+    }
+    /* Status pill (applied by yaml-entry when key === "status") */
+    .yaml-status { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: lowercase; }
+    .yaml-status-done { background: #1f3a26; color: #a7e4a1; }
+    .yaml-status-failed { background: #3a1a1a; color: #ffb3b3; }
+    .yaml-status-waiting { background: #3a2f17; color: #f4c97e; }
+    .yaml-status-claimed { background: #1f2a3a; color: #9be7ff; }
+    .yaml-status-open { background: #2a2a3a; color: #c8d6e8; }
+
+    .files-code code { font-family: inherit; font-size: inherit; }
+    .syn-key { color: #9be7ff; }
+    .syn-str { color: #a7e4a1; }
+    .syn-num { color: #f4b678; }
+    .syn-bool { color: #c792ea; }
+    .syn-null { color: #c792ea; }
+    .syn-kw { color: #c792ea; font-weight: 500; }
+    .syn-builtin { color: #9be7ff; }
+    .syn-fn { color: #f7c173; }
+    .syn-comment { color: #6a7f94; font-style: italic; }
+    .syn-punct { color: #8ca0b8; }
+    .syn-decor { color: #f4a6c8; }
+    .syn-tag { color: #7fc2ff; }
+    .syn-attr { color: #c8a3ff; }
+    .syn-interp { color: #f4b678; }
+    .files-picker-toggle {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      border-bottom: 1px solid #ffffff12;
+      background: #0b121c;
+      color: #c8d4e5;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+    }
+    .files-picker-toggle:hover {
+      background: #111a26;
+    }
+    .files-picker-toggle-caret {
+      font-size: 12px;
+      color: #9be7ff;
+      transition: transform 0.2s ease;
+    }
+    .files-picker-toggle[aria-expanded="false"] .files-picker-toggle-caret {
+      transform: rotate(-90deg);
+    }
+    .files-split {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .files-sidebar {
+      width: 280px;
+      min-width: 200px;
+      border-right: 1px solid #ffffff12;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .files-list {
+      padding: 4px;
+    }
+    .files-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: #c8d4e5;
+      text-align: left;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      transition: background 0.12s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .files-item:hover {
+      background: #ffffff0d;
+    }
+    .files-item-active {
+      background: #ffffff08;
+      border-left: 2px solid #9be7ff;
+    }
+    .files-item-icon {
+      flex-shrink: 0;
+      width: 16px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .files-item-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .files-item-size {
+      margin-left: auto;
+      color: #5a6a7e;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+    .files-content {
+      flex: 1;
+      min-width: 0;
+      overflow: auto;
+      padding: 16px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .files-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #5a7a9a;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    /* Files-tab image viewer */
+    .files-image-view {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+      height: 100%;
+      box-sizing: border-box;
+    }
+    .files-image-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #8a96a8;
+      letter-spacing: 0.03em;
+      flex: 0 0 auto;
+    }
+    .files-image-info { margin-right: 4px; }
+    .files-image-zoom {
+      min-width: 48px;
+      text-align: center;
+      color: #cfe3ff;
+    }
+    .files-image-toggle {
+      border: 1px solid #ffffff2a;
+      background: #0c1624a6;
+      color: #cfe3ff;
+      border-radius: 6px;
+      padding: 3px 10px;
+      cursor: pointer;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+    .files-image-toggle:hover { background: #14223680; }
+    .files-image-canvas {
+      /* Bounded, scrollable viewport — the image can exceed it when zoomed
+         and the user pans by dragging or scrolling. */
+      flex: 1 1 auto;
+      min-height: 160px;
+      overflow: auto;
+      /* Checkerboard so transparent PNGs (sprites/icons) read clearly. */
+      background-color: #0c1018;
+      background-image:
+        linear-gradient(45deg, #1c2735 25%, transparent 25%),
+        linear-gradient(-45deg, #1c2735 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1c2735 75%),
+        linear-gradient(-45deg, transparent 75%, #1c2735 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      border: 1px solid #ffffff1a;
+      border-radius: 4px;
+      padding: 12px;
+      cursor: grab;
+      /* Claim touch gestures (pinch-zoom + drag-pan handled in JS) instead of
+         letting the browser do native page pinch-zoom / scroll over the
+         viewer. */
+      touch-action: none;
+    }
+    .files-image-canvas.is-grabbing { cursor: grabbing; }
+    .files-image {
+      display: block;
+      /* width/height are set explicitly by the zoom logic — don't cap. */
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+    .files-image.is-pixelated {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .files-loading {
+      padding: 12px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #5a7a9a;
+    }
+    .files-md {
+      font-family: "Space Grotesk", system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #e4eefb;
+    }
+    .files-md h1, .files-md h2, .files-md h3,
+    .files-md h4, .files-md h5, .files-md h6 {
+      color: #fff;
+      font-family: "Fraunces", serif;
+      margin: 20px 0 8px;
+      line-height: 1.3;
+    }
+    .files-md h1 { font-size: 1.6em; border-bottom: 1px solid #ffffff18; padding-bottom: 8px; }
+    .files-md h2 { font-size: 1.35em; border-bottom: 1px solid #ffffff12; padding-bottom: 6px; }
+    .files-md h3 { font-size: 1.15em; }
+    .files-md p { margin: 8px 0; }
+    .files-md ul, .files-md ol { margin: 8px 0; padding-left: 22px; }
+    .files-md li { margin: 3px 0; }
+    .files-md code {
+      background: #ffffff15;
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+    }
+    .files-md pre {
+      background: #00000040;
+      padding: 12px 14px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 10px 0;
+      border: 1px solid #ffffff10;
+    }
+    .files-md pre code {
+      background: none;
+      padding: 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .files-md strong { color: #fff; }
+    .files-md em { color: #c8daf0; }
+    .files-md blockquote {
+      margin: 10px 0;
+      padding: 8px 14px;
+      border-left: 3px solid #9be7ff44;
+      background: #ffffff06;
+      border-radius: 0 6px 6px 0;
+      color: #c8daf0;
+    }
+    .files-md hr {
+      border: none;
+      border-top: 1px solid #ffffff18;
+      margin: 16px 0;
+    }
+    .files-md a {
+      color: #9be7ff;
+      text-decoration: none;
+    }
+    .files-md a:hover {
+      text-decoration: underline;
+    }
+    .files-md table {
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 13px;
+      width: 100%;
+    }
+    .files-md th, .files-md td {
+      border: 1px solid #ffffff1a;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .files-md th {
+      background: #ffffff0a;
+      color: #fff;
+      font-weight: 500;
+    }
+    .files-md img {
+      max-width: 100%;
+      border-radius: 6px;
+    }
+    .files-md input[type="checkbox"] {
+      margin-right: 6px;
+    }
+    .files-raw {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #d7e3f5;
+    }
+
+    /* Collapse the picker + viewer split into the
+       mobile-style picker-toggle flow when the PANEL itself is narrower
+       than the "lg" breakpoint (1200px). Uses container queries instead
+       of @media so the layout responds to the actual rendered width of
+       the .tasks-panel / .files-panel container — works correctly in
+       browser split-screen / sidebar / iframe contexts where the viewport
+       is wide but the panel isn't. Fine-tuning rules (smaller fonts, dock
+       tweaks, etc.) stay in the 640px @media block below — those are
+       device-class adjustments, not container-size ones. */
+    @container tasks-panel (max-width: 1199px) {
+      .tasks-split {
+        flex-direction: column;
+      }
+      .tasks-sidebar {
+        width: 100%;
+        min-width: 100%;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid #ffffff12;
+      }
+      .tasks-picker-toggle {
+        display: inline-flex;
+      }
+      .tasks-sidebar.tasks-sidebar-collapsed {
+        display: none;
+      }
+      .tasks-sidebar:not(.tasks-sidebar-collapsed) ~ .tasks-content {
+        display: none;
+      }
+      .tasks-panel.tasks-list-hidden .tasks-filter-chips {
+        display: none;
+      }
+      .tasks-content {
+        flex: 1;
+        min-height: 0;
+      }
+    }
+    @container files-panel (max-width: 1199px) {
+      .files-split {
+        flex-direction: column;
+      }
+      .files-sidebar {
+        width: 100%;
+        min-width: 100%;
+        flex: 1;
+        min-height: 0;
+        max-height: none;
+        border-right: none;
+        border-bottom: 1px solid #ffffff12;
+      }
+      .files-picker-toggle {
+        display: flex;
+      }
+      .files-sidebar.files-sidebar-collapsed {
+        display: none;
+      }
+      .files-sidebar:not(.files-sidebar-collapsed) ~ .files-content {
+        display: none;
+      }
+      .files-content {
+        flex: 1;
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .stage {
+        padding: 38px 8px 80px;
+      }
+      body.hide-header .stage { padding-top: 8px; }
+      .tab-nav {
+        margin-bottom: 8px;
+      }
+      .repo-cta {
+        font-size: 10px;
+        height: 30px;
+        gap: 7px;
+      }
+      .chat-panel,
+      .files-panel,
+      .tasks-panel {
+        min-width: 100%;
+        border-radius: 12px 12px 0 0;
+      }
+      .tasks-viewer-head {
+        padding: 6px 10px;
+        gap: 8px;
+      }
+      .tasks-viewer-headline-wrap {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1px;
+      }
+      .tasks-viewer-headline {
+        font-size: 14px;
+      }
+      .tasks-viewer-id {
+        font-size: 9px;
+      }
+      .files-breadcrumb {
+        font-size: 10px;
+      }
+      .files-branch-select {
+        max-width: 160px;
+        min-width: 110px;
+      }
+      .quick-job {
+        margin-top: 14px;
+        padding: 11px;
+      }
+      .quick-job-head-row {
+        flex-direction: column;
+      }
+      .quick-job-grid,
+      .quick-job-actions {
+        grid-template-columns: 1fr;
+      }
+      .dock-shell {
+        bottom: 8px;
+        width: calc(100% - 12px);
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+      }
+      .side-bubble {
+        display: none;
+      }
+      .dock {
+        border-radius: 14px;
+        padding: 4px 6px;
+        flex-wrap: nowrap;
+        gap: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .pill {
+        font-size: 10px;
+        min-height: 38px;
+        flex: 0 0 auto;
+        padding: 5px 8px;
+      }
+      .pill-label {
+        font-size: 9px;
+        gap: 3px;
+      }
+      .pill-icon {
+        font-size: 10px;
+        width: 12px;
+        min-width: 12px;
+      }
+      .pill-value {
+        font-size: 10px;
+      }
+    }
+
+    /* ── Dock spacer — pushes context tools (mic, speaker, pills) to the right ── */
+    .dock-spacer {
+      flex: 1;
+    }
+
+    /* ── Dock pills container — context-right group ── */
+    #dock-pills {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      min-width: 0;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* ── Global mic — dictate into any focused input ── */
+    .global-mic {
+      flex: 0 0 auto;
+      margin-left: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #7dc5ff44;
+      background: #0b1828cc;
+      backdrop-filter: blur(8px);
+      color: #7dc5ff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-mic:hover {
+      transform: translateY(-2px);
+      background: #0f2340cc;
+      border-color: #7dc5ff77;
+    }
+    .global-mic.recording {
+      border-color: #ff6b6b88;
+      background: #2a0a0acc;
+      color: #ff9b9b;
+      animation: mic-pulse 1.1s ease-in-out infinite;
+    }
+    .global-mic.transcribing {
+      border-color: #ffb36655;
+      background: #1a0f00cc;
+      color: #ffd09b;
+      cursor: not-allowed;
+      animation: none;
+    }
+    .global-mic:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .global-speaker {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #7dc5ff44;
+      background: #0b1828cc;
+      backdrop-filter: blur(8px);
+      color: #7dc5ff;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-speaker:hover {
+      transform: translateY(-2px);
+      background: #0f2340cc;
+      border-color: #7dc5ff77;
+    }
+    .global-speaker.is-playing {
+      border-color: #9be7ff88;
+      background: #061830cc;
+      color: var(--accent);
+      animation: mic-pulse 1.4s ease-in-out infinite;
+    }
+    .global-speaker:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .global-speaker.is-active {
+      border-color: #9be7ff88;
+      background: #061830cc;
+      color: var(--accent);
+    }
+
+    /* ── Global read-aloud (headphones) — explicit "read to me" button ── */
+    .global-read-aloud {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      margin-right: 8px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #4ade8044;
+      background: #0b1828cc;
+      backdrop-filter: blur(8px);
+      color: #4ade80;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-read-aloud:hover {
+      transform: translateY(-2px);
+      background: #0f2340cc;
+      border-color: #4ade8077;
+    }
+    .global-read-aloud.is-playing {
+      border-color: #9be7ff88;
+      background: #061830cc;
+      color: var(--accent);
+      animation: mic-pulse 1.4s ease-in-out infinite;
+    }
+    .global-read-aloud:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ── Global voice-mode (fullscreen voice chat) — dock button ── */
+    .global-voice-mode {
+      flex: 0 0 auto;
+      margin-left: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #4ade8044;
+      background: #081a0dcc;
+      backdrop-filter: blur(8px);
+      color: #4ade80;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-voice-mode:hover {
+      transform: translateY(-2px);
+      background: #0d2a18cc;
+      border-color: #4ade8077;
+    }
+    .global-voice-mode[hidden] { display: none; }
+
+    /* ── Global voice-task (Vue island Stage 2) — dock button ── */
+    .global-voice-task {
+      flex: 0 0 auto;
+      margin-left: 4px;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #6ee7b744;
+      background: #071a1acc;
+      backdrop-filter: blur(8px);
+      color: #6ee7b7;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+    }
+    .global-voice-task:hover {
+      transform: translateY(-2px);
+      background: #0d2a2acc;
+      border-color: #6ee7b777;
+    }
+    .global-voice-task[hidden] { display: none; }
+
+    /* ── Audio action modal — small centered card for recording / playback ── */
+    .audio-action-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 190;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(6, 13, 26, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .audio-action-modal[hidden] { display: none; }
+    .audio-action-card {
+      background: var(--panel, #0f1e33);
+      border: 1px solid var(--border, #1e3a5f);
+      border-radius: 20px;
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      min-width: 200px;
+    }
+    .audio-action-card.is-player {
+      min-width: min(420px, 90vw);
+      padding: 20px 24px 24px;
+    }
+    .audio-action-icon {
+      font-size: 32px;
+      line-height: 1;
+      animation: audio-modal-pulse 1.2s ease-in-out infinite;
+    }
+    .audio-action-label {
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .audio-action-stop {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 100px;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+    .audio-action-stop:hover {
+      background: #ff6b6b22;
+      border-color: #ff6b6b55;
+      color: #ff9b9b;
+    }
+    /* Player controls row (skip + stop + skip) */
+    .audio-player-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .audio-player-skip {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.16s ease, border-color 0.16s ease;
+    }
+    .audio-player-skip[hidden] { display: none !important; }
+    .audio-player-skip:hover { background: #7dc5ff22; border-color: #7dc5ff55; }
+    .audio-player-skip:disabled { opacity: 0.35; cursor: default; pointer-events: none; }
+    /* Progress bar */
+    .audio-player-progress {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 5px;
+    }
+    .audio-player-progress[hidden] { display: none; }
+    .audio-player-bar-wrap {
+      height: 3px;
+      background: var(--border, #1e3a5f);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .audio-player-bar {
+      height: 100%;
+      background: var(--accent, #9be7ff);
+      border-radius: 999px;
+      transition: width 0.35s ease;
+      width: 0%;
+    }
+    .audio-player-counter {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+    /* Read-along transcript pane */
+    .audio-player-transcript {
+      width: min(380px, 80vw);
+      max-height: 136px;
+      overflow-y: auto;
+      border: 1px solid var(--border, #1e3a5f);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: rgba(0, 0, 0, 0.28);
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+      text-align: left;
+    }
+    .audio-player-transcript[hidden] { display: none; }
+    .audio-transcript-line {
+      margin: 0 0 6px;
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 2px 4px;
+      transition: color 0.18s, background 0.18s;
+    }
+    .audio-transcript-line:last-child { margin-bottom: 0; }
+    .audio-transcript-line:hover { color: var(--text); background: rgba(255, 255, 255, 0.06); }
+    .audio-transcript-active {
+      color: var(--text) !important;
+      background: rgba(155, 231, 255, 0.13) !important;
+      border-left: 2px solid var(--accent, #9be7ff);
+      padding-left: 6px;
+    }
+    /* Resume prompt */
+    .audio-player-resume {
+      display: grid;
+      gap: 10px;
+      text-align: center;
+      width: 100%;
+    }
+    .audio-player-resume[hidden] { display: none; }
+    .audio-player-resume-msg {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+    .audio-player-resume-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .audio-player-resume-btn {
+      padding: 8px 18px;
+      border-radius: 100px;
+      border: 1px solid var(--border, #1e3a5f);
+      background: var(--input, #0d1f35);
+      color: var(--text);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: filter 0.16s ease;
+    }
+    .audio-player-resume-btn.is-resume {
+      background: #0e2c4a;
+      border-color: #7dc5ff55;
+      color: #9be7ff;
+    }
+    .audio-player-resume-btn:hover { filter: brightness(1.14); }
+    @keyframes audio-modal-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* ── Voice model text inputs in settings ── */
+    .voice-model-input {
+      width: 120px;
+      font-size: 11px;
+      padding: 4px 8px;
+      height: 28px;
+    }
+
+    /* ── Voice chat mode button ── */
+    .chat-voice-mode {
+      flex-shrink: 0;
+      flex-grow: 0;
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 14px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #c07bff33;
+      background: #1a0a3333;
+      color: #c07bff;
+      transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+    }
+    .chat-voice-mode:hover {
+      transform: translateY(-1px);
+      background: #2a104455;
+      border-color: #c07bff55;
+    }
+    .chat-voice-mode[hidden] { display: none; }
+
+    `;
+const _gs = document.createElement("style");
+_gs.textContent = pageStyles;
+document.head.insertBefore(_gs, document.head.firstChild);
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/sw.js").catch(() => {
   });
