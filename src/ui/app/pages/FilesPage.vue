@@ -227,6 +227,31 @@ async function loadDirectory(dirPath: string): Promise<void> {
         item.appendChild(size);
       }
 
+      // ⇥ throw button — opens file in reading pane (touch-safe alternative to drag).
+      if (entry.type === "file") {
+        const throwBtn = document.createElement("button");
+        throwBtn.type = "button";
+        throwBtn.className = "files-throw-btn";
+        throwBtn.textContent = "⇥";
+        throwBtn.title = "Open in reading pane";
+        throwBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          const fn = (window as any).__throwToReadingPane;
+          if (typeof fn === "function") fn({ kind: "file", path: entry.path });
+        });
+        item.appendChild(throwBtn);
+
+        // HTML5 drag — carries application/x-caravel-ref MIME.
+        item.draggable = true;
+        item.addEventListener("dragstart", (ev) => {
+          if (!ev.dataTransfer) return;
+          const ref = JSON.stringify({ kind: "file", path: entry.path });
+          ev.dataTransfer.setData("application/x-caravel-ref", ref);
+          ev.dataTransfer.setData("text/plain", entry.path);
+          ev.dataTransfer.effectAllowed = "copy";
+        });
+      }
+
       item.addEventListener("click", () => {
         if (entry.type === "directory") {
           loadDirectory(entry.path);

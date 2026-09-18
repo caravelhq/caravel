@@ -12431,7 +12431,7 @@ var useShowHide = (modelValue, props, emit2, element, computedId, options = {
     }
   };
 };
-var _hoisted_1$n = [
+var _hoisted_1$o = [
   "type",
   "disabled",
   "aria-label"
@@ -12457,7 +12457,7 @@ var BCloseButton_default = /* @__PURE__ */ defineComponent({
         disabled: unref(props).disabled,
         "aria-label": unref(props).ariaLabel,
         onClick: _cache[0] || (_cache[0] = ($event) => emit2("click", $event))
-      }, null, 8, _hoisted_1$n);
+      }, null, 8, _hoisted_1$o);
     };
   }
 });
@@ -12748,7 +12748,7 @@ var BLink_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$m = {
+var _hoisted_1$n = {
   key: 0,
   class: "visually-hidden"
 };
@@ -12781,7 +12781,7 @@ var BSpinner_default = /* @__PURE__ */ defineComponent({
         role: unref(props).label || hasLabelSlot.value ? unref(props).role : null,
         "aria-hidden": unref(props).label || hasLabelSlot.value ? null : true
       }, {
-        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$m, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
+        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$n, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
         _: 3
       }, 8, [
         "class",
@@ -14307,12 +14307,12 @@ var useModalManager = (modalOpen, initialValue) => {
     })) ?? [])
   };
 };
-var _hoisted_1$l = [
+var _hoisted_1$m = [
   "id",
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$9 = ["id"];
+var _hoisted_2$a = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$9),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$a),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14728,7 +14728,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
               "height": "0",
               "overflow": "hidden"
             }
-          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$l), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
+          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$m), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
           _: 3
         }, 16, ["appear"])) : createCommentVNode("", true), !unref(props).noBackdrop ? renderSlot(_ctx.$slots, "backdrop", normalizeProps(mergeProps({ key: 1 }, sharedSlots.value)), () => [unref(renderBackdropRef) ? (openBlock(), createBlock(Transition, normalizeProps(mergeProps({ key: 0 }, unref(backdropTransitionProps))), {
           default: withCtx(() => [withDirectives(createBaseVNode("div", {
@@ -14820,7 +14820,7 @@ var BProgressBar_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$k = ["aria-valuenow", "aria-valuemax"];
+var _hoisted_1$l = ["aria-valuenow", "aria-valuemax"];
 var BProgress_default = /* @__PURE__ */ defineComponent({
   __name: "BProgress",
   props: {
@@ -14887,7 +14887,7 @@ var BProgress_default = /* @__PURE__ */ defineComponent({
         "variant",
         "text-variant",
         "bg-variant"
-      ])])], 12, _hoisted_1$k);
+      ])])], 12, _hoisted_1$l);
     };
   }
 });
@@ -14967,13 +14967,13 @@ var useCountdownHover = (element, { modelValueIgnoresHover, noHoverPause, noResu
   });
   return { isHovering };
 };
-var _hoisted_1$j = [
+var _hoisted_1$k = [
   "id",
   "role",
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$8 = {
+var _hoisted_2$9 = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$8, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$9, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -15237,7 +15237,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             "max",
             "value"
           ])) : createCommentVNode("", true)
-        ], 10, _hoisted_1$j), [[vShow, isAlertVisible.value]])]),
+        ], 10, _hoisted_1$k), [[vShow, isAlertVisible.value]])]),
         _: 3
       }, 16, ["appear"])) : createCommentVNode("", true);
     };
@@ -15496,7 +15496,7 @@ var useFormInput = (props, input, modelValue, modelModifiers) => {
     isDisabled
   };
 };
-var _hoisted_1$i = [
+var _hoisted_1$j = [
   "id",
   "value",
   "name",
@@ -15617,7 +15617,7 @@ var BFormInput_default = /* @__PURE__ */ defineComponent({
         onInput: _cache[0] || (_cache[0] = (...args) => unref(onInput) && unref(onInput)(...args)),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 42, _hoisted_1$i);
+      }, null, 42, _hoisted_1$j);
     };
   }
 });
@@ -15800,7 +15800,7 @@ var BCol_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$h = [
+var _hoisted_1$i = [
   "value",
   "disabled",
   "selected"
@@ -15826,7 +15826,7 @@ var BFormSelectOption_default = /* @__PURE__ */ defineComponent({
         value: unref(props).value,
         disabled: unref(props).disabled,
         selected: isSelected.value
-      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$h);
+      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$i);
     };
   }
 });
@@ -16113,13 +16113,13 @@ var BFormGroupLabel_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$g = [
+var _hoisted_1$h = [
   "id",
   "disabled",
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$7 = {
+var _hoisted_2$8 = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$7, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$8, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -16450,7 +16450,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
             key: "2"
           } : void 0
         ]), 1040)
-      ], 64))], 64))], 16, _hoisted_1$g);
+      ], 64))], 64))], 16, _hoisted_1$h);
     };
   }
 });
@@ -16484,7 +16484,7 @@ var BFormSelectOptionGroup_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$f = [
+var _hoisted_1$g = [
   "id",
   "name",
   "form",
@@ -16619,7 +16619,7 @@ var BFormSelectBase_default = /* @__PURE__ */ defineComponent({
           }, 1040))], 64);
         }), 128)),
         renderSlot(_ctx.$slots, "default")
-      ], 10, _hoisted_1$f)), [[vModelSelect, localValue.value]]);
+      ], 10, _hoisted_1$g)), [[vModelSelect, localValue.value]]);
     };
   }
 });
@@ -16782,7 +16782,7 @@ var useTextareaResize = (input, { maxRows, noAutoShrink, rows }) => {
     computedRows
   };
 };
-var _hoisted_1$e = [
+var _hoisted_1$f = [
   "id",
   "name",
   "form",
@@ -16910,7 +16910,7 @@ var BFormTextarea_default = /* @__PURE__ */ defineComponent({
         }),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 46, _hoisted_1$e);
+      }, null, 46, _hoisted_1$f);
     };
   }
 });
@@ -19241,8 +19241,8 @@ function highlightVueBlockContent(content, blockName) {
   if (blockName === "style") return highlightCss(content);
   return highlightHtml(content);
 }
-const _hoisted_1$d = { id: "dashboard-panel" };
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _hoisted_1$e = { id: "dashboard-panel" };
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "DashboardPage",
   setup(__props) {
     const router2 = useRouter();
@@ -19722,7 +19722,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       document.removeEventListener("click", onScheduleClick);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$d, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$e, [..._cache[0] || (_cache[0] = [
         createBaseVNode("section", { class: "hero" }, [
           createBaseVNode("div", {
             class: "logo-art",
@@ -21024,14 +21024,14 @@ function stripFrontmatter(src) {
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
 }
-const _hoisted_1$c = {
+const _hoisted_1$d = {
   id: "chat-panel",
   class: "chat-panel"
 };
 const CHAT_ID_KEY = "caravel.chat.id";
 const CHAT_POLL_FAST_MS = 500;
 const CHAT_POLL_IDLE_MS = 1e4;
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
   __name: "ChatPage",
   setup(__props) {
     let chatHistory = [];
@@ -21315,10 +21315,10 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       input.value = chat.name || "";
       input.placeholder = chat.preview || "Chat name";
       input.maxLength = 80;
-      const commit = (save) => {
+      const commit = (save2) => {
         if (!input.parentNode) return;
         input.disabled = true;
-        if (save) {
+        if (save2) {
           const name = input.value.trim();
           submitChatRename(chat.id, name).then(() => loadChatList());
         } else {
@@ -21745,7 +21745,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       document.removeEventListener("visibilitychange", onVisibilityChange);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$d, [..._cache[0] || (_cache[0] = [
         createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
       ])]);
     };
@@ -22575,7 +22575,7 @@ function renderReportPane(card) {
   const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
   const pillsHidden = allPaths.length <= 1;
   const pillsHtml = pillsHidden ? "" : allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + "</button>"
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml$1(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
   ).join("");
   return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
 }
@@ -22686,11 +22686,11 @@ function loadReportNode(node) {
     node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
-const _hoisted_1$b = {
+const _hoisted_1$c = {
   id: "tasks-panel",
   class: "tasks-panel"
 };
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
   __name: "TasksPage",
   setup(__props) {
     const tasksStore = useTasksStore();
@@ -23159,6 +23159,15 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
         submitNext(nextBtn.closest(".task-panel-next"));
         return;
       }
+      const throwBtn = t.closest("[data-throw-path]");
+      if (throwBtn) {
+        ev.preventDefault();
+        const path = throwBtn.getAttribute("data-throw-path") || "";
+        const kind = throwBtn.getAttribute("data-throw-kind") || "report";
+        const fn = window.__throwToReadingPane;
+        if (path && typeof fn === "function") fn({ kind, path });
+        return;
+      }
       const pillBtn = t.closest("[data-doc-pill]");
       if (pillBtn) {
         ev.preventDefault();
@@ -23256,7 +23265,13 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       if (openFileBtn) {
         ev.preventDefault();
         const filePath = openFileBtn.getAttribute("data-open-file");
-        if (filePath && window.__loadFile) window.__loadFile(filePath);
+        if (!filePath) return;
+        if (ev.altKey) {
+          const fn = window.__throwToReadingPane;
+          if (typeof fn === "function") fn({ kind: "report", path: filePath });
+        } else if (window.__loadFile) {
+          window.__loadFile(filePath);
+        }
         return;
       }
       const openFolderBtn = t.closest("[data-open-folder]");
@@ -23777,7 +23792,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       }
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$b, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", {
           class: "tasks-view-tabs",
           id: "tasks-view-tabs",
@@ -26025,7 +26040,7 @@ var load_1 = load$1;
 var loader = {
   load: load_1
 };
-var load = loader.load;
+var load$2 = loader.load;
 const escapeHtml = (s) => String(s).replace(
   /[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
@@ -26080,7 +26095,7 @@ function renderObject(obj, depth) {
 function yamlRender(src) {
   if (!src) return "";
   try {
-    const parsed = load(src);
+    const parsed = load$2(src);
     if (parsed === null || parsed === void 0)
       return '<div class="yaml-empty">empty document</div>';
     return `<div class="yaml-doc">${renderValue(parsed, 0)}</div>`;
@@ -26089,11 +26104,11 @@ function yamlRender(src) {
     return `<div class="yaml-error">YAML parse error: ${escapeHtml(msg)}</div><pre class="yaml-raw">${escapeHtml(src)}</pre>`;
   }
 }
-const _hoisted_1$a = {
+const _hoisted_1$b = {
   ref: "content",
   class: "files-content"
 };
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -26393,18 +26408,18 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       filesContent.appendChild(wrap);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$a, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$b, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", { class: "files-empty" }, "Select a file to view", -1)
       ])], 512);
     };
   }
 });
-const _hoisted_1$9 = {
+const _hoisted_1$a = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$6 = { class: "files-split" };
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
+const _hoisted_2$7 = { class: "files-split" };
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
     const activeFilePath = /* @__PURE__ */ ref("");
@@ -26600,6 +26615,27 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
             size.textContent = fmtSize(entry.size);
             item.appendChild(size);
           }
+          if (entry.type === "file") {
+            const throwBtn = document.createElement("button");
+            throwBtn.type = "button";
+            throwBtn.className = "files-throw-btn";
+            throwBtn.textContent = "⇥";
+            throwBtn.title = "Open in reading pane";
+            throwBtn.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              const fn = window.__throwToReadingPane;
+              if (typeof fn === "function") fn({ kind: "file", path: entry.path });
+            });
+            item.appendChild(throwBtn);
+            item.draggable = true;
+            item.addEventListener("dragstart", (ev) => {
+              if (!ev.dataTransfer) return;
+              const ref2 = JSON.stringify({ kind: "file", path: entry.path });
+              ev.dataTransfer.setData("application/x-caravel-ref", ref2);
+              ev.dataTransfer.setData("text/plain", entry.path);
+              ev.dataTransfer.effectAllowed = "copy";
+            });
+          }
           item.addEventListener("click", () => {
             if (entry.type === "directory") {
               loadDirectory(entry.path);
@@ -26664,9 +26700,9 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
       window.__filesActivePath = null;
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$9, [
+      return openBlock(), createElementBlock("div", _hoisted_1$a, [
         _cache[1] || (_cache[1] = createStaticVNode('<div class="files-toolbar"><div class="files-toolbar-row files-toolbar-row-branch"><select id="files-branch-select" class="files-branch-select" title="Branch" hidden></select><div class="files-nav-group"><button id="files-nav-back" class="files-nav-btn" type="button" title="Back" aria-label="Back" disabled="true">←</button><button id="files-nav-forward" class="files-nav-btn" type="button" title="Forward" aria-label="Forward" disabled="true">→</button></div></div><div class="files-toolbar-row files-toolbar-row-crumb"><div class="files-breadcrumb" id="files-breadcrumb"></div></div></div><button id="files-picker-toggle" class="files-picker-toggle" type="button" aria-expanded="true" hidden><span class="files-picker-toggle-label" id="files-picker-toggle-label">Browse files</span><span class="files-picker-toggle-caret" aria-hidden="true">▾</span></button>', 2)),
-        createBaseVNode("div", _hoisted_2$6, [
+        createBaseVNode("div", _hoisted_2$7, [
           _cache[0] || (_cache[0] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
@@ -26678,7 +26714,7 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
               createBaseVNode("div", { class: "files-loading" }, "Loading...")
             ])
           ], -1)),
-          createVNode(_sfc_main$b, {
+          createVNode(_sfc_main$c, {
             path: activeFilePath.value,
             branch: activeBranch.value || void 0,
             kind: "file"
@@ -26694,10 +26730,10 @@ const router = createRouter({
   linkActiveClass: "tab-btn-active",
   linkExactActiveClass: "tab-btn-active",
   routes: [
-    { path: "/dashboard", component: _sfc_main$e },
-    { path: "/chat", component: _sfc_main$d },
-    { path: "/tasks", component: _sfc_main$c },
-    { path: "/files", component: _sfc_main$a },
+    { path: "/dashboard", component: _sfc_main$f },
+    { path: "/chat", component: _sfc_main$e },
+    { path: "/tasks", component: _sfc_main$d },
+    { path: "/files", component: _sfc_main$b },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
@@ -26708,11 +26744,95 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const micEnabled = /* @__PURE__ */ ref(false);
   return { settingsOpen, ttsEnabled, micEnabled };
 });
-const _hoisted_1$8 = { class: "settings-head" };
-const _hoisted_2$5 = { class: "settings-stack" };
-const _hoisted_3$3 = { class: "setting-item" };
-const _hoisted_4$3 = { class: "setting-item" };
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+function load(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("reading." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
+}
+function save(key, value) {
+  try {
+    localStorage.setItem("reading." + key, JSON.stringify(value));
+  } catch {
+  }
+}
+const useReadingStore = /* @__PURE__ */ defineStore("reading", () => {
+  if (typeof localStorage !== "undefined" && localStorage.getItem("split.enabled") === "1") {
+    localStorage.setItem("reading.open", "true");
+    localStorage.removeItem("split.enabled");
+  }
+  const open = /* @__PURE__ */ ref(load("open", false));
+  const side = /* @__PURE__ */ ref(load("side", "right"));
+  const width = /* @__PURE__ */ ref(load("width", 380));
+  const stack2 = /* @__PURE__ */ ref(load("stack", []));
+  const activeIndex = /* @__PURE__ */ ref(0);
+  const dragActive = /* @__PURE__ */ ref(false);
+  function setOpen(v2) {
+    open.value = v2;
+    save("open", v2);
+  }
+  function toggle() {
+    setOpen(!open.value);
+  }
+  function setSide(s) {
+    side.value = s;
+    save("side", s);
+  }
+  function setWidth(w2) {
+    width.value = w2;
+    save("width", w2);
+  }
+  function throwRef(ref2) {
+    const existing = stack2.value.findIndex((r) => r.path === ref2.path);
+    if (existing !== -1) {
+      activeIndex.value = existing;
+    } else {
+      stack2.value.push(ref2);
+      activeIndex.value = stack2.value.length - 1;
+      save("stack", stack2.value);
+    }
+    setOpen(true);
+  }
+  function activate(index) {
+    if (index >= 0 && index < stack2.value.length) {
+      activeIndex.value = index;
+    }
+  }
+  function closeItem(index) {
+    stack2.value.splice(index, 1);
+    save("stack", stack2.value);
+    if (activeIndex.value >= stack2.value.length) {
+      activeIndex.value = Math.max(0, stack2.value.length - 1);
+    }
+  }
+  function setDragActive(v2) {
+    dragActive.value = v2;
+  }
+  return {
+    open,
+    side,
+    width,
+    stack: stack2,
+    activeIndex,
+    dragActive,
+    setOpen,
+    toggle,
+    setSide,
+    setWidth,
+    throwRef,
+    activate,
+    closeItem,
+    setDragActive
+  };
+});
+const _hoisted_1$9 = { class: "settings-head" };
+const _hoisted_2$6 = { class: "settings-stack" };
+const _hoisted_3$5 = { class: "setting-item" };
+const _hoisted_4$4 = { class: "setting-item" };
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
@@ -26722,7 +26842,7 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
         id: "settings-modal",
         "aria-live": "polite"
       }, [
-        createBaseVNode("div", _hoisted_1$8, [
+        createBaseVNode("div", _hoisted_1$9, [
           _cache[3] || (_cache[3] = createBaseVNode("span", null, "Settings", -1)),
           createBaseVNode("button", {
             class: "settings-close",
@@ -26732,9 +26852,9 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = false)
           }, "×")
         ]),
-        createBaseVNode("div", _hoisted_2$5, [
+        createBaseVNode("div", _hoisted_2$6, [
           _cache[6] || (_cache[6] = createStaticVNode('<div class="setting-item"><div class="setting-main"><div class="settings-label">💓 Heartbeat</div><div class="settings-meta" id="hb-info">syncing...</div></div><div class="setting-actions"><button class="hb-config" id="hb-config" type="button">Configure</button><button class="hb-toggle" id="hb-toggle" type="button">Loading...</button></div></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🕒 Clock</div><div class="settings-meta" id="clock-info">24-hour format</div></div><button class="hb-toggle" id="clock-toggle" type="button">24h</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🔗 GitHub Banner</div><div class="settings-meta">Star on GitHub header bar</div></div><button class="hb-toggle" id="header-toggle" type="button">On</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🐞 Debug</div><div class="settings-meta">Show chat thread/session ids</div></div><button class="hb-toggle off" id="debug-toggle" type="button">Off</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🎙️ Voice — STT</div><div class="settings-meta" id="voice-stt-meta">Whisper (local)</div></div><button class="hb-toggle off" id="voice-stt-toggle" type="button">Whisper</button></div>', 5)),
-          createBaseVNode("div", _hoisted_3$3, [
+          createBaseVNode("div", _hoisted_3$5, [
             _cache[4] || (_cache[4] = createBaseVNode("div", { class: "setting-main" }, [
               createBaseVNode("div", { class: "settings-label" }, "🎙️ Mic (STT)"),
               createBaseVNode("div", { class: "settings-meta" }, "Dictate and voice chat")
@@ -26746,7 +26866,7 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
               onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
             }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
           ]),
-          createBaseVNode("div", _hoisted_4$3, [
+          createBaseVNode("div", _hoisted_4$4, [
             _cache[5] || (_cache[5] = createBaseVNode("div", { class: "setting-main" }, [
               createBaseVNode("div", { class: "settings-label" }, "🔊 Speaker (TTS)"),
               createBaseVNode("div", { class: "settings-meta" }, "Read aloud and voice replies"),
@@ -26776,21 +26896,21 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_main$8 = {};
-const _hoisted_1$7 = {
+const _sfc_main$9 = {};
+const _hoisted_1$8 = {
   class: "info-modal",
   id: "hb-modal",
   "aria-live": "polite",
   "aria-hidden": "true"
 };
 function _sfc_render$1(_ctx, _cache) {
-  return openBlock(), createElementBlock("section", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
+  return openBlock(), createElementBlock("section", _hoisted_1$8, [..._cache[0] || (_cache[0] = [
     createStaticVNode('<article class="hb-card"><div class="info-head"><span>Heartbeat Configuration</span><button class="settings-close" id="hb-modal-close" type="button" aria-label="Close heartbeat configuration">×</button></div><form class="hb-form" id="hb-form"><label class="hb-field" for="hb-interval-input"><span class="hb-label">Interval (minutes)</span><input class="hb-input" id="hb-interval-input" type="number" min="1" max="1440" step="1" required></label><label class="hb-field" for="hb-prompt-input"><span class="hb-label">Custom prompt</span><textarea class="hb-textarea" id="hb-prompt-input" placeholder="What should heartbeat run?" required></textarea></label><div class="hb-actions"><div class="hb-status" id="hb-modal-status"></div><div class="hb-buttons"><button class="hb-btn ghost" id="hb-cancel-btn" type="button">Cancel</button><button class="hb-btn solid" id="hb-save-btn" type="submit">Save</button></div></div></form></article>', 1)
   ])]);
 }
-const HeartbeatBar = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$1]]);
-const _sfc_main$7 = {};
-const _hoisted_1$6 = {
+const HeartbeatBar = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$1]]);
+const _sfc_main$8 = {};
+const _hoisted_1$7 = {
   id: "audio-action-modal",
   class: "audio-action-modal",
   hidden: "",
@@ -26798,13 +26918,13 @@ const _hoisted_1$6 = {
   "aria-modal": "true"
 };
 function _sfc_render(_ctx, _cache) {
-  return openBlock(), createElementBlock("div", _hoisted_1$6, [..._cache[0] || (_cache[0] = [
+  return openBlock(), createElementBlock("div", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
     createStaticVNode('<div class="audio-action-card" id="audio-action-card"><div class="audio-action-icon" id="audio-action-icon"></div><div class="audio-action-label" id="audio-action-label">Recording...</div><div class="audio-player-resume" id="audio-player-resume" hidden><div class="audio-player-resume-msg" id="audio-player-resume-msg"></div><div class="audio-player-resume-btns"><button class="audio-player-resume-btn is-restart" id="audio-resume-restart" type="button">Start over</button><button class="audio-player-resume-btn is-resume" id="audio-resume-continue" type="button">Resume</button></div></div><div class="audio-player-progress" id="audio-player-progress" hidden><div class="audio-player-bar-wrap"><div class="audio-player-bar" id="audio-player-bar"></div></div><div class="audio-player-counter" id="audio-player-counter">0 / 0</div></div><div class="audio-player-transcript" id="audio-player-transcript" hidden></div><div class="audio-player-controls"><button class="audio-player-skip" id="audio-skip-back" type="button" aria-label="Previous" hidden><i class="fa-solid fa-backward-step"></i></button><button class="audio-action-stop" id="audio-action-stop" type="button" aria-label="Stop"><i class="fa-solid fa-stop"></i><span>Stop</span></button><button class="audio-player-skip" id="audio-skip-forward" type="button" aria-label="Next" hidden><i class="fa-solid fa-forward-step"></i></button></div></div>', 1)
   ])]);
 }
-const AudioModal = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render]]);
-const _hoisted_1$5 = ["disabled"];
-const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+const AudioModal = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render]]);
+const _hoisted_1$6 = ["disabled"];
+const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
@@ -26822,7 +26942,7 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
         onClick: triggerMic
       }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$5);
+      ])], 8, _hoisted_1$6);
     };
   }
 });
@@ -26886,9 +27006,9 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
     updateLastAssistant
   };
 });
-const _hoisted_1$4 = ["hidden"];
-const _hoisted_2$4 = ["hidden"];
-const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+const _hoisted_1$5 = ["hidden"];
+const _hoisted_2$5 = ["hidden"];
+const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
@@ -26919,7 +27039,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
           onClick: openVoiceMode
         }, [..._cache[0] || (_cache[0] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$4),
+        ])], 8, _hoisted_1$5),
         createBaseVNode("button", {
           id: "global-voice-task",
           class: "global-voice-task",
@@ -26953,33 +27073,33 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_2$4)
+        ])], 8, _hoisted_2$5)
       ], 64);
     };
   }
 });
-const _hoisted_1$3 = { class: "dock-shell" };
-const _hoisted_2$3 = {
+const _hoisted_1$4 = { class: "dock-shell" };
+const _hoisted_2$4 = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$2 = { class: "side-value" };
-const _hoisted_4$2 = {
+const _hoisted_3$4 = { class: "side-value" };
+const _hoisted_4$3 = {
   class: "side-bubble",
   id: "tasks-bubble",
   "aria-live": "polite"
 };
-const _hoisted_5$1 = { class: "side-value" };
-const _hoisted_6$1 = {
+const _hoisted_5$2 = { class: "side-value" };
+const _hoisted_6$2 = {
   class: "dock",
   id: "dock",
   "aria-live": "polite"
 };
-const _hoisted_7$1 = { id: "dock-pills" };
-const _hoisted_8$1 = { class: "pill-label" };
-const _hoisted_9$1 = { class: "pill-icon" };
-const _hoisted_10$1 = { class: "pill-value" };
+const _hoisted_7$2 = { id: "dock-pills" };
+const _hoisted_8$2 = { class: "pill-label" };
+const _hoisted_9$2 = { class: "pill-icon" };
+const _hoisted_10$2 = { class: "pill-value" };
 const _hoisted_11 = {
   class: "side-bubble",
   id: "uptime-bubble",
@@ -26988,7 +27108,7 @@ const _hoisted_11 = {
 const _hoisted_12 = { class: "side-value" };
 const STATE_POLL_OK_MS = 1e3;
 const STATE_POLL_OFFLINE_MS = 400;
-const _sfc_main$4 = /* @__PURE__ */ defineComponent({
+const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
     const pills = /* @__PURE__ */ ref([]);
@@ -27072,32 +27192,32 @@ const _sfc_main$4 = /* @__PURE__ */ defineComponent({
       window.removeEventListener("pageshow", kickStatePoll);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$3, [
-        createBaseVNode("aside", _hoisted_2$3, [
+      return openBlock(), createElementBlock("div", _hoisted_1$4, [
+        createBaseVNode("aside", _hoisted_2$4, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$2, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$4, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
-        createBaseVNode("aside", _hoisted_4$2, [
+        createBaseVNode("aside", _hoisted_4$3, [
           _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
-          createBaseVNode("div", _hoisted_5$1, toDisplayString(tasksCount.value), 1),
+          createBaseVNode("div", _hoisted_5$2, toDisplayString(tasksCount.value), 1),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
-        createBaseVNode("footer", _hoisted_6$1, [
-          createVNode(_sfc_main$5),
-          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+        createBaseVNode("footer", _hoisted_6$2, [
           createVNode(_sfc_main$6),
-          createBaseVNode("div", _hoisted_7$1, [
+          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+          createVNode(_sfc_main$7),
+          createBaseVNode("div", _hoisted_7$2, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
                 key: pill.label,
                 class: normalizeClass(["pill", pill.cls])
               }, [
-                createBaseVNode("div", _hoisted_8$1, [
-                  createBaseVNode("span", _hoisted_9$1, toDisplayString(pill.icon), 1),
+                createBaseVNode("div", _hoisted_8$2, [
+                  createBaseVNode("span", _hoisted_9$2, toDisplayString(pill.icon), 1),
                   createTextVNode(toDisplayString(pill.label), 1)
                 ]),
-                createBaseVNode("div", _hoisted_10$1, toDisplayString(pill.value), 1)
+                createBaseVNode("div", _hoisted_10$2, toDisplayString(pill.value), 1)
               ], 2);
             }), 128))
           ])
@@ -27204,17 +27324,17 @@ function speakFetch(text) {
     })
   );
 }
-const _hoisted_1$2 = {
+const _hoisted_1$3 = {
   class: "voice-mode-overlay",
   role: "dialog",
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$2 = ["innerHTML"];
-const _hoisted_3$1 = { class: "vm-controls" };
-const _hoisted_4$1 = { class: "voice-mode-status" };
+const _hoisted_2$3 = ["innerHTML"];
+const _hoisted_3$3 = { class: "vm-controls" };
+const _hoisted_4$2 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
-const _sfc_main$3 = /* @__PURE__ */ defineComponent({
+const _sfc_main$4 = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
   setup(__props) {
     const voice = useVoiceStore();
@@ -27548,13 +27668,13 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       voice.close();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$2, [
+      return openBlock(), createElementBlock("div", _hoisted_1$3, [
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$2),
-        createBaseVNode("div", _hoisted_3$1, [
-          createBaseVNode("div", _hoisted_4$1, toDisplayString(statusText.value), 1),
+        }, null, 8, _hoisted_2$3),
+        createBaseVNode("div", _hoisted_3$3, [
+          createBaseVNode("div", _hoisted_4$2, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
             type: "button",
@@ -27706,33 +27826,33 @@ Example response:
     submitDraft
   };
 });
-const _hoisted_1$1 = {
+const _hoisted_1$2 = {
   key: 0,
   class: "vtc-success text-center py-4"
 };
-const _hoisted_2$1 = {
+const _hoisted_2$2 = {
   key: 0,
   class: "vtc-claude-reply mb-3 p-3 rounded"
 };
-const _hoisted_3 = { class: "row g-2 mb-2" };
-const _hoisted_4 = { class: "col-6" };
-const _hoisted_5 = { class: "col-6" };
-const _hoisted_6 = { class: "d-flex gap-2 justify-content-end" };
-const _hoisted_7 = {
+const _hoisted_3$2 = { class: "row g-2 mb-2" };
+const _hoisted_4$1 = { class: "col-6" };
+const _hoisted_5$1 = { class: "col-6" };
+const _hoisted_6$1 = { class: "d-flex gap-2 justify-content-end" };
+const _hoisted_7$1 = {
   key: 2,
   class: "vtc-capture text-center py-3"
 };
-const _hoisted_8 = { class: "voice-mode-status mb-4" };
-const _hoisted_9 = {
+const _hoisted_8$1 = { class: "voice-mode-status mb-4" };
+const _hoisted_9$1 = {
   key: 0,
   class: "vm-heard mt-2"
 };
-const _hoisted_10 = {
+const _hoisted_10$1 = {
   key: 1,
   class: "vm-reply vm-active mt-2"
 };
 const HOLD_MS = 250;
-const _sfc_main$2 = /* @__PURE__ */ defineComponent({
+const _sfc_main$3 = /* @__PURE__ */ defineComponent({
   __name: "VoiceTaskCreator",
   setup(__props) {
     const voice = useVoiceStore();
@@ -28115,12 +28235,12 @@ User's voice request: "${userText}"`;
           ], -1)
         ])]),
         default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$1, [..._cache[8] || (_cache[8] = [
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$2, [..._cache[8] || (_cache[8] = [
             createBaseVNode("i", { class: "fa-solid fa-circle-check vtc-success-icon mb-3" }, null, -1),
             createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
             createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
           ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$1, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$2, [
               _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
@@ -28139,8 +28259,8 @@ User's voice request: "${userText}"`;
               ]),
               _: 1
             }),
-            createBaseVNode("div", _hoisted_3, [
-              createBaseVNode("div", _hoisted_4, [
+            createBaseVNode("div", _hoisted_3$2, [
+              createBaseVNode("div", _hoisted_4$1, [
                 createVNode(unref(BFormGroup_default), {
                   label: "Priority",
                   "label-for": "vtc-priority"
@@ -28171,7 +28291,7 @@ User's voice request: "${userText}"`;
                   _: 1
                 })
               ]),
-              createBaseVNode("div", _hoisted_5, [
+              createBaseVNode("div", _hoisted_5$1, [
                 createVNode(unref(BFormGroup_default), {
                   label: "Kind",
                   "label-for": "vtc-kind"
@@ -28261,7 +28381,7 @@ User's voice request: "${userText}"`;
               ]),
               _: 1
             })) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_6, [
+            createBaseVNode("div", _hoisted_6$1, [
               createVNode(unref(BButton_default), {
                 variant: "secondary",
                 size: "sm",
@@ -28286,8 +28406,8 @@ User's voice request: "${userText}"`;
                 _: 1
               }, 8, ["disabled"])
             ])
-          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7, [
-            createBaseVNode("div", _hoisted_8, toDisplayString(statusText.value), 1),
+          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7$1, [
+            createBaseVNode("div", _hoisted_8$1, toDisplayString(statusText.value), 1),
             createBaseVNode("button", {
               class: normalizeClass(["voice-mode-btn mx-auto mb-4", { listening: isListening.value, processing: isProcessing.value }]),
               type: "button",
@@ -28302,8 +28422,8 @@ User's voice request: "${userText}"`;
                 class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
               }, null, 2)
             ], 34),
-            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
+            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9$1, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10$1, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
           ]))
         ]),
         _: 1
@@ -28311,8 +28431,8 @@ User's voice request: "${userText}"`;
     };
   }
 });
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-9d3f47dd"]]);
-const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-9d3f47dd"]]);
+const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
     const voice = useVoiceStore();
@@ -28339,22 +28459,166 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$3, { key: 0 })) : createCommentVNode("", true),
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$4, { key: 0 })) : createCommentVNode("", true),
         createVNode(VoiceTaskCreator)
       ]);
     };
   }
 });
-const _hoisted_1 = { class: "stage" };
-const _hoisted_2 = {
+const _hoisted_1$1 = { class: "reading-header" };
+const _hoisted_2$1 = { class: "reading-stack" };
+const _hoisted_3$1 = ["title", "onClick"];
+const _hoisted_4 = { class: "reading-pill-name" };
+const _hoisted_5 = ["onClick"];
+const _hoisted_6 = {
+  key: 0,
+  class: "reading-empty-hint"
+};
+const _hoisted_7 = { class: "reading-controls" };
+const _hoisted_8 = ["title"];
+const _hoisted_9 = {
+  key: 0,
+  class: "reading-doc"
+};
+const _hoisted_10 = {
+  key: 1,
+  class: "reading-doc reading-doc-empty"
+};
+const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+  __name: "ReadingPane",
+  setup(__props) {
+    const reading = useReadingStore();
+    const activeRef = computed(() => {
+      return reading.stack[reading.activeIndex] ?? null;
+    });
+    function onSplitterDown(ev) {
+      ev.preventDefault();
+      const startX = ev.clientX;
+      const startW = reading.width;
+      const side = reading.side;
+      function onMove(me2) {
+        const dx = me2.clientX - startX;
+        const newW = side === "right" ? startW - dx : startW + dx;
+        reading.setWidth(Math.max(200, Math.min(900, newW)));
+      }
+      function onUp() {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      }
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    }
+    function onDragOver(ev) {
+      var _a2;
+      if (!((_a2 = ev.dataTransfer) == null ? void 0 : _a2.types.includes("application/x-caravel-ref"))) return;
+      ev.preventDefault();
+      ev.dataTransfer.dropEffect = "copy";
+    }
+    function onDrop(ev) {
+      var _a2;
+      ev.preventDefault();
+      reading.setDragActive(false);
+      const data = (_a2 = ev.dataTransfer) == null ? void 0 : _a2.getData("application/x-caravel-ref");
+      if (!data) return;
+      try {
+        const ref2 = JSON.parse(data);
+        reading.throwRef(ref2);
+      } catch {
+      }
+    }
+    function pillLabel(ref2) {
+      return ref2.path.split("/").pop() || ref2.path;
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: normalizeClass(["reading-pane", { "reading-drag-over": unref(reading).dragActive }]),
+        style: normalizeStyle({ width: unref(reading).width + "px" }),
+        onDragover: onDragOver,
+        onDrop
+      }, [
+        createBaseVNode("div", {
+          class: "reading-splitter",
+          onPointerdown: withModifiers(onSplitterDown, ["stop"])
+        }, null, 32),
+        createBaseVNode("div", _hoisted_1$1, [
+          createBaseVNode("div", _hoisted_2$1, [
+            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(reading).stack, (item, i) => {
+              return openBlock(), createElementBlock("button", {
+                key: item.path,
+                class: normalizeClass(["reading-pill", { "is-active": i === unref(reading).activeIndex }]),
+                type: "button",
+                title: item.path,
+                onClick: ($event) => unref(reading).activate(i)
+              }, [
+                createBaseVNode("span", _hoisted_4, toDisplayString(pillLabel(item)), 1),
+                createBaseVNode("span", {
+                  class: "reading-pill-close",
+                  role: "button",
+                  tabindex: "-1",
+                  "aria-label": "Remove",
+                  onClick: withModifiers(($event) => unref(reading).closeItem(i), ["stop"])
+                }, "×", 8, _hoisted_5)
+              ], 10, _hoisted_3$1);
+            }), 128)),
+            unref(reading).stack.length === 0 ? (openBlock(), createElementBlock("span", _hoisted_6, " Drop a file or press ⇥ ")) : createCommentVNode("", true)
+          ]),
+          createBaseVNode("div", _hoisted_7, [
+            createBaseVNode("button", {
+              class: "reading-side-btn",
+              type: "button",
+              title: unref(reading).side === "right" ? "Dock left" : "Dock right",
+              onClick: _cache[0] || (_cache[0] = ($event) => unref(reading).setSide(unref(reading).side === "right" ? "left" : "right"))
+            }, toDisplayString(unref(reading).side === "right" ? "⇦" : "⇨"), 9, _hoisted_8),
+            createBaseVNode("button", {
+              class: "reading-close-btn",
+              type: "button",
+              title: "Close reading pane",
+              onClick: _cache[1] || (_cache[1] = ($event) => unref(reading).setOpen(false))
+            }, "×")
+          ])
+        ]),
+        activeRef.value ? (openBlock(), createElementBlock("div", _hoisted_9, [
+          createVNode(_sfc_main$c, {
+            path: activeRef.value.path,
+            kind: activeRef.value.kind
+          }, null, 8, ["path", "kind"])
+        ])) : (openBlock(), createElementBlock("div", _hoisted_10, [..._cache[2] || (_cache[2] = [
+          createBaseVNode("p", { class: "reading-drop-msg" }, "Drop a file or press ⇥ on a file row to open it here.", -1)
+        ])]))
+      ], 38);
+    };
+  }
+});
+const _hoisted_1 = {
   class: "tab-nav",
   role: "tablist",
   "aria-label": "Main navigation"
 };
+const _hoisted_2 = ["aria-pressed"];
+const _hoisted_3 = { class: "stage-main" };
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "App",
   setup(__props) {
     const ui = useUiStore();
+    const reading = useReadingStore();
+    onMounted(() => {
+      window.__throwToReadingPane = (ref2) => reading.throwRef(ref2);
+    });
+    function onStageDragEnter(ev) {
+      var _a2;
+      if ((_a2 = ev.dataTransfer) == null ? void 0 : _a2.types.includes("application/x-caravel-ref")) {
+        reading.setDragActive(true);
+      }
+    }
+    function onStageDragLeave(ev) {
+      const stage = ev.currentTarget;
+      if (!stage.contains(ev.relatedTarget)) {
+        reading.setDragActive(false);
+      }
+    }
+    function onStageDragEnd() {
+      reading.setDragActive(false);
+    }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
         _cache[6] || (_cache[6] = createBaseVNode("a", {
@@ -28367,18 +28631,24 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
           createBaseVNode("span", { class: "repo-star" }, "★")
         ], -1)),
-        createVNode(_sfc_main$9),
+        createVNode(_sfc_main$a),
         createVNode(HeartbeatBar),
         _cache[7] || (_cache[7] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
-        createBaseVNode("main", _hoisted_1, [
-          createBaseVNode("nav", _hoisted_2, [
+        createBaseVNode("main", {
+          class: "stage",
+          onDragenterCapture: onStageDragEnter,
+          onDragleaveCapture: onStageDragLeave,
+          onDragendCapture: onStageDragEnd,
+          onDropCapture: onStageDragEnd
+        }, [
+          createBaseVNode("nav", _hoisted_1, [
             createVNode(unref(RouterLink), {
               class: "tab-btn",
               to: "/dashboard",
               role: "tab",
               "aria-controls": "dashboard-panel"
             }, {
-              default: withCtx(() => [..._cache[1] || (_cache[1] = [
+              default: withCtx(() => [..._cache[2] || (_cache[2] = [
                 createBaseVNode("span", { class: "tab-btn-label-full" }, "Dashboard", -1),
                 createBaseVNode("span", { class: "tab-btn-label-short" }, "Dash", -1)
               ])]),
@@ -28390,7 +28660,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               role: "tab",
               "aria-controls": "chat-panel"
             }, {
-              default: withCtx(() => [..._cache[2] || (_cache[2] = [
+              default: withCtx(() => [..._cache[3] || (_cache[3] = [
                 createTextVNode("Chat", -1)
               ])]),
               _: 1
@@ -28401,7 +28671,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               role: "tab",
               "aria-controls": "tasks-panel"
             }, {
-              default: withCtx(() => [..._cache[3] || (_cache[3] = [
+              default: withCtx(() => [..._cache[4] || (_cache[4] = [
                 createTextVNode("Tasks", -1)
               ])]),
               _: 1
@@ -28412,32 +28682,44 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               role: "tab",
               "aria-controls": "files-panel"
             }, {
-              default: withCtx(() => [..._cache[4] || (_cache[4] = [
+              default: withCtx(() => [..._cache[5] || (_cache[5] = [
                 createTextVNode("Files", -1)
               ])]),
               _: 1
             }),
-            _cache[5] || (_cache[5] = createBaseVNode("button", {
+            createBaseVNode("button", {
               class: "tab-btn tab-btn-split",
               id: "reading-nav-toggle",
               type: "button",
               title: "Toggle reading pane",
               "aria-label": "Toggle reading pane",
-              "aria-pressed": "false"
-            }, "⫽", -1)),
+              "aria-pressed": unref(reading).open ? "true" : "false",
+              onClick: _cache[0] || (_cache[0] = ($event) => unref(reading).toggle())
+            }, "⫽", 8, _hoisted_2),
             createBaseVNode("button", {
               class: "tab-btn tab-btn-settings",
               id: "settings-btn",
               type: "button",
               title: "Settings",
-              onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = true)
+              onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).settingsOpen = true)
             }, "⚙")
           ]),
-          createVNode(unref(RouterView))
-        ]),
+          createBaseVNode("div", {
+            class: normalizeClass(["stage-body", {
+              "reading-open": unref(reading).open,
+              "reading-left": unref(reading).open && unref(reading).side === "left",
+              "reading-right": unref(reading).open && unref(reading).side === "right"
+            }])
+          }, [
+            createBaseVNode("div", _hoisted_3, [
+              createVNode(unref(RouterView))
+            ]),
+            unref(reading).open ? (openBlock(), createBlock(_sfc_main$1, { key: 0 })) : createCommentVNode("", true)
+          ], 2)
+        ], 32),
         createVNode(AudioModal),
-        createVNode(_sfc_main$4),
-        createVNode(_sfc_main$1)
+        createVNode(_sfc_main$5),
+        createVNode(_sfc_main$2)
       ], 64);
     };
   }
@@ -33752,6 +34034,206 @@ const pageStyles = String.raw`    :root {
       border-color: #c07bff55;
     }
     .chat-voice-mode[hidden] { display: none; }
+
+    /* ── Stage body — RouterView + optional reading pane (Phase 2) ── */
+    .stage-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
+    .stage-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      align-items: center;
+    }
+    /* When reading pane is open: horizontal split */
+    .stage-body.reading-open {
+      flex-direction: row;
+    }
+    .stage-body.reading-open .stage-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .stage-body.reading-left {
+      flex-direction: row-reverse;
+    }
+
+    /* ── Reading pane ── */
+    .reading-pane {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff08, transparent 55%),
+        linear-gradient(180deg, #0d1826cc 0%, #09111ecc 100%);
+      border-left: 1px solid #ffffff22;
+      position: relative;
+    }
+    .stage-body.reading-left .reading-pane {
+      border-left: none;
+      border-right: 1px solid #ffffff22;
+    }
+
+    /* Splitter drag handle */
+    .reading-splitter {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -4px;
+      width: 8px;
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    .stage-body.reading-left .reading-splitter {
+      left: auto;
+      right: -4px;
+    }
+    .reading-splitter:hover { background: #7dc5ff22; }
+
+    /* Narrow viewport: full-screen overlay (spec R6) */
+    @media (max-width: 1199px) {
+      .reading-pane {
+        position: fixed;
+        inset: 0;
+        width: 100% !important;
+        z-index: 200;
+        border: none;
+        backdrop-filter: blur(12px);
+      }
+    }
+
+    /* Reading pane header */
+    .reading-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #ffffff1a;
+      flex-shrink: 0;
+    }
+    .reading-stack {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      align-items: center;
+    }
+    .reading-stack::-webkit-scrollbar { display: none; }
+    .reading-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px 2px 10px;
+      border-radius: 12px;
+      border: 1px solid #4a7a9b44;
+      background: #0a1a2e44;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .reading-pill.is-active {
+      border-color: #7dc5ffaa;
+      background: #0e2040aa;
+      color: #dbeaff;
+    }
+    .reading-pill-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-pill-close {
+      color: #6a8fa0;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .reading-pill-close:hover { color: #ff8888; }
+    .reading-empty-hint {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+    .reading-controls {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .reading-side-btn,
+    .reading-close-btn {
+      background: none;
+      border: 1px solid #4a7a9b44;
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .reading-side-btn:hover,
+    .reading-close-btn:hover {
+      border-color: #7dc5ffaa;
+      color: #dbeaff;
+    }
+
+    /* Document area */
+    .reading-doc {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .reading-doc-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .reading-drop-msg {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .reading-drag-over {
+      outline: 2px dashed #7dc5ff66;
+      outline-offset: -3px;
+    }
+
+    /* ── ⇥ throw buttons on file rows and doc-pills ── */
+    .files-throw-btn,
+    .task-throw-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .files-item:hover .files-throw-btn,
+    .task-panel-context-item:hover .task-throw-btn {
+      opacity: 1;
+    }
+    .files-throw-btn:hover,
+    .task-throw-btn:hover {
+      color: #7dc5ff;
+      opacity: 1;
+    }
 
     `;
 const _gs = document.createElement("style");

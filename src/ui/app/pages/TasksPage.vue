@@ -571,6 +571,16 @@ function onPanelBodyClick(ev: MouseEvent): void {
   const nextBtn = t.closest<HTMLElement>(".task-panel-next-submit");
   if (nextBtn) { ev.preventDefault(); submitNext(nextBtn.closest(".task-panel-next")); return; }
 
+  const throwBtn = t.closest<HTMLElement>("[data-throw-path]");
+  if (throwBtn) {
+    ev.preventDefault();
+    const path = throwBtn.getAttribute("data-throw-path") || "";
+    const kind = (throwBtn.getAttribute("data-throw-kind") || "report") as "file" | "report";
+    const fn = (window as any).__throwToReadingPane;
+    if (path && typeof fn === "function") fn({ kind, path });
+    return;
+  }
+
   const pillBtn = t.closest<HTMLElement>("[data-doc-pill]");
   if (pillBtn) { ev.preventDefault(); setActiveReportDoc(pillBtn.closest(".task-panel-report-pane"), pillBtn.getAttribute("data-doc-pill") || ""); return; }
 
@@ -632,7 +642,14 @@ function onPanelBodyClick(ev: MouseEvent): void {
   if (openFileBtn) {
     ev.preventDefault();
     const filePath = openFileBtn.getAttribute("data-open-file");
-    if (filePath && window.__loadFile) window.__loadFile(filePath);
+    if (!filePath) return;
+    // Alt-click → throw to reading pane (spec R3). Plain click → Files panel.
+    if ((ev as MouseEvent).altKey) {
+      const fn = (window as any).__throwToReadingPane;
+      if (typeof fn === "function") fn({ kind: "report", path: filePath });
+    } else if (window.__loadFile) {
+      window.__loadFile(filePath);
+    }
     return;
   }
 

@@ -14,12 +14,14 @@ const MIME_TYPES: Record<string, string> = {
   ".jpg": "image/jpeg",
 };
 
+const DAEMON_BASE = "http://127.0.0.1:4632";
+
 const server = Bun.serve({
   port: PORT,
   async fetch(req) {
     const url = new URL(req.url);
 
-    // Stub API endpoints so dock components can poll without error
+    // Stub /api/state so dock shows test-server as the "daemon"
     if (url.pathname === "/api/state") {
       const now = Date.now();
       const stub = {
@@ -36,6 +38,27 @@ const server = Bun.serve({
       return new Response(JSON.stringify(stub), {
         headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
       });
+    }
+
+    // Proxy all other /api/* to the live daemon so tests get real data
+    if (url.pathname.startsWith("/api/")) {
+      try {
+        const target = DAEMON_BASE + url.pathname + url.search;
+        const proxyRes = await fetch(target, {
+          method: req.method,
+          headers: req.headers,
+          body: req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
+        });
+        const body = await proxyRes.arrayBuffer();
+        const headers = new Headers(proxyRes.headers);
+        headers.set("Access-Control-Allow-Origin", "*");
+        return new Response(body, { status: proxyRes.status, headers });
+      } catch {
+        return new Response(JSON.stringify({ ok: false, error: "daemon unreachable" }), {
+          status: 502,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Route everything to index.html for SPA routing (except explicit files)

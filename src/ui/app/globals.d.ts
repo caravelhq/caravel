@@ -22,4 +22,6 @@ declare interface Window {
   // Navigation
   __taskBackContext?: unknown;
   __renderFilesBackButton?: () => void;
+  // Reading pane — throw a ref from vanilla DOM code (Phase 2)
+  __throwToReadingPane?: (ref: { kind: string; path: string; branch?: string }) => void;
 }

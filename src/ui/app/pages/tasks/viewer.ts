@@ -201,7 +201,8 @@ export function renderReportPane(card: TaskRow): string {
   const docsHtml = allPaths.map((p, i) => docNode(p, i === 0, i === 0)).join("");
   const pillsHidden = allPaths.length <= 1;
   const pillsHtml = pillsHidden ? "" : allPaths.map((p, i) =>
-    '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p) + '" type="button">' + escapeHtml(p.split("/").pop() || p) + "</button>"
+    '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p) + '" type="button">' + escapeHtml(p.split("/").pop() || p) + "</button>" +
+    '<button class="task-throw-btn" data-throw-path="' + escapeHtml(p) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
   ).join("");
   return (
     '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '">' +

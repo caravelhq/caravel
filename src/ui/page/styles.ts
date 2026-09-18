@@ -5309,4 +5309,204 @@ export const pageStyles = String.raw`    :root {
     }
     .chat-voice-mode[hidden] { display: none; }
 
+    /* ── Stage body — RouterView + optional reading pane (Phase 2) ── */
+    .stage-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
+    .stage-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      align-items: center;
+    }
+    /* When reading pane is open: horizontal split */
+    .stage-body.reading-open {
+      flex-direction: row;
+    }
+    .stage-body.reading-open .stage-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .stage-body.reading-left {
+      flex-direction: row-reverse;
+    }
+
+    /* ── Reading pane ── */
+    .reading-pane {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff08, transparent 55%),
+        linear-gradient(180deg, #0d1826cc 0%, #09111ecc 100%);
+      border-left: 1px solid #ffffff22;
+      position: relative;
+    }
+    .stage-body.reading-left .reading-pane {
+      border-left: none;
+      border-right: 1px solid #ffffff22;
+    }
+
+    /* Splitter drag handle */
+    .reading-splitter {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -4px;
+      width: 8px;
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    .stage-body.reading-left .reading-splitter {
+      left: auto;
+      right: -4px;
+    }
+    .reading-splitter:hover { background: #7dc5ff22; }
+
+    /* Narrow viewport: full-screen overlay (spec R6) */
+    @media (max-width: 1199px) {
+      .reading-pane {
+        position: fixed;
+        inset: 0;
+        width: 100% !important;
+        z-index: 200;
+        border: none;
+        backdrop-filter: blur(12px);
+      }
+    }
+
+    /* Reading pane header */
+    .reading-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #ffffff1a;
+      flex-shrink: 0;
+    }
+    .reading-stack {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      align-items: center;
+    }
+    .reading-stack::-webkit-scrollbar { display: none; }
+    .reading-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px 2px 10px;
+      border-radius: 12px;
+      border: 1px solid #4a7a9b44;
+      background: #0a1a2e44;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .reading-pill.is-active {
+      border-color: #7dc5ffaa;
+      background: #0e2040aa;
+      color: #dbeaff;
+    }
+    .reading-pill-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-pill-close {
+      color: #6a8fa0;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .reading-pill-close:hover { color: #ff8888; }
+    .reading-empty-hint {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+    .reading-controls {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .reading-side-btn,
+    .reading-close-btn {
+      background: none;
+      border: 1px solid #4a7a9b44;
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .reading-side-btn:hover,
+    .reading-close-btn:hover {
+      border-color: #7dc5ffaa;
+      color: #dbeaff;
+    }
+
+    /* Document area */
+    .reading-doc {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .reading-doc-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .reading-drop-msg {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .reading-drag-over {
+      outline: 2px dashed #7dc5ff66;
+      outline-offset: -3px;
+    }
+
+    /* ── ⇥ throw buttons on file rows and doc-pills ── */
+    .files-throw-btn,
+    .task-throw-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .files-item:hover .files-throw-btn,
+    .task-panel-context-item:hover .task-throw-btn {
+      opacity: 1;
+    }
+    .files-throw-btn:hover,
+    .task-throw-btn:hover {
+      color: #7dc5ff;
+      opacity: 1;
+    }
+
     `;
