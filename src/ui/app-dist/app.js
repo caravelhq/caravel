@@ -19841,747 +19841,6 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _export_sfc = (sfc, props) => {
-  const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
-    target[key] = val;
-  }
-  return target;
-};
-const _sfc_main$d = {};
-const _hoisted_1$c = {
-  id: "chat-panel",
-  class: "chat-panel"
-};
-function _sfc_render$2(_ctx, _cache) {
-  return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
-    createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
-  ])]);
-}
-const ChatPage = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$2]]);
-const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
-  const view = /* @__PURE__ */ ref("projects");
-  const filter = /* @__PURE__ */ ref("all");
-  const cache = /* @__PURE__ */ ref([]);
-  const expanded = /* @__PURE__ */ ref({});
-  const collapsed = /* @__PURE__ */ ref({});
-  const bulkSelected = /* @__PURE__ */ ref({});
-  const multiSelectActive = /* @__PURE__ */ ref(false);
-  const pane = /* @__PURE__ */ ref("empty");
-  const pickerCollapsed = /* @__PURE__ */ ref(false);
-  const currentTaskId = /* @__PURE__ */ ref(null);
-  const currentTaskProject = /* @__PURE__ */ ref(null);
-  const currentViewMode = /* @__PURE__ */ ref("task");
-  const currentProjectSlug = /* @__PURE__ */ ref(null);
-  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
-  const loaded = /* @__PURE__ */ ref(false);
-  return {
-    view,
-    filter,
-    cache,
-    expanded,
-    collapsed,
-    bulkSelected,
-    multiSelectActive,
-    pane,
-    pickerCollapsed,
-    currentTaskId,
-    currentTaskProject,
-    currentViewMode,
-    currentProjectSlug,
-    taskFromProjectSlug,
-    loaded
-  };
-});
-const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
-  const tiers = /* @__PURE__ */ ref(null);
-  const lastFetch = /* @__PURE__ */ ref(0);
-  async function fetch2() {
-    try {
-      const res = await window.fetch("/api/tasks/attention");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.ok && data.tiers) {
-        tiers.value = data.tiers;
-        lastFetch.value = Date.now();
-      }
-    } catch (_2) {
-    }
-  }
-  return { tiers, lastFetch, fetch: fetch2 };
-});
-function escapeHtml$1(s) {
-  return escHtml(String(s == null ? "" : s));
-}
-function timeAgo(iso) {
-  if (!iso) return "";
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return "";
-  const diff = Math.max(0, Date.now() - t);
-  const mins = Math.floor(diff / 6e4);
-  if (mins < 1) return "just now";
-  if (mins < 60) return mins + "m ago";
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + "h ago";
-  return Math.floor(hrs / 24) + "d ago";
-}
-function statusClass(status) {
-  if (!status) return "is-open";
-  if (status === "open" || status === "claimed") return "is-open";
-  if (status.indexOf("waiting:") === 0) return "is-waiting";
-  if (status === "paused") return "is-paused";
-  if (status === "done") return "is-done";
-  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
-  return "is-open";
-}
-function shorten(s, n) {
-  const str2 = String(s || "");
-  if (str2.length <= n) return str2;
-  return str2.slice(0, n - 1) + "…";
-}
-function shortenStatusLabel(s) {
-  if (!s) return "?";
-  if (s === "paused") return "paused";
-  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
-  if (s.indexOf("failed:") === 0) {
-    const rest = s.slice("failed:".length);
-    return rest === "other" ? "failed" : "fail " + rest;
-  }
-  return s;
-}
-function fmtDaysHours(ms) {
-  if (!Number.isFinite(ms) || ms < 0) return "—";
-  const seconds = Math.floor(ms / 1e3);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(seconds % 86400 / 3600);
-  if (days > 0) return days + "d " + hours + "h";
-  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
-}
-function suggestChildHeadline(parentHeadline, source) {
-  const base = String(parentHeadline || "").slice(0, 56);
-  return base + " — rework";
-}
-function renderNextTargetPicker(currentAgent, agentsCache) {
-  let options = "";
-  const agents = Array.isArray(agentsCache) ? agentsCache : [];
-  for (const a of agents) {
-    if (!a || !a.name) continue;
-    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-    const selected = a.name === currentAgent ? " selected" : "";
-    options += '<option value="' + escapeHtml$1(a.name) + '"' + selected + ">" + escapeHtml$1(label) + "</option>";
-  }
-  if (!options && currentAgent) {
-    options = '<option value="' + escapeHtml$1(currentAgent) + '" selected>' + escapeHtml$1(currentAgent) + "</option>";
-  }
-  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
-}
-function countActiveDescendants(taskId, cache) {
-  if (!taskId || !cache.length) return 0;
-  const byParent = {};
-  for (const t of cache) {
-    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-    if (!p2) continue;
-    (byParent[p2] = byParent[p2] || []).push(t);
-  }
-  const queue2 = [taskId];
-  const seen = { [taskId]: true };
-  let count = 0;
-  while (queue2.length > 0) {
-    const cur = queue2.shift();
-    for (const kid of byParent[cur] || []) {
-      if (seen[kid.id]) continue;
-      seen[kid.id] = true;
-      if (!kid.closed || !kid.closed.status) count++;
-      queue2.push(kid.id);
-    }
-  }
-  return count;
-}
-function shortId(id) {
-  return String(id || "").replace(/^TSK-\d{4}-/, "");
-}
-function tierRow(rowCls, row, showCheckbox) {
-  const full = escapeHtml$1(row.id || "");
-  const shrt = escapeHtml$1(shortId(row.id));
-  const headline = escapeHtml$1(row.headline || row.id || "");
-  const label = escapeHtml$1(shorten(row.label || row.headline || row.id || "", 120));
-  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml$1(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
-  return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
-}
-function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
-  const count = tier && tier.count || 0;
-  const rows = tier && tier.rows || [];
-  const selectAll = showCheckbox && count > 0 ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />' : "";
-  let h2 = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
-  for (const row of rows) {
-    h2 += tierRow(rowCls, row, showCheckbox);
-  }
-  if (count > rows.length) {
-    h2 += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
-  }
-  return h2;
-}
-function renderAttentionTiers(el, tiers) {
-  if (!el) return;
-  if (!tiers) {
-    el.hidden = true;
-    return;
-  }
-  let html = "";
-  html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
-  html += renderTierSection(tiers.failed, "tasks-tier-head-failed", "tasks-tier-row-failed", "✗", "Triage", false);
-  html += renderTierSection(tiers.blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
-  html += renderTierSection(tiers.paused, "tasks-tier-head-paused", "tasks-tier-row-paused", "⏸", "Paused", false);
-  html += renderTierSection(tiers.reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read", true);
-  el.innerHTML = html;
-  el.hidden = html === "";
-}
-function passesFilter(t, filter) {
-  if (filter === "all") return true;
-  const s = (t.status || "").toLowerCase();
-  if (filter === "open") return s === "open" || s === "claimed";
-  if (filter === "waiting") return s.indexOf("waiting:") === 0;
-  if (filter === "done") return s === "done";
-  if (filter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
-  return true;
-}
-function buildTaskTree(tasks) {
-  const byId = {};
-  for (const t of tasks) byId[t.id] = t;
-  function idDerivedAncestor(id) {
-    let cur = id;
-    while (true) {
-      const m2 = /^(.+)\.[0-9]+$/.exec(cur);
-      if (!m2) return null;
-      cur = m2[1];
-      if (byId[cur]) return cur;
-    }
-  }
-  function dotDepth(id) {
-    return (String(id).match(/\./g) || []).length;
-  }
-  function effectiveParent(t) {
-    const pid = t.parent && t.parent !== "null" ? t.parent : null;
-    if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
-      const idAnc = idDerivedAncestor(t.id);
-      if (idAnc) return idAnc;
-    }
-    if (pid && pid !== t.id && byId[pid]) {
-      const seen = { [t.id]: true };
-      let cur = byId[pid];
-      let cyclic = false;
-      while (cur) {
-        if (seen[cur.id]) {
-          cyclic = true;
-          break;
-        }
-        seen[cur.id] = true;
-        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
-        if (!nextId || nextId === cur.id || !byId[nextId]) break;
-        cur = byId[nextId];
-      }
-      if (!cyclic) return pid;
-    }
-    return idDerivedAncestor(t.id);
-  }
-  const roots = [];
-  const childrenOf = {};
-  for (const t of tasks) {
-    const parentId = effectiveParent(t);
-    if (parentId) {
-      (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
-    } else {
-      roots.push(t);
-    }
-  }
-  function byUpdatedDesc(a, b2) {
-    return (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0);
-  }
-  function byIdAsc(a, b2) {
-    return String(a.id).localeCompare(String(b2.id));
-  }
-  roots.sort(byUpdatedDesc);
-  Object.keys(childrenOf).forEach((k) => childrenOf[k].sort(byIdAsc));
-  return { roots, childrenOf };
-}
-function buildByParent(cache) {
-  const bp = {};
-  for (const t of cache) {
-    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-    if (!p2) continue;
-    (bp[p2] = bp[p2] || []).push(t);
-  }
-  return bp;
-}
-function countNonTerminalDescendants(taskId, byParent) {
-  const queue2 = [taskId];
-  const seen = { [taskId]: true };
-  let count = 0;
-  while (queue2.length > 0) {
-    const cur = queue2.shift();
-    for (const kid of byParent[cur] || []) {
-      if (seen[kid.id]) continue;
-      seen[kid.id] = true;
-      const s = kid.status || "";
-      const terminal = s === "done" || s.indexOf("failed:") === 0;
-      if (!terminal) count++;
-      queue2.push(kid.id);
-    }
-  }
-  return count;
-}
-function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTaskId) {
-  let rowStatus = statusClass(t.status);
-  const marker = depth === 0 ? "●" : "└";
-  const headline = t.headline || t.summary && t.summary.brief || t.brief || "(no headline)";
-  let rowClass = "tasks-tree-row";
-  if (t.id === currentTaskId) rowClass += " is-active";
-  if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
-  if (t.status === "paused") rowClass += " is-paused";
-  if (t.closed && t.closed.status) rowClass += " is-closed";
-  if (depth === 0) rowClass += " is-root";
-  let queuedBadge = "";
-  if (queuedCount > 0) {
-    rowClass += " has-queued";
-    rowStatus = "is-open";
-    queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
-  }
-  const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
-  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml$1(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
-  const rawStatus = t.status || "?";
-  const shortStatus = shortenStatusLabel(rawStatus);
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml$1(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml$1(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml$1(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml$1(rawStatus) + '">' + escapeHtml$1(shortStatus) + "</span>") + "</div></div></div>";
-}
-function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
-  if (seen[node.id] || depth > 32) return;
-  seen[node.id] = true;
-  const kids = tree.childrenOf[node.id] || [];
-  const hasChildren = kids.length > 0;
-  const queuedCount = countNonTerminalDescendants(node.id, byParent);
-  if (queuedCount > 0 && hasChildren && !(node.id in expanded)) {
-    expanded[node.id] = true;
-  }
-  const isExpanded = !!expanded[node.id];
-  out.push(renderTreeRow(node, depth, hasChildren, isExpanded, queuedCount, currentTaskId));
-  if (!hasChildren || !isExpanded) return;
-  for (const kid of kids) {
-    renderTreeBranch(tree, kid, depth + 1, out, expanded, byParent, currentTaskId, seen);
-  }
-}
-function expandAncestors(taskId, cache, expanded) {
-  if (!taskId) return;
-  const byId = {};
-  for (const t of cache) byId[t.id] = t;
-  function depth(id) {
-    return (String(id).match(/\./g) || []).length;
-  }
-  function idDerived(id) {
-    let cur2 = id;
-    while (true) {
-      const m2 = /^(.+)\.[0-9]+$/.exec(cur2);
-      if (!m2) return null;
-      cur2 = m2[1];
-      if (byId[cur2]) return cur2;
-    }
-  }
-  function ancestorOf(id) {
-    const t = byId[id];
-    if (t) {
-      const p2 = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
-      if (p2 && byId[p2] && depth(p2) >= depth(id)) {
-        const derived = idDerived(id);
-        if (derived) return derived;
-      }
-      if (p2 && byId[p2]) return p2;
-    }
-    return idDerived(id);
-  }
-  const seen = {};
-  let cur = ancestorOf(taskId);
-  while (cur && !seen[cur]) {
-    seen[cur] = true;
-    expanded[cur] = true;
-    cur = ancestorOf(cur);
-  }
-}
-function currentStatusClass(status) {
-  const s = (status || "").toLowerCase();
-  if (s === "done") return "status-done";
-  if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
-  if (s === "waiting:on:user") return "status-waiting-user";
-  if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
-  if (s === "waiting:on:limits") return "status-waiting-limits";
-  if (s.indexOf("waiting:") === 0) return "status-waiting-other";
-  if (s === "claimed") return "status-claimed";
-  return "status-open";
-}
-function renderCurrentRow(task, currentTaskId, currentSelected) {
-  const sc = currentStatusClass(task.status);
-  const isClaimed = task.status === "claimed";
-  const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
-  const meta = [
-    escapeHtml$1(task.agent || task.to || "?"),
-    escapeHtml$1(shortenStatusLabel(task.status || "?")),
-    ...task.updated ? [escapeHtml$1(timeAgo(task.updated))] : []
-  ];
-  let rowClass = "tasks-current-row " + sc;
-  if (task.id === currentTaskId) rowClass += " is-active";
-  const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
-  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml$1(task.id) + '" data-task-agent="' + escapeHtml$1(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml$1(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml$1(task.id) + '">' + escapeHtml$1(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml$1(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
-}
-function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
-  const filtered = cache.filter((t) => passesFilter(t, filter));
-  if (filtered.length === 0) {
-    tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
-    return;
-  }
-  const groups = {};
-  for (const t of filtered) {
-    const key = t.project || "__unassigned";
-    (groups[key] = groups[key] || []).push(t);
-  }
-  const projectKeys = Object.keys(groups).sort((a, b2) => {
-    if (a === "__unassigned" && b2 !== "__unassigned") return 1;
-    if (b2 === "__unassigned" && a !== "__unassigned") return -1;
-    const aLatest = groups[a].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
-    const bLatest = groups[b2].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
-    return bLatest - aLatest;
-  });
-  let html = "";
-  const byParent = buildByParent(filtered);
-  for (const groupKey of projectKeys) {
-    const rows = groups[groupKey];
-    const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
-    const isCollapsed = !!collapsed[groupKey];
-    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml$1(groupKey) + '">';
-    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml$1(groupKey) + '">';
-    html += '<span class="tasks-current-group-chevron"></span>';
-    html += '<span class="tasks-current-group-name">' + escapeHtml$1(displayName) + "</span>";
-    html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
-    html += '<div class="tasks-current-group-body">';
-    const tree = buildTaskTree(rows);
-    const out = [];
-    for (const root of tree.roots) {
-      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
-    }
-    html += out.join("") + "</div></div>";
-  }
-  tasksTree.innerHTML = html;
-}
-function updateGroupSelectAll(groupEl) {
-  if (!groupEl) return;
-  const allCb = groupEl.querySelector(".current-group-select-all");
-  if (!allCb) return;
-  const rowCbs = groupEl.querySelectorAll(".current-row-select");
-  if (rowCbs.length === 0) return;
-  let checkedCount = 0;
-  rowCbs.forEach((cb) => {
-    if (cb.checked) checkedCount++;
-  });
-  if (checkedCount === 0) {
-    allCb.checked = false;
-    allCb.indeterminate = false;
-  } else if (checkedCount === rowCbs.length) {
-    allCb.checked = true;
-    allCb.indeterminate = false;
-  } else {
-    allCb.checked = false;
-    allCb.indeterminate = true;
-  }
-}
-function handleRowCheckboxChange(ev, bulkSelected, updateBulkBar) {
-  const cb = ev.target;
-  if (!cb || cb.type !== "checkbox") return;
-  if (cb.classList.contains("current-row-select")) {
-    const taskId = cb.getAttribute("data-task-id") || "";
-    const agent = cb.getAttribute("data-task-agent") || "";
-    const defaultStatus = cb.getAttribute("data-task-default-status") || "cancelled";
-    if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
-    else delete bulkSelected[taskId];
-    updateBulkBar();
-    updateGroupSelectAll(cb.closest("[data-project-key]"));
-    return;
-  }
-  if (cb.classList.contains("current-group-select-all")) {
-    const groupEl = cb.closest("[data-project-key]");
-    const rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
-    rowCbs.forEach((rCb) => {
-      const rId = rCb.getAttribute("data-task-id") || "";
-      const rAgent = rCb.getAttribute("data-task-agent") || "";
-      const rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
-      if (cb.checked) {
-        bulkSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
-        rCb.checked = true;
-      } else {
-        delete bulkSelected[rId];
-        rCb.checked = false;
-      }
-    });
-    updateBulkBar();
-  }
-}
-function createBulkBar(tasksTreeEl, getBulkSelected, getMultiSelectActive, setMultiSelectActive, clearSelection, rerenderPicker, fetchTasks) {
-  const bar = document.createElement("div");
-  bar.className = "tasks-bulk-bar";
-  bar.hidden = true;
-  bar.innerHTML = '<span class="bulk-bar-count"></span><input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…"><button type="button" class="bulk-bar-close is-primary"></button><button type="button" class="bulk-bar-clear">Clear</button><button type="button" class="bulk-bar-done">Done</button><span class="bulk-bar-status"></span>';
-  const closeBtn = bar.querySelector(".bulk-bar-close");
-  const clearBtn = bar.querySelector(".bulk-bar-clear");
-  const doneBtn = bar.querySelector(".bulk-bar-done");
-  const statusEl = bar.querySelector(".bulk-bar-status");
-  const reasonEl = bar.querySelector(".bulk-bar-reason");
-  async function submitBulkClose() {
-    const selected = getBulkSelected();
-    const ids = Object.keys(selected);
-    if (ids.length === 0) return;
-    const reason = (reasonEl ? reasonEl.value : "").trim();
-    if (closeBtn) closeBtn.disabled = true;
-    if (statusEl) {
-      statusEl.textContent = "Closing…";
-      statusEl.className = "bulk-bar-status";
-    }
-    let closed = 0, failed = 0;
-    for (const id of ids) {
-      const sel = selected[id];
-      if (!sel) continue;
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(id) + "/close", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent: sel.agent, reason, status: sel.defaultStatus })
-        });
-        const data = await res.json();
-        if (data && data.ok) closed++;
-        else failed++;
-      } catch (_2) {
-        failed++;
-      }
-    }
-    clearSelection();
-    if (statusEl) {
-      statusEl.textContent = failed > 0 ? "Closed " + closed + " · " + failed + " failed." : "Closed " + closed + ".";
-      statusEl.className = "bulk-bar-status is-ok";
-    }
-    if (closeBtn) closeBtn.disabled = false;
-    fetchTasks();
-  }
-  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
-  if (clearBtn) clearBtn.addEventListener("click", () => {
-    clearSelection();
-    rerenderPicker();
-  });
-  if (doneBtn) doneBtn.addEventListener("click", () => {
-    setMultiSelectActive(false);
-    clearSelection();
-    tasksTreeEl.classList.remove("is-multiselect-active");
-    updateBar();
-    rerenderPicker();
-  });
-  function updateBar() {
-    const selected = getBulkSelected();
-    const ids = Object.keys(selected);
-    const multiActive = getMultiSelectActive();
-    if (ids.length === 0 && !multiActive) {
-      bar.hidden = true;
-      return;
-    }
-    bar.hidden = false;
-    const countEl = bar.querySelector(".bulk-bar-count");
-    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
-    if (closeBtn) {
-      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
-      closeBtn.hidden = ids.length === 0;
-    }
-    if (clearBtn) clearBtn.hidden = ids.length === 0;
-    if (statusEl) statusEl.textContent = "";
-  }
-  bar.update = updateBar;
-  if (tasksTreeEl.parentNode) {
-    tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);
-  }
-  return bar;
-}
-function hideClosedKey(slug) {
-  return "caravel.project.hideClosed." + (slug || "__unassigned__");
-}
-function getProjectHideClosed(slug) {
-  try {
-    return !!(window.localStorage && window.localStorage.getItem(hideClosedKey(slug)) === "1");
-  } catch (_2) {
-    return false;
-  }
-}
-function setProjectHideClosed(slug, hide) {
-  try {
-    if (!window.localStorage) return;
-    if (hide) window.localStorage.setItem(hideClosedKey(slug), "1");
-    else window.localStorage.removeItem(hideClosedKey(slug));
-  } catch (_2) {
-  }
-}
-let projectsOverviewCache = null;
-function invalidateProjectsCache() {
-  projectsOverviewCache = null;
-}
-async function loadProjectsOverview() {
-  if (projectsOverviewCache !== null) return projectsOverviewCache;
-  try {
-    const res = await fetch("/api/projects?counts=1", { cache: "no-store" });
-    const data = await res.json();
-    projectsOverviewCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
-  } catch (_2) {
-    projectsOverviewCache = [];
-  }
-  return projectsOverviewCache;
-}
-function renderProjectCard(card, currentProjectSlug) {
-  const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
-  const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
-  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml$1(card.jira) + "</span>" : "";
-  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml$1(card.status) + "</span>" : "";
-  const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
-  const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
-  const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
-  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml$1(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml$1(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml$1(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml$1(touched) + "</span></div></div>";
-}
-function renderProjectsView(tasksTreeEl, currentProjectSlug) {
-  tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
-  loadProjectsOverview().then((cards) => {
-    if (!cards.length) {
-      tasksTreeEl.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
-      return;
-    }
-    cards.sort((a, b2) => {
-      if (a.slug === "" && b2.slug !== "") return 1;
-      if (b2.slug === "" && a.slug !== "") return -1;
-      const ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
-      const tb = b2.lastTouched ? Date.parse(b2.lastTouched) || 0 : 0;
-      if (tb !== ta) return tb - ta;
-      return a.slug.localeCompare(b2.slug);
-    });
-    let html = '<div class="tasks-projects-grid">';
-    for (const card of cards) html += renderProjectCard(card, currentProjectSlug);
-    html += "</div>";
-    tasksTreeEl.innerHTML = html;
-  }).catch((err) => {
-    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml$1(String(err.message || err)) + "</div>";
-  });
-}
-function renderDocCard(doc2, kind) {
-  const title = doc2.title || doc2.filename || "(untitled)";
-  const desc = doc2.description ? escapeHtml$1(shorten(doc2.description, 140)) : "";
-  const meta = [];
-  if (doc2.doc_type) meta.push(escapeHtml$1(doc2.doc_type));
-  if (doc2.last_updated) meta.push(escapeHtml$1(doc2.last_updated));
-  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml$1(kind || "other") + '" data-open-file="' + escapeHtml$1(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml$1(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
-}
-function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
-  var _a2, _b;
-  const { slug } = summary;
-  const displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
-  const hideClosed = getProjectHideClosed(slug);
-  let headParts = '<div class="tasks-project-head">';
-  headParts += '<div class="tasks-project-head-row">';
-  headParts += '<div class="tasks-project-title">' + escapeHtml$1(displayName) + "</div>";
-  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml$1(summary.jira) + "</span>";
-  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml$1(summary.status) + "</span>";
-  headParts += "</div>";
-  if (summary.title && slug && slug !== "") {
-    headParts += '<div class="tasks-project-slug">' + escapeHtml$1(slug) + "</div>";
-  }
-  const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
-  const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
-  headParts += '<div class="tasks-project-metrics">';
-  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml$1(medClose) + "</span></span>";
-  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml$1(medAge) + "</span></span>";
-  headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
-  headParts += "</div>";
-  headParts += '<div class="tasks-project-actions">';
-  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml$1(slug) + '">+ New task here</button>';
-  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml$1(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
-  headParts += "</div></div>";
-  const docs = summary.docs || { primary: [], fdps: [], other: [] };
-  let docsHtml = "";
-  if (docs.primary.length || docs.fdps.length || docs.other.length) {
-    docsHtml += '<div class="tasks-project-docs"><div class="tasks-project-docs-head">Documents</div><div class="tasks-project-docs-grid">';
-    for (const d2 of docs.primary) docsHtml += renderDocCard(d2, "primary");
-    for (const d2 of docs.fdps) docsHtml += renderDocCard(d2, "fdp");
-    docsHtml += "</div>";
-    if (docs.other.length) {
-      docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ")</summary>";
-      docsHtml += '<div class="tasks-project-docs-grid">';
-      for (const d2 of docs.other) docsHtml += renderDocCard(d2, "other");
-      docsHtml += "</div></details>";
-    }
-    docsHtml += "</div>";
-  }
-  let leavesHtml = '<div class="tasks-project-section"><div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ")</div>";
-  if (summary.leaves.length === 0) {
-    leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
-  } else {
-    leavesHtml += '<div class="tasks-current">';
-    const sorted = summary.leaves.slice().sort((a, b2) => (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0));
-    for (const t of sorted) leavesHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
-    leavesHtml += "</div>";
-  }
-  leavesHtml += "</div>";
-  const familiesScoped = hideClosed ? summary.families.filter((t) => !(t.closed && t.closed.status)) : summary.families;
-  let familiesHtml = "";
-  if (familiesScoped.length > 0) {
-    familiesHtml += '<div class="tasks-project-section"><div class="tasks-project-section-head">Family trees</div><div class="tasks-project-trees">';
-    const tree = buildTaskTree(familiesScoped);
-    const byParent = {};
-    for (const t of familiesScoped) {
-      const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-      if (!p2) continue;
-      (byParent[p2] = byParent[p2] || []).push(t);
-    }
-    for (const root of tree.roots) expanded[root.id] = true;
-    const out = [];
-    for (const root of tree.roots) {
-      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
-    }
-    familiesHtml += out.join("") + "</div></div>";
-  }
-  let closedHtml = "";
-  if (summary.closedTasks.length > 0 && !hideClosed) {
-    closedHtml += '<details class="tasks-project-section tasks-project-closed">';
-    closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ")</summary>";
-    closedHtml += '<div class="tasks-current">';
-    for (const t of summary.closedTasks) closedHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
-    closedHtml += "</div></details>";
-  }
-  projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
-}
-let projectsCache = null;
-async function ensureProjectsLoaded(select) {
-  if (!select) return;
-  if (projectsCache !== null) {
-    populateProjectSelect(select, projectsCache);
-    return;
-  }
-  try {
-    const res = await fetch("/api/projects", { cache: "no-store" });
-    const data = await res.json();
-    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
-  } catch (_2) {
-    projectsCache = [];
-  }
-  populateProjectSelect(select, projectsCache);
-}
-function populateProjectSelect(select, projects) {
-  const current = select.value;
-  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
-  for (const p2 of projects) {
-    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
-    html += '<option value="' + escapeHtml$1(p2.slug) + '">' + escapeHtml$1(label) + "</option>";
-  }
-  select.innerHTML = html;
-  if (current && Array.from(select.options).some((o) => o.value === current)) {
-    select.value = current;
-  }
-}
 function z() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
@@ -21764,6 +21023,1456 @@ function stripFrontmatter(src) {
   const m2 = src.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
+}
+const _hoisted_1$c = {
+  id: "chat-panel",
+  class: "chat-panel"
+};
+const CHAT_ID_KEY = "caravel.chat.id";
+const CHAT_POLL_FAST_MS = 500;
+const CHAT_POLL_IDLE_MS = 1e4;
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
+  __name: "ChatPage",
+  setup(__props) {
+    let chatHistory = [];
+    let chatSessionId = "";
+    let chatListCache = [];
+    let chatServerUpdatedAt = null;
+    let chatPollTimer = null;
+    let agentsCache = [];
+    let chatAgentLocked = null;
+    let pendingAgentId = null;
+    let agentsFetched = false;
+    let chatMessages = null;
+    let chatInput = null;
+    let chatSend = null;
+    let chatForm = null;
+    function $2(id) {
+      return document.getElementById(id);
+    }
+    function generateChatId() {
+      const id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem(CHAT_ID_KEY, id);
+      return id;
+    }
+    function cleanHistory(arr) {
+      if (!Array.isArray(arr)) return [];
+      return arr.filter((m2) => {
+        if (m2.role === "assistant" && m2.text && m2.text.startsWith("[Failed:")) return false;
+        return true;
+      });
+    }
+    function hasActiveWork() {
+      for (const m2 of chatHistory) {
+        const s = m2.state;
+        if (s === "pending" || s === "sent" || s === "thinking" || s === "streaming" || s === "background") return true;
+      }
+      return false;
+    }
+    function orderedChatAgents() {
+      let coord = null;
+      const rest = [];
+      for (const a of agentsCache) {
+        if (!a || !a.name) continue;
+        if (a.name === "alice") coord = a;
+        else rest.push(a);
+      }
+      return coord ? [coord, ...rest] : rest;
+    }
+    function defaultChatAgentName() {
+      const match = agentsCache.find((a) => a.name === "alice");
+      if (match) return match.name;
+      return agentsCache.length > 0 ? agentsCache[0].name : null;
+    }
+    function findAgent(id) {
+      if (!id) return null;
+      return agentsCache.find((a) => a.name === id) || null;
+    }
+    function effectiveAgentId() {
+      return chatAgentLocked || pendingAgentId || null;
+    }
+    function agentPicked() {
+      if (agentsFetched && agentsCache.length === 0) return true;
+      return !!(chatAgentLocked || pendingAgentId);
+    }
+    function updateAgentBadge() {
+      const el = $2("chat-agent-badge");
+      const id = effectiveAgentId();
+      const agent = findAgent(id);
+      if (chatInput) {
+        chatInput.placeholder = agent ? `Message ${agent.displayName}…` : "Message…";
+      }
+      if (!el) return;
+      if (!agent) {
+        el.hidden = true;
+        el.textContent = "";
+        el.title = "";
+        el.dataset.locked = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
+      el.title = (agent.description || "") + (chatAgentLocked ? " (locked for this chat)" : " (not yet locked — send first message to confirm)");
+      el.dataset.locked = chatAgentLocked ? "1" : "0";
+    }
+    function updateSendDisabled() {
+      if (!chatSend) return;
+      chatSend.disabled = !agentPicked();
+    }
+    function updateSessionBadge(session) {
+      const el = $2("chat-session-badge");
+      if (!el) return;
+      const chatFp = chatSessionId ? chatSessionId.slice(0, 8) : "";
+      if (!session || !session.sessionId) {
+        el.hidden = false;
+        el.textContent = "thread " + chatFp + " · no session yet";
+        el.title = "No Claude session has been created for this chat yet.";
+        el.dataset.sessionId = "";
+        return;
+      }
+      const sidFp = session.sessionId.slice(0, 8);
+      const turns = typeof session.turnCount === "number" ? session.turnCount : 0;
+      el.hidden = false;
+      el.textContent = "thread " + chatFp + " → " + sidFp + " · " + turns + " turn" + (turns === 1 ? "" : "s");
+      el.title = "thread: " + chatSessionId + "\nsession: " + session.sessionId + "\n(click to copy session id)";
+      el.dataset.sessionId = session.sessionId;
+    }
+    function updateChatNameInput(name, preview) {
+      const toolbar = $2("chat-name-input");
+      const inline = $2("chat-new-title-input");
+      const autoSuggestion = (preview ? String(preview).trim().slice(0, 50) : "") || "Untitled chat";
+      if (toolbar) {
+        toolbar.value = name || "";
+        toolbar.dataset.committed = name || "";
+        toolbar.setAttribute("placeholder", autoSuggestion);
+      }
+      if (inline) {
+        inline.value = name || "";
+        inline.dataset.committed = name || "";
+      }
+      refreshChatTitleVisibility();
+    }
+    function refreshChatTitleVisibility() {
+      const toolbar = $2("chat-name-input");
+      const inline = $2("chat-new-title-input");
+      const isEmpty = !chatHistory || chatHistory.length === 0;
+      if (toolbar) toolbar.hidden = isEmpty;
+      if (inline) inline.hidden = !isEmpty;
+    }
+    function schedulePoll() {
+      if (chatPollTimer) clearTimeout(chatPollTimer);
+      const delay3 = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
+      chatPollTimer = setTimeout(() => {
+        pollChat().finally(schedulePoll);
+      }, delay3);
+    }
+    async function pollChat(opts) {
+      if (document.visibilityState !== "visible") return;
+      try {
+        let url = "/api/chats/" + encodeURIComponent(chatSessionId);
+        if (chatServerUpdatedAt && !(opts == null ? void 0 : opts.force)) url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data || !data.ok) return;
+        updateSessionBadge(data.session);
+        if (data.unchanged) {
+          if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
+          return;
+        }
+        if (data.chat && data.chat.messages) {
+          chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
+          if (data.chat.agentId && chatAgentLocked !== data.chat.agentId) {
+            chatAgentLocked = data.chat.agentId;
+            updateAgentBadge();
+            updateSendDisabled();
+          }
+          renderChatHistory();
+          if (typeof window.__vmOnAssistantChunk === "function") {
+            const lastMsg = chatHistory[chatHistory.length - 1];
+            if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
+              const st = lastMsg.state;
+              const isDone = !st || st === "done";
+              if (isDone || st === "streaming" || st === "background") {
+                window.__vmOnAssistantChunk(lastMsg.text, isDone);
+              }
+            }
+          }
+        }
+      } catch (_2) {
+      }
+    }
+    async function loadChatFromServer() {
+      try {
+        const res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
+        const data = await res.json();
+        if (data.ok && data.chat) {
+          chatServerUpdatedAt = data.chat.updatedAt || null;
+          chatHistory = cleanHistory(data.chat.messages || []);
+          chatAgentLocked = data.chat.agentId || null;
+          renderChatHistory();
+          updateAgentBadge();
+          updateSendDisabled();
+        }
+        if (data && data.ok) updateSessionBadge(data.session);
+      } catch (_2) {
+      }
+    }
+    async function loadChatList() {
+      try {
+        const res = await fetch("/api/chats");
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.chats)) {
+          chatListCache = data.chats;
+          renderChatList();
+        }
+      } catch (_2) {
+      }
+    }
+    async function loadAgents() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if (data && data.ok && Array.isArray(data.agents)) agentsCache = data.agents;
+      } catch (_2) {
+      }
+      agentsFetched = true;
+      if (!pendingAgentId && !chatAgentLocked) pendingAgentId = defaultChatAgentName();
+      renderChatHistory();
+      updateAgentBadge();
+    }
+    function renderChatList() {
+      const listEl = $2("chat-history-list");
+      if (!listEl) return;
+      listEl.textContent = "";
+      if (!chatListCache.length) {
+        const empty = document.createElement("div");
+        empty.className = "chat-history-empty";
+        empty.textContent = "No saved chats";
+        listEl.appendChild(empty);
+        return;
+      }
+      for (const chat of chatListCache) {
+        const isActive = chat.id === chatSessionId;
+        const row = document.createElement("div");
+        row.className = "chat-history-row" + (isActive ? " chat-history-row-active" : "");
+        row.dataset.chatId = chat.id;
+        const item = document.createElement("button");
+        item.className = "chat-history-item" + (isActive ? " chat-history-active" : "");
+        item.type = "button";
+        item.dataset.chatId = chat.id;
+        const preview = document.createElement("span");
+        preview.className = "chat-history-preview";
+        const agentForRow = findAgent(chat.agentId || null);
+        const prefix = agentForRow && agentForRow.emoji ? agentForRow.emoji + " " : "";
+        preview.textContent = prefix + (chat.name || chat.preview || "(empty)");
+        const meta = document.createElement("span");
+        meta.className = "chat-history-meta";
+        const d2 = new Date(chat.updatedAt || 0);
+        meta.textContent = (chat.messageCount || 0) + " msgs · " + d2.toLocaleDateString();
+        item.appendChild(preview);
+        item.appendChild(meta);
+        item.addEventListener("click", () => switchToChat(chat.id));
+        row.appendChild(item);
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "chat-history-rename-btn";
+        renameBtn.type = "button";
+        renameBtn.title = chat.name ? "Rename chat" : "Name this chat";
+        renameBtn.setAttribute("aria-label", renameBtn.title);
+        renameBtn.textContent = "✏️";
+        renameBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          beginInlineRename(chat);
+        });
+        row.appendChild(renameBtn);
+        if (isActive) {
+          const syncBtn = document.createElement("button");
+          syncBtn.className = "chat-history-sync-btn";
+          syncBtn.type = "button";
+          syncBtn.title = "Force resync from server";
+          syncBtn.setAttribute("aria-label", "Force resync from server");
+          syncBtn.textContent = "↻";
+          syncBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            pollChat({ force: true });
+          });
+          row.appendChild(syncBtn);
+        }
+        listEl.appendChild(row);
+      }
+    }
+    function beginInlineRename(chat) {
+      const listEl = $2("chat-history-list");
+      if (!listEl) return;
+      const row = listEl.querySelector('.chat-history-row[data-chat-id="' + chat.id + '"]');
+      if (!row || row.querySelector(".chat-history-rename-input")) return;
+      const item = row.querySelector(".chat-history-item");
+      if (!item) return;
+      item.style.display = "none";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "chat-history-rename-input";
+      input.value = chat.name || "";
+      input.placeholder = chat.preview || "Chat name";
+      input.maxLength = 80;
+      const commit = (save) => {
+        if (!input.parentNode) return;
+        input.disabled = true;
+        if (save) {
+          const name = input.value.trim();
+          submitChatRename(chat.id, name).then(() => loadChatList());
+        } else {
+          input.remove();
+          item.style.display = "";
+        }
+      };
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          commit(true);
+        } else if (ev.key === "Escape") {
+          ev.preventDefault();
+          commit(false);
+        }
+      });
+      input.addEventListener("blur", () => commit(true));
+      row.insertBefore(input, row.firstChild);
+      input.focus();
+      input.select();
+    }
+    async function submitChatRename(id, name) {
+      try {
+        await fetch("/api/chats/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+      } catch (_2) {
+      }
+    }
+    async function switchToChat(id) {
+      chatSessionId = id;
+      window.__chatSessionId = id;
+      localStorage.setItem(CHAT_ID_KEY, id);
+      chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
+      let fetchedName = "";
+      let fetchedPreview = "";
+      try {
+        const res = await fetch("/api/chats/" + encodeURIComponent(id));
+        const data = await res.json();
+        if (data.ok && data.chat) {
+          chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || null;
+          chatAgentLocked = data.chat.agentId || null;
+          fetchedName = data.chat.name || "";
+          fetchedPreview = data.chat.preview || "";
+        } else {
+          chatHistory = [];
+        }
+      } catch (_2) {
+        chatHistory = [];
+      }
+      if (!chatAgentLocked && !pendingAgentId && agentsCache.length > 0) {
+        pendingAgentId = defaultChatAgentName();
+      }
+      updateAgentBadge();
+      updateChatNameInput(fetchedName, fetchedPreview);
+      updateSendDisabled();
+      renderChatHistory();
+      schedulePoll();
+      const dropdown = $2("chat-history-dropdown");
+      if (dropdown) dropdown.hidden = true;
+      loadChatList();
+    }
+    function startNewChat() {
+      chatSessionId = generateChatId();
+      chatHistory = [];
+      chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
+      if (agentsCache.length > 0) pendingAgentId = defaultChatAgentName();
+      updateAgentBadge();
+      updateChatNameInput("");
+      updateSendDisabled();
+      renderChatHistory();
+      schedulePoll();
+      const dropdown = $2("chat-history-dropdown");
+      if (dropdown) dropdown.hidden = true;
+      loadChatList();
+    }
+    function createChatEmptyState() {
+      const empty = document.createElement("div");
+      empty.className = "chat-empty";
+      if (!agentsFetched) {
+        empty.textContent = "Loading agents…";
+        return empty;
+      }
+      if (agentsCache.length === 0) {
+        empty.textContent = "Send a message to start chatting with the daemon.";
+        return empty;
+      }
+      const head = document.createElement("div");
+      head.className = "chat-picker-head";
+      head.textContent = "Pick an agent to start this chat";
+      empty.appendChild(head);
+      const sub = document.createElement("div");
+      sub.className = "chat-picker-sub";
+      sub.textContent = "Agent is locked once you send the first message.";
+      empty.appendChild(sub);
+      const list = document.createElement("div");
+      list.className = "chat-picker-list";
+      for (const agent of orderedChatAgents()) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "chat-picker-item";
+        if (pendingAgentId === agent.name) item.classList.add("chat-picker-item-active");
+        const title = document.createElement("div");
+        title.className = "chat-picker-item-title";
+        title.textContent = (agent.emoji ? agent.emoji + " " : "") + (agent.displayName || agent.name);
+        item.appendChild(title);
+        const desc = document.createElement("div");
+        desc.className = "chat-picker-item-desc";
+        desc.textContent = agent.description || "";
+        item.appendChild(desc);
+        item.addEventListener("click", () => {
+          pendingAgentId = agent.name;
+          updateAgentBadge();
+          updateSendDisabled();
+          list.querySelectorAll(".chat-picker-item").forEach((el) => {
+            el.classList.toggle("chat-picker-item-active", el === item);
+          });
+        });
+        list.appendChild(item);
+      }
+      empty.appendChild(list);
+      return empty;
+    }
+    function createChatMessageEl() {
+      const msgEl = document.createElement("div");
+      const roleEl = document.createElement("div");
+      roleEl.className = "chat-msg-role";
+      const textEl = document.createElement("div");
+      textEl.className = "chat-msg-text";
+      msgEl.appendChild(roleEl);
+      msgEl.appendChild(textEl);
+      return msgEl;
+    }
+    function syncChatMessageEl(msgEl, msg) {
+      let roleEl = msgEl.querySelector(".chat-msg-role");
+      let textEl = msgEl.querySelector(".chat-msg-text");
+      if (!roleEl || !textEl) {
+        msgEl.textContent = "";
+        roleEl = document.createElement("div");
+        roleEl.className = "chat-msg-role";
+        textEl = document.createElement("div");
+        textEl.className = "chat-msg-text";
+        msgEl.appendChild(roleEl);
+        msgEl.appendChild(textEl);
+      }
+      const isUser = msg.role === "user";
+      const state = msg.state || (isUser ? "sent" : "done");
+      let cls = "chat-msg " + (isUser ? "chat-msg-user" : "chat-msg-assistant");
+      if (state === "streaming") cls += " chat-msg-streaming";
+      if (state === "error") cls += " chat-msg-error";
+      if (isUser && state === "pending") cls += " chat-msg-user-pending";
+      msgEl.className = cls;
+      roleEl.textContent = "";
+      const roleText = document.createElement("span");
+      roleText.className = "chat-msg-role-label";
+      roleText.textContent = isUser ? "You" : "Claude";
+      roleEl.appendChild(roleText);
+      if (isUser && state === "pending") {
+        const pill = document.createElement("span");
+        pill.className = "chat-msg-pill";
+        pill.textContent = "queued";
+        roleEl.appendChild(pill);
+      }
+      textEl.innerHTML = renderMarkdown(msg.text || "");
+      msgEl.querySelectorAll(".chat-msg-meta").forEach((el) => el.remove());
+      if (!isUser) {
+        let metaLabel = "";
+        let metaClass = "";
+        if (state === "thinking") {
+          metaClass = "chat-msg-thinking";
+          metaLabel = "thinking…";
+        } else if (state === "background") {
+          metaClass = "chat-msg-background";
+          metaLabel = "⚙ working in background…";
+        }
+        if (metaLabel) {
+          const meta = document.createElement("div");
+          meta.className = "chat-msg-meta " + metaClass;
+          const labelSpan = document.createElement("span");
+          labelSpan.className = "chat-msg-meta-label";
+          labelSpan.textContent = metaLabel;
+          meta.appendChild(labelSpan);
+          const stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "chat-msg-stop-inline";
+          stopBtn.title = "Stop this response";
+          stopBtn.setAttribute("aria-label", "Stop this response");
+          stopBtn.textContent = "stop";
+          stopBtn.addEventListener("click", () => {
+            stopBtn.disabled = true;
+            interruptCurrent({ sendAfter: true });
+          });
+          meta.appendChild(stopBtn);
+          msgEl.appendChild(meta);
+        }
+        const isActive = state === "thinking" || state === "streaming" || state === "background";
+        msgEl.dataset.active = isActive ? "1" : "0";
+      }
+    }
+    function updateInterruptBtn() {
+      const btn = $2("chat-interrupt");
+      if (!btn) return;
+      const live = chatHistory.some((m2) => {
+        if (m2.role !== "assistant") return false;
+        const s = m2.state;
+        return s === "thinking" || s === "streaming" || s === "background";
+      });
+      btn.hidden = !live;
+      if (live) btn.disabled = false;
+    }
+    function renderChatHistory() {
+      const w2 = window;
+      if (typeof w2.__updateSpeakerDisabled === "function") w2.__updateSpeakerDisabled();
+      refreshChatTitleVisibility();
+      if (!chatMessages) return;
+      if (!chatHistory.length) {
+        if (chatMessages.children.length !== 1 || !chatMessages.firstElementChild || !chatMessages.firstElementChild.classList.contains("chat-empty")) {
+          chatMessages.textContent = "";
+          chatMessages.appendChild(createChatEmptyState());
+        }
+        return;
+      }
+      if (chatMessages.firstElementChild && chatMessages.firstElementChild.classList.contains("chat-empty")) {
+        chatMessages.textContent = "";
+      }
+      const msgEls = chatMessages.querySelectorAll(".chat-msg");
+      for (let i = 0; i < chatHistory.length; i++) {
+        let msgEl = msgEls[i];
+        if (!msgEl) {
+          msgEl = createChatMessageEl();
+          chatMessages.appendChild(msgEl);
+        }
+        syncChatMessageEl(msgEl, chatHistory[i]);
+      }
+      const allMsgEls = chatMessages.querySelectorAll(".chat-msg");
+      for (let j2 = allMsgEls.length - 1; j2 >= chatHistory.length; j2--) {
+        allMsgEls[j2].remove();
+      }
+      updateInterruptBtn();
+      requestAnimationFrame(() => {
+        if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+    }
+    function autoResizeChatInput() {
+      if (!chatInput) return;
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + "px";
+    }
+    async function sendChat() {
+      if (!chatInput) return;
+      const message = (chatInput.value || "").trim();
+      if (!message) return;
+      if (!agentPicked()) return;
+      chatInput.value = "";
+      autoResizeChatInput();
+      const w2 = window;
+      if (typeof w2.__ttsResetAutoRead === "function") w2.__ttsResetAutoRead();
+      chatHistory.push({ role: "user", text: message, state: "pending" });
+      if (!chatAgentLocked && pendingAgentId) {
+        chatAgentLocked = pendingAgentId;
+        updateAgentBadge();
+        updateSendDisabled();
+      }
+      renderChatHistory();
+      const payload = { message, chatId: chatSessionId };
+      if (chatAgentLocked) payload.agentId = chatAgentLocked;
+      else if (pendingAgentId) payload.agentId = pendingAgentId;
+      try {
+        await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (_2) {
+      }
+      pollChat().finally(schedulePoll);
+      if (chatInput) chatInput.focus();
+    }
+    async function interruptCurrent(opts) {
+      try {
+        await fetch("/api/chat/interrupt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId: chatSessionId })
+        });
+      } catch (_2) {
+      }
+      if ((opts == null ? void 0 : opts.sendAfter) && chatInput && (chatInput.value || "").trim()) {
+        await sendChat();
+      } else {
+        await pollChat();
+      }
+      schedulePoll();
+    }
+    function wireChatNameInput(el, peerSel) {
+      if (!el) return;
+      el.dataset.committed = el.value || "";
+      const commit = () => {
+        const v2 = (el.value || "").trim();
+        if (!chatSessionId) return;
+        if (v2 === (el.dataset.committed || "")) return;
+        el.dataset.committed = v2;
+        const peer = peerSel ? document.querySelector(peerSel) : null;
+        if (peer) {
+          peer.value = v2;
+          peer.dataset.committed = v2;
+        }
+        submitChatRename(chatSessionId, v2).then(() => loadChatList()).catch(() => {
+        });
+      };
+      el.addEventListener("blur", commit);
+      el.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          commit();
+          el.blur();
+        }
+      });
+    }
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") pollChat();
+    }
+    onMounted(() => {
+      chatMessages = $2("chat-messages");
+      chatInput = $2("chat-input");
+      chatSend = $2("chat-send");
+      chatForm = $2("chat-form");
+      const injectedSessionId = window.__chatSessionId;
+      const injectedAgentId = window.__pendingAgentId;
+      if (injectedSessionId) {
+        chatSessionId = injectedSessionId;
+        localStorage.setItem(CHAT_ID_KEY, injectedSessionId);
+        if (injectedAgentId) pendingAgentId = injectedAgentId;
+        delete window.__chatSessionId;
+        delete window.__pendingAgentId;
+      } else {
+        chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
+      }
+      window.__chatSessionId = chatSessionId;
+      window.__chatHistory = chatHistory;
+      wireChatNameInput($2("chat-name-input"), "#chat-new-title-input");
+      wireChatNameInput($2("chat-new-title-input"), "#chat-name-input");
+      const badge = $2("chat-session-badge");
+      if (badge) {
+        badge.addEventListener("click", () => {
+          const sid = badge.dataset.sessionId || "";
+          if (!sid) return;
+          try {
+            navigator.clipboard.writeText(sid);
+          } catch (_2) {
+          }
+          const original = badge.textContent;
+          badge.textContent = "copied";
+          setTimeout(() => {
+            badge.textContent = original;
+          }, 900);
+        });
+      }
+      const historyBtn = $2("chat-history-btn");
+      const historyDropdown = $2("chat-history-dropdown");
+      if (historyBtn && historyDropdown) {
+        historyBtn.addEventListener("click", () => {
+          const showing = !historyDropdown.hidden;
+          historyDropdown.hidden = showing;
+          if (!showing) loadChatList();
+        });
+        document.addEventListener("click", (e) => {
+          if (!historyDropdown.hidden && !historyBtn.contains(e.target) && !historyDropdown.contains(e.target)) {
+            historyDropdown.hidden = true;
+          }
+        });
+      }
+      const newBtn = $2("chat-new-btn");
+      if (newBtn) newBtn.addEventListener("click", () => startNewChat());
+      const deleteBtn = $2("chat-delete");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", async () => {
+          if (!chatSessionId || chatHistory.length === 0) {
+            startNewChat();
+            return;
+          }
+          const n = chatHistory.length;
+          const suffix = n === 1 ? " message" : " messages";
+          if (!window.confirm("Delete this chat? " + n + suffix + " will be permanently removed.")) return;
+          const idToDelete = chatSessionId;
+          try {
+            await fetch("/api/chats/" + encodeURIComponent(idToDelete), { method: "DELETE" });
+          } catch (_2) {
+          }
+          startNewChat();
+        });
+      }
+      if (chatForm) {
+        chatForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          sendChat();
+        });
+      }
+      const interruptBtn = $2("chat-interrupt");
+      if (interruptBtn) {
+        interruptBtn.addEventListener("click", () => {
+          interruptBtn.disabled = true;
+          interruptCurrent({ sendAfter: true });
+        });
+      }
+      if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      if (chatInput) chatInput.focus();
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+      loadAgents().then(() => loadChatFromServer()).finally(schedulePoll);
+    });
+    onBeforeUnmount(() => {
+      if (chatPollTimer) {
+        clearTimeout(chatPollTimer);
+        chatPollTimer = null;
+      }
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
+        createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
+      ])]);
+    };
+  }
+});
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref("projects");
+  const filter = /* @__PURE__ */ ref("all");
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const pane = /* @__PURE__ */ ref("empty");
+  const pickerCollapsed = /* @__PURE__ */ ref(false);
+  const currentTaskId = /* @__PURE__ */ ref(null);
+  const currentTaskProject = /* @__PURE__ */ ref(null);
+  const currentViewMode = /* @__PURE__ */ ref("task");
+  const currentProjectSlug = /* @__PURE__ */ ref(null);
+  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
+  const loaded = /* @__PURE__ */ ref(false);
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    pane,
+    pickerCollapsed,
+    currentTaskId,
+    currentTaskProject,
+    currentViewMode,
+    currentProjectSlug,
+    taskFromProjectSlug,
+    loaded
+  };
+});
+const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
+  const tiers = /* @__PURE__ */ ref(null);
+  const lastFetch = /* @__PURE__ */ ref(0);
+  async function fetch2() {
+    try {
+      const res = await window.fetch("/api/tasks/attention");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.ok && data.tiers) {
+        tiers.value = data.tiers;
+        lastFetch.value = Date.now();
+      }
+    } catch (_2) {
+    }
+  }
+  return { tiers, lastFetch, fetch: fetch2 };
+});
+function escapeHtml$1(s) {
+  return escHtml(String(s == null ? "" : s));
+}
+function timeAgo(iso) {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
+  const mins = Math.floor(diff / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
+function statusClass(status) {
+  if (!status) return "is-open";
+  if (status === "open" || status === "claimed") return "is-open";
+  if (status.indexOf("waiting:") === 0) return "is-waiting";
+  if (status === "paused") return "is-paused";
+  if (status === "done") return "is-done";
+  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
+  return "is-open";
+}
+function shorten(s, n) {
+  const str2 = String(s || "");
+  if (str2.length <= n) return str2;
+  return str2.slice(0, n - 1) + "…";
+}
+function shortenStatusLabel(s) {
+  if (!s) return "?";
+  if (s === "paused") return "paused";
+  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
+  if (s.indexOf("failed:") === 0) {
+    const rest = s.slice("failed:".length);
+    return rest === "other" ? "failed" : "fail " + rest;
+  }
+  return s;
+}
+function fmtDaysHours(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  const seconds = Math.floor(ms / 1e3);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  if (days > 0) return days + "d " + hours + "h";
+  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
+}
+function suggestChildHeadline(parentHeadline, source) {
+  const base = String(parentHeadline || "").slice(0, 56);
+  return base + " — rework";
+}
+function renderNextTargetPicker(currentAgent, agentsCache) {
+  let options = "";
+  const agents = Array.isArray(agentsCache) ? agentsCache : [];
+  for (const a of agents) {
+    if (!a || !a.name) continue;
+    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+    const selected = a.name === currentAgent ? " selected" : "";
+    options += '<option value="' + escapeHtml$1(a.name) + '"' + selected + ">" + escapeHtml$1(label) + "</option>";
+  }
+  if (!options && currentAgent) {
+    options = '<option value="' + escapeHtml$1(currentAgent) + '" selected>' + escapeHtml$1(currentAgent) + "</option>";
+  }
+  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
+}
+function countActiveDescendants(taskId, cache) {
+  if (!taskId || !cache.length) return 0;
+  const byParent = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (byParent[p2] = byParent[p2] || []).push(t);
+  }
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      if (!kid.closed || !kid.closed.status) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function shortId(id) {
+  return String(id || "").replace(/^TSK-\d{4}-/, "");
+}
+function tierRow(rowCls, row, showCheckbox) {
+  const full = escapeHtml$1(row.id || "");
+  const shrt = escapeHtml$1(shortId(row.id));
+  const headline = escapeHtml$1(row.headline || row.id || "");
+  const label = escapeHtml$1(shorten(row.label || row.headline || row.id || "", 120));
+  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml$1(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
+  return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
+}
+function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
+  const count = tier && tier.count || 0;
+  const rows = tier && tier.rows || [];
+  const selectAll = showCheckbox && count > 0 ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />' : "";
+  let h2 = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
+  for (const row of rows) {
+    h2 += tierRow(rowCls, row, showCheckbox);
+  }
+  if (count > rows.length) {
+    h2 += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
+  }
+  return h2;
+}
+function renderAttentionTiers(el, tiers) {
+  if (!el) return;
+  if (!tiers) {
+    el.hidden = true;
+    return;
+  }
+  let html = "";
+  html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
+  html += renderTierSection(tiers.failed, "tasks-tier-head-failed", "tasks-tier-row-failed", "✗", "Triage", false);
+  html += renderTierSection(tiers.blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
+  html += renderTierSection(tiers.paused, "tasks-tier-head-paused", "tasks-tier-row-paused", "⏸", "Paused", false);
+  html += renderTierSection(tiers.reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read", true);
+  el.innerHTML = html;
+  el.hidden = html === "";
+}
+function passesFilter(t, filter) {
+  if (filter === "all") return true;
+  const s = (t.status || "").toLowerCase();
+  if (filter === "open") return s === "open" || s === "claimed";
+  if (filter === "waiting") return s.indexOf("waiting:") === 0;
+  if (filter === "done") return s === "done";
+  if (filter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
+  return true;
+}
+function buildTaskTree(tasks) {
+  const byId = {};
+  for (const t of tasks) byId[t.id] = t;
+  function idDerivedAncestor(id) {
+    let cur = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur);
+      if (!m2) return null;
+      cur = m2[1];
+      if (byId[cur]) return cur;
+    }
+  }
+  function dotDepth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function effectiveParent(t) {
+    const pid = t.parent && t.parent !== "null" ? t.parent : null;
+    if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
+      const idAnc = idDerivedAncestor(t.id);
+      if (idAnc) return idAnc;
+    }
+    if (pid && pid !== t.id && byId[pid]) {
+      const seen = { [t.id]: true };
+      let cur = byId[pid];
+      let cyclic = false;
+      while (cur) {
+        if (seen[cur.id]) {
+          cyclic = true;
+          break;
+        }
+        seen[cur.id] = true;
+        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+        if (!nextId || nextId === cur.id || !byId[nextId]) break;
+        cur = byId[nextId];
+      }
+      if (!cyclic) return pid;
+    }
+    return idDerivedAncestor(t.id);
+  }
+  const roots = [];
+  const childrenOf = {};
+  for (const t of tasks) {
+    const parentId = effectiveParent(t);
+    if (parentId) {
+      (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
+    } else {
+      roots.push(t);
+    }
+  }
+  function byUpdatedDesc(a, b2) {
+    return (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0);
+  }
+  function byIdAsc(a, b2) {
+    return String(a.id).localeCompare(String(b2.id));
+  }
+  roots.sort(byUpdatedDesc);
+  Object.keys(childrenOf).forEach((k) => childrenOf[k].sort(byIdAsc));
+  return { roots, childrenOf };
+}
+function buildByParent(cache) {
+  const bp = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (bp[p2] = bp[p2] || []).push(t);
+  }
+  return bp;
+}
+function countNonTerminalDescendants(taskId, byParent) {
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      const s = kid.status || "";
+      const terminal = s === "done" || s.indexOf("failed:") === 0;
+      if (!terminal) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTaskId) {
+  let rowStatus = statusClass(t.status);
+  const marker = depth === 0 ? "●" : "└";
+  const headline = t.headline || t.summary && t.summary.brief || t.brief || "(no headline)";
+  let rowClass = "tasks-tree-row";
+  if (t.id === currentTaskId) rowClass += " is-active";
+  if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+  if (t.status === "paused") rowClass += " is-paused";
+  if (t.closed && t.closed.status) rowClass += " is-closed";
+  if (depth === 0) rowClass += " is-root";
+  let queuedBadge = "";
+  if (queuedCount > 0) {
+    rowClass += " has-queued";
+    rowStatus = "is-open";
+    queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
+  }
+  const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
+  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml$1(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
+  const rawStatus = t.status || "?";
+  const shortStatus = shortenStatusLabel(rawStatus);
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml$1(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml$1(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml$1(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml$1(rawStatus) + '">' + escapeHtml$1(shortStatus) + "</span>") + "</div></div></div>";
+}
+function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
+  if (seen[node.id] || depth > 32) return;
+  seen[node.id] = true;
+  const kids = tree.childrenOf[node.id] || [];
+  const hasChildren = kids.length > 0;
+  const queuedCount = countNonTerminalDescendants(node.id, byParent);
+  if (queuedCount > 0 && hasChildren && !(node.id in expanded)) {
+    expanded[node.id] = true;
+  }
+  const isExpanded = !!expanded[node.id];
+  out.push(renderTreeRow(node, depth, hasChildren, isExpanded, queuedCount, currentTaskId));
+  if (!hasChildren || !isExpanded) return;
+  for (const kid of kids) {
+    renderTreeBranch(tree, kid, depth + 1, out, expanded, byParent, currentTaskId, seen);
+  }
+}
+function expandAncestors(taskId, cache, expanded) {
+  if (!taskId) return;
+  const byId = {};
+  for (const t of cache) byId[t.id] = t;
+  function depth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function idDerived(id) {
+    let cur2 = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur2);
+      if (!m2) return null;
+      cur2 = m2[1];
+      if (byId[cur2]) return cur2;
+    }
+  }
+  function ancestorOf(id) {
+    const t = byId[id];
+    if (t) {
+      const p2 = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
+      if (p2 && byId[p2] && depth(p2) >= depth(id)) {
+        const derived = idDerived(id);
+        if (derived) return derived;
+      }
+      if (p2 && byId[p2]) return p2;
+    }
+    return idDerived(id);
+  }
+  const seen = {};
+  let cur = ancestorOf(taskId);
+  while (cur && !seen[cur]) {
+    seen[cur] = true;
+    expanded[cur] = true;
+    cur = ancestorOf(cur);
+  }
+}
+function currentStatusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "done") return "status-done";
+  if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
+  if (s === "waiting:on:user") return "status-waiting-user";
+  if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
+  if (s === "waiting:on:limits") return "status-waiting-limits";
+  if (s.indexOf("waiting:") === 0) return "status-waiting-other";
+  if (s === "claimed") return "status-claimed";
+  return "status-open";
+}
+function renderCurrentRow(task, currentTaskId, currentSelected) {
+  const sc = currentStatusClass(task.status);
+  const isClaimed = task.status === "claimed";
+  const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
+  const meta = [
+    escapeHtml$1(task.agent || task.to || "?"),
+    escapeHtml$1(shortenStatusLabel(task.status || "?")),
+    ...task.updated ? [escapeHtml$1(timeAgo(task.updated))] : []
+  ];
+  let rowClass = "tasks-current-row " + sc;
+  if (task.id === currentTaskId) rowClass += " is-active";
+  const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
+  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml$1(task.id) + '" data-task-agent="' + escapeHtml$1(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml$1(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml$1(task.id) + '">' + escapeHtml$1(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml$1(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
+}
+function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
+  const filtered = cache.filter((t) => passesFilter(t, filter));
+  if (filtered.length === 0) {
+    tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
+    return;
+  }
+  const groups = {};
+  for (const t of filtered) {
+    const key = t.project || "__unassigned";
+    (groups[key] = groups[key] || []).push(t);
+  }
+  const projectKeys = Object.keys(groups).sort((a, b2) => {
+    if (a === "__unassigned" && b2 !== "__unassigned") return 1;
+    if (b2 === "__unassigned" && a !== "__unassigned") return -1;
+    const aLatest = groups[a].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    const bLatest = groups[b2].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    return bLatest - aLatest;
+  });
+  let html = "";
+  const byParent = buildByParent(filtered);
+  for (const groupKey of projectKeys) {
+    const rows = groups[groupKey];
+    const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
+    const isCollapsed = !!collapsed[groupKey];
+    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml$1(groupKey) + '">';
+    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml$1(groupKey) + '">';
+    html += '<span class="tasks-current-group-chevron"></span>';
+    html += '<span class="tasks-current-group-name">' + escapeHtml$1(displayName) + "</span>";
+    html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
+    html += '<div class="tasks-current-group-body">';
+    const tree = buildTaskTree(rows);
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    html += out.join("") + "</div></div>";
+  }
+  tasksTree.innerHTML = html;
+}
+function updateGroupSelectAll(groupEl) {
+  if (!groupEl) return;
+  const allCb = groupEl.querySelector(".current-group-select-all");
+  if (!allCb) return;
+  const rowCbs = groupEl.querySelectorAll(".current-row-select");
+  if (rowCbs.length === 0) return;
+  let checkedCount = 0;
+  rowCbs.forEach((cb) => {
+    if (cb.checked) checkedCount++;
+  });
+  if (checkedCount === 0) {
+    allCb.checked = false;
+    allCb.indeterminate = false;
+  } else if (checkedCount === rowCbs.length) {
+    allCb.checked = true;
+    allCb.indeterminate = false;
+  } else {
+    allCb.checked = false;
+    allCb.indeterminate = true;
+  }
+}
+function handleRowCheckboxChange(ev, bulkSelected, updateBulkBar) {
+  const cb = ev.target;
+  if (!cb || cb.type !== "checkbox") return;
+  if (cb.classList.contains("current-row-select")) {
+    const taskId = cb.getAttribute("data-task-id") || "";
+    const agent = cb.getAttribute("data-task-agent") || "";
+    const defaultStatus = cb.getAttribute("data-task-default-status") || "cancelled";
+    if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
+    else delete bulkSelected[taskId];
+    updateBulkBar();
+    updateGroupSelectAll(cb.closest("[data-project-key]"));
+    return;
+  }
+  if (cb.classList.contains("current-group-select-all")) {
+    const groupEl = cb.closest("[data-project-key]");
+    const rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
+    rowCbs.forEach((rCb) => {
+      const rId = rCb.getAttribute("data-task-id") || "";
+      const rAgent = rCb.getAttribute("data-task-agent") || "";
+      const rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
+      if (cb.checked) {
+        bulkSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
+        rCb.checked = true;
+      } else {
+        delete bulkSelected[rId];
+        rCb.checked = false;
+      }
+    });
+    updateBulkBar();
+  }
+}
+function createBulkBar(tasksTreeEl, getBulkSelected, getMultiSelectActive, setMultiSelectActive, clearSelection, rerenderPicker, fetchTasks) {
+  const bar = document.createElement("div");
+  bar.className = "tasks-bulk-bar";
+  bar.hidden = true;
+  bar.innerHTML = '<span class="bulk-bar-count"></span><input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…"><button type="button" class="bulk-bar-close is-primary"></button><button type="button" class="bulk-bar-clear">Clear</button><button type="button" class="bulk-bar-done">Done</button><span class="bulk-bar-status"></span>';
+  const closeBtn = bar.querySelector(".bulk-bar-close");
+  const clearBtn = bar.querySelector(".bulk-bar-clear");
+  const doneBtn = bar.querySelector(".bulk-bar-done");
+  const statusEl = bar.querySelector(".bulk-bar-status");
+  const reasonEl = bar.querySelector(".bulk-bar-reason");
+  async function submitBulkClose() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    if (ids.length === 0) return;
+    const reason = (reasonEl ? reasonEl.value : "").trim();
+    if (closeBtn) closeBtn.disabled = true;
+    if (statusEl) {
+      statusEl.textContent = "Closing…";
+      statusEl.className = "bulk-bar-status";
+    }
+    let closed = 0, failed = 0;
+    for (const id of ids) {
+      const sel = selected[id];
+      if (!sel) continue;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(id) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent: sel.agent, reason, status: sel.defaultStatus })
+        });
+        const data = await res.json();
+        if (data && data.ok) closed++;
+        else failed++;
+      } catch (_2) {
+        failed++;
+      }
+    }
+    clearSelection();
+    if (statusEl) {
+      statusEl.textContent = failed > 0 ? "Closed " + closed + " · " + failed + " failed." : "Closed " + closed + ".";
+      statusEl.className = "bulk-bar-status is-ok";
+    }
+    if (closeBtn) closeBtn.disabled = false;
+    fetchTasks();
+  }
+  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    clearSelection();
+    rerenderPicker();
+  });
+  if (doneBtn) doneBtn.addEventListener("click", () => {
+    setMultiSelectActive(false);
+    clearSelection();
+    tasksTreeEl.classList.remove("is-multiselect-active");
+    updateBar();
+    rerenderPicker();
+  });
+  function updateBar() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    const multiActive = getMultiSelectActive();
+    if (ids.length === 0 && !multiActive) {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    const countEl = bar.querySelector(".bulk-bar-count");
+    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
+    if (closeBtn) {
+      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
+      closeBtn.hidden = ids.length === 0;
+    }
+    if (clearBtn) clearBtn.hidden = ids.length === 0;
+    if (statusEl) statusEl.textContent = "";
+  }
+  bar.update = updateBar;
+  if (tasksTreeEl.parentNode) {
+    tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);
+  }
+  return bar;
+}
+function hideClosedKey(slug) {
+  return "caravel.project.hideClosed." + (slug || "__unassigned__");
+}
+function getProjectHideClosed(slug) {
+  try {
+    return !!(window.localStorage && window.localStorage.getItem(hideClosedKey(slug)) === "1");
+  } catch (_2) {
+    return false;
+  }
+}
+function setProjectHideClosed(slug, hide) {
+  try {
+    if (!window.localStorage) return;
+    if (hide) window.localStorage.setItem(hideClosedKey(slug), "1");
+    else window.localStorage.removeItem(hideClosedKey(slug));
+  } catch (_2) {
+  }
+}
+let projectsOverviewCache = null;
+function invalidateProjectsCache() {
+  projectsOverviewCache = null;
+}
+async function loadProjectsOverview() {
+  if (projectsOverviewCache !== null) return projectsOverviewCache;
+  try {
+    const res = await fetch("/api/projects?counts=1", { cache: "no-store" });
+    const data = await res.json();
+    projectsOverviewCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsOverviewCache = [];
+  }
+  return projectsOverviewCache;
+}
+function renderProjectCard(card, currentProjectSlug) {
+  const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
+  const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
+  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml$1(card.jira) + "</span>" : "";
+  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml$1(card.status) + "</span>" : "";
+  const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
+  const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
+  const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
+  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml$1(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml$1(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml$1(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml$1(touched) + "</span></div></div>";
+}
+function renderProjectsView(tasksTreeEl, currentProjectSlug) {
+  tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
+  loadProjectsOverview().then((cards) => {
+    if (!cards.length) {
+      tasksTreeEl.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
+      return;
+    }
+    cards.sort((a, b2) => {
+      if (a.slug === "" && b2.slug !== "") return 1;
+      if (b2.slug === "" && a.slug !== "") return -1;
+      const ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
+      const tb = b2.lastTouched ? Date.parse(b2.lastTouched) || 0 : 0;
+      if (tb !== ta) return tb - ta;
+      return a.slug.localeCompare(b2.slug);
+    });
+    let html = '<div class="tasks-projects-grid">';
+    for (const card of cards) html += renderProjectCard(card, currentProjectSlug);
+    html += "</div>";
+    tasksTreeEl.innerHTML = html;
+  }).catch((err) => {
+    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml$1(String(err.message || err)) + "</div>";
+  });
+}
+function renderDocCard(doc2, kind) {
+  const title = doc2.title || doc2.filename || "(untitled)";
+  const desc = doc2.description ? escapeHtml$1(shorten(doc2.description, 140)) : "";
+  const meta = [];
+  if (doc2.doc_type) meta.push(escapeHtml$1(doc2.doc_type));
+  if (doc2.last_updated) meta.push(escapeHtml$1(doc2.last_updated));
+  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml$1(kind || "other") + '" data-open-file="' + escapeHtml$1(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml$1(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
+}
+function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
+  var _a2, _b;
+  const { slug } = summary;
+  const displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
+  const hideClosed = getProjectHideClosed(slug);
+  let headParts = '<div class="tasks-project-head">';
+  headParts += '<div class="tasks-project-head-row">';
+  headParts += '<div class="tasks-project-title">' + escapeHtml$1(displayName) + "</div>";
+  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml$1(summary.jira) + "</span>";
+  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml$1(summary.status) + "</span>";
+  headParts += "</div>";
+  if (summary.title && slug && slug !== "") {
+    headParts += '<div class="tasks-project-slug">' + escapeHtml$1(slug) + "</div>";
+  }
+  const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
+  const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
+  headParts += '<div class="tasks-project-metrics">';
+  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml$1(medClose) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml$1(medAge) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
+  headParts += "</div>";
+  headParts += '<div class="tasks-project-actions">';
+  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml$1(slug) + '">+ New task here</button>';
+  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml$1(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
+  headParts += "</div></div>";
+  const docs = summary.docs || { primary: [], fdps: [], other: [] };
+  let docsHtml = "";
+  if (docs.primary.length || docs.fdps.length || docs.other.length) {
+    docsHtml += '<div class="tasks-project-docs"><div class="tasks-project-docs-head">Documents</div><div class="tasks-project-docs-grid">';
+    for (const d2 of docs.primary) docsHtml += renderDocCard(d2, "primary");
+    for (const d2 of docs.fdps) docsHtml += renderDocCard(d2, "fdp");
+    docsHtml += "</div>";
+    if (docs.other.length) {
+      docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ")</summary>";
+      docsHtml += '<div class="tasks-project-docs-grid">';
+      for (const d2 of docs.other) docsHtml += renderDocCard(d2, "other");
+      docsHtml += "</div></details>";
+    }
+    docsHtml += "</div>";
+  }
+  let leavesHtml = '<div class="tasks-project-section"><div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ")</div>";
+  if (summary.leaves.length === 0) {
+    leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
+  } else {
+    leavesHtml += '<div class="tasks-current">';
+    const sorted = summary.leaves.slice().sort((a, b2) => (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0));
+    for (const t of sorted) leavesHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    leavesHtml += "</div>";
+  }
+  leavesHtml += "</div>";
+  const familiesScoped = hideClosed ? summary.families.filter((t) => !(t.closed && t.closed.status)) : summary.families;
+  let familiesHtml = "";
+  if (familiesScoped.length > 0) {
+    familiesHtml += '<div class="tasks-project-section"><div class="tasks-project-section-head">Family trees</div><div class="tasks-project-trees">';
+    const tree = buildTaskTree(familiesScoped);
+    const byParent = {};
+    for (const t of familiesScoped) {
+      const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+      if (!p2) continue;
+      (byParent[p2] = byParent[p2] || []).push(t);
+    }
+    for (const root of tree.roots) expanded[root.id] = true;
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    familiesHtml += out.join("") + "</div></div>";
+  }
+  let closedHtml = "";
+  if (summary.closedTasks.length > 0 && !hideClosed) {
+    closedHtml += '<details class="tasks-project-section tasks-project-closed">';
+    closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ")</summary>";
+    closedHtml += '<div class="tasks-current">';
+    for (const t of summary.closedTasks) closedHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    closedHtml += "</div></details>";
+  }
+  projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
+}
+let projectsCache = null;
+async function ensureProjectsLoaded(select) {
+  if (!select) return;
+  if (projectsCache !== null) {
+    populateProjectSelect(select, projectsCache);
+    return;
+  }
+  try {
+    const res = await fetch("/api/projects", { cache: "no-store" });
+    const data = await res.json();
+    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsCache = [];
+  }
+  populateProjectSelect(select, projectsCache);
+}
+function populateProjectSelect(select, projects) {
+  const current = select.value;
+  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
+  for (const p2 of projects) {
+    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
+    html += '<option value="' + escapeHtml$1(p2.slug) + '">' + escapeHtml$1(label) + "</option>";
+  }
+  select.innerHTML = html;
+  if (current && Array.from(select.options).some((o) => o.value === current)) {
+    select.value = current;
+  }
 }
 function renderSection(title, bodyHtml, openByDefault) {
   if (!bodyHtml) return "";
@@ -25986,7 +26695,7 @@ const router = createRouter({
   linkExactActiveClass: "tab-btn-active",
   routes: [
     { path: "/dashboard", component: _sfc_main$e },
-    { path: "/chat", component: ChatPage },
+    { path: "/chat", component: _sfc_main$d },
     { path: "/tasks", component: _sfc_main$c },
     { path: "/files", component: _sfc_main$a },
     { path: "/", redirect: "/dashboard" },
@@ -26060,6 +26769,13 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _export_sfc = (sfc, props) => {
+  const target = sfc.__vccOpts || sfc;
+  for (const [key, val] of props) {
+    target[key] = val;
+  }
+  return target;
+};
 const _sfc_main$8 = {};
 const _hoisted_1$7 = {
   class: "info-modal",
