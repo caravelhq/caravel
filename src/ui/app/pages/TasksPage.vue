@@ -137,6 +137,12 @@ import {
   renderProjectsView, renderProjectPage, openProjectPanel as doOpenProjectPanel,
   invalidateProjectsCache, getProjectHideClosed, setProjectHideClosed, ensureProjectsLoaded,
 } from "./tasks/projects";
+import {
+  renderPanelCard, renderReportPane, renderTaskTree,
+  loadReportNode, setActiveReportDoc, appendReportExtras,
+} from "./tasks/viewer";
+import { statusClass } from "./tasks/helpers";
+import { useRouter } from "vue-router";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
@@ -157,9 +163,17 @@ let tasksNewFormEl: HTMLFormElement | null = null;
 let tasksUserBlockedEl: HTMLElement | null = null;
 let bulkBarEl: HTMLElement | null = null;
 
+let taskPanelBodyEl: HTMLElement | null = null;
+let taskPanelHeadlineEl: HTMLElement | null = null;
+let taskPanelIdEl: HTMLElement | null = null;
+let taskPanelStatusEl: HTMLElement | null = null;
+
 let attentionIntervalId: ReturnType<typeof setInterval> | null = null;
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let lpStartX = 0, lpStartY = 0;
+
+const router = useRouter();
+let currentTaskChain: { task?: Record<string, unknown>; ancestors?: Record<string, unknown>[]; children?: Record<string, unknown>[] } | null = null;
 
 // ── Picker helpers ────────────────────────────────────────────────────────
 
@@ -235,27 +249,72 @@ async function fetchTasks(): Promise<void> {
   }
 }
 
-// Part 2 fills this in fully — stub opens viewer section and sets ID.
-function openTaskPanel(taskId: string): void {
-  tasksStore.currentTaskId = taskId;
-  const task = tasksStore.cache.find(t => t.id === taskId);
-  if (task) tasksStore.currentTaskProject = task.project || null;
-  setRightPaneMode("view");
-  // taskFromProjectSlug: if we opened from a project pane, remember that.
-  if (tasksStore.pane !== "project") tasksStore.taskFromProjectSlug = null;
+async function openTaskPanel(taskId: string): Promise<void> {
+  if (!taskId || !taskPanelBodyEl) return;
+  const prevPane = tasksStore.pane;
+  const sameTask = taskId === tasksStore.currentTaskId;
+  if (prevPane === "project") tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
+  else if (!sameTask) tasksStore.taskFromProjectSlug = null;
 
-  // Sync project button.
-  if (tasksProjectBtnEl) {
-    const hasProject = !!tasksStore.currentTaskProject;
-    tasksProjectBtnEl.disabled = !hasProject;
-    tasksProjectBtnEl.setAttribute("aria-disabled", hasProject ? "false" : "true");
+  tasksStore.currentTaskId = taskId;
+  tasksStore.currentTaskProject = null;
+  setRightPaneMode("view");
+
+  if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
+  if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";
+  if (taskPanelStatusEl) { taskPanelStatusEl.textContent = ""; taskPanelStatusEl.className = "tasks-viewer-status"; }
+  taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
+
+  expandAncestors(taskId, tasksStore.cache, tasksStore.expanded);
+  renderTaskPicker();
+
+  if (tasksTreeEl) {
+    tasksTreeEl.querySelectorAll(".tasks-tree-row, .tasks-current-row").forEach(r => {
+      r.classList.toggle("is-active", r.getAttribute("data-task-id") === taskId);
+    });
   }
 
-  // Expand ancestors so the active row is visible.
-  expandAncestors(taskId, tasksStore.cache, tasksStore.expanded);
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
+    const data = await res.json();
+    if (!data.ok || !data.chain) {
+      taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Unable to load task.</div>';
+      return;
+    }
+    currentTaskChain = data.chain;
+    const task = data.chain.task;
+    if (task) {
+      tasksStore.currentTaskProject = task.project || null;
+      if (tasksProjectBtnEl) {
+        tasksProjectBtnEl.disabled = !task.project;
+        tasksProjectBtnEl.setAttribute("aria-disabled", task.project ? "false" : "true");
+      }
+      if (taskPanelHeadlineEl) {
+        taskPanelHeadlineEl.textContent = task.headline || task.brief || "Task " + taskId;
+        taskPanelHeadlineEl.dataset.taskId = task.id || "";
+        taskPanelHeadlineEl.dataset.agent = task.agent || task.to || "";
+        taskPanelHeadlineEl.dataset.locked = task.status === "claimed" ? "true" : "false";
+        taskPanelHeadlineEl.title = task.status === "claimed" ? "Cannot rename while the worker is claimed" : "Click to rename — Enter to save, Esc to cancel";
+        taskPanelHeadlineEl.classList.toggle("is-editable", task.status !== "claimed");
+      }
+      if (taskPanelStatusEl) {
+        taskPanelStatusEl.textContent = task.status || "?";
+        taskPanelStatusEl.className = "tasks-viewer-status " + statusClass(task.status);
+      }
+    }
 
-  // Part 2 loads the viewer body.
-  if (window.__loadTaskDetail) window.__loadTaskDetail(taskId);
+    const viewMode = tasksStore.currentViewMode;
+    const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
+    const reportHtml = task?.reportPath ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
+
+    taskPanelBodyEl.innerHTML =
+      '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + "</div>" +
+      '<div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
+
+    taskPanelBodyEl.querySelectorAll<HTMLElement>(".task-panel-report").forEach(rn => loadReportNode(rn));
+  } catch (err) {
+    taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String((err as Error).message || err) + "</div>";
+  }
 }
 
 async function openProjectPanel(slug: string): Promise<void> {
@@ -281,6 +340,319 @@ async function openProjectPanel(slug: string): Promise<void> {
     );
   } catch (err) {
     tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Error: ' + String((err as Error).message || err) + "</div>";
+  }
+}
+
+// ── Action submit helpers ─────────────────────────────────────────────────
+
+function setViewMode(mode: "task" | "report"): void {
+  tasksStore.currentViewMode = mode;
+  taskPanelBodyEl?.querySelectorAll<HTMLElement>(".tasks-viewer-pane").forEach(p => {
+    p.hidden = p.getAttribute("data-pane") !== mode;
+  });
+  document.querySelectorAll(".tasks-viewer-tab").forEach(t => {
+    const isActive = t.getAttribute("data-view") === mode;
+    t.classList.toggle("is-active", isActive);
+    t.setAttribute("aria-selected", isActive ? "true" : "false");
+  });
+}
+
+async function submitNext(wrapper: HTMLElement | null): Promise<void> {
+  if (!wrapper) return;
+  const agent = wrapper.getAttribute("data-next-agent") || "";
+  const taskId = wrapper.getAttribute("data-next-id") || "";
+  const source = wrapper.getAttribute("data-next-source") || "revisit";
+  const input = wrapper.querySelector<HTMLTextAreaElement>(".task-panel-next-input");
+  const btn = wrapper.querySelector<HTMLButtonElement>(".task-panel-next-submit");
+  const statusEl = wrapper.querySelector<HTMLElement>(".task-panel-next-status");
+  const targetSel = wrapper.querySelector<HTMLSelectElement>(".task-panel-next-target-select");
+  const headlineEl = wrapper.querySelector<HTMLInputElement>(".task-panel-next-headline-input");
+  const instruction = (input?.value || "").trim();
+  if (!instruction) {
+    if (statusEl) { statusEl.textContent = "Type an instruction first."; statusEl.className = "task-panel-unblock-status task-panel-next-status is-error"; }
+    return;
+  }
+  if (btn) btn.disabled = true;
+  if (statusEl) { statusEl.textContent = "Spawning child…"; statusEl.className = "task-panel-unblock-status task-panel-next-status"; }
+  try {
+    const payload: Record<string, string> = { agent, instruction, source };
+    const target = targetSel?.value;
+    if (target && target !== agent) payload.target = target;
+    const headline = (headlineEl?.value || "").trim();
+    if (headline) payload.headline = headline;
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!data.ok) {
+      if (statusEl) { statusEl.textContent = "Error: " + (data.error || "unknown"); statusEl.className = "task-panel-unblock-status task-panel-next-status is-error"; }
+      if (btn) btn.disabled = false;
+      return;
+    }
+    if (statusEl) { statusEl.textContent = "Child " + (data.id || "?") + " queued."; statusEl.className = "task-panel-unblock-status task-panel-next-status is-ok"; }
+    if (data.id) openTaskPanel(data.id);
+    fetchTasks();
+    attentionStore.fetch();
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = "Error: " + String((err as Error).message || err); statusEl.className = "task-panel-unblock-status task-panel-next-status is-error"; }
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function submitClose(wrapper: HTMLElement | null): Promise<void> {
+  if (!wrapper) return;
+  const agent = wrapper.getAttribute("data-close-agent") || "";
+  const taskId = wrapper.getAttribute("data-close-id") || "";
+  const defaultStatus = wrapper.getAttribute("data-close-default-status") || "closed";
+  const input = wrapper.querySelector<HTMLTextAreaElement>(".task-panel-close-input");
+  const cascadeBox = wrapper.querySelector<HTMLInputElement>(".task-panel-close-cascade-checkbox");
+  const btn = wrapper.querySelector<HTMLButtonElement>(".task-panel-close-submit");
+  const statusEl = wrapper.querySelector<HTMLElement>(".task-panel-close-status");
+  if (!agent || !taskId) return;
+  if (btn) btn.disabled = true;
+  if (statusEl) { statusEl.textContent = "Closing…"; statusEl.className = "task-panel-close-status task-panel-unblock-status"; }
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent, reason: (input?.value || "").trim(), status: defaultStatus, cascade: !!cascadeBox?.checked }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      if (statusEl) { statusEl.textContent = "Error: " + (data.error || "unknown"); statusEl.className = "task-panel-close-status task-panel-unblock-status is-error"; }
+      if (btn) btn.disabled = false;
+      return;
+    }
+    if (statusEl) { statusEl.textContent = "Closed."; statusEl.className = "task-panel-close-status task-panel-unblock-status is-ok"; }
+    openTaskPanel(taskId); fetchTasks(); attentionStore.fetch();
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = "Error: " + String((err as Error).message || err); statusEl.className = "task-panel-close-status task-panel-unblock-status is-error"; }
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function submitDoneReading(agent: string, taskId: string, btn: HTMLElement | null): Promise<void> {
+  if (!agent || !taskId) return;
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent, reason: "", status: "closed", cascade: false }),
+    });
+    const data = await res.json();
+    if (!data.ok) return;
+    openTaskPanel(taskId); fetchTasks(); attentionStore.fetch();
+  } catch (_) {}
+  finally { if (btn) (btn as HTMLButtonElement).disabled = false; }
+}
+
+async function submitAbort(wrapper: HTMLElement | null): Promise<void> {
+  if (!wrapper) return;
+  const agent = wrapper.getAttribute("data-abort-agent") || "";
+  const taskId = wrapper.getAttribute("data-abort-id") || "";
+  const input = wrapper.querySelector<HTMLTextAreaElement>(".task-panel-abort-input");
+  const btn = wrapper.querySelector<HTMLButtonElement>(".task-panel-abort-submit");
+  const statusEl = wrapper.querySelector<HTMLElement>(".task-panel-abort-status");
+  if (!agent || !taskId) return;
+  if (btn) btn.disabled = true;
+  if (statusEl) { statusEl.textContent = "Killing worker…"; statusEl.className = "task-panel-abort-status task-panel-unblock-status"; }
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/abort", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ agent, reason: (input?.value || "").trim() }),
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      if (statusEl) { statusEl.textContent = "Error: " + (data.error || "unknown"); statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error"; }
+      if (btn) btn.disabled = false; return;
+    }
+    if (statusEl) { statusEl.textContent = data.mode === "stale" ? "Cancelled (stale claim cleared)." : "Worker killed — finalising…"; statusEl.className = "task-panel-abort-status task-panel-unblock-status is-ok"; }
+    setTimeout(() => { openTaskPanel(taskId); fetchTasks(); attentionStore.fetch(); }, data.mode === "stale" ? 0 : 1200);
+  } catch (err) {
+    if (statusEl) { statusEl.textContent = "Error: " + String((err as Error).message || err); statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error"; }
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function submitReopen(btn: HTMLElement | null): Promise<void> {
+  if (!btn) return;
+  const agent = btn.getAttribute("data-reopen-agent") || "";
+  const taskId = btn.getAttribute("data-reopen-task") || "";
+  if (!agent || !taskId) return;
+  (btn as HTMLButtonElement).disabled = true;
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/reopen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+    const data = await res.json();
+    if (!data.ok) { (btn as HTMLButtonElement).disabled = false; return; }
+    openTaskPanel(taskId); fetchTasks(); attentionStore.fetch();
+  } catch (_) { (btn as HTMLButtonElement).disabled = false; }
+}
+
+async function submitResume(btn: HTMLElement | null): Promise<void> {
+  if (!btn) return;
+  const agent = btn.getAttribute("data-resume-agent") || "";
+  const taskId = btn.getAttribute("data-resume-task") || "";
+  if (!agent || !taskId) return;
+  (btn as HTMLButtonElement).disabled = true;
+  try {
+    const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/resume", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+    const data = await res.json();
+    if (!data.ok) { (btn as HTMLButtonElement).disabled = false; return; }
+    openTaskPanel(taskId); fetchTasks(); attentionStore.fetch();
+  } catch (_) { (btn as HTMLButtonElement).disabled = false; }
+}
+
+// Defect 7 / V11 — NEVER sends. Prefills the chat input, user presses Send.
+function launchChatForTask(taskId: string, parentAgent: string, msgEl: HTMLTextAreaElement | null): void {
+  if (!taskId) return;
+  if (!parentAgent) return;
+  const taskRoot = String(taskId).split(".")[0];
+  const threadId = "task-" + taskRoot + "-" + parentAgent;
+  const typedMsg = (msgEl?.value || "").trim();
+  const initialMsg = typedMsg ? "Continue after " + taskId + "\n" + typedMsg : "Continue after " + taskId + "\n";
+  window.__chatSessionId = threadId;
+  window.__pendingAgentId = parentAgent;
+  router.push("/chat").then(() => {
+    setTimeout(() => {
+      const chatInput = document.getElementById("chat-input") as HTMLTextAreaElement | null;
+      if (!chatInput) return;
+      chatInput.value = initialMsg;
+      try { chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length); } catch (_) {}
+      chatInput.focus();
+      chatInput.dispatchEvent(new Event("input", { bubbles: true }));
+    }, 50);
+  });
+}
+
+function openFollowOnForm(sourceTaskId: string, sourceAgent: string): void {
+  if (!tasksNewFormEl || !sourceTaskId) return;
+  const chain = currentTaskChain;
+  let sourceCard: Record<string, unknown> | null = null;
+  const childReviewPaths: string[] = [];
+  if (chain) {
+    if ((chain.task as { id?: string })?.id === sourceTaskId) {
+      sourceCard = chain.task as Record<string, unknown>;
+      for (const ch of chain.children || []) {
+        const rp = (ch as { reportPath?: string }).reportPath;
+        if (rp) childReviewPaths.push(rp);
+      }
+    } else {
+      const all = [...(chain.ancestors || []), ...(chain.children || [])];
+      sourceCard = (all.find(a => (a as { id?: string }).id === sourceTaskId) as Record<string, unknown>) || null;
+    }
+  }
+  const contextLines: string[] = [];
+  if (sourceCard?.reportPath) {
+    contextLines.push(sourceCard.reportPath as string);
+    for (const d of (sourceCard.deliverables as string[]) || []) contextLines.push(d);
+  }
+  for (const rp of childReviewPaths) { if (!contextLines.includes(rp)) contextLines.push(rp); }
+  const srcHeadline = String((sourceCard?.headline as string) || sourceTaskId);
+  const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
+  const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
+
+  tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
+  const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
+  const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
+  if (parentChipEl) parentChipEl.removeAttribute("hidden");
+  if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
+  const headlineEl = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
+  if (headlineEl) headlineEl.value = headlineSuggest;
+  const briefEl = document.getElementById("multi-agent-new-brief") as HTMLTextAreaElement | null;
+  if (briefEl) briefEl.value = briefSuggest;
+  const ctxEl = document.getElementById("multi-agent-new-context") as HTMLTextAreaElement | null;
+  if (ctxEl) ctxEl.value = contextLines.join("\n");
+  if (sourceCard?.project) {
+    const projEl = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
+    if (projEl) ensureProjectsLoaded(projEl).then(() => { if (projEl) projEl.value = sourceCard!.project as string; });
+  }
+  setRightPaneMode("new");
+  headlineEl?.focus();
+}
+
+function onPanelBodyClick(ev: MouseEvent): void {
+  const t = ev.target as HTMLElement;
+  const nextBtn = t.closest<HTMLElement>(".task-panel-next-submit");
+  if (nextBtn) { ev.preventDefault(); submitNext(nextBtn.closest(".task-panel-next")); return; }
+
+  const pillBtn = t.closest<HTMLElement>("[data-doc-pill]");
+  if (pillBtn) { ev.preventDefault(); setActiveReportDoc(pillBtn.closest(".task-panel-report-pane"), pillBtn.getAttribute("data-doc-pill") || ""); return; }
+
+  const doneReadingBtn = t.closest<HTMLElement>("[data-done-reading-id]");
+  if (doneReadingBtn) {
+    ev.preventDefault();
+    (doneReadingBtn as HTMLButtonElement).disabled = true;
+    submitDoneReading(doneReadingBtn.getAttribute("data-done-reading-agent") || "", doneReadingBtn.getAttribute("data-done-reading-id") || "", doneReadingBtn);
+    return;
+  }
+
+  const toggleCloseBtn = t.closest("[data-toggle-close]");
+  if (toggleCloseBtn) {
+    ev.preventDefault();
+    const closeForm = toggleCloseBtn.closest(".task-panel-card")?.querySelector<HTMLElement>(".task-panel-close-form");
+    if (closeForm) { closeForm.hidden = false; closeForm.querySelector<HTMLElement>(".task-panel-close-input")?.focus(); closeForm.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    return;
+  }
+  const closeSubmitBtn = t.closest(".task-panel-close-submit");
+  if (closeSubmitBtn) { ev.preventDefault(); submitClose(closeSubmitBtn.closest(".task-panel-close-form")); return; }
+  const closeCancelBtn = t.closest(".task-panel-close-cancel");
+  if (closeCancelBtn) { ev.preventDefault(); const f = closeCancelBtn.closest<HTMLElement>(".task-panel-close-form"); if (f) f.hidden = true; return; }
+
+  const toggleAbortBtn = t.closest("[data-toggle-abort]");
+  if (toggleAbortBtn) {
+    ev.preventDefault();
+    const abortForm = toggleAbortBtn.closest(".task-panel-card")?.querySelector<HTMLElement>(".task-panel-abort-form");
+    if (abortForm) { abortForm.hidden = false; abortForm.querySelector<HTMLElement>(".task-panel-abort-input")?.focus(); abortForm.scrollIntoView({ behavior: "smooth", block: "nearest" }); }
+    return;
+  }
+  const abortSubmitBtn = t.closest(".task-panel-abort-submit");
+  if (abortSubmitBtn) { ev.preventDefault(); submitAbort(abortSubmitBtn.closest(".task-panel-abort-form")); return; }
+  const abortCancelBtn = t.closest(".task-panel-abort-cancel");
+  if (abortCancelBtn) { ev.preventDefault(); const f = abortCancelBtn.closest<HTMLElement>(".task-panel-abort-form"); if (f) f.hidden = true; return; }
+
+  const reopenBtn = t.closest<HTMLElement>("[data-reopen-task]");
+  if (reopenBtn) { ev.preventDefault(); submitReopen(reopenBtn); return; }
+  const resumeBtn = t.closest<HTMLElement>("[data-resume-task]");
+  if (resumeBtn) { ev.preventDefault(); submitResume(resumeBtn); return; }
+
+  const followonBtn = t.closest("[data-followon-task]");
+  if (followonBtn) {
+    ev.preventDefault();
+    const continueForm = taskPanelBodyEl?.querySelector<HTMLElement>(".task-panel-next");
+    if (continueForm) {
+      continueForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      continueForm.querySelector<HTMLElement>(".task-panel-next-input")?.focus();
+      const det = continueForm.closest("details"); if (det) det.open = true;
+    } else {
+      openFollowOnForm(followonBtn.getAttribute("data-followon-task") || "", followonBtn.getAttribute("data-followon-agent") || "");
+    }
+    return;
+  }
+
+  const openTaskBtn = t.closest("[data-open-task]");
+  if (openTaskBtn) { ev.preventDefault(); openTaskPanel(openTaskBtn.getAttribute("data-open-task") || ""); return; }
+
+  const openFileBtn = t.closest("[data-open-file]");
+  if (openFileBtn) {
+    ev.preventDefault();
+    const filePath = openFileBtn.getAttribute("data-open-file");
+    if (filePath && window.__loadFile) window.__loadFile(filePath);
+    return;
+  }
+
+  const openFolderBtn = t.closest("[data-open-folder]");
+  if (openFolderBtn) {
+    ev.preventDefault();
+    const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
+    if (window.__loadDirectory) window.__loadDirectory(folderPath);
+    return;
+  }
+
+  const toggleChatBtn = t.closest("[data-toggle-chat]");
+  if (toggleChatBtn) {
+    ev.preventDefault();
+    const chatCard = toggleChatBtn.closest(".task-panel-card");
+    const chatFormEl = chatCard?.querySelector<HTMLElement>(".task-panel-chat-form");
+    const chatAgent = chatFormEl?.getAttribute("data-chat-parent-agent") || "";
+    const chatMsgEl = chatFormEl?.querySelector<HTMLTextAreaElement>(".task-panel-chat-msg-input") || null;
+    launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat") || "", chatAgent, chatMsgEl);
+    return;
   }
 }
 
@@ -443,6 +815,69 @@ onMounted(() => {
   tasksEmptyEl          = document.getElementById("tasks-empty");
   tasksNewFormEl        = document.getElementById("multi-agent-new") as HTMLFormElement | null;
   tasksUserBlockedEl    = document.getElementById("tasks-user-blocked");
+  taskPanelBodyEl       = document.getElementById("tasks-viewer-body");
+  taskPanelHeadlineEl   = document.getElementById("tasks-viewer-headline");
+  taskPanelIdEl         = document.getElementById("tasks-viewer-id");
+  taskPanelStatusEl     = document.getElementById("tasks-viewer-status");
+
+  // Viewer task/report tab switching.
+  document.querySelectorAll(".tasks-viewer-tab").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const v = btn.getAttribute("data-view") as "task" | "report" | null;
+      if (v) setViewMode(v);
+    });
+  });
+
+  // Delegated click handler for the task detail panel.
+  if (taskPanelBodyEl) {
+    taskPanelBodyEl.addEventListener("click", onPanelBodyClick as EventListener);
+  }
+
+  // Headline click-to-edit.
+  if (taskPanelHeadlineEl) {
+    taskPanelHeadlineEl.addEventListener("click", async () => {
+      const el = taskPanelHeadlineEl!;
+      if (el.dataset.locked === "true") return;
+      const taskId = el.dataset.taskId;
+      if (!taskId) return;
+      const current = el.textContent || "";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "tasks-viewer-headline-input";
+      input.value = current;
+      input.style.width = "100%";
+      el.replaceWith(input);
+      input.focus();
+      input.select();
+      const restore = () => {
+        if (!input.isConnected) return;
+        input.replaceWith(el);
+      };
+      input.addEventListener("keydown", async (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const next = input.value.trim();
+          if (!next || next === current) { restore(); return; }
+          try {
+            await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/rename", {
+              method: "PATCH", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ headline: next }),
+            });
+            el.textContent = next;
+          } catch (_) {}
+          if (input.isConnected) restore();
+        } else if (e.key === "Escape") {
+          restore();
+        }
+      });
+      input.addEventListener("blur", restore);
+    });
+  }
+
+  // Expose cross-page global so other tabs can request a task open.
+  window.__loadTaskDetail = (taskId: string) => {
+    if (taskId) openTaskPanel(taskId);
+  };
 
   if (tasksTreeEl) {
     bulkBarEl = createBulkBar(
@@ -577,9 +1012,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
   if (longPressTimer !== null) clearTimeout(longPressTimer);
-  // Remove window global to avoid leaking across page navigations.
+  // Remove window globals to avoid leaking across page navigations.
   if (typeof window.__ensureTasksLoaded !== "undefined") {
     delete (window as unknown as Record<string, unknown>).__ensureTasksLoaded;
+  }
+  if (typeof window.__loadTaskDetail !== "undefined") {
+    delete (window as unknown as Record<string, unknown>).__loadTaskDetail;
   }
 });
 </script>
