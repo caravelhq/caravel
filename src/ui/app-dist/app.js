@@ -22669,7 +22669,7 @@ function loadReportNode(node) {
     node.setAttribute("data-loaded", "true");
     if (data.markdown) {
       const raw = data.content || "";
-      const body = stripFrontmatter(raw);
+      const { body } = stripFrontmatter(raw);
       const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
       const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml$1(fmMatch[1]) + "</pre>" : "";
       node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";

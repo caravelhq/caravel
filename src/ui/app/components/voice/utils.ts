@@ -96,7 +96,7 @@ export function detectMimeType(): string | null {
 export function isRecordingSupported(): boolean {
   return !!(
     typeof MediaRecorder !== "undefined" &&
-    navigator.mediaDevices?.getUserMedia &&
+    typeof navigator.mediaDevices?.getUserMedia === "function" &&
     detectMimeType()
   );
 }

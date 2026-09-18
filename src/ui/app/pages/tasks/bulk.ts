@@ -151,7 +151,7 @@ export function createBulkBar(
     if (statusEl) statusEl.textContent = "";
   }
 
-  (bar as HTMLElement & { update: () => void }).update = updateBar;
+  (bar as unknown as HTMLElement & { update: () => void }).update = updateBar;
 
   if (tasksTreeEl.parentNode) {
     tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);

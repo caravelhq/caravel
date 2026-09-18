@@ -18,6 +18,7 @@ if ("serviceWorker" in navigator) {
 
 createApp(App)
   .use(createPinia())
-  .use(router)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  .use(router as any)
   .use(createBootstrap())
   .mount("#app");

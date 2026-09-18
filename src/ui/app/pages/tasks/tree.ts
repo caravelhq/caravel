@@ -54,7 +54,7 @@ export function buildTaskTree(tasks: TaskRow[]): TaskTree {
       while (cur) {
         if (seen[cur.id]) { cyclic = true; break; }
         seen[cur.id] = true;
-        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+        const nextId: string | null = cur.parent && cur.parent !== "null" ? cur.parent : null;
         if (!nextId || nextId === cur.id || !byId[nextId]) break;
         cur = byId[nextId];
       }
