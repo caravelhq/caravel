@@ -8,3 +8,4 @@ plugin-cache
 agents/
 CLAUDE.md
 .wt-phase34/
+.caravel-test-server-*.pid

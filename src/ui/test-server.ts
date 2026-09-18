@@ -1,9 +1,45 @@
-// Test server for caravel-vue app — serves app-dist with minimal routing
-import { readFileSync, existsSync } from "fs";
-import { join, extname } from "path";
+// Caravel UI test server — serves THIS checkout's app bundle against the LIVE
+// daemon's API, so an app-dist build can be gated without restarting the daemon.
+//
+//   bun run src/ui/test-server.ts [start] [--port 4633] [--daemon http://127.0.0.1:4632] [--ttl 30]
+//   bun run src/ui/test-server.ts stop [--port 4633]
+//
+// What it serves:
+//   /, /index.html, unknown paths  → htmlPage() from this checkout (same shell + inline
+//                                    CSS the daemon serves — not a hand-written copy)
+//   /app.js, /app.css, other files → this checkout's src/ui/app-dist/
+//   everything else (/api/*, /sw.js, /icon.svg, /manifest.json) → proxied to the daemon
+//
+// If the daemon is unreachable, /api/* answers 503 JSON with `harness_error` set and
+// the server says so loudly on stderr. It never fabricates API data: a gate that
+// passes against stubbed state is as wrong as one that fails against missing state.
+// (WAL-95 — R05 wrote up three "defects" measured against a server with no API.)
+//
+// Lifecycle — never clean this up with a `pkill -f` pattern: the daemon runs from the
+// same repo path, and `pkill -f "bun run.*caravel"` killed it on 2026-09-18. Instead:
+//   - `stop` kills exactly the PID in the pidfile, after checking it is a test server;
+//   - the server exits on its own after --ttl minutes (default 30; 0 = never), so an
+//     orphan can't hold the port indefinitely;
+//   - it refuses to bind the daemon's port.
 
-const APP_DIST = new URL("./app-dist", import.meta.url);
-const PORT = 4633;
+import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
+import { join, extname, normalize } from "path";
+import { htmlPage } from "./page/html";
+
+const APP_DIST = new URL("./app-dist/", import.meta.url).pathname;
+const REPO_ROOT = new URL("../../", import.meta.url).pathname;
+
+function flag(name: string, fallback: string): string {
+  const i = process.argv.indexOf(`--${name}`);
+  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+
+const command = process.argv[2] && !process.argv[2].startsWith("--") ? process.argv[2] : "start";
+const PORT = Number(flag("port", process.env.CARAVEL_TEST_PORT || "4633"));
+const DAEMON = flag("daemon", process.env.CARAVEL_DAEMON_URL || "http://127.0.0.1:4632").replace(/\/$/, "");
+const TTL_MIN = Number(flag("ttl", "30"));
+const PIDFILE = join(REPO_ROOT, `.caravel-test-server-${PORT}.pid`);
+
 const MIME_TYPES: Record<string, string> = {
   ".js": "application/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -12,104 +48,146 @@ const MIME_TYPES: Record<string, string> = {
   ".svg": "image/svg+xml",
   ".png": "image/png",
   ".jpg": "image/jpeg",
+  ".map": "application/json",
 };
 
-const DAEMON_BASE = "http://127.0.0.1:4632";
+function isTestServer(pid: number): boolean {
+  try {
+    return readFileSync(`/proc/${pid}/cmdline`, "utf8").includes("test-server.ts");
+  } catch {
+    return false;
+  }
+}
 
-const server = Bun.serve({
-  port: PORT,
-  async fetch(req) {
-    const url = new URL(req.url);
+function stop(): never {
+  if (!existsSync(PIDFILE)) {
+    console.log(`No test server pidfile for port ${PORT} (${PIDFILE}).`);
+    process.exit(0);
+  }
+  const pid = Number(readFileSync(PIDFILE, "utf8").trim());
+  if (!pid || !isTestServer(pid)) {
+    console.log(`Stale pidfile (PID ${pid} is not a test server) — removing it, killing nothing.`);
+    unlinkSync(PIDFILE);
+    process.exit(0);
+  }
+  process.kill(pid, "SIGTERM");
+  console.log(`Stopped test server PID ${pid} on :${PORT}.`);
+  process.exit(0);
+}
 
-    // Stub /api/state so dock shows test-server as the "daemon"
-    if (url.pathname === "/api/state") {
-      const now = Date.now();
-      const stub = {
-        daemon: { running: true, pid: 0, startedAt: now - 60000, uptimeMs: 60000 },
-        tasksActive: 0,
-        heartbeat: { enabled: false, intervalMinutes: 60, nextAt: null, nextInMs: null },
-        jobs: [],
-        security: { enableApiKey: false, apiKey: "" },
-        telegram: { configured: false, allowedUserCount: 0 },
-        discord: { configured: false, allowedUserCount: 0 },
-        session: null,
-        web: { port: 4633, enabled: true },
-      };
-      return new Response(JSON.stringify(stub), {
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-      });
-    }
+async function daemonReachable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${DAEMON}/api/health`, { signal: AbortSignal.timeout(2000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
 
-    // Proxy all other /api/* to the live daemon so tests get real data
-    if (url.pathname.startsWith("/api/")) {
-      try {
-        const target = DAEMON_BASE + url.pathname + url.search;
-        const proxyRes = await fetch(target, {
-          method: req.method,
-          headers: req.headers,
-          body: req.method !== "GET" && req.method !== "HEAD" ? req.body : undefined,
-        });
-        const body = await proxyRes.arrayBuffer();
-        const headers = new Headers(proxyRes.headers);
-        headers.set("Access-Control-Allow-Origin", "*");
-        return new Response(body, { status: proxyRes.status, headers });
-      } catch {
-        return new Response(JSON.stringify({ ok: false, error: "daemon unreachable" }), {
-          status: 502,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-    }
+function harnessError(reason: string): Response {
+  const body = {
+    error: `caravel test-server: ${reason}`,
+    harness_error: true,
+    note: "This is a test-harness failure, not an app defect. Results that depend on this response are invalid.",
+  };
+  return new Response(JSON.stringify(body), {
+    status: 503,
+    headers: { "Content-Type": "application/json", "X-Caravel-Harness": "test-server" },
+  });
+}
 
-    // Route everything to index.html for SPA routing (except explicit files)
-    let pathname = url.pathname;
+async function proxy(req: Request, url: URL): Promise<Response> {
+  const headers = new Headers(req.headers);
+  headers.delete("host");
+  try {
+    const res = await fetch(`${DAEMON}${url.pathname}${url.search}`, {
+      method: req.method,
+      headers,
+      body: req.method === "GET" || req.method === "HEAD" ? undefined : req.body,
+      redirect: "manual",
+      // @ts-expect-error Bun supports streaming request bodies
+      duplex: "half",
+    });
+    const out = new Headers(res.headers);
+    out.set("X-Caravel-Harness", "test-server; proxied");
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers: out });
+  } catch (err) {
+    console.error(`[test-server] HARNESS ERROR: ${req.method} ${url.pathname} → daemon ${DAEMON} unreachable (${(err as Error).message})`);
+    return harnessError(`daemon unreachable at ${DAEMON}`);
+  }
+}
 
-    // Serve explicit static files from app-dist
-    if (pathname.startsWith("/app.") || pathname.startsWith("/icon.") || pathname.startsWith("/manifest.")) {
-      const filePath = join(APP_DIST.pathname, pathname.slice(1));
-      if (existsSync(filePath)) {
-        const content = readFileSync(filePath);
-        const ext = extname(filePath);
-        const contentType = MIME_TYPES[ext] || "application/octet-stream";
-        return new Response(content, { headers: { "Content-Type": contentType } });
-      }
-    }
+function serveDist(pathname: string): Response | null {
+  const rel = normalize(pathname).replace(/^\/+/, "");
+  if (!rel || rel.startsWith("..") || rel.endsWith(".ts")) return null;
+  const filePath = join(APP_DIST, rel);
+  if (!existsSync(filePath)) return null;
+  const type = MIME_TYPES[extname(filePath)] || "application/octet-stream";
+  return new Response(Bun.file(filePath), { headers: { "Content-Type": type, "X-Caravel-Harness": "test-server" } });
+}
 
-    // Service worker
-    if (pathname === "/sw.js") {
-      const sw = `self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', e => {
-  if (e.request.url.includes('/api/')) return;
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
-});`;
-      return new Response(sw, { headers: { "Content-Type": "application/javascript; charset=utf-8" } });
-    }
+function page(): Response {
+  return new Response(htmlPage(), {
+    headers: { "Content-Type": "text/html; charset=utf-8", "X-Caravel-Harness": "test-server" },
+  });
+}
 
-    // For any other route, serve index.html (Vue Router will handle it)
-    const indexPath = join(APP_DIST.pathname, "index.html");
-    if (existsSync(indexPath)) {
-      const html = readFileSync(indexPath, "utf-8");
-      return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
-    }
+async function start() {
+  const daemonPort = Number(new URL(DAEMON).port || 80);
+  if (PORT === daemonPort) {
+    console.error(`Refusing to bind :${PORT} — that is the daemon's port. Pick another --port.`);
+    process.exit(2);
+  }
 
-    // Fallback: serve app.html template if index.html doesn't exist (test scenario)
-    const html = `<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Caravel</title>
-  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-</head>
-<body>
-  <div id="app"></div>
-  <link rel="stylesheet" href="/app.css" />
-  <script type="module" src="/app.js"></script>
-</body>
-</html>`;
-    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
-  },
-});
+  if (!(await daemonReachable())) {
+    console.error(
+      `\n*** WARNING: daemon not reachable at ${DAEMON}. Every /api/* request will answer 503 ` +
+        `(harness_error). Any spec that reads API-derived values WILL FAIL for harness reasons. ` +
+        `Start the daemon or pass --daemon, then restart this server.\n`,
+    );
+  }
 
-console.log(`Test server listening on http://127.0.0.1:${PORT}`);
+  const server = Bun.serve({
+    port: PORT,
+    hostname: "127.0.0.1",
+    async fetch(req) {
+      const url = new URL(req.url);
+      const { pathname } = url;
+      if (pathname === "/" || pathname === "/index.html") return page();
+      if (pathname.startsWith("/api/")) return proxy(req, url);
+      const dist = serveDist(pathname);
+      if (dist) return dist;
+      if (["/sw.js", "/icon.svg", "/manifest.json"].includes(pathname)) return proxy(req, url);
+      return page(); // SPA fallback
+    },
+  });
+
+  writeFileSync(PIDFILE, String(process.pid));
+  const cleanup = () => {
+    try {
+      if (readFileSync(PIDFILE, "utf8").trim() === String(process.pid)) unlinkSync(PIDFILE);
+    } catch {}
+    server.stop(true);
+    process.exit(0);
+  };
+  process.on("SIGTERM", cleanup);
+  process.on("SIGINT", cleanup);
+  if (TTL_MIN > 0) {
+    setTimeout(() => {
+      console.log(`[test-server] TTL of ${TTL_MIN} min reached — exiting.`);
+      cleanup();
+    }, TTL_MIN * 60_000).unref?.();
+  }
+
+  console.log(`Test server PID ${process.pid} listening on http://127.0.0.1:${PORT}`);
+  console.log(`  app bundle: ${APP_DIST}`);
+  console.log(`  /api/* → ${DAEMON}`);
+  console.log(`  stop with:  bun run src/ui/test-server.ts stop --port ${PORT}   (TTL ${TTL_MIN || "∞"} min)`);
+}
+
+if (command === "stop") stop();
+else if (command === "start") await start();
+else {
+  console.error(`Unknown command "${command}". Use: start | stop`);
+  process.exit(2);
+}

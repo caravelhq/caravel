@@ -328,7 +328,11 @@ export async function start(args: string[] = []) {
   let discordStopGateway: (() => void) | null = null;
   let multiAgentHandle: ReturnType<typeof startMultiAgentRunner> | null = null;
 
-  async function shutdown() {
+  // Log the signal before tearing down: a SIGTERM exits cleanly (code 0), so
+  // without this line an accidental `pkill` is indistinguishable from the log
+  // simply stopping. (WAL-95 — the 2026-09-18 kill left no trace in daemon.log.)
+  async function shutdown(signal: string) {
+    console.log(`[${new Date().toISOString()}] Caravel daemon PID ${process.pid} received ${signal} — shutting down (parent PID ${process.ppid})`);
     if (discordStopGateway) discordStopGateway();
     if (multiAgentHandle) multiAgentHandle.stop();
     if (web) web.stop();
@@ -336,8 +340,8 @@ export async function start(args: string[] = []) {
     await cleanupPidFile();
     process.exit(0);
   }
-  process.on("SIGTERM", shutdown);
-  process.on("SIGINT", shutdown);
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 
   console.log("Caravel daemon started");
   console.log(`  PID: ${process.pid}`);
