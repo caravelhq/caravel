@@ -656,6 +656,126 @@ function onPanelBodyClick(ev: MouseEvent): void {
   }
 }
 
+// ── New-task form ─────────────────────────────────────────────────────────
+
+let agentsCache: Array<{ name: string; emoji?: string; displayName?: string }> = [];
+
+async function loadAgentsForForm(): Promise<void> {
+  try {
+    const res = await fetch("/api/agents");
+    const data = await res.json();
+    if (data?.ok && Array.isArray(data.agents)) agentsCache = data.agents;
+  } catch (_) {}
+  populateTaskTargetSelect();
+}
+
+function populateTaskTargetSelect(): void {
+  const sel = document.getElementById("multi-agent-new-to") as HTMLSelectElement | null;
+  if (!sel) return;
+  const prev = sel.value;
+  const coord = agentsCache.find(a => a.name === "alice");
+  const rest = agentsCache.filter(a => a.name !== "alice");
+  const ordered = coord ? [coord, ...rest] : rest;
+  sel.innerHTML = ordered.map(a => {
+    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+    return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
+  }).join("");
+  if (prev) sel.value = prev;
+}
+
+function updateHeadlineCount(): void {
+  const input = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
+  const counter = document.getElementById("multi-agent-new-headline-count");
+  if (!input || !counter) return;
+  const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
+  counter.textContent = words + " / 10 words";
+  counter.classList.toggle("is-over", words > 10);
+}
+
+function clearParentChip(): void {
+  if (!tasksNewFormEl) return;
+  tasksNewFormEl.removeAttribute("data-parent");
+  const chipEl = document.getElementById("multi-agent-new-parent-chip");
+  const chipIdEl = document.getElementById("multi-agent-new-parent-id");
+  if (chipEl) chipEl.setAttribute("hidden", "");
+  if (chipIdEl) chipIdEl.textContent = "";
+}
+
+async function submitNewTask(ev: SubmitEvent): Promise<void> {
+  ev.preventDefault();
+  const headline = (document.getElementById("multi-agent-new-headline") as HTMLInputElement | null)?.value.trim() || "";
+  const to = (document.getElementById("multi-agent-new-to") as HTMLSelectElement | null)?.value || "";
+  const kind = (document.getElementById("multi-agent-new-kind") as HTMLSelectElement | null)?.value || "";
+  const from = (document.getElementById("multi-agent-new-from") as HTMLInputElement | null)?.value.trim() || "user";
+  const brief = (document.getElementById("multi-agent-new-brief") as HTMLTextAreaElement | null)?.value.trim() || "";
+  const output = (document.getElementById("multi-agent-new-output") as HTMLTextAreaElement | null)?.value.trim() || "";
+  const contextRaw = (document.getElementById("multi-agent-new-context") as HTMLTextAreaElement | null)?.value.trim() || "";
+  const context = contextRaw ? contextRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
+  const needsRaw = (document.getElementById("multi-agent-new-needs") as HTMLTextAreaElement | null)?.value.trim() || "";
+  const needs = needsRaw ? needsRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
+  const newStatus = document.getElementById("multi-agent-new-status");
+  const submitBtn = document.getElementById("multi-agent-new-submit") as HTMLButtonElement | null;
+
+  const headlineWords = headline.split(/\s+/).filter(Boolean).length;
+  if (!headline) {
+    if (newStatus) { newStatus.textContent = "Headline is required (≤10 words)."; newStatus.className = "multi-agent-new-status is-error"; }
+    return;
+  }
+  if (headlineWords > 10) {
+    if (newStatus) { newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`; newStatus.className = "multi-agent-new-status is-error"; }
+    return;
+  }
+  if (!brief) {
+    if (newStatus) { newStatus.textContent = "Brief is required."; newStatus.className = "multi-agent-new-status is-error"; }
+    return;
+  }
+  if (!to) {
+    populateTaskTargetSelect();
+    if (newStatus) { newStatus.textContent = "Pick a target agent."; newStatus.className = "multi-agent-new-status is-error"; }
+    return;
+  }
+
+  if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.className = "multi-agent-new-status"; }
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    const payload: Record<string, unknown> = { headline, to, from: from || "user", kind, brief, output_format: output, context };
+    if (needs.length > 0) payload.needs = needs;
+    const projectEl = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
+    if (projectEl) {
+      const projVal = (projectEl.value || "").trim();
+      if (projVal === "__none__") payload.project = null;
+      else if (projVal) payload.project = projVal;
+    }
+    const parentAttr = tasksNewFormEl?.getAttribute("data-parent");
+    if (parentAttr) payload.parent = parentAttr;
+
+    const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!data.ok) {
+      if (newStatus) { newStatus.textContent = "Error: " + (data.error || "unknown"); newStatus.className = "multi-agent-new-status is-error"; }
+      if (submitBtn) submitBtn.disabled = false;
+      return;
+    }
+    if (newStatus) { newStatus.textContent = "Dispatched " + data.id; newStatus.className = "multi-agent-new-status is-ok"; }
+    // Reset transient fields; keep kind/to for quick re-dispatch.
+    ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach(id => {
+      const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null;
+      if (el) el.value = "";
+    });
+    clearParentChip();
+    updateHeadlineCount();
+    if (submitBtn) submitBtn.disabled = false;
+    fetchTasks();
+    attentionStore.fetch();
+    if (data.id) openTaskPanel(data.id);
+    else setRightPaneMode("empty");
+  } catch (err) {
+    if (newStatus) { newStatus.textContent = "Error: " + String((err as Error).message || err); newStatus.className = "multi-agent-new-status is-error"; }
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
 // ── Event handlers ────────────────────────────────────────────────────────
 
 function onTreeChange(ev: Event): void {
@@ -992,7 +1112,31 @@ onMounted(() => {
 
   // Cancel button on new form.
   const cancelBtn = document.getElementById("multi-agent-new-cancel");
-  if (cancelBtn) cancelBtn.addEventListener("click", () => setRightPaneMode("empty"));
+  if (cancelBtn) cancelBtn.addEventListener("click", () => {
+    clearParentChip();
+    const newStatusEl = document.getElementById("multi-agent-new-status");
+    if (newStatusEl) newStatusEl.textContent = "";
+    setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
+  });
+
+  // Parent chip clear button.
+  const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
+  if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
+
+  // Headline word counter.
+  const headlineInput = document.getElementById("multi-agent-new-headline");
+  if (headlineInput) {
+    headlineInput.addEventListener("input", updateHeadlineCount);
+    updateHeadlineCount();
+  }
+
+  // New-task form submit.
+  if (tasksNewFormEl) {
+    tasksNewFormEl.addEventListener("submit", submitNewTask as EventListener);
+  }
+
+  // Load agents catalog for the target select.
+  loadAgentsForForm();
 
   // Attention tiers.
   attentionStore.fetch();
