@@ -4375,6 +4375,11 @@ export const pageStyles = String.raw`    :root {
       opacity: 0.35;
       cursor: default;
     }
+    .files-back-to-task {
+      width: auto;
+      min-width: 44px;
+      padding: 0 8px;
+    }
     .files-code {
       margin: 0;
       padding: 0;
