@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount, useTemplateRef } from "vue";
+import { watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
 import { renderMarkdown, stripFrontmatter } from "../../lib/markdown";
 import { yamlRender } from "../../lib/yaml-render";
 import { escHtml, detectLang, isYaml, isImageFile, highlightCode } from "../../lib/highlight";
@@ -15,14 +15,34 @@ const props = defineProps<{
 const contentEl = useTemplateRef<HTMLDivElement>("content");
 
 let currentPath = "";
+// Tracks a path that arrived before mount (immediate watch fires during setup(),
+// before contentEl is populated). Flushed in onMounted so ⇥ and alt-click paths work.
+let pendingPath = "";
+let pendingBranch = "";
 
-watch(() => [props.path, props.branch] as const, ([p]) => {
+watch(() => [props.path, props.branch] as const, ([p, b]) => {
   if (!p) {
-    setEmpty();
+    if (contentEl.value) setEmpty();
     return;
   }
-  renderPath(p, props.branch);
+  if (!contentEl.value) {
+    // Watch fired before mount; park the path and flush in onMounted.
+    pendingPath = p;
+    pendingBranch = b || "";
+    return;
+  }
+  renderPath(p, b);
 }, { immediate: true });
+
+onMounted(() => {
+  if (pendingPath) {
+    const p = pendingPath;
+    const b = pendingBranch;
+    pendingPath = "";
+    pendingBranch = "";
+    renderPath(p, b || undefined);
+  }
+});
 
 onBeforeUnmount(() => {
   // Nothing to clean up for fetch; any in-flight request resolves harmlessly
