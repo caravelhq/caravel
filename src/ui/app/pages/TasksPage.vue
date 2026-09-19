@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, watch } from "vue";
 import { useTasksStore } from "../stores/tasks";
 import { useAttentionStore } from "../stores/attention";
 import { renderAttentionTiers } from "./tasks/tiers";
@@ -176,6 +176,11 @@ let lpStartX = 0, lpStartY = 0;
 
 const router = useRouter();
 let currentTaskChain: { task?: Record<string, unknown>; ancestors?: Record<string, unknown>[]; children?: Record<string, unknown>[] } | null = null;
+
+// Re-render the attention-tier sidebar whenever the store updates (covers mount race + 30s re-poll).
+watch(() => attentionStore.tiers, (tiers) => {
+  if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
+});
 
 // ── Picker helpers ────────────────────────────────────────────────────────
 
