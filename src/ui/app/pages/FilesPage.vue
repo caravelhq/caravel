@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from "vue";
+import { useRouter } from "vue-router";
 import DocViewer from "../components/doc/DocViewer.vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
 import { useUiStore } from "../stores/ui";
@@ -30,6 +31,8 @@ let filesSkipHistoryPush = false;
 let filesLoaded = false;
 
 const ui = useUiStore();
+const router = useRouter();
+const filesBackTaskId = ref<string>("");
 
 function isPanelNarrow(panelId: string, threshold: number): boolean {
   const el = document.getElementById(panelId);
@@ -329,6 +332,7 @@ onMounted(() => {
     filesLoaded = true;
     // Consume a cross-page navigation request set by TasksPage (router push to /files).
     const nav = ui.filesNav;
+    if (nav?.backTaskId) filesBackTaskId.value = nav.backTaskId;
     ui.filesNav = null;
     if (nav) {
       refreshBranchSelector().then(() => {
@@ -350,6 +354,11 @@ onBeforeUnmount(() => {
   // Clear global refs on unmount so cross-page callers get null rather than stale closures.
   (window as any).__filesActivePath = null;
 });
+
+function goBackToTask(): void {
+  filesBackTaskId.value = "";
+  router.push("/tasks");
+}
 </script>
 
 <template>
@@ -360,6 +369,7 @@ onBeforeUnmount(() => {
         <div class="files-nav-group">
           <button id="files-nav-back" class="files-nav-btn" type="button" title="Back" aria-label="Back" :disabled="true">←</button>
           <button id="files-nav-forward" class="files-nav-btn" type="button" title="Forward" aria-label="Forward" :disabled="true">→</button>
+          <button v-if="filesBackTaskId" id="files-back-to-task" class="files-nav-btn files-back-to-task" type="button" :title="'Back to ' + filesBackTaskId" @click="goBackToTask">← Task</button>
         </div>
       </div>
       <div class="files-toolbar-row files-toolbar-row-crumb">
