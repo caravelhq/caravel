@@ -19242,7 +19242,7 @@ function highlightVueBlockContent(content, blockName) {
   return highlightHtml(content);
 }
 const _hoisted_1$e = { id: "dashboard-panel" };
-const _sfc_main$f = /* @__PURE__ */ defineComponent({
+const _sfc_main$g = /* @__PURE__ */ defineComponent({
   __name: "DashboardPage",
   setup(__props) {
     const router2 = useRouter();
@@ -21031,7 +21031,7 @@ const _hoisted_1$d = {
 const CHAT_ID_KEY = "caravel.chat.id";
 const CHAT_POLL_FAST_MS = 500;
 const CHAT_POLL_IDLE_MS = 1e4;
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "ChatPage",
   setup(__props) {
     let chatHistory = [];
@@ -22686,15 +22686,23 @@ function loadReportNode(node) {
     node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
+const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
+  const settingsOpen = /* @__PURE__ */ ref(false);
+  const ttsEnabled = /* @__PURE__ */ ref(true);
+  const micEnabled = /* @__PURE__ */ ref(false);
+  const filesNav = /* @__PURE__ */ ref(null);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav };
+});
 const _hoisted_1$c = {
   id: "tasks-panel",
   class: "tasks-panel"
 };
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
   __name: "TasksPage",
   setup(__props) {
     const tasksStore = useTasksStore();
     const attentionStore = useAttentionStore();
+    const ui = useUiStore();
     let tasksTreeEl = null;
     let tasksViewTabsEl = null;
     let tasksFilterChipsEl = null;
@@ -23269,8 +23277,9 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
         if (ev.altKey) {
           const fn = window.__throwToReadingPane;
           if (typeof fn === "function") fn({ kind: "report", path: filePath });
-        } else if (window.__loadFile) {
-          window.__loadFile(filePath);
+        } else {
+          ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
+          router2.push("/files");
         }
         return;
       }
@@ -23278,7 +23287,8 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       if (openFolderBtn) {
         ev.preventDefault();
         const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
-        if (window.__loadDirectory) window.__loadDirectory(folderPath);
+        ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || void 0 };
+        router2.push("/files");
         return;
       }
       const toggleChatBtn = t.closest("[data-toggle-chat]");
@@ -23499,7 +23509,10 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       if (docBtn) {
         ev.preventDefault();
         const path = docBtn.getAttribute("data-open-file");
-        if (path && window.__loadFile) window.__loadFile(path);
+        if (path) {
+          ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
+          router2.push("/files");
+        }
         return;
       }
       const newHere = target.closest("[data-project-new-task]");
@@ -26108,7 +26121,7 @@ const _hoisted_1$b = {
   ref: "content",
   class: "files-content"
 };
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -26119,13 +26132,29 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     const props = __props;
     const contentEl = useTemplateRef("content");
     let currentPath = "";
-    watch(() => [props.path, props.branch], ([p2]) => {
+    let pendingPath = "";
+    let pendingBranch = "";
+    watch(() => [props.path, props.branch], ([p2, b2]) => {
       if (!p2) {
-        setEmpty();
+        if (contentEl.value) setEmpty();
         return;
       }
-      renderPath(p2, props.branch);
+      if (!contentEl.value) {
+        pendingPath = p2;
+        pendingBranch = b2 || "";
+        return;
+      }
+      renderPath(p2, b2);
     }, { immediate: true });
+    onMounted(() => {
+      if (pendingPath) {
+        const p2 = pendingPath;
+        const b2 = pendingBranch;
+        pendingPath = "";
+        pendingBranch = "";
+        renderPath(p2, b2 || void 0);
+      }
+    });
     onBeforeUnmount(() => {
     });
     function setEmpty() {
@@ -26419,7 +26448,7 @@ const _hoisted_1$a = {
   class: "files-panel"
 };
 const _hoisted_2$7 = { class: "files-split" };
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
     const activeFilePath = /* @__PURE__ */ ref("");
@@ -26441,6 +26470,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
     let filesHistoryIdx = -1;
     let filesSkipHistoryPush = false;
     let filesLoaded = false;
+    const ui = useUiStore();
     function isPanelNarrow(panelId, threshold) {
       const el = document.getElementById(panelId);
       if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
@@ -26693,7 +26723,20 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       }
       if (!filesLoaded) {
         filesLoaded = true;
-        refreshBranchSelector().then(() => loadDirectory("."));
+        const nav = ui.filesNav;
+        ui.filesNav = null;
+        if (nav) {
+          refreshBranchSelector().then(() => {
+            if (nav.kind === "dir") {
+              loadDirectory(nav.path);
+            } else {
+              const dir = nav.path.includes("/") ? nav.path.split("/").slice(0, -1).join("/") || "." : ".";
+              loadDirectory(dir).then(() => openFile(nav.path));
+            }
+          });
+        } else {
+          refreshBranchSelector().then(() => loadDirectory("."));
+        }
       }
     });
     onBeforeUnmount(() => {
@@ -26714,7 +26757,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
               createBaseVNode("div", { class: "files-loading" }, "Loading...")
             ])
           ], -1)),
-          createVNode(_sfc_main$c, {
+          createVNode(_sfc_main$d, {
             path: activeFilePath.value,
             branch: activeBranch.value || void 0,
             kind: "file"
@@ -26730,19 +26773,13 @@ const router = createRouter({
   linkActiveClass: "tab-btn-active",
   linkExactActiveClass: "tab-btn-active",
   routes: [
-    { path: "/dashboard", component: _sfc_main$f },
-    { path: "/chat", component: _sfc_main$e },
-    { path: "/tasks", component: _sfc_main$d },
-    { path: "/files", component: _sfc_main$b },
+    { path: "/dashboard", component: _sfc_main$g },
+    { path: "/chat", component: _sfc_main$f },
+    { path: "/tasks", component: _sfc_main$e },
+    { path: "/files", component: _sfc_main$c },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
-});
-const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
-  const settingsOpen = /* @__PURE__ */ ref(false);
-  const ttsEnabled = /* @__PURE__ */ ref(true);
-  const micEnabled = /* @__PURE__ */ ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled };
 });
 function load(key, fallback) {
   try {
@@ -26832,7 +26869,7 @@ const _hoisted_1$9 = { class: "settings-head" };
 const _hoisted_2$6 = { class: "settings-stack" };
 const _hoisted_3$5 = { class: "setting-item" };
 const _hoisted_4$4 = { class: "setting-item" };
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
@@ -26896,7 +26933,7 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_main$9 = {};
+const _sfc_main$a = {};
 const _hoisted_1$8 = {
   class: "info-modal",
   id: "hb-modal",
@@ -26908,8 +26945,8 @@ function _sfc_render$1(_ctx, _cache) {
     createStaticVNode('<article class="hb-card"><div class="info-head"><span>Heartbeat Configuration</span><button class="settings-close" id="hb-modal-close" type="button" aria-label="Close heartbeat configuration">×</button></div><form class="hb-form" id="hb-form"><label class="hb-field" for="hb-interval-input"><span class="hb-label">Interval (minutes)</span><input class="hb-input" id="hb-interval-input" type="number" min="1" max="1440" step="1" required></label><label class="hb-field" for="hb-prompt-input"><span class="hb-label">Custom prompt</span><textarea class="hb-textarea" id="hb-prompt-input" placeholder="What should heartbeat run?" required></textarea></label><div class="hb-actions"><div class="hb-status" id="hb-modal-status"></div><div class="hb-buttons"><button class="hb-btn ghost" id="hb-cancel-btn" type="button">Cancel</button><button class="hb-btn solid" id="hb-save-btn" type="submit">Save</button></div></div></form></article>', 1)
   ])]);
 }
-const HeartbeatBar = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$1]]);
-const _sfc_main$8 = {};
+const HeartbeatBar = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$1]]);
+const _sfc_main$9 = {};
 const _hoisted_1$7 = {
   id: "audio-action-modal",
   class: "audio-action-modal",
@@ -26922,9 +26959,9 @@ function _sfc_render(_ctx, _cache) {
     createStaticVNode('<div class="audio-action-card" id="audio-action-card"><div class="audio-action-icon" id="audio-action-icon"></div><div class="audio-action-label" id="audio-action-label">Recording...</div><div class="audio-player-resume" id="audio-player-resume" hidden><div class="audio-player-resume-msg" id="audio-player-resume-msg"></div><div class="audio-player-resume-btns"><button class="audio-player-resume-btn is-restart" id="audio-resume-restart" type="button">Start over</button><button class="audio-player-resume-btn is-resume" id="audio-resume-continue" type="button">Resume</button></div></div><div class="audio-player-progress" id="audio-player-progress" hidden><div class="audio-player-bar-wrap"><div class="audio-player-bar" id="audio-player-bar"></div></div><div class="audio-player-counter" id="audio-player-counter">0 / 0</div></div><div class="audio-player-transcript" id="audio-player-transcript" hidden></div><div class="audio-player-controls"><button class="audio-player-skip" id="audio-skip-back" type="button" aria-label="Previous" hidden><i class="fa-solid fa-backward-step"></i></button><button class="audio-action-stop" id="audio-action-stop" type="button" aria-label="Stop"><i class="fa-solid fa-stop"></i><span>Stop</span></button><button class="audio-player-skip" id="audio-skip-forward" type="button" aria-label="Next" hidden><i class="fa-solid fa-forward-step"></i></button></div></div>', 1)
   ])]);
 }
-const AudioModal = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render]]);
+const AudioModal = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render]]);
 const _hoisted_1$6 = ["disabled"];
-const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+const _sfc_main$8 = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
@@ -27008,7 +27045,7 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
 });
 const _hoisted_1$5 = ["hidden"];
 const _hoisted_2$5 = ["hidden"];
-const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
@@ -27108,7 +27145,7 @@ const _hoisted_11 = {
 const _hoisted_12 = { class: "side-value" };
 const STATE_POLL_OK_MS = 1e3;
 const STATE_POLL_OFFLINE_MS = 400;
-const _sfc_main$5 = /* @__PURE__ */ defineComponent({
+const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
     const pills = /* @__PURE__ */ ref([]);
@@ -27204,9 +27241,9 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
         createBaseVNode("footer", _hoisted_6$2, [
-          createVNode(_sfc_main$6),
-          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
           createVNode(_sfc_main$7),
+          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+          createVNode(_sfc_main$8),
           createBaseVNode("div", _hoisted_7$2, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
@@ -27334,7 +27371,7 @@ const _hoisted_2$3 = ["innerHTML"];
 const _hoisted_3$3 = { class: "vm-controls" };
 const _hoisted_4$2 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
-const _sfc_main$4 = /* @__PURE__ */ defineComponent({
+const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
   setup(__props) {
     const voice = useVoiceStore();
@@ -27852,7 +27889,7 @@ const _hoisted_10$1 = {
   class: "vm-reply vm-active mt-2"
 };
 const HOLD_MS = 250;
-const _sfc_main$3 = /* @__PURE__ */ defineComponent({
+const _sfc_main$4 = /* @__PURE__ */ defineComponent({
   __name: "VoiceTaskCreator",
   setup(__props) {
     const voice = useVoiceStore();
@@ -28431,8 +28468,8 @@ User's voice request: "${userText}"`;
     };
   }
 });
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-9d3f47dd"]]);
-const _sfc_main$2 = /* @__PURE__ */ defineComponent({
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-9d3f47dd"]]);
+const _sfc_main$3 = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
     const voice = useVoiceStore();
@@ -28459,7 +28496,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$4, { key: 0 })) : createCommentVNode("", true),
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$5, { key: 0 })) : createCommentVNode("", true),
         createVNode(VoiceTaskCreator)
       ]);
     };
@@ -28484,7 +28521,7 @@ const _hoisted_10 = {
   key: 1,
   class: "reading-doc reading-doc-empty"
 };
-const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "ReadingPane",
   setup(__props) {
     const reading = useReadingStore();
@@ -28578,7 +28615,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
           ])
         ]),
         activeRef.value ? (openBlock(), createElementBlock("div", _hoisted_9, [
-          createVNode(_sfc_main$c, {
+          createVNode(_sfc_main$d, {
             path: activeRef.value.path,
             kind: activeRef.value.kind
           }, null, 8, ["path", "kind"])
@@ -28586,6 +28623,52 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
           createBaseVNode("p", { class: "reading-drop-msg" }, "Drop a file or press ⇥ on a file row to open it here.", -1)
         ])]))
       ], 38);
+    };
+  }
+});
+const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+  __name: "ReadingDropZone",
+  setup(__props) {
+    const reading = useReadingStore();
+    function onDragOver(ev) {
+      if (!ev.dataTransfer) return;
+      const types = ev.dataTransfer.types;
+      if (types.includes("application/x-caravel-ref") || types.includes("text/plain")) {
+        ev.preventDefault();
+        ev.dataTransfer.dropEffect = "copy";
+      }
+    }
+    function onDrop(ev) {
+      ev.preventDefault();
+      reading.setDragActive(false);
+      if (!ev.dataTransfer) return;
+      const raw = ev.dataTransfer.getData("application/x-caravel-ref") || ev.dataTransfer.getData("text/plain");
+      if (!raw) return;
+      try {
+        const ref2 = JSON.parse(raw);
+        if (ref2 && ref2.path) reading.throwRef(ref2);
+      } catch {
+        const path = raw.trim();
+        if (path) reading.throwRef({ kind: "file", path });
+      }
+    }
+    function onDragLeave(ev) {
+      const zone = ev.currentTarget;
+      if (!zone.contains(ev.relatedTarget)) {
+        reading.setDragActive(false);
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: "reading-drop-zone",
+        "aria-label": "Drop here to open in reading pane",
+        role: "region",
+        onDragover: onDragOver,
+        onDrop,
+        onDragleave: onDragLeave
+      }, [..._cache[0] || (_cache[0] = [
+        createBaseVNode("span", { class: "reading-drop-zone-label" }, "⇥ Open in reading pane", -1)
+      ])], 32);
     };
   }
 });
@@ -28631,7 +28714,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
           createBaseVNode("span", { class: "repo-star" }, "★")
         ], -1)),
-        createVNode(_sfc_main$a),
+        createVNode(_sfc_main$b),
         createVNode(HeartbeatBar),
         _cache[7] || (_cache[7] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
         createBaseVNode("main", {
@@ -28643,6 +28726,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
         }, [
           createBaseVNode("nav", _hoisted_1, [
             createVNode(unref(RouterLink), {
+              id: "tab-dashboard",
               class: "tab-btn",
               to: "/dashboard",
               role: "tab",
@@ -28655,6 +28739,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               _: 1
             }),
             createVNode(unref(RouterLink), {
+              id: "tab-chat",
               class: "tab-btn",
               to: "/chat",
               role: "tab",
@@ -28666,6 +28751,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               _: 1
             }),
             createVNode(unref(RouterLink), {
+              id: "tab-tasks",
               class: "tab-btn",
               to: "/tasks",
               role: "tab",
@@ -28677,6 +28763,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
               _: 1
             }),
             createVNode(unref(RouterLink), {
+              id: "tab-files",
               class: "tab-btn",
               to: "/files",
               role: "tab",
@@ -28714,12 +28801,13 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", _hoisted_3, [
               createVNode(unref(RouterView))
             ]),
-            unref(reading).open ? (openBlock(), createBlock(_sfc_main$1, { key: 0 })) : createCommentVNode("", true)
+            unref(reading).dragActive && !unref(reading).open ? (openBlock(), createBlock(_sfc_main$1, { key: 0 })) : createCommentVNode("", true),
+            unref(reading).open ? (openBlock(), createBlock(_sfc_main$2, { key: 1 })) : createCommentVNode("", true)
           ], 2)
         ], 32),
         createVNode(AudioModal),
-        createVNode(_sfc_main$5),
-        createVNode(_sfc_main$2)
+        createVNode(_sfc_main$6),
+        createVNode(_sfc_main$3)
       ], 64);
     };
   }
@@ -34209,6 +34297,30 @@ const pageStyles = String.raw`    :root {
     .reading-drag-over {
       outline: 2px dashed #7dc5ff66;
       outline-offset: -3px;
+    }
+
+    /* ── Stage-edge drop zone (visible only while a drag is in flight, pane closed) ── */
+    .reading-drop-zone {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to left, #7dc5ff22, transparent);
+      border-left: 2px dashed #7dc5ff66;
+      z-index: 100;
+      pointer-events: all;
+      cursor: copy;
+    }
+    .reading-drop-zone-label {
+      color: #7dc5ff;
+      font-size: 13px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      user-select: none;
     }
 
     /* ── ⇥ throw buttons on file rows and doc-pills ── */
