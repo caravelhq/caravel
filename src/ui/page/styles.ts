@@ -5485,6 +5485,30 @@ export const pageStyles = String.raw`    :root {
       outline-offset: -3px;
     }
 
+    /* ── Stage-edge drop zone (visible only while a drag is in flight, pane closed) ── */
+    .reading-drop-zone {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to left, #7dc5ff22, transparent);
+      border-left: 2px dashed #7dc5ff66;
+      z-index: 100;
+      pointer-events: all;
+      cursor: copy;
+    }
+    .reading-drop-zone-label {
+      color: #7dc5ff;
+      font-size: 13px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      user-select: none;
+    }
+
     /* ── ⇥ throw buttons on file rows and doc-pills ── */
     .files-throw-btn,
     .task-throw-btn {

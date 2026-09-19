@@ -9,6 +9,7 @@ import AudioModal from "./components/chrome/AudioModal.vue";
 import StatusDock from "./components/chrome/StatusDock.vue";
 import VoiceIsland from "./components/voice/VoiceIsland.vue";
 import ReadingPane from "./components/reading/ReadingPane.vue";
+import ReadingDropZone from "./components/reading/ReadingDropZone.vue";
 import type { ReadingRef } from "./stores/reading";
 
 const ui = useUiStore();
@@ -111,6 +112,7 @@ function onStageDragEnd(): void {
       <div class="stage-main">
         <RouterView />
       </div>
+      <ReadingDropZone v-if="reading.dragActive && !reading.open" />
       <ReadingPane v-if="reading.open" />
     </div>
   </main>
