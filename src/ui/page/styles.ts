@@ -79,7 +79,7 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 42px 16px 90px;
+      padding: 12px 16px 90px;
       position: relative;
       z-index: 1;
       overflow: hidden;
@@ -1021,19 +1021,19 @@ export const pageStyles = String.raw`    :root {
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
     }
+    /* In-flow on the Dashboard hero (moved out of the app shell 2026-09-20).
+       Was position:fixed across the top, where it covered the reading pane's
+       header on narrow viewports and sat over every page. */
     .repo-cta {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 5;
       height: 34px;
+      margin: 18px auto 0;
+      width: fit-content;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 0 12px;
-      border-radius: 0;
+      padding: 0 16px;
+      border-radius: 999px;
       text-decoration: none;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
@@ -1042,7 +1042,7 @@ export const pageStyles = String.raw`    :root {
       color: #f1f6ff;
       background: linear-gradient(180deg, #ffffff18, #ffffff0d);
       backdrop-filter: blur(6px);
-      border-bottom: 1px solid #ffffff22;
+      border: 1px solid #ffffff22;
       animation: ctaEnter 420ms ease-out both;
       transition: background 0.18s ease;
     }
@@ -1534,6 +1534,13 @@ export const pageStyles = String.raw`    :root {
       width: fit-content;
     }
     .tab-btn {
+      /* RouterLinks render as <a>, which is inline by default — height and
+         vertical centring silently do nothing, and the UA underlines it.
+         inline-flex + no underline makes anchors and buttons render alike. */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
       height: 32px;
       padding: 0 18px;
       border: 1px solid transparent;
@@ -4822,7 +4829,7 @@ export const pageStyles = String.raw`    :root {
 
     @media (max-width: 640px) {
       .stage {
-        padding: 38px 8px 80px;
+        padding: 8px 8px 80px;
       }
       body.hide-header .stage { padding-top: 8px; }
       .tab-nav {

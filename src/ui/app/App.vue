@@ -39,17 +39,6 @@ function onStageDragEnd(): void {
 </script>
 
 <template>
-  <a
-    class="repo-cta"
-    href="https://github.com/caravelhq/caravel"
-    target="_blank"
-    rel="noopener noreferrer"
-    aria-label="Star Caravel on GitHub"
-  >
-    <span class="repo-text">Like Caravel? Star it on GitHub</span>
-    <span class="repo-star">★</span>
-  </a>
-
   <SettingsModal />
   <HeartbeatBar />
 

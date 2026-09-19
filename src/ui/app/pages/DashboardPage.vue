@@ -608,6 +608,16 @@ onBeforeUnmount(() => {
       <div class="time" id="clock">--:--:--</div>
       <div class="date" id="date">Loading date...</div>
       <div class="message" id="message">Welcome back.</div>
+      <a
+        class="repo-cta"
+        href="https://github.com/caravelhq/caravel"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Star Caravel on GitHub"
+      >
+        <span class="repo-text">Like Caravel? Star it on GitHub</span>
+        <span class="repo-star">★</span>
+      </a>
       <section class="multi-agent-panel" id="multi-agent-panel" hidden>
         <div class="multi-agent-head">
           <div>

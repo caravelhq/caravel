@@ -19798,6 +19798,16 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
             class: "message",
             id: "message"
           }, "Welcome back."),
+          createBaseVNode("a", {
+            class: "repo-cta",
+            href: "https://github.com/caravelhq/caravel",
+            target: "_blank",
+            rel: "noopener noreferrer",
+            "aria-label": "Star Caravel on GitHub"
+          }, [
+            createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
+            createBaseVNode("span", { class: "repo-star" }, "★")
+          ]),
           createBaseVNode("section", {
             class: "multi-agent-panel",
             id: "multi-agent-panel",
@@ -28792,19 +28802,9 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        _cache[6] || (_cache[6] = createBaseVNode("a", {
-          class: "repo-cta",
-          href: "https://github.com/caravelhq/caravel",
-          target: "_blank",
-          rel: "noopener noreferrer",
-          "aria-label": "Star Caravel on GitHub"
-        }, [
-          createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
-          createBaseVNode("span", { class: "repo-star" }, "★")
-        ], -1)),
         createVNode(_sfc_main$b),
         createVNode(HeartbeatBar),
-        _cache[7] || (_cache[7] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
+        _cache[6] || (_cache[6] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
         createBaseVNode("main", {
           class: "stage",
           onDragenterCapture: onStageDragEnter,
@@ -28981,7 +28981,7 @@ const pageStyles = String.raw`    :root {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 42px 16px 90px;
+      padding: 12px 16px 90px;
       position: relative;
       z-index: 1;
       overflow: hidden;
@@ -29923,19 +29923,19 @@ const pageStyles = String.raw`    :root {
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
     }
+    /* In-flow on the Dashboard hero (moved out of the app shell 2026-09-20).
+       Was position:fixed across the top, where it covered the reading pane's
+       header on narrow viewports and sat over every page. */
     .repo-cta {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 5;
       height: 34px;
+      margin: 18px auto 0;
+      width: fit-content;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 0 12px;
-      border-radius: 0;
+      padding: 0 16px;
+      border-radius: 999px;
       text-decoration: none;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
@@ -29944,7 +29944,7 @@ const pageStyles = String.raw`    :root {
       color: #f1f6ff;
       background: linear-gradient(180deg, #ffffff18, #ffffff0d);
       backdrop-filter: blur(6px);
-      border-bottom: 1px solid #ffffff22;
+      border: 1px solid #ffffff22;
       animation: ctaEnter 420ms ease-out both;
       transition: background 0.18s ease;
     }
@@ -30436,6 +30436,13 @@ const pageStyles = String.raw`    :root {
       width: fit-content;
     }
     .tab-btn {
+      /* RouterLinks render as <a>, which is inline by default — height and
+         vertical centring silently do nothing, and the UA underlines it.
+         inline-flex + no underline makes anchors and buttons render alike. */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
       height: 32px;
       padding: 0 18px;
       border: 1px solid transparent;
@@ -33724,7 +33731,7 @@ const pageStyles = String.raw`    :root {
 
     @media (max-width: 640px) {
       .stage {
-        padding: 38px 8px 80px;
+        padding: 8px 8px 80px;
       }
       body.hide-header .stage { padding-top: 8px; }
       .tab-nav {
