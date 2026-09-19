@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import DocViewer from "../components/doc/DocViewer.vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
+import { useUiStore } from "../stores/ui";
 
 // Reactive state passed to DocViewer
 const activeFilePath = ref("");
@@ -27,6 +28,8 @@ let filesHistory: Array<{ dir: string; file: string }> = [];
 let filesHistoryIdx = -1;
 let filesSkipHistoryPush = false;
 let filesLoaded = false;
+
+const ui = useUiStore();
 
 function isPanelNarrow(panelId: string, threshold: number): boolean {
   const el = document.getElementById(panelId);
@@ -324,7 +327,22 @@ onMounted(() => {
   // Load on first mount (equivalent to tab click triggering load in vanilla).
   if (!filesLoaded) {
     filesLoaded = true;
-    refreshBranchSelector().then(() => loadDirectory("."));
+    // Consume a cross-page navigation request set by TasksPage (router push to /files).
+    const nav = ui.filesNav;
+    ui.filesNav = null;
+    if (nav) {
+      refreshBranchSelector().then(() => {
+        if (nav.kind === "dir") {
+          loadDirectory(nav.path);
+        } else {
+          // Load the containing directory first so the sidebar highlights correctly.
+          const dir = nav.path.includes("/") ? nav.path.split("/").slice(0, -1).join("/") || "." : ".";
+          loadDirectory(dir).then(() => openFile(nav.path));
+        }
+      });
+    } else {
+      refreshBranchSelector().then(() => loadDirectory("."));
+    }
   }
 });
 

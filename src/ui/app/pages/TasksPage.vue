@@ -143,9 +143,11 @@ import {
 } from "./tasks/viewer";
 import { statusClass } from "./tasks/helpers";
 import { useRouter } from "vue-router";
+import { useUiStore } from "../stores/ui";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
+const ui = useUiStore();
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 let tasksTreeEl: HTMLElement | null = null;
@@ -647,8 +649,9 @@ function onPanelBodyClick(ev: MouseEvent): void {
     if ((ev as MouseEvent).altKey) {
       const fn = (window as any).__throwToReadingPane;
       if (typeof fn === "function") fn({ kind: "report", path: filePath });
-    } else if (window.__loadFile) {
-      window.__loadFile(filePath);
+    } else {
+      ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || undefined };
+      router.push("/files");
     }
     return;
   }
@@ -657,7 +660,8 @@ function onPanelBodyClick(ev: MouseEvent): void {
   if (openFolderBtn) {
     ev.preventDefault();
     const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
-    if (window.__loadDirectory) window.__loadDirectory(folderPath);
+    ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || undefined };
+    router.push("/files");
     return;
   }
 
@@ -869,7 +873,10 @@ function onProjectPaneClick(ev: MouseEvent): void {
   if (docBtn) {
     ev.preventDefault();
     const path = docBtn.getAttribute("data-open-file");
-    if (path && window.__loadFile) window.__loadFile(path);
+    if (path) {
+      ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || undefined };
+      router.push("/files");
+    }
     return;
   }
 
