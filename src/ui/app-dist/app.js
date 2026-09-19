@@ -23703,6 +23703,15 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         tasksProjectPaneEl.addEventListener("click", onProjectPaneClick);
         tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
       }
+      if (tasksUserBlockedEl) {
+        tasksUserBlockedEl.addEventListener("click", (ev) => {
+          const row = ev.target.closest("[data-open-task]");
+          if (!row) return;
+          ev.preventDefault();
+          const taskId = row.getAttribute("data-open-task");
+          if (taskId) openTaskPanel(taskId);
+        });
+      }
       if (tasksViewTabsEl) {
         tasksViewTabsEl.addEventListener("click", (ev) => {
           const btn = ev.target.closest(".tasks-view-tab");
@@ -23794,8 +23803,16 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         if (!tasksStore.loaded) fetchTasks();
         else fetchTasks();
       };
-      if (!tasksStore.loaded) fetchTasks();
-      else renderTaskPicker();
+      if (!tasksStore.loaded) {
+        fetchTasks();
+      } else {
+        renderTaskPicker();
+        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+          openTaskPanel(tasksStore.currentTaskId);
+        } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
+          openProjectPanel(tasksStore.currentProjectSlug);
+        }
+      }
     });
     onBeforeUnmount(() => {
       if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
