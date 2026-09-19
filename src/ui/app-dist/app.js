@@ -22726,6 +22726,9 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     let lpStartX = 0, lpStartY = 0;
     const router2 = useRouter();
     let currentTaskChain = null;
+    watch(() => attentionStore.tiers, (tiers) => {
+      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
+    });
     function setRightPaneMode(mode) {
       tasksStore.pane = mode;
       if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
@@ -26447,7 +26450,11 @@ const _hoisted_1$a = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$7 = { class: "files-split" };
+const _hoisted_2$7 = { class: "files-toolbar" };
+const _hoisted_3$6 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_4$5 = { class: "files-nav-group" };
+const _hoisted_5$3 = ["title"];
+const _hoisted_6$3 = { class: "files-split" };
 const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
@@ -26471,6 +26478,8 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     let filesSkipHistoryPush = false;
     let filesLoaded = false;
     const ui = useUiStore();
+    const router2 = useRouter();
+    const filesBackTaskId = /* @__PURE__ */ ref("");
     function isPanelNarrow(panelId, threshold) {
       const el = document.getElementById(panelId);
       if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
@@ -26724,6 +26733,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       if (!filesLoaded) {
         filesLoaded = true;
         const nav = ui.filesNav;
+        if (nav == null ? void 0 : nav.backTaskId) filesBackTaskId.value = nav.backTaskId;
         ui.filesNav = null;
         if (nav) {
           refreshBranchSelector().then(() => {
@@ -26742,11 +26752,72 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     onBeforeUnmount(() => {
       window.__filesActivePath = null;
     });
+    function goBackToTask() {
+      filesBackTaskId.value = "";
+      router2.push("/tasks");
+    }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$a, [
-        _cache[1] || (_cache[1] = createStaticVNode('<div class="files-toolbar"><div class="files-toolbar-row files-toolbar-row-branch"><select id="files-branch-select" class="files-branch-select" title="Branch" hidden></select><div class="files-nav-group"><button id="files-nav-back" class="files-nav-btn" type="button" title="Back" aria-label="Back" disabled="true">←</button><button id="files-nav-forward" class="files-nav-btn" type="button" title="Forward" aria-label="Forward" disabled="true">→</button></div></div><div class="files-toolbar-row files-toolbar-row-crumb"><div class="files-breadcrumb" id="files-breadcrumb"></div></div></div><button id="files-picker-toggle" class="files-picker-toggle" type="button" aria-expanded="true" hidden><span class="files-picker-toggle-label" id="files-picker-toggle-label">Browse files</span><span class="files-picker-toggle-caret" aria-hidden="true">▾</span></button>', 2)),
         createBaseVNode("div", _hoisted_2$7, [
-          _cache[0] || (_cache[0] = createBaseVNode("div", {
+          createBaseVNode("div", _hoisted_3$6, [
+            _cache[2] || (_cache[2] = createBaseVNode("select", {
+              id: "files-branch-select",
+              class: "files-branch-select",
+              title: "Branch",
+              hidden: ""
+            }, null, -1)),
+            createBaseVNode("div", _hoisted_4$5, [
+              _cache[0] || (_cache[0] = createBaseVNode("button", {
+                id: "files-nav-back",
+                class: "files-nav-btn",
+                type: "button",
+                title: "Back",
+                "aria-label": "Back",
+                disabled: true
+              }, "←", -1)),
+              _cache[1] || (_cache[1] = createBaseVNode("button", {
+                id: "files-nav-forward",
+                class: "files-nav-btn",
+                type: "button",
+                title: "Forward",
+                "aria-label": "Forward",
+                disabled: true
+              }, "→", -1)),
+              filesBackTaskId.value ? (openBlock(), createElementBlock("button", {
+                key: 0,
+                id: "files-back-to-task",
+                class: "files-nav-btn files-back-to-task",
+                type: "button",
+                title: "Back to " + filesBackTaskId.value,
+                onClick: goBackToTask
+              }, "← Task", 8, _hoisted_5$3)) : createCommentVNode("", true)
+            ])
+          ]),
+          _cache[3] || (_cache[3] = createBaseVNode("div", { class: "files-toolbar-row files-toolbar-row-crumb" }, [
+            createBaseVNode("div", {
+              class: "files-breadcrumb",
+              id: "files-breadcrumb"
+            })
+          ], -1))
+        ]),
+        _cache[5] || (_cache[5] = createBaseVNode("button", {
+          id: "files-picker-toggle",
+          class: "files-picker-toggle",
+          type: "button",
+          "aria-expanded": "true",
+          hidden: ""
+        }, [
+          createBaseVNode("span", {
+            class: "files-picker-toggle-label",
+            id: "files-picker-toggle-label"
+          }, "Browse files"),
+          createBaseVNode("span", {
+            class: "files-picker-toggle-caret",
+            "aria-hidden": "true"
+          }, "▾")
+        ], -1)),
+        createBaseVNode("div", _hoisted_6$3, [
+          _cache[4] || (_cache[4] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
           }, [
