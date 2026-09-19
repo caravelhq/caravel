@@ -75,12 +75,12 @@ function onStageDragEnd(): void {
     @drop.capture="onStageDragEnd"
   >
     <nav class="tab-nav" role="tablist" aria-label="Main navigation">
-      <RouterLink class="tab-btn" to="/dashboard" role="tab" aria-controls="dashboard-panel">
+      <RouterLink id="tab-dashboard" class="tab-btn" to="/dashboard" role="tab" aria-controls="dashboard-panel">
         <span class="tab-btn-label-full">Dashboard</span><span class="tab-btn-label-short">Dash</span>
       </RouterLink>
-      <RouterLink class="tab-btn" to="/chat" role="tab" aria-controls="chat-panel">Chat</RouterLink>
-      <RouterLink class="tab-btn" to="/tasks" role="tab" aria-controls="tasks-panel">Tasks</RouterLink>
-      <RouterLink class="tab-btn" to="/files" role="tab" aria-controls="files-panel">Files</RouterLink>
+      <RouterLink id="tab-chat" class="tab-btn" to="/chat" role="tab" aria-controls="chat-panel">Chat</RouterLink>
+      <RouterLink id="tab-tasks" class="tab-btn" to="/tasks" role="tab" aria-controls="tasks-panel">Tasks</RouterLink>
+      <RouterLink id="tab-files" class="tab-btn" to="/files" role="tab" aria-controls="files-panel">Files</RouterLink>
       <button
         class="tab-btn tab-btn-split"
         id="reading-nav-toggle"
