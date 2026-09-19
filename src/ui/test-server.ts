@@ -1,7 +1,7 @@
 // Caravel UI test server — serves THIS checkout's app bundle against the LIVE
 // daemon's API, so an app-dist build can be gated without restarting the daemon.
 //
-//   bun run src/ui/test-server.ts [start] [--port 4633] [--daemon http://127.0.0.1:4632] [--ttl 30]
+//   bun run src/ui/test-server.ts [start] [--port 4633] [--daemon http://127.0.0.1:4632] [--ttl 30] [--host 127.0.0.1]
 //   bun run src/ui/test-server.ts stop [--port 4633]
 //
 // What it serves:
@@ -38,6 +38,7 @@ const command = process.argv[2] && !process.argv[2].startsWith("--") ? process.a
 const PORT = Number(flag("port", process.env.CARAVEL_TEST_PORT || "4633"));
 const DAEMON = flag("daemon", process.env.CARAVEL_DAEMON_URL || "http://127.0.0.1:4632").replace(/\/$/, "");
 const TTL_MIN = Number(flag("ttl", "30"));
+const HOST = flag("host", process.env.CARAVEL_TEST_HOST || "127.0.0.1");
 const PIDFILE = join(REPO_ROOT, `.caravel-test-server-${PORT}.pid`);
 
 const MIME_TYPES: Record<string, string> = {
@@ -149,7 +150,7 @@ async function start() {
 
   const server = Bun.serve({
     port: PORT,
-    hostname: "127.0.0.1",
+    hostname: HOST,
     async fetch(req) {
       const url = new URL(req.url);
       const { pathname } = url;
@@ -179,7 +180,7 @@ async function start() {
     }, TTL_MIN * 60_000).unref?.();
   }
 
-  console.log(`Test server PID ${process.pid} listening on http://127.0.0.1:${PORT}`);
+  console.log(`Test server PID ${process.pid} listening on http://${HOST}:${PORT}`);
   console.log(`  app bundle: ${APP_DIST}`);
   console.log(`  /api/* → ${DAEMON}`);
   console.log(`  stop with:  bun run src/ui/test-server.ts stop --port ${PORT}   (TTL ${TTL_MIN || "∞"} min)`);
