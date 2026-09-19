@@ -1072,6 +1072,17 @@ onMounted(() => {
     tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
   }
 
+  // Delegated click for attention-tier sidebar rows (opens task panel).
+  if (tasksUserBlockedEl) {
+    tasksUserBlockedEl.addEventListener("click", (ev) => {
+      const row = (ev.target as HTMLElement).closest<HTMLElement>("[data-open-task]");
+      if (!row) return;
+      ev.preventDefault();
+      const taskId = row.getAttribute("data-open-task");
+      if (taskId) openTaskPanel(taskId);
+    });
+  }
+
   if (tasksViewTabsEl) {
     tasksViewTabsEl.addEventListener("click", (ev) => {
       const btn = (ev.target as HTMLElement).closest(".tasks-view-tab");
@@ -1178,8 +1189,17 @@ onMounted(() => {
   };
 
   // Initial load.
-  if (!tasksStore.loaded) fetchTasks();
-  else renderTaskPicker();
+  if (!tasksStore.loaded) {
+    fetchTasks();
+  } else {
+    renderTaskPicker();
+    // Restore task panel if we're returning to this route with a task already open.
+    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      openTaskPanel(tasksStore.currentTaskId);
+    } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
+      openProjectPanel(tasksStore.currentProjectSlug);
+    }
+  }
 });
 
 onBeforeUnmount(() => {
