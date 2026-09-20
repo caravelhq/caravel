@@ -15,5 +15,6 @@ export const useUiStore = defineStore("ui", () => {
   const micEnabled = ref(false);
   const filesNav = ref<FilesNavRequest | null>(null);
   const hbModalOpen = ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen };
+  const infoOpen = ref(false);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen };
 });

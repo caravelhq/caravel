@@ -19247,7 +19247,8 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const micEnabled = /* @__PURE__ */ ref(false);
   const filesNav = /* @__PURE__ */ ref(null);
   const hbModalOpen = /* @__PURE__ */ ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen };
+  const infoOpen = /* @__PURE__ */ ref(false);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen };
 });
 const _hoisted_1$e = { id: "dashboard-panel" };
 const _sfc_main$g = /* @__PURE__ */ defineComponent({
@@ -26999,7 +27000,6 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
     const sttEnabled = /* @__PURE__ */ ref(false);
     const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
     const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
-    const infoOpen = /* @__PURE__ */ ref(false);
     const infoHtml = /* @__PURE__ */ ref("");
     function escHtml2(s) {
       return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -27100,7 +27100,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       }
     }
     async function openInfo() {
-      infoOpen.value = true;
+      ui.infoOpen = true;
       infoHtml.value = '<div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div>';
       try {
         const res = await fetch("/api/technical-info");
@@ -27241,10 +27241,10 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
           ])
         ], 2),
         createBaseVNode("section", {
-          class: normalizeClass(["info-modal", { open: infoOpen.value }]),
+          class: normalizeClass(["info-modal", { open: unref(ui).infoOpen }]),
           id: "info-modal",
-          "aria-hidden": !infoOpen.value,
-          onClick: _cache[4] || (_cache[4] = withModifiers(($event) => infoOpen.value = false, ["self"]))
+          "aria-hidden": !unref(ui).infoOpen,
+          onClick: _cache[4] || (_cache[4] = withModifiers(($event) => unref(ui).infoOpen = false, ["self"]))
         }, [
           createBaseVNode("article", _hoisted_19, [
             createBaseVNode("div", _hoisted_20, [
@@ -27254,7 +27254,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
                 id: "info-close",
                 type: "button",
                 "aria-label": "Close technical info",
-                onClick: _cache[3] || (_cache[3] = ($event) => infoOpen.value = false)
+                onClick: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false)
               }, "×")
             ]),
             createBaseVNode("div", {
@@ -29176,8 +29176,18 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const ui = useUiStore();
     const reading = useReadingStore();
+    function onEscape(ev) {
+      if (ev.key !== "Escape") return;
+      if (ui.hbModalOpen) ui.hbModalOpen = false;
+      else if (ui.infoOpen) ui.infoOpen = false;
+      else if (ui.settingsOpen) ui.settingsOpen = false;
+    }
     onMounted(() => {
       window.__throwToReadingPane = (ref2) => reading.throwRef(ref2);
+      document.addEventListener("keydown", onEscape);
+    });
+    onBeforeUnmount(() => {
+      document.removeEventListener("keydown", onEscape);
     });
     function onStageDragEnter(ev) {
       var _a2;

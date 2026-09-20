@@ -29,7 +29,7 @@ const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
 const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
 
 // — Technical Info —
-const infoOpen = ref(false);
+
 const infoHtml = ref("");
 
 function escHtml(s: string): string {
@@ -147,7 +147,7 @@ async function toggleStt(): Promise<void> {
 }
 
 async function openInfo(): Promise<void> {
-  infoOpen.value = true;
+  ui.infoOpen = true;
   infoHtml.value = '<div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div>';
   try {
     const res = await fetch("/api/technical-info");
@@ -242,11 +242,11 @@ async function openInfo(): Promise<void> {
   </aside>
 
   <!-- Technical info overlay — sibling to the aside at app-root level (z-index 7 > settings z-index 6) -->
-  <section class="info-modal" id="info-modal" :class="{ open: infoOpen }" :aria-hidden="!infoOpen" @click.self="infoOpen = false">
+  <section class="info-modal" id="info-modal" :class="{ open: ui.infoOpen }" :aria-hidden="!ui.infoOpen" @click.self="ui.infoOpen = false">
     <article class="info-card">
       <div class="info-head">
         <span>Technical Info</span>
-        <button class="settings-close" id="info-close" type="button" aria-label="Close technical info" @click="infoOpen = false">×</button>
+        <button class="settings-close" id="info-close" type="button" aria-label="Close technical info" @click="ui.infoOpen = false">×</button>
       </div>
       <div id="info-body" class="info-body" v-html="infoHtml"></div>
     </article>
