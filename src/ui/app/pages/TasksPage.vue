@@ -141,7 +141,7 @@ import {
   renderPanelCard, renderReportPane, renderTaskTree,
   loadReportNode, setActiveReportDoc, appendReportExtras,
 } from "./tasks/viewer";
-import { statusClass } from "./tasks/helpers";
+import { statusClass, isPanelNarrow } from "./tasks/helpers";
 import { useRouter } from "vue-router";
 import { useUiStore } from "../stores/ui";
 
@@ -193,11 +193,25 @@ function setRightPaneMode(mode: "empty" | "view" | "new" | "project"): void {
   if (mode !== "view") {
     // Viewer shown via part-2 — nothing to clear here yet.
   }
-  if (mode === "view" || mode === "project" || mode === "new") {
-    const panel = document.getElementById("tasks-panel");
-    if (panel) panel.classList.add("tasks-list-hidden");
+  // Narrow panel: switching the right pane to view/new/project means the user
+  // wants to SEE it, so collapse the picker; "empty" goes back to the list.
+  // Vanilla did this via setTasksPickerCollapsed (client.js:5283) and the
+  // collapse class lives on .tasks-sidebar — the port put `tasks-list-hidden`
+  // on #tasks-panel, where the only rule that matches it styles the filter
+  // chips, so the list never actually hid. Desktop showed both panes side by
+  // side, so the fault was invisible until a phone-width panel.
+  // Threshold is the panel's own width, not the viewport (container-query
+  // semantics), so a narrow panel inside a wide window behaves the same.
+  const panel = document.getElementById("tasks-panel");
+  const collapse = mode !== "empty";
+  if (isPanelNarrow("tasks-panel", 1199)) {
+    if (tasksSidebarEl) tasksSidebarEl.classList.toggle("tasks-sidebar-collapsed", collapse);
+    if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", collapse ? "false" : "true");
+    if (panel) panel.classList.toggle("tasks-list-hidden", collapse);
   } else {
-    const panel = document.getElementById("tasks-panel");
+    // Wide: both panes coexist — never hide the list.
+    if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
+    if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
     if (panel) panel.classList.remove("tasks-list-hidden");
   }
 }

@@ -21815,6 +21815,11 @@ const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
 function escapeHtml$1(s) {
   return escHtml(String(s == null ? "" : s));
 }
+function isPanelNarrow(panelId, threshold) {
+  const el = document.getElementById(panelId);
+  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
+}
 function timeAgo(iso) {
   if (!iso) return "";
   const t = Date.parse(iso);
@@ -22745,11 +22750,15 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
       if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
       if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
-      if (mode === "view" || mode === "project" || mode === "new") {
-        const panel = document.getElementById("tasks-panel");
-        if (panel) panel.classList.add("tasks-list-hidden");
+      const panel = document.getElementById("tasks-panel");
+      const collapse = mode !== "empty";
+      if (isPanelNarrow("tasks-panel", 1199)) {
+        if (tasksSidebarEl) tasksSidebarEl.classList.toggle("tasks-sidebar-collapsed", collapse);
+        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", collapse ? "false" : "true");
+        if (panel) panel.classList.toggle("tasks-list-hidden", collapse);
       } else {
-        const panel = document.getElementById("tasks-panel");
+        if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
+        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
         if (panel) panel.classList.remove("tasks-list-hidden");
       }
     }
@@ -26507,13 +26516,13 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     const ui = useUiStore();
     const router2 = useRouter();
     const filesBackTaskId = /* @__PURE__ */ ref("");
-    function isPanelNarrow(panelId, threshold) {
+    function isPanelNarrow2(panelId, threshold) {
       const el = document.getElementById(panelId);
       if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
       return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
     }
     function isMobileFiles() {
-      return isPanelNarrow("files-panel", 1199);
+      return isPanelNarrow2("files-panel", 1199);
     }
     function setPickerCollapsed(collapsed) {
       if (!filesSidebar || !filesPickerToggle) return;
