@@ -2,8 +2,10 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { escHtml } from "../lib/highlight";
+import { useUiStore } from "../stores/ui";
 
 const router = useRouter();
+const ui = useUiStore();
 
 // ── State ──────────────────────────────────────────────────────────────────
 let heartbeatTimezoneOffsetMinutes = 0;
@@ -293,11 +295,8 @@ function renderCell(name: string, counts: Record<string, number>): string {
 function navigateToTasksDir(agent: string, status: string): void {
   if (!agent || !status) return;
   const dir = "agents/" + agent + "/tasks/" + status;
-  router.push("/files").then(() => {
-    if (typeof (window as any).__loadDirectory === "function") {
-      (window as any).__loadDirectory(dir);
-    }
-  });
+  ui.filesNav = { path: dir, kind: "dir" };
+  router.push("/files");
 }
 
 async function fetchSummary(): Promise<void> {
