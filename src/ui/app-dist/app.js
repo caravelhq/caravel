@@ -14312,7 +14312,7 @@ var _hoisted_1$m = [
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$a = ["id"];
+var _hoisted_2$b = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$a),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$b),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14973,7 +14973,7 @@ var _hoisted_1$k = [
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$9 = {
+var _hoisted_2$a = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$9, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$a, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -16119,7 +16119,7 @@ var _hoisted_1$h = [
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$8 = {
+var _hoisted_2$9 = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$8, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$9, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -19241,11 +19241,20 @@ function highlightVueBlockContent(content, blockName) {
   if (blockName === "style") return highlightCss(content);
   return highlightHtml(content);
 }
+const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
+  const settingsOpen = /* @__PURE__ */ ref(false);
+  const ttsEnabled = /* @__PURE__ */ ref(true);
+  const micEnabled = /* @__PURE__ */ ref(false);
+  const filesNav = /* @__PURE__ */ ref(null);
+  const hbModalOpen = /* @__PURE__ */ ref(false);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen };
+});
 const _hoisted_1$e = { id: "dashboard-panel" };
 const _sfc_main$g = /* @__PURE__ */ defineComponent({
   __name: "DashboardPage",
   setup(__props) {
     const router2 = useRouter();
+    const ui = useUiStore();
     let heartbeatTimezoneOffsetMinutes = 0;
     let use12Hour = localStorage.getItem("clock.format") === "12";
     let quickView = "jobs";
@@ -19473,11 +19482,8 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
     function navigateToTasksDir(agent, status) {
       if (!agent || !status) return;
       const dir = "agents/" + agent + "/tasks/" + status;
-      router2.push("/files").then(() => {
-        if (typeof window.__loadDirectory === "function") {
-          window.__loadDirectory(dir);
-        }
-      });
+      ui.filesNav = { path: dir, kind: "dir" };
+      router2.push("/files");
     }
     async function fetchSummary() {
       if (!multiAgentPanel || !multiAgentGrid || !multiAgentSub) return;
@@ -22701,13 +22707,6 @@ function loadReportNode(node) {
     node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
-const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
-  const settingsOpen = /* @__PURE__ */ ref(false);
-  const ttsEnabled = /* @__PURE__ */ ref(true);
-  const micEnabled = /* @__PURE__ */ ref(false);
-  const filesNav = /* @__PURE__ */ ref(null);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav };
-});
 const _hoisted_1$c = {
   id: "tasks-panel",
   class: "tasks-panel"
@@ -23666,9 +23665,6 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
           input.addEventListener("blur", restore);
         });
       }
-      window.__loadTaskDetail = (taskId) => {
-        if (taskId) openTaskPanel(taskId);
-      };
       if (tasksTreeEl) {
         bulkBarEl = createBulkBar(
           tasksTreeEl,
@@ -23818,10 +23814,6 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       loadAgentsForForm();
       attentionStore.fetch();
       attentionIntervalId = setInterval(() => attentionStore.fetch(), 3e4);
-      window.__ensureTasksLoaded = () => {
-        if (!tasksStore.loaded) fetchTasks();
-        else fetchTasks();
-      };
       if (!tasksStore.loaded) {
         fetchTasks();
       } else {
@@ -23836,12 +23828,6 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     onBeforeUnmount(() => {
       if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
       if (longPressTimer !== null) clearTimeout(longPressTimer);
-      if (typeof window.__ensureTasksLoaded !== "undefined") {
-        delete window.__ensureTasksLoaded;
-      }
-      if (typeof window.__loadTaskDetail !== "undefined") {
-        delete window.__loadTaskDetail;
-      }
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
@@ -26486,11 +26472,11 @@ const _hoisted_1$a = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$7 = { class: "files-toolbar" };
-const _hoisted_3$6 = { class: "files-toolbar-row files-toolbar-row-branch" };
-const _hoisted_4$5 = { class: "files-nav-group" };
-const _hoisted_5$3 = ["title"];
-const _hoisted_6$3 = { class: "files-split" };
+const _hoisted_2$8 = { class: "files-toolbar" };
+const _hoisted_3$7 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_4$6 = { class: "files-nav-group" };
+const _hoisted_5$5 = ["title"];
+const _hoisted_6$5 = { class: "files-split" };
 const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
@@ -26641,7 +26627,6 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     async function loadDirectory(dirPath) {
       filesCurrentDir = dirPath || ".";
       activeFilePath.value = "";
-      window.__filesActivePath = null;
       pushHistory(filesCurrentDir, "");
       renderBreadcrumb(filesCurrentDir);
       updatePickerToggleLabel();
@@ -26729,7 +26714,6 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     function openFile(filePath) {
       activeFilePath.value = filePath;
       activeBranch.value = filesSelectedBranch;
-      window.__filesActivePath = filePath;
       pushHistory(filesCurrentDir, filePath);
       updatePickerToggleLabel();
       if (isMobileFiles()) setPickerCollapsed(true);
@@ -26739,8 +26723,6 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
         });
       }
     }
-    window.__loadFile = openFile;
-    window.__loadDirectory = loadDirectory;
     onMounted(() => {
       filesList = document.getElementById("files-list");
       filesBreadcrumb = document.getElementById("files-breadcrumb");
@@ -26785,24 +26767,21 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
         }
       }
     });
-    onBeforeUnmount(() => {
-      window.__filesActivePath = null;
-    });
     function goBackToTask() {
       filesBackTaskId.value = "";
       router2.push("/tasks");
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$a, [
-        createBaseVNode("div", _hoisted_2$7, [
-          createBaseVNode("div", _hoisted_3$6, [
+        createBaseVNode("div", _hoisted_2$8, [
+          createBaseVNode("div", _hoisted_3$7, [
             _cache[2] || (_cache[2] = createBaseVNode("select", {
               id: "files-branch-select",
               class: "files-branch-select",
               title: "Branch",
               hidden: ""
             }, null, -1)),
-            createBaseVNode("div", _hoisted_4$5, [
+            createBaseVNode("div", _hoisted_4$6, [
               _cache[0] || (_cache[0] = createBaseVNode("button", {
                 id: "files-nav-back",
                 class: "files-nav-btn",
@@ -26826,7 +26805,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
                 type: "button",
                 title: "Back to " + filesBackTaskId.value,
                 onClick: goBackToTask
-              }, "← Task", 8, _hoisted_5$3)) : createCommentVNode("", true)
+              }, "← Task", 8, _hoisted_5$5)) : createCommentVNode("", true)
             ])
           ]),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "files-toolbar-row files-toolbar-row-crumb" }, [
@@ -26852,7 +26831,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
             "aria-hidden": "true"
           }, "▾")
         ], -1)),
-        createBaseVNode("div", _hoisted_6$3, [
+        createBaseVNode("div", _hoisted_6$5, [
           _cache[4] || (_cache[4] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
@@ -26973,63 +26952,482 @@ const useReadingStore = /* @__PURE__ */ defineStore("reading", () => {
   };
 });
 const _hoisted_1$9 = { class: "settings-head" };
-const _hoisted_2$6 = { class: "settings-stack" };
-const _hoisted_3$5 = { class: "setting-item" };
-const _hoisted_4$4 = { class: "setting-item" };
+const _hoisted_2$7 = { class: "settings-stack" };
+const _hoisted_3$6 = { class: "setting-item" };
+const _hoisted_4$5 = { class: "setting-main" };
+const _hoisted_5$4 = {
+  class: "settings-meta",
+  id: "hb-info"
+};
+const _hoisted_6$4 = { class: "setting-actions" };
+const _hoisted_7$4 = ["disabled"];
+const _hoisted_8$4 = { class: "setting-item" };
+const _hoisted_9$4 = { class: "setting-main" };
+const _hoisted_10$4 = {
+  class: "settings-meta",
+  id: "clock-info"
+};
+const _hoisted_11$2 = { class: "setting-item" };
+const _hoisted_12$1 = { class: "setting-item" };
+const _hoisted_13 = { class: "setting-item" };
+const _hoisted_14 = { class: "setting-main" };
+const _hoisted_15 = {
+  class: "settings-meta",
+  id: "voice-stt-meta"
+};
+const _hoisted_16 = { class: "setting-item" };
+const _hoisted_17 = { class: "setting-item" };
+const _hoisted_18 = ["aria-hidden"];
+const _hoisted_19 = { class: "hb-card" };
+const _hoisted_20 = { class: "info-head" };
+const _hoisted_21 = ["innerHTML"];
 const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
+    const use12Hour = /* @__PURE__ */ ref(localStorage.getItem("clock.format") === "12");
+    const clockText = computed(() => use12Hour.value ? "12h" : "24h");
+    const clockInfo = computed(() => use12Hour.value ? "12-hour format" : "24-hour format");
+    const headerHidden = /* @__PURE__ */ ref(localStorage.getItem("header.hidden") === "1");
+    const debugEnabled = /* @__PURE__ */ ref(localStorage.getItem("debug.enabled") === "1");
+    const hbEnabled = /* @__PURE__ */ ref(false);
+    const hbInterval = /* @__PURE__ */ ref(15);
+    const hbInfo = /* @__PURE__ */ ref("syncing...");
+    const hbBusy = /* @__PURE__ */ ref(false);
+    const hbToggleText = computed(() => hbEnabled.value ? "Enabled" : "Disabled");
+    const hbToggleClass = computed(() => "hb-toggle " + (hbEnabled.value ? "on" : "off"));
+    const sttEnabled = /* @__PURE__ */ ref(false);
+    const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
+    const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
+    const infoOpen = /* @__PURE__ */ ref(false);
+    const infoHtml = /* @__PURE__ */ ref("");
+    function escHtml2(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function renderTechInfo(data) {
+      const files = (data == null ? void 0 : data.files) ?? {};
+      const sections = [
+        { title: "daemon", value: (data == null ? void 0 : data.daemon) ?? null },
+        { title: "settings.json", value: files.settingsJson ?? null },
+        { title: "session.json", value: files.sessionJson ?? null },
+        { title: "state.json", value: files.stateJson ?? null }
+      ];
+      return sections.map(
+        (s) => `<div class="info-section"><div class="info-title">${escHtml2(s.title)}</div><pre class="info-json">${escHtml2(JSON.stringify(s.value, null, 2))}</pre></div>`
+      ).join("");
+    }
+    async function loadSettings() {
+      var _a2, _b;
+      hbInfo.value = "syncing...";
+      try {
+        const res = await fetch("/api/settings");
+        const data = await res.json();
+        hbEnabled.value = Boolean((_a2 = data == null ? void 0 : data.heartbeat) == null ? void 0 : _a2.enabled);
+        hbInterval.value = Number((_b = data == null ? void 0 : data.heartbeat) == null ? void 0 : _b.interval) || 15;
+        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+      } catch {
+        hbInfo.value = "unavailable";
+      }
+    }
+    async function loadVoiceSettings() {
+      try {
+        const res = await fetch("/api/settings/voice");
+        const data = await res.json();
+        if (!data.ok) return;
+        const v2 = data.voice ?? {};
+        const hasApiKey = Boolean(v2.hasApiKey);
+        sttEnabled.value = Boolean(v2.sttEnabled && hasApiKey);
+      } catch (_2) {
+      }
+    }
+    watch(() => ui.settingsOpen, (open) => {
+      if (open) {
+        loadSettings();
+        loadVoiceSettings();
+      }
+    });
+    function toggleClock() {
+      use12Hour.value = !use12Hour.value;
+      localStorage.setItem("clock.format", use12Hour.value ? "12" : "24");
+    }
+    function toggleHeader() {
+      headerHidden.value = !headerHidden.value;
+      localStorage.setItem("header.hidden", headerHidden.value ? "1" : "0");
+      document.body.classList.toggle("hide-header", headerHidden.value);
+    }
+    function toggleDebug() {
+      debugEnabled.value = !debugEnabled.value;
+      localStorage.setItem("debug.enabled", debugEnabled.value ? "1" : "0");
+    }
+    async function toggleHb() {
+      if (hbBusy.value) return;
+      hbBusy.value = true;
+      const next = !hbEnabled.value;
+      hbEnabled.value = next;
+      hbInfo.value = next ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+      try {
+        const res = await fetch("/api/settings/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: next })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "save failed");
+        if (out.heartbeat) {
+          hbEnabled.value = Boolean(out.heartbeat.enabled);
+          hbInterval.value = Number(out.heartbeat.interval) || hbInterval.value;
+          hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+        }
+      } catch {
+        hbEnabled.value = !next;
+        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+      } finally {
+        hbBusy.value = false;
+      }
+    }
+    function openHbConfig() {
+      ui.hbModalOpen = true;
+    }
+    async function toggleStt() {
+      sttEnabled.value = !sttEnabled.value;
+      try {
+        await fetch("/api/settings/voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sttEnabled: sttEnabled.value })
+        });
+      } catch (_2) {
+      }
+    }
+    async function openInfo() {
+      infoOpen.value = true;
+      infoHtml.value = '<div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div>';
+      try {
+        const res = await fetch("/api/technical-info");
+        const data = await res.json();
+        infoHtml.value = renderTechInfo(data);
+      } catch (err) {
+        infoHtml.value = `<div class="info-section"><div class="info-title">Error</div><pre class="info-json">${escHtml2(String(err))}</pre></div>`;
+      }
+    }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("aside", {
-        class: normalizeClass(["settings-modal", { open: unref(ui).settingsOpen }]),
-        id: "settings-modal",
-        "aria-live": "polite"
+      return openBlock(), createElementBlock(Fragment, null, [
+        createBaseVNode("aside", {
+          class: normalizeClass(["settings-modal", { open: unref(ui).settingsOpen }]),
+          id: "settings-modal",
+          "aria-live": "polite"
+        }, [
+          createBaseVNode("div", _hoisted_1$9, [
+            _cache[5] || (_cache[5] = createBaseVNode("span", null, "Settings", -1)),
+            createBaseVNode("button", {
+              class: "settings-close",
+              id: "settings-close",
+              type: "button",
+              "aria-label": "Close settings",
+              onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = false)
+            }, "×")
+          ]),
+          createBaseVNode("div", _hoisted_2$7, [
+            createBaseVNode("div", _hoisted_3$6, [
+              createBaseVNode("div", _hoisted_4$5, [
+                _cache[6] || (_cache[6] = createBaseVNode("div", { class: "settings-label" }, "💓 Heartbeat", -1)),
+                createBaseVNode("div", _hoisted_5$4, toDisplayString(hbInfo.value), 1)
+              ]),
+              createBaseVNode("div", _hoisted_6$4, [
+                createBaseVNode("button", {
+                  class: "hb-config",
+                  id: "hb-config",
+                  type: "button",
+                  onClick: openHbConfig
+                }, "Configure"),
+                createBaseVNode("button", {
+                  class: normalizeClass(hbToggleClass.value),
+                  id: "hb-toggle",
+                  type: "button",
+                  disabled: hbBusy.value,
+                  onClick: toggleHb
+                }, toDisplayString(hbToggleText.value), 11, _hoisted_7$4)
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_8$4, [
+              createBaseVNode("div", _hoisted_9$4, [
+                _cache[7] || (_cache[7] = createBaseVNode("div", { class: "settings-label" }, "🕒 Clock", -1)),
+                createBaseVNode("div", _hoisted_10$4, toDisplayString(clockInfo.value), 1)
+              ]),
+              createBaseVNode("button", {
+                class: normalizeClass("hb-toggle " + (use12Hour.value ? "on" : "off")),
+                id: "clock-toggle",
+                type: "button",
+                onClick: toggleClock
+              }, toDisplayString(clockText.value), 3)
+            ]),
+            createBaseVNode("div", _hoisted_11$2, [
+              _cache[8] || (_cache[8] = createBaseVNode("div", { class: "setting-main" }, [
+                createBaseVNode("div", { class: "settings-label" }, "🔗 GitHub Banner"),
+                createBaseVNode("div", { class: "settings-meta" }, "Star on GitHub header bar")
+              ], -1)),
+              createBaseVNode("button", {
+                class: normalizeClass("hb-toggle " + (headerHidden.value ? "off" : "on")),
+                id: "header-toggle",
+                type: "button",
+                onClick: toggleHeader
+              }, toDisplayString(headerHidden.value ? "Off" : "On"), 3)
+            ]),
+            createBaseVNode("div", _hoisted_12$1, [
+              _cache[9] || (_cache[9] = createBaseVNode("div", { class: "setting-main" }, [
+                createBaseVNode("div", { class: "settings-label" }, "🐞 Debug"),
+                createBaseVNode("div", { class: "settings-meta" }, "Show chat thread/session ids")
+              ], -1)),
+              createBaseVNode("button", {
+                class: normalizeClass("hb-toggle " + (debugEnabled.value ? "on" : "off")),
+                id: "debug-toggle",
+                type: "button",
+                onClick: toggleDebug
+              }, toDisplayString(debugEnabled.value ? "On" : "Off"), 3)
+            ]),
+            createBaseVNode("div", _hoisted_13, [
+              createBaseVNode("div", _hoisted_14, [
+                _cache[10] || (_cache[10] = createBaseVNode("div", { class: "settings-label" }, "🎙️ Voice — STT", -1)),
+                createBaseVNode("div", _hoisted_15, toDisplayString(sttMeta.value), 1)
+              ]),
+              createBaseVNode("button", {
+                class: normalizeClass("hb-toggle " + (sttEnabled.value ? "on" : "off")),
+                id: "voice-stt-toggle",
+                type: "button",
+                onClick: toggleStt
+              }, toDisplayString(sttText.value), 3)
+            ]),
+            createBaseVNode("div", _hoisted_16, [
+              _cache[11] || (_cache[11] = createBaseVNode("div", { class: "setting-main" }, [
+                createBaseVNode("div", { class: "settings-label" }, "🎙️ Mic (STT)"),
+                createBaseVNode("div", { class: "settings-meta" }, "Dictate and voice chat")
+              ], -1)),
+              createBaseVNode("button", {
+                class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
+                id: "voice-mic-toggle",
+                type: "button",
+                onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
+              }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
+            ]),
+            createBaseVNode("div", _hoisted_17, [
+              _cache[12] || (_cache[12] = createBaseVNode("div", { class: "setting-main" }, [
+                createBaseVNode("div", { class: "settings-label" }, "🔊 Speaker (TTS)"),
+                createBaseVNode("div", { class: "settings-meta" }, "Read aloud and voice replies"),
+                createBaseVNode("div", {
+                  class: "settings-error-note",
+                  id: "tts-error-note",
+                  hidden: ""
+                }, "DeepGram not configured")
+              ], -1)),
+              createBaseVNode("button", {
+                class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
+                id: "voice-tts-toggle",
+                type: "button",
+                onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
+              }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
+            ]),
+            createBaseVNode("div", { class: "setting-item" }, [
+              _cache[13] || (_cache[13] = createBaseVNode("div", { class: "setting-main" }, [
+                createBaseVNode("div", { class: "settings-label" }, "🧾 Advanced"),
+                createBaseVNode("div", { class: "settings-meta" }, "Technical runtime and JSON files")
+              ], -1)),
+              createBaseVNode("button", {
+                class: "hb-toggle on",
+                id: "info-open",
+                type: "button",
+                onClick: openInfo
+              }, "Info")
+            ])
+          ])
+        ], 2),
+        createBaseVNode("section", {
+          class: normalizeClass(["info-modal", { open: infoOpen.value }]),
+          id: "info-modal",
+          "aria-hidden": !infoOpen.value,
+          onClick: _cache[4] || (_cache[4] = withModifiers(($event) => infoOpen.value = false, ["self"]))
+        }, [
+          createBaseVNode("article", _hoisted_19, [
+            createBaseVNode("div", _hoisted_20, [
+              _cache[14] || (_cache[14] = createBaseVNode("span", null, "Technical Info", -1)),
+              createBaseVNode("button", {
+                class: "settings-close",
+                type: "button",
+                "aria-label": "Close",
+                onClick: _cache[3] || (_cache[3] = ($event) => infoOpen.value = false)
+              }, "×")
+            ]),
+            createBaseVNode("div", {
+              id: "info-body",
+              class: "info-body",
+              innerHTML: infoHtml.value
+            }, null, 8, _hoisted_21)
+          ])
+        ], 10, _hoisted_18)
+      ], 64);
+    };
+  }
+});
+const _hoisted_1$8 = ["aria-hidden"];
+const _hoisted_2$6 = { class: "hb-card" };
+const _hoisted_3$5 = {
+  class: "hb-field",
+  for: "hb-interval-input"
+};
+const _hoisted_4$4 = ["disabled"];
+const _hoisted_5$3 = {
+  class: "hb-field",
+  for: "hb-prompt-input"
+};
+const _hoisted_6$3 = ["disabled"];
+const _hoisted_7$3 = { class: "hb-actions" };
+const _hoisted_8$3 = {
+  class: "hb-status",
+  id: "hb-modal-status"
+};
+const _hoisted_9$3 = { class: "hb-buttons" };
+const _hoisted_10$3 = ["disabled"];
+const _hoisted_11$1 = ["disabled"];
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
+  __name: "HeartbeatBar",
+  setup(__props) {
+    const ui = useUiStore();
+    const interval = /* @__PURE__ */ ref(15);
+    const prompt = /* @__PURE__ */ ref("");
+    const status = /* @__PURE__ */ ref("");
+    const busy = /* @__PURE__ */ ref(false);
+    watch(() => ui.hbModalOpen, async (open) => {
+      if (!open) return;
+      status.value = "Loading...";
+      busy.value = false;
+      try {
+        const res = await fetch("/api/settings/heartbeat");
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "failed to load heartbeat");
+        const hb = out.heartbeat || {};
+        interval.value = Number(hb.interval) || 15;
+        prompt.value = typeof hb.prompt === "string" ? hb.prompt : "";
+        status.value = "";
+      } catch (err) {
+        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
+      }
+    });
+    function close() {
+      ui.hbModalOpen = false;
+      status.value = "";
+      busy.value = false;
+    }
+    async function save2(e) {
+      e.preventDefault();
+      if (busy.value) return;
+      const iv = Number(String(interval.value).trim());
+      const pr = String(prompt.value).trim();
+      if (!Number.isFinite(iv) || iv < 1 || iv > 1440) {
+        status.value = "Interval must be 1-1440 minutes.";
+        return;
+      }
+      if (!pr) {
+        status.value = "Prompt is required.";
+        return;
+      }
+      busy.value = true;
+      status.value = "Saving...";
+      try {
+        const res = await fetch("/api/settings/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interval: iv, prompt: pr })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "save failed");
+        if (out.heartbeat) {
+          interval.value = Number(out.heartbeat.interval) || iv;
+          prompt.value = typeof out.heartbeat.prompt === "string" ? out.heartbeat.prompt : pr;
+        }
+        status.value = "Saved.";
+        setTimeout(() => close(), 120);
+      } catch (err) {
+        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
+        busy.value = false;
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("section", {
+        class: normalizeClass(["info-modal", { open: unref(ui).hbModalOpen }]),
+        id: "hb-modal",
+        "aria-hidden": !unref(ui).hbModalOpen,
+        onClick: withModifiers(close, ["self"])
       }, [
-        createBaseVNode("div", _hoisted_1$9, [
-          _cache[3] || (_cache[3] = createBaseVNode("span", null, "Settings", -1)),
-          createBaseVNode("button", {
-            class: "settings-close",
-            id: "settings-close",
-            type: "button",
-            "aria-label": "Close settings",
-            onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = false)
-          }, "×")
-        ]),
-        createBaseVNode("div", _hoisted_2$6, [
-          _cache[6] || (_cache[6] = createStaticVNode('<div class="setting-item"><div class="setting-main"><div class="settings-label">💓 Heartbeat</div><div class="settings-meta" id="hb-info">syncing...</div></div><div class="setting-actions"><button class="hb-config" id="hb-config" type="button">Configure</button><button class="hb-toggle" id="hb-toggle" type="button">Loading...</button></div></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🕒 Clock</div><div class="settings-meta" id="clock-info">24-hour format</div></div><button class="hb-toggle" id="clock-toggle" type="button">24h</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🔗 GitHub Banner</div><div class="settings-meta">Star on GitHub header bar</div></div><button class="hb-toggle" id="header-toggle" type="button">On</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🐞 Debug</div><div class="settings-meta">Show chat thread/session ids</div></div><button class="hb-toggle off" id="debug-toggle" type="button">Off</button></div><div class="setting-item"><div class="setting-main"><div class="settings-label">🎙️ Voice — STT</div><div class="settings-meta" id="voice-stt-meta">Whisper (local)</div></div><button class="hb-toggle off" id="voice-stt-toggle" type="button">Whisper</button></div>', 5)),
-          createBaseVNode("div", _hoisted_3$5, [
-            _cache[4] || (_cache[4] = createBaseVNode("div", { class: "setting-main" }, [
-              createBaseVNode("div", { class: "settings-label" }, "🎙️ Mic (STT)"),
-              createBaseVNode("div", { class: "settings-meta" }, "Dictate and voice chat")
-            ], -1)),
+        createBaseVNode("article", _hoisted_2$6, [
+          createBaseVNode("div", { class: "info-head" }, [
+            _cache[2] || (_cache[2] = createBaseVNode("span", null, "Heartbeat Configuration", -1)),
             createBaseVNode("button", {
-              class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
-              id: "voice-mic-toggle",
+              class: "settings-close",
+              id: "hb-modal-close",
               type: "button",
-              onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
-            }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
+              "aria-label": "Close heartbeat configuration",
+              onClick: close
+            }, "×")
           ]),
-          createBaseVNode("div", _hoisted_4$4, [
-            _cache[5] || (_cache[5] = createBaseVNode("div", { class: "setting-main" }, [
-              createBaseVNode("div", { class: "settings-label" }, "🔊 Speaker (TTS)"),
-              createBaseVNode("div", { class: "settings-meta" }, "Read aloud and voice replies"),
-              createBaseVNode("div", {
-                class: "settings-error-note",
-                id: "tts-error-note",
-                hidden: ""
-              }, "DeepGram not configured")
-            ], -1)),
-            createBaseVNode("button", {
-              class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
-              id: "voice-tts-toggle",
-              type: "button",
-              onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
-            }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
-          ]),
-          _cache[7] || (_cache[7] = createStaticVNode('<div class="setting-item"><div class="setting-main"><div class="settings-label">🧾 Advanced</div><div class="settings-meta">Technical runtime and JSON files</div></div><button class="hb-toggle on" id="info-open" type="button">Info</button></div>', 1))
+          createBaseVNode("form", {
+            class: "hb-form",
+            id: "hb-form",
+            onSubmit: save2
+          }, [
+            createBaseVNode("label", _hoisted_3$5, [
+              _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
+              withDirectives(createBaseVNode("input", {
+                class: "hb-input",
+                id: "hb-interval-input",
+                type: "number",
+                min: "1",
+                max: "1440",
+                step: "1",
+                required: "",
+                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
+                disabled: busy.value
+              }, null, 8, _hoisted_4$4), [
+                [
+                  vModelText,
+                  interval.value,
+                  void 0,
+                  { number: true }
+                ]
+              ])
+            ]),
+            createBaseVNode("label", _hoisted_5$3, [
+              _cache[4] || (_cache[4] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
+              withDirectives(createBaseVNode("textarea", {
+                class: "hb-textarea",
+                id: "hb-prompt-input",
+                placeholder: "What should heartbeat run?",
+                required: "",
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
+                disabled: busy.value
+              }, null, 8, _hoisted_6$3), [
+                [vModelText, prompt.value]
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_7$3, [
+              createBaseVNode("div", _hoisted_8$3, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_9$3, [
+                createBaseVNode("button", {
+                  class: "hb-btn ghost",
+                  id: "hb-cancel-btn",
+                  type: "button",
+                  disabled: busy.value,
+                  onClick: close
+                }, "Cancel", 8, _hoisted_10$3),
+                createBaseVNode("button", {
+                  class: "hb-btn solid",
+                  id: "hb-save-btn",
+                  type: "submit",
+                  disabled: busy.value
+                }, "Save", 8, _hoisted_11$1)
+              ])
+            ])
+          ], 32)
         ])
-      ], 2);
+      ], 10, _hoisted_1$8);
     };
   }
 });
@@ -27040,19 +27438,6 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const _sfc_main$a = {};
-const _hoisted_1$8 = {
-  class: "info-modal",
-  id: "hb-modal",
-  "aria-live": "polite",
-  "aria-hidden": "true"
-};
-function _sfc_render$1(_ctx, _cache) {
-  return openBlock(), createElementBlock("section", _hoisted_1$8, [..._cache[0] || (_cache[0] = [
-    createStaticVNode('<article class="hb-card"><div class="info-head"><span>Heartbeat Configuration</span><button class="settings-close" id="hb-modal-close" type="button" aria-label="Close heartbeat configuration">×</button></div><form class="hb-form" id="hb-form"><label class="hb-field" for="hb-interval-input"><span class="hb-label">Interval (minutes)</span><input class="hb-input" id="hb-interval-input" type="number" min="1" max="1440" step="1" required></label><label class="hb-field" for="hb-prompt-input"><span class="hb-label">Custom prompt</span><textarea class="hb-textarea" id="hb-prompt-input" placeholder="What should heartbeat run?" required></textarea></label><div class="hb-actions"><div class="hb-status" id="hb-modal-status"></div><div class="hb-buttons"><button class="hb-btn ghost" id="hb-cancel-btn" type="button">Cancel</button><button class="hb-btn solid" id="hb-save-btn" type="submit">Save</button></div></div></form></article>', 1)
-  ])]);
-}
-const HeartbeatBar = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$1]]);
 const _sfc_main$9 = {};
 const _hoisted_1$7 = {
   id: "audio-action-modal",
@@ -28593,7 +28978,6 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
       document.addEventListener("voice:open-chat-mode", onOpenChatMode);
       document.addEventListener("voice:open-task-creator", onOpenTaskCreator);
       document.addEventListener("voice:close", onClose);
-      window.__voiceIslandReady = true;
       document.dispatchEvent(new CustomEvent("voice:island-ready"));
     });
     onBeforeUnmount(() => {
@@ -28812,7 +29196,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
         createVNode(_sfc_main$b),
-        createVNode(HeartbeatBar),
+        createVNode(_sfc_main$a),
         _cache[6] || (_cache[6] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
         createBaseVNode("main", {
           class: "stage",
