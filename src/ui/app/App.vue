@@ -42,21 +42,6 @@ function onStageDragEnd(): void {
   <SettingsModal />
   <HeartbeatBar />
 
-  <section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true">
-    <article class="info-card">
-      <div class="info-head">
-        <span>Advanced Technical Info</span>
-        <button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button>
-      </div>
-      <div class="info-body" id="info-body">
-        <div class="info-section">
-          <div class="info-title">Loading</div>
-          <pre class="info-json">Loading technical data...</pre>
-        </div>
-      </div>
-    </article>
-  </section>
-
   <main
     class="stage"
     @dragenter.capture="onStageDragEnter"

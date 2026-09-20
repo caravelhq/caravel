@@ -241,12 +241,12 @@ async function openInfo(): Promise<void> {
     </div>
   </aside>
 
-  <!-- Technical info overlay -->
+  <!-- Technical info overlay — sibling to the aside at app-root level (z-index 7 > settings z-index 6) -->
   <section class="info-modal" id="info-modal" :class="{ open: infoOpen }" :aria-hidden="!infoOpen" @click.self="infoOpen = false">
-    <article class="hb-card">
+    <article class="info-card">
       <div class="info-head">
         <span>Technical Info</span>
-        <button class="settings-close" type="button" aria-label="Close" @click="infoOpen = false">×</button>
+        <button class="settings-close" id="info-close" type="button" aria-label="Close technical info" @click="infoOpen = false">×</button>
       </div>
       <div id="info-body" class="info-body" v-html="infoHtml"></div>
     </article>
