@@ -26978,7 +26978,7 @@ const _hoisted_15 = {
 const _hoisted_16 = { class: "setting-item" };
 const _hoisted_17 = { class: "setting-item" };
 const _hoisted_18 = ["aria-hidden"];
-const _hoisted_19 = { class: "hb-card" };
+const _hoisted_19 = { class: "info-card" };
 const _hoisted_20 = { class: "info-head" };
 const _hoisted_21 = ["innerHTML"];
 const _sfc_main$b = /* @__PURE__ */ defineComponent({
@@ -27251,8 +27251,9 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
               _cache[14] || (_cache[14] = createBaseVNode("span", null, "Technical Info", -1)),
               createBaseVNode("button", {
                 class: "settings-close",
+                id: "info-close",
                 type: "button",
-                "aria-label": "Close",
+                "aria-label": "Close technical info",
                 onClick: _cache[3] || (_cache[3] = ($event) => infoOpen.value = false)
               }, "×")
             ]),
@@ -29197,7 +29198,6 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
       return openBlock(), createElementBlock(Fragment, null, [
         createVNode(_sfc_main$b),
         createVNode(_sfc_main$a),
-        _cache[6] || (_cache[6] = createStaticVNode('<section class="info-modal" id="info-modal" aria-live="polite" aria-hidden="true"><article class="info-card"><div class="info-head"><span>Advanced Technical Info</span><button class="settings-close" id="info-close" type="button" aria-label="Close technical info">×</button></div><div class="info-body" id="info-body"><div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div></div></article></section>', 1)),
         createBaseVNode("main", {
           class: "stage",
           onDragenterCapture: onStageDragEnter,
