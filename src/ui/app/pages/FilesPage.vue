@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import DocViewer from "../components/doc/DocViewer.vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
@@ -175,7 +175,6 @@ async function refreshBranchSelector(): Promise<void> {
 async function loadDirectory(dirPath: string): Promise<void> {
   filesCurrentDir = dirPath || ".";
   activeFilePath.value = "";
-  (window as any).__filesActivePath = null;
   pushHistory(filesCurrentDir, "");
   renderBreadcrumb(filesCurrentDir);
   updatePickerToggleLabel();
@@ -281,7 +280,6 @@ async function loadDirectory(dirPath: string): Promise<void> {
 function openFile(filePath: string): void {
   activeFilePath.value = filePath;
   activeBranch.value = filesSelectedBranch;
-  (window as any).__filesActivePath = filePath;
   pushHistory(filesCurrentDir, filePath);
   updatePickerToggleLabel();
   if (isMobileFiles()) setPickerCollapsed(true);
@@ -293,10 +291,6 @@ function openFile(filePath: string): void {
     });
   }
 }
-
-// Expose loadFile and loadDirectory for cross-page globals (F8 deferred to later phase).
-(window as any).__loadFile = openFile;
-(window as any).__loadDirectory = loadDirectory;
 
 onMounted(() => {
   filesList = document.getElementById("files-list");
@@ -350,10 +344,6 @@ onMounted(() => {
   }
 });
 
-onBeforeUnmount(() => {
-  // Clear global refs on unmount so cross-page callers get null rather than stale closures.
-  (window as any).__filesActivePath = null;
-});
 
 function goBackToTask(): void {
   filesBackTaskId.value = "";

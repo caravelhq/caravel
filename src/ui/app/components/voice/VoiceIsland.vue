@@ -14,7 +14,6 @@ onMounted(() => {
   document.addEventListener("voice:open-chat-mode", onOpenChatMode);
   document.addEventListener("voice:open-task-creator", onOpenTaskCreator);
   document.addEventListener("voice:close", onClose);
-  (window as any).__voiceIslandReady = true;
   document.dispatchEvent(new CustomEvent("voice:island-ready"));
 });
 

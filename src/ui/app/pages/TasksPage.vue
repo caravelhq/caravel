@@ -1037,11 +1037,6 @@ onMounted(() => {
     });
   }
 
-  // Expose cross-page global so other tabs can request a task open.
-  window.__loadTaskDetail = (taskId: string) => {
-    if (taskId) openTaskPanel(taskId);
-  };
-
   if (tasksTreeEl) {
     bulkBarEl = createBulkBar(
       tasksTreeEl,
@@ -1196,12 +1191,6 @@ onMounted(() => {
   attentionStore.fetch();
   attentionIntervalId = setInterval(() => attentionStore.fetch(), 30000);
 
-  // Expose for router / other pages.
-  window.__ensureTasksLoaded = () => {
-    if (!tasksStore.loaded) fetchTasks();
-    else fetchTasks();
-  };
-
   // Initial load.
   if (!tasksStore.loaded) {
     fetchTasks();
@@ -1219,12 +1208,5 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
   if (longPressTimer !== null) clearTimeout(longPressTimer);
-  // Remove window globals to avoid leaking across page navigations.
-  if (typeof window.__ensureTasksLoaded !== "undefined") {
-    delete (window as unknown as Record<string, unknown>).__ensureTasksLoaded;
-  }
-  if (typeof window.__loadTaskDetail !== "undefined") {
-    delete (window as unknown as Record<string, unknown>).__loadTaskDetail;
-  }
 });
 </script>
