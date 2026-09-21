@@ -1,6 +1,7 @@
 ---
 name: task
 description: Formulate a multi-agent task envelope and dispatch it to the right agent's tasks/open/. Use when the user says "/task", asks Alice to "delegate", "send to Ray", "ask Sam", or describes work that should run in another agent's queue rather than this chat. Also use when an in-progress chat needs to spawn a follow-up task for another agent.
+topics: [multi-agent]
 ---
 
 # /task — formulate and dispatch a multi-agent task

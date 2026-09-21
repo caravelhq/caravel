@@ -79,7 +79,7 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 42px 16px 90px;
+      padding: 12px 16px 90px;
       position: relative;
       z-index: 1;
       overflow: hidden;
@@ -87,74 +87,6 @@ export const pageStyles = String.raw`    :root {
     }
     body.hide-header .repo-cta { display: none; }
     body.hide-header .stage { padding-top: 12px; }
-
-    .split-pane {
-      position: fixed;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      width: 50vw;
-      background: #0d1117;
-      border-left: 1px solid #1f2630;
-      box-shadow: -8px 0 24px #00000040;
-      z-index: 5;
-      display: none;
-    }
-    .split-iframe {
-      width: 100%;
-      height: 100%;
-      border: 0;
-      background: #0d1117;
-      display: block;
-    }
-    .split-pane-close {
-      position: absolute;
-      top: 6px;
-      right: 8px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      border: 1px solid #2a3442;
-      background: #11161e;
-      color: #d7e3f5;
-      font-size: 16px;
-      line-height: 1;
-      cursor: pointer;
-      z-index: 6;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .split-pane-close:hover { background: #1a232f; border-color: #3a4756; }
-    body.split-mode .stage { width: 50vw; align-self: flex-start; }
-    body.split-mode .split-pane { display: block; }
-    /* In split mode the parent dock represents the whole app — anchor it
-       over the left pane (where the parent stage lives) and hide the
-       iframe's duplicate dock via body.embed. */
-    body.split-mode .dock-shell {
-      left: 25vw;
-      width: min(calc(50vw - 24px), 1140px);
-    }
-
-    /* Embed mode = page rendered inside the split-pane iframe. Hide all
-       global chrome so only the stage shows; the parent owns the dock,
-       repo banner, settings, and split toggle. */
-    body.embed .repo-cta,
-    body.embed .dock-shell,
-    body.embed #split-nav-toggle,
-    body.embed #settings-btn { display: none !important; }
-    body.embed .stage { padding-bottom: 16px; }
-
-    @media (max-width: 1199px) {
-      body.split-mode .stage { width: 100%; align-self: stretch; }
-      body.split-mode .split-pane { display: none; }
-      body.split-mode .dock-shell {
-        left: 50%;
-        width: min(calc(100% - 24px), 1140px);
-      }
-      #split-toggle-row,
-      #split-nav-toggle { display: none; }
-    }
 
     .hero {
       text-align: center;
@@ -1089,19 +1021,19 @@ export const pageStyles = String.raw`    :root {
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
     }
+    /* In-flow on the Dashboard hero (moved out of the app shell 2026-09-20).
+       Was position:fixed across the top, where it covered the reading pane's
+       header on narrow viewports and sat over every page. */
     .repo-cta {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 5;
       height: 34px;
+      margin: 18px auto 0;
+      width: fit-content;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 0 12px;
-      border-radius: 0;
+      padding: 0 16px;
+      border-radius: 999px;
       text-decoration: none;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
@@ -1110,7 +1042,7 @@ export const pageStyles = String.raw`    :root {
       color: #f1f6ff;
       background: linear-gradient(180deg, #ffffff18, #ffffff0d);
       backdrop-filter: blur(6px);
-      border-bottom: 1px solid #ffffff22;
+      border: 1px solid #ffffff22;
       animation: ctaEnter 420ms ease-out both;
       transition: background 0.18s ease;
     }
@@ -1602,6 +1534,13 @@ export const pageStyles = String.raw`    :root {
       width: fit-content;
     }
     .tab-btn {
+      /* RouterLinks render as <a>, which is inline by default — height and
+         vertical centring silently do nothing, and the UA underlines it.
+         inline-flex + no underline makes anchors and buttons render alike. */
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
       height: 32px;
       padding: 0 18px;
       border: 1px solid transparent;
@@ -4443,6 +4382,11 @@ export const pageStyles = String.raw`    :root {
       opacity: 0.35;
       cursor: default;
     }
+    .files-back-to-task {
+      width: auto;
+      min-width: 44px;
+      padding: 0 8px;
+    }
     .files-code {
       margin: 0;
       padding: 0;
@@ -4885,7 +4829,7 @@ export const pageStyles = String.raw`    :root {
 
     @media (max-width: 640px) {
       .stage {
-        padding: 38px 8px 80px;
+        padding: 8px 8px 80px;
       }
       body.hide-header .stage { padding-top: 8px; }
       .tab-nav {
@@ -5376,5 +5320,229 @@ export const pageStyles = String.raw`    :root {
       border-color: #c07bff55;
     }
     .chat-voice-mode[hidden] { display: none; }
+
+    /* ── Stage body — RouterView + optional reading pane (Phase 2) ── */
+    .stage-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      overflow: hidden;
+    }
+    .stage-main {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      align-items: center;
+    }
+    /* When reading pane is open: horizontal split */
+    .stage-body.reading-open {
+      flex-direction: row;
+    }
+    .stage-body.reading-open .stage-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .stage-body.reading-left {
+      flex-direction: row-reverse;
+    }
+
+    /* ── Reading pane ── */
+    .reading-pane {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(120% 100% at 100% 0%, #7dc5ff08, transparent 55%),
+        linear-gradient(180deg, #0d1826cc 0%, #09111ecc 100%);
+      border-left: 1px solid #ffffff22;
+      position: relative;
+    }
+    .stage-body.reading-left .reading-pane {
+      border-left: none;
+      border-right: 1px solid #ffffff22;
+    }
+
+    /* Splitter drag handle */
+    .reading-splitter {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -4px;
+      width: 8px;
+      cursor: ew-resize;
+      z-index: 10;
+    }
+    .stage-body.reading-left .reading-splitter {
+      left: auto;
+      right: -4px;
+    }
+    .reading-splitter:hover { background: #7dc5ff22; }
+
+    /* Narrow viewport: full-screen overlay (spec R6) */
+    @media (max-width: 1199px) {
+      .reading-pane {
+        position: fixed;
+        inset: 0;
+        width: 100% !important;
+        z-index: 200;
+        border: none;
+        backdrop-filter: blur(12px);
+      }
+    }
+
+    /* Reading pane header */
+    .reading-header {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 8px;
+      border-bottom: 1px solid #ffffff1a;
+      flex-shrink: 0;
+    }
+    .reading-stack {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+      overflow-x: auto;
+      scrollbar-width: none;
+      align-items: center;
+    }
+    .reading-stack::-webkit-scrollbar { display: none; }
+    .reading-pill {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px 2px 10px;
+      border-radius: 12px;
+      border: 1px solid #4a7a9b44;
+      background: #0a1a2e44;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .reading-pill.is-active {
+      border-color: #7dc5ffaa;
+      background: #0e2040aa;
+      color: #dbeaff;
+    }
+    .reading-pill-name {
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .reading-pill-close {
+      color: #6a8fa0;
+      cursor: pointer;
+      padding: 0 2px;
+      line-height: 1;
+    }
+    .reading-pill-close:hover { color: #ff8888; }
+    .reading-empty-hint {
+      font-size: 12px;
+      color: var(--muted);
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+    .reading-controls {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .reading-side-btn,
+    .reading-close-btn {
+      background: none;
+      border: 1px solid #4a7a9b44;
+      border-radius: 4px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 14px;
+      padding: 2px 6px;
+      line-height: 1;
+    }
+    .reading-side-btn:hover,
+    .reading-close-btn:hover {
+      border-color: #7dc5ffaa;
+      color: #dbeaff;
+    }
+
+    /* Document area */
+    .reading-doc {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
+    }
+    .reading-doc-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .reading-drop-msg {
+      color: var(--muted);
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .reading-drag-over {
+      outline: 2px dashed #7dc5ff66;
+      outline-offset: -3px;
+    }
+
+    /* ── Stage-edge drop zone (visible only while a drag is in flight, pane closed) ── */
+    .reading-drop-zone {
+      position: absolute;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to left, #7dc5ff22, transparent);
+      border-left: 2px dashed #7dc5ff66;
+      z-index: 100;
+      pointer-events: all;
+      cursor: copy;
+    }
+    .reading-drop-zone-label {
+      color: #7dc5ff;
+      font-size: 13px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      user-select: none;
+    }
+
+    /* ── ⇥ throw buttons on file rows and doc-pills ── */
+    .files-throw-btn,
+    .task-throw-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 13px;
+      padding: 0 4px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .files-item:hover .files-throw-btn,
+    .task-panel-context-item:hover .task-throw-btn {
+      opacity: 1;
+    }
+    .files-throw-btn:hover,
+    .task-throw-btn:hover {
+      color: #7dc5ff;
+      opacity: 1;
+    }
 
     `;

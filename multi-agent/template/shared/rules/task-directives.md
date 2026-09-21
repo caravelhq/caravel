@@ -1,5 +1,6 @@
 ---
 description: Legacy — XML directive as fallback signal. The primary contract is now `task-output.md` (write a file).
+topics: [multi-agent]
 ---
 
 # Task directives — fallback signal (legacy)

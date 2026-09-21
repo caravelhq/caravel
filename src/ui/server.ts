@@ -33,35 +33,7 @@ import { getSettings, reloadSettings } from "../config";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
-// Bundled `marked` JS, lazily built on first request and cached for the
-// lifetime of the process. Keeps the rendered markdown in one CommonMark-
-// compliant library instead of hand-rolled regex passes in client.js.
-let markedBundle: string | null = null;
-async function getMarkedBundle(): Promise<string | null> {
-  if (markedBundle !== null) return markedBundle;
-  return (markedBundle = await buildBundle("./page/marked-entry.ts", "marked"));
-}
 
-let yamlBundle: string | null = null;
-async function getYamlBundle(): Promise<string | null> {
-  if (yamlBundle !== null) return yamlBundle;
-  return (yamlBundle = await buildBundle("./page/yaml-entry.ts", "yaml"));
-}
-
-async function buildBundle(entryRel: string, label: string): Promise<string> {
-  const entry = new URL(entryRel, import.meta.url).pathname;
-  const result = await Bun.build({
-    entrypoints: [entry],
-    target: "browser",
-    minify: true,
-    format: "iife",
-  });
-  if (!result.success || result.outputs.length === 0) {
-    console.error(`[ui] ${label} bundle build failed`, result.logs);
-    return "";
-  }
-  return await result.outputs[0]!.text();
-}
 
 // ── TTS audio cache ──────────────────────────────────────────────────────────
 // Server-side LRU cache for synthesised TTS audio. Keyed by SHA-256 of the
@@ -367,50 +339,17 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
         });
       }
 
-      if (url.pathname === "/client.js") {
-        const file = Bun.file(new URL("./page/client.js", import.meta.url));
+      if (url.pathname === "/app.js") {
+        const file = Bun.file(new URL("./app-dist/app.js", import.meta.url));
         return new Response(file, {
           headers: { "Content-Type": "application/javascript; charset=utf-8" },
         });
       }
 
-      if (url.pathname === "/island/voice.js") {
-        const file = Bun.file(new URL("./island-dist/voice-island.js", import.meta.url));
-        return new Response(file, {
-          headers: { "Content-Type": "application/javascript; charset=utf-8" },
-        });
-      }
-
-      if (url.pathname === "/island/voice.css") {
-        const file = Bun.file(new URL("./island-dist/voice-island.css", import.meta.url));
+      if (url.pathname === "/app.css") {
+        const file = Bun.file(new URL("./app-dist/app.css", import.meta.url));
         return new Response(file, {
           headers: { "Content-Type": "text/css; charset=utf-8" },
-        });
-      }
-
-      if (url.pathname === "/marked.js") {
-        const bundled = await getMarkedBundle();
-        if (bundled) {
-          return new Response(bundled, {
-            headers: { "Content-Type": "application/javascript; charset=utf-8" },
-          });
-        }
-        return new Response("// marked bundle unavailable", {
-          status: 500,
-          headers: { "Content-Type": "application/javascript; charset=utf-8" },
-        });
-      }
-
-      if (url.pathname === "/yaml.js") {
-        const bundled = await getYamlBundle();
-        if (bundled) {
-          return new Response(bundled, {
-            headers: { "Content-Type": "application/javascript; charset=utf-8" },
-          });
-        }
-        return new Response("// yaml bundle unavailable", {
-          status: 500,
-          headers: { "Content-Type": "application/javascript; charset=utf-8" },
         });
       }
 

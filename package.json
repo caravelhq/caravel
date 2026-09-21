@@ -11,7 +11,9 @@
     "telegram": "bun run src/index.ts telegram",
     "discord": "bun run src/index.ts discord",
     "status": "bun run src/index.ts status",
+    "build": "vite build",
     "build:island": "vite build",
+    "dev": "vite build --watch",
     "dev:island": "vite build --watch",
     "test:stale-claim": "bun run test/stale-claim-replay.ts",
     "test:set-field": "bun run test/set-field.test.ts",
@@ -34,6 +36,7 @@
     "marked": "^18.0.3",
     "ogg-opus-decoder": "^1.7.3",
     "pinia": "^3",
-    "vue": "^3"
+    "vue": "^3",
+    "vue-router": "^4"
   }
 }

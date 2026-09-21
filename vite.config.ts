@@ -5,22 +5,19 @@ import { resolve } from "path";
 export default defineConfig({
   plugins: [vue()],
   define: {
-    // Replace process.env.NODE_ENV so the browser bundle doesn't throw
-    // ReferenceError when Vue/Pinia/BVN check it at runtime.
     "process.env.NODE_ENV": JSON.stringify("production"),
   },
   build: {
-    outDir: "src/ui/island-dist",
-    lib: {
-      entry: resolve(__dirname, "src/ui/island/voice/main.ts"),
-      name: "VoiceIsland",
-      fileName: "voice-island",
-      formats: ["es"],
-    },
+    outDir: "src/ui/app-dist",
     rollupOptions: {
-      // Vue and Pinia are bundled in — no external deps to worry about
+      input: resolve(__dirname, "src/ui/app/main.ts"),
+      output: {
+        entryFileNames: "app.js",
+        assetFileNames: (info) =>
+          info.name?.endsWith(".css") ? "app.css" : "[name].[ext]",
+      },
     },
-    minify: false,  // readable output for debugging during dev
+    minify: false,
     emptyOutDir: true,
   },
 });
