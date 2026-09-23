@@ -1,0 +1,70 @@
+{
+  "suite": "M-modal",
+  "captured_at": "2026-09-23T11:14:04.847Z",
+  "base_url": "http://127.0.0.1:4636",
+  "passed": 12,
+  "failed": 0,
+  "results": [
+    {
+      "name": "M1a - desktop md width",
+      "pass": true,
+      "detail": "width=480px (expected 480±8px)"
+    },
+    {
+      "name": "M1a - desktop centred horizontally",
+      "pass": true,
+      "detail": "center-x=720 vs viewport-center=720"
+    },
+    {
+      "name": "M1a - desktop centred vertically",
+      "pass": true,
+      "detail": "center-y=450 vs viewport-center=450"
+    },
+    {
+      "name": "M1b - mobile full width",
+      "pass": true,
+      "detail": "width=390px at 390px viewport"
+    },
+    {
+      "name": "M1b - mobile anchored left",
+      "pass": true,
+      "detail": "x=0 (expected ≤2)"
+    },
+    {
+      "name": "M2 - settings opens",
+      "pass": true,
+      "detail": "#settings-modal.open=true"
+    },
+    {
+      "name": "M2 - both modals open simultaneously",
+      "pass": true,
+      "detail": "settings.open=true, info.open=true"
+    },
+    {
+      "name": "M2 - Escape closes info modal (topmost)",
+      "pass": true,
+      "detail": "info.open=false after Escape"
+    },
+    {
+      "name": "M2 - settings stays open after Escape on info",
+      "pass": true,
+      "detail": "settings.open=true after Escape on info"
+    },
+    {
+      "name": "M2 - second Escape closes settings",
+      "pass": true,
+      "detail": "settings.open=false after second Escape"
+    },
+    {
+      "name": "M2 - backdrop click closes settings",
+      "pass": true,
+      "detail": "settings.open=false after backdrop click"
+    },
+    {
+      "name": "M2 - focus returns to #settings-btn",
+      "pass": true,
+      "detail": "focused element id=\"settings-btn\""
+    }
+  ],
+  "screenshots": "repos/caravel/tests/ui/phase3/.runs/M-modal/"
+}

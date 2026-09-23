@@ -117,12 +117,17 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     return tabs.value.findIndex((t) => refKey(t) === key);
   }
 
+  const splitRatio = ref<number>(
+    Math.min(0.75, Math.max(0.25, load<number>("splitRatio", 0.5)))
+  );
+
   function persist(): void {
     save("tabs", tabs.value);
     save("splitIndex", splitIndex.value);
     save("splitOn", splitOn.value);
     save("active0", active.value[0]);
     save("active1", active.value[1]);
+    save("splitRatio", splitRatio.value);
   }
 
   // Ensure active keys are valid; fix up if a tab was closed.
@@ -249,6 +254,38 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     persist();
   }
 
+  function moveToGroup(key: string, targetGroup: 0 | 1): void {
+    const fromIdx = keyIndex(key);
+    if (fromIdx === -1) return;
+    if (tabGroup(fromIdx) === targetGroup) return;
+
+    const ref = tabs.value[fromIdx];
+    tabs.value.splice(fromIdx, 1);
+    if (splitIndex.value !== null && fromIdx < splitIndex.value) {
+      splitIndex.value--;
+    }
+
+    // If a group became empty, collapse split before inserting
+    if (splitOn.value && splitIndex.value !== null) {
+      const g1Start = splitIndex.value;
+      if (g1Start <= 0 || g1Start >= tabs.value.length) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+
+    const insertAt = targetGroup === 0
+      ? 0
+      : (splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length);
+    tabs.value.splice(insertAt, 0, ref);
+    if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
+      splitIndex.value++;
+    }
+
+    fixupActive();
+    persist();
+  }
+
   function toggleSplit(): void {
     if (splitOn.value) {
       splitOn.value = false;
@@ -287,6 +324,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     tabs,
     splitIndex,
     splitOn,
+    splitRatio,
     active,
     focused,
     groupTabs,
@@ -295,6 +333,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     open,
     close,
     move,
+    moveToGroup,
     toggleSplit,
     focus,
     activate,

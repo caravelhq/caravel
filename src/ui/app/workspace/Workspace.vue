@@ -1,61 +1,93 @@
 <script setup lang="ts">
-// Workspace — single-group form for Phase 3 node 5.
-// Tab strip chrome (split, drag-to-reorder) comes in the next node.
-import { computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useWorkspaceStore } from "../stores/workspace";
 import { refKey, type ResourceRef } from "./refs";
+import TabStrip from "./TabStrip.vue";
 import ViewHost from "./ViewHost.vue";
 
 const ws = useWorkspaceStore();
 
-const group0Tabs = computed(() => ws.groupTabs(0));
+// Viewport width tracking for ≥1200px split layout
+const viewportWidth = ref(typeof window !== "undefined" ? window.innerWidth : 1440);
+function onResize() { viewportWidth.value = window.innerWidth; }
+onMounted(() => window.addEventListener("resize", onResize, { passive: true }));
+onBeforeUnmount(() => window.removeEventListener("resize", onResize));
 
-const activeRef = computed((): ResourceRef | null => {
-  const key = ws.active[0];
+const isWide = computed(() => viewportWidth.value >= 1200);
+const showSplit = computed(() => isWide.value && ws.splitOn);
+
+function activeRefForGroup(g: 0 | 1): ResourceRef | null {
+  const key = ws.active[g];
   if (!key) return null;
   return ws.tabs.find((t) => refKey(t) === key) ?? null;
-});
+}
 
-function tabLabel(ref: ResourceRef): string {
-  switch (ref.kind) {
-    case "dashboard": return "Dashboard";
-    case "file": return ref.path.split("/").pop() || ref.path;
-    case "report": return ref.taskId;
-    case "legacy": return ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
-    case "envelope": return ref.taskId;
-    case "project": return ref.slug;
-    case "chat": return ref.chatId;
+// Splitter drag
+const draggingSplitter = ref(false);
+let splitterContainerWidth = 0;
+
+function startSplitterDrag(e: MouseEvent) {
+  e.preventDefault();
+  draggingSplitter.value = true;
+  const container = (e.currentTarget as HTMLElement).parentElement!;
+  splitterContainerWidth = container.getBoundingClientRect().width;
+
+  function onMove(ev: MouseEvent) {
+    if (!draggingSplitter.value) return;
+    const containerRect = container.getBoundingClientRect();
+    const ratio = (ev.clientX - containerRect.left) / containerRect.width;
+    ws.splitRatio = Math.min(0.75, Math.max(0.25, ratio));
   }
+
+  function onUp() {
+    draggingSplitter.value = false;
+    try {
+      localStorage.setItem("workspace.splitRatio", JSON.stringify(ws.splitRatio));
+    } catch {}
+    document.removeEventListener("mousemove", onMove);
+    document.removeEventListener("mouseup", onUp);
+  }
+
+  document.addEventListener("mousemove", onMove);
+  document.addEventListener("mouseup", onUp);
 }
 </script>
 
 <template>
   <div class="workspace">
-    <!-- Minimal tab bar: one button per tab, close button on each -->
-    <div class="workspace-tabs" role="tablist">
-      <button
-        v-for="tab in group0Tabs"
-        :key="refKey(tab)"
-        class="workspace-tab"
-        :class="{ 'workspace-tab--active': ws.active[0] === refKey(tab) }"
-        role="tab"
-        :aria-selected="ws.active[0] === refKey(tab)"
-        type="button"
-        @click="ws.activate(refKey(tab))"
-      >
-        <span class="workspace-tab-label">{{ tabLabel(tab) }}</span>
-        <span
-          v-if="tab.kind !== 'dashboard'"
-          class="workspace-tab-close"
-          role="button"
-          tabindex="-1"
-          aria-label="Close tab"
-          @click.stop="ws.close(refKey(tab))"
-        >×</span>
-      </button>
-    </div>
+    <TabStrip />
 
-    <ViewHost :active-ref="activeRef" />
+    <div class="workspace-body">
+      <!-- Narrow or split off: single host -->
+      <template v-if="!showSplit">
+        <ViewHost :active-ref="activeRefForGroup(ws.focused)" />
+      </template>
+
+      <!-- Wide + split on: two panes with resizable splitter -->
+      <template v-else>
+        <div
+          class="ws-pane"
+          :style="{ width: (ws.splitRatio * 100).toFixed(2) + '%' }"
+          @click="ws.focus(0)"
+        >
+          <ViewHost :active-ref="activeRefForGroup(0)" />
+        </div>
+
+        <div
+          class="ws-splitter"
+          :class="{ 'ws-splitter--dragging': draggingSplitter }"
+          @mousedown="startSplitterDrag"
+        />
+
+        <div
+          class="ws-pane"
+          :style="{ width: ((1 - ws.splitRatio) * 100).toFixed(2) + '%' }"
+          @click="ws.focus(1)"
+        >
+          <ViewHost :active-ref="activeRefForGroup(1)" />
+        </div>
+      </template>
+    </div>
   </div>
 </template>
 
@@ -68,57 +100,33 @@ function tabLabel(ref: ResourceRef): string {
   overflow: hidden;
 }
 
-.workspace-tabs {
+.workspace-body {
   display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  flex-shrink: 0;
-  gap: 2px;
-  padding: 4px 8px 0;
-  background: var(--surface-1, #1a1a1a);
-  border-bottom: 1px solid var(--border-subtle, #333);
-}
-
-.workspace-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border: none;
-  border-radius: var(--radius-sm, 4px) var(--radius-sm, 4px) 0 0;
-  background: var(--surface-2, #262626);
-  color: inherit;
-  cursor: pointer;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  opacity: 0.7;
-  transition: opacity 0.1s;
-}
-
-.workspace-tab:hover {
-  opacity: 0.9;
-}
-
-.workspace-tab--active {
-  opacity: 1;
-  background: var(--surface-3, #303030);
-}
-
-.workspace-tab-label {
-  max-width: 180px;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.workspace-tab-close {
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  opacity: 0.6;
-  padding: 0 2px;
+.ws-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.workspace-tab-close:hover {
-  opacity: 1;
+.ws-splitter {
+  width: 4px;
+  flex-shrink: 0;
+  background: var(--border-subtle, #333);
+  cursor: col-resize;
+  transition: background 0.15s;
+  user-select: none;
+}
+
+.ws-splitter:hover,
+.ws-splitter--dragging {
+  background: var(--accent, #7dc5ff66);
 }
 </style>
