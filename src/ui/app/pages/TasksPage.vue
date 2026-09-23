@@ -126,6 +126,7 @@
 import { onMounted, onBeforeUnmount, watch } from "vue";
 import { useTasksStore } from "../stores/tasks";
 import { useAttentionStore } from "../stores/attention";
+import { useLiveStore } from "../stores/live";
 import { renderAttentionTiers } from "./tasks/tiers";
 import {
   buildTaskTree, renderTreeBranch, renderCurrentView, renderAllTasksView, expandAncestors,
@@ -147,6 +148,7 @@ import { useUiStore } from "../stores/ui";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
+const live = useLiveStore();
 const ui = useUiStore();
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
@@ -170,7 +172,6 @@ let taskPanelHeadlineEl: HTMLElement | null = null;
 let taskPanelIdEl: HTMLElement | null = null;
 let taskPanelStatusEl: HTMLElement | null = null;
 
-let attentionIntervalId: ReturnType<typeof setInterval> | null = null;
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let lpStartX = 0, lpStartY = 0;
 
@@ -1187,9 +1188,13 @@ onMounted(() => {
   // Load agents catalog for the target select.
   loadAgentsForForm();
 
-  // Attention tiers.
-  attentionStore.fetch();
-  attentionIntervalId = setInterval(() => attentionStore.fetch(), 30000);
+  // Attention tiers — live channel replaces the 30s poll.
+  // 'tasks' topic included so tree-level changes (moves, closes) also refresh the tiers.
+  live.bind("attention", {
+    topics: ["attention", "tasks"],
+    fetch: () =>
+      attentionStore.fetch().then(() => attentionStore.tiers),
+  });
 
   // Initial load.
   if (!tasksStore.loaded) {
@@ -1206,7 +1211,7 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
+  live.unbind("attention");
   if (longPressTimer !== null) clearTimeout(longPressTimer);
 });
 </script>
