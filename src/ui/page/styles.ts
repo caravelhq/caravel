@@ -1089,31 +1089,6 @@ export const pageStyles = String.raw`    :root {
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
     }
-    .settings-modal {
-      position: fixed;
-      top: 94px;
-      right: 18px;
-      width: min(320px, calc(100vw - 36px));
-      z-index: 6;
-      border: 1px solid #d8e4ff20;
-      border-radius: 14px;
-      background: #0b1220b8;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 36px #0000005a;
-      padding: 12px;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: translateY(-8px) scale(0.98);
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
-    }
-    .settings-modal.open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(0) scale(1);
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s;
-    }
     .settings-head {
       display: flex;
       align-items: center;
@@ -1333,24 +1308,90 @@ export const pageStyles = String.raw`    :root {
     .hb-btn.solid:hover {
       filter: brightness(1.06);
     }
-    .info-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 7;
-      display: grid;
-      place-items: center;
-      background: #02050db0;
-      padding: 18px;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+    /* ── BaseModal — native <dialog> modal system ── */
+    .base-modal {
+      padding: 0;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      background: var(--surface-1);
+      box-shadow: var(--shadow-overlay);
+      color: var(--text);
+      max-height: 90vh;
+      overflow: hidden;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
     }
-    .info-modal.open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition: opacity 0.18s ease, visibility 0s linear 0s;
+    .base-modal::backdrop {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+    }
+    .base-modal[data-size="sm"] { width: min(360px, calc(100vw - 32px)); }
+    .base-modal[data-size="md"] { width: min(480px, calc(100vw - 32px)); }
+    .base-modal[data-size="lg"] { width: min(700px, calc(100vw - 32px)); }
+    .base-modal[data-size="sheet"] {
+      width: 100%;
+      max-width: 100%;
+      max-height: 85vh;
+      margin: auto auto 0 auto;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    @media (max-width: 640px) {
+      .base-modal[data-size="md"],
+      .base-modal[data-size="lg"] {
+        width: 100%;
+        max-width: 100%;
+        max-height: 85vh;
+        margin: auto auto 0 auto;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+    .base-modal-inner {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+    }
+    .base-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9eb5d6;
+      flex-shrink: 0;
+    }
+    .base-modal-title {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .base-modal-close {
+      border: none;
+      background: transparent;
+      color: #9eb5d6;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+    .base-modal-body {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .base-modal-footer {
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
     }
     .info-card {
       width: min(980px, 100%);
@@ -5121,18 +5162,6 @@ export const pageStyles = String.raw`    :root {
     .global-voice-task[hidden] { display: none; }
 
     /* ── Audio action modal — small centered card for recording / playback ── */
-    .audio-action-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 190;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(6, 13, 26, 0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-    .audio-action-modal[hidden] { display: none; }
     .audio-action-card {
       background: var(--panel, #0f1e33);
       border: 1px solid var(--border, #1e3a5f);

@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted } from "vue";
 import { RouterLink, RouterView } from "vue-router";
-import { useUiStore } from "./stores/ui";
 import { useReadingStore } from "./stores/reading";
 import SettingsModal from "./components/chrome/SettingsModal.vue";
 import HeartbeatBar from "./components/chrome/HeartbeatBar.vue";
@@ -12,27 +11,11 @@ import ReadingPane from "./components/reading/ReadingPane.vue";
 import ReadingDropZone from "./components/reading/ReadingDropZone.vue";
 import type { ReadingRef } from "./stores/reading";
 
-const ui = useUiStore();
 const reading = useReadingStore();
-
-// Escape closes the topmost open modal, in vanilla's priority order
-// (client.js:706-716): heartbeat, then technical info, then settings.
-// Backdrop clicks are handled per-modal by @click.self.
-function onEscape(ev: KeyboardEvent): void {
-  if (ev.key !== "Escape") return;
-  if (ui.hbModalOpen) ui.hbModalOpen = false;
-  else if (ui.infoOpen) ui.infoOpen = false;
-  else if (ui.settingsOpen) ui.settingsOpen = false;
-}
 
 onMounted(() => {
   // Expose reading pane throw globally so vanilla DOM code (task doc-pills, etc.) can use it.
   (window as any).__throwToReadingPane = (ref: ReadingRef) => reading.throwRef(ref);
-  document.addEventListener("keydown", onEscape);
-});
-
-onBeforeUnmount(() => {
-  document.removeEventListener("keydown", onEscape);
 });
 
 // Stage drag tracking — show drop zone on reading pane while dragging a valid ref.

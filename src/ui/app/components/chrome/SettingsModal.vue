@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from "vue";
 import { useUiStore } from "../../stores/ui";
+import BaseModal from "../modal/BaseModal.vue";
+import SettingRow from "../modal/SettingRow.vue";
 
 const ui = useUiStore();
 
@@ -29,7 +31,6 @@ const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
 const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
 
 // — Technical Info —
-
 const infoHtml = ref("");
 
 function escHtml(s: string): string {
@@ -160,55 +161,33 @@ async function openInfo(): Promise<void> {
 </script>
 
 <template>
-  <aside class="settings-modal" id="settings-modal" aria-live="polite" :class="{ open: ui.settingsOpen }">
-    <div class="settings-head">
-      <span>Settings</span>
-      <button class="settings-close" id="settings-close" type="button" aria-label="Close settings" @click="ui.settingsOpen = false">×</button>
-    </div>
+  <BaseModal
+    id="settings-modal"
+    :open="ui.settingsOpen"
+    @close="ui.settingsOpen = false"
+    size="md"
+    title="Settings"
+  >
     <div class="settings-stack">
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">💓 Heartbeat</div>
-          <div class="settings-meta" id="hb-info">{{ hbInfo }}</div>
-        </div>
+      <SettingRow label="💓 Heartbeat" :meta="hbInfo">
         <div class="setting-actions">
           <button class="hb-config" id="hb-config" type="button" @click="openHbConfig">Configure</button>
           <button :class="hbToggleClass" id="hb-toggle" type="button" :disabled="hbBusy" @click="toggleHb">{{ hbToggleText }}</button>
         </div>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🕒 Clock</div>
-          <div class="settings-meta" id="clock-info">{{ clockInfo }}</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🕒 Clock" :meta="clockInfo">
         <button :class="'hb-toggle ' + (use12Hour ? 'on' : 'off')" id="clock-toggle" type="button" @click="toggleClock">{{ clockText }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🔗 GitHub Banner</div>
-          <div class="settings-meta">Star on GitHub header bar</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🔗 GitHub Banner" meta="Star on GitHub header bar">
         <button :class="'hb-toggle ' + (headerHidden ? 'off' : 'on')" id="header-toggle" type="button" @click="toggleHeader">{{ headerHidden ? 'Off' : 'On' }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🐞 Debug</div>
-          <div class="settings-meta">Show chat thread/session ids</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🐞 Debug" meta="Show chat thread/session ids">
         <button :class="'hb-toggle ' + (debugEnabled ? 'on' : 'off')" id="debug-toggle" type="button" @click="toggleDebug">{{ debugEnabled ? 'On' : 'Off' }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🎙️ Voice — STT</div>
-          <div class="settings-meta" id="voice-stt-meta">{{ sttMeta }}</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🎙️ Voice — STT" :meta="sttMeta">
         <button :class="'hb-toggle ' + (sttEnabled ? 'on' : 'off')" id="voice-stt-toggle" type="button" @click="toggleStt">{{ sttText }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🎙️ Mic (STT)</div>
-          <div class="settings-meta">Dictate and voice chat</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🎙️ Mic (STT)" meta="Dictate and voice chat">
         <button
           class="hb-toggle"
           :class="ui.micEnabled ? 'on' : 'off'"
@@ -216,13 +195,11 @@ async function openInfo(): Promise<void> {
           type="button"
           @click="ui.micEnabled = !ui.micEnabled"
         >{{ ui.micEnabled ? 'On' : 'Off' }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🔊 Speaker (TTS)</div>
-          <div class="settings-meta">Read aloud and voice replies</div>
+      </SettingRow>
+      <SettingRow label="🔊 Speaker (TTS)" meta="Read aloud and voice replies">
+        <template #extra>
           <div class="settings-error-note" id="tts-error-note" hidden>DeepGram not configured</div>
-        </div>
+        </template>
         <button
           class="hb-toggle"
           :class="ui.ttsEnabled ? 'on' : 'off'"
@@ -230,25 +207,23 @@ async function openInfo(): Promise<void> {
           type="button"
           @click="ui.ttsEnabled = !ui.ttsEnabled"
         >{{ ui.ttsEnabled ? 'On' : 'Off' }}</button>
-      </div>
-      <div class="setting-item">
-        <div class="setting-main">
-          <div class="settings-label">🧾 Advanced</div>
-          <div class="settings-meta">Technical runtime and JSON files</div>
-        </div>
+      </SettingRow>
+      <SettingRow label="🧾 Advanced" meta="Technical runtime and JSON files">
         <button class="hb-toggle on" id="info-open" type="button" @click="openInfo">Info</button>
-      </div>
+      </SettingRow>
     </div>
-  </aside>
+  </BaseModal>
 
-  <!-- Technical info overlay — sibling to the aside at app-root level (z-index 7 > settings z-index 6) -->
-  <section class="info-modal" id="info-modal" :class="{ open: ui.infoOpen }" :aria-hidden="!ui.infoOpen" @click.self="ui.infoOpen = false">
-    <article class="info-card">
-      <div class="info-head">
-        <span>Technical Info</span>
-        <button class="settings-close" id="info-close" type="button" aria-label="Close technical info" @click="ui.infoOpen = false">×</button>
-      </div>
+  <!-- Technical info overlay — teleported to body so it's not nested inside the settings dialog -->
+  <Teleport to="body">
+    <BaseModal
+      id="info-modal"
+      :open="ui.infoOpen"
+      @close="ui.infoOpen = false"
+      size="lg"
+      title="Technical Info"
+    >
       <div id="info-body" class="info-body" v-html="infoHtml"></div>
-    </article>
-  </section>
+    </BaseModal>
+  </Teleport>
 </template>
