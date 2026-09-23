@@ -1,0 +1,42 @@
+id: TSK-FX-RECUR
+headline: "Fixture: spawned from weekly-review template"
+created: 2026-09-21T08:00:00.000Z
+updated: 2026-09-21T08:05:00.000Z
+
+from: user
+to: agent-alpha
+parent: TSK-SCHED-FX-REVIEW
+recurring_template: TSK-SCHED-FX-REVIEW
+reply_to: user
+
+kind: other
+project: Fixture
+deadline: null
+
+budget:
+  max_turns: 30
+  max_subagents: 0
+  max_usd: null
+
+brief: |
+  Fixture task spawned from TSK-SCHED-FX-REVIEW for testing recurring: true flag.
+
+output_format: ""
+
+context: []
+
+status: done
+lease:
+  holder: null
+  expires: null
+history:
+  - ts: 2026-09-21T08:00:00.000Z
+    from: null
+    to: open
+    by: user
+    note: "spawned from template"
+
+summary:
+  brief: "completed fixture recurring task"
+  response: ""
+report: ""
