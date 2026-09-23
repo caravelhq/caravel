@@ -12,6 +12,28 @@ export const pageStyles = String.raw`    :root {
       --good: #67f0b5;
       --bad: #ff7f7f;
       --warn: #ffc276;
+
+      /* Phase 3 design tokens — used by later nodes; declared here only. */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --border-subtle: #d8e4ff14;
+      --border-strong: #d8e4ff3d;
+
+      --surface-0: #060d1a;
+      --surface-1: #0b1220;
+      --surface-2: #111b2e;
+      --surface-3: #1a2640;
+
+      --shadow-overlay: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     * { box-sizing: border-box; }
