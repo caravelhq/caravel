@@ -208,10 +208,23 @@ export class BridgeKnowledge implements KnowledgeService {
       let parsed: unknown;
       try { parsed = JSON.parse(stdout); } catch { return { ok: false, reason: "parse error" }; }
 
+      // search → flat list [{id, score, snippet, via}, ...]
+      // query  → {docs: [...], reports: [...], ...}
+      let docs: unknown[];
+      let reports: unknown[];
+
+      if (Array.isArray(parsed)) {
+        docs = parsed;
+        reports = [];
+      } else {
+        docs = (parsed as any)?.docs ?? [];
+        reports = (parsed as any)?.reports ?? [];
+      }
+
       const result: SearchResult = {
         ok: true,
-        docs: (parsed as any)?.docs ?? [],
-        reports: (parsed as any)?.reports ?? [],
+        docs,
+        reports,
         tookMs: Date.now() - t0,
         builtAt: (parsed as any)?.builtAt,
       };
@@ -259,13 +272,20 @@ export class BridgeKnowledge implements KnowledgeService {
     if (!cliFound) return { ok: true, enabled: false };
 
     try {
+      // stats output: {total_nodes, by_kind: [{kind, n}], ..., built_at}
       const parsed = JSON.parse(stdout) as any;
+      const byKind: Array<{ kind: string; n: number }> = parsed?.by_kind ?? [];
+      const docs = byKind.find((k) => k.kind === "doc")?.n;
+      // Count task reports as the "reports" count
+      const byStatus: Array<{ status: string; n: number }> = parsed?.by_status ?? [];
+      const reports = byKind.find((k) => k.kind === "task")?.n
+        ?? byStatus.filter((s) => s.status === "done").reduce((acc, s) => acc + s.n, 0);
       return {
         ok: true,
         enabled: true,
-        docs: parsed?.docs ?? parsed?.document_count,
-        reports: parsed?.reports ?? parsed?.report_count,
-        builtAt: parsed?.builtAt ?? parsed?.built_at,
+        docs,
+        reports,
+        builtAt: parsed?.built_at ?? parsed?.builtAt,
       };
     } catch {
       return { ok: true, enabled: true };
