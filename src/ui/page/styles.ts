@@ -4206,6 +4206,58 @@ export const pageStyles = String.raw`    :root {
     .ntm-next-fires--invalid { color: #ff9a9a; }
     /* ── /NewTaskModal ── */
 
+    /* ── DashboardView tokens ── */
+    :root {
+      --color-active: #a8f1ca;
+      --color-paused: #ffd39f;
+    }
+    /* ── Attention tiers ── */
+    .db-tiers { display: flex; flex-direction: column; gap: 8px; width: min(820px, 100%); margin: 24px auto 0; }
+    .db-tier-section { border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; background: #07101da6; overflow: hidden; }
+    .db-tier-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+    .db-tier-header:hover { background: rgba(255,255,255,0.04); }
+    .db-tier-title { font-size: 13px; font-weight: 600; color: #c8daf0; text-transform: uppercase; letter-spacing: 0.06em; }
+    .db-tier-count { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+    .db-tier-rows { display: flex; flex-direction: column; }
+    .db-tier-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--border-subtle, #d8e4ff14); cursor: pointer; }
+    .db-tier-row:hover { background: rgba(255,255,255,0.04); }
+    .db-tier-row-headline { flex: 1; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-tier-row-agent { font-size: 11px; color: var(--muted); padding: 2px 6px; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 3px; white-space: nowrap; }
+    .db-tier-open-all { display: block; padding: 8px 14px; font-size: 12px; color: var(--accent); border: none; background: none; cursor: pointer; text-align: left; border-top: 1px solid var(--border-subtle, #d8e4ff14); }
+    .db-tier-open-all:hover { text-decoration: underline; }
+    .db-tier-empty { padding: 12px 14px; font-size: 13px; color: var(--muted); font-style: italic; }
+    /* ── Totals line ── */
+    .db-totals { width: min(820px, 100%); margin: 12px auto 0; }
+    .db-totals-btn { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; }
+    .db-totals-btn:hover { color: var(--text); }
+    .db-totals-sep { opacity: 0.4; }
+    .db-totals-done { color: #93e0a8; }
+    .db-totals-failed { color: #ff9a9a; }
+    /* ── Schedule list ── */
+    .db-sched { width: min(820px, 100%); margin: 16px auto 24px; }
+    .db-sched-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 10px; }
+    .db-sched-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .db-sched-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; overflow: hidden; }
+    .db-sched-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle, #d8e4ff14); align-items: start; }
+    .db-sched-row:last-child { border-bottom: none; }
+    .db-sched-row-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .db-sched-row-head { display: flex; align-items: center; gap: 8px; }
+    .db-sched-headline { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-sched-recur { font-size: 11px; color: var(--accent); }
+    .db-sched-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .db-sched-agent { font-size: 11px; color: var(--muted); }
+    .db-sched-cadence { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+    .db-sched-count { font-size: 11px; color: var(--muted); }
+    .db-sched-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 1px 7px; border-radius: 10px; }
+    .db-sched-pill--active { color: var(--color-active); border: 1px solid var(--color-active); background: #a8f1ca14; }
+    .db-sched-pill--paused { color: var(--color-paused); border: 1px solid var(--color-paused); background: #ffd39f14; }
+    .db-sched-actions { display: flex; gap: 4px; align-items: flex-start; flex-shrink: 0; }
+    .db-sched-act-btn { padding: 3px 8px; font-size: 11px; background: transparent; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 4px; color: var(--muted); cursor: pointer; }
+    .db-sched-act-btn:hover { color: var(--text); border-color: var(--border-strong, #d8e4ff3d); }
+    .db-sched-act-btn--danger:hover { color: #ff9a9a; border-color: #ff9a9a40; }
+    .db-sched-empty { padding: 16px 14px; font-size: 13px; color: var(--muted); font-style: italic; text-align: center; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; }
+    /* ── /DashboardView tokens ── */
+
     .task-panel-section {
       border: 1px solid #ffffff10;
       border-radius: 8px;

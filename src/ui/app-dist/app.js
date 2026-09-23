@@ -12431,7 +12431,7 @@ var useShowHide = (modelValue, props, emit2, element, computedId, options = {
     }
   };
 };
-var _hoisted_1$r = [
+var _hoisted_1$z = [
   "type",
   "disabled",
   "aria-label"
@@ -12457,7 +12457,7 @@ var BCloseButton_default = /* @__PURE__ */ defineComponent({
         disabled: unref(props).disabled,
         "aria-label": unref(props).ariaLabel,
         onClick: _cache[0] || (_cache[0] = ($event) => emit2("click", $event))
-      }, null, 8, _hoisted_1$r);
+      }, null, 8, _hoisted_1$z);
     };
   }
 });
@@ -12748,7 +12748,7 @@ var BLink_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$q = {
+var _hoisted_1$y = {
   key: 0,
   class: "visually-hidden"
 };
@@ -12781,7 +12781,7 @@ var BSpinner_default = /* @__PURE__ */ defineComponent({
         role: unref(props).label || hasLabelSlot.value ? unref(props).role : null,
         "aria-hidden": unref(props).label || hasLabelSlot.value ? null : true
       }, {
-        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$q, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
+        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$y, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
         _: 3
       }, 8, [
         "class",
@@ -14307,12 +14307,12 @@ var useModalManager = (modalOpen, initialValue) => {
     })) ?? [])
   };
 };
-var _hoisted_1$p = [
+var _hoisted_1$x = [
   "id",
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$f = ["id"];
+var _hoisted_2$m = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$f),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$m),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14728,7 +14728,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
               "height": "0",
               "overflow": "hidden"
             }
-          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$p), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
+          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$x), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
           _: 3
         }, 16, ["appear"])) : createCommentVNode("", true), !unref(props).noBackdrop ? renderSlot(_ctx.$slots, "backdrop", normalizeProps(mergeProps({ key: 1 }, sharedSlots.value)), () => [unref(renderBackdropRef) ? (openBlock(), createBlock(Transition, normalizeProps(mergeProps({ key: 0 }, unref(backdropTransitionProps))), {
           default: withCtx(() => [withDirectives(createBaseVNode("div", {
@@ -14820,7 +14820,7 @@ var BProgressBar_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$o = ["aria-valuenow", "aria-valuemax"];
+var _hoisted_1$w = ["aria-valuenow", "aria-valuemax"];
 var BProgress_default = /* @__PURE__ */ defineComponent({
   __name: "BProgress",
   props: {
@@ -14887,7 +14887,7 @@ var BProgress_default = /* @__PURE__ */ defineComponent({
         "variant",
         "text-variant",
         "bg-variant"
-      ])])], 12, _hoisted_1$o);
+      ])])], 12, _hoisted_1$w);
     };
   }
 });
@@ -14967,13 +14967,13 @@ var useCountdownHover = (element, { modelValueIgnoresHover, noHoverPause, noResu
   });
   return { isHovering };
 };
-var _hoisted_1$n = [
+var _hoisted_1$v = [
   "id",
   "role",
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$e = {
+var _hoisted_2$l = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$e, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$l, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -15237,7 +15237,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             "max",
             "value"
           ])) : createCommentVNode("", true)
-        ], 10, _hoisted_1$n), [[vShow, isAlertVisible.value]])]),
+        ], 10, _hoisted_1$v), [[vShow, isAlertVisible.value]])]),
         _: 3
       }, 16, ["appear"])) : createCommentVNode("", true);
     };
@@ -15496,7 +15496,7 @@ var useFormInput = (props, input, modelValue, modelModifiers) => {
     isDisabled
   };
 };
-var _hoisted_1$m = [
+var _hoisted_1$u = [
   "id",
   "value",
   "name",
@@ -15617,7 +15617,7 @@ var BFormInput_default = /* @__PURE__ */ defineComponent({
         onInput: _cache[0] || (_cache[0] = (...args) => unref(onInput) && unref(onInput)(...args)),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 42, _hoisted_1$m);
+      }, null, 42, _hoisted_1$u);
     };
   }
 });
@@ -15800,7 +15800,7 @@ var BCol_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$l = [
+var _hoisted_1$t = [
   "value",
   "disabled",
   "selected"
@@ -15826,7 +15826,7 @@ var BFormSelectOption_default = /* @__PURE__ */ defineComponent({
         value: unref(props).value,
         disabled: unref(props).disabled,
         selected: isSelected.value
-      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$l);
+      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$t);
     };
   }
 });
@@ -16113,13 +16113,13 @@ var BFormGroupLabel_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$k = [
+var _hoisted_1$s = [
   "id",
   "disabled",
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$d = {
+var _hoisted_2$k = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$d, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -16450,7 +16450,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
             key: "2"
           } : void 0
         ]), 1040)
-      ], 64))], 64))], 16, _hoisted_1$k);
+      ], 64))], 64))], 16, _hoisted_1$s);
     };
   }
 });
@@ -16484,7 +16484,7 @@ var BFormSelectOptionGroup_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$j = [
+var _hoisted_1$r = [
   "id",
   "name",
   "form",
@@ -16619,7 +16619,7 @@ var BFormSelectBase_default = /* @__PURE__ */ defineComponent({
           }, 1040))], 64);
         }), 128)),
         renderSlot(_ctx.$slots, "default")
-      ], 10, _hoisted_1$j)), [[vModelSelect, localValue.value]]);
+      ], 10, _hoisted_1$r)), [[vModelSelect, localValue.value]]);
     };
   }
 });
@@ -16782,7 +16782,7 @@ var useTextareaResize = (input, { maxRows, noAutoShrink, rows }) => {
     computedRows
   };
 };
-var _hoisted_1$i = [
+var _hoisted_1$q = [
   "id",
   "name",
   "form",
@@ -16910,7 +16910,7 @@ var BFormTextarea_default = /* @__PURE__ */ defineComponent({
         }),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 46, _hoisted_1$i);
+      }, null, 46, _hoisted_1$q);
     };
   }
 });
@@ -19134,19 +19134,43 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const audioModalOpen = /* @__PURE__ */ ref(false);
   return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
 });
+const useNewTaskStore = /* @__PURE__ */ defineStore("newTask", () => {
+  const isOpen = /* @__PURE__ */ ref(false);
+  const parent = /* @__PURE__ */ ref(null);
+  const project = /* @__PURE__ */ ref(null);
+  const mode = /* @__PURE__ */ ref("task");
+  const scheduleId = /* @__PURE__ */ ref(null);
+  const prefillHeadline = /* @__PURE__ */ ref("");
+  const prefillBrief = /* @__PURE__ */ ref("");
+  const prefillContext = /* @__PURE__ */ ref([]);
+  function open(opts = {}) {
+    parent.value = opts.parent ?? null;
+    project.value = opts.project ?? null;
+    mode.value = opts.mode ?? "task";
+    scheduleId.value = opts.scheduleId ?? null;
+    prefillHeadline.value = opts.headline ?? "";
+    prefillBrief.value = opts.brief ?? "";
+    prefillContext.value = opts.context ?? [];
+    isOpen.value = true;
+  }
+  function close() {
+    isOpen.value = false;
+  }
+  return { isOpen, parent, project, mode, scheduleId, prefillHeadline, prefillBrief, prefillContext, open, close };
+});
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$h = ["data-size"];
-const _hoisted_2$c = {
+const _hoisted_1$p = ["data-size"];
+const _hoisted_2$j = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$8 = { class: "base-modal-title" };
-const _hoisted_4$8 = { class: "base-modal-body" };
-const _hoisted_5$5 = {
+const _hoisted_3$f = { class: "base-modal-title" };
+const _hoisted_4$c = { class: "base-modal-body" };
+const _hoisted_5$9 = {
   key: 0,
   class: "base-modal-footer"
 };
-const _sfc_main$m = /* @__PURE__ */ defineComponent({
+const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "BaseModal",
   props: {
     open: { type: Boolean },
@@ -19215,8 +19239,8 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
-              createBaseVNode("span", _hoisted_3$8, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
+              createBaseVNode("span", _hoisted_3$f, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -19226,25 +19250,25 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$8, [
+          createBaseVNode("div", _hoisted_4$c, [
             renderSlot(_ctx.$slots, "default")
           ]),
-          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$5, [
+          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$9, [
             renderSlot(_ctx.$slots, "footer")
           ])) : createCommentVNode("", true)
         ])
-      ], 40, _hoisted_1$h);
+      ], 40, _hoisted_1$p);
     };
   }
 });
-const _hoisted_1$g = { class: "setting-item" };
-const _hoisted_2$b = { class: "setting-main" };
-const _hoisted_3$7 = { class: "settings-label" };
-const _hoisted_4$7 = {
+const _hoisted_1$o = { class: "setting-item" };
+const _hoisted_2$i = { class: "setting-main" };
+const _hoisted_3$e = { class: "settings-label" };
+const _hoisted_4$b = {
   key: 0,
   class: "settings-meta"
 };
-const _sfc_main$l = /* @__PURE__ */ defineComponent({
+const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "SettingRow",
   props: {
     label: {},
@@ -19252,10 +19276,10 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$g, [
-        createBaseVNode("div", _hoisted_2$b, [
-          createBaseVNode("div", _hoisted_3$7, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$7, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+      return openBlock(), createElementBlock("div", _hoisted_1$o, [
+        createBaseVNode("div", _hoisted_2$i, [
+          createBaseVNode("div", _hoisted_3$e, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$b, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -19263,11 +19287,11 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$f = { class: "settings-stack" };
-const _hoisted_2$a = { class: "setting-actions" };
-const _hoisted_3$6 = ["disabled"];
-const _hoisted_4$6 = ["innerHTML"];
-const _sfc_main$k = /* @__PURE__ */ defineComponent({
+const _hoisted_1$n = { class: "settings-stack" };
+const _hoisted_2$h = { class: "setting-actions" };
+const _hoisted_3$d = ["disabled"];
+const _hoisted_4$a = ["innerHTML"];
+const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
@@ -19397,7 +19421,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$m, {
+        createVNode(_sfc_main$u, {
           id: "settings-modal",
           open: unref(ui).settingsOpen,
           onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
@@ -19405,13 +19429,13 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
           title: "Settings"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$f, [
-              createVNode(_sfc_main$l, {
+            createBaseVNode("div", _hoisted_1$n, [
+              createVNode(_sfc_main$t, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$a, [
+                  createBaseVNode("div", _hoisted_2$h, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -19424,12 +19448,12 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$6)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$d)
                   ])
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🕒 Clock",
                 meta: clockInfo.value
               }, {
@@ -19443,7 +19467,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🔗 GitHub Banner",
                 meta: "Star on GitHub header bar"
               }, {
@@ -19457,7 +19481,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🐞 Debug",
                 meta: "Show chat thread/session ids"
               }, {
@@ -19471,7 +19495,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🎙️ Voice — STT",
                 meta: sttMeta.value
               }, {
@@ -19485,7 +19509,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🎙️ Mic (STT)",
                 meta: "Dictate and voice chat"
               }, {
@@ -19499,7 +19523,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🔊 Speaker (TTS)",
                 meta: "Read aloud and voice replies"
               }, {
@@ -19520,7 +19544,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$l, {
+              createVNode(_sfc_main$t, {
                 label: "🧾 Advanced",
                 meta: "Technical runtime and JSON files"
               }, {
@@ -19539,7 +19563,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
           _: 1
         }, 8, ["open"]),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
-          createVNode(_sfc_main$m, {
+          createVNode(_sfc_main$u, {
             id: "info-modal",
             open: unref(ui).infoOpen,
             onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
@@ -19551,7 +19575,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_4$6)
+              }, null, 8, _hoisted_4$a)
             ]),
             _: 1
           }, 8, ["open"])
@@ -19560,25 +19584,25 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$e = {
+const _hoisted_1$m = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$9 = ["disabled"];
-const _hoisted_3$5 = {
+const _hoisted_2$g = ["disabled"];
+const _hoisted_3$c = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$5 = ["disabled"];
-const _hoisted_5$4 = { class: "hb-actions" };
-const _hoisted_6$4 = {
+const _hoisted_4$9 = ["disabled"];
+const _hoisted_5$8 = { class: "hb-actions" };
+const _hoisted_6$8 = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_7$3 = { class: "hb-buttons" };
-const _hoisted_8$3 = ["disabled"];
-const _hoisted_9$3 = ["disabled"];
-const _sfc_main$j = /* @__PURE__ */ defineComponent({
+const _hoisted_7$6 = { class: "hb-buttons" };
+const _hoisted_8$6 = ["disabled"];
+const _hoisted_9$5 = ["disabled"];
+const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
     const ui = useUiStore();
@@ -19642,7 +19666,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$m, {
+      return openBlock(), createBlock(_sfc_main$u, {
         id: "hb-modal",
         open: unref(ui).hbModalOpen,
         onClose: close,
@@ -19655,7 +19679,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_1$e, [
+            createBaseVNode("label", _hoisted_1$m, [
               _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
@@ -19667,7 +19691,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$9), [
+              }, null, 8, _hoisted_2$g), [
                 [
                   vModelText,
                   interval.value,
@@ -19676,7 +19700,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$5, [
+            createBaseVNode("label", _hoisted_3$c, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -19685,26 +19709,26 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$5), [
+              }, null, 8, _hoisted_4$9), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$4, [
-              createBaseVNode("div", _hoisted_6$4, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$3, [
+            createBaseVNode("div", _hoisted_5$8, [
+              createBaseVNode("div", _hoisted_6$8, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$6, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_8$3),
+                }, "Cancel", 8, _hoisted_8$6),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_9$3)
+                }, "Save", 8, _hoisted_9$5)
               ])
             ])
           ], 32)
@@ -19714,12 +19738,12 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_main$i = /* @__PURE__ */ defineComponent({
+const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
   setup(__props) {
     const ui = useUiStore();
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$m, {
+      return openBlock(), createBlock(_sfc_main$u, {
         id: "audio-action-modal",
         open: unref(ui).audioModalOpen,
         onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
@@ -19818,8 +19842,8 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$d = ["disabled"];
-const _sfc_main$h = /* @__PURE__ */ defineComponent({
+const _hoisted_1$l = ["disabled"];
+const _sfc_main$p = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
@@ -19837,7 +19861,7 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
         onClick: triggerMic
       }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$d);
+      ])], 8, _hoisted_1$l);
     };
   }
 });
@@ -19901,9 +19925,9 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
     updateLastAssistant
   };
 });
-const _hoisted_1$c = ["hidden"];
-const _hoisted_2$8 = ["hidden"];
-const _sfc_main$g = /* @__PURE__ */ defineComponent({
+const _hoisted_1$k = ["hidden"];
+const _hoisted_2$f = ["hidden"];
+const _sfc_main$o = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
@@ -19934,7 +19958,7 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
           onClick: openVoiceMode
         }, [..._cache[0] || (_cache[0] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$c),
+        ])], 8, _hoisted_1$k),
         createBaseVNode("button", {
           id: "global-voice-task",
           class: "global-voice-task",
@@ -19968,7 +19992,7 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_2$8)
+        ])], 8, _hoisted_2$f)
       ], 64);
     };
   }
@@ -20195,35 +20219,35 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   connect();
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
-const _hoisted_1$b = { class: "dock-shell" };
-const _hoisted_2$7 = {
+const _hoisted_1$j = { class: "dock-shell" };
+const _hoisted_2$e = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$4 = { class: "side-value" };
-const _hoisted_4$4 = {
+const _hoisted_3$b = { class: "side-value" };
+const _hoisted_4$8 = {
   class: "side-bubble",
   id: "tasks-bubble",
   "aria-live": "polite"
 };
-const _hoisted_5$3 = { class: "side-value" };
-const _hoisted_6$3 = {
+const _hoisted_5$7 = { class: "side-value" };
+const _hoisted_6$7 = {
   class: "dock",
   id: "dock",
   "aria-live": "polite"
 };
-const _hoisted_7$2 = { id: "dock-pills" };
-const _hoisted_8$2 = { class: "pill-label" };
-const _hoisted_9$2 = { class: "pill-icon" };
-const _hoisted_10$1 = { class: "pill-value" };
-const _hoisted_11 = {
+const _hoisted_7$5 = { id: "dock-pills" };
+const _hoisted_8$5 = { class: "pill-label" };
+const _hoisted_9$4 = { class: "pill-icon" };
+const _hoisted_10$3 = { class: "pill-value" };
+const _hoisted_11$2 = {
   class: "side-bubble",
   id: "uptime-bubble",
   "aria-live": "polite"
 };
-const _hoisted_12 = { class: "side-value" };
-const _sfc_main$f = /* @__PURE__ */ defineComponent({
+const _hoisted_12$2 = { class: "side-value" };
+const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
     const live = useLiveStore();
@@ -20305,39 +20329,39 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
       return out;
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$b, [
-        createBaseVNode("aside", _hoisted_2$7, [
+      return openBlock(), createElementBlock("div", _hoisted_1$j, [
+        createBaseVNode("aside", _hoisted_2$e, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$4, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$b, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
-        createBaseVNode("aside", _hoisted_4$4, [
+        createBaseVNode("aside", _hoisted_4$8, [
           _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
-          createBaseVNode("div", _hoisted_5$3, toDisplayString(tasksCount.value), 1),
+          createBaseVNode("div", _hoisted_5$7, toDisplayString(tasksCount.value), 1),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
-        createBaseVNode("footer", _hoisted_6$3, [
-          createVNode(_sfc_main$g),
+        createBaseVNode("footer", _hoisted_6$7, [
+          createVNode(_sfc_main$o),
           _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
-          createVNode(_sfc_main$h),
-          createBaseVNode("div", _hoisted_7$2, [
+          createVNode(_sfc_main$p),
+          createBaseVNode("div", _hoisted_7$5, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
                 key: pill.label,
                 class: normalizeClass(["pill", pill.cls])
               }, [
-                createBaseVNode("div", _hoisted_8$2, [
-                  createBaseVNode("span", _hoisted_9$2, toDisplayString(pill.icon), 1),
+                createBaseVNode("div", _hoisted_8$5, [
+                  createBaseVNode("span", _hoisted_9$4, toDisplayString(pill.icon), 1),
                   createTextVNode(toDisplayString(pill.label), 1)
                 ]),
-                createBaseVNode("div", _hoisted_10$1, toDisplayString(pill.value), 1)
+                createBaseVNode("div", _hoisted_10$3, toDisplayString(pill.value), 1)
               ], 2);
             }), 128))
           ])
         ]),
-        createBaseVNode("aside", _hoisted_11, [
+        createBaseVNode("aside", _hoisted_11$2, [
           _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
-          createBaseVNode("div", _hoisted_12, toDisplayString(uptime.value), 1),
+          createBaseVNode("div", _hoisted_12$2, toDisplayString(uptime.value), 1),
           _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
         ])
       ]);
@@ -20437,17 +20461,17 @@ function speakFetch(text) {
     })
   );
 }
-const _hoisted_1$a = {
+const _hoisted_1$i = {
   class: "voice-mode-overlay",
   role: "dialog",
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$6 = ["innerHTML"];
-const _hoisted_3$3 = { class: "vm-controls" };
-const _hoisted_4$3 = { class: "voice-mode-status" };
+const _hoisted_2$d = ["innerHTML"];
+const _hoisted_3$a = { class: "vm-controls" };
+const _hoisted_4$7 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
   setup(__props) {
     const voice = useVoiceStore();
@@ -20781,13 +20805,13 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       voice.close();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$a, [
+      return openBlock(), createElementBlock("div", _hoisted_1$i, [
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$6),
-        createBaseVNode("div", _hoisted_3$3, [
-          createBaseVNode("div", _hoisted_4$3, toDisplayString(statusText.value), 1),
+        }, null, 8, _hoisted_2$d),
+        createBaseVNode("div", _hoisted_3$a, [
+          createBaseVNode("div", _hoisted_4$7, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
             type: "button",
@@ -20939,33 +20963,33 @@ Example response:
     submitDraft
   };
 });
-const _hoisted_1$9 = {
+const _hoisted_1$h = {
   key: 0,
   class: "vtc-success text-center py-4"
 };
-const _hoisted_2$5 = {
+const _hoisted_2$c = {
   key: 0,
   class: "vtc-claude-reply mb-3 p-3 rounded"
 };
-const _hoisted_3$2 = { class: "row g-2 mb-2" };
-const _hoisted_4$2 = { class: "col-6" };
-const _hoisted_5$2 = { class: "col-6" };
-const _hoisted_6$2 = { class: "d-flex gap-2 justify-content-end" };
-const _hoisted_7$1 = {
+const _hoisted_3$9 = { class: "row g-2 mb-2" };
+const _hoisted_4$6 = { class: "col-6" };
+const _hoisted_5$6 = { class: "col-6" };
+const _hoisted_6$6 = { class: "d-flex gap-2 justify-content-end" };
+const _hoisted_7$4 = {
   key: 2,
   class: "vtc-capture text-center py-3"
 };
-const _hoisted_8$1 = { class: "voice-mode-status mb-4" };
-const _hoisted_9$1 = {
+const _hoisted_8$4 = { class: "voice-mode-status mb-4" };
+const _hoisted_9$3 = {
   key: 0,
   class: "vm-heard mt-2"
 };
-const _hoisted_10 = {
+const _hoisted_10$2 = {
   key: 1,
   class: "vm-reply vm-active mt-2"
 };
 const HOLD_MS = 250;
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
+const _sfc_main$l = /* @__PURE__ */ defineComponent({
   __name: "VoiceTaskCreator",
   setup(__props) {
     const voice = useVoiceStore();
@@ -21348,12 +21372,12 @@ User's voice request: "${userText}"`;
           ], -1)
         ])]),
         default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$9, [..._cache[8] || (_cache[8] = [
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$h, [..._cache[8] || (_cache[8] = [
             createBaseVNode("i", { class: "fa-solid fa-circle-check vtc-success-icon mb-3" }, null, -1),
             createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
             createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
           ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$5, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
               _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
@@ -21372,8 +21396,8 @@ User's voice request: "${userText}"`;
               ]),
               _: 1
             }),
-            createBaseVNode("div", _hoisted_3$2, [
-              createBaseVNode("div", _hoisted_4$2, [
+            createBaseVNode("div", _hoisted_3$9, [
+              createBaseVNode("div", _hoisted_4$6, [
                 createVNode(unref(BFormGroup_default), {
                   label: "Priority",
                   "label-for": "vtc-priority"
@@ -21404,7 +21428,7 @@ User's voice request: "${userText}"`;
                   _: 1
                 })
               ]),
-              createBaseVNode("div", _hoisted_5$2, [
+              createBaseVNode("div", _hoisted_5$6, [
                 createVNode(unref(BFormGroup_default), {
                   label: "Kind",
                   "label-for": "vtc-kind"
@@ -21494,7 +21518,7 @@ User's voice request: "${userText}"`;
               ]),
               _: 1
             })) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_6$2, [
+            createBaseVNode("div", _hoisted_6$6, [
               createVNode(unref(BButton_default), {
                 variant: "secondary",
                 size: "sm",
@@ -21519,8 +21543,8 @@ User's voice request: "${userText}"`;
                 _: 1
               }, 8, ["disabled"])
             ])
-          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7$1, [
-            createBaseVNode("div", _hoisted_8$1, toDisplayString(statusText.value), 1),
+          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7$4, [
+            createBaseVNode("div", _hoisted_8$4, toDisplayString(statusText.value), 1),
             createBaseVNode("button", {
               class: normalizeClass(["voice-mode-btn mx-auto mb-4", { listening: isListening.value, processing: isProcessing.value }]),
               type: "button",
@@ -21535,8 +21559,8 @@ User's voice request: "${userText}"`;
                 class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
               }, null, 2)
             ], 34),
-            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9$1, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
+            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9$3, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10$2, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
           ]))
         ]),
         _: 1
@@ -21551,8 +21575,8 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-9d3f47dd"]]);
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-9d3f47dd"]]);
+const _sfc_main$k = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
     const voice = useVoiceStore();
@@ -21578,22 +21602,22 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$e, { key: 0 })) : createCommentVNode("", true),
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$m, { key: 0 })) : createCommentVNode("", true),
         createVNode(VoiceTaskCreator)
       ]);
     };
   }
 });
-const _hoisted_1$8 = { class: "tab-strip" };
-const _hoisted_2$4 = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$1 = { class: "ts-tab-label" };
-const _hoisted_4$1 = ["onClick"];
-const _hoisted_5$1 = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_6$1 = { class: "ts-tab-label" };
-const _hoisted_7 = ["onClick"];
-const _hoisted_8 = { class: "ts-actions" };
-const _hoisted_9 = ["title"];
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
+const _hoisted_1$g = { class: "tab-strip" };
+const _hoisted_2$b = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_3$8 = { class: "ts-tab-label" };
+const _hoisted_4$5 = ["onClick"];
+const _hoisted_5$5 = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_6$5 = { class: "ts-tab-label" };
+const _hoisted_7$3 = ["onClick"];
+const _hoisted_8$3 = { class: "ts-actions" };
+const _hoisted_9$2 = ["title"];
+const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "TabStrip",
   setup(__props) {
     const ws = useWorkspaceStore();
@@ -21670,7 +21694,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       onDragEnd();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$8, [
+      return openBlock(), createElementBlock("div", _hoisted_1$g, [
         (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
           return openBlock(), createElementBlock("button", {
             key: unref(refKey)(tab),
@@ -21695,7 +21719,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
             onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
             onDrop: ($event) => onTabDrop($event, i)
           }, [
-            createBaseVNode("span", _hoisted_3$1, toDisplayString(tabLabel(tab)), 1),
+            createBaseVNode("span", _hoisted_3$8, toDisplayString(tabLabel(tab)), 1),
             tab.kind !== "dashboard" ? (openBlock(), createElementBlock("span", {
               key: 0,
               class: "ts-tab-close",
@@ -21703,8 +21727,8 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
               tabindex: "-1",
               "aria-label": "Close tab",
               onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_4$1)) : createCommentVNode("", true)
-          ], 42, _hoisted_2$4);
+            }, "×", 8, _hoisted_4$5)) : createCommentVNode("", true)
+          ], 42, _hoisted_2$b);
         }), 128)),
         unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
           key: 0,
@@ -21741,7 +21765,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
             onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
             onDrop: ($event) => onTabDrop($event, group0.value.length + i)
           }, [
-            createBaseVNode("span", _hoisted_6$1, toDisplayString(tabLabel(tab)), 1),
+            createBaseVNode("span", _hoisted_6$5, toDisplayString(tabLabel(tab)), 1),
             tab.kind !== "dashboard" ? (openBlock(), createElementBlock("span", {
               key: 0,
               class: "ts-tab-close",
@@ -21749,22 +21773,783 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
               tabindex: "-1",
               "aria-label": "Close tab",
               onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_7)) : createCommentVNode("", true)
-          ], 42, _hoisted_5$1);
+            }, "×", 8, _hoisted_7$3)) : createCommentVNode("", true)
+          ], 42, _hoisted_5$5);
         }), 128)),
-        createBaseVNode("div", _hoisted_8, [
+        createBaseVNode("div", _hoisted_8$3, [
           createBaseVNode("button", {
             class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
             type: "button",
             title: unref(ws).splitOn ? "Close split" : "Open split",
             onClick: _cache[3] || (_cache[3] = ($event) => unref(ws).toggleSplit())
-          }, "⫽", 10, _hoisted_9)
+          }, "⫽", 10, _hoisted_9$2)
         ])
       ]);
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["__scopeId", "data-v-ac98f00b"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$j, [["__scopeId", "data-v-ac98f00b"]]);
+const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
+  const tiers = /* @__PURE__ */ ref(null);
+  const lastFetch = /* @__PURE__ */ ref(0);
+  async function fetch2() {
+    try {
+      const res = await window.fetch("/api/tasks/attention");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.ok && data.tiers) {
+        tiers.value = data.tiers;
+        lastFetch.value = Date.now();
+      }
+    } catch (_2) {
+    }
+  }
+  return { tiers, lastFetch, fetch: fetch2 };
+});
+function useResource(key, spec) {
+  const live = useLiveStore();
+  const resolvedKey = () => typeof key === "string" ? key : key.value;
+  onMounted(() => {
+    live.bind(resolvedKey(), spec);
+  });
+  onBeforeUnmount(() => {
+    live.unbind(resolvedKey());
+  });
+  if (typeof key !== "string") {
+    watch(key, (newKey, oldKey) => {
+      if (oldKey) live.unbind(oldKey);
+      live.bind(newKey, spec);
+    });
+  }
+  const entryRef = computed(() => live.entry(resolvedKey()));
+  return { entry: entryRef };
+}
+const useDashboardStore = /* @__PURE__ */ defineStore("dashboard", () => {
+  const clockFormat = /* @__PURE__ */ ref(
+    localStorage.getItem("clock.format") === "12" ? "12" : "24"
+  );
+  const collapsedSections = /* @__PURE__ */ reactive({});
+  function toggleSection(key) {
+    collapsedSections[key] = !collapsedSections[key];
+  }
+  function isCollapsed(key) {
+    return !!collapsedSections[key];
+  }
+  return { clockFormat, collapsedSections, toggleSection, isCollapsed };
+});
+const _hoisted_1$f = { class: "hero" };
+const _hoisted_2$a = { class: "date" };
+const _hoisted_3$7 = { class: "message" };
+const _sfc_main$i = /* @__PURE__ */ defineComponent({
+  __name: "DashboardHero",
+  setup(__props) {
+    const dash = useDashboardStore();
+    const clockTime = /* @__PURE__ */ ref("--:--:--");
+    const clockDate = /* @__PURE__ */ ref("Loading date...");
+    const greeting = /* @__PURE__ */ ref("Welcome back.");
+    const clockEl = /* @__PURE__ */ ref(null);
+    let tzOffsetMinutes = 0;
+    let clockInterval = null;
+    function clampTzOffset(v2) {
+      const n = Number(v2);
+      return Number.isFinite(n) ? Math.max(-720, Math.min(840, Math.round(n))) : 0;
+    }
+    function toOffsetDate(base) {
+      return new Date(base.getTime() + tzOffsetMinutes * 6e4);
+    }
+    function formatOffsetDate(base, opts) {
+      return new Intl.DateTimeFormat(void 0, { ...opts, timeZone: "UTC" }).format(toOffsetDate(base));
+    }
+    function greetingForHour(h2) {
+      if (h2 < 5) return "Night mode.";
+      if (h2 < 12) return "Good morning.";
+      if (h2 < 18) return "Good afternoon.";
+      if (h2 < 22) return "Good evening.";
+      return "Wind down and ship clean.";
+    }
+    function renderClock() {
+      const now = /* @__PURE__ */ new Date();
+      const shifted = toOffsetDate(now);
+      const rawH = shifted.getUTCHours();
+      const use12 = dash.clockFormat === "12";
+      const hh = use12 ? String(rawH % 12 || 12).padStart(2, "0") : String(rawH).padStart(2, "0");
+      const mm = String(shifted.getUTCMinutes()).padStart(2, "0");
+      const ss = String(shifted.getUTCSeconds()).padStart(2, "0");
+      const suffix = use12 ? rawH >= 12 ? " PM" : " AM" : "";
+      clockTime.value = hh + ":" + mm + ":" + ss + suffix;
+      clockDate.value = formatOffsetDate(now, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+      greeting.value = greetingForHour(rawH);
+      const night = rawH < 5 || rawH >= 22;
+      document.body.classList.toggle("night-mode", night);
+      document.body.classList.toggle("day-mode", !night);
+      document.body.dataset.mode = night ? "night" : "day";
+      nextTick(() => {
+        if (clockEl.value) {
+          clockEl.value.classList.remove("ms-pulse");
+          requestAnimationFrame(() => {
+            var _a2;
+            return (_a2 = clockEl.value) == null ? void 0 : _a2.classList.add("ms-pulse");
+          });
+        }
+      });
+    }
+    async function loadTzSettings() {
+      try {
+        const r = await fetch("/api/settings");
+        const d2 = await r.json();
+        tzOffsetMinutes = clampTzOffset(d2 == null ? void 0 : d2.timezoneOffsetMinutes);
+        renderClock();
+      } catch {
+      }
+    }
+    onMounted(() => {
+      renderClock();
+      clockInterval = setInterval(renderClock, 1e3);
+      loadTzSettings();
+    });
+    onBeforeUnmount(() => {
+      if (clockInterval) clearInterval(clockInterval);
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("section", _hoisted_1$f, [
+        _cache[0] || (_cache[0] = createBaseVNode("div", {
+          class: "logo-art",
+          role: "img",
+          "aria-label": "Caravel ship logo"
+        }, [
+          createBaseVNode("svg", {
+            class: "logo-ship",
+            viewBox: "0 0 120 96",
+            width: "120",
+            height: "96",
+            fill: "none",
+            "aria-hidden": "true"
+          }, [
+            createBaseVNode("path", {
+              d: "M34 70 V30 M58 70 V14 M84 60 V28",
+              stroke: "currentColor",
+              "stroke-width": "1.6",
+              "stroke-linecap": "round",
+              opacity: "0.55"
+            }),
+            createBaseVNode("path", {
+              d: "M12 59 L52 24 M28 45 L80 6 M64 53 L102 22",
+              stroke: "currentColor",
+              "stroke-width": "1.4",
+              "stroke-linecap": "round",
+              opacity: "0.5"
+            }),
+            createBaseVNode("path", {
+              d: "M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z",
+              fill: "currentColor",
+              opacity: "0.6"
+            }),
+            createBaseVNode("path", {
+              d: "M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z",
+              fill: "currentColor",
+              opacity: "0.92"
+            }),
+            createBaseVNode("path", {
+              d: "M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z",
+              fill: "currentColor",
+              opacity: "0.74"
+            }),
+            createBaseVNode("path", {
+              d: "M58 14 h12 l-3.5 3 l3.5 3 h-12 Z",
+              fill: "currentColor",
+              opacity: "0.9"
+            }),
+            createBaseVNode("path", {
+              d: "M82 70 V60 H102 L100 70 Z",
+              fill: "currentColor",
+              opacity: "0.85"
+            }),
+            createBaseVNode("path", {
+              d: "M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z",
+              fill: "currentColor"
+            })
+          ])
+        ], -1)),
+        _cache[1] || (_cache[1] = createBaseVNode("div", {
+          class: "brand-name",
+          "aria-label": "Caravel"
+        }, "Caravel", -1)),
+        createBaseVNode("div", {
+          ref_key: "clockEl",
+          ref: clockEl,
+          class: "time"
+        }, toDisplayString(clockTime.value), 513),
+        createBaseVNode("div", _hoisted_2$a, toDisplayString(clockDate.value), 1),
+        createBaseVNode("div", _hoisted_3$7, toDisplayString(greeting.value), 1),
+        _cache[2] || (_cache[2] = createBaseVNode("a", {
+          class: "repo-cta",
+          href: "https://github.com/caravelhq/caravel",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          "aria-label": "Star Caravel on GitHub"
+        }, [
+          createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
+          createBaseVNode("span", { class: "repo-star" }, "★")
+        ], -1))
+      ]);
+    };
+  }
+});
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref("projects");
+  const filter = /* @__PURE__ */ ref("all");
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const pane = /* @__PURE__ */ ref("empty");
+  const pickerCollapsed = /* @__PURE__ */ ref(false);
+  const currentTaskId = /* @__PURE__ */ ref(null);
+  const currentTaskProject = /* @__PURE__ */ ref(null);
+  const currentViewMode = /* @__PURE__ */ ref("task");
+  const currentProjectSlug = /* @__PURE__ */ ref(null);
+  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
+  const loaded = /* @__PURE__ */ ref(false);
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    pane,
+    pickerCollapsed,
+    currentTaskId,
+    currentTaskProject,
+    currentViewMode,
+    currentProjectSlug,
+    taskFromProjectSlug,
+    loaded
+  };
+});
+const _hoisted_1$e = ["data-task-id"];
+const _hoisted_2$9 = { class: "db-tier-row-headline" };
+const _hoisted_3$6 = {
+  key: 0,
+  class: "db-tier-row-agent"
+};
+const _sfc_main$h = /* @__PURE__ */ defineComponent({
+  __name: "TierRow",
+  props: {
+    row: {}
+  },
+  emits: ["open-task"],
+  setup(__props, { emit: __emit }) {
+    const emit2 = __emit;
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: "db-tier-row",
+        role: "button",
+        tabindex: "0",
+        "data-task-id": __props.row.id,
+        onClick: _cache[0] || (_cache[0] = ($event) => emit2("open-task", __props.row.id)),
+        onKeydown: [
+          _cache[1] || (_cache[1] = withKeys(($event) => emit2("open-task", __props.row.id), ["enter"])),
+          _cache[2] || (_cache[2] = withKeys(withModifiers(($event) => emit2("open-task", __props.row.id), ["prevent"]), ["space"]))
+        ]
+      }, [
+        createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
+        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$6, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
+      ], 40, _hoisted_1$e);
+    };
+  }
+});
+const _hoisted_1$d = ["data-tier"];
+const _hoisted_2$8 = { class: "db-tier-title" };
+const _hoisted_3$5 = { class: "db-tier-count" };
+const _hoisted_4$4 = {
+  key: 0,
+  style: { "opacity": "0.5" }
+};
+const _hoisted_5$4 = {
+  key: 1,
+  style: { "opacity": "0.5" }
+};
+const _hoisted_6$4 = {
+  key: 2,
+  style: { "opacity": "0.5" }
+};
+const _hoisted_7$2 = { class: "db-tier-rows" };
+const _hoisted_8$2 = {
+  key: 0,
+  class: "db-tier-empty"
+};
+const _sfc_main$g = /* @__PURE__ */ defineComponent({
+  __name: "TierSection",
+  props: {
+    sectionKey: {},
+    title: {},
+    tier: {},
+    rowLimit: {},
+    openAllLink: { type: Boolean }
+  },
+  setup(__props) {
+    const props = __props;
+    const dash = useDashboardStore();
+    const workspace = useWorkspaceStore();
+    const tasksStore = useTasksStore();
+    const collapsed = computed(() => dash.isCollapsed(props.sectionKey));
+    const limit = computed(() => props.rowLimit ?? 8);
+    const visibleRows = computed(() => props.tier.rows.slice(0, limit.value));
+    const hasMore = computed(() => props.tier.count > visibleRows.value.length);
+    function openTask(id) {
+      tasksStore.currentTaskId = id;
+      tasksStore.pane = "view";
+      workspace.open({ kind: "legacy", page: "tasks" });
+    }
+    function openAllTasks() {
+      workspace.open({ kind: "legacy", page: "tasks" });
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: "db-tier-section",
+        "data-tier": __props.sectionKey
+      }, [
+        createBaseVNode("div", {
+          class: "db-tier-header",
+          onClick: _cache[0] || (_cache[0] = ($event) => unref(dash).toggleSection(__props.sectionKey))
+        }, [
+          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.title), 1),
+          createBaseVNode("span", _hoisted_3$5, [
+            createTextVNode(toDisplayString(__props.tier.count) + " ", 1),
+            __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$4, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
+            collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$4, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$4, " ▾"))
+          ])
+        ]),
+        !collapsed.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+          createBaseVNode("div", _hoisted_7$2, [
+            !visibleRows.value.length ? (openBlock(), createElementBlock("div", _hoisted_8$2, "Nothing here.")) : createCommentVNode("", true),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(visibleRows.value, (row) => {
+              return openBlock(), createBlock(_sfc_main$h, {
+                key: row.id,
+                row,
+                onOpenTask: openTask
+              }, null, 8, ["row"]);
+            }), 128))
+          ]),
+          __props.openAllLink && __props.tier.count > 0 ? (openBlock(), createElementBlock("button", {
+            key: 0,
+            class: "db-tier-open-all",
+            type: "button",
+            onClick: withModifiers(openAllTasks, ["stop"])
+          }, " Open all " + toDisplayString(__props.tier.count) + " in Tasks → ", 1)) : hasMore.value ? (openBlock(), createElementBlock("button", {
+            key: 1,
+            class: "db-tier-open-all",
+            type: "button",
+            onClick: withModifiers(openAllTasks, ["stop"])
+          }, toDisplayString(__props.tier.count - visibleRows.value.length) + " more in Tasks → ", 1)) : createCommentVNode("", true)
+        ], 64)) : createCommentVNode("", true)
+      ], 8, _hoisted_1$d);
+    };
+  }
+});
+const _hoisted_1$c = {
+  id: "dashboard-attention-tiers",
+  class: "db-tiers",
+  "aria-label": "Attention tiers"
+};
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
+  __name: "AttentionTiers",
+  setup(__props) {
+    const attention = useAttentionStore();
+    const triageTier = computed(() => {
+      const t = attention.tiers;
+      if (!t) return { count: 0, rows: [] };
+      return {
+        count: t.unclassified.count + t.failed.count,
+        rows: [...t.unclassified.rows, ...t.failed.rows].slice(0, 8)
+      };
+    });
+    const blockedTier = computed(() => {
+      var _a2;
+      return ((_a2 = attention.tiers) == null ? void 0 : _a2.blocked) ?? { count: 0, rows: [] };
+    });
+    const pausedTier = computed(() => {
+      var _a2;
+      return ((_a2 = attention.tiers) == null ? void 0 : _a2.paused) ?? { count: 0, rows: [] };
+    });
+    const reportsTier = computed(() => {
+      var _a2;
+      return ((_a2 = attention.tiers) == null ? void 0 : _a2.reports) ?? { count: 0, rows: [] };
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$c, [
+        createVNode(_sfc_main$g, {
+          "section-key": "triage",
+          title: "Triage",
+          tier: triageTier.value
+        }, null, 8, ["tier"]),
+        createVNode(_sfc_main$g, {
+          "section-key": "blocked",
+          title: "Blocked",
+          tier: blockedTier.value
+        }, null, 8, ["tier"]),
+        createVNode(_sfc_main$g, {
+          "section-key": "paused",
+          title: "Paused",
+          tier: pausedTier.value
+        }, null, 8, ["tier"]),
+        createVNode(_sfc_main$g, {
+          "section-key": "reports",
+          title: "Reports",
+          tier: reportsTier.value,
+          "row-limit": 3,
+          "open-all-link": true
+        }, null, 8, ["tier"])
+      ]);
+    };
+  }
+});
+const _hoisted_1$b = {
+  key: 0,
+  class: "db-totals"
+};
+const _hoisted_2$7 = { class: "db-totals-done" };
+const _hoisted_3$4 = { class: "db-totals-failed" };
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
+  __name: "TotalsLine",
+  props: {
+    totals: {}
+  },
+  setup(__props) {
+    const workspace = useWorkspaceStore();
+    return (_ctx, _cache) => {
+      return __props.totals ? (openBlock(), createElementBlock("div", _hoisted_1$b, [
+        createBaseVNode("button", {
+          class: "db-totals-btn",
+          type: "button",
+          onClick: _cache[0] || (_cache[0] = ($event) => unref(workspace).open({ kind: "legacy", page: "tasks" }))
+        }, [
+          createBaseVNode("span", null, toDisplayString(__props.totals.open ?? 0) + " open", 1),
+          _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
+          createBaseVNode("span", null, toDisplayString(__props.totals.waiting ?? 0) + " waiting", 1),
+          _cache[2] || (_cache[2] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
+          createBaseVNode("span", _hoisted_2$7, toDisplayString(__props.totals.done ?? 0) + " done", 1),
+          _cache[3] || (_cache[3] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
+          createBaseVNode("span", _hoisted_3$4, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
+        ])
+      ])) : createCommentVNode("", true);
+    };
+  }
+});
+const _hoisted_1$a = ["data-sched-id"];
+const _hoisted_2$6 = { class: "db-sched-row-main" };
+const _hoisted_3$3 = { class: "db-sched-row-head" };
+const _hoisted_4$3 = { class: "db-sched-headline" };
+const _hoisted_5$3 = { class: "db-sched-meta" };
+const _hoisted_6$3 = { class: "db-sched-agent" };
+const _hoisted_7$1 = { class: "db-sched-cadence" };
+const _hoisted_8$1 = {
+  key: 0,
+  class: "db-sched-count"
+};
+const _hoisted_9$1 = { class: "db-sched-actions" };
+const _hoisted_10$1 = ["disabled"];
+const _hoisted_11$1 = { style: { "margin": "0 0 16px", "font-size": "13px", "color": "#c8daf0" } };
+const _hoisted_12$1 = { style: { "display": "flex", "gap": "8px", "justify-content": "flex-end" } };
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
+  __name: "ScheduleRow",
+  props: {
+    template: {}
+  },
+  emits: ["pause", "resume", "delete"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit2 = __emit;
+    const nt2 = useNewTaskStore();
+    const confirmOpen = /* @__PURE__ */ ref(false);
+    const busy = /* @__PURE__ */ ref(false);
+    const rec = computed(() => props.template.recurrence ?? {});
+    const enabled = computed(() => rec.value.enabled !== false);
+    const agent = computed(() => props.template.to ?? props.template.agent ?? "");
+    const headline = computed(() => props.template.headline ?? props.template.id);
+    const fireCount = computed(() => rec.value.count ?? 0);
+    const cadenceLabel = computed(() => {
+      if (rec.value.cron) return "cron: " + rec.value.cron;
+      const iv = rec.value.interval;
+      if (iv) return "every " + (iv.every_hours ?? "?") + "h @ " + (iv.start ?? "--");
+      return "--";
+    });
+    function openEdit() {
+      nt2.open({ mode: "schedule", scheduleId: props.template.id });
+    }
+    function onPauseResume() {
+      if (busy.value) return;
+      if (enabled.value) emit2("pause", props.template.id, agent.value);
+      else emit2("resume", props.template.id, agent.value);
+    }
+    function onDeleteConfirm() {
+      confirmOpen.value = false;
+      emit2("delete", props.template.id, agent.value);
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: "db-sched-row",
+        "data-sched-id": __props.template.id
+      }, [
+        createBaseVNode("div", _hoisted_2$6, [
+          createBaseVNode("div", _hoisted_3$3, [
+            createBaseVNode("span", _hoisted_4$3, toDisplayString(headline.value), 1),
+            _cache[3] || (_cache[3] = createBaseVNode("span", {
+              class: "db-sched-recur",
+              title: "Recurring template"
+            }, "↻", -1))
+          ]),
+          createBaseVNode("div", _hoisted_5$3, [
+            createBaseVNode("span", _hoisted_6$3, toDisplayString(agent.value), 1),
+            createBaseVNode("span", _hoisted_7$1, toDisplayString(cadenceLabel.value), 1),
+            fireCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$1, toDisplayString(fireCount.value) + " fired", 1)) : createCommentVNode("", true),
+            createBaseVNode("span", {
+              class: normalizeClass(["db-sched-pill", enabled.value ? "db-sched-pill--active" : "db-sched-pill--paused"])
+            }, toDisplayString(enabled.value ? "● active" : "⏸ paused"), 3)
+          ])
+        ]),
+        createBaseVNode("div", _hoisted_9$1, [
+          createBaseVNode("button", {
+            class: "db-sched-act-btn",
+            type: "button",
+            onClick: openEdit
+          }, "Edit"),
+          createBaseVNode("button", {
+            class: "db-sched-act-btn",
+            type: "button",
+            disabled: busy.value,
+            onClick: onPauseResume
+          }, toDisplayString(enabled.value ? "Pause" : "Resume"), 9, _hoisted_10$1),
+          createBaseVNode("button", {
+            class: "db-sched-act-btn db-sched-act-btn--danger",
+            type: "button",
+            onClick: _cache[0] || (_cache[0] = ($event) => confirmOpen.value = true)
+          }, "Delete")
+        ]),
+        createVNode(_sfc_main$u, {
+          open: confirmOpen.value,
+          size: "sm",
+          title: "Delete schedule?",
+          onClose: _cache[2] || (_cache[2] = ($event) => confirmOpen.value = false)
+        }, {
+          footer: withCtx(() => [
+            createBaseVNode("div", _hoisted_12$1, [
+              createBaseVNode("button", {
+                class: "db-sched-act-btn",
+                type: "button",
+                onClick: _cache[1] || (_cache[1] = ($event) => confirmOpen.value = false)
+              }, "Cancel"),
+              createBaseVNode("button", {
+                class: "db-sched-act-btn db-sched-act-btn--danger",
+                type: "button",
+                onClick: onDeleteConfirm
+              }, "Delete")
+            ])
+          ]),
+          default: withCtx(() => [
+            createBaseVNode("p", _hoisted_11$1, [
+              _cache[4] || (_cache[4] = createTextVNode(" Delete ", -1)),
+              createBaseVNode("strong", null, toDisplayString(headline.value), 1),
+              _cache[5] || (_cache[5] = createTextVNode("? This cannot be undone. ", -1))
+            ])
+          ]),
+          _: 1
+        }, 8, ["open"])
+      ], 8, _hoisted_1$a);
+    };
+  }
+});
+const _hoisted_1$9 = { class: "db-sched" };
+const _hoisted_2$5 = { class: "db-sched-header" };
+const _hoisted_3$2 = {
+  key: 0,
+  class: "db-sched-empty"
+};
+const _hoisted_4$2 = {
+  key: 1,
+  class: "db-sched-empty"
+};
+const _hoisted_5$2 = {
+  key: 2,
+  class: "db-sched-list",
+  id: "dashboard-sched-list"
+};
+const _hoisted_6$2 = {
+  key: 3,
+  style: { "font-size": "12px", "color": "var(--muted)", "margin-top": "6px" }
+};
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  __name: "ScheduleList",
+  props: {
+    templates: {},
+    loading: { type: Boolean }
+  },
+  emits: ["refresh"],
+  setup(__props, { emit: __emit }) {
+    const emit2 = __emit;
+    const nt2 = useNewTaskStore();
+    const statusMsg = /* @__PURE__ */ ref("");
+    let statusTimer = null;
+    function setStatus(msg) {
+      statusMsg.value = msg;
+      if (statusTimer) clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => {
+        statusMsg.value = "";
+      }, 4e3);
+    }
+    async function onPause(id, agent) {
+      try {
+        const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/pause", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "pause failed");
+        emit2("refresh");
+      } catch (err) {
+        setStatus("Failed: " + (err instanceof Error ? err.message : String(err)));
+      }
+    }
+    async function onResume(id, agent) {
+      try {
+        const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/resume", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "resume failed");
+        emit2("refresh");
+      } catch (err) {
+        setStatus("Failed: " + (err instanceof Error ? err.message : String(err)));
+      }
+    }
+    async function onDelete(id, agent) {
+      try {
+        const res = await fetch(
+          "/api/tasks/schedule/" + encodeURIComponent(id) + "?agent=" + encodeURIComponent(agent),
+          { method: "DELETE" }
+        );
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "delete failed");
+        setStatus("Deleted.");
+        emit2("refresh");
+      } catch (err) {
+        setStatus("Failed: " + (err instanceof Error ? err.message : String(err)));
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("section", _hoisted_1$9, [
+        createBaseVNode("div", _hoisted_2$5, [
+          _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-sched-title" }, "Scheduled tasks", -1)),
+          createBaseVNode("button", {
+            class: "db-sched-act-btn",
+            type: "button",
+            onClick: _cache[0] || (_cache[0] = ($event) => unref(nt2).open())
+          }, "+ New Task")
+        ]),
+        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$2, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$2, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$2, [
+          (openBlock(true), createElementBlock(Fragment, null, renderList(__props.templates, (t) => {
+            return openBlock(), createBlock(_sfc_main$d, {
+              key: t.id,
+              template: t,
+              onPause,
+              onResume,
+              onDelete
+            }, null, 8, ["template"]);
+          }), 128))
+        ])),
+        statusMsg.value ? (openBlock(), createElementBlock("div", _hoisted_6$2, toDisplayString(statusMsg.value), 1)) : createCommentVNode("", true)
+      ]);
+    };
+  }
+});
+const _hoisted_1$8 = { id: "dashboard-panel" };
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
+  __name: "DashboardView",
+  setup(__props) {
+    const attentionStore = useAttentionStore();
+    const live = useLiveStore();
+    useResource("attention", {
+      topics: ["attention", "tasks"],
+      fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
+    });
+    const { entry: schedEntry } = useResource("schedules", {
+      topics: ["tasks"],
+      fetch: async () => {
+        const r = await fetch("/api/tasks/scheduled");
+        const d2 = await r.json();
+        return d2.ok ? d2.templates ?? [] : [];
+      }
+    });
+    const templates = computed(() => {
+      var _a2;
+      const data = (_a2 = schedEntry.value) == null ? void 0 : _a2.data;
+      return Array.isArray(data) ? data : [];
+    });
+    const schedulesLoading = computed(
+      () => !schedEntry.value || schedEntry.value.status === "idle" || schedEntry.value.status === "loading"
+    );
+    const { entry: summaryEntry } = useResource("summary", {
+      topics: ["tasks"],
+      fetch: async () => {
+        const r = await fetch("/api/multi-agent/summary");
+        const d2 = await r.json();
+        return d2.ok ? d2.summary : null;
+      }
+    });
+    const totals = computed(() => {
+      var _a2;
+      const s = (_a2 = summaryEntry.value) == null ? void 0 : _a2.data;
+      return (s == null ? void 0 : s.totals) ?? null;
+    });
+    function prefetchTopReports() {
+      var _a2;
+      const tiers = attentionStore.tiers;
+      if (!((_a2 = tiers == null ? void 0 : tiers.reports) == null ? void 0 : _a2.rows)) return;
+      for (const row of tiers.reports.rows.slice(0, 3)) {
+        if (row.id) {
+          live.prefetch("report:" + row.id, {
+            topics: ["tasks"],
+            fetch: async () => {
+              const r = await fetch("/api/tasks/" + encodeURIComponent(row.id));
+              return r.ok ? r.json() : null;
+            }
+          });
+        }
+      }
+    }
+    watch(() => attentionStore.tiers, (tiers) => {
+      if (tiers) prefetchTopReports();
+    }, { once: true });
+    function onSchedulesRefresh() {
+      live.bind("schedules", {
+        topics: ["tasks"],
+        fetch: async () => {
+          const r = await fetch("/api/tasks/scheduled");
+          const d2 = await r.json();
+          return d2.ok ? d2.templates ?? [] : [];
+        }
+      });
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$8, [
+        createVNode(_sfc_main$i),
+        createVNode(_sfc_main$e, { totals: totals.value }, null, 8, ["totals"]),
+        createVNode(_sfc_main$f),
+        createVNode(_sfc_main$c, {
+          templates: templates.value,
+          loading: schedulesLoading.value,
+          onRefresh: onSchedulesRefresh
+        }, null, 8, ["templates", "loading"])
+      ]);
+    };
+  }
+});
 function z() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
@@ -25780,57 +26565,6 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
-  const view = /* @__PURE__ */ ref("projects");
-  const filter = /* @__PURE__ */ ref("all");
-  const cache = /* @__PURE__ */ ref([]);
-  const expanded = /* @__PURE__ */ ref({});
-  const collapsed = /* @__PURE__ */ ref({});
-  const bulkSelected = /* @__PURE__ */ ref({});
-  const multiSelectActive = /* @__PURE__ */ ref(false);
-  const pane = /* @__PURE__ */ ref("empty");
-  const pickerCollapsed = /* @__PURE__ */ ref(false);
-  const currentTaskId = /* @__PURE__ */ ref(null);
-  const currentTaskProject = /* @__PURE__ */ ref(null);
-  const currentViewMode = /* @__PURE__ */ ref("task");
-  const currentProjectSlug = /* @__PURE__ */ ref(null);
-  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
-  const loaded = /* @__PURE__ */ ref(false);
-  return {
-    view,
-    filter,
-    cache,
-    expanded,
-    collapsed,
-    bulkSelected,
-    multiSelectActive,
-    pane,
-    pickerCollapsed,
-    currentTaskId,
-    currentTaskProject,
-    currentViewMode,
-    currentProjectSlug,
-    taskFromProjectSlug,
-    loaded
-  };
-});
-const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
-  const tiers = /* @__PURE__ */ ref(null);
-  const lastFetch = /* @__PURE__ */ ref(0);
-  async function fetch2() {
-    try {
-      const res = await window.fetch("/api/tasks/attention");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.ok && data.tiers) {
-        tiers.value = data.tiers;
-        lastFetch.value = Date.now();
-      }
-    } catch (_2) {
-    }
-  }
-  return { tiers, lastFetch, fetch: fetch2 };
-});
 function escapeHtml(s) {
   return escHtml(String(s == null ? "" : s));
 }
@@ -26480,34 +27214,6 @@ function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulk
   }
   projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
 }
-let projectsCache = null;
-async function ensureProjectsLoaded(select) {
-  if (!select) return;
-  if (projectsCache !== null) {
-    populateProjectSelect(select, projectsCache);
-    return;
-  }
-  try {
-    const res = await fetch("/api/projects", { cache: "no-store" });
-    const data = await res.json();
-    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
-  } catch (_2) {
-    projectsCache = [];
-  }
-  populateProjectSelect(select, projectsCache);
-}
-function populateProjectSelect(select, projects) {
-  const current = select.value;
-  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
-  for (const p2 of projects) {
-    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
-    html += '<option value="' + escapeHtml(p2.slug) + '">' + escapeHtml(label) + "</option>";
-  }
-  select.innerHTML = html;
-  if (current && Array.from(select.options).some((o) => o.value === current)) {
-    select.value = current;
-  }
-}
 function renderSection(title, bodyHtml, openByDefault) {
   if (!bodyHtml) return "";
   return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
@@ -26732,6 +27438,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     const live = useLiveStore();
     const ui = useUiStore();
     const ws = useWorkspaceStore();
+    const nt2 = useNewTaskStore();
     let tasksTreeEl = null;
     let tasksViewTabsEl = null;
     let tasksFilterChipsEl = null;
@@ -26743,7 +27450,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     let tasksViewerEl = null;
     let tasksProjectPaneEl = null;
     let tasksEmptyEl = null;
-    let tasksNewFormEl = null;
     let tasksUserBlockedEl = null;
     let bulkBarEl = null;
     let taskPanelBodyEl = null;
@@ -26762,7 +27468,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
       if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
       if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
-      if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
       const panel = document.getElementById("tasks-panel");
       const collapse = mode !== "empty";
       if (isPanelNarrow("tasks-panel", 1199)) {
@@ -27144,9 +27849,9 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
         }, 50);
       });
     }
-    function openFollowOnForm(sourceTaskId, sourceAgent) {
+    function openFollowOnForm(sourceTaskId, _sourceAgent) {
       var _a2;
-      if (!tasksNewFormEl || !sourceTaskId) return;
+      if (!sourceTaskId) return;
       const chain = currentTaskChain;
       let sourceCard = null;
       const childReviewPaths = [];
@@ -27173,25 +27878,13 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       const srcHeadline = String((sourceCard == null ? void 0 : sourceCard.headline) || sourceTaskId);
       const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
       const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
-      tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
-      const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
-      const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
-      if (parentChipEl) parentChipEl.removeAttribute("hidden");
-      if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
-      const headlineEl = document.getElementById("multi-agent-new-headline");
-      if (headlineEl) headlineEl.value = headlineSuggest;
-      const briefEl = document.getElementById("multi-agent-new-brief");
-      if (briefEl) briefEl.value = briefSuggest;
-      const ctxEl = document.getElementById("multi-agent-new-context");
-      if (ctxEl) ctxEl.value = contextLines.join("\n");
-      if (sourceCard == null ? void 0 : sourceCard.project) {
-        const projEl = document.getElementById("multi-agent-new-project");
-        if (projEl) ensureProjectsLoaded(projEl).then(() => {
-          if (projEl) projEl.value = sourceCard.project;
-        });
-      }
-      setRightPaneMode("new");
-      headlineEl == null ? void 0 : headlineEl.focus();
+      nt2.open({
+        parent: sourceTaskId,
+        project: sourceCard == null ? void 0 : sourceCard.project,
+        headline: headlineSuggest,
+        brief: briefSuggest,
+        context: contextLines
+      });
     }
     function onPanelBodyClick(ev) {
       var _a2, _b, _c, _d, _e2, _f, _g;
@@ -27343,139 +28036,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
         return;
       }
     }
-    let agentsCache = [];
-    async function loadAgentsForForm() {
-      try {
-        const res = await fetch("/api/agents");
-        const data = await res.json();
-        if ((data == null ? void 0 : data.ok) && Array.isArray(data.agents)) agentsCache = data.agents;
-      } catch (_2) {
-      }
-      populateTaskTargetSelect();
-    }
-    function populateTaskTargetSelect() {
-      const sel = document.getElementById("multi-agent-new-to");
-      if (!sel) return;
-      const prev = sel.value;
-      const coord = agentsCache.find((a) => a.name === "alice");
-      const rest = agentsCache.filter((a) => a.name !== "alice");
-      const ordered = coord ? [coord, ...rest] : rest;
-      sel.innerHTML = ordered.map((a) => {
-        const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-        return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
-      }).join("");
-      if (prev) sel.value = prev;
-    }
-    function updateHeadlineCount() {
-      const input = document.getElementById("multi-agent-new-headline");
-      const counter = document.getElementById("multi-agent-new-headline-count");
-      if (!input || !counter) return;
-      const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
-      counter.textContent = words + " / 10 words";
-      counter.classList.toggle("is-over", words > 10);
-    }
-    function clearParentChip() {
-      if (!tasksNewFormEl) return;
-      tasksNewFormEl.removeAttribute("data-parent");
-      const chipEl = document.getElementById("multi-agent-new-parent-chip");
-      const chipIdEl = document.getElementById("multi-agent-new-parent-id");
-      if (chipEl) chipEl.setAttribute("hidden", "");
-      if (chipIdEl) chipIdEl.textContent = "";
-    }
-    async function submitNewTask(ev) {
-      var _a2, _b, _c, _d, _e2, _f, _g, _h;
-      ev.preventDefault();
-      const headline = ((_a2 = document.getElementById("multi-agent-new-headline")) == null ? void 0 : _a2.value.trim()) || "";
-      const to = ((_b = document.getElementById("multi-agent-new-to")) == null ? void 0 : _b.value) || "";
-      const kind = ((_c = document.getElementById("multi-agent-new-kind")) == null ? void 0 : _c.value) || "";
-      const from = ((_d = document.getElementById("multi-agent-new-from")) == null ? void 0 : _d.value.trim()) || "user";
-      const brief = ((_e2 = document.getElementById("multi-agent-new-brief")) == null ? void 0 : _e2.value.trim()) || "";
-      const output = ((_f = document.getElementById("multi-agent-new-output")) == null ? void 0 : _f.value.trim()) || "";
-      const contextRaw = ((_g = document.getElementById("multi-agent-new-context")) == null ? void 0 : _g.value.trim()) || "";
-      const context = contextRaw ? contextRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
-      const needsRaw = ((_h = document.getElementById("multi-agent-new-needs")) == null ? void 0 : _h.value.trim()) || "";
-      const needs = needsRaw ? needsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
-      const newStatus = document.getElementById("multi-agent-new-status");
-      const submitBtn = document.getElementById("multi-agent-new-submit");
-      const headlineWords = headline.split(/\s+/).filter(Boolean).length;
-      if (!headline) {
-        if (newStatus) {
-          newStatus.textContent = "Headline is required (≤10 words).";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (headlineWords > 10) {
-        if (newStatus) {
-          newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`;
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (!brief) {
-        if (newStatus) {
-          newStatus.textContent = "Brief is required.";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (!to) {
-        populateTaskTargetSelect();
-        if (newStatus) {
-          newStatus.textContent = "Pick a target agent.";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (newStatus) {
-        newStatus.textContent = "Dispatching…";
-        newStatus.className = "multi-agent-new-status";
-      }
-      if (submitBtn) submitBtn.disabled = true;
-      try {
-        const payload = { headline, to, from: from || "user", kind, brief, output_format: output, context };
-        if (needs.length > 0) payload.needs = needs;
-        const projectEl = document.getElementById("multi-agent-new-project");
-        if (projectEl) {
-          const projVal = (projectEl.value || "").trim();
-          if (projVal === "__none__") payload.project = null;
-          else if (projVal) payload.project = projVal;
-        }
-        const parentAttr = tasksNewFormEl == null ? void 0 : tasksNewFormEl.getAttribute("data-parent");
-        if (parentAttr) payload.parent = parentAttr;
-        const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (!data.ok) {
-          if (newStatus) {
-            newStatus.textContent = "Error: " + (data.error || "unknown");
-            newStatus.className = "multi-agent-new-status is-error";
-          }
-          if (submitBtn) submitBtn.disabled = false;
-          return;
-        }
-        if (newStatus) {
-          newStatus.textContent = "Dispatched " + data.id;
-          newStatus.className = "multi-agent-new-status is-ok";
-        }
-        ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.value = "";
-        });
-        clearParentChip();
-        updateHeadlineCount();
-        if (submitBtn) submitBtn.disabled = false;
-        fetchTasks();
-        attentionStore.fetch();
-        if (data.id) openTaskPanel(data.id);
-        else setRightPaneMode("empty");
-      } catch (err) {
-        if (newStatus) {
-          newStatus.textContent = "Error: " + String(err.message || err);
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    }
     function onTreeChange(ev) {
       handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
     }
@@ -27598,21 +28158,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       }
     }
     function openNewTaskFormForProject(slug) {
-      if (!tasksNewFormEl) return;
-      tasksNewFormEl.removeAttribute("data-parent");
-      const chip = document.getElementById("multi-agent-new-parent-chip");
-      const chipId = document.getElementById("multi-agent-new-parent-id");
-      if (chip) chip.setAttribute("hidden", "");
-      if (chipId) chipId.textContent = "";
-      const projectSelect = document.getElementById("multi-agent-new-project");
-      if (projectSelect) {
-        ensureProjectsLoaded(projectSelect).then(() => {
-          if (slug && slug !== "__none__") projectSelect.value = slug;
-        });
-      }
-      setRightPaneMode("new");
-      const headlineEl = document.getElementById("multi-agent-new-headline");
-      if (headlineEl) headlineEl.focus();
+      nt2.open({ project: slug && slug !== "__none__" ? slug : void 0 });
     }
     onMounted(() => {
       tasksTreeEl = document.getElementById("tasks-tree");
@@ -27626,7 +28172,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       tasksViewerEl = document.getElementById("tasks-viewer");
       tasksProjectPaneEl = document.getElementById("tasks-project-pane");
       tasksEmptyEl = document.getElementById("tasks-empty");
-      tasksNewFormEl = document.getElementById("multi-agent-new");
       tasksUserBlockedEl = document.getElementById("tasks-user-blocked");
       taskPanelBodyEl = document.getElementById("tasks-viewer-body");
       taskPanelHeadlineEl = document.getElementById("tasks-viewer-headline");
@@ -27800,38 +28345,9 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
           openProjectPanel(tasksStore.currentTaskProject);
         });
       }
-      if (tasksNewBtnEl && tasksNewFormEl) {
-        tasksNewBtnEl.addEventListener("click", () => {
-          tasksNewFormEl.removeAttribute("data-parent");
-          const chip = document.getElementById("multi-agent-new-parent-chip");
-          const chipId = document.getElementById("multi-agent-new-parent-id");
-          if (chip) chip.setAttribute("hidden", "");
-          if (chipId) chipId.textContent = "";
-          const projectSelect = document.getElementById("multi-agent-new-project");
-          if (projectSelect) ensureProjectsLoaded(projectSelect);
-          setRightPaneMode("new");
-          const hl = document.getElementById("multi-agent-new-headline");
-          if (hl) hl.focus();
-        });
+      if (tasksNewBtnEl) {
+        tasksNewBtnEl.addEventListener("click", () => nt2.open());
       }
-      const cancelBtn = document.getElementById("multi-agent-new-cancel");
-      if (cancelBtn) cancelBtn.addEventListener("click", () => {
-        clearParentChip();
-        const newStatusEl = document.getElementById("multi-agent-new-status");
-        if (newStatusEl) newStatusEl.textContent = "";
-        setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
-      });
-      const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
-      if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
-      const headlineInput = document.getElementById("multi-agent-new-headline");
-      if (headlineInput) {
-        headlineInput.addEventListener("input", updateHeadlineCount);
-        updateHeadlineCount();
-      }
-      if (tasksNewFormEl) {
-        tasksNewFormEl.addEventListener("submit", submitNewTask);
-      }
-      loadAgentsForForm();
       live.bind("attention", {
         topics: ["attention", "tasks"],
         fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
@@ -28023,140 +28539,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
               createTextVNode("Select a task on the left, or click "),
               createBaseVNode("strong", null, "+ New"),
               createTextVNode(" to create one.")
-            ]),
-            createBaseVNode("form", {
-              class: "multi-agent-new tasks-new-form",
-              id: "multi-agent-new",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "multi-agent-new-head" }, "Create task"),
-              createBaseVNode("div", {
-                class: "multi-agent-new-parent",
-                id: "multi-agent-new-parent-chip",
-                hidden: ""
-              }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("↳ child of "),
-                  createBaseVNode("strong", { id: "multi-agent-new-parent-id" })
-                ]),
-                createBaseVNode("button", {
-                  type: "button",
-                  class: "multi-agent-new-parent-clear",
-                  id: "multi-agent-new-parent-clear",
-                  title: "Clear parent"
-                }, "✕")
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("Headline "),
-                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
-                ]),
-                createBaseVNode("input", {
-                  id: "multi-agent-new-headline",
-                  type: "text",
-                  maxlength: "120",
-                  placeholder: "BLE plugin survey",
-                  required: ""
-                }),
-                createBaseVNode("span", {
-                  class: "multi-agent-new-counter",
-                  id: "multi-agent-new-headline-count"
-                }, "0 / 10 words")
-              ]),
-              createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "Target"),
-                  createBaseVNode("select", { id: "multi-agent-new-to" })
-                ]),
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "Project"),
-                  createBaseVNode("select", { id: "multi-agent-new-project" }, [
-                    createBaseVNode("option", { value: "" }, "(auto from context)"),
-                    createBaseVNode("option", { value: "__none__" }, "(none / unassigned)")
-                  ])
-                ])
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, "Brief"),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-brief",
-                  rows: "4",
-                  placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
-                  required: ""
-                })
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("Depends on "),
-                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
-                ]),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-needs",
-                  rows: "2",
-                  placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
-                })
-              ]),
-              createBaseVNode("details", {
-                class: "multi-agent-new-advanced",
-                id: "multi-agent-new-advanced"
-              }, [
-                createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced"),
-                createBaseVNode("div", { class: "multi-agent-new-advanced-body" }, [
-                  createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                      createBaseVNode("span", null, "Kind"),
-                      createBaseVNode("select", { id: "multi-agent-new-kind" }, [
-                        createBaseVNode("option", { value: "research" }, "research"),
-                        createBaseVNode("option", { value: "code" }, "code"),
-                        createBaseVNode("option", { value: "review" }, "review"),
-                        createBaseVNode("option", { value: "summarise" }, "summarise"),
-                        createBaseVNode("option", { value: "decide" }, "decide"),
-                        createBaseVNode("option", { value: "other" }, "other")
-                      ])
-                    ]),
-                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                      createBaseVNode("span", null, "From"),
-                      createBaseVNode("input", {
-                        id: "multi-agent-new-from",
-                        type: "text",
-                        value: "user"
-                      })
-                    ])
-                  ]),
-                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                    createBaseVNode("span", null, "Output format"),
-                    createBaseVNode("textarea", {
-                      id: "multi-agent-new-output",
-                      rows: "2",
-                      placeholder: "What 'done' looks like."
-                    })
-                  ]),
-                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                    createBaseVNode("span", null, "Context (one per line — file path, jira:KEY, or URL)"),
-                    createBaseVNode("textarea", {
-                      id: "multi-agent-new-context",
-                      rows: "2",
-                      placeholder: "Notes/Projects/...\njira:WAL-XX"
-                    })
-                  ])
-                ])
-              ]),
-              createBaseVNode("div", { class: "multi-agent-new-actions" }, [
-                createBaseVNode("span", {
-                  class: "multi-agent-new-status",
-                  id: "multi-agent-new-status"
-                }),
-                createBaseVNode("button", {
-                  class: "multi-agent-new-cancel",
-                  id: "multi-agent-new-cancel",
-                  type: "button"
-                }, "Cancel"),
-                createBaseVNode("button", {
-                  class: "multi-agent-new-submit",
-                  id: "multi-agent-new-submit",
-                  type: "submit"
-                }, "Dispatch")
-              ])
             ])
           ])
         ], -1)
@@ -28901,11 +29283,11 @@ const _hoisted_1$4 = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$3 = { class: "files-toolbar" };
-const _hoisted_3 = { class: "files-toolbar-row files-toolbar-row-branch" };
-const _hoisted_4 = { class: "files-nav-group" };
-const _hoisted_5 = ["title"];
-const _hoisted_6 = { class: "files-split" };
+const _hoisted_2$4 = { class: "files-toolbar" };
+const _hoisted_3$1 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_4$1 = { class: "files-nav-group" };
+const _hoisted_5$1 = ["title"];
+const _hoisted_6$1 = { class: "files-split" };
 const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
@@ -29202,15 +29584,15 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$4, [
-        createBaseVNode("div", _hoisted_2$3, [
-          createBaseVNode("div", _hoisted_3, [
+        createBaseVNode("div", _hoisted_2$4, [
+          createBaseVNode("div", _hoisted_3$1, [
             _cache[2] || (_cache[2] = createBaseVNode("select", {
               id: "files-branch-select",
               class: "files-branch-select",
               title: "Branch",
               hidden: ""
             }, null, -1)),
-            createBaseVNode("div", _hoisted_4, [
+            createBaseVNode("div", _hoisted_4$1, [
               _cache[0] || (_cache[0] = createBaseVNode("button", {
                 id: "files-nav-back",
                 class: "files-nav-btn",
@@ -29234,7 +29616,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
                 type: "button",
                 title: "Back to " + filesBackTaskId.value,
                 onClick: goBackToTask
-              }, "← Task", 8, _hoisted_5)) : createCommentVNode("", true)
+              }, "← Task", 8, _hoisted_5$1)) : createCommentVNode("", true)
             ])
           ]),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "files-toolbar-row files-toolbar-row-crumb" }, [
@@ -29260,7 +29642,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
             "aria-hidden": "true"
           }, "▾")
         ], -1)),
-        createBaseVNode("div", _hoisted_6, [
+        createBaseVNode("div", _hoisted_6$1, [
           _cache[4] || (_cache[4] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
@@ -29293,616 +29675,8 @@ const _sfc_main$4 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$3 = { id: "dashboard-panel" };
-const _sfc_main$3 = /* @__PURE__ */ defineComponent({
-  __name: "DashboardPage",
-  setup(__props) {
-    const router2 = useRouter();
-    const ui = useUiStore();
-    let heartbeatTimezoneOffsetMinutes = 0;
-    let use12Hour = localStorage.getItem("clock.format") === "12";
-    let quickView = "jobs";
-    let quickViewInitialized = false;
-    let quickViewChosenByUser = false;
-    let lastRenderedSchedules = [];
-    let scrollAnimFrame = 0;
-    let clockInterval = null;
-    let summaryInterval = null;
-    let clockEl = null;
-    let dateEl = null;
-    let msgEl = null;
-    let quickJobsView = null;
-    let quickJobForm = null;
-    let quickOpenCreate = null;
-    let quickBackJobs = null;
-    let quickJobSubmit = null;
-    let quickJobStatus = null;
-    let quickJobsStatus = null;
-    let quickJobsNext = null;
-    let quickJobCount = null;
-    let quickJobsList = null;
-    let quickTaskAgent = null;
-    let quickTaskHeadline = null;
-    let quickTaskBrief = null;
-    let quickTaskRecurring = null;
-    let quickTaskScheduleSection = null;
-    let quickTaskModeCron = null;
-    let quickTaskModeInterval = null;
-    let quickCronSection = null;
-    let quickIntervalSection = null;
-    let quickTaskCron = null;
-    let quickTaskIntervalStart = null;
-    let quickTaskIntervalHours = null;
-    let multiAgentPanel = null;
-    let multiAgentGrid = null;
-    let multiAgentSub = null;
-    let multiAgentExtras = null;
-    let multiAgentRefresh = null;
-    function clampTimezoneOffsetMinutes(value) {
-      const n = Number(value);
-      if (!Number.isFinite(n)) return 0;
-      return Math.max(-720, Math.min(840, Math.round(n)));
-    }
-    function toOffsetDate(baseDate) {
-      const base = baseDate instanceof Date ? baseDate : new Date(String(baseDate));
-      return new Date(base.getTime() + heartbeatTimezoneOffsetMinutes * 6e4);
-    }
-    function formatOffsetDate(baseDate, options) {
-      return new Intl.DateTimeFormat(void 0, { ...options, timeZone: "UTC" }).format(toOffsetDate(baseDate));
-    }
-    function greetingForHour(h2) {
-      if (h2 < 5) return "Night mode.";
-      if (h2 < 12) return "Good morning.";
-      if (h2 < 18) return "Good afternoon.";
-      if (h2 < 22) return "Good evening.";
-      return "Wind down and ship clean.";
-    }
-    function isNightHour(hour) {
-      return hour < 5 || hour >= 22;
-    }
-    function applyVisualMode(hour) {
-      const night = isNightHour(hour);
-      document.body.classList.toggle("night-mode", night);
-      document.body.classList.toggle("day-mode", !night);
-      document.body.dataset.mode = night ? "night" : "day";
-      if (msgEl) msgEl.textContent = night ? "Night mode." : greetingForHour(hour);
-    }
-    function renderClock() {
-      if (!clockEl || !dateEl) return;
-      const now = /* @__PURE__ */ new Date();
-      const shifted = toOffsetDate(now);
-      const rawH = shifted.getUTCHours();
-      const hh = use12Hour ? String(rawH % 12 || 12).padStart(2, "0") : String(rawH).padStart(2, "0");
-      const mm = String(shifted.getUTCMinutes()).padStart(2, "0");
-      const ss = String(shifted.getUTCSeconds()).padStart(2, "0");
-      const suffix = use12Hour ? rawH >= 12 ? " PM" : " AM" : "";
-      clockEl.textContent = hh + ":" + mm + ":" + ss + suffix;
-      dateEl.textContent = formatOffsetDate(now, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-      });
-      applyVisualMode(rawH);
-      clockEl.classList.remove("ms-pulse");
-      requestAnimationFrame(() => clockEl == null ? void 0 : clockEl.classList.add("ms-pulse"));
-    }
-    function renderSchedulesList(schedules) {
-      if (!quickJobsList) return;
-      const items = Array.isArray(schedules) ? schedules : [];
-      lastRenderedSchedules = items;
-      if (!items.length) {
-        quickJobsList.innerHTML = '<div class="quick-jobs-empty">No scheduled tasks yet.</div>';
-        if (quickJobsNext) quickJobsNext.textContent = "No schedules";
-        return;
-      }
-      if (quickJobsNext) quickJobsNext.textContent = items.length + " schedule" + (items.length === 1 ? "" : "s");
-      quickJobsList.innerHTML = items.map((t) => {
-        const rec = t.recurrence || {};
-        const recInterval = rec.interval;
-        const cadence = rec.cron ? "cron: " + rec.cron : recInterval ? "every " + recInterval.every_hours + "h @ " + recInterval.start : "--";
-        const enabled = rec.enabled !== false;
-        const agent = String(t.agent || "--");
-        const headline = String(t.headline || t.title || t.id || "--");
-        const count = rec.count != null ? " (" + rec.count + " fired)" : "";
-        return '<div class="quick-job-item"><div class="quick-job-item-main"><div class="quick-job-line"><span class="quick-job-item-name">' + escHtml(headline) + '</span><span class="quick-job-item-time">' + escHtml(agent) + '</span><span class="quick-job-item-cooldown">' + escHtml(String(cadence)) + escHtml(count) + '</span></div><div style="font-size:11px;opacity:0.6;padding:2px 0 4px;">' + (enabled ? '<span style="color:#a8f1ca">● active</span>' : '<span style="color:#ffd39f">⏸ paused</span>') + '</div></div><div style="display:flex;gap:6px;">' + (enabled ? '<button class="quick-job-delete" type="button" data-pause-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Pause</button>' : '<button class="quick-job-delete" type="button" data-resume-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Resume</button>') + '<button class="quick-job-delete" type="button" data-delete-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Delete</button></div></div>';
-      }).join("");
-    }
-    async function loadAndRenderSchedules() {
-      try {
-        const res = await fetch("/api/tasks/scheduled", { cache: "no-store" });
-        if (!res.ok) throw new Error("status " + res.status);
-        const out = await res.json();
-        renderSchedulesList(Array.isArray(out.templates) ? out.templates : []);
-      } catch {
-        renderSchedulesList([]);
-      }
-    }
-    function smoothScrollTo(top) {
-      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
-      const start = window.scrollY;
-      const target = Math.max(0, top);
-      const distance = target - start;
-      if (Math.abs(distance) < 1) return;
-      const duration = 560;
-      const t0 = performance.now();
-      const step = (now) => {
-        const p2 = Math.min(1, (now - t0) / duration);
-        const eased = p2 < 0.5 ? 4 * p2 * p2 * p2 : 1 - Math.pow(-2 * p2 + 2, 3) / 2;
-        window.scrollTo(0, start + distance * eased);
-        if (p2 < 1) {
-          scrollAnimFrame = requestAnimationFrame(step);
-        } else {
-          scrollAnimFrame = 0;
-        }
-      };
-      scrollAnimFrame = requestAnimationFrame(step);
-    }
-    function focusQuickView(view) {
-      const target = view === "jobs" ? quickJobsView : quickJobForm;
-      if (!target) return;
-      const y2 = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 44);
-      smoothScrollTo(y2);
-    }
-    function setQuickView(view, options) {
-      if (!quickJobsView || !quickJobForm) return;
-      const showJobs = view === "jobs";
-      quickJobsView.classList.toggle("quick-view-hidden", !showJobs);
-      quickJobForm.classList.toggle("quick-view-hidden", showJobs);
-      quickView = showJobs ? "jobs" : "create";
-      if (options == null ? void 0 : options.user) quickViewChosenByUser = true;
-      if (options == null ? void 0 : options.scroll) focusQuickView(quickView);
-    }
-    function syncQuickViewForSchedules() {
-      const count = lastRenderedSchedules.length;
-      if (count === 0) {
-        if (quickViewInitialized && quickView === "jobs" && quickViewChosenByUser) return;
-        setQuickView("create");
-        quickViewInitialized = true;
-        return;
-      }
-      if (!quickViewInitialized) {
-        setQuickView("jobs");
-        quickViewInitialized = true;
-      }
-    }
-    async function populateQuickTaskDropdowns() {
-      try {
-        const res = await fetch("/api/agents", { cache: "no-store" });
-        if (res.ok && quickTaskAgent) {
-          const data = await res.json();
-          const agents = Array.isArray(data.agents) ? data.agents : [];
-          quickTaskAgent.innerHTML = agents.map(
-            (a) => '<option value="' + escHtml(a.name) + '"' + (a.name === "alice" ? " selected" : "") + ">" + escHtml((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>"
-          ).join("");
-        }
-      } catch {
-      }
-    }
-    function updateBriefCount() {
-      if (quickTaskBrief && quickJobCount) {
-        quickJobCount.textContent = String((quickTaskBrief.value || "").trim().length) + " chars";
-      }
-    }
-    function syncScheduleSection() {
-      if (!quickTaskRecurring || !quickTaskScheduleSection) return;
-      quickTaskScheduleSection.classList.toggle("quick-view-hidden", !quickTaskRecurring.checked);
-    }
-    function syncCronIntervalSections() {
-      const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-      if (quickCronSection) quickCronSection.classList.toggle("quick-view-hidden", isInterval);
-      if (quickIntervalSection) quickIntervalSection.classList.toggle("quick-view-hidden", !isInterval);
-    }
-    async function loadSettings() {
-      try {
-        const res = await fetch("/api/settings");
-        const data = await res.json();
-        heartbeatTimezoneOffsetMinutes = clampTimezoneOffsetMinutes(data == null ? void 0 : data.timezoneOffsetMinutes);
-        renderClock();
-        loadAndRenderSchedules();
-      } catch {
-      }
-    }
-    function escSummary(s) {
-      return String(s).replace(
-        /[&<>"']/g,
-        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
-      );
-    }
-    function renderCell(name, counts) {
-      const open = counts.open || 0;
-      const waiting = counts.waiting || 0;
-      const done = counts.done || 0;
-      const failed = counts.failed || 0;
-      const archived = counts.archived || 0;
-      function countSpan(value, status, icon, label) {
-        const clsBase = value > 0 ? "multi-agent-count-" + status : "multi-agent-count-zero";
-        const clsLink = value > 0 ? " multi-agent-count-link" : "";
-        const dataAttrs = value > 0 ? ' data-agent="' + escSummary(name) + '" data-status="' + status + '" role="button" tabindex="0"' : "";
-        return '<span class="' + clsBase + clsLink + '" title="' + label + '"' + dataAttrs + ">" + icon + " " + value + "</span>";
-      }
-      return '<div class="multi-agent-cell"><div class="multi-agent-cell-name">' + escSummary(name) + '</div><div class="multi-agent-cell-counts">' + countSpan(open, "open", "○", "open") + countSpan(waiting, "waiting", "⏳", "waiting") + countSpan(done, "done", "✓", "done") + countSpan(failed, "failed", "✗", "failed") + countSpan(archived, "archived", "📦", "archived") + "</div></div>";
-    }
-    function navigateToTasksDir(agent, status) {
-      if (!agent || !status) return;
-      const dir = "agents/" + agent + "/tasks/" + status;
-      ui.filesNav = { path: dir, kind: "dir" };
-      router2.push("/files");
-    }
-    async function fetchSummary() {
-      if (!multiAgentPanel || !multiAgentGrid || !multiAgentSub) return;
-      try {
-        const res = await fetch("/api/multi-agent/summary", { cache: "no-store" });
-        const data = await res.json();
-        if (!data.ok || !data.summary) {
-          multiAgentSub.textContent = "Unavailable";
-          multiAgentGrid.innerHTML = "";
-          if (multiAgentExtras) multiAgentExtras.innerHTML = "";
-          multiAgentPanel.removeAttribute("hidden");
-          return;
-        }
-        const s = data.summary;
-        if (!s.enabled) {
-          multiAgentPanel.setAttribute("hidden", "");
-          return;
-        }
-        multiAgentPanel.removeAttribute("hidden");
-        const totals = s.totals || {};
-        multiAgentSub.textContent = (totals.open || 0) + " open · " + (totals.waiting || 0) + " waiting · " + (totals.done || 0) + " done · " + (totals.failed || 0) + " failed · " + (totals.archived || 0) + " archived";
-        const byAgent = s.byAgent || {};
-        const names = Object.keys(byAgent).sort();
-        multiAgentGrid.innerHTML = names.map((n) => renderCell(n, byAgent[n])).join("");
-        if (multiAgentExtras) {
-          const extraLines = [];
-          for (const item of s.waitingUser || []) {
-            extraLines.push('<div class="multi-agent-extras-line">⏳ ' + escSummary(item.agent) + ": " + escSummary(item.summary || item.file) + "</div>");
-          }
-          for (const pi of s.paused || []) {
-            extraLines.push('<div class="multi-agent-extras-line paused">⏸ ' + escSummary(pi.agent) + ": " + escSummary(pi.summary || pi.file) + "</div>");
-          }
-          for (const e of s.escalated || []) {
-            extraLines.push('<div class="multi-agent-extras-line escalated">↑ ' + escSummary(e.agent) + ": " + escSummary(e.file) + "</div>");
-          }
-          const unreadable = s.unreadable || [];
-          if (unreadable.length > 0) {
-            const label = unreadable.length + " envelope" + (unreadable.length === 1 ? "" : "s") + " unreadable";
-            const listItems = unreadable.map((u) => escSummary(u.agent) + "/" + escSummary(u.file)).join(", ");
-            extraLines.push('<div class="multi-agent-extras-line unreadable" title="' + escSummary(listItems) + '">⚠ ' + escSummary(label) + "</div>");
-          }
-          multiAgentExtras.innerHTML = extraLines.join("");
-        }
-      } catch (err) {
-        if (multiAgentSub) multiAgentSub.textContent = "Error: " + (err instanceof Error ? err.message : String(err));
-      }
-    }
-    async function onScheduleClick(event) {
-      const target = event.target;
-      if (!target) return;
-      const pauseBtn = target.closest("[data-pause-schedule]");
-      if (pauseBtn) {
-        const agent = pauseBtn.getAttribute("data-pause-schedule") || "";
-        const id = pauseBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        pauseBtn.disabled = true;
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/pause", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "pause failed");
-          await loadAndRenderSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          pauseBtn.disabled = false;
-        }
-        return;
-      }
-      const resumeBtn = target.closest("[data-resume-schedule]");
-      if (resumeBtn) {
-        const agent = resumeBtn.getAttribute("data-resume-schedule") || "";
-        const id = resumeBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        resumeBtn.disabled = true;
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/resume", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "resume failed");
-          await loadAndRenderSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          resumeBtn.disabled = false;
-        }
-        return;
-      }
-      const deleteBtn = target.closest("[data-delete-schedule]");
-      if (deleteBtn) {
-        const agent = deleteBtn.getAttribute("data-delete-schedule") || "";
-        const id = deleteBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        deleteBtn.disabled = true;
-        if (quickJobsStatus) quickJobsStatus.textContent = "Deleting…";
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "?agent=" + encodeURIComponent(agent), { method: "DELETE" });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "delete failed");
-          if (quickJobsStatus) quickJobsStatus.textContent = "Deleted.";
-          await loadAndRenderSchedules();
-          syncQuickViewForSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          deleteBtn.disabled = false;
-        }
-      }
-    }
-    async function onFormSubmit(event) {
-      event.preventDefault();
-      const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
-      const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
-      const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
-      if (!agent || !headline || !brief) {
-        if (quickJobStatus) quickJobStatus.textContent = "Agent, title, and description are required.";
-        return;
-      }
-      const isRecurring = quickTaskRecurring ? quickTaskRecurring.checked : false;
-      if (quickJobSubmit) quickJobSubmit.disabled = true;
-      if (quickJobStatus) quickJobStatus.textContent = isRecurring ? "Saving schedule…" : "Creating task…";
-      try {
-        if (isRecurring) {
-          const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-          const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
-          const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
-          const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
-          if (!isInterval && !cron) {
-            if (quickJobStatus) quickJobStatus.textContent = "Enter a cron expression.";
-            return;
-          }
-          const recurrence = isInterval ? { interval: { start: intervalStart || "08:00", every_hours: intervalHours }, enabled: true, skip_if_active: true } : { cron, enabled: true, skip_if_active: true };
-          const res = await fetch("/api/tasks/schedule", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief, recurrence })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "failed");
-          if (quickJobStatus) quickJobStatus.textContent = "Schedule created.";
-          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "schedule");
-          if (quickTaskHeadline) quickTaskHeadline.value = "";
-          if (quickTaskBrief) quickTaskBrief.value = "";
-          setQuickView("jobs", { scroll: true });
-          await loadAndRenderSchedules();
-          syncQuickViewForSchedules();
-        } else {
-          const res = await fetch("/api/tasks/new", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "failed");
-          if (quickJobStatus) quickJobStatus.textContent = "Task created.";
-          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "task");
-          if (quickTaskHeadline) quickTaskHeadline.value = "";
-          if (quickTaskBrief) quickTaskBrief.value = "";
-          setQuickView("jobs", { scroll: true });
-        }
-      } catch (err) {
-        if (quickJobStatus) quickJobStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-      } finally {
-        if (quickJobSubmit) quickJobSubmit.disabled = false;
-      }
-    }
-    onMounted(() => {
-      clockEl = document.getElementById("clock");
-      dateEl = document.getElementById("date");
-      msgEl = document.getElementById("message");
-      quickJobsView = document.getElementById("quick-jobs-view");
-      quickJobForm = document.getElementById("quick-job-form");
-      quickOpenCreate = document.getElementById("quick-open-create");
-      quickBackJobs = document.getElementById("quick-back-jobs");
-      quickJobSubmit = document.getElementById("quick-job-submit");
-      quickJobStatus = document.getElementById("quick-job-status");
-      quickJobsStatus = document.getElementById("quick-jobs-status");
-      quickJobsNext = document.getElementById("quick-jobs-next");
-      quickJobCount = document.getElementById("quick-job-count");
-      quickJobsList = document.getElementById("quick-jobs-list");
-      quickTaskAgent = document.getElementById("quick-task-agent");
-      quickTaskHeadline = document.getElementById("quick-task-headline");
-      quickTaskBrief = document.getElementById("quick-task-brief");
-      quickTaskRecurring = document.getElementById("quick-task-recurring");
-      quickTaskScheduleSection = document.getElementById("quick-task-schedule-section");
-      quickTaskModeCron = document.getElementById("quick-task-mode-cron");
-      quickTaskModeInterval = document.getElementById("quick-task-mode-interval");
-      quickCronSection = document.getElementById("quick-cron-section");
-      quickIntervalSection = document.getElementById("quick-interval-section");
-      quickTaskCron = document.getElementById("quick-task-cron");
-      quickTaskIntervalStart = document.getElementById("quick-task-interval-start");
-      quickTaskIntervalHours = document.getElementById("quick-task-interval-hours");
-      multiAgentPanel = document.getElementById("multi-agent-panel");
-      multiAgentGrid = document.getElementById("multi-agent-grid");
-      multiAgentSub = document.getElementById("multi-agent-sub");
-      multiAgentExtras = document.getElementById("multi-agent-extras");
-      multiAgentRefresh = document.getElementById("multi-agent-refresh");
-      renderClock();
-      clockInterval = setInterval(renderClock, 1e3);
-      setQuickView(quickView);
-      loadSettings();
-      quickOpenCreate == null ? void 0 : quickOpenCreate.addEventListener("click", () => setQuickView("create", { scroll: true, user: true }));
-      quickBackJobs == null ? void 0 : quickBackJobs.addEventListener("click", () => setQuickView("jobs", { scroll: true, user: true }));
-      quickTaskBrief == null ? void 0 : quickTaskBrief.addEventListener("input", updateBriefCount);
-      quickTaskRecurring == null ? void 0 : quickTaskRecurring.addEventListener("change", syncScheduleSection);
-      quickTaskModeCron == null ? void 0 : quickTaskModeCron.addEventListener("change", syncCronIntervalSections);
-      quickTaskModeInterval == null ? void 0 : quickTaskModeInterval.addEventListener("change", syncCronIntervalSections);
-      syncScheduleSection();
-      syncCronIntervalSections();
-      populateQuickTaskDropdowns();
-      quickJobForm == null ? void 0 : quickJobForm.addEventListener("submit", onFormSubmit);
-      document.addEventListener("click", onScheduleClick);
-      multiAgentRefresh == null ? void 0 : multiAgentRefresh.addEventListener("click", fetchSummary);
-      fetchSummary();
-      summaryInterval = setInterval(fetchSummary, 3e4);
-      const openTasksBtn = document.getElementById("multi-agent-open-tasks-btn");
-      openTasksBtn == null ? void 0 : openTasksBtn.addEventListener("click", () => router2.push("/tasks"));
-      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("click", (ev) => {
-        const link = ev.target.closest(".multi-agent-count-link");
-        if (!link) return;
-        ev.preventDefault();
-        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
-      });
-      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("keydown", (ev) => {
-        if (ev.key !== "Enter" && ev.key !== " ") return;
-        const link = ev.target.closest(".multi-agent-count-link");
-        if (!link) return;
-        ev.preventDefault();
-        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
-      });
-    });
-    onBeforeUnmount(() => {
-      if (clockInterval) clearInterval(clockInterval);
-      if (summaryInterval) clearInterval(summaryInterval);
-      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
-      document.removeEventListener("click", onScheduleClick);
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$3, [..._cache[0] || (_cache[0] = [
-        createBaseVNode("section", { class: "hero" }, [
-          createBaseVNode("div", {
-            class: "logo-art",
-            role: "img",
-            "aria-label": "Caravel ship logo"
-          }, [
-            createBaseVNode("svg", {
-              class: "logo-ship",
-              viewBox: "0 0 120 96",
-              width: "120",
-              height: "96",
-              fill: "none",
-              "aria-hidden": "true"
-            }, [
-              createBaseVNode("path", {
-                d: "M34 70 V30 M58 70 V14 M84 60 V28",
-                stroke: "currentColor",
-                "stroke-width": "1.6",
-                "stroke-linecap": "round",
-                opacity: "0.55"
-              }),
-              createBaseVNode("path", {
-                d: "M12 59 L52 24 M28 45 L80 6 M64 53 L102 22",
-                stroke: "currentColor",
-                "stroke-width": "1.4",
-                "stroke-linecap": "round",
-                opacity: "0.5"
-              }),
-              createBaseVNode("path", {
-                d: "M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z",
-                fill: "currentColor",
-                opacity: "0.6"
-              }),
-              createBaseVNode("path", {
-                d: "M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z",
-                fill: "currentColor",
-                opacity: "0.92"
-              }),
-              createBaseVNode("path", {
-                d: "M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z",
-                fill: "currentColor",
-                opacity: "0.74"
-              }),
-              createBaseVNode("path", {
-                d: "M58 14 h12 l-3.5 3 l3.5 3 h-12 Z",
-                fill: "currentColor",
-                opacity: "0.9"
-              }),
-              createBaseVNode("path", {
-                d: "M82 70 V60 H102 L100 70 Z",
-                fill: "currentColor",
-                opacity: "0.85"
-              }),
-              createBaseVNode("path", {
-                d: "M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z",
-                fill: "currentColor"
-              })
-            ])
-          ]),
-          createBaseVNode("div", {
-            class: "brand-name",
-            "aria-label": "Caravel"
-          }, "Caravel"),
-          createBaseVNode("div", {
-            class: "time",
-            id: "clock"
-          }, "--:--:--"),
-          createBaseVNode("div", {
-            class: "date",
-            id: "date"
-          }, "Loading date..."),
-          createBaseVNode("div", {
-            class: "message",
-            id: "message"
-          }, "Welcome back."),
-          createBaseVNode("a", {
-            class: "repo-cta",
-            href: "https://github.com/caravelhq/caravel",
-            target: "_blank",
-            rel: "noopener noreferrer",
-            "aria-label": "Star Caravel on GitHub"
-          }, [
-            createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
-            createBaseVNode("span", { class: "repo-star" }, "★")
-          ]),
-          createBaseVNode("section", {
-            class: "multi-agent-panel",
-            id: "multi-agent-panel",
-            hidden: ""
-          }, [
-            createBaseVNode("div", { class: "multi-agent-head" }, [
-              createBaseVNode("div", null, [
-                createBaseVNode("div", { class: "multi-agent-title" }, "Multi-Agent Tasks"),
-                createBaseVNode("div", {
-                  class: "multi-agent-sub",
-                  id: "multi-agent-sub"
-                }, "Loading...")
-              ]),
-              createBaseVNode("div", { class: "multi-agent-head-actions" }, [
-                createBaseVNode("button", {
-                  class: "multi-agent-action",
-                  id: "multi-agent-open-tasks-btn",
-                  type: "button",
-                  title: "Open the Tasks panel"
-                }, "Open Tasks"),
-                createBaseVNode("button", {
-                  class: "multi-agent-refresh",
-                  id: "multi-agent-refresh",
-                  type: "button",
-                  title: "Refresh"
-                }, "↻")
-              ])
-            ]),
-            createBaseVNode("div", {
-              class: "multi-agent-grid",
-              id: "multi-agent-grid"
-            }),
-            createBaseVNode("div", {
-              class: "multi-agent-extras",
-              id: "multi-agent-extras"
-            })
-          ])
-        ], -1),
-        createStaticVNode('<section class="quick-jobs-view" id="quick-jobs-view"><div class="quick-jobs-header"><div class="quick-jobs-next" id="quick-jobs-next">No schedules</div><button class="quick-open-create" id="quick-open-create" type="button">+ New Task</button></div><div class="quick-jobs-list" id="quick-jobs-list"><div class="quick-jobs-empty">Loading...</div></div><div class="quick-jobs-status" id="quick-jobs-status"></div></section><form class="quick-job-form quick-view-hidden" id="quick-job-form"><div class="quick-job-form-head"><button class="quick-back-jobs" id="quick-back-jobs" type="button">← Schedules</button><h2 class="quick-job-form-title">New Task</h2></div><div class="quick-field"><label class="quick-label" for="quick-task-agent">Agent</label><select class="quick-select" id="quick-task-agent"><option value="alice">alice</option></select></div><div class="quick-field"><label class="quick-label" for="quick-task-headline">Title</label><input class="quick-input" id="quick-task-headline" type="text" placeholder="Short task title" autocomplete="off"></div><div class="quick-field"><label class="quick-label" for="quick-task-brief">Description <span class="quick-count" id="quick-job-count">0 chars</span></label><textarea class="quick-textarea" id="quick-task-brief" rows="4" placeholder="What should the agent do?"></textarea></div><div class="quick-field quick-field-check"><label class="quick-check-label"><input type="checkbox" id="quick-task-recurring"> Recurring </label></div><section class="quick-view-hidden quick-schedule-section" id="quick-task-schedule-section"><div class="quick-field quick-field-radios"><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-interval" checked> Interval </label><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-cron"> Cron </label></div><section id="quick-interval-section"><div class="quick-field"><label class="quick-label" for="quick-task-interval-start">Start time (HH:MM)</label><input class="quick-input" id="quick-task-interval-start" type="text" placeholder="08:00"></div><div class="quick-field"><label class="quick-label" for="quick-task-interval-hours">Every (hours)</label><input class="quick-input" id="quick-task-interval-hours" type="number" value="24" min="1" max="168"></div></section><section class="quick-view-hidden" id="quick-cron-section"><div class="quick-field"><label class="quick-label" for="quick-task-cron">Cron expression</label><input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" autocomplete="off"></div></section></section><div class="quick-field quick-field-submit"><button class="quick-submit" id="quick-job-submit" type="submit">Create</button><div class="quick-job-status" id="quick-job-status"></div></div></form>', 2)
-      ])]);
-    };
-  }
-});
 const registry = {
-  dashboard: _sfc_main$3,
+  dashboard: _sfc_main$b,
   file: _sfc_main$9,
   report: _sfc_main$8,
   legacy: _sfc_main$4
@@ -29910,12 +29684,12 @@ const registry = {
 function getViewComponent(kind) {
   return registry[kind] ?? null;
 }
-const _hoisted_1$2 = { class: "view-host" };
-const _hoisted_2$2 = {
+const _hoisted_1$3 = { class: "view-host" };
+const _hoisted_2$3 = {
   key: 1,
   class: "view-host-empty"
 };
-const _sfc_main$2 = /* @__PURE__ */ defineComponent({
+const _sfc_main$3 = /* @__PURE__ */ defineComponent({
   __name: "ViewHost",
   props: {
     activeRef: {}
@@ -29932,7 +29706,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
     });
     const cacheKey = computed(() => props.activeRef ? refKey(props.activeRef) : "");
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$2, [
+      return openBlock(), createElementBlock("div", _hoisted_1$3, [
         __props.activeRef && viewComponent.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
           isLegacy.value ? (openBlock(), createBlock(resolveDynamicComponent(viewComponent.value), {
             key: 0,
@@ -29946,15 +29720,15 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
               resource: __props.activeRef
             }, null, 8, ["resource"]))
           ], 1024))
-        ], 64)) : (openBlock(), createElementBlock("div", _hoisted_2$2))
+        ], 64)) : (openBlock(), createElementBlock("div", _hoisted_2$3))
       ]);
     };
   }
 });
-const ViewHost = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-e41f6907"]]);
-const _hoisted_1$1 = { class: "workspace" };
-const _hoisted_2$1 = { class: "workspace-body" };
-const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+const ViewHost = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-e41f6907"]]);
+const _hoisted_1$2 = { class: "workspace" };
+const _hoisted_2$2 = { class: "workspace-body" };
+const _sfc_main$2 = /* @__PURE__ */ defineComponent({
   __name: "Workspace",
   setup(__props) {
     const ws = useWorkspaceStore();
@@ -29996,9 +29770,9 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       document.addEventListener("mouseup", onUp);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$1, [
+      return openBlock(), createElementBlock("div", _hoisted_1$2, [
         createVNode(TabStrip),
-        createBaseVNode("div", _hoisted_2$1, [
+        createBaseVNode("div", _hoisted_2$2, [
           !showSplit.value ? (openBlock(), createBlock(ViewHost, {
             key: 0,
             "active-ref": activeRefForGroup(unref(ws).focused)
@@ -30031,7 +29805,553 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-283cef38"]]);
+const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-283cef38"]]);
+const _hoisted_1$1 = {
+  key: 0,
+  class: "multi-agent-new-parent"
+};
+const _hoisted_2$1 = { class: "multi-agent-new-grid" };
+const _hoisted_3 = { class: "multi-agent-new-field" };
+const _hoisted_4 = {
+  key: 0,
+  value: "alice"
+};
+const _hoisted_5 = ["value"];
+const _hoisted_6 = { class: "multi-agent-new-field" };
+const _hoisted_7 = ["value"];
+const _hoisted_8 = { class: "multi-agent-new-block" };
+const _hoisted_9 = { class: "multi-agent-new-block" };
+const _hoisted_10 = { class: "multi-agent-new-advanced" };
+const _hoisted_11 = { class: "multi-agent-new-advanced-body" };
+const _hoisted_12 = { class: "multi-agent-new-block" };
+const _hoisted_13 = { class: "multi-agent-new-grid" };
+const _hoisted_14 = { class: "multi-agent-new-field" };
+const _hoisted_15 = { class: "multi-agent-new-field" };
+const _hoisted_16 = { class: "multi-agent-new-block" };
+const _hoisted_17 = { class: "multi-agent-new-block" };
+const _hoisted_18 = { class: "ntm-repeat-toggle" };
+const _hoisted_19 = { class: "ntm-check-label" };
+const _hoisted_20 = {
+  key: 1,
+  class: "ntm-repeat-section"
+};
+const _hoisted_21 = { class: "ntm-repeat-modes" };
+const _hoisted_22 = { class: "ntm-radio-label" };
+const _hoisted_23 = { class: "ntm-radio-label" };
+const _hoisted_24 = {
+  key: 0,
+  class: "multi-agent-new-grid"
+};
+const _hoisted_25 = { class: "multi-agent-new-field" };
+const _hoisted_26 = { class: "multi-agent-new-field" };
+const _hoisted_27 = { key: 1 };
+const _hoisted_28 = { class: "multi-agent-new-block" };
+const _hoisted_29 = {
+  key: 2,
+  class: "ntm-next-fires"
+};
+const _hoisted_30 = { class: "ntm-next-fires-list" };
+const _hoisted_31 = {
+  key: 3,
+  class: "ntm-next-fires ntm-next-fires--invalid"
+};
+const _hoisted_32 = { class: "multi-agent-new-actions" };
+const _hoisted_33 = ["disabled"];
+const _sfc_main$1 = /* @__PURE__ */ defineComponent({
+  __name: "NewTaskModal",
+  setup(__props) {
+    const nt2 = useNewTaskStore();
+    const to = /* @__PURE__ */ ref("alice");
+    const headline = /* @__PURE__ */ ref("");
+    const brief = /* @__PURE__ */ ref("");
+    const project = /* @__PURE__ */ ref("");
+    const needs = /* @__PURE__ */ ref("");
+    const kind = /* @__PURE__ */ ref("other");
+    const from = /* @__PURE__ */ ref("user");
+    const outputFormat = /* @__PURE__ */ ref("");
+    const context = /* @__PURE__ */ ref("");
+    const repeat2 = /* @__PURE__ */ ref(false);
+    const repeatMode = /* @__PURE__ */ ref("interval");
+    const intervalStart = /* @__PURE__ */ ref("08:00");
+    const intervalHours = /* @__PURE__ */ ref(24);
+    const cronExpr = /* @__PURE__ */ ref("");
+    const status = /* @__PURE__ */ ref("");
+    const statusClass2 = /* @__PURE__ */ ref("");
+    const submitting = /* @__PURE__ */ ref(false);
+    const agents = /* @__PURE__ */ ref([]);
+    const projects = /* @__PURE__ */ ref([]);
+    const headlineWords = computed(() => headline.value.trim().split(/\s+/).filter(Boolean).length);
+    const modalTitle = computed(() => nt2.mode === "schedule" ? "New schedule" : "New task");
+    function matchCronField(field, value) {
+      for (const part of field.split(",")) {
+        const [range, stepStr] = part.split("/");
+        const step = stepStr ? parseInt(stepStr) : 1;
+        if (range === "*") {
+          if (value % step === 0) return true;
+          continue;
+        }
+        if (range.includes("-")) {
+          const [lo, hi] = range.split("-").map(Number);
+          if (value >= lo && value <= hi && (value - lo) % step === 0) return true;
+          continue;
+        }
+        if (parseInt(range) === value) return true;
+      }
+      return false;
+    }
+    function cronMatches(expr, d2) {
+      const parts = expr.trim().split(/\s+/);
+      if (parts.length !== 5) return false;
+      const [minute, hour, dayOfMonth, month, dayOfWeek] = parts;
+      return matchCronField(minute, d2.getMinutes()) && matchCronField(hour, d2.getHours()) && matchCronField(dayOfMonth, d2.getDate()) && matchCronField(month, d2.getMonth() + 1) && matchCronField(dayOfWeek, d2.getDay());
+    }
+    function nextCronFires(expr, count) {
+      const results = [];
+      const d2 = /* @__PURE__ */ new Date();
+      d2.setSeconds(0, 0);
+      d2.setMinutes(d2.getMinutes() + 1);
+      for (let i = 0; i < 2880 && results.length < count; i++) {
+        if (cronMatches(expr, d2)) results.push(new Date(d2));
+        d2.setMinutes(d2.getMinutes() + 1);
+      }
+      return results;
+    }
+    function nextIntervalFires(startHHMM, everyHours, count) {
+      const results = [];
+      const [hStr, mStr] = (startHHMM || "08:00").split(":");
+      const h2 = parseInt(hStr) || 8;
+      const m2 = parseInt(mStr) || 0;
+      const now = /* @__PURE__ */ new Date();
+      const base = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h2, m2, 0, 0);
+      const ms = (everyHours || 24) * 36e5;
+      let t = base.getTime();
+      while (t <= now.getTime()) t += ms;
+      for (let i = 0; i < count; i++) {
+        results.push(new Date(t));
+        t += ms;
+      }
+      return results;
+    }
+    const nextFireTimes = computed(() => {
+      if (!repeat2.value) return [];
+      if (repeatMode.value === "cron") {
+        if (!cronExpr.value.trim()) return [];
+        try {
+          return nextCronFires(cronExpr.value.trim(), 3);
+        } catch {
+          return [];
+        }
+      }
+      return nextIntervalFires(intervalStart.value, intervalHours.value, 3);
+    });
+    function fmtDate(d2) {
+      return d2.toLocaleString(void 0, { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    }
+    async function loadAgents() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if ((data == null ? void 0 : data.ok) && Array.isArray(data.agents)) {
+          agents.value = data.agents;
+          const coord = agents.value.find((a) => a.name === "alice");
+          const rest = agents.value.filter((a) => a.name !== "alice");
+          agents.value = coord ? [coord, ...rest] : rest;
+        }
+      } catch {
+      }
+    }
+    async function loadProjects() {
+      try {
+        const res = await fetch("/api/projects");
+        const data = await res.json();
+        if ((data == null ? void 0 : data.ok) && Array.isArray(data.projects)) {
+          projects.value = data.projects;
+        }
+      } catch {
+      }
+    }
+    function reset() {
+      headline.value = nt2.prefillHeadline;
+      brief.value = nt2.prefillBrief;
+      context.value = (nt2.prefillContext || []).join("\n");
+      project.value = nt2.project || "";
+      needs.value = "";
+      kind.value = "other";
+      from.value = "user";
+      outputFormat.value = "";
+      repeat2.value = nt2.mode === "schedule";
+      repeatMode.value = "interval";
+      intervalStart.value = "08:00";
+      intervalHours.value = 24;
+      cronExpr.value = "";
+      status.value = "";
+      statusClass2.value = "";
+      submitting.value = false;
+    }
+    onMounted(() => {
+      loadAgents();
+      loadProjects();
+    });
+    watch(() => nt2.isOpen, (open) => {
+      if (open) reset();
+    });
+    async function submit() {
+      const hl = headline.value.trim();
+      const br = brief.value.trim();
+      if (!hl) {
+        status.value = "Headline is required (≤10 words).";
+        statusClass2.value = "is-error";
+        return;
+      }
+      if (headlineWords.value > 10) {
+        status.value = `Headline too long (${headlineWords.value} words; max 10).`;
+        statusClass2.value = "is-error";
+        return;
+      }
+      if (!br) {
+        status.value = "Brief is required.";
+        statusClass2.value = "is-error";
+        return;
+      }
+      if (!to.value) {
+        status.value = "Pick a target agent.";
+        statusClass2.value = "is-error";
+        return;
+      }
+      submitting.value = true;
+      status.value = repeat2.value ? "Saving schedule…" : "Dispatching…";
+      statusClass2.value = "";
+      try {
+        if (repeat2.value) {
+          const isCron = repeatMode.value === "cron";
+          if (isCron && !cronExpr.value.trim()) {
+            status.value = "Enter a cron expression.";
+            statusClass2.value = "is-error";
+            submitting.value = false;
+            return;
+          }
+          const recurrence = isCron ? { cron: cronExpr.value.trim(), enabled: true, skip_if_active: true } : { interval: { start: intervalStart.value || "08:00", every_hours: intervalHours.value }, enabled: true, skip_if_active: true };
+          const payload = {
+            to: to.value,
+            headline: hl,
+            kind: kind.value,
+            brief: br,
+            recurrence
+          };
+          if (from.value && from.value !== "user") payload.from = from.value;
+          if (outputFormat.value.trim()) payload.output_format = outputFormat.value.trim();
+          const ctxLines = context.value.trim().split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+          if (ctxLines.length > 0) payload.context = ctxLines;
+          const needsLines = needs.value.trim().split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+          if (needsLines.length > 0) payload.needs = needsLines;
+          if (project.value && project.value !== "__none__") payload.project = project.value;
+          if (nt2.parent) payload.parent = nt2.parent;
+          const res = await fetch("/api/tasks/schedule", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "failed");
+          status.value = "Schedule created: " + (out.id || "ok");
+          statusClass2.value = "is-ok";
+          setTimeout(() => nt2.close(), 1200);
+        } else {
+          const payload = {
+            headline: hl,
+            to: to.value,
+            from: from.value || "user",
+            kind: kind.value,
+            brief: br
+          };
+          if (outputFormat.value.trim()) payload.output_format = outputFormat.value.trim();
+          const ctxLines = context.value.trim().split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+          if (ctxLines.length > 0) payload.context = ctxLines;
+          const needsLines = needs.value.trim().split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+          if (needsLines.length > 0) payload.needs = needsLines;
+          if (project.value === "__none__") payload.project = null;
+          else if (project.value) payload.project = project.value;
+          if (nt2.parent) payload.parent = nt2.parent;
+          const res = await fetch("/api/tasks/new", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "failed");
+          status.value = "Dispatched " + (out.id || "task");
+          statusClass2.value = "is-ok";
+          setTimeout(() => nt2.close(), 800);
+        }
+      } catch (err) {
+        status.value = "Error: " + (err.message || String(err));
+        statusClass2.value = "is-error";
+      } finally {
+        submitting.value = false;
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(_sfc_main$u, {
+        id: "new-task-modal",
+        open: unref(nt2).isOpen,
+        title: modalTitle.value,
+        size: "lg",
+        onClose: _cache[16] || (_cache[16] = ($event) => unref(nt2).close())
+      }, {
+        default: withCtx(() => [
+          createBaseVNode("form", {
+            class: "ntm-form",
+            onSubmit: withModifiers(submit, ["prevent"])
+          }, [
+            unref(nt2).parent ? (openBlock(), createElementBlock("div", _hoisted_1$1, [
+              createBaseVNode("span", null, [
+                _cache[17] || (_cache[17] = createTextVNode("↳ child of ", -1)),
+                createBaseVNode("strong", null, toDisplayString(unref(nt2).parent), 1)
+              ])
+            ])) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_2$1, [
+              createBaseVNode("label", _hoisted_3, [
+                _cache[18] || (_cache[18] = createBaseVNode("span", null, "Target", -1)),
+                withDirectives(createBaseVNode("select", {
+                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => to.value = $event)
+                }, [
+                  !agents.value.length ? (openBlock(), createElementBlock("option", _hoisted_4, "alice")) : createCommentVNode("", true),
+                  (openBlock(true), createElementBlock(Fragment, null, renderList(agents.value, (a) => {
+                    return openBlock(), createElementBlock("option", {
+                      key: a.name,
+                      value: a.name
+                    }, toDisplayString((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)), 9, _hoisted_5);
+                  }), 128))
+                ], 512), [
+                  [vModelSelect, to.value]
+                ])
+              ]),
+              createBaseVNode("label", _hoisted_6, [
+                _cache[21] || (_cache[21] = createBaseVNode("span", null, "Project", -1)),
+                withDirectives(createBaseVNode("select", {
+                  "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => project.value = $event)
+                }, [
+                  _cache[19] || (_cache[19] = createBaseVNode("option", { value: "" }, "(auto from context)", -1)),
+                  _cache[20] || (_cache[20] = createBaseVNode("option", { value: "__none__" }, "(none / unassigned)", -1)),
+                  (openBlock(true), createElementBlock(Fragment, null, renderList(projects.value, (p2) => {
+                    return openBlock(), createElementBlock("option", {
+                      key: p2.slug,
+                      value: p2.slug
+                    }, toDisplayString(p2.name || p2.slug), 9, _hoisted_7);
+                  }), 128))
+                ], 512), [
+                  [vModelSelect, project.value]
+                ])
+              ])
+            ]),
+            createBaseVNode("label", _hoisted_8, [
+              _cache[22] || (_cache[22] = createBaseVNode("span", null, [
+                createTextVNode("Headline "),
+                createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
+              ], -1)),
+              withDirectives(createBaseVNode("input", {
+                id: "ntm-headline",
+                "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => headline.value = $event),
+                type: "text",
+                maxlength: "120",
+                placeholder: "BLE plugin survey",
+                required: "",
+                autocomplete: "off"
+              }, null, 512), [
+                [vModelText, headline.value]
+              ]),
+              createBaseVNode("span", {
+                class: normalizeClass(["multi-agent-new-counter", { "is-over": headlineWords.value > 10 }])
+              }, toDisplayString(headlineWords.value) + " / 10 words ", 3)
+            ]),
+            createBaseVNode("label", _hoisted_9, [
+              _cache[23] || (_cache[23] = createBaseVNode("span", null, [
+                createTextVNode("Brief "),
+                createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required)")
+              ], -1)),
+              withDirectives(createBaseVNode("textarea", {
+                id: "ntm-brief",
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => brief.value = $event),
+                rows: "4",
+                placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
+                required: ""
+              }, null, 512), [
+                [vModelText, brief.value]
+              ])
+            ]),
+            createBaseVNode("details", _hoisted_10, [
+              _cache[30] || (_cache[30] = createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced", -1)),
+              createBaseVNode("div", _hoisted_11, [
+                createBaseVNode("label", _hoisted_12, [
+                  _cache[24] || (_cache[24] = createBaseVNode("span", null, [
+                    createTextVNode("Depends on "),
+                    createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
+                  ], -1)),
+                  withDirectives(createBaseVNode("textarea", {
+                    "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => needs.value = $event),
+                    rows: "2",
+                    placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
+                  }, null, 512), [
+                    [vModelText, needs.value]
+                  ])
+                ]),
+                createBaseVNode("div", _hoisted_13, [
+                  createBaseVNode("label", _hoisted_14, [
+                    _cache[26] || (_cache[26] = createBaseVNode("span", null, "Kind", -1)),
+                    withDirectives(createBaseVNode("select", {
+                      "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => kind.value = $event)
+                    }, [..._cache[25] || (_cache[25] = [
+                      createBaseVNode("option", { value: "research" }, "research", -1),
+                      createBaseVNode("option", { value: "code" }, "code", -1),
+                      createBaseVNode("option", { value: "review" }, "review", -1),
+                      createBaseVNode("option", { value: "summarise" }, "summarise", -1),
+                      createBaseVNode("option", { value: "decide" }, "decide", -1),
+                      createBaseVNode("option", { value: "other" }, "other", -1)
+                    ])], 512), [
+                      [vModelSelect, kind.value]
+                    ])
+                  ]),
+                  createBaseVNode("label", _hoisted_15, [
+                    _cache[27] || (_cache[27] = createBaseVNode("span", null, "From", -1)),
+                    withDirectives(createBaseVNode("input", {
+                      "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => from.value = $event),
+                      type: "text",
+                      value: "user"
+                    }, null, 512), [
+                      [vModelText, from.value]
+                    ])
+                  ])
+                ]),
+                createBaseVNode("label", _hoisted_16, [
+                  _cache[28] || (_cache[28] = createBaseVNode("span", null, "Output format", -1)),
+                  withDirectives(createBaseVNode("textarea", {
+                    "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => outputFormat.value = $event),
+                    rows: "2",
+                    placeholder: "What 'done' looks like."
+                  }, null, 512), [
+                    [vModelText, outputFormat.value]
+                  ])
+                ]),
+                createBaseVNode("label", _hoisted_17, [
+                  _cache[29] || (_cache[29] = createBaseVNode("span", null, [
+                    createTextVNode("Context "),
+                    createBaseVNode("em", { class: "multi-agent-new-hint" }, "(one per line — file path, jira:KEY, or URL)")
+                  ], -1)),
+                  withDirectives(createBaseVNode("textarea", {
+                    "onUpdate:modelValue": _cache[8] || (_cache[8] = ($event) => context.value = $event),
+                    rows: "2",
+                    placeholder: "Notes/Projects/...\njira:WAL-XX"
+                  }, null, 512), [
+                    [vModelText, context.value]
+                  ])
+                ])
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_18, [
+              createBaseVNode("label", _hoisted_19, [
+                withDirectives(createBaseVNode("input", {
+                  "onUpdate:modelValue": _cache[9] || (_cache[9] = ($event) => repeat2.value = $event),
+                  type: "checkbox"
+                }, null, 512), [
+                  [vModelCheckbox, repeat2.value]
+                ]),
+                _cache[31] || (_cache[31] = createTextVNode(" Repeat ", -1))
+              ])
+            ]),
+            repeat2.value ? (openBlock(), createElementBlock("section", _hoisted_20, [
+              createBaseVNode("div", _hoisted_21, [
+                createBaseVNode("label", _hoisted_22, [
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => repeatMode.value = $event),
+                    type: "radio",
+                    value: "interval"
+                  }, null, 512), [
+                    [vModelRadio, repeatMode.value]
+                  ]),
+                  _cache[32] || (_cache[32] = createTextVNode(" Interval ", -1))
+                ]),
+                createBaseVNode("label", _hoisted_23, [
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => repeatMode.value = $event),
+                    type: "radio",
+                    value: "cron"
+                  }, null, 512), [
+                    [vModelRadio, repeatMode.value]
+                  ]),
+                  _cache[33] || (_cache[33] = createTextVNode(" Cron ", -1))
+                ])
+              ]),
+              repeatMode.value === "interval" ? (openBlock(), createElementBlock("div", _hoisted_24, [
+                createBaseVNode("label", _hoisted_25, [
+                  _cache[34] || (_cache[34] = createBaseVNode("span", null, "Start time (HH:MM)", -1)),
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[12] || (_cache[12] = ($event) => intervalStart.value = $event),
+                    type: "text",
+                    placeholder: "08:00"
+                  }, null, 512), [
+                    [vModelText, intervalStart.value]
+                  ])
+                ]),
+                createBaseVNode("label", _hoisted_26, [
+                  _cache[35] || (_cache[35] = createBaseVNode("span", null, "Every (hours)", -1)),
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => intervalHours.value = $event),
+                    type: "number",
+                    min: "1",
+                    max: "168"
+                  }, null, 512), [
+                    [
+                      vModelText,
+                      intervalHours.value,
+                      void 0,
+                      { number: true }
+                    ]
+                  ])
+                ])
+              ])) : (openBlock(), createElementBlock("div", _hoisted_27, [
+                createBaseVNode("label", _hoisted_28, [
+                  _cache[36] || (_cache[36] = createBaseVNode("span", null, "Cron expression", -1)),
+                  withDirectives(createBaseVNode("input", {
+                    "onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => cronExpr.value = $event),
+                    type: "text",
+                    placeholder: "0 8 * * *",
+                    autocomplete: "off"
+                  }, null, 512), [
+                    [vModelText, cronExpr.value]
+                  ])
+                ])
+              ])),
+              nextFireTimes.value.length ? (openBlock(), createElementBlock("div", _hoisted_29, [
+                _cache[37] || (_cache[37] = createBaseVNode("span", { class: "ntm-next-fires-label" }, "Next 3 fires:", -1)),
+                createBaseVNode("ul", _hoisted_30, [
+                  (openBlock(true), createElementBlock(Fragment, null, renderList(nextFireTimes.value, (d2, i) => {
+                    return openBlock(), createElementBlock("li", { key: i }, toDisplayString(fmtDate(d2)), 1);
+                  }), 128))
+                ])
+              ])) : repeat2.value && repeatMode.value === "cron" && cronExpr.value.trim() ? (openBlock(), createElementBlock("div", _hoisted_31, " Invalid cron expression ")) : createCommentVNode("", true)
+            ])) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_32, [
+              createBaseVNode("span", {
+                class: normalizeClass(["multi-agent-new-status", statusClass2.value])
+              }, toDisplayString(status.value), 3),
+              createBaseVNode("button", {
+                class: "multi-agent-new-cancel",
+                type: "button",
+                onClick: _cache[15] || (_cache[15] = ($event) => unref(nt2).close())
+              }, "Cancel"),
+              createBaseVNode("button", {
+                class: "multi-agent-new-submit",
+                type: "submit",
+                disabled: submitting.value
+              }, toDisplayString(repeat2.value ? "Save schedule" : "Dispatch"), 9, _hoisted_33)
+            ])
+          ], 32)
+        ]),
+        _: 1
+      }, 8, ["open", "title"]);
+    };
+  }
+});
 const _hoisted_1 = { class: "stage" };
 const _hoisted_2 = {
   class: "tab-nav",
@@ -30043,10 +30363,25 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const ui = useUiStore();
     const ws = useWorkspaceStore();
+    const nt2 = useNewTaskStore();
+    function onGlobalKeyDown(ev) {
+      if (ev.key !== "n") return;
+      const t = ev.target;
+      if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
+      ev.preventDefault();
+      nt2.open();
+    }
+    onMounted(() => {
+      document.addEventListener("keydown", onGlobalKeyDown);
+    });
+    onBeforeUnmount(() => {
+      document.removeEventListener("keydown", onGlobalKeyDown);
+    });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$k),
-        createVNode(_sfc_main$j),
+        createVNode(_sfc_main$s),
+        createVNode(_sfc_main$1),
+        createVNode(_sfc_main$r),
         createBaseVNode("main", _hoisted_1, [
           createBaseVNode("nav", _hoisted_2, [
             createBaseVNode("button", {
@@ -30086,9 +30421,9 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
           ]),
           createVNode(Workspace)
         ]),
-        createVNode(_sfc_main$i),
-        createVNode(_sfc_main$f),
-        createVNode(_sfc_main$c)
+        createVNode(_sfc_main$q),
+        createVNode(_sfc_main$n),
+        createVNode(_sfc_main$k)
       ], 64);
     };
   }
@@ -34251,6 +34586,108 @@ const pageStyles = String.raw`    :root {
       padding: 0 4px;
     }
     .multi-agent-new-parent-clear:hover { color: #fff; }
+
+    /* ── NewTaskModal ── */
+    .ntm-form { display: flex; flex-direction: column; gap: 12px; }
+    .ntm-repeat-toggle { display: flex; align-items: center; }
+    .ntm-check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #c8daf0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ntm-check-label input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; }
+    .ntm-repeat-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      background: #0d1f35;
+      border: 1px solid #1f3a5a;
+      border-radius: 7px;
+    }
+    .ntm-repeat-modes { display: flex; gap: 20px; }
+    .ntm-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #c8daf0;
+      cursor: pointer;
+    }
+    .ntm-next-fires {
+      font-size: 12px;
+      color: #9ab0cc;
+      margin-top: 4px;
+    }
+    .ntm-next-fires-label { display: block; margin-bottom: 4px; }
+    .ntm-next-fires-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .ntm-next-fires-list li { font-size: 11px; font-family: "JetBrains Mono", monospace; }
+    .ntm-next-fires--invalid { color: #ff9a9a; }
+    /* ── /NewTaskModal ── */
+
+    /* ── DashboardView tokens ── */
+    :root {
+      --color-active: #a8f1ca;
+      --color-paused: #ffd39f;
+    }
+    /* ── Attention tiers ── */
+    .db-tiers { display: flex; flex-direction: column; gap: 8px; width: min(820px, 100%); margin: 24px auto 0; }
+    .db-tier-section { border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; background: #07101da6; overflow: hidden; }
+    .db-tier-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; cursor: pointer; user-select: none; }
+    .db-tier-header:hover { background: rgba(255,255,255,0.04); }
+    .db-tier-title { font-size: 13px; font-weight: 600; color: #c8daf0; text-transform: uppercase; letter-spacing: 0.06em; }
+    .db-tier-count { font-size: 12px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+    .db-tier-rows { display: flex; flex-direction: column; }
+    .db-tier-row { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-top: 1px solid var(--border-subtle, #d8e4ff14); cursor: pointer; }
+    .db-tier-row:hover { background: rgba(255,255,255,0.04); }
+    .db-tier-row-headline { flex: 1; font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-tier-row-agent { font-size: 11px; color: var(--muted); padding: 2px 6px; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 3px; white-space: nowrap; }
+    .db-tier-open-all { display: block; padding: 8px 14px; font-size: 12px; color: var(--accent); border: none; background: none; cursor: pointer; text-align: left; border-top: 1px solid var(--border-subtle, #d8e4ff14); }
+    .db-tier-open-all:hover { text-decoration: underline; }
+    .db-tier-empty { padding: 12px 14px; font-size: 13px; color: var(--muted); font-style: italic; }
+    /* ── Totals line ── */
+    .db-totals { width: min(820px, 100%); margin: 12px auto 0; }
+    .db-totals-btn { display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 13px; color: var(--muted); background: none; border: none; cursor: pointer; }
+    .db-totals-btn:hover { color: var(--text); }
+    .db-totals-sep { opacity: 0.4; }
+    .db-totals-done { color: #93e0a8; }
+    .db-totals-failed { color: #ff9a9a; }
+    /* ── Schedule list ── */
+    .db-sched { width: min(820px, 100%); margin: 16px auto 24px; }
+    .db-sched-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 0 10px; }
+    .db-sched-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .db-sched-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; overflow: hidden; }
+    .db-sched-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border-subtle, #d8e4ff14); align-items: start; }
+    .db-sched-row:last-child { border-bottom: none; }
+    .db-sched-row-main { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+    .db-sched-row-head { display: flex; align-items: center; gap: 8px; }
+    .db-sched-headline { font-size: 13px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .db-sched-recur { font-size: 11px; color: var(--accent); }
+    .db-sched-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .db-sched-agent { font-size: 11px; color: var(--muted); }
+    .db-sched-cadence { font-size: 11px; color: var(--muted); font-family: "JetBrains Mono", monospace; }
+    .db-sched-count { font-size: 11px; color: var(--muted); }
+    .db-sched-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 1px 7px; border-radius: 10px; }
+    .db-sched-pill--active { color: var(--color-active); border: 1px solid var(--color-active); background: #a8f1ca14; }
+    .db-sched-pill--paused { color: var(--color-paused); border: 1px solid var(--color-paused); background: #ffd39f14; }
+    .db-sched-actions { display: flex; gap: 4px; align-items: flex-start; flex-shrink: 0; }
+    .db-sched-act-btn { padding: 3px 8px; font-size: 11px; background: transparent; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 4px; color: var(--muted); cursor: pointer; }
+    .db-sched-act-btn:hover { color: var(--text); border-color: var(--border-strong, #d8e4ff3d); }
+    .db-sched-act-btn--danger:hover { color: #ff9a9a; border-color: #ff9a9a40; }
+    .db-sched-empty { padding: 16px 14px; font-size: 13px; color: var(--muted); font-style: italic; text-align: center; border: 1px solid var(--border-subtle, #d8e4ff14); border-radius: 8px; }
+    /* ── /DashboardView tokens ── */
+
     .task-panel-section {
       border: 1px solid #ffffff10;
       border-radius: 8px;
