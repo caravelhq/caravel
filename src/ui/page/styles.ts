@@ -1319,8 +1319,6 @@ export const pageStyles = String.raw`    :root {
       max-height: 90vh;
       overflow: hidden;
       margin: auto;
-      display: flex;
-      flex-direction: column;
     }
     .base-modal::backdrop {
       background: rgba(0, 0, 0, 0.6);

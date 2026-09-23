@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { RouterLink, RouterView } from "vue-router";
+import { useUiStore } from "./stores/ui";
 import { useReadingStore } from "./stores/reading";
+
+const ui = useUiStore();
 import SettingsModal from "./components/chrome/SettingsModal.vue";
 import HeartbeatBar from "./components/chrome/HeartbeatBar.vue";
 import AudioModal from "./components/chrome/AudioModal.vue";
