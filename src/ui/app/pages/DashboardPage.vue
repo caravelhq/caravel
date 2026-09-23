@@ -3,16 +3,15 @@ import { onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { escHtml } from "../lib/highlight";
 import { useUiStore } from "../stores/ui";
+import { useNewTaskStore } from "../stores/newTask";
 
 const router = useRouter();
 const ui = useUiStore();
+const nt = useNewTaskStore();
 
 // ── State ──────────────────────────────────────────────────────────────────
 let heartbeatTimezoneOffsetMinutes = 0;
 let use12Hour = localStorage.getItem("clock.format") === "12";
-let quickView = "jobs";
-let quickViewInitialized = false;
-let quickViewChosenByUser = false;
 let lastRenderedSchedules: Array<Record<string, unknown>> = [];
 let scrollAnimFrame = 0;
 let clockInterval: ReturnType<typeof setInterval> | null = null;
@@ -22,28 +21,9 @@ let summaryInterval: ReturnType<typeof setInterval> | null = null;
 let clockEl: HTMLElement | null = null;
 let dateEl: HTMLElement | null = null;
 let msgEl: HTMLElement | null = null;
-let quickJobsView: HTMLElement | null = null;
-let quickJobForm: HTMLFormElement | null = null;
-let quickOpenCreate: HTMLElement | null = null;
-let quickBackJobs: HTMLElement | null = null;
-let quickJobSubmit: HTMLButtonElement | null = null;
-let quickJobStatus: HTMLElement | null = null;
 let quickJobsStatus: HTMLElement | null = null;
 let quickJobsNext: HTMLElement | null = null;
-let quickJobCount: HTMLElement | null = null;
 let quickJobsList: HTMLElement | null = null;
-let quickTaskAgent: HTMLSelectElement | null = null;
-let quickTaskHeadline: HTMLInputElement | null = null;
-let quickTaskBrief: HTMLTextAreaElement | null = null;
-let quickTaskRecurring: HTMLInputElement | null = null;
-let quickTaskScheduleSection: HTMLElement | null = null;
-let quickTaskModeCron: HTMLInputElement | null = null;
-let quickTaskModeInterval: HTMLInputElement | null = null;
-let quickCronSection: HTMLElement | null = null;
-let quickIntervalSection: HTMLElement | null = null;
-let quickTaskCron: HTMLInputElement | null = null;
-let quickTaskIntervalStart: HTMLInputElement | null = null;
-let quickTaskIntervalHours: HTMLInputElement | null = null;
 let multiAgentPanel: HTMLElement | null = null;
 let multiAgentGrid: HTMLElement | null = null;
 let multiAgentSub: HTMLElement | null = null;
@@ -166,7 +146,7 @@ async function loadAndRenderSchedules(): Promise<void> {
   }
 }
 
-// ── Quick view toggle ─────────────────────────────────────────────────────
+// ── Quick view scroll helper ──────────────────────────────────────────────
 function smoothScrollTo(top: number): void {
   if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
   const start = window.scrollY;
@@ -182,69 +162,6 @@ function smoothScrollTo(top: number): void {
     if (p < 1) { scrollAnimFrame = requestAnimationFrame(step); } else { scrollAnimFrame = 0; }
   };
   scrollAnimFrame = requestAnimationFrame(step);
-}
-
-function focusQuickView(view: string): void {
-  const target = view === "jobs" ? quickJobsView : quickJobForm;
-  if (!target) return;
-  const y = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 44);
-  smoothScrollTo(y);
-}
-
-function setQuickView(view: string, options?: { user?: boolean; scroll?: boolean }): void {
-  if (!quickJobsView || !quickJobForm) return;
-  const showJobs = view === "jobs";
-  quickJobsView.classList.toggle("quick-view-hidden", !showJobs);
-  quickJobForm.classList.toggle("quick-view-hidden", showJobs);
-  quickView = showJobs ? "jobs" : "create";
-  if (options?.user) quickViewChosenByUser = true;
-  if (options?.scroll) focusQuickView(quickView);
-}
-
-function syncQuickViewForSchedules(): void {
-  const count = lastRenderedSchedules.length;
-  if (count === 0) {
-    if (quickViewInitialized && quickView === "jobs" && quickViewChosenByUser) return;
-    setQuickView("create");
-    quickViewInitialized = true;
-    return;
-  }
-  if (!quickViewInitialized) {
-    setQuickView("jobs");
-    quickViewInitialized = true;
-  }
-}
-
-// ── Quick task form helpers ───────────────────────────────────────────────
-async function populateQuickTaskDropdowns(): Promise<void> {
-  try {
-    const res = await fetch("/api/agents", { cache: "no-store" });
-    if (res.ok && quickTaskAgent) {
-      const data = await res.json();
-      const agents = Array.isArray(data.agents) ? data.agents : [];
-      quickTaskAgent.innerHTML = agents.map((a: Record<string, string>) =>
-        '<option value="' + escHtml(a.name) + '"' + (a.name === "alice" ? " selected" : "") + ">" +
-        escHtml((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>"
-      ).join("");
-    }
-  } catch { /* agents list is best-effort */ }
-}
-
-function updateBriefCount(): void {
-  if (quickTaskBrief && quickJobCount) {
-    quickJobCount.textContent = String((quickTaskBrief.value || "").trim().length) + " chars";
-  }
-}
-
-function syncScheduleSection(): void {
-  if (!quickTaskRecurring || !quickTaskScheduleSection) return;
-  quickTaskScheduleSection.classList.toggle("quick-view-hidden", !quickTaskRecurring.checked);
-}
-
-function syncCronIntervalSections(): void {
-  const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-  if (quickCronSection) quickCronSection.classList.toggle("quick-view-hidden", isInterval);
-  if (quickIntervalSection) quickIntervalSection.classList.toggle("quick-view-hidden", !isInterval);
 }
 
 // ── Settings (timezone only; heartbeat handled by HeartbeatBar) ───────────
@@ -417,7 +334,6 @@ async function onScheduleClick(event: MouseEvent): Promise<void> {
       if (!out.ok) throw new Error(out.error || "delete failed");
       if (quickJobsStatus) quickJobsStatus.textContent = "Deleted.";
       await loadAndRenderSchedules();
-      syncQuickViewForSchedules();
     } catch (err) {
       if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
     } finally {
@@ -426,95 +342,14 @@ async function onScheduleClick(event: MouseEvent): Promise<void> {
   }
 }
 
-// ── Form submit ───────────────────────────────────────────────────────────
-async function onFormSubmit(event: Event): Promise<void> {
-  event.preventDefault();
-  const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
-  const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
-  const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
-  if (!agent || !headline || !brief) {
-    if (quickJobStatus) quickJobStatus.textContent = "Agent, title, and description are required.";
-    return;
-  }
-  const isRecurring = quickTaskRecurring ? quickTaskRecurring.checked : false;
-  if (quickJobSubmit) quickJobSubmit.disabled = true;
-  if (quickJobStatus) quickJobStatus.textContent = isRecurring ? "Saving schedule…" : "Creating task…";
-
-  try {
-    if (isRecurring) {
-      const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-      const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
-      const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
-      const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
-      if (!isInterval && !cron) {
-        if (quickJobStatus) quickJobStatus.textContent = "Enter a cron expression.";
-        return;
-      }
-      const recurrence = isInterval
-        ? { interval: { start: intervalStart || "08:00", every_hours: intervalHours }, enabled: true, skip_if_active: true }
-        : { cron, enabled: true, skip_if_active: true };
-      const res = await fetch("/api/tasks/schedule", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief, recurrence }),
-      });
-      const out = await res.json();
-      if (!out.ok) throw new Error(out.error || "failed");
-      if (quickJobStatus) quickJobStatus.textContent = "Schedule created.";
-      if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "schedule");
-      if (quickTaskHeadline) quickTaskHeadline.value = "";
-      if (quickTaskBrief) quickTaskBrief.value = "";
-      setQuickView("jobs", { scroll: true });
-      await loadAndRenderSchedules();
-      syncQuickViewForSchedules();
-    } else {
-      const res = await fetch("/api/tasks/new", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief }),
-      });
-      const out = await res.json();
-      if (!out.ok) throw new Error(out.error || "failed");
-      if (quickJobStatus) quickJobStatus.textContent = "Task created.";
-      if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "task");
-      if (quickTaskHeadline) quickTaskHeadline.value = "";
-      if (quickTaskBrief) quickTaskBrief.value = "";
-      setQuickView("jobs", { scroll: true });
-    }
-  } catch (err) {
-    if (quickJobStatus) quickJobStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-  } finally {
-    if (quickJobSubmit) quickJobSubmit.disabled = false;
-  }
-}
-
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 onMounted(() => {
   clockEl = document.getElementById("clock");
   dateEl = document.getElementById("date");
   msgEl = document.getElementById("message");
-  quickJobsView = document.getElementById("quick-jobs-view");
-  quickJobForm = document.getElementById("quick-job-form") as HTMLFormElement | null;
-  quickOpenCreate = document.getElementById("quick-open-create");
-  quickBackJobs = document.getElementById("quick-back-jobs");
-  quickJobSubmit = document.getElementById("quick-job-submit") as HTMLButtonElement | null;
-  quickJobStatus = document.getElementById("quick-job-status");
   quickJobsStatus = document.getElementById("quick-jobs-status");
   quickJobsNext = document.getElementById("quick-jobs-next");
-  quickJobCount = document.getElementById("quick-job-count");
   quickJobsList = document.getElementById("quick-jobs-list");
-  quickTaskAgent = document.getElementById("quick-task-agent") as HTMLSelectElement | null;
-  quickTaskHeadline = document.getElementById("quick-task-headline") as HTMLInputElement | null;
-  quickTaskBrief = document.getElementById("quick-task-brief") as HTMLTextAreaElement | null;
-  quickTaskRecurring = document.getElementById("quick-task-recurring") as HTMLInputElement | null;
-  quickTaskScheduleSection = document.getElementById("quick-task-schedule-section");
-  quickTaskModeCron = document.getElementById("quick-task-mode-cron") as HTMLInputElement | null;
-  quickTaskModeInterval = document.getElementById("quick-task-mode-interval") as HTMLInputElement | null;
-  quickCronSection = document.getElementById("quick-cron-section");
-  quickIntervalSection = document.getElementById("quick-interval-section");
-  quickTaskCron = document.getElementById("quick-task-cron") as HTMLInputElement | null;
-  quickTaskIntervalStart = document.getElementById("quick-task-interval-start") as HTMLInputElement | null;
-  quickTaskIntervalHours = document.getElementById("quick-task-interval-hours") as HTMLInputElement | null;
   multiAgentPanel = document.getElementById("multi-agent-panel");
   multiAgentGrid = document.getElementById("multi-agent-grid");
   multiAgentSub = document.getElementById("multi-agent-sub");
@@ -524,25 +359,7 @@ onMounted(() => {
   // Clock
   renderClock();
   clockInterval = setInterval(renderClock, 1000);
-  setQuickView(quickView);
   loadSettings();
-
-  // Quick view buttons
-  quickOpenCreate?.addEventListener("click", () => setQuickView("create", { scroll: true, user: true }));
-  quickBackJobs?.addEventListener("click", () => setQuickView("jobs", { scroll: true, user: true }));
-
-  // Form field listeners
-  quickTaskBrief?.addEventListener("input", updateBriefCount);
-  quickTaskRecurring?.addEventListener("change", syncScheduleSection);
-  quickTaskModeCron?.addEventListener("change", syncCronIntervalSections);
-  quickTaskModeInterval?.addEventListener("change", syncCronIntervalSections);
-
-  syncScheduleSection();
-  syncCronIntervalSections();
-  populateQuickTaskDropdowns();
-
-  // Form submit
-  quickJobForm?.addEventListener("submit", onFormSubmit);
 
   // Schedule list delegated click handler
   document.addEventListener("click", onScheduleClick);
@@ -633,84 +450,16 @@ onBeforeUnmount(() => {
       </section>
     </section>
 
-    <!-- Quick jobs view: schedule list -->
+    <!-- Schedule list -->
     <section class="quick-jobs-view" id="quick-jobs-view">
       <div class="quick-jobs-header">
         <div class="quick-jobs-next" id="quick-jobs-next">No schedules</div>
-        <button class="quick-open-create" id="quick-open-create" type="button">+ New Task</button>
+        <button class="quick-open-create" type="button" @click="nt.open()">+ New Task</button>
       </div>
       <div class="quick-jobs-list" id="quick-jobs-list">
         <div class="quick-jobs-empty">Loading...</div>
       </div>
       <div class="quick-jobs-status" id="quick-jobs-status"></div>
     </section>
-
-    <!-- Quick task create / schedule form -->
-    <form class="quick-job-form quick-view-hidden" id="quick-job-form">
-      <div class="quick-job-form-head">
-        <button class="quick-back-jobs" id="quick-back-jobs" type="button">← Schedules</button>
-        <h2 class="quick-job-form-title">New Task</h2>
-      </div>
-
-      <div class="quick-field">
-        <label class="quick-label" for="quick-task-agent">Agent</label>
-        <select class="quick-select" id="quick-task-agent">
-          <option value="alice">alice</option>
-        </select>
-      </div>
-
-      <div class="quick-field">
-        <label class="quick-label" for="quick-task-headline">Title</label>
-        <input class="quick-input" id="quick-task-headline" type="text" placeholder="Short task title" autocomplete="off" />
-      </div>
-
-      <div class="quick-field">
-        <label class="quick-label" for="quick-task-brief">Description <span class="quick-count" id="quick-job-count">0 chars</span></label>
-        <textarea class="quick-textarea" id="quick-task-brief" rows="4" placeholder="What should the agent do?"></textarea>
-      </div>
-
-      <div class="quick-field quick-field-check">
-        <label class="quick-check-label">
-          <input type="checkbox" id="quick-task-recurring" />
-          Recurring
-        </label>
-      </div>
-
-      <section class="quick-view-hidden quick-schedule-section" id="quick-task-schedule-section">
-        <div class="quick-field quick-field-radios">
-          <label class="quick-radio-label">
-            <input type="radio" name="quick-task-mode" id="quick-task-mode-interval" checked />
-            Interval
-          </label>
-          <label class="quick-radio-label">
-            <input type="radio" name="quick-task-mode" id="quick-task-mode-cron" />
-            Cron
-          </label>
-        </div>
-
-        <section id="quick-interval-section">
-          <div class="quick-field">
-            <label class="quick-label" for="quick-task-interval-start">Start time (HH:MM)</label>
-            <input class="quick-input" id="quick-task-interval-start" type="text" placeholder="08:00" />
-          </div>
-          <div class="quick-field">
-            <label class="quick-label" for="quick-task-interval-hours">Every (hours)</label>
-            <input class="quick-input" id="quick-task-interval-hours" type="number" value="24" min="1" max="168" />
-          </div>
-        </section>
-
-        <section class="quick-view-hidden" id="quick-cron-section">
-          <div class="quick-field">
-            <label class="quick-label" for="quick-task-cron">Cron expression</label>
-            <input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" autocomplete="off" />
-          </div>
-        </section>
-      </section>
-
-      <div class="quick-field quick-field-submit">
-        <button class="quick-submit" id="quick-job-submit" type="submit">Create</button>
-        <div class="quick-job-status" id="quick-job-status"></div>
-      </div>
-    </form>
   </div>
 </template>

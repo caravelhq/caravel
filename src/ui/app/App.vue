@@ -1,19 +1,35 @@
 <script setup lang="ts">
+import { onMounted, onBeforeUnmount } from "vue";
 import { useUiStore } from "./stores/ui";
 import { useWorkspaceStore } from "./stores/workspace";
+import { useNewTaskStore } from "./stores/newTask";
 import SettingsModal from "./components/chrome/SettingsModal.vue";
 import HeartbeatBar from "./components/chrome/HeartbeatBar.vue";
 import AudioModal from "./components/chrome/AudioModal.vue";
 import StatusDock from "./components/chrome/StatusDock.vue";
 import VoiceIsland from "./components/voice/VoiceIsland.vue";
 import Workspace from "./workspace/Workspace.vue";
+import NewTaskModal from "./components/tasks/NewTaskModal.vue";
 
 const ui = useUiStore();
 const ws = useWorkspaceStore();
+const nt = useNewTaskStore();
+
+function onGlobalKeyDown(ev: KeyboardEvent): void {
+  if (ev.key !== "n") return;
+  const t = ev.target as HTMLElement;
+  if (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
+  ev.preventDefault();
+  nt.open();
+}
+
+onMounted(() => { document.addEventListener("keydown", onGlobalKeyDown); });
+onBeforeUnmount(() => { document.removeEventListener("keydown", onGlobalKeyDown); });
 </script>
 
 <template>
   <SettingsModal />
+  <NewTaskModal />
   <HeartbeatBar />
 
   <main class="stage">

@@ -49,74 +49,6 @@
         </div>
         <div class="tasks-project-pane" id="tasks-project-pane" hidden></div>
         <div class="tasks-empty" id="tasks-empty">Select a task on the left, or click <strong>+ New</strong> to create one.</div>
-        <form class="multi-agent-new tasks-new-form" id="multi-agent-new" hidden>
-          <div class="multi-agent-new-head">Create task</div>
-          <div class="multi-agent-new-parent" id="multi-agent-new-parent-chip" hidden>
-            <span>↳ child of <strong id="multi-agent-new-parent-id"></strong></span>
-            <button type="button" class="multi-agent-new-parent-clear" id="multi-agent-new-parent-clear" title="Clear parent">✕</button>
-          </div>
-          <label class="multi-agent-new-block">
-            <span>Headline <em class="multi-agent-new-hint">(required, ≤10 words)</em></span>
-            <input id="multi-agent-new-headline" type="text" maxlength="120" placeholder="BLE plugin survey" required />
-            <span class="multi-agent-new-counter" id="multi-agent-new-headline-count">0 / 10 words</span>
-          </label>
-          <div class="multi-agent-new-grid">
-            <label class="multi-agent-new-field">
-              <span>Target</span>
-              <select id="multi-agent-new-to"></select>
-            </label>
-            <label class="multi-agent-new-field">
-              <span>Project</span>
-              <select id="multi-agent-new-project">
-                <option value="">(auto from context)</option>
-                <option value="__none__">(none / unassigned)</option>
-              </select>
-            </label>
-          </div>
-          <label class="multi-agent-new-block">
-            <span>Brief</span>
-            <textarea id="multi-agent-new-brief" rows="4" placeholder="Why and what — specific enough that two workers wouldn't duplicate effort." required></textarea>
-          </label>
-          <label class="multi-agent-new-block">
-            <span>Depends on <em class="multi-agent-new-hint">(task IDs, one per line)</em></span>
-            <textarea id="multi-agent-new-needs" rows="2" placeholder="TSK-2026-08-01-0001&#10;TSK-2026-08-01-0002"></textarea>
-          </label>
-          <details class="multi-agent-new-advanced" id="multi-agent-new-advanced">
-            <summary class="multi-agent-new-advanced-toggle">▸ Advanced</summary>
-            <div class="multi-agent-new-advanced-body">
-              <div class="multi-agent-new-grid">
-                <label class="multi-agent-new-field">
-                  <span>Kind</span>
-                  <select id="multi-agent-new-kind">
-                    <option value="research">research</option>
-                    <option value="code">code</option>
-                    <option value="review">review</option>
-                    <option value="summarise">summarise</option>
-                    <option value="decide">decide</option>
-                    <option value="other">other</option>
-                  </select>
-                </label>
-                <label class="multi-agent-new-field">
-                  <span>From</span>
-                  <input id="multi-agent-new-from" type="text" value="user" />
-                </label>
-              </div>
-              <label class="multi-agent-new-block">
-                <span>Output format</span>
-                <textarea id="multi-agent-new-output" rows="2" placeholder="What 'done' looks like."></textarea>
-              </label>
-              <label class="multi-agent-new-block">
-                <span>Context (one per line — file path, jira:KEY, or URL)</span>
-                <textarea id="multi-agent-new-context" rows="2" placeholder="Notes/Projects/...&#10;jira:WAL-XX"></textarea>
-              </label>
-            </div>
-          </details>
-          <div class="multi-agent-new-actions">
-            <span class="multi-agent-new-status" id="multi-agent-new-status"></span>
-            <button class="multi-agent-new-cancel" id="multi-agent-new-cancel" type="button">Cancel</button>
-            <button class="multi-agent-new-submit" id="multi-agent-new-submit" type="submit">Dispatch</button>
-          </div>
-        </form>
       </div>
     </div>
   </div>
@@ -136,7 +68,7 @@ import {
 } from "./tasks/bulk";
 import {
   renderProjectsView, renderProjectPage, openProjectPanel as doOpenProjectPanel,
-  invalidateProjectsCache, getProjectHideClosed, setProjectHideClosed, ensureProjectsLoaded,
+  invalidateProjectsCache, getProjectHideClosed, setProjectHideClosed,
 } from "./tasks/projects";
 import {
   renderPanelCard, renderReportPane, renderTaskTree,
@@ -146,12 +78,14 @@ import { statusClass, isPanelNarrow } from "./tasks/helpers";
 import { useRouter } from "vue-router";
 import { useUiStore } from "../stores/ui";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useNewTaskStore } from "../stores/newTask";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
 const live = useLiveStore();
 const ui = useUiStore();
 const ws = useWorkspaceStore();
+const nt = useNewTaskStore();
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 let tasksTreeEl: HTMLElement | null = null;
@@ -165,7 +99,6 @@ let tasksNewBtnEl: HTMLButtonElement | null = null;
 let tasksViewerEl: HTMLElement | null = null;
 let tasksProjectPaneEl: HTMLElement | null = null;
 let tasksEmptyEl: HTMLElement | null = null;
-let tasksNewFormEl: HTMLFormElement | null = null;
 let tasksUserBlockedEl: HTMLElement | null = null;
 let bulkBarEl: HTMLElement | null = null;
 
@@ -187,12 +120,11 @@ watch(() => attentionStore.tiers, (tiers) => {
 
 // ── Picker helpers ────────────────────────────────────────────────────────
 
-function setRightPaneMode(mode: "empty" | "view" | "new" | "project"): void {
+function setRightPaneMode(mode: "empty" | "view" | "project"): void {
   tasksStore.pane = mode;
   if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
   if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
   if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
-  if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
   if (mode !== "view") {
     // Viewer shown via part-2 — nothing to clear here yet.
   }
@@ -544,8 +476,8 @@ function launchChatForTask(taskId: string, parentAgent: string, msgEl: HTMLTextA
   });
 }
 
-function openFollowOnForm(sourceTaskId: string, sourceAgent: string): void {
-  if (!tasksNewFormEl || !sourceTaskId) return;
+function openFollowOnForm(sourceTaskId: string, _sourceAgent: string): void {
+  if (!sourceTaskId) return;
   const chain = currentTaskChain;
   let sourceCard: Record<string, unknown> | null = null;
   const childReviewPaths: string[] = [];
@@ -570,24 +502,13 @@ function openFollowOnForm(sourceTaskId: string, sourceAgent: string): void {
   const srcHeadline = String((sourceCard?.headline as string) || sourceTaskId);
   const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
   const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
-
-  tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
-  const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
-  const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
-  if (parentChipEl) parentChipEl.removeAttribute("hidden");
-  if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
-  const headlineEl = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
-  if (headlineEl) headlineEl.value = headlineSuggest;
-  const briefEl = document.getElementById("multi-agent-new-brief") as HTMLTextAreaElement | null;
-  if (briefEl) briefEl.value = briefSuggest;
-  const ctxEl = document.getElementById("multi-agent-new-context") as HTMLTextAreaElement | null;
-  if (ctxEl) ctxEl.value = contextLines.join("\n");
-  if (sourceCard?.project) {
-    const projEl = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
-    if (projEl) ensureProjectsLoaded(projEl).then(() => { if (projEl) projEl.value = sourceCard!.project as string; });
-  }
-  setRightPaneMode("new");
-  headlineEl?.focus();
+  nt.open({
+    parent: sourceTaskId,
+    project: sourceCard?.project as string | undefined,
+    headline: headlineSuggest,
+    brief: briefSuggest,
+    context: contextLines,
+  });
 }
 
 function onPanelBodyClick(ev: MouseEvent): void {
@@ -702,126 +623,6 @@ function onPanelBodyClick(ev: MouseEvent): void {
     const chatMsgEl = chatFormEl?.querySelector<HTMLTextAreaElement>(".task-panel-chat-msg-input") || null;
     launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat") || "", chatAgent, chatMsgEl);
     return;
-  }
-}
-
-// ── New-task form ─────────────────────────────────────────────────────────
-
-let agentsCache: Array<{ name: string; emoji?: string; displayName?: string }> = [];
-
-async function loadAgentsForForm(): Promise<void> {
-  try {
-    const res = await fetch("/api/agents");
-    const data = await res.json();
-    if (data?.ok && Array.isArray(data.agents)) agentsCache = data.agents;
-  } catch (_) {}
-  populateTaskTargetSelect();
-}
-
-function populateTaskTargetSelect(): void {
-  const sel = document.getElementById("multi-agent-new-to") as HTMLSelectElement | null;
-  if (!sel) return;
-  const prev = sel.value;
-  const coord = agentsCache.find(a => a.name === "alice");
-  const rest = agentsCache.filter(a => a.name !== "alice");
-  const ordered = coord ? [coord, ...rest] : rest;
-  sel.innerHTML = ordered.map(a => {
-    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-    return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
-  }).join("");
-  if (prev) sel.value = prev;
-}
-
-function updateHeadlineCount(): void {
-  const input = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
-  const counter = document.getElementById("multi-agent-new-headline-count");
-  if (!input || !counter) return;
-  const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
-  counter.textContent = words + " / 10 words";
-  counter.classList.toggle("is-over", words > 10);
-}
-
-function clearParentChip(): void {
-  if (!tasksNewFormEl) return;
-  tasksNewFormEl.removeAttribute("data-parent");
-  const chipEl = document.getElementById("multi-agent-new-parent-chip");
-  const chipIdEl = document.getElementById("multi-agent-new-parent-id");
-  if (chipEl) chipEl.setAttribute("hidden", "");
-  if (chipIdEl) chipIdEl.textContent = "";
-}
-
-async function submitNewTask(ev: SubmitEvent): Promise<void> {
-  ev.preventDefault();
-  const headline = (document.getElementById("multi-agent-new-headline") as HTMLInputElement | null)?.value.trim() || "";
-  const to = (document.getElementById("multi-agent-new-to") as HTMLSelectElement | null)?.value || "";
-  const kind = (document.getElementById("multi-agent-new-kind") as HTMLSelectElement | null)?.value || "";
-  const from = (document.getElementById("multi-agent-new-from") as HTMLInputElement | null)?.value.trim() || "user";
-  const brief = (document.getElementById("multi-agent-new-brief") as HTMLTextAreaElement | null)?.value.trim() || "";
-  const output = (document.getElementById("multi-agent-new-output") as HTMLTextAreaElement | null)?.value.trim() || "";
-  const contextRaw = (document.getElementById("multi-agent-new-context") as HTMLTextAreaElement | null)?.value.trim() || "";
-  const context = contextRaw ? contextRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
-  const needsRaw = (document.getElementById("multi-agent-new-needs") as HTMLTextAreaElement | null)?.value.trim() || "";
-  const needs = needsRaw ? needsRaw.split(/\r?\n/).map(s => s.trim()).filter(Boolean) : [];
-  const newStatus = document.getElementById("multi-agent-new-status");
-  const submitBtn = document.getElementById("multi-agent-new-submit") as HTMLButtonElement | null;
-
-  const headlineWords = headline.split(/\s+/).filter(Boolean).length;
-  if (!headline) {
-    if (newStatus) { newStatus.textContent = "Headline is required (≤10 words)."; newStatus.className = "multi-agent-new-status is-error"; }
-    return;
-  }
-  if (headlineWords > 10) {
-    if (newStatus) { newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`; newStatus.className = "multi-agent-new-status is-error"; }
-    return;
-  }
-  if (!brief) {
-    if (newStatus) { newStatus.textContent = "Brief is required."; newStatus.className = "multi-agent-new-status is-error"; }
-    return;
-  }
-  if (!to) {
-    populateTaskTargetSelect();
-    if (newStatus) { newStatus.textContent = "Pick a target agent."; newStatus.className = "multi-agent-new-status is-error"; }
-    return;
-  }
-
-  if (newStatus) { newStatus.textContent = "Dispatching…"; newStatus.className = "multi-agent-new-status"; }
-  if (submitBtn) submitBtn.disabled = true;
-
-  try {
-    const payload: Record<string, unknown> = { headline, to, from: from || "user", kind, brief, output_format: output, context };
-    if (needs.length > 0) payload.needs = needs;
-    const projectEl = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
-    if (projectEl) {
-      const projVal = (projectEl.value || "").trim();
-      if (projVal === "__none__") payload.project = null;
-      else if (projVal) payload.project = projVal;
-    }
-    const parentAttr = tasksNewFormEl?.getAttribute("data-parent");
-    if (parentAttr) payload.parent = parentAttr;
-
-    const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    const data = await res.json();
-    if (!data.ok) {
-      if (newStatus) { newStatus.textContent = "Error: " + (data.error || "unknown"); newStatus.className = "multi-agent-new-status is-error"; }
-      if (submitBtn) submitBtn.disabled = false;
-      return;
-    }
-    if (newStatus) { newStatus.textContent = "Dispatched " + data.id; newStatus.className = "multi-agent-new-status is-ok"; }
-    // Reset transient fields; keep kind/to for quick re-dispatch.
-    ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach(id => {
-      const el = document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null;
-      if (el) el.value = "";
-    });
-    clearParentChip();
-    updateHeadlineCount();
-    if (submitBtn) submitBtn.disabled = false;
-    fetchTasks();
-    attentionStore.fetch();
-    if (data.id) openTaskPanel(data.id);
-    else setRightPaneMode("empty");
-  } catch (err) {
-    if (newStatus) { newStatus.textContent = "Error: " + String((err as Error).message || err); newStatus.className = "multi-agent-new-status is-error"; }
-    if (submitBtn) submitBtn.disabled = false;
   }
 }
 
@@ -954,21 +755,7 @@ function onProjectPaneChange(ev: Event): void {
 }
 
 function openNewTaskFormForProject(slug: string): void {
-  if (!tasksNewFormEl) return;
-  tasksNewFormEl.removeAttribute("data-parent");
-  const chip = document.getElementById("multi-agent-new-parent-chip");
-  const chipId = document.getElementById("multi-agent-new-parent-id");
-  if (chip) chip.setAttribute("hidden", "");
-  if (chipId) chipId.textContent = "";
-  const projectSelect = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
-  if (projectSelect) {
-    ensureProjectsLoaded(projectSelect).then(() => {
-      if (slug && slug !== "__none__") projectSelect.value = slug;
-    });
-  }
-  setRightPaneMode("new");
-  const headlineEl = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
-  if (headlineEl) headlineEl.focus();
+  nt.open({ project: slug && slug !== "__none__" ? slug : undefined });
 }
 
 // ── Mount ─────────────────────────────────────────────────────────────────
@@ -985,7 +772,6 @@ onMounted(() => {
   tasksViewerEl         = document.getElementById("tasks-viewer");
   tasksProjectPaneEl    = document.getElementById("tasks-project-pane");
   tasksEmptyEl          = document.getElementById("tasks-empty");
-  tasksNewFormEl        = document.getElementById("multi-agent-new") as HTMLFormElement | null;
   tasksUserBlockedEl    = document.getElementById("tasks-user-blocked");
   taskPanelBodyEl       = document.getElementById("tasks-viewer-body");
   taskPanelHeadlineEl   = document.getElementById("tasks-viewer-headline");
@@ -1153,48 +939,9 @@ onMounted(() => {
       openProjectPanel(tasksStore.currentTaskProject);
     });
   }
-  if (tasksNewBtnEl && tasksNewFormEl) {
-    tasksNewBtnEl.addEventListener("click", () => {
-      tasksNewFormEl!.removeAttribute("data-parent");
-      const chip = document.getElementById("multi-agent-new-parent-chip");
-      const chipId = document.getElementById("multi-agent-new-parent-id");
-      if (chip) chip.setAttribute("hidden", "");
-      if (chipId) chipId.textContent = "";
-      const projectSelect = document.getElementById("multi-agent-new-project") as HTMLSelectElement | null;
-      if (projectSelect) ensureProjectsLoaded(projectSelect);
-      setRightPaneMode("new");
-      const hl = document.getElementById("multi-agent-new-headline") as HTMLInputElement | null;
-      if (hl) hl.focus();
-    });
+  if (tasksNewBtnEl) {
+    tasksNewBtnEl.addEventListener("click", () => nt.open());
   }
-
-  // Cancel button on new form.
-  const cancelBtn = document.getElementById("multi-agent-new-cancel");
-  if (cancelBtn) cancelBtn.addEventListener("click", () => {
-    clearParentChip();
-    const newStatusEl = document.getElementById("multi-agent-new-status");
-    if (newStatusEl) newStatusEl.textContent = "";
-    setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
-  });
-
-  // Parent chip clear button.
-  const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
-  if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
-
-  // Headline word counter.
-  const headlineInput = document.getElementById("multi-agent-new-headline");
-  if (headlineInput) {
-    headlineInput.addEventListener("input", updateHeadlineCount);
-    updateHeadlineCount();
-  }
-
-  // New-task form submit.
-  if (tasksNewFormEl) {
-    tasksNewFormEl.addEventListener("submit", submitNewTask as EventListener);
-  }
-
-  // Load agents catalog for the target select.
-  loadAgentsForForm();
 
   // Attention tiers — live channel replaces the 30s poll.
   // 'tasks' topic included so tree-level changes (moves, closes) also refresh the tiers.

@@ -4156,6 +4156,56 @@ export const pageStyles = String.raw`    :root {
       padding: 0 4px;
     }
     .multi-agent-new-parent-clear:hover { color: #fff; }
+
+    /* ── NewTaskModal ── */
+    .ntm-form { display: flex; flex-direction: column; gap: 12px; }
+    .ntm-repeat-toggle { display: flex; align-items: center; }
+    .ntm-check-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #c8daf0;
+      cursor: pointer;
+      user-select: none;
+    }
+    .ntm-check-label input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; }
+    .ntm-repeat-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 12px;
+      background: #0d1f35;
+      border: 1px solid #1f3a5a;
+      border-radius: 7px;
+    }
+    .ntm-repeat-modes { display: flex; gap: 20px; }
+    .ntm-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #c8daf0;
+      cursor: pointer;
+    }
+    .ntm-next-fires {
+      font-size: 12px;
+      color: #9ab0cc;
+      margin-top: 4px;
+    }
+    .ntm-next-fires-label { display: block; margin-bottom: 4px; }
+    .ntm-next-fires-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .ntm-next-fires-list li { font-size: 11px; font-family: "JetBrains Mono", monospace; }
+    .ntm-next-fires--invalid { color: #ff9a9a; }
+    /* ── /NewTaskModal ── */
+
     .task-panel-section {
       border: 1px solid #ffffff10;
       border-radius: 8px;
