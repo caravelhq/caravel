@@ -137,12 +137,12 @@ async function rate(doc: KnowledgeDoc, verdict: "up" | "down"): Promise<void> {
   const node = (doc.id || doc.path) as string | undefined;
   if (!node) return;
   try {
-    await fetch("/api/knowledge/mark", {
+    const r = await fetch("/api/knowledge/mark", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ node, verdict, query: ks.currentQuery }),
     });
-    rated.value = new Set([...rated.value, node]);
+    if (r.ok) rated.value = new Set([...rated.value, node]);
   } catch {}
 }
 
