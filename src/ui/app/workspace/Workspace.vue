@@ -97,6 +97,7 @@ function startSplitterDrag(e: MouseEvent) {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow: hidden;
 }
 

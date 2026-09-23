@@ -18864,6 +18864,9 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     if (initialTabs.length === 0) initialTabs = [DASHBOARD_REF];
     initialSplitIndex = load$2("splitIndex", null);
     initialSplitOn = load$2("splitOn", false);
+    if (initialSplitOn && initialSplitIndex === null) {
+      initialSplitOn = false;
+    }
     initialActive0 = load$2("active0", refKey(initialTabs[0]));
     initialActive1 = load$2("active1", null);
   }
@@ -30028,7 +30031,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-f2d5ad00"]]);
+const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-283cef38"]]);
 const _hoisted_1 = { class: "stage" };
 const _hoisted_2 = {
   class: "tab-nav",

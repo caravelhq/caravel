@@ -59,9 +59,9 @@ try {
   }
 
   // Check tab bar exists and has dashboard tab
-  const tabBar = await page.$(".workspace-tabs");
-  if (!tabBar) fail("W0.1 dashboard - .workspace-tabs present", "not found");
-  else pass("W0.1 dashboard - .workspace-tabs present");
+  const tabBar = await page.$(".tab-strip");
+  if (!tabBar) fail("W0.1 dashboard - .tab-strip present", "not found");
+  else pass("W0.1 dashboard - .tab-strip present");
 
   // ── W0.2 — Legacy Tasks page (kind:'legacy', page:'tasks') ─────────────────
   await page.goto(`${BASE}/#/tasks`, { waitUntil: "networkidle" });
@@ -109,7 +109,7 @@ try {
   }
 
   // ── W0.5 — Tab bar shows multiple tabs after navigation ────────────────────
-  const tabs = await page.$$(".workspace-tab");
+  const tabs = await page.$$(".ts-tab");
   if (tabs.length < 4) {
     fail("W0.5 - tab bar has ≥4 tabs after navigation", `found ${tabs.length}`);
   } else {
@@ -117,10 +117,10 @@ try {
   }
 
   // ── W0.6 — Switching back to dashboard via tab click ──────────────────────
-  const allTabs = await page.$$(".workspace-tab");
+  const allTabs = await page.$$(".ts-tab");
   let dashTabEl = null;
   for (const t of allTabs) {
-    const label = await t.$(".workspace-tab-label");
+    const label = await t.$(".ts-tab-label");
     const text = label ? await label.textContent() : "";
     if (text?.toLowerCase().includes("dashboard")) { dashTabEl = t; break; }
   }
@@ -130,20 +130,19 @@ try {
     await dashTabEl.click();
     await page.waitForTimeout(300);
     await page.screenshot({ path: join(SHOTS_DIR, "05-tab-switch-dashboard.png") });
-    // Verify the dashboard content is showing (DashboardPage should be mounted)
-    const activeTabSelected = await page.$(".workspace-tab--active");
+    const activeTabSelected = await page.$(".ts-tab--focused");
     if (activeTabSelected) pass("W0.6 - clicking dashboard tab activates it");
     else pass("W0.6 - tab click processed (no error)");
   }
 
   // ── W0.7 — Close a non-dashboard tab (tab count decreases) ────────────────
-  const tabsBefore = (await page.$$(".workspace-tab")).length;
+  const tabsBefore = (await page.$$(".ts-tab")).length;
   let closeBtn = null;
-  for (const t of await page.$$(".workspace-tab")) {
-    const label = await t.$(".workspace-tab-label");
+  for (const t of await page.$$(".ts-tab")) {
+    const label = await t.$(".ts-tab-label");
     const text = label ? await label.textContent() : "";
     if (text?.toLowerCase().includes("chat") || text?.toLowerCase().includes("files")) {
-      closeBtn = await t.$(".workspace-tab-close");
+      closeBtn = await t.$(".ts-tab-close");
       break;
     }
   }
@@ -152,7 +151,7 @@ try {
   } else {
     await closeBtn.click();
     await page.waitForTimeout(200);
-    const tabsAfter = (await page.$$(".workspace-tab")).length;
+    const tabsAfter = (await page.$$(".ts-tab")).length;
     if (tabsAfter < tabsBefore) {
       pass(`W0.7 - close tab: ${tabsBefore} → ${tabsAfter} tabs`);
     } else {
@@ -166,12 +165,12 @@ try {
   const tasksVisit1 = await page.$("#tasks-panel");
   await page.goto(`${BASE}/#/chat`, { waitUntil: "networkidle" });
   // Close the tasks tab if it's still in the bar
-  const tabsNow = await page.$$(".workspace-tab");
+  const tabsNow = await page.$$(".ts-tab");
   for (const t of tabsNow) {
-    const label = await t.$(".workspace-tab-label");
+    const label = await t.$(".ts-tab-label");
     const text = label ? await label.textContent() : "";
     if (text?.toLowerCase().includes("tasks")) {
-      const close = await t.$(".workspace-tab-close");
+      const close = await t.$(".ts-tab-close");
       if (close) await close.click();
       break;
     }

@@ -143,28 +143,29 @@
   flex: 1;
 }
 
-.workspace[data-v-f2d5ad00] {
+.workspace[data-v-283cef38] {
   display: flex;
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  width: 100%;
   overflow: hidden;
 }
-.workspace-body[data-v-f2d5ad00] {
+.workspace-body[data-v-283cef38] {
   display: flex;
   flex-direction: row;
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
-.ws-pane[data-v-f2d5ad00] {
+.ws-pane[data-v-283cef38] {
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
   overflow: hidden;
 }
-.ws-splitter[data-v-f2d5ad00] {
+.ws-splitter[data-v-283cef38] {
   width: 4px;
   flex-shrink: 0;
   background: var(--border-subtle, #333);
@@ -172,8 +173,8 @@
   transition: background 0.15s;
   user-select: none;
 }
-.ws-splitter[data-v-f2d5ad00]:hover,
-.ws-splitter--dragging[data-v-f2d5ad00] {
+.ws-splitter[data-v-283cef38]:hover,
+.ws-splitter--dragging[data-v-283cef38] {
   background: var(--accent, #7dc5ff66);
 }
     /* ── Voice-mode fullscreen overlay ── */

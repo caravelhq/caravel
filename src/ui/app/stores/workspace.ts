@@ -87,6 +87,10 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     if (initialTabs.length === 0) initialTabs = [DASHBOARD_REF];
     initialSplitIndex = load<number | null>("splitIndex", null);
     initialSplitOn = load<boolean>("splitOn", false);
+    // Invariant: splitOn requires a valid splitIndex. Clean up inconsistent state.
+    if (initialSplitOn && initialSplitIndex === null) {
+      initialSplitOn = false;
+    }
     initialActive0 = load<string | null>("active0", refKey(initialTabs[0]));
     initialActive1 = load<string | null>("active1", null);
   }
