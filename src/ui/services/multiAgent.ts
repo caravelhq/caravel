@@ -75,6 +75,9 @@ export interface TaskRow {
   // reportPath when it exists; everything else flows here so the UI can
   // mount them as secondary tabs without dropping the worker's writeup.
   deliverables: string[];
+  // True when the task is a spawned instance of a recurring template.
+  // Derived from recurring_template (belt-and-braces) or a TSK-SCHED- id prefix.
+  recurring: boolean;
 }
 
 export interface TaskChain {
@@ -382,6 +385,9 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     deliverables.push(declaredResolved);
   }
 
+  const recurringTemplate = asNullableString(doc.recurring_template);
+  const recurring = !!(recurringTemplate || id.startsWith("TSK-SCHED-"));
+
   return {
     id,
     headline: asString(doc.headline),
@@ -413,6 +419,7 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
     envelopePath,
     reportPath,
     deliverables,
+    recurring,
   };
 }
 

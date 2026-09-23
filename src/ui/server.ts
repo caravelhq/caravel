@@ -26,7 +26,7 @@ import { SIDECARS_DIR } from "./constants";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
 import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain, computeAttentionTiers, type AttentionTiers } from "./services/multiAgent";
-import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate } from "./services/multiAgentDispatch";
+import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate, patchScheduledTemplate } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
@@ -786,6 +786,28 @@ self.addEventListener('fetch', e => {
           const result = await setScheduledTemplateEnabled(String(body?.agent ?? "").trim(), templateId, true);
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id, enabled: result.enabled });
+        } catch (err) {
+          return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Edit a scheduled template (PATCH). Preserves count and last_fired.
+      if (url.pathname.startsWith("/api/tasks/schedule/") && req.method === "PATCH") {
+        try {
+          const templateId = decodeURIComponent(url.pathname.slice("/api/tasks/schedule/".length));
+          if (!/^TSK-/.test(templateId)) return json({ ok: false, error: "invalid template id" });
+          const body = await req.json();
+          const result = await patchScheduledTemplate({
+            agent: String(body?.agent ?? "").trim(),
+            templateId,
+            ...(body?.headline !== undefined ? { headline: String(body.headline) } : {}),
+            ...(body?.brief !== undefined ? { brief: String(body.brief) } : {}),
+            ...(body?.to !== undefined ? { to: String(body.to) } : {}),
+            ...("project" in (body ?? {}) ? { project: body.project === null ? null : String(body.project) } : {}),
+            ...(body?.recurrence !== undefined ? { recurrence: body.recurrence } : {}),
+          });
+          if (!result.ok) return new Response(JSON.stringify(result), { status: 400, headers: { "Content-Type": "application/json" } });
+          return json(result);
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

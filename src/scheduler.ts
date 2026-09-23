@@ -11,12 +11,13 @@
 //   DEC-5: no Telegram/Discord notify on instance completion
 //   DEC-6: from field carries template owner so the runner's continuation gate works
 
-import { readdir, readFile, writeFile, mkdir } from "fs/promises";
+import { readdir, readFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
 import { listAgentNamesSync } from "./agents";
 import { cronMatches } from "./cron";
+import { loadTemplate, saveTemplate } from "./ui/services/templateYaml";
 import { shiftDateToOffset } from "./timezone";
 import { createTask } from "./ui/services/multiAgentDispatch";
 
@@ -175,26 +176,17 @@ function intervalFiresNow(
   return diff % periodMinutes === 0;
 }
 
-// Bump count and last_fired in the template file using targeted line replacement
-// so the rest of the YAML formatting is preserved. Assumes createScheduledTemplate()
-// writes both fields indented inside the recurrence: block — if the format drifts, the
-// regex won't match and we bail rather than write back an unchanged (or corrupted) file.
+// Bump count and last_fired in the template file using the comment-preserving
+// YAML pair so that hand-written comments inside recurrence: survive.
 async function bumpTemplateFired(template: ScheduledTemplate, now: Date): Promise<void> {
-  let content: string;
-  try { content = await readFile(template.path, "utf-8"); } catch { return; }
-  const nowIso = now.toISOString();
+  let doc;
+  try { doc = await loadTemplate(template.path); } catch { return; }
   const newCount = template.recurrence.count + 1;
-  const afterCount = content.replace(/^(\s+count:\s*).*$/m, `$1${newCount}`);
-  if (afterCount === content) {
-    console.error(`[scheduler] bumpTemplateFired: count line not found in ${template.path} — skipping write`);
-    return;
+  doc.setIn(["recurrence", "count"], newCount);
+  doc.setIn(["recurrence", "last_fired"], now.toISOString());
+  try { await saveTemplate(template.path, doc); } catch (e) {
+    console.error(`[scheduler] bumpTemplateFired: write failed for ${template.path}`, e);
   }
-  const afterFired = afterCount.replace(/^(\s+last_fired:\s*).*$/m, `$1${nowIso}`);
-  if (afterFired === afterCount) {
-    console.error(`[scheduler] bumpTemplateFired: last_fired line not found in ${template.path} — skipping write`);
-    return;
-  }
-  try { await writeFile(template.path, afterFired); } catch {}
 }
 
 async function writeSkipJournal(agent: string, templateId: string, reason: string, now: Date): Promise<void> {
@@ -254,6 +246,7 @@ export async function tickScheduler(tzOffsetMinutes: number, now: Date): Promise
         to: template.to,
         from: template.from,
         parent: template.id,
+        recurring_template: template.id,
         kind: template.kind,
         headline: template.headline,
         brief: template.brief,

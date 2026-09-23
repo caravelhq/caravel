@@ -10,6 +10,8 @@ import { loadChat } from "./chats";
 import { abortInflightWorker, loadGraph, detectCycles } from "../../multiAgent";
 import { listAgentNamesSync } from "../../agents";
 import { inferProjectFromContext, readParentProject as _readParentProject } from "../../projectUtils";
+import { loadTemplate, saveTemplate } from "./templateYaml";
+import { nextCronMatch } from "../../cron";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -44,6 +46,11 @@ interface CreateTaskInput {
   // the project but the context paths don't point at the folder
   // (e.g. retro-creating an envelope or a cross-project lift).
   project?: string | null;
+  // Belt-and-braces recurring identity. Scheduler sets this when spawning
+  // from a template so the task listing can mark the row recurring: true.
+  // Instances already carry parent: <templateId>; this is redundant but
+  // makes the check in listTasks a single field read.
+  recurring_template?: string;
 }
 
 export type CreateTaskResult =
@@ -274,6 +281,7 @@ export async function createTask(input: CreateTaskInput): Promise<CreateTaskResu
     ``,
     `kind: ${kind}`,
     ...(project ? [`project: ${project}`] : []),
+    ...(input.recurring_template ? [`recurring_template: ${input.recurring_template}`] : []),
     `deadline: null`,
     ``,
     `budget:`,
@@ -1648,7 +1656,7 @@ export async function createScheduledTemplate(
   const to = (input.to ?? "").trim();
   const from = (input.from ?? "user").trim() || "user";
   const kind = (input.kind ?? "other").trim();
-  const priority = (input.priority ?? "P2").trim();
+  const priority = (input.priority ?? "").trim();
   const headline = (input.headline ?? "").trim();
   const brief = (input.brief ?? "").trim();
   const enabled = input.recurrence.enabled !== false;
@@ -1659,7 +1667,7 @@ export async function createScheduledTemplate(
 
   if (!knownAgents().includes(to)) return { ok: false, error: `unknown target agent: ${to || "(empty)"}` };
   if (!KNOWN_KINDS.includes(kind)) return { ok: false, error: `unknown kind: ${kind}` };
-  if (!KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
+  if (priority && !KNOWN_PRIORITIES.includes(priority)) return { ok: false, error: `unknown priority: ${priority}` };
   if (!headline) return { ok: false, error: "headline is required (≤10 words)" };
   const headlineWords = headline.split(/\s+/).filter(Boolean).length;
   if (headlineWords > 10) return { ok: false, error: `headline too long (${headlineWords} words; max 10)` };
@@ -1721,7 +1729,7 @@ export async function createScheduledTemplate(
     `reply_to: ${from}`,
     ``,
     `kind: ${kind}`,
-    `priority: ${priority}`,
+    ...(priority ? [`priority: ${priority}`] : []),
     ...(project ? [`project: ${project}`] : []),
     `deadline: null`,
     ``,
@@ -1807,4 +1815,103 @@ export async function deleteScheduledTemplate(
   }
 
   return { ok: true, id: templateId };
+}
+
+// === Patch a scheduled template ==============================================
+//
+// Edits apply to future fires only — an in-flight instance keeps its brief
+// (DEC-0017). count and last_fired are always preserved.
+
+export interface PatchScheduledTemplateInput {
+  agent: string;
+  templateId: string;
+  headline?: string;
+  brief?: string;
+  to?: string;
+  project?: string | null;
+  recurrence?: {
+    cron?: string;
+    interval?: { start: string; every_hours: number };
+    enabled?: boolean;
+    skip_if_active?: boolean;
+  };
+}
+
+export type PatchScheduledTemplateResult =
+  | { ok: true; template: Record<string, unknown>; nextFires: string[] }
+  | { ok: false; error: string };
+
+export async function patchScheduledTemplate(
+  input: PatchScheduledTemplateInput
+): Promise<PatchScheduledTemplateResult> {
+  const { agent, templateId } = input;
+  if (!knownAgents().includes(agent)) return { ok: false, error: `unknown agent: ${agent}` };
+  if (!/^TSK-/.test(templateId)) return { ok: false, error: `invalid template id: ${templateId}` };
+
+  const path = join(AGENTS_DIR, agent, "tasks", "scheduled", `${templateId}.yaml`);
+  if (!existsSync(path)) return { ok: false, error: `template ${templateId} not found for agent ${agent}` };
+
+  // Validate cron before touching the file — bad cron must leave it byte-identical.
+  const newCron = input.recurrence?.cron;
+  if (newCron !== undefined && !/^\S+ \S+ \S+ \S+ \S+$/.test(newCron.trim())) {
+    return { ok: false, error: "cron must be a 5-field expression (min hour day month weekday)" };
+  }
+
+  if (input.to !== undefined && !knownAgents().includes(input.to)) {
+    return { ok: false, error: `unknown target agent: ${input.to}` };
+  }
+
+  let doc;
+  try { doc = await loadTemplate(path); } catch (err) {
+    return { ok: false, error: `failed to read template: ${String(err)}` };
+  }
+
+  const now = new Date().toISOString();
+
+  if (input.headline !== undefined) doc.set("headline", input.headline);
+  if (input.brief !== undefined) doc.set("brief", input.brief);
+  if (input.to !== undefined) doc.set("to", input.to);
+  if ("project" in input) {
+    const p = input.project === null ? null : ((input.project ?? "").trim() || null);
+    if (p === null) {
+      doc.delete("project");
+    } else {
+      doc.set("project", p);
+    }
+  }
+  doc.set("updated", now);
+
+  if (input.recurrence) {
+    if (newCron !== undefined) doc.setIn(["recurrence", "cron"], newCron.trim());
+    if (input.recurrence.interval !== undefined) doc.setIn(["recurrence", "interval"], input.recurrence.interval);
+    if (input.recurrence.enabled !== undefined) doc.setIn(["recurrence", "enabled"], input.recurrence.enabled);
+    if (input.recurrence.skip_if_active !== undefined) doc.setIn(["recurrence", "skip_if_active"], input.recurrence.skip_if_active);
+  }
+
+  try { await saveTemplate(path, doc); } catch (err) {
+    return { ok: false, error: `failed to write template: ${String(err)}` };
+  }
+
+  // Re-read for the returned template object.
+  const { load: yamlLoad2 } = await import("js-yaml");
+  let template: Record<string, unknown> = {};
+  try {
+    const raw = await readFile(path, "utf-8");
+    template = (yamlLoad2(raw, { json: true }) as Record<string, unknown>) ?? {};
+  } catch {}
+
+  // Compute next 3 fires. Cron only — interval schedules return [].
+  const cronExpr = (typeof template.recurrence === "object" && template.recurrence !== null)
+    ? (template.recurrence as Record<string, unknown>).cron as string | undefined
+    : undefined;
+  const nextFires: string[] = [];
+  if (cronExpr) {
+    let cursor = new Date();
+    for (let i = 0; i < 3; i++) {
+      cursor = nextCronMatch(cronExpr, cursor);
+      nextFires.push(cursor.toISOString());
+    }
+  }
+
+  return { ok: true, template, nextFires };
 }
