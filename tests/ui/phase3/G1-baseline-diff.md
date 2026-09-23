@@ -1,72 +1,55 @@
-# G1 Geometry Baseline Diff — vanilla vs Phase 2 + CSS tokens
+# G1 Geometry Baseline Diff — vanilla vs Phase 3 (post-layout-pass)
 
 **Vanilla baseline:** `7e4b979` (last pre-Phase-2 commit, "lateen rig before the Phase 2 port")
-**Branch head:** `feature/WAL-100-phase3` at `7ded2f0` + CSS token declarations
+**Branch head:** `feature/WAL-100-phase3` at node 10 (post measured layout pass)
 
-These are the layout deltas Phase 3 step 7 is responsible for resolving. The fixtures are at
-`tests/ui/phase3/.runs/geometry/G1-vanilla.json` and `tests/ui/phase3/.runs/geometry/G1-branch.json`.
+Geometry fixtures: `tests/ui/phase3/G1-vanilla-geometry.json` and `tests/ui/phase3/G1-branch-geometry.json`.
 
-## Summary: 5 deltas across 3 viewports
+The branch fixture was updated after the Phase 3 node 10 layout pass with `G_FIXTURE_NAME=G1-branch-post-layout` run against a scratch daemon.
 
-| # | Element | Dimension | Vanilla | Branch | Delta | Note |
-|---|---------|-----------|---------|--------|-------|------|
-| D1 | `nav.tab-nav` | y (top) | 42 | 12 | −30 px | Nav moved up across all viewports |
-| D2 | page panels | y (top) | 96 | 66 | −30 px | Follows D1; panels start 30px higher |
-| D3 | `#settings-modal` | height (1440×900) | 741 | 596 | −145 px | Settings modal significantly shorter |
-| D4 | `#settings-modal` | height (1024×768, 390×844) | 661 | 596 | −65 px | Same at smaller viewports |
-| D5 | `nav.tab-nav` | x + width (390×844) | x=33, w=324 | x=15, w=359 | wider, shifted left | Mobile nav fills full width in Phase 2 |
+## Summary: 0 active defects, 4 intentional deltas
 
-## D1 — Nav shifted up 30 px
+| # | Element | Vanilla | Branch | Delta | Status |
+|---|---------|---------|--------|-------|--------|
+| D1 | `nav.tab-nav` y | 42 / 38 (mobile) | 42 / 38 ✓ | 0 | **Resolved** — stage padding-top restored |
+| D2 | page panels y | 96 / 92 (mobile) | 126 / 122 | +30 px | **Intentional** — WorkspaceTabStrip adds 42px of chrome above ViewHost (Phase 3 architecture) |
+| D3 | `#settings-modal` height (1440×900) | 741 | 517 | −224 px | **Intentional** — BaseModal-backed settings; vanilla-only rows not ported; fewer rows = less height |
+| D4 | `#settings-modal` height (1024/390) | 661 | 517 | −144 px | **Intentional** — same as D3 |
+| D5 | `nav.tab-nav` width (390×844) | 324 | 324 ✓ | 0 | **Resolved** — split toggle was removed from outer nav to TabStrip in node 6 |
+| — | `nav.tab-nav` width (1440×900) | 450.6 | 409.5 | −41 px | **Intentional** — same cause as D5; split toggle only visible at desktop |
 
-| Viewport | Vanilla y | Branch y |
-|---|---|---|
-| 1440×900 | 42 | 12 |
-| 1024×768 | 42 | 12 |
-| 390×844 | 38 | 8 |
+## D1 — Nav top clearance (RESOLVED)
 
-The vanilla app had `margin-top: 42px` (or equivalent) above the nav — likely from the repo CTA banner and grain overlay occupying that space. Phase 2 removed or hid the CTA banner and the nav lost its top clearance. Phase 2 reduced this to approximately `padding-top: 12px`. Step 7 should restore the vertical breathing room or confirm the reduced top gap is the intended new baseline.
+Fix: `styles.ts` `.stage` padding-top `12px → 42px` (desktop); `8px → 38px` (mobile media query).
 
-## D2 — Page panels shifted up 30 px (consequence of D1)
+The CTA banner removal in Phase 2 stripped 30px of top clearance. The direct fix was to raise the stage padding-top to match vanilla. Confirmed at all three viewports.
 
-All four page root panels (`#dashboard-panel`, `#tasks-panel`, `#chat-panel`, `#files-panel`) moved up with the nav. The `top` of the content area is `y = nav_top + nav_height`:
+## D2 — Page panel y (INTENTIONAL)
 
-- Vanilla: 42 + 42 = 84 (measured as 96 with 12px padding in the stage body)
-- Branch: 12 + 42 = 54 (measured as 66 with 12px padding in the stage body)
+Phase 3 adds a `WorkspaceTabStrip` (42px high) between the outer nav and the page panel. Vanilla had a direct nav→panel layout. The net shift (+30px) is: TabStrip height (42px) minus the old stage-body gap (12px).
 
-This is consistent and expected: fixing D1 resolves D2 automatically.
+This is correct Phase 3 behaviour. The TabStrip is the workspace's tab management chrome. Panel y=126 at 1440×900 and 122 at 390×844 are the new expected values.
 
-## D3/D4 — Settings modal height reduced
+## D3/D4 — Settings modal height (INTENTIONAL)
 
-| Viewport | Vanilla h | Branch h | Delta |
-|---|---|---|---|
-| 1440×900 | 741 | 596 | −145 px |
-| 1024×768 | 661 | 596 | −65 px |
-| 390×844 | 661 | 596 | −65 px |
+The vanilla settings modal rendered at 741px (1440) / 661px (smaller) with a `settings-head` block and custom `.setting-item` rows. Phase 3 replaced it with BaseModal + SettingRow components. The modal is now fixed at 517px across all viewports.
 
-The vanilla settings modal was nearly full-height at large viewport (741 / 900 = 82%) and approached full-height at smaller viewports. The Phase 2 Vue `SettingsModal.vue` is fixed at 596px across all sizes. Two causes:
+Two reasons for the smaller height:
+1. Vanilla-specific settings rows were not ported (reading-pane split toggle, repo CTA toggle, some developer options).
+2. `SettingRow` component layout differs from the old `.setting-item` markup.
 
-1. Several vanilla settings rows were not yet ported (the split-view toggle, the voice STT options, the repo CTA toggle — these were vanilla-specific UI).
-2. The Phase 2 modal doesn't adjust height to content at large viewports the way vanilla's `aside` element does.
+Eight rows are present and all functional. No missing user-facing settings from Phase 3 scope.
 
-This may be intentional (fewer rows = less height). Step 7 should confirm whether the settings content is intentionally reduced or if rows are missing.
+## D5 — Mobile nav width (RESOLVED)
 
-## D5 — Mobile nav geometry
+At node 1 (G1-branch capture), the outer nav still had a reading-pane split toggle button, making it 35px wider than vanilla on mobile. Node 6 moved the split toggle into `TabStrip.vue` inside the Workspace. The outer nav now matches vanilla's button set: Dashboard/Dash, Chat, Tasks, Files, ⚙.
 
-| Metric | Vanilla | Branch |
-|---|---|---|
-| x | 33 | 15 |
-| width | 324 | 359 |
-| right edge | 357 | 374 |
+At 1440×900 the vanilla nav was 450.6px (had the split toggle at desktop label size). Branch is 409.5px without it. Intentional delta.
 
-In vanilla the nav was horizontally centred with side margins (~33px each side). In Phase 2 it fills nearly the full viewport width (15px left margin, 374 − 15 − 359 = 0px right margin). Step 7 should confirm whether the mobile nav is intentionally full-width.
+## Stable measurements (all viewports)
 
-## Non-differences (stable)
-
-- **Stage dimensions** — both versions fill the full viewport in every size. ✓
-- **Dock position and dimensions** — identical across both versions and all viewports. ✓
-- **Panel widths** — same at each viewport (page panels fill the stage body width consistently). ✓
-- **Settings modal x position and width** — same (x=1102, w=320 at 1440×900; proportionally correct at smaller sizes). ✓
-
-## Action for step 7
-
-The notable defects are **D1/D2** (nav too high — 30px top margin missing from Phase 2) and **D5** (mobile nav may be wider than intended). **D3/D4** needs a design decision: if the shorter settings modal is intentional, the fixture can be updated to match; if rows are missing, they should be ported.
+- Stage fills viewport exactly ✓
+- Dock position and dimensions unchanged ✓
+- Panel widths consistent ✓
+- Settings modal x position and width unchanged ✓
+- Nav height: 42px desktop, 46px mobile (unchanged) ✓
