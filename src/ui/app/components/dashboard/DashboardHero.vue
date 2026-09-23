@@ -1,8 +1,23 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useDashboardStore } from "../../stores/dashboard";
+import SearchBox from "../search/SearchBox.vue";
 
 const dash = useDashboardStore();
+
+const corpusLabel = ref("Search knowledge…");
+
+async function loadCorpusLabel(): Promise<void> {
+  try {
+    const r = await fetch("/api/knowledge/stats");
+    const d = await r.json();
+    if (!d?.ok || !d.enabled) return;
+    const parts: string[] = [];
+    if (d.docs) parts.push(`${d.docs} docs`);
+    if (d.reports) parts.push(`${d.reports} reports`);
+    if (parts.length) corpusLabel.value = `Search ${parts.join(" and ")}…`;
+  } catch { /* unavailable — leave default */ }
+}
 
 const clockTime = ref("--:--:--");
 const clockDate = ref("Loading date...");
@@ -73,6 +88,7 @@ onMounted(() => {
   renderClock();
   clockInterval = setInterval(renderClock, 1000);
   loadTzSettings();
+  loadCorpusLabel();
 });
 
 onBeforeUnmount(() => {
@@ -98,6 +114,7 @@ onBeforeUnmount(() => {
     <div ref="clockEl" class="time">{{ clockTime }}</div>
     <div class="date">{{ clockDate }}</div>
     <div class="message">{{ greeting }}</div>
+    <SearchBox :corpus-label="corpusLabel" />
     <a
       class="repo-cta"
       href="https://github.com/caravelhq/caravel"

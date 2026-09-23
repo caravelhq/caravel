@@ -31,6 +31,7 @@ import { listProjects, listProjectsWithCounts, getProjectSummary, createProject 
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
 import { startLive, handleLiveRoute, handleLiveConnectionsRoute, setAttentionInvalidator } from "./live";
+import { BridgeKnowledge, startKnowledgeReindex } from "./knowledge";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -285,6 +286,10 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
 
   // Start filesystem watchers for the live SSE channel.
   const stopLive = startLive(process.cwd());
+
+  // Knowledge service — bridge to the workspace CLI
+  const knowledge = new BridgeKnowledge(process.cwd());
+  const stopKnowledgeReindex = startKnowledgeReindex(process.cwd(), knowledge);
 
   // Recover any chat messages left in a non-terminal state by a previous
   // daemon instance that was killed mid-run. Non-blocking — the sweep reads
@@ -1376,12 +1381,84 @@ Return ONLY the cleaned readable text, nothing else.\n\nDocument:\n\n${content}`
         }
       }
 
+      // ── Knowledge API ──────────────────────────────────────────────────────
+      if (url.pathname === "/api/knowledge/stats" && req.method === "GET") {
+        try {
+          const result = await knowledge.stats();
+          return json(result);
+        } catch (err) {
+          return json({ ok: false, enabled: false, reason: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/knowledge/search" && req.method === "GET") {
+        const q = url.searchParams.get("q") ?? "";
+        const limit = url.searchParams.get("limit");
+        const doc_type = url.searchParams.get("doc_type") ?? undefined;
+        const project = url.searchParams.get("project") ?? undefined;
+        try {
+          const result = await knowledge.search(q, {
+            limit: limit ? parseInt(limit, 10) : undefined,
+            doc_type,
+            project,
+          });
+          return json(result);
+        } catch (err) {
+          return json({ ok: false, reason: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/knowledge/query" && req.method === "GET") {
+        const q = url.searchParams.get("q") ?? "";
+        const limit = url.searchParams.get("limit");
+        const tasks = url.searchParams.get("tasks") === "true";
+        const project = url.searchParams.get("project") ?? undefined;
+        const since = url.searchParams.get("since") ?? undefined;
+        try {
+          const result = await knowledge.query(q, {
+            limit: limit ? parseInt(limit, 10) : undefined,
+            tasks,
+            project,
+            since,
+          });
+          return json(result);
+        } catch (err) {
+          return json({ ok: false, reason: String(err) });
+        }
+      }
+
+      if (url.pathname === "/api/knowledge/doc" && req.method === "GET") {
+        const path = url.searchParams.get("path") ?? "";
+        if (!path) return new Response(JSON.stringify({ ok: false, reason: "path required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+        try {
+          const result = await knowledge.doc(path);
+          if (!result.ok) return new Response(JSON.stringify(result), { status: 400, headers: { "Content-Type": "application/json" } });
+          return json(result);
+        } catch (err) {
+          return new Response(JSON.stringify({ ok: false, reason: String(err) }), { status: 400, headers: { "Content-Type": "application/json" } });
+        }
+      }
+
+      if (url.pathname === "/api/knowledge/mark" && req.method === "POST") {
+        try {
+          const body = await req.json() as Record<string, unknown>;
+          const node = typeof body?.node === "string" ? body.node.trim() : "";
+          const verdict = typeof body?.verdict === "string" ? body.verdict.trim() : "";
+          const query = typeof body?.query === "string" ? body.query.trim() : undefined;
+          if (!node || !verdict) return new Response(JSON.stringify({ ok: false, reason: "node and verdict required" }), { status: 400, headers: { "Content-Type": "application/json" } });
+          const result = await knowledge.mark(node, verdict, query);
+          return json(result);
+        } catch (err) {
+          return json({ ok: false, reason: String(err) });
+        }
+      }
+
       return new Response("Not found", { status: 404 });
     },
   });
 
   return {
-    stop: () => { stopLive(); server.stop(); },
+    stop: () => { stopKnowledgeReindex(); stopLive(); server.stop(); },
     host: opts.host,
     port: server.port,
   };

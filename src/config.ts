@@ -65,6 +65,10 @@ const DEFAULT_SETTINGS: Settings = {
   stt: { baseUrl: "", model: "" },
   deepGram: { apiKey: "", sttEnabled: false, sttModel: "nova-3", ttsModel: "aura-2-thalia-en" },
   pocketSync: DEFAULT_POCKET_SYNC,
+  knowledge: {
+    cli: ".claude/skills/knowledge/script/knowledge.mjs",
+    node: "node",
+  },
 };
 
 export interface HeartbeatExcludeWindow {
@@ -119,6 +123,7 @@ export interface Settings {
   stt: SttConfig;
   deepGram: DeepGramConfig;
   pocketSync: PocketSyncConfig;
+  knowledge: KnowledgeConfig;
 }
 
 export interface AgenticMode {
@@ -163,6 +168,13 @@ export interface DeepGramConfig {
   sttModel: string;
   /** DeepGram TTS model (default: "aura-2-thalia-en") */
   ttsModel: string;
+}
+
+export interface KnowledgeConfig {
+  /** Path to the knowledge CLI script (default: .claude/skills/knowledge/script/knowledge.mjs) */
+  cli: string;
+  /** Node binary used to run the CLI (default: "node") */
+  node: string;
 }
 
 let cached: Settings | null = null;
@@ -318,6 +330,10 @@ function parseSettings(raw: Record<string, any>): Settings {
       enabled: !!(raw.pocketSync?.enabled),
       cron: (typeof raw.pocketSync?.cron === "string" && raw.pocketSync.cron.trim()) || DEFAULT_POCKET_SYNC.cron,
       timeoutMs: Number(raw.pocketSync?.timeoutMs) > 0 ? Number(raw.pocketSync.timeoutMs) : DEFAULT_POCKET_SYNC.timeoutMs,
+    },
+    knowledge: {
+      cli: (typeof raw.knowledge?.cli === "string" && raw.knowledge.cli.trim()) || DEFAULT_SETTINGS.knowledge.cli,
+      node: (typeof raw.knowledge?.node === "string" && raw.knowledge.node.trim()) || DEFAULT_SETTINGS.knowledge.node,
     },
   };
 }
