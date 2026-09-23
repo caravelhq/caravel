@@ -22478,63 +22478,62 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       topics: ["attention", "tasks"],
       fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
     });
-    const { entry: schedEntry } = useResource("schedules", {
-      topics: ["tasks"],
-      fetch: async () => {
+    const templates = /* @__PURE__ */ ref([]);
+    const schedulesLoading = /* @__PURE__ */ ref(true);
+    async function fetchSchedules() {
+      try {
         const r = await fetch("/api/tasks/scheduled");
         const d2 = await r.json();
-        return d2.ok ? d2.templates ?? [] : [];
-      }
-    });
-    const templates = computed(() => {
-      var _a2;
-      const data = (_a2 = schedEntry.value) == null ? void 0 : _a2.data;
-      return Array.isArray(data) ? data : [];
-    });
-    const schedulesLoading = computed(
-      () => !schedEntry.value || schedEntry.value.status === "idle" || schedEntry.value.status === "loading"
-    );
-    const { entry: summaryEntry } = useResource("summary", {
-      topics: ["tasks"],
-      fetch: async () => {
-        const r = await fetch("/api/multi-agent/summary");
-        const d2 = await r.json();
-        return d2.ok ? d2.summary : null;
-      }
-    });
-    const totals = computed(() => {
-      var _a2;
-      const s = (_a2 = summaryEntry.value) == null ? void 0 : _a2.data;
-      return (s == null ? void 0 : s.totals) ?? null;
-    });
-    function prefetchTopReports() {
-      var _a2;
-      const tiers = attentionStore.tiers;
-      if (!((_a2 = tiers == null ? void 0 : tiers.reports) == null ? void 0 : _a2.rows)) return;
-      for (const row of tiers.reports.rows.slice(0, 3)) {
-        if (row.id) {
-          live.prefetch("report:" + row.id, {
-            topics: ["tasks"],
-            fetch: async () => {
-              const r = await fetch("/api/tasks/" + encodeURIComponent(row.id));
-              return r.ok ? r.json() : null;
-            }
-          });
-        }
+        templates.value = d2.ok ? d2.templates ?? [] : [];
+      } catch {
+        templates.value = [];
+      } finally {
+        schedulesLoading.value = false;
       }
     }
+    useResource("schedules", {
+      topics: ["tasks"],
+      fetch: async () => {
+        await fetchSchedules();
+        return templates.value;
+      }
+    });
+    const totals = /* @__PURE__ */ ref(null);
+    useResource("summary", {
+      topics: ["tasks"],
+      fetch: async () => {
+        var _a2;
+        try {
+          const r = await fetch("/api/multi-agent/summary");
+          const d2 = await r.json();
+          totals.value = d2.ok ? ((_a2 = d2.summary) == null ? void 0 : _a2.totals) ?? null : null;
+          return totals.value;
+        } catch {
+          return null;
+        }
+      }
+    });
     watch(() => attentionStore.tiers, (tiers) => {
-      if (tiers) prefetchTopReports();
+      var _a2;
+      if (!((_a2 = tiers == null ? void 0 : tiers.reports) == null ? void 0 : _a2.rows)) return;
+      for (const row of tiers.reports.rows.slice(0, 3)) {
+        if (!row.id) continue;
+        live.prefetch("report:" + row.id, {
+          topics: ["tasks"],
+          fetch: async () => {
+            try {
+              const r = await fetch("/api/tasks/" + encodeURIComponent(row.id));
+              return r.ok ? r.json() : null;
+            } catch {
+              return null;
+            }
+          }
+        });
+      }
     }, { once: true });
     function onSchedulesRefresh() {
-      live.bind("schedules", {
-        topics: ["tasks"],
-        fetch: async () => {
-          const r = await fetch("/api/tasks/scheduled");
-          const d2 = await r.json();
-          return d2.ok ? d2.templates ?? [] : [];
-        }
-      });
+      schedulesLoading.value = true;
+      fetchSchedules();
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$8, [

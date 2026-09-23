@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useAttentionStore } from "../stores/attention";
 import { useLiveStore } from "../stores/live";
 import { useResource } from "../composables/useResource";
@@ -12,82 +12,79 @@ import type { ScheduleTemplate } from "../components/dashboard/ScheduleRow.vue";
 const attentionStore = useAttentionStore();
 const live = useLiveStore();
 
-// ── Attention tiers — shared key with TasksPage ───────────────────────────
-// Both this view and TasksPage bind "attention" with the same spec.
-// The live store deduplicates: first bind sets the spec; later binds just
-// increment refs. Both read from attentionStore.tiers.
+// ── Attention tiers ────────────────────────────────────────────────────────
+// Shared live key with TasksPage — first bind sets the spec; subsequent
+// binds increment refs. Both views read from attentionStore.tiers.
 useResource("attention", {
   topics: ["attention", "tasks"],
   fetch: () => attentionStore.fetch().then(() => attentionStore.tiers),
 });
 
 // ── Schedules ─────────────────────────────────────────────────────────────
-const { entry: schedEntry } = useResource("schedules", {
-  topics: ["tasks"],
-  fetch: async () => {
+// Using a local ref updated inside fetch to work around reactive-Map mutation
+// tracking — doFetch mutates entry.data through the raw ref, not the proxy.
+const templates = ref<ScheduleTemplate[]>([]);
+const schedulesLoading = ref(true);
+
+async function fetchSchedules(): Promise<void> {
+  try {
     const r = await fetch("/api/tasks/scheduled");
     const d = await r.json();
-    return d.ok ? (d.templates ?? []) : [];
-  },
-});
-
-const templates = computed<ScheduleTemplate[]>(() => {
-  const data = schedEntry.value?.data;
-  return Array.isArray(data) ? (data as ScheduleTemplate[]) : [];
-});
-
-const schedulesLoading = computed(() =>
-  !schedEntry.value || schedEntry.value.status === "idle" || schedEntry.value.status === "loading"
-);
-
-// ── Summary / totals ──────────────────────────────────────────────────────
-const { entry: summaryEntry } = useResource("summary", {
-  topics: ["tasks"],
-  fetch: async () => {
-    const r = await fetch("/api/multi-agent/summary");
-    const d = await r.json();
-    return d.ok ? d.summary : null;
-  },
-});
-
-const totals = computed(() => {
-  const s = summaryEntry.value?.data as { totals?: Record<string, number> } | null;
-  return s?.totals ?? null;
-});
-
-// Prefetch top reports for instant first-render of Reports tier rows (DEC-0021)
-function prefetchTopReports(): void {
-  const tiers = attentionStore.tiers;
-  if (!tiers?.reports?.rows) return;
-  for (const row of tiers.reports.rows.slice(0, 3)) {
-    if (row.id) {
-      live.prefetch("report:" + row.id, {
-        topics: ["tasks"],
-        fetch: async () => {
-          const r = await fetch("/api/tasks/" + encodeURIComponent(row.id));
-          return r.ok ? r.json() : null;
-        },
-      });
-    }
+    templates.value = d.ok ? (d.templates ?? []) : [];
+  } catch {
+    templates.value = [];
+  } finally {
+    schedulesLoading.value = false;
   }
 }
 
-// Prefetch on attention data ready
-import { watch } from "vue";
+useResource("schedules", {
+  topics: ["tasks"],
+  fetch: async () => {
+    await fetchSchedules();
+    return templates.value;
+  },
+});
+
+// ── Summary / totals ──────────────────────────────────────────────────────
+interface Totals { open?: number; waiting?: number; done?: number; failed?: number }
+const totals = ref<Totals | null>(null);
+
+useResource("summary", {
+  topics: ["tasks"],
+  fetch: async () => {
+    try {
+      const r = await fetch("/api/multi-agent/summary");
+      const d = await r.json();
+      totals.value = d.ok ? (d.summary?.totals ?? null) : null;
+      return totals.value;
+    } catch {
+      return null;
+    }
+  },
+});
+
+// ── Prefetch top report rows (DEC-0021) ────────────────────────────────────
 watch(() => attentionStore.tiers, (tiers) => {
-  if (tiers) prefetchTopReports();
+  if (!tiers?.reports?.rows) return;
+  for (const row of tiers.reports.rows.slice(0, 3)) {
+    if (!row.id) continue;
+    live.prefetch("report:" + row.id, {
+      topics: ["tasks"],
+      fetch: async () => {
+        try {
+          const r = await fetch("/api/tasks/" + encodeURIComponent(row.id));
+          return r.ok ? r.json() : null;
+        } catch { return null; }
+      },
+    });
+  }
 }, { once: true });
 
-// Refresh schedules (called after pause/resume/delete)
+// Refresh schedules after a mutating action (pause/resume/delete)
 function onSchedulesRefresh(): void {
-  live.bind("schedules", {
-    topics: ["tasks"],
-    fetch: async () => {
-      const r = await fetch("/api/tasks/scheduled");
-      const d = await r.json();
-      return d.ok ? (d.templates ?? []) : [];
-    },
-  });
+  schedulesLoading.value = true;
+  fetchSchedules();
 }
 </script>
 
