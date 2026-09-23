@@ -30,6 +30,7 @@ import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeT
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
+import { startLive, handleLiveRoute, handleLiveConnectionsRoute } from "./live";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -277,6 +278,10 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   if (opts.onChat) registeredOnChat = opts.onChat;
+
+  // Start filesystem watchers for the live SSE channel.
+  const stopLive = startLive(process.cwd());
+
   // Recover any chat messages left in a non-terminal state by a previous
   // daemon instance that was killed mid-run. Non-blocking — the sweep reads
   // the chats dir, so we let it run in parallel with server startup.
@@ -376,6 +381,16 @@ self.addEventListener('fetch', e => {
 </g>
 </svg>`;
         return new Response(svg, { headers: { "Content-Type": "image/svg+xml" } });
+      }
+
+      // Live SSE channel — one persistent connection per client
+      if (url.pathname === "/api/live" && req.method === "GET") {
+        return handleLiveRoute(req);
+      }
+
+      // Test-only: expose server-side connection count for L5 mutation proof
+      if (url.pathname === "/api/live/connections" && req.method === "GET") {
+        return handleLiveConnectionsRoute();
       }
 
       if (url.pathname === "/api/health") {
@@ -1340,7 +1355,7 @@ Return ONLY the cleaned readable text, nothing else.\n\nDocument:\n\n${content}`
   });
 
   return {
-    stop: () => server.stop(),
+    stop: () => { stopLive(); server.stop(); },
     host: opts.host,
     port: server.port,
   };
