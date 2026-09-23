@@ -42,6 +42,17 @@ export function emitLive(topic: string, hint: Record<string, unknown> = {}): voi
   }
 }
 
+// ── Cache invalidation hook ───────────────────────────────────────────────────
+
+// Registered by server.ts to clear the attention-tier cache when a task file
+// changes. This ensures the next browser fetch after an SSE 'attention'/'tasks'
+// event returns fresh data (not the 5s cached result).
+let onAttentionInvalidate: (() => void) | null = null;
+
+export function setAttentionInvalidator(fn: () => void): void {
+  onAttentionInvalidate = fn;
+}
+
 // ── Debounce / coalesce per topic ────────────────────────────────────────────
 
 const debounce = new Map<string, ReturnType<typeof setTimeout>>();
@@ -57,6 +68,10 @@ function emitDebounced(topic: string, hint: Record<string, unknown>): void {
       debounce.delete(topic);
       const h = debounceHints.get(topic) ?? {};
       debounceHints.delete(topic);
+      // Invalidate attention cache when task-relevant topics fire
+      if (topic === "attention" || topic === "tasks" || topic.startsWith("task:")) {
+        onAttentionInvalidate?.();
+      }
       emitLive(topic, h);
     }, 150)
   );

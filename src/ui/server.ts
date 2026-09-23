@@ -30,7 +30,7 @@ import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeT
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
-import { startLive, handleLiveRoute, handleLiveConnectionsRoute } from "./live";
+import { startLive, handleLiveRoute, handleLiveConnectionsRoute, setAttentionInvalidator } from "./live";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
@@ -278,6 +278,10 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
 
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   if (opts.onChat) registeredOnChat = opts.onChat;
+
+  // Wire the attention-cache invalidator so fs.watch events clear stale cache
+  // before the SSE event reaches the browser.
+  setAttentionInvalidator(invalidateAttentionCache);
 
   // Start filesystem watchers for the live SSE channel.
   const stopLive = startLive(process.cwd());

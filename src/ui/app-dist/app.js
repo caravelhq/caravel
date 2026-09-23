@@ -12431,7 +12431,7 @@ var useShowHide = (modelValue, props, emit2, element, computedId, options = {
     }
   };
 };
-var _hoisted_1$o = [
+var _hoisted_1$p = [
   "type",
   "disabled",
   "aria-label"
@@ -12457,7 +12457,7 @@ var BCloseButton_default = /* @__PURE__ */ defineComponent({
         disabled: unref(props).disabled,
         "aria-label": unref(props).ariaLabel,
         onClick: _cache[0] || (_cache[0] = ($event) => emit2("click", $event))
-      }, null, 8, _hoisted_1$o);
+      }, null, 8, _hoisted_1$p);
     };
   }
 });
@@ -12748,7 +12748,7 @@ var BLink_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$n = {
+var _hoisted_1$o = {
   key: 0,
   class: "visually-hidden"
 };
@@ -12781,7 +12781,7 @@ var BSpinner_default = /* @__PURE__ */ defineComponent({
         role: unref(props).label || hasLabelSlot.value ? unref(props).role : null,
         "aria-hidden": unref(props).label || hasLabelSlot.value ? null : true
       }, {
-        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$n, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
+        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$o, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
         _: 3
       }, 8, [
         "class",
@@ -14307,12 +14307,12 @@ var useModalManager = (modalOpen, initialValue) => {
     })) ?? [])
   };
 };
-var _hoisted_1$m = [
+var _hoisted_1$n = [
   "id",
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$b = ["id"];
+var _hoisted_2$d = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$b),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$d),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14728,7 +14728,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
               "height": "0",
               "overflow": "hidden"
             }
-          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$m), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
+          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$n), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
           _: 3
         }, 16, ["appear"])) : createCommentVNode("", true), !unref(props).noBackdrop ? renderSlot(_ctx.$slots, "backdrop", normalizeProps(mergeProps({ key: 1 }, sharedSlots.value)), () => [unref(renderBackdropRef) ? (openBlock(), createBlock(Transition, normalizeProps(mergeProps({ key: 0 }, unref(backdropTransitionProps))), {
           default: withCtx(() => [withDirectives(createBaseVNode("div", {
@@ -14820,7 +14820,7 @@ var BProgressBar_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$l = ["aria-valuenow", "aria-valuemax"];
+var _hoisted_1$m = ["aria-valuenow", "aria-valuemax"];
 var BProgress_default = /* @__PURE__ */ defineComponent({
   __name: "BProgress",
   props: {
@@ -14887,7 +14887,7 @@ var BProgress_default = /* @__PURE__ */ defineComponent({
         "variant",
         "text-variant",
         "bg-variant"
-      ])])], 12, _hoisted_1$l);
+      ])])], 12, _hoisted_1$m);
     };
   }
 });
@@ -14967,13 +14967,13 @@ var useCountdownHover = (element, { modelValueIgnoresHover, noHoverPause, noResu
   });
   return { isHovering };
 };
-var _hoisted_1$k = [
+var _hoisted_1$l = [
   "id",
   "role",
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$a = {
+var _hoisted_2$c = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$a, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$c, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -15237,7 +15237,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             "max",
             "value"
           ])) : createCommentVNode("", true)
-        ], 10, _hoisted_1$k), [[vShow, isAlertVisible.value]])]),
+        ], 10, _hoisted_1$l), [[vShow, isAlertVisible.value]])]),
         _: 3
       }, 16, ["appear"])) : createCommentVNode("", true);
     };
@@ -15496,7 +15496,7 @@ var useFormInput = (props, input, modelValue, modelModifiers) => {
     isDisabled
   };
 };
-var _hoisted_1$j = [
+var _hoisted_1$k = [
   "id",
   "value",
   "name",
@@ -15617,7 +15617,7 @@ var BFormInput_default = /* @__PURE__ */ defineComponent({
         onInput: _cache[0] || (_cache[0] = (...args) => unref(onInput) && unref(onInput)(...args)),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 42, _hoisted_1$j);
+      }, null, 42, _hoisted_1$k);
     };
   }
 });
@@ -15800,7 +15800,7 @@ var BCol_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$i = [
+var _hoisted_1$j = [
   "value",
   "disabled",
   "selected"
@@ -15826,7 +15826,7 @@ var BFormSelectOption_default = /* @__PURE__ */ defineComponent({
         value: unref(props).value,
         disabled: unref(props).disabled,
         selected: isSelected.value
-      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$i);
+      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$j);
     };
   }
 });
@@ -16113,13 +16113,13 @@ var BFormGroupLabel_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$h = [
+var _hoisted_1$i = [
   "id",
   "disabled",
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$9 = {
+var _hoisted_2$b = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$9, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$b, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -16450,7 +16450,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
             key: "2"
           } : void 0
         ]), 1040)
-      ], 64))], 64))], 16, _hoisted_1$h);
+      ], 64))], 64))], 16, _hoisted_1$i);
     };
   }
 });
@@ -16484,7 +16484,7 @@ var BFormSelectOptionGroup_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$g = [
+var _hoisted_1$h = [
   "id",
   "name",
   "form",
@@ -16619,7 +16619,7 @@ var BFormSelectBase_default = /* @__PURE__ */ defineComponent({
           }, 1040))], 64);
         }), 128)),
         renderSlot(_ctx.$slots, "default")
-      ], 10, _hoisted_1$g)), [[vModelSelect, localValue.value]]);
+      ], 10, _hoisted_1$h)), [[vModelSelect, localValue.value]]);
     };
   }
 });
@@ -16782,7 +16782,7 @@ var useTextareaResize = (input, { maxRows, noAutoShrink, rows }) => {
     computedRows
   };
 };
-var _hoisted_1$f = [
+var _hoisted_1$g = [
   "id",
   "name",
   "form",
@@ -16910,7 +16910,7 @@ var BFormTextarea_default = /* @__PURE__ */ defineComponent({
         }),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 46, _hoisted_1$f);
+      }, null, 46, _hoisted_1$g);
     };
   }
 });
@@ -19248,10 +19248,11 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const filesNav = /* @__PURE__ */ ref(null);
   const hbModalOpen = /* @__PURE__ */ ref(false);
   const infoOpen = /* @__PURE__ */ ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen };
+  const audioModalOpen = /* @__PURE__ */ ref(false);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
 });
-const _hoisted_1$e = { id: "dashboard-panel" };
-const _sfc_main$g = /* @__PURE__ */ defineComponent({
+const _hoisted_1$f = { id: "dashboard-panel" };
+const _sfc_main$i = /* @__PURE__ */ defineComponent({
   __name: "DashboardPage",
   setup(__props) {
     const router2 = useRouter();
@@ -19729,7 +19730,7 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
       document.removeEventListener("click", onScheduleClick);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$e, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$f, [..._cache[0] || (_cache[0] = [
         createBaseVNode("section", { class: "hero" }, [
           createBaseVNode("div", {
             class: "logo-art",
@@ -21041,14 +21042,14 @@ function stripFrontmatter(src) {
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
 }
-const _hoisted_1$d = {
+const _hoisted_1$e = {
   id: "chat-panel",
   class: "chat-panel"
 };
 const CHAT_ID_KEY = "caravel.chat.id";
 const CHAT_POLL_FAST_MS = 500;
 const CHAT_POLL_IDLE_MS = 1e4;
-const _sfc_main$f = /* @__PURE__ */ defineComponent({
+const _sfc_main$h = /* @__PURE__ */ defineComponent({
   __name: "ChatPage",
   setup(__props) {
     let chatHistory = [];
@@ -21762,7 +21763,7 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
       document.removeEventListener("visibilitychange", onVisibilityChange);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$d, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$e, [..._cache[0] || (_cache[0] = [
         createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
       ])]);
     };
@@ -21818,6 +21819,228 @@ const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
     }
   }
   return { tiers, lastFetch, fetch: fetch2 };
+});
+const MAX_ENTRIES = 64;
+const UNHEALTHY_MS = 1e4;
+const FALLBACK_MS = 15e3;
+const LIVE_URL = "/api/live";
+const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
+  const entries = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  const topicMap = /* @__PURE__ */ new Map();
+  let es = null;
+  let unhealthyTimer = null;
+  let fallbackTimer = null;
+  let overflowLogged = false;
+  function touch(entry2) {
+    entry2.touchedAt = Date.now();
+  }
+  function evict() {
+    var _a2;
+    if (entries.size <= MAX_ENTRIES) {
+      overflowLogged = false;
+      return;
+    }
+    let oldest = null;
+    let oldestTime = Infinity;
+    for (const [key, e] of entries) {
+      if (e.refs === 0 && e.touchedAt < oldestTime) {
+        oldest = key;
+        oldestTime = e.touchedAt;
+      }
+    }
+    if (oldest) {
+      const e = entries.get(oldest);
+      for (const topic of e.spec.topics) {
+        (_a2 = topicMap.get(topic)) == null ? void 0 : _a2.delete(oldest);
+      }
+      entries.delete(oldest);
+    } else if (!overflowLogged) {
+      console.warn("[live] resource cache overflow: all 64 entries are bound — possible leak");
+      overflowLogged = true;
+    }
+  }
+  function registerTopics(key, spec) {
+    for (const topic of spec.topics) {
+      if (!topicMap.has(topic)) topicMap.set(topic, /* @__PURE__ */ new Set());
+      topicMap.get(topic).add(key);
+    }
+  }
+  async function doFetch(key, entry2) {
+    if (entry2.inflight) {
+      entry2.dirty = true;
+      return;
+    }
+    entry2.inflight = true;
+    entry2.dirty = false;
+    try {
+      const data = await entry2.spec.fetch();
+      entry2.data = data;
+      entry2.status = "ready";
+      entry2.fetchedAt = Date.now();
+      touch(entry2);
+      entry2.error = null;
+    } catch (err) {
+      entry2.status = "error";
+      entry2.error = String(err);
+    } finally {
+      entry2.inflight = false;
+      if (entry2.dirty && entry2.refs > 0) {
+        doFetch(key, entry2).catch(() => {
+        });
+      }
+    }
+  }
+  function bind(key, spec) {
+    let entry2 = entries.get(key);
+    const isNew = !entry2;
+    if (isNew) {
+      entry2 = {
+        data: null,
+        status: "idle",
+        error: null,
+        fetchedAt: null,
+        refs: 0,
+        touchedAt: Date.now(),
+        spec,
+        inflight: false,
+        dirty: false
+      };
+      entries.set(key, entry2);
+      registerTopics(key, spec);
+    } else {
+      touch(entry2);
+    }
+    const wasUnbound = entry2.refs === 0;
+    entry2.refs++;
+    if (isNew) evict();
+    if (wasUnbound) {
+      doFetch(key, entry2).catch(() => {
+      });
+    }
+  }
+  function unbind(key) {
+    const entry2 = entries.get(key);
+    if (!entry2) return;
+    entry2.refs = Math.max(0, entry2.refs - 1);
+    touch(entry2);
+  }
+  function entry(key) {
+    const e = entries.get(key);
+    if (e) touch(e);
+    return e;
+  }
+  function prefetch(key, spec) {
+    if (entries.has(key)) return;
+    const e = {
+      data: null,
+      status: "idle",
+      error: null,
+      fetchedAt: null,
+      refs: 0,
+      touchedAt: Date.now(),
+      spec,
+      inflight: false,
+      dirty: false
+    };
+    entries.set(key, e);
+    registerTopics(key, spec);
+    evict();
+    doFetch(key, e).catch(() => {
+    });
+  }
+  function handleEvent(topic, hint) {
+    const keys = topicMap.get(topic);
+    if (!keys) return;
+    for (const key of keys) {
+      const e = entries.get(key);
+      if (!e) continue;
+      touch(e);
+      if (e.refs > 0) {
+        doFetch(key, e).catch(() => {
+        });
+      } else {
+        e.status = "idle";
+      }
+    }
+  }
+  function refetchAllBound() {
+    for (const [key, e] of entries) {
+      if (e.refs > 0) doFetch(key, e).catch(() => {
+      });
+    }
+  }
+  function startFallback() {
+    if (fallbackTimer) return;
+    fallbackTimer = setInterval(refetchAllBound, FALLBACK_MS);
+  }
+  function clearFallback() {
+    if (fallbackTimer) {
+      clearInterval(fallbackTimer);
+      fallbackTimer = null;
+    }
+  }
+  function startUnhealthyTimer() {
+    if (unhealthyTimer) return;
+    unhealthyTimer = setTimeout(() => {
+      unhealthyTimer = null;
+      startFallback();
+    }, UNHEALTHY_MS);
+  }
+  function clearUnhealthyTimer() {
+    if (unhealthyTimer) {
+      clearTimeout(unhealthyTimer);
+      unhealthyTimer = null;
+    }
+  }
+  function connect() {
+    if (es) {
+      es.close();
+      es = null;
+    }
+    es = new EventSource(LIVE_URL);
+    es.addEventListener("message", (ev) => {
+      let payload;
+      try {
+        payload = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      const { topic, hint = {} } = payload;
+      if (topic === "hello") {
+        clearUnhealthyTimer();
+        clearFallback();
+        refetchAllBound();
+        return;
+      }
+      if (topic === "resync") {
+        refetchAllBound();
+        return;
+      }
+      handleEvent(topic);
+    });
+    es.addEventListener("error", () => {
+      startUnhealthyTimer();
+    });
+    es.addEventListener("open", () => {
+      clearUnhealthyTimer();
+    });
+  }
+  function disconnect() {
+    if (es) {
+      es.close();
+      es = null;
+    }
+    clearUnhealthyTimer();
+    clearFallback();
+  }
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refetchAllBound();
+    });
+    window.addEventListener("pageshow", () => refetchAllBound());
+  }
+  connect();
+  return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
 function escapeHtml$1(s) {
   return escHtml(String(s == null ? "" : s));
@@ -22708,15 +22931,16 @@ function loadReportNode(node) {
     node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
-const _hoisted_1$c = {
+const _hoisted_1$d = {
   id: "tasks-panel",
   class: "tasks-panel"
 };
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _sfc_main$g = /* @__PURE__ */ defineComponent({
   __name: "TasksPage",
   setup(__props) {
     const tasksStore = useTasksStore();
     const attentionStore = useAttentionStore();
+    const live = useLiveStore();
     const ui = useUiStore();
     let tasksTreeEl = null;
     let tasksViewTabsEl = null;
@@ -22736,7 +22960,6 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     let taskPanelHeadlineEl = null;
     let taskPanelIdEl = null;
     let taskPanelStatusEl = null;
-    let attentionIntervalId = null;
     let longPressTimer = null;
     let lpStartX = 0, lpStartY = 0;
     const router2 = useRouter();
@@ -23813,8 +24036,10 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         tasksNewFormEl.addEventListener("submit", submitNewTask);
       }
       loadAgentsForForm();
-      attentionStore.fetch();
-      attentionIntervalId = setInterval(() => attentionStore.fetch(), 3e4);
+      live.bind("attention", {
+        topics: ["attention", "tasks"],
+        fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
+      });
       if (!tasksStore.loaded) {
         fetchTasks();
       } else {
@@ -23827,11 +24052,11 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       }
     });
     onBeforeUnmount(() => {
-      if (attentionIntervalId !== null) clearInterval(attentionIntervalId);
+      live.unbind("attention");
       if (longPressTimer !== null) clearTimeout(longPressTimer);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$d, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", {
           class: "tasks-view-tabs",
           id: "tasks-view-tabs",
@@ -26143,11 +26368,11 @@ function yamlRender(src) {
     return `<div class="yaml-error">YAML parse error: ${escapeHtml(msg)}</div><pre class="yaml-raw">${escapeHtml(src)}</pre>`;
   }
 }
-const _hoisted_1$b = {
+const _hoisted_1$c = {
   ref: "content",
   class: "files-content"
 };
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -26463,22 +26688,22 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       filesContent.appendChild(wrap);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$b, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", { class: "files-empty" }, "Select a file to view", -1)
       ])], 512);
     };
   }
 });
-const _hoisted_1$a = {
+const _hoisted_1$b = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$8 = { class: "files-toolbar" };
-const _hoisted_3$7 = { class: "files-toolbar-row files-toolbar-row-branch" };
-const _hoisted_4$6 = { class: "files-nav-group" };
+const _hoisted_2$a = { class: "files-toolbar" };
+const _hoisted_3$9 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_4$8 = { class: "files-nav-group" };
 const _hoisted_5$5 = ["title"];
-const _hoisted_6$5 = { class: "files-split" };
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
+const _hoisted_6$4 = { class: "files-split" };
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
     const activeFilePath = /* @__PURE__ */ ref("");
@@ -26773,16 +26998,16 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       router2.push("/tasks");
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$a, [
-        createBaseVNode("div", _hoisted_2$8, [
-          createBaseVNode("div", _hoisted_3$7, [
+      return openBlock(), createElementBlock("div", _hoisted_1$b, [
+        createBaseVNode("div", _hoisted_2$a, [
+          createBaseVNode("div", _hoisted_3$9, [
             _cache[2] || (_cache[2] = createBaseVNode("select", {
               id: "files-branch-select",
               class: "files-branch-select",
               title: "Branch",
               hidden: ""
             }, null, -1)),
-            createBaseVNode("div", _hoisted_4$6, [
+            createBaseVNode("div", _hoisted_4$8, [
               _cache[0] || (_cache[0] = createBaseVNode("button", {
                 id: "files-nav-back",
                 class: "files-nav-btn",
@@ -26832,7 +27057,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
             "aria-hidden": "true"
           }, "▾")
         ], -1)),
-        createBaseVNode("div", _hoisted_6$5, [
+        createBaseVNode("div", _hoisted_6$4, [
           _cache[4] || (_cache[4] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
@@ -26844,7 +27069,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
               createBaseVNode("div", { class: "files-loading" }, "Loading...")
             ])
           ], -1)),
-          createVNode(_sfc_main$d, {
+          createVNode(_sfc_main$f, {
             path: activeFilePath.value,
             branch: activeBranch.value || void 0,
             kind: "file"
@@ -26860,10 +27085,10 @@ const router = createRouter({
   linkActiveClass: "tab-btn-active",
   linkExactActiveClass: "tab-btn-active",
   routes: [
-    { path: "/dashboard", component: _sfc_main$g },
-    { path: "/chat", component: _sfc_main$f },
-    { path: "/tasks", component: _sfc_main$e },
-    { path: "/files", component: _sfc_main$c },
+    { path: "/dashboard", component: _sfc_main$i },
+    { path: "/chat", component: _sfc_main$h },
+    { path: "/tasks", component: _sfc_main$g },
+    { path: "/files", component: _sfc_main$e },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
@@ -26952,36 +27177,139 @@ const useReadingStore = /* @__PURE__ */ defineStore("reading", () => {
     setDragActive
   };
 });
-const _hoisted_1$9 = { class: "settings-head" };
-const _hoisted_2$7 = { class: "settings-stack" };
-const _hoisted_3$6 = { class: "setting-item" };
-const _hoisted_4$5 = { class: "setting-main" };
+const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
+const _hoisted_1$a = ["data-size"];
+const _hoisted_2$9 = {
+  key: 0,
+  class: "base-modal-head"
+};
+const _hoisted_3$8 = { class: "base-modal-title" };
+const _hoisted_4$7 = { class: "base-modal-body" };
 const _hoisted_5$4 = {
-  class: "settings-meta",
-  id: "hb-info"
+  key: 0,
+  class: "base-modal-footer"
 };
-const _hoisted_6$4 = { class: "setting-actions" };
-const _hoisted_7$4 = ["disabled"];
-const _hoisted_8$4 = { class: "setting-item" };
-const _hoisted_9$4 = { class: "setting-main" };
-const _hoisted_10$4 = {
-  class: "settings-meta",
-  id: "clock-info"
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
+  __name: "BaseModal",
+  props: {
+    open: { type: Boolean },
+    size: { default: "md" },
+    title: {},
+    dismissible: { type: Boolean, default: true }
+  },
+  emits: ["close"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit2 = __emit;
+    useModalsStore();
+    const dialogRef = /* @__PURE__ */ ref(null);
+    let scrollLockCount = 0;
+    function lockScroll() {
+      scrollLockCount++;
+      if (scrollLockCount === 1) document.body.style.overflow = "hidden";
+    }
+    function unlockScroll() {
+      scrollLockCount = Math.max(0, scrollLockCount - 1);
+      if (scrollLockCount === 0) document.body.style.overflow = "";
+    }
+    function openDialog() {
+      const el = dialogRef.value;
+      if (!el || el.open) return;
+      el.showModal();
+      lockScroll();
+    }
+    function closeDialog() {
+      const el = dialogRef.value;
+      if (!el || !el.open) return;
+      el.close();
+      unlockScroll();
+    }
+    onMounted(() => {
+      if (props.open) openDialog();
+    });
+    watch(() => props.open, (val) => {
+      if (val) openDialog();
+      else closeDialog();
+    });
+    onBeforeUnmount(() => {
+      if (props.open) unlockScroll();
+    });
+    function onCancel(ev) {
+      ev.preventDefault();
+      if (props.dismissible) emit2("close");
+    }
+    function onDialogClick(ev) {
+      if (!props.dismissible) return;
+      if (ev.target === dialogRef.value) emit2("close");
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("dialog", {
+        ref_key: "dialogRef",
+        ref: dialogRef,
+        "data-size": __props.size,
+        class: "base-modal",
+        "aria-modal": true,
+        onCancel,
+        onClick: onDialogClick
+      }, [
+        createBaseVNode("div", {
+          class: "base-modal-inner",
+          onClick: _cache[1] || (_cache[1] = withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          renderSlot(_ctx.$slots, "header", {}, () => [
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$9, [
+              createBaseVNode("span", _hoisted_3$8, toDisplayString(__props.title), 1),
+              __props.dismissible ? (openBlock(), createElementBlock("button", {
+                key: 0,
+                class: "base-modal-close",
+                type: "button",
+                "aria-label": "Close",
+                onClick: _cache[0] || (_cache[0] = ($event) => emit2("close"))
+              }, "×")) : createCommentVNode("", true)
+            ])) : createCommentVNode("", true)
+          ]),
+          createBaseVNode("div", _hoisted_4$7, [
+            renderSlot(_ctx.$slots, "default")
+          ]),
+          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$4, [
+            renderSlot(_ctx.$slots, "footer")
+          ])) : createCommentVNode("", true)
+        ])
+      ], 40, _hoisted_1$a);
+    };
+  }
+});
+const _hoisted_1$9 = { class: "setting-item" };
+const _hoisted_2$8 = { class: "setting-main" };
+const _hoisted_3$7 = { class: "settings-label" };
+const _hoisted_4$6 = {
+  key: 0,
+  class: "settings-meta"
 };
-const _hoisted_11$2 = { class: "setting-item" };
-const _hoisted_12$1 = { class: "setting-item" };
-const _hoisted_13 = { class: "setting-item" };
-const _hoisted_14 = { class: "setting-main" };
-const _hoisted_15 = {
-  class: "settings-meta",
-  id: "voice-stt-meta"
-};
-const _hoisted_16 = { class: "setting-item" };
-const _hoisted_17 = { class: "setting-item" };
-const _hoisted_18 = ["aria-hidden"];
-const _hoisted_19 = { class: "info-card" };
-const _hoisted_20 = { class: "info-head" };
-const _hoisted_21 = ["innerHTML"];
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  __name: "SettingRow",
+  props: {
+    label: {},
+    meta: {}
+  },
+  setup(__props) {
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$9, [
+        createBaseVNode("div", _hoisted_2$8, [
+          createBaseVNode("div", _hoisted_3$7, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$6, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+          renderSlot(_ctx.$slots, "extra")
+        ]),
+        renderSlot(_ctx.$slots, "default")
+      ]);
+    };
+  }
+});
+const _hoisted_1$8 = { class: "settings-stack" };
+const _hoisted_2$7 = { class: "setting-actions" };
+const _hoisted_3$6 = ["disabled"];
+const _hoisted_4$5 = ["innerHTML"];
 const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -27112,182 +27440,187 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createBaseVNode("aside", {
-          class: normalizeClass(["settings-modal", { open: unref(ui).settingsOpen }]),
+        createVNode(_sfc_main$d, {
           id: "settings-modal",
-          "aria-live": "polite"
-        }, [
-          createBaseVNode("div", _hoisted_1$9, [
-            _cache[5] || (_cache[5] = createBaseVNode("span", null, "Settings", -1)),
-            createBaseVNode("button", {
-              class: "settings-close",
-              id: "settings-close",
-              type: "button",
-              "aria-label": "Close settings",
-              onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = false)
-            }, "×")
-          ]),
-          createBaseVNode("div", _hoisted_2$7, [
-            createBaseVNode("div", _hoisted_3$6, [
-              createBaseVNode("div", _hoisted_4$5, [
-                _cache[6] || (_cache[6] = createBaseVNode("div", { class: "settings-label" }, "💓 Heartbeat", -1)),
-                createBaseVNode("div", _hoisted_5$4, toDisplayString(hbInfo.value), 1)
-              ]),
-              createBaseVNode("div", _hoisted_6$4, [
-                createBaseVNode("button", {
-                  class: "hb-config",
-                  id: "hb-config",
-                  type: "button",
-                  onClick: openHbConfig
-                }, "Configure"),
-                createBaseVNode("button", {
-                  class: normalizeClass(hbToggleClass.value),
-                  id: "hb-toggle",
-                  type: "button",
-                  disabled: hbBusy.value,
-                  onClick: toggleHb
-                }, toDisplayString(hbToggleText.value), 11, _hoisted_7$4)
-              ])
-            ]),
-            createBaseVNode("div", _hoisted_8$4, [
-              createBaseVNode("div", _hoisted_9$4, [
-                _cache[7] || (_cache[7] = createBaseVNode("div", { class: "settings-label" }, "🕒 Clock", -1)),
-                createBaseVNode("div", _hoisted_10$4, toDisplayString(clockInfo.value), 1)
-              ]),
-              createBaseVNode("button", {
-                class: normalizeClass("hb-toggle " + (use12Hour.value ? "on" : "off")),
-                id: "clock-toggle",
-                type: "button",
-                onClick: toggleClock
-              }, toDisplayString(clockText.value), 3)
-            ]),
-            createBaseVNode("div", _hoisted_11$2, [
-              _cache[8] || (_cache[8] = createBaseVNode("div", { class: "setting-main" }, [
-                createBaseVNode("div", { class: "settings-label" }, "🔗 GitHub Banner"),
-                createBaseVNode("div", { class: "settings-meta" }, "Star on GitHub header bar")
-              ], -1)),
-              createBaseVNode("button", {
-                class: normalizeClass("hb-toggle " + (headerHidden.value ? "off" : "on")),
-                id: "header-toggle",
-                type: "button",
-                onClick: toggleHeader
-              }, toDisplayString(headerHidden.value ? "Off" : "On"), 3)
-            ]),
-            createBaseVNode("div", _hoisted_12$1, [
-              _cache[9] || (_cache[9] = createBaseVNode("div", { class: "setting-main" }, [
-                createBaseVNode("div", { class: "settings-label" }, "🐞 Debug"),
-                createBaseVNode("div", { class: "settings-meta" }, "Show chat thread/session ids")
-              ], -1)),
-              createBaseVNode("button", {
-                class: normalizeClass("hb-toggle " + (debugEnabled.value ? "on" : "off")),
-                id: "debug-toggle",
-                type: "button",
-                onClick: toggleDebug
-              }, toDisplayString(debugEnabled.value ? "On" : "Off"), 3)
-            ]),
-            createBaseVNode("div", _hoisted_13, [
-              createBaseVNode("div", _hoisted_14, [
-                _cache[10] || (_cache[10] = createBaseVNode("div", { class: "settings-label" }, "🎙️ Voice — STT", -1)),
-                createBaseVNode("div", _hoisted_15, toDisplayString(sttMeta.value), 1)
-              ]),
-              createBaseVNode("button", {
-                class: normalizeClass("hb-toggle " + (sttEnabled.value ? "on" : "off")),
-                id: "voice-stt-toggle",
-                type: "button",
-                onClick: toggleStt
-              }, toDisplayString(sttText.value), 3)
-            ]),
-            createBaseVNode("div", _hoisted_16, [
-              _cache[11] || (_cache[11] = createBaseVNode("div", { class: "setting-main" }, [
-                createBaseVNode("div", { class: "settings-label" }, "🎙️ Mic (STT)"),
-                createBaseVNode("div", { class: "settings-meta" }, "Dictate and voice chat")
-              ], -1)),
-              createBaseVNode("button", {
-                class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
-                id: "voice-mic-toggle",
-                type: "button",
-                onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
-              }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
-            ]),
-            createBaseVNode("div", _hoisted_17, [
-              _cache[12] || (_cache[12] = createBaseVNode("div", { class: "setting-main" }, [
-                createBaseVNode("div", { class: "settings-label" }, "🔊 Speaker (TTS)"),
-                createBaseVNode("div", { class: "settings-meta" }, "Read aloud and voice replies"),
-                createBaseVNode("div", {
-                  class: "settings-error-note",
-                  id: "tts-error-note",
-                  hidden: ""
-                }, "DeepGram not configured")
-              ], -1)),
-              createBaseVNode("button", {
-                class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
-                id: "voice-tts-toggle",
-                type: "button",
-                onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
-              }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
-            ]),
-            createBaseVNode("div", { class: "setting-item" }, [
-              _cache[13] || (_cache[13] = createBaseVNode("div", { class: "setting-main" }, [
-                createBaseVNode("div", { class: "settings-label" }, "🧾 Advanced"),
-                createBaseVNode("div", { class: "settings-meta" }, "Technical runtime and JSON files")
-              ], -1)),
-              createBaseVNode("button", {
-                class: "hb-toggle on",
-                id: "info-open",
-                type: "button",
-                onClick: openInfo
-              }, "Info")
+          open: unref(ui).settingsOpen,
+          onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
+          size: "md",
+          title: "Settings"
+        }, {
+          default: withCtx(() => [
+            createBaseVNode("div", _hoisted_1$8, [
+              createVNode(_sfc_main$c, {
+                label: "💓 Heartbeat",
+                meta: hbInfo.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("div", _hoisted_2$7, [
+                    createBaseVNode("button", {
+                      class: "hb-config",
+                      id: "hb-config",
+                      type: "button",
+                      onClick: openHbConfig
+                    }, "Configure"),
+                    createBaseVNode("button", {
+                      class: normalizeClass(hbToggleClass.value),
+                      id: "hb-toggle",
+                      type: "button",
+                      disabled: hbBusy.value,
+                      onClick: toggleHb
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$6)
+                  ])
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$c, {
+                label: "🕒 Clock",
+                meta: clockInfo.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (use12Hour.value ? "on" : "off")),
+                    id: "clock-toggle",
+                    type: "button",
+                    onClick: toggleClock
+                  }, toDisplayString(clockText.value), 3)
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$c, {
+                label: "🔗 GitHub Banner",
+                meta: "Star on GitHub header bar"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (headerHidden.value ? "off" : "on")),
+                    id: "header-toggle",
+                    type: "button",
+                    onClick: toggleHeader
+                  }, toDisplayString(headerHidden.value ? "Off" : "On"), 3)
+                ]),
+                _: 1
+              }),
+              createVNode(_sfc_main$c, {
+                label: "🐞 Debug",
+                meta: "Show chat thread/session ids"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (debugEnabled.value ? "on" : "off")),
+                    id: "debug-toggle",
+                    type: "button",
+                    onClick: toggleDebug
+                  }, toDisplayString(debugEnabled.value ? "On" : "Off"), 3)
+                ]),
+                _: 1
+              }),
+              createVNode(_sfc_main$c, {
+                label: "🎙️ Voice — STT",
+                meta: sttMeta.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (sttEnabled.value ? "on" : "off")),
+                    id: "voice-stt-toggle",
+                    type: "button",
+                    onClick: toggleStt
+                  }, toDisplayString(sttText.value), 3)
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$c, {
+                label: "🎙️ Mic (STT)",
+                meta: "Dictate and voice chat"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
+                    id: "voice-mic-toggle",
+                    type: "button",
+                    onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
+                  }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
+                ]),
+                _: 1
+              }),
+              createVNode(_sfc_main$c, {
+                label: "🔊 Speaker (TTS)",
+                meta: "Read aloud and voice replies"
+              }, {
+                extra: withCtx(() => [..._cache[4] || (_cache[4] = [
+                  createBaseVNode("div", {
+                    class: "settings-error-note",
+                    id: "tts-error-note",
+                    hidden: ""
+                  }, "DeepGram not configured", -1)
+                ])]),
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
+                    id: "voice-tts-toggle",
+                    type: "button",
+                    onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
+                  }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
+                ]),
+                _: 1
+              }),
+              createVNode(_sfc_main$c, {
+                label: "🧾 Advanced",
+                meta: "Technical runtime and JSON files"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: "hb-toggle on",
+                    id: "info-open",
+                    type: "button",
+                    onClick: openInfo
+                  }, "Info")
+                ]),
+                _: 1
+              })
             ])
-          ])
-        ], 2),
-        createBaseVNode("section", {
-          class: normalizeClass(["info-modal", { open: unref(ui).infoOpen }]),
-          id: "info-modal",
-          "aria-hidden": !unref(ui).infoOpen,
-          onClick: _cache[4] || (_cache[4] = withModifiers(($event) => unref(ui).infoOpen = false, ["self"]))
-        }, [
-          createBaseVNode("article", _hoisted_19, [
-            createBaseVNode("div", _hoisted_20, [
-              _cache[14] || (_cache[14] = createBaseVNode("span", null, "Technical Info", -1)),
-              createBaseVNode("button", {
-                class: "settings-close",
-                id: "info-close",
-                type: "button",
-                "aria-label": "Close technical info",
-                onClick: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false)
-              }, "×")
+          ]),
+          _: 1
+        }, 8, ["open"]),
+        (openBlock(), createBlock(Teleport, { to: "body" }, [
+          createVNode(_sfc_main$d, {
+            id: "info-modal",
+            open: unref(ui).infoOpen,
+            onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
+            size: "lg",
+            title: "Technical Info"
+          }, {
+            default: withCtx(() => [
+              createBaseVNode("div", {
+                id: "info-body",
+                class: "info-body",
+                innerHTML: infoHtml.value
+              }, null, 8, _hoisted_4$5)
             ]),
-            createBaseVNode("div", {
-              id: "info-body",
-              class: "info-body",
-              innerHTML: infoHtml.value
-            }, null, 8, _hoisted_21)
-          ])
-        ], 10, _hoisted_18)
+            _: 1
+          }, 8, ["open"])
+        ]))
       ], 64);
     };
   }
 });
-const _hoisted_1$8 = ["aria-hidden"];
-const _hoisted_2$6 = { class: "hb-card" };
-const _hoisted_3$5 = {
+const _hoisted_1$7 = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_4$4 = ["disabled"];
-const _hoisted_5$3 = {
+const _hoisted_2$6 = ["disabled"];
+const _hoisted_3$5 = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_6$3 = ["disabled"];
-const _hoisted_7$3 = { class: "hb-actions" };
-const _hoisted_8$3 = {
+const _hoisted_4$4 = ["disabled"];
+const _hoisted_5$3 = { class: "hb-actions" };
+const _hoisted_6$3 = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_9$3 = { class: "hb-buttons" };
-const _hoisted_10$3 = ["disabled"];
-const _hoisted_11$1 = ["disabled"];
+const _hoisted_7$3 = { class: "hb-buttons" };
+const _hoisted_8$3 = ["disabled"];
+const _hoisted_9$3 = ["disabled"];
 const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
@@ -27352,30 +27685,21 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("section", {
-        class: normalizeClass(["info-modal", { open: unref(ui).hbModalOpen }]),
+      return openBlock(), createBlock(_sfc_main$d, {
         id: "hb-modal",
-        "aria-hidden": !unref(ui).hbModalOpen,
-        onClick: withModifiers(close, ["self"])
-      }, [
-        createBaseVNode("article", _hoisted_2$6, [
-          createBaseVNode("div", { class: "info-head" }, [
-            _cache[2] || (_cache[2] = createBaseVNode("span", null, "Heartbeat Configuration", -1)),
-            createBaseVNode("button", {
-              class: "settings-close",
-              id: "hb-modal-close",
-              type: "button",
-              "aria-label": "Close heartbeat configuration",
-              onClick: close
-            }, "×")
-          ]),
+        open: unref(ui).hbModalOpen,
+        onClose: close,
+        size: "lg",
+        title: "Heartbeat Configuration"
+      }, {
+        default: withCtx(() => [
           createBaseVNode("form", {
             class: "hb-form",
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_3$5, [
-              _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
+            createBaseVNode("label", _hoisted_1$7, [
+              _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
                 id: "hb-interval-input",
@@ -27386,7 +27710,7 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$4), [
+              }, null, 8, _hoisted_2$6), [
                 [
                   vModelText,
                   interval.value,
@@ -27395,8 +27719,8 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_5$3, [
-              _cache[4] || (_cache[4] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
+            createBaseVNode("label", _hoisted_3$5, [
+              _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
                 id: "hb-prompt-input",
@@ -27404,55 +27728,139 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_6$3), [
+              }, null, 8, _hoisted_4$4), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_7$3, [
-              createBaseVNode("div", _hoisted_8$3, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_9$3, [
+            createBaseVNode("div", _hoisted_5$3, [
+              createBaseVNode("div", _hoisted_6$3, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$3, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_10$3),
+                }, "Cancel", 8, _hoisted_8$3),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_11$1)
+                }, "Save", 8, _hoisted_9$3)
               ])
             ])
           ], 32)
-        ])
-      ], 10, _hoisted_1$8);
+        ]),
+        _: 1
+      }, 8, ["open"]);
     };
   }
 });
-const _export_sfc = (sfc, props) => {
-  const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
-    target[key] = val;
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+  __name: "AudioModal",
+  setup(__props) {
+    const ui = useUiStore();
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(_sfc_main$d, {
+        id: "audio-action-modal",
+        open: unref(ui).audioModalOpen,
+        onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
+        size: "sm",
+        dismissible: false
+      }, {
+        default: withCtx(() => [..._cache[1] || (_cache[1] = [
+          createBaseVNode("div", {
+            class: "audio-action-card",
+            id: "audio-action-card"
+          }, [
+            createBaseVNode("div", {
+              class: "audio-action-icon",
+              id: "audio-action-icon"
+            }),
+            createBaseVNode("div", {
+              class: "audio-action-label",
+              id: "audio-action-label"
+            }, "Recording..."),
+            createBaseVNode("div", {
+              class: "audio-player-resume",
+              id: "audio-player-resume",
+              hidden: ""
+            }, [
+              createBaseVNode("div", {
+                class: "audio-player-resume-msg",
+                id: "audio-player-resume-msg"
+              }),
+              createBaseVNode("div", { class: "audio-player-resume-btns" }, [
+                createBaseVNode("button", {
+                  class: "audio-player-resume-btn is-restart",
+                  id: "audio-resume-restart",
+                  type: "button"
+                }, "Start over"),
+                createBaseVNode("button", {
+                  class: "audio-player-resume-btn is-resume",
+                  id: "audio-resume-continue",
+                  type: "button"
+                }, "Resume")
+              ])
+            ]),
+            createBaseVNode("div", {
+              class: "audio-player-progress",
+              id: "audio-player-progress",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "audio-player-bar-wrap" }, [
+                createBaseVNode("div", {
+                  class: "audio-player-bar",
+                  id: "audio-player-bar"
+                })
+              ]),
+              createBaseVNode("div", {
+                class: "audio-player-counter",
+                id: "audio-player-counter"
+              }, "0 / 0")
+            ]),
+            createBaseVNode("div", {
+              class: "audio-player-transcript",
+              id: "audio-player-transcript",
+              hidden: ""
+            }),
+            createBaseVNode("div", { class: "audio-player-controls" }, [
+              createBaseVNode("button", {
+                class: "audio-player-skip",
+                id: "audio-skip-back",
+                type: "button",
+                "aria-label": "Previous",
+                hidden: ""
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-backward-step" })
+              ]),
+              createBaseVNode("button", {
+                class: "audio-action-stop",
+                id: "audio-action-stop",
+                type: "button",
+                "aria-label": "Stop"
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-stop" }),
+                createBaseVNode("span", null, "Stop")
+              ]),
+              createBaseVNode("button", {
+                class: "audio-player-skip",
+                id: "audio-skip-forward",
+                type: "button",
+                "aria-label": "Next",
+                hidden: ""
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-forward-step" })
+              ])
+            ])
+          ], -1)
+        ])]),
+        _: 1
+      }, 8, ["open"]);
+    };
   }
-  return target;
-};
-const _sfc_main$9 = {};
-const _hoisted_1$7 = {
-  id: "audio-action-modal",
-  class: "audio-action-modal",
-  hidden: "",
-  role: "dialog",
-  "aria-modal": "true"
-};
-function _sfc_render(_ctx, _cache) {
-  return openBlock(), createElementBlock("div", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
-    createStaticVNode('<div class="audio-action-card" id="audio-action-card"><div class="audio-action-icon" id="audio-action-icon"></div><div class="audio-action-label" id="audio-action-label">Recording...</div><div class="audio-player-resume" id="audio-player-resume" hidden><div class="audio-player-resume-msg" id="audio-player-resume-msg"></div><div class="audio-player-resume-btns"><button class="audio-player-resume-btn is-restart" id="audio-resume-restart" type="button">Start over</button><button class="audio-player-resume-btn is-resume" id="audio-resume-continue" type="button">Resume</button></div></div><div class="audio-player-progress" id="audio-player-progress" hidden><div class="audio-player-bar-wrap"><div class="audio-player-bar" id="audio-player-bar"></div></div><div class="audio-player-counter" id="audio-player-counter">0 / 0</div></div><div class="audio-player-transcript" id="audio-player-transcript" hidden></div><div class="audio-player-controls"><button class="audio-player-skip" id="audio-skip-back" type="button" aria-label="Previous" hidden><i class="fa-solid fa-backward-step"></i></button><button class="audio-action-stop" id="audio-action-stop" type="button" aria-label="Stop"><i class="fa-solid fa-stop"></i><span>Stop</span></button><button class="audio-player-skip" id="audio-skip-forward" type="button" aria-label="Next" hidden><i class="fa-solid fa-forward-step"></i></button></div></div>', 1)
-  ])]);
-}
-const AudioModal = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render]]);
+});
 const _hoisted_1$6 = ["disabled"];
 const _sfc_main$8 = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
@@ -27636,19 +28044,37 @@ const _hoisted_11 = {
   "aria-live": "polite"
 };
 const _hoisted_12 = { class: "side-value" };
-const STATE_POLL_OK_MS = 1e3;
-const STATE_POLL_OFFLINE_MS = 400;
 const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
-    const pills = /* @__PURE__ */ ref([]);
-    const jobsCount = /* @__PURE__ */ ref("-");
-    const tasksCount = /* @__PURE__ */ ref("-");
-    const uptime = /* @__PURE__ */ ref("-");
-    let stateOnline = true;
-    let statePollTimer = null;
+    const live = useLiveStore();
+    const STATE_SPEC = {
+      topics: ["state"],
+      fetch: () => fetch("/api/state", { cache: "no-store" }).then((r) => r.json())
+    };
+    onMounted(() => live.bind("state", STATE_SPEC));
+    onBeforeUnmount(() => live.unbind("state"));
+    const stateEntry = computed(() => live.entry("state"));
+    const stateData = computed(() => {
+      var _a2;
+      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.data) ?? null;
+    });
+    const isOffline = computed(() => {
+      var _a2;
+      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.status) === "error";
+    });
+    let uptimeTick = null;
+    const now = /* @__PURE__ */ ref(Date.now());
+    onMounted(() => {
+      uptimeTick = setInterval(() => {
+        now.value = Date.now();
+      }, 1e3);
+    });
+    onBeforeUnmount(() => {
+      if (uptimeTick) clearInterval(uptimeTick);
+    });
     function fmtDur(ms) {
-      if (ms == null) return "n/a";
+      if (ms == null || ms < 0) return "n/a";
       const s = Math.floor(ms / 1e3);
       const d2 = Math.floor(s / 86400);
       if (d2 > 0) {
@@ -27662,64 +28088,42 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
       if (m2 > 0) return `${m2}m ${ss}s`;
       return `${ss}s`;
     }
-    function buildPills(state) {
+    const jobsCount = computed(() => {
+      var _a2;
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      return String(((_a2 = d2 == null ? void 0 : d2.jobs) == null ? void 0 : _a2.length) ?? 0);
+    });
+    const tasksCount = computed(() => {
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      return String((d2 == null ? void 0 : d2.tasksActive) ?? 0);
+    });
+    const uptime = computed(() => {
+      var _a2;
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      const startedAt = (_a2 = d2 == null ? void 0 : d2.daemon) == null ? void 0 : _a2.startedAt;
+      if (!startedAt) return "-";
+      return fmtDur(now.value - startedAt);
+    });
+    const pills = computed(() => {
       var _a2, _b;
+      if (isOffline.value) {
+        return [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
+      }
+      const d2 = stateData.value;
+      if (!d2) return [];
       const out = [];
-      if ((_a2 = state.telegram) == null ? void 0 : _a2.configured) {
-        const n = state.telegram.allowedUserCount;
+      if ((_a2 = d2.telegram) == null ? void 0 : _a2.configured) {
+        const n = d2.telegram.allowedUserCount;
         out.push({ cls: "ok", icon: "✈️", label: "Telegram", value: `${n} user${n !== 1 ? "s" : ""}` });
       }
-      if ((_b = state.discord) == null ? void 0 : _b.configured) {
-        const n = state.discord.allowedUserCount;
+      if ((_b = d2.discord) == null ? void 0 : _b.configured) {
+        const n = d2.discord.allowedUserCount;
         out.push({ cls: "ok", icon: "🎮", label: "Discord", value: `${n} user${n !== 1 ? "s" : ""}` });
       }
       return out;
-    }
-    async function refreshState() {
-      var _a2, _b;
-      try {
-        const res = await fetch("/api/state", { cache: "no-store" });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        const state = await res.json();
-        stateOnline = true;
-        pills.value = buildPills(state);
-        jobsCount.value = String(((_a2 = state.jobs) == null ? void 0 : _a2.length) ?? 0);
-        tasksCount.value = String(state.tasksActive ?? 0);
-        uptime.value = fmtDur((_b = state.daemon) == null ? void 0 : _b.uptimeMs);
-      } catch {
-        stateOnline = false;
-        pills.value = [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
-        jobsCount.value = "-";
-        tasksCount.value = "-";
-      }
-    }
-    function scheduleStatePoll(delay3) {
-      if (statePollTimer) clearTimeout(statePollTimer);
-      statePollTimer = setTimeout(runStatePoll, delay3);
-    }
-    async function runStatePoll() {
-      await refreshState();
-      scheduleStatePoll(stateOnline ? STATE_POLL_OK_MS : STATE_POLL_OFFLINE_MS);
-    }
-    function kickStatePoll() {
-      scheduleStatePoll(0);
-    }
-    function onVisibilityChange() {
-      if (document.visibilityState === "visible") kickStatePoll();
-    }
-    onMounted(() => {
-      runStatePoll();
-      document.addEventListener("visibilitychange", onVisibilityChange);
-      window.addEventListener("online", kickStatePoll);
-      window.addEventListener("focus", kickStatePoll);
-      window.addEventListener("pageshow", kickStatePoll);
-    });
-    onBeforeUnmount(() => {
-      if (statePollTimer) clearTimeout(statePollTimer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("online", kickStatePoll);
-      window.removeEventListener("focus", kickStatePoll);
-      window.removeEventListener("pageshow", kickStatePoll);
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$4, [
@@ -28961,6 +29365,13 @@ User's voice request: "${userText}"`;
     };
   }
 });
+const _export_sfc = (sfc, props) => {
+  const target = sfc.__vccOpts || sfc;
+  for (const [key, val] of props) {
+    target[key] = val;
+  }
+  return target;
+};
 const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-9d3f47dd"]]);
 const _sfc_main$3 = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
@@ -29107,7 +29518,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
           ])
         ]),
         activeRef.value ? (openBlock(), createElementBlock("div", _hoisted_9, [
-          createVNode(_sfc_main$d, {
+          createVNode(_sfc_main$f, {
             path: activeRef.value.path,
             kind: activeRef.value.kind
           }, null, 8, ["path", "kind"])
@@ -29176,18 +29587,8 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const ui = useUiStore();
     const reading = useReadingStore();
-    function onEscape(ev) {
-      if (ev.key !== "Escape") return;
-      if (ui.hbModalOpen) ui.hbModalOpen = false;
-      else if (ui.infoOpen) ui.infoOpen = false;
-      else if (ui.settingsOpen) ui.settingsOpen = false;
-    }
     onMounted(() => {
       window.__throwToReadingPane = (ref2) => reading.throwRef(ref2);
-      document.addEventListener("keydown", onEscape);
-    });
-    onBeforeUnmount(() => {
-      document.removeEventListener("keydown", onEscape);
     });
     function onStageDragEnter(ev) {
       var _a2;
@@ -29296,7 +29697,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
             unref(reading).open ? (openBlock(), createBlock(_sfc_main$2, { key: 1 })) : createCommentVNode("", true)
           ], 2)
         ], 32),
-        createVNode(AudioModal),
+        createVNode(_sfc_main$9),
         createVNode(_sfc_main$6),
         createVNode(_sfc_main$3)
       ], 64);
@@ -29317,6 +29718,28 @@ const pageStyles = String.raw`    :root {
       --good: #67f0b5;
       --bad: #ff7f7f;
       --warn: #ffc276;
+
+      /* Phase 3 design tokens — used by later nodes; declared here only. */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 24px;
+      --space-6: 32px;
+
+      --radius-sm: 4px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+
+      --border-subtle: #d8e4ff14;
+      --border-strong: #d8e4ff3d;
+
+      --surface-0: #060d1a;
+      --surface-1: #0b1220;
+      --surface-2: #111b2e;
+      --surface-3: #1a2640;
+
+      --shadow-overlay: 0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
     }
 
     * { box-sizing: border-box; }
@@ -30372,31 +30795,6 @@ const pageStyles = String.raw`    :root {
       0%, 100% { opacity: 0.78; }
       50% { opacity: 1; }
     }
-    .settings-modal {
-      position: fixed;
-      top: 94px;
-      right: 18px;
-      width: min(320px, calc(100vw - 36px));
-      z-index: 6;
-      border: 1px solid #d8e4ff20;
-      border-radius: 14px;
-      background: #0b1220b8;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 18px 36px #0000005a;
-      padding: 12px;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: translateY(-8px) scale(0.98);
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
-    }
-    .settings-modal.open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transform: translateY(0) scale(1);
-      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0s;
-    }
     .settings-head {
       display: flex;
       align-items: center;
@@ -30616,24 +31014,88 @@ const pageStyles = String.raw`    :root {
     .hb-btn.solid:hover {
       filter: brightness(1.06);
     }
-    .info-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 7;
-      display: grid;
-      place-items: center;
-      background: #02050db0;
-      padding: 18px;
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.18s ease, visibility 0s linear 0.18s;
+    /* ── BaseModal — native <dialog> modal system ── */
+    .base-modal {
+      padding: 0;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      background: var(--surface-1);
+      box-shadow: var(--shadow-overlay);
+      color: var(--text);
+      max-height: 90vh;
+      overflow: hidden;
+      margin: auto;
     }
-    .info-modal.open {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-      transition: opacity 0.18s ease, visibility 0s linear 0s;
+    .base-modal::backdrop {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+    }
+    .base-modal[data-size="sm"] { width: min(360px, calc(100vw - 32px)); }
+    .base-modal[data-size="md"] { width: min(480px, calc(100vw - 32px)); }
+    .base-modal[data-size="lg"] { width: min(700px, calc(100vw - 32px)); }
+    .base-modal[data-size="sheet"] {
+      width: 100%;
+      max-width: 100%;
+      max-height: 85vh;
+      margin: auto auto 0 auto;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+    @media (max-width: 640px) {
+      .base-modal[data-size="md"],
+      .base-modal[data-size="lg"] {
+        width: 100%;
+        max-width: 100%;
+        max-height: 85vh;
+        margin: auto auto 0 auto;
+        border-bottom-left-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+    }
+    .base-modal-inner {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      flex: 1;
+    }
+    .base-modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #9eb5d6;
+      flex-shrink: 0;
+    }
+    .base-modal-title {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .base-modal-close {
+      border: none;
+      background: transparent;
+      color: #9eb5d6;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+    .base-modal-body {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .base-modal-footer {
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
     }
     .info-card {
       width: min(980px, 100%);
@@ -34404,18 +34866,6 @@ const pageStyles = String.raw`    :root {
     .global-voice-task[hidden] { display: none; }
 
     /* ── Audio action modal — small centered card for recording / playback ── */
-    .audio-action-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 190;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(6, 13, 26, 0.6);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
-    }
-    .audio-action-modal[hidden] { display: none; }
     .audio-action-card {
       background: var(--panel, #0f1e33);
       border: 1px solid var(--border, #1e3a5f);

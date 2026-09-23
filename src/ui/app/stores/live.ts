@@ -114,7 +114,8 @@ export const useLiveStore = defineStore("live", () => {
 
   function bind(key: string, spec: ResourceSpec): void {
     let entry = entries.get(key);
-    if (!entry) {
+    const isNew = !entry;
+    if (isNew) {
       entry = {
         data: null,
         status: "idle",
@@ -128,12 +129,13 @@ export const useLiveStore = defineStore("live", () => {
       };
       entries.set(key, entry);
       registerTopics(key, spec);
-      evict();
     } else {
       touch(entry);
     }
     const wasUnbound = entry.refs === 0;
     entry.refs++;
+    // Evict AFTER refs++ so the new entry (refs=1) is never its own eviction victim
+    if (isNew) evict();
     if (wasUnbound) {
       // 0→1 transition: fetch (revalidating cache hit or fresh)
       doFetch(key, entry).catch(() => {});
