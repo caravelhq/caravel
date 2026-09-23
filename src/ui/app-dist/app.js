@@ -4627,8 +4627,8 @@ function resolveAsset(type2, name, warnMissing = true, maybeSelfReference = fals
     return res;
   }
 }
-function resolve(registry, name) {
-  return registry && (registry[name] || registry[camelize(name)] || registry[capitalize(camelize(name))]);
+function resolve(registry2, name) {
+  return registry2 && (registry2[name] || registry2[camelize(name)] || registry2[capitalize(camelize(name))]);
 }
 function renderList(source, renderItem, cache, index) {
   let ret;
@@ -8866,9 +8866,9 @@ function formatComponentName(instance, Component, isRoot = false) {
     }
   }
   if (!name && instance) {
-    const inferFromRegistry = (registry) => {
-      for (const key in registry) {
-        if (registry[key] === Component) {
+    const inferFromRegistry = (registry2) => {
+      for (const key in registry2) {
+        if (registry2[key] === Component) {
           return key;
         }
       }
@@ -12431,7 +12431,7 @@ var useShowHide = (modelValue, props, emit2, element, computedId, options = {
     }
   };
 };
-var _hoisted_1$p = [
+var _hoisted_1$q = [
   "type",
   "disabled",
   "aria-label"
@@ -12457,7 +12457,7 @@ var BCloseButton_default = /* @__PURE__ */ defineComponent({
         disabled: unref(props).disabled,
         "aria-label": unref(props).ariaLabel,
         onClick: _cache[0] || (_cache[0] = ($event) => emit2("click", $event))
-      }, null, 8, _hoisted_1$p);
+      }, null, 8, _hoisted_1$q);
     };
   }
 });
@@ -12748,7 +12748,7 @@ var BLink_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$o = {
+var _hoisted_1$p = {
   key: 0,
   class: "visually-hidden"
 };
@@ -12781,7 +12781,7 @@ var BSpinner_default = /* @__PURE__ */ defineComponent({
         role: unref(props).label || hasLabelSlot.value ? unref(props).role : null,
         "aria-hidden": unref(props).label || hasLabelSlot.value ? null : true
       }, {
-        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$o, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
+        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$p, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
         _: 3
       }, 8, [
         "class",
@@ -14307,12 +14307,12 @@ var useModalManager = (modalOpen, initialValue) => {
     })) ?? [])
   };
 };
-var _hoisted_1$n = [
+var _hoisted_1$o = [
   "id",
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$d = ["id"];
+var _hoisted_2$e = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$d),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$e),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14728,7 +14728,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
               "height": "0",
               "overflow": "hidden"
             }
-          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$n), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
+          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$o), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
           _: 3
         }, 16, ["appear"])) : createCommentVNode("", true), !unref(props).noBackdrop ? renderSlot(_ctx.$slots, "backdrop", normalizeProps(mergeProps({ key: 1 }, sharedSlots.value)), () => [unref(renderBackdropRef) ? (openBlock(), createBlock(Transition, normalizeProps(mergeProps({ key: 0 }, unref(backdropTransitionProps))), {
           default: withCtx(() => [withDirectives(createBaseVNode("div", {
@@ -14820,7 +14820,7 @@ var BProgressBar_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$m = ["aria-valuenow", "aria-valuemax"];
+var _hoisted_1$n = ["aria-valuenow", "aria-valuemax"];
 var BProgress_default = /* @__PURE__ */ defineComponent({
   __name: "BProgress",
   props: {
@@ -14887,7 +14887,7 @@ var BProgress_default = /* @__PURE__ */ defineComponent({
         "variant",
         "text-variant",
         "bg-variant"
-      ])])], 12, _hoisted_1$m);
+      ])])], 12, _hoisted_1$n);
     };
   }
 });
@@ -14967,13 +14967,13 @@ var useCountdownHover = (element, { modelValueIgnoresHover, noHoverPause, noResu
   });
   return { isHovering };
 };
-var _hoisted_1$l = [
+var _hoisted_1$m = [
   "id",
   "role",
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$c = {
+var _hoisted_2$d = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$c, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$d, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -15237,7 +15237,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             "max",
             "value"
           ])) : createCommentVNode("", true)
-        ], 10, _hoisted_1$l), [[vShow, isAlertVisible.value]])]),
+        ], 10, _hoisted_1$m), [[vShow, isAlertVisible.value]])]),
         _: 3
       }, 16, ["appear"])) : createCommentVNode("", true);
     };
@@ -15496,7 +15496,7 @@ var useFormInput = (props, input, modelValue, modelModifiers) => {
     isDisabled
   };
 };
-var _hoisted_1$k = [
+var _hoisted_1$l = [
   "id",
   "value",
   "name",
@@ -15617,7 +15617,7 @@ var BFormInput_default = /* @__PURE__ */ defineComponent({
         onInput: _cache[0] || (_cache[0] = (...args) => unref(onInput) && unref(onInput)(...args)),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 42, _hoisted_1$k);
+      }, null, 42, _hoisted_1$l);
     };
   }
 });
@@ -15800,7 +15800,7 @@ var BCol_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$j = [
+var _hoisted_1$k = [
   "value",
   "disabled",
   "selected"
@@ -15826,7 +15826,7 @@ var BFormSelectOption_default = /* @__PURE__ */ defineComponent({
         value: unref(props).value,
         disabled: unref(props).disabled,
         selected: isSelected.value
-      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$j);
+      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$k);
     };
   }
 });
@@ -16113,13 +16113,13 @@ var BFormGroupLabel_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$i = [
+var _hoisted_1$j = [
   "id",
   "disabled",
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$b = {
+var _hoisted_2$c = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$b, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -16450,7 +16450,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
             key: "2"
           } : void 0
         ]), 1040)
-      ], 64))], 64))], 16, _hoisted_1$i);
+      ], 64))], 64))], 16, _hoisted_1$j);
     };
   }
 });
@@ -16484,7 +16484,7 @@ var BFormSelectOptionGroup_default = /* @__PURE__ */ defineComponent({
     };
   }
 });
-var _hoisted_1$h = [
+var _hoisted_1$i = [
   "id",
   "name",
   "form",
@@ -16619,7 +16619,7 @@ var BFormSelectBase_default = /* @__PURE__ */ defineComponent({
           }, 1040))], 64);
         }), 128)),
         renderSlot(_ctx.$slots, "default")
-      ], 10, _hoisted_1$h)), [[vModelSelect, localValue.value]]);
+      ], 10, _hoisted_1$i)), [[vModelSelect, localValue.value]]);
     };
   }
 });
@@ -16782,7 +16782,7 @@ var useTextareaResize = (input, { maxRows, noAutoShrink, rows }) => {
     computedRows
   };
 };
-var _hoisted_1$g = [
+var _hoisted_1$h = [
   "id",
   "name",
   "form",
@@ -16910,7 +16910,7 @@ var BFormTextarea_default = /* @__PURE__ */ defineComponent({
         }),
         onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
         onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 46, _hoisted_1$g);
+      }, null, 46, _hoisted_1$h);
     };
   }
 });
@@ -17199,17 +17199,17 @@ var registryPlugin = { install(app) {
   const removeStack = (modal) => {
     stack2.value.delete(modal.uid);
   };
-  const registry = /* @__PURE__ */ ref(/* @__PURE__ */ new Map());
+  const registry2 = /* @__PURE__ */ ref(/* @__PURE__ */ new Map());
   const pushRegistry = (modal) => {
-    registry.value.set(modal.uid, modal);
+    registry2.value.set(modal.uid, modal);
   };
   const removeRegistry = (modal) => {
-    registry.value.delete(modal.uid);
+    registry2.value.delete(modal.uid);
   };
   app.provide(modalManagerKey, {
     countStack,
     lastStack,
-    registry: computed(() => registry.value),
+    registry: computed(() => registry2.value),
     stack: valuesStack,
     pushStack,
     removeStack,
@@ -18772,475 +18772,325 @@ function useRouter() {
 function useRoute(_name) {
   return inject(routeLocationKey);
 }
-function escHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+function refKey(ref2) {
+  switch (ref2.kind) {
+    case "dashboard":
+      return "dashboard";
+    case "file":
+      return ref2.branch ? `file:${ref2.path}@${ref2.branch}` : `file:${ref2.path}`;
+    case "report":
+      return `report:${ref2.taskId}`;
+    case "envelope":
+      return `envelope:${ref2.taskId}`;
+    case "project":
+      return `project:${ref2.slug}`;
+    case "chat":
+      return `chat:${ref2.chatId}`;
+    case "legacy":
+      return `legacy:${ref2.page}`;
+  }
 }
-function fmtSize(bytes) {
-  if (bytes == null) return "";
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+function load$2(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("workspace." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
 }
-function fileIcon(entry) {
-  if (entry.type === "directory") return "📁";
-  const ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
-  const lx = ext.toLowerCase();
-  if (lx === "md" || lx === "markdown" || lx === "mdx") return "📝";
-  if (lx === "ts" || lx === "js" || lx === "mjs") return "📦";
-  if (lx === "json") return "📋";
-  if (lx === "sh" || lx === "bash") return "⚙️";
-  if (lx === "yml" || lx === "yaml") return "📑";
-  if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(lx) !== -1) return "🖼️";
-  return "📄";
+function save(key, value) {
+  try {
+    localStorage.setItem("workspace." + key, JSON.stringify(value));
+  } catch {
+  }
 }
-function detectLang(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  if (ext === "json") return "json";
-  if (["js", "mjs", "cjs", "ts", "tsx", "jsx"].indexOf(ext) !== -1) return "js";
-  if (ext === "py") return "py";
-  if (ext === "vue") return "vue";
-  if (ext === "html" || ext === "htm") return "html";
-  if (["css", "scss", "sass", "less"].indexOf(ext) !== -1) return "css";
-  return "";
+function migrateFromReading() {
+  try {
+    const rawStack = localStorage.getItem("reading.stack");
+    if (!rawStack) return { tabs: [], active1: null, splitOn: false };
+    const stack2 = JSON.parse(rawStack);
+    const openVal = localStorage.getItem("reading.open");
+    const wasOpen = openVal === "true";
+    const tabs = stack2.map((r) => {
+      var _a2;
+      if (r.kind === "file") return { kind: "file", path: r.path, branch: r.branch };
+      const base = ((_a2 = r.path.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) ?? r.path;
+      return { kind: "report", taskId: base, path: r.path };
+    });
+    const active1 = wasOpen && tabs.length > 0 ? refKey(tabs[tabs.length - 1]) : null;
+    ["open", "side", "width", "stack"].forEach((k) => {
+      localStorage.removeItem("reading." + k);
+    });
+    localStorage.removeItem("split.enabled");
+    return { tabs, active1, splitOn: wasOpen && tabs.length > 0 };
+  } catch {
+    return { tabs: [], active1: null, splitOn: false };
+  }
 }
-function isYaml(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  return ext === "yaml" || ext === "yml";
-}
-function isImageFile(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
-}
-function highlightCode(src, lang) {
-  if (lang === "json") return highlightJson(src);
-  if (lang === "js") return highlightJs(src);
-  if (lang === "py") return highlightPy(src);
-  if (lang === "vue") return highlightVue(src);
-  if (lang === "html") return highlightHtml(src);
-  if (lang === "css") return highlightCss(src);
-  return escHtml(src);
-}
-function highlightJson(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === '"') {
-      const start = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === '"') {
-          i++;
-          break;
-        }
-        i++;
-      }
-      const str2 = src.slice(start, i);
-      let j2 = i;
-      while (j2 < len && /\s/.test(src[j2])) j2++;
-      if (src[j2] === ":") {
-        out += '<span class="syn-key">' + escHtml(str2) + "</span>";
+const DASHBOARD_REF = { kind: "dashboard" };
+const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
+  const hasWorkspaceData = localStorage.getItem("workspace.tabs") !== null;
+  let initialTabs;
+  let initialSplitIndex;
+  let initialSplitOn;
+  let initialActive0;
+  let initialActive1;
+  if (!hasWorkspaceData) {
+    const migrated = migrateFromReading();
+    if (migrated.tabs.length > 0) {
+      const mainTab = DASHBOARD_REF;
+      initialTabs = [mainTab, ...migrated.tabs];
+      if (migrated.splitOn) {
+        initialSplitIndex = 1;
+        initialSplitOn = true;
+        initialActive0 = refKey(mainTab);
+        initialActive1 = migrated.active1;
       } else {
-        out += '<span class="syn-str">' + escHtml(str2) + "</span>";
+        initialSplitIndex = null;
+        initialSplitOn = false;
+        initialActive0 = refKey(mainTab);
+        initialActive1 = null;
       }
-      continue;
-    }
-    if (ch === "-" || ch >= "0" && ch <= "9") {
-      const nStart = i;
-      if (ch === "-") i++;
-      while (i < len && /[0-9.eE+\-]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (src.slice(i, i + 4) === "true" || src.slice(i, i + 5) === "false") {
-      const kw = src.slice(i, i + 4) === "true" ? "true" : "false";
-      out += '<span class="syn-bool">' + kw + "</span>";
-      i += kw.length;
-      continue;
-    }
-    if (src.slice(i, i + 4) === "null") {
-      out += '<span class="syn-null">null</span>';
-      i += 4;
-      continue;
-    }
-    if ("{}[],:".indexOf(ch) >= 0) {
-      out += '<span class="syn-punct">' + escHtml(ch) + "</span>";
-      i++;
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-const JS_KEYWORDS = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|as|interface|type|enum|implements|public|private|protected|readonly|abstract)$/;
-const JS_BUILTINS = /^(true|false|null|undefined|NaN|Infinity|console|Math|JSON|Object|Array|String|Number|Boolean|Promise|Date|RegExp|Error|window|document|globalThis)$/;
-function highlightJs(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "/" && src[i + 1] === "/") {
-      const end = src.indexOf("\n", i);
-      const e = end === -1 ? len : end;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
-      i = e;
-      continue;
-    }
-    if (ch === "/" && src[i + 1] === "*") {
-      let bend = src.indexOf("*/", i + 2);
-      if (bend === -1) bend = len;
-      else bend += 2;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, bend)) + "</span>";
-      i = bend;
-      continue;
-    }
-    if (ch === '"' || ch === "'" || ch === "`") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === quote) {
-          i++;
-          break;
-        }
-        if (quote === "`" && src[i] === "$" && src[i + 1] === "{") {
-          let depth = 1;
-          i += 2;
-          while (i < len && depth > 0) {
-            if (src[i] === "{") depth++;
-            else if (src[i] === "}") depth--;
-            i++;
-          }
-          continue;
-        }
-        i++;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (/[A-Za-z_$]/.test(ch)) {
-      const idStart = i;
-      while (i < len && /[A-Za-z0-9_$]/.test(src[i])) i++;
-      const word = src.slice(idStart, i);
-      if (JS_KEYWORDS.test(word)) {
-        out += '<span class="syn-kw">' + word + "</span>";
-      } else if (JS_BUILTINS.test(word)) {
-        out += '<span class="syn-builtin">' + word + "</span>";
-      } else if (src[i] === "(") {
-        out += '<span class="syn-fn">' + word + "</span>";
-      } else {
-        out += escHtml(word);
-      }
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-const PY_KEYWORDS = /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|match|case)$/;
-const PY_BUILTINS = /^(abs|all|any|bool|bytes|callable|chr|dict|dir|enumerate|filter|float|format|frozenset|getattr|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|map|max|min|next|object|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|str|sum|super|tuple|type|vars|zip|self|cls)$/;
-function highlightPy(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "@" && /[A-Za-z_]/.test(src[i + 1] || "")) {
-      const dStart = i;
-      i++;
-      while (i < len && /[A-Za-z0-9_.]/.test(src[i])) i++;
-      out += '<span class="syn-decor">' + escHtml(src.slice(dStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "#") {
-      const end = src.indexOf("\n", i);
-      const e = end === -1 ? len : end;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
-      i = e;
-      continue;
-    }
-    if ((ch === '"' || ch === "'") && src[i + 1] === ch && src[i + 2] === ch) {
-      const tq = ch + ch + ch;
-      const tStart = i;
-      i += 3;
-      const tEnd = src.indexOf(tq, i);
-      if (tEnd === -1) {
-        i = len;
-      } else {
-        i = tEnd + 3;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(tStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === quote) {
-          i++;
-          break;
-        }
-        if (src[i] === "\n") break;
-        i++;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (/[A-Za-z_]/.test(ch)) {
-      const idStart = i;
-      while (i < len && /[A-Za-z0-9_]/.test(src[i])) i++;
-      const word = src.slice(idStart, i);
-      if (PY_KEYWORDS.test(word)) {
-        out += '<span class="syn-kw">' + word + "</span>";
-      } else if (PY_BUILTINS.test(word)) {
-        out += '<span class="syn-builtin">' + word + "</span>";
-      } else if (src[i] === "(") {
-        out += '<span class="syn-fn">' + word + "</span>";
-      } else {
-        out += escHtml(word);
-      }
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-function highlightHtmlTag(tag) {
-  let out = "";
-  const len = tag.length;
-  if (len < 2) return escHtml(tag);
-  out += '<span class="syn-punct">&lt;</span>';
-  let i = 1;
-  if (tag[i] === "/") {
-    out += '<span class="syn-punct">/</span>';
-    i++;
-  }
-  const nameStart = i;
-  while (i < len && /[a-zA-Z0-9\-]/.test(tag[i])) i++;
-  if (i > nameStart) {
-    out += '<span class="syn-tag">' + escHtml(tag.slice(nameStart, i)) + "</span>";
-  }
-  while (i < len && tag[i] !== ">") {
-    if (/\s/.test(tag[i])) {
-      out += tag[i];
-      i++;
-      continue;
-    }
-    if (tag[i] === "/") {
-      out += '<span class="syn-punct">/</span>';
-      i++;
-      continue;
-    }
-    const aStart = i;
-    while (i < len && /[a-zA-Z0-9:@\-._]/.test(tag[i])) i++;
-    if (i > aStart) {
-      out += '<span class="syn-attr">' + escHtml(tag.slice(aStart, i)) + "</span>";
     } else {
-      out += escHtml(tag[i]);
-      i++;
-      continue;
+      initialTabs = [DASHBOARD_REF];
+      initialSplitIndex = null;
+      initialSplitOn = false;
+      initialActive0 = "dashboard";
+      initialActive1 = null;
     }
-    if (tag[i] === "=") {
-      out += '<span class="syn-punct">=</span>';
-      i++;
-      if (tag[i] === '"' || tag[i] === "'") {
-        const quote = tag[i];
-        const vStart = i;
-        i++;
-        while (i < len && tag[i] !== quote) i++;
-        if (i < len) i++;
-        out += '<span class="syn-str">' + escHtml(tag.slice(vStart, i)) + "</span>";
+  } else {
+    initialTabs = load$2("tabs", [DASHBOARD_REF]);
+    if (initialTabs.length === 0) initialTabs = [DASHBOARD_REF];
+    initialSplitIndex = load$2("splitIndex", null);
+    initialSplitOn = load$2("splitOn", false);
+    initialActive0 = load$2("active0", refKey(initialTabs[0]));
+    initialActive1 = load$2("active1", null);
+  }
+  const tabs = /* @__PURE__ */ ref(initialTabs);
+  const splitIndex = /* @__PURE__ */ ref(initialSplitIndex);
+  const splitOn = /* @__PURE__ */ ref(initialSplitOn);
+  const active = /* @__PURE__ */ ref([initialActive0, initialActive1]);
+  const focused = /* @__PURE__ */ ref(0);
+  function group0End() {
+    return splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
+  }
+  function tabGroup(idx) {
+    if (!splitOn.value || splitIndex.value === null) return 0;
+    return idx >= splitIndex.value ? 1 : 0;
+  }
+  function groupTabs(g2) {
+    const end = group0End();
+    return g2 === 0 ? tabs.value.slice(0, end) : tabs.value.slice(end);
+  }
+  function keyIndex(key) {
+    return tabs.value.findIndex((t) => refKey(t) === key);
+  }
+  function persist() {
+    save("tabs", tabs.value);
+    save("splitIndex", splitIndex.value);
+    save("splitOn", splitOn.value);
+    save("active0", active.value[0]);
+    save("active1", active.value[1]);
+  }
+  function fixupActive() {
+    const g0 = groupTabs(0);
+    const g1 = groupTabs(1);
+    if (g0.length > 0 && (active.value[0] === null || !g0.find((t) => refKey(t) === active.value[0]))) {
+      active.value[0] = refKey(g0[g0.length - 1]);
+    } else if (g0.length === 0) {
+      active.value[0] = null;
+    }
+    if (g1.length > 0 && (active.value[1] === null || !g1.find((t) => refKey(t) === active.value[1]))) {
+      active.value[1] = refKey(g1[g1.length - 1]);
+    } else if (g1.length === 0) {
+      active.value[1] = null;
+    }
+  }
+  function open(ref2, opts = {}) {
+    const key = refKey(ref2);
+    const existingIdx = keyIndex(key);
+    if (existingIdx !== -1) {
+      if (!opts.background) {
+        const g2 = tabGroup(existingIdx);
+        active.value[g2] = key;
+        focused.value = g2;
+        persist();
+      }
+      return;
+    }
+    const targetGroup = opts.side ? 1 : focused.value;
+    if (opts.side && !(splitOn.value && splitIndex.value !== null)) {
+      tabs.value.push(ref2);
+      splitIndex.value = tabs.value.length - 1;
+      splitOn.value = true;
+      if (!opts.background) {
+        active.value[1] = key;
+        focused.value = 1;
+      }
+    } else {
+      const activeKey = active.value[targetGroup];
+      let insertIdx;
+      if (activeKey !== null) {
+        const activeTabIdx = keyIndex(activeKey);
+        insertIdx = activeTabIdx !== -1 ? activeTabIdx + 1 : group0End();
       } else {
-        const uStart = i;
-        while (i < len && !/[\s>]/.test(tag[i])) i++;
-        out += '<span class="syn-str">' + escHtml(tag.slice(uStart, i)) + "</span>";
+        insertIdx = targetGroup === 0 ? group0End() : tabs.value.length;
       }
+      const groupEnd = targetGroup === 0 ? group0End() : tabs.value.length;
+      const groupStart = targetGroup === 0 ? 0 : group0End();
+      insertIdx = Math.max(groupStart, Math.min(groupEnd, insertIdx));
+      tabs.value.splice(insertIdx, 0, ref2);
+      if (splitOn.value && splitIndex.value !== null && insertIdx <= splitIndex.value) {
+        splitIndex.value++;
+      }
+      if (!opts.background) {
+        active.value[targetGroup] = key;
+        focused.value = targetGroup;
+      }
+    }
+    persist();
+  }
+  function close(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    tabs.value.splice(idx, 1);
+    if (splitOn.value && splitIndex.value !== null) {
+      if (idx < splitIndex.value) {
+        splitIndex.value--;
+      }
+      const g0 = groupTabs(0);
+      const g1 = groupTabs(1);
+      if (g0.length === 0 || g1.length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    if (tabs.value.length === 0) {
+      tabs.value.push(DASHBOARD_REF);
+      active.value = [refKey(DASHBOARD_REF), null];
+      focused.value = 0;
+      persist();
+      return;
+    }
+    fixupActive();
+    persist();
+  }
+  function move(key, toIndex) {
+    const fromIdx = keyIndex(key);
+    if (fromIdx === -1) return;
+    const ref2 = tabs.value[fromIdx];
+    tabs.value.splice(fromIdx, 1);
+    const clampedTo = Math.max(0, Math.min(tabs.value.length, toIndex));
+    tabs.value.splice(clampedTo, 0, ref2);
+    if (splitOn.value && splitIndex.value !== null) {
+      let s = splitIndex.value;
+      if (fromIdx < s) s--;
+      if (clampedTo <= s) s++;
+      splitIndex.value = Math.max(1, Math.min(tabs.value.length - 1, s));
+    }
+    persist();
+  }
+  function toggleSplit() {
+    if (splitOn.value) {
+      splitOn.value = false;
+      splitIndex.value = null;
+    } else {
+      if (tabs.value.length >= 2) {
+        if (splitIndex.value === null) splitIndex.value = 1;
+        splitOn.value = true;
+        fixupActive();
+      }
+    }
+    persist();
+  }
+  function focus(group) {
+    focused.value = group;
+  }
+  function activate(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    active.value[g2] = key;
+    focused.value = g2;
+    persist();
+  }
+  const focusedActiveRef = computed(() => {
+    const key = active.value[focused.value];
+    if (!key) return null;
+    return tabs.value.find((t) => refKey(t) === key) ?? null;
+  });
+  return {
+    tabs,
+    splitIndex,
+    splitOn,
+    active,
+    focused,
+    groupTabs,
+    tabGroup,
+    refKey,
+    open,
+    close,
+    move,
+    toggleSplit,
+    focus,
+    activate,
+    focusedActiveRef
+  };
+});
+const Stub = /* @__PURE__ */ defineComponent({ render: () => null });
+const router = createRouter({
+  history: createWebHashHistory(),
+  linkActiveClass: "tab-btn-active",
+  linkExactActiveClass: "tab-btn-active",
+  routes: [
+    { path: "/dashboard", component: Stub },
+    { path: "/chat", component: Stub },
+    { path: "/tasks", component: Stub },
+    { path: "/files", component: Stub },
+    { path: "/file/:path(.*)", component: Stub },
+    { path: "/report/:taskId", component: Stub },
+    { path: "/", redirect: "/dashboard" },
+    { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
+  ]
+});
+function routeToRef(route) {
+  const p2 = route.path;
+  if (p2 === "/dashboard" || p2 === "/") return { kind: "dashboard" };
+  if (p2 === "/tasks") return { kind: "legacy", page: "tasks" };
+  if (p2 === "/chat") return { kind: "legacy", page: "chat" };
+  if (p2 === "/files") return { kind: "legacy", page: "files" };
+  if (p2.startsWith("/file/")) {
+    const path = decodeURIComponent(p2.slice("/file/".length));
+    const branch = route.query["branch"];
+    return { kind: "file", path, ...branch ? { branch } : {} };
+  }
+  if (p2.startsWith("/report/")) {
+    const taskId = decodeURIComponent(p2.slice("/report/".length));
+    return { kind: "report", taskId };
+  }
+  return null;
+}
+router.afterEach((to) => {
+  const ref2 = routeToRef(to);
+  if (!ref2) return;
+  const ws = useWorkspaceStore();
+  const key = refKey(ref2);
+  const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
+  if (existingIdx !== -1) {
+    ws.activate(key);
+  } else {
+    ws.open(ref2);
+  }
+  const sideKey = to.query["side"];
+  if (sideKey) {
+    const sideIdx = ws.tabs.findIndex((t) => refKey(t) === sideKey);
+    if (sideIdx !== -1) {
+      const g2 = ws.tabGroup(sideIdx);
+      ws.active[g2] = sideKey;
     }
   }
-  if (i < len && tag[i] === ">") out += '<span class="syn-punct">&gt;</span>';
-  return out;
-}
-function highlightHtml(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    if (src.slice(i, i + 4) === "<!--") {
-      let end = src.indexOf("-->", i + 4);
-      end = end === -1 ? len : end + 3;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    if (src[i] === "<") {
-      const tagEnd = src.indexOf(">", i);
-      if (tagEnd === -1) {
-        out += escHtml(src.slice(i));
-        break;
-      }
-      out += highlightHtmlTag(src.slice(i, tagEnd + 1));
-      i = tagEnd + 1;
-      continue;
-    }
-    if (src[i] === "{" && src[i + 1] === "{") {
-      const iend = src.indexOf("}}", i + 2);
-      if (iend === -1) {
-        out += escHtml(src.slice(i));
-        break;
-      }
-      const end = iend + 2;
-      out += '<span class="syn-interp">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    out += escHtml(src[i]);
-    i++;
-  }
-  return out;
-}
-function highlightCss(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  let depth = 0;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "/" && src[i + 1] === "*") {
-      let end = src.indexOf("*/", i + 2);
-      end = end === -1 ? len : end + 2;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len && src[i] !== quote) {
-        if (src[i] === "\\" && i + 1 < len) i++;
-        i++;
-      }
-      if (i < len) i++;
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "{") {
-      depth++;
-      out += '<span class="syn-punct">{</span>';
-      i++;
-      continue;
-    }
-    if (ch === "}") {
-      if (depth > 0) depth--;
-      out += '<span class="syn-punct">}</span>';
-      i++;
-      continue;
-    }
-    if (ch === "@" && /[a-zA-Z]/.test(src[i + 1] || "")) {
-      const aStart = i;
-      i++;
-      while (i < len && /[a-zA-Z\-]/.test(src[i])) i++;
-      out += '<span class="syn-kw">' + escHtml(src.slice(aStart, i)) + "</span>";
-      continue;
-    }
-    if (depth > 0 && /[a-zA-Z\-]/.test(ch)) {
-      const pStart = i;
-      while (i < len && /[a-zA-Z0-9\-]/.test(src[i])) i++;
-      let j2 = i;
-      while (j2 < len && /\s/.test(src[j2])) j2++;
-      if (src[j2] === ":") {
-        out += '<span class="syn-key">' + escHtml(src.slice(pStart, i)) + "</span>";
-      } else {
-        out += escHtml(src.slice(pStart, i));
-      }
-      continue;
-    }
-    if (depth > 0 && ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9.]/.test(src[i])) i++;
-      while (i < len && /[a-zA-Z%]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "#" && /[0-9a-fA-F]/.test(src[i + 1] || "")) {
-      const hStart = i;
-      i++;
-      while (i < len && /[0-9a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(hStart, i)) + "</span>";
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-function highlightVue(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  const blockRe = /<(template|script|style)(\s[^>]*?)?>/i;
-  while (i < len) {
-    const rest = src.slice(i);
-    const m2 = blockRe.exec(rest);
-    if (!m2) {
-      out += escHtml(rest);
-      break;
-    }
-    out += escHtml(rest.slice(0, m2.index));
-    const blockName = m2[1].toLowerCase();
-    const openTag = m2[0];
-    out += highlightHtmlTag(openTag);
-    const contentStart = m2.index + openTag.length;
-    const closeRe = new RegExp("</" + blockName + "\\s*>", "i");
-    const close = closeRe.exec(rest.slice(contentStart));
-    if (!close) {
-      const tailContent = rest.slice(contentStart);
-      out += highlightVueBlockContent(tailContent, blockName);
-      break;
-    }
-    const content = rest.slice(contentStart, contentStart + close.index);
-    out += highlightVueBlockContent(content, blockName);
-    const closeTag = close[0];
-    out += highlightHtmlTag(closeTag);
-    i += contentStart + close.index + closeTag.length;
-  }
-  return out;
-}
-function highlightVueBlockContent(content, blockName) {
-  if (blockName === "script") return highlightJs(content);
-  if (blockName === "style") return highlightCss(content);
-  return highlightHtml(content);
-}
+});
 const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const settingsOpen = /* @__PURE__ */ ref(false);
   const ttsEnabled = /* @__PURE__ */ ref(true);
@@ -19251,611 +19101,2453 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const audioModalOpen = /* @__PURE__ */ ref(false);
   return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
 });
-const _hoisted_1$f = { id: "dashboard-panel" };
-const _sfc_main$i = /* @__PURE__ */ defineComponent({
-  __name: "DashboardPage",
+const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
+const _hoisted_1$g = ["data-size"];
+const _hoisted_2$b = {
+  key: 0,
+  class: "base-modal-head"
+};
+const _hoisted_3$9 = { class: "base-modal-title" };
+const _hoisted_4$8 = { class: "base-modal-body" };
+const _hoisted_5$5 = {
+  key: 0,
+  class: "base-modal-footer"
+};
+const _sfc_main$l = /* @__PURE__ */ defineComponent({
+  __name: "BaseModal",
+  props: {
+    open: { type: Boolean },
+    size: { default: "md" },
+    title: {},
+    dismissible: { type: Boolean, default: true }
+  },
+  emits: ["close"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit2 = __emit;
+    useModalsStore();
+    const dialogRef = /* @__PURE__ */ ref(null);
+    let scrollLockCount = 0;
+    function lockScroll() {
+      scrollLockCount++;
+      if (scrollLockCount === 1) document.body.style.overflow = "hidden";
+    }
+    function unlockScroll() {
+      scrollLockCount = Math.max(0, scrollLockCount - 1);
+      if (scrollLockCount === 0) document.body.style.overflow = "";
+    }
+    function openDialog() {
+      const el = dialogRef.value;
+      if (!el || el.open) return;
+      el.showModal();
+      lockScroll();
+    }
+    function closeDialog() {
+      const el = dialogRef.value;
+      if (!el || !el.open) return;
+      el.close();
+      unlockScroll();
+    }
+    onMounted(() => {
+      if (props.open) openDialog();
+    });
+    watch(() => props.open, (val) => {
+      if (val) openDialog();
+      else closeDialog();
+    });
+    onBeforeUnmount(() => {
+      if (props.open) unlockScroll();
+    });
+    function onCancel(ev) {
+      ev.preventDefault();
+      if (props.dismissible) emit2("close");
+    }
+    function onDialogClick(ev) {
+      if (!props.dismissible) return;
+      if (ev.target === dialogRef.value) emit2("close");
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("dialog", {
+        ref_key: "dialogRef",
+        ref: dialogRef,
+        "data-size": __props.size,
+        class: "base-modal",
+        "aria-modal": true,
+        onCancel,
+        onClick: onDialogClick
+      }, [
+        createBaseVNode("div", {
+          class: "base-modal-inner",
+          onClick: _cache[1] || (_cache[1] = withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          renderSlot(_ctx.$slots, "header", {}, () => [
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$b, [
+              createBaseVNode("span", _hoisted_3$9, toDisplayString(__props.title), 1),
+              __props.dismissible ? (openBlock(), createElementBlock("button", {
+                key: 0,
+                class: "base-modal-close",
+                type: "button",
+                "aria-label": "Close",
+                onClick: _cache[0] || (_cache[0] = ($event) => emit2("close"))
+              }, "×")) : createCommentVNode("", true)
+            ])) : createCommentVNode("", true)
+          ]),
+          createBaseVNode("div", _hoisted_4$8, [
+            renderSlot(_ctx.$slots, "default")
+          ]),
+          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$5, [
+            renderSlot(_ctx.$slots, "footer")
+          ])) : createCommentVNode("", true)
+        ])
+      ], 40, _hoisted_1$g);
+    };
+  }
+});
+const _hoisted_1$f = { class: "setting-item" };
+const _hoisted_2$a = { class: "setting-main" };
+const _hoisted_3$8 = { class: "settings-label" };
+const _hoisted_4$7 = {
+  key: 0,
+  class: "settings-meta"
+};
+const _sfc_main$k = /* @__PURE__ */ defineComponent({
+  __name: "SettingRow",
+  props: {
+    label: {},
+    meta: {}
+  },
   setup(__props) {
-    const router2 = useRouter();
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$f, [
+        createBaseVNode("div", _hoisted_2$a, [
+          createBaseVNode("div", _hoisted_3$8, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$7, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+          renderSlot(_ctx.$slots, "extra")
+        ]),
+        renderSlot(_ctx.$slots, "default")
+      ]);
+    };
+  }
+});
+const _hoisted_1$e = { class: "settings-stack" };
+const _hoisted_2$9 = { class: "setting-actions" };
+const _hoisted_3$7 = ["disabled"];
+const _hoisted_4$6 = ["innerHTML"];
+const _sfc_main$j = /* @__PURE__ */ defineComponent({
+  __name: "SettingsModal",
+  setup(__props) {
     const ui = useUiStore();
-    let heartbeatTimezoneOffsetMinutes = 0;
-    let use12Hour = localStorage.getItem("clock.format") === "12";
-    let quickView = "jobs";
-    let quickViewInitialized = false;
-    let quickViewChosenByUser = false;
-    let lastRenderedSchedules = [];
-    let scrollAnimFrame = 0;
-    let clockInterval = null;
-    let summaryInterval = null;
-    let clockEl = null;
-    let dateEl = null;
-    let msgEl = null;
-    let quickJobsView = null;
-    let quickJobForm = null;
-    let quickOpenCreate = null;
-    let quickBackJobs = null;
-    let quickJobSubmit = null;
-    let quickJobStatus = null;
-    let quickJobsStatus = null;
-    let quickJobsNext = null;
-    let quickJobCount = null;
-    let quickJobsList = null;
-    let quickTaskAgent = null;
-    let quickTaskHeadline = null;
-    let quickTaskBrief = null;
-    let quickTaskRecurring = null;
-    let quickTaskScheduleSection = null;
-    let quickTaskModeCron = null;
-    let quickTaskModeInterval = null;
-    let quickCronSection = null;
-    let quickIntervalSection = null;
-    let quickTaskCron = null;
-    let quickTaskIntervalStart = null;
-    let quickTaskIntervalHours = null;
-    let multiAgentPanel = null;
-    let multiAgentGrid = null;
-    let multiAgentSub = null;
-    let multiAgentExtras = null;
-    let multiAgentRefresh = null;
-    function clampTimezoneOffsetMinutes(value) {
-      const n = Number(value);
-      if (!Number.isFinite(n)) return 0;
-      return Math.max(-720, Math.min(840, Math.round(n)));
+    const use12Hour = /* @__PURE__ */ ref(localStorage.getItem("clock.format") === "12");
+    const clockText = computed(() => use12Hour.value ? "12h" : "24h");
+    const clockInfo = computed(() => use12Hour.value ? "12-hour format" : "24-hour format");
+    const headerHidden = /* @__PURE__ */ ref(localStorage.getItem("header.hidden") === "1");
+    const debugEnabled = /* @__PURE__ */ ref(localStorage.getItem("debug.enabled") === "1");
+    const hbEnabled = /* @__PURE__ */ ref(false);
+    const hbInterval = /* @__PURE__ */ ref(15);
+    const hbInfo = /* @__PURE__ */ ref("syncing...");
+    const hbBusy = /* @__PURE__ */ ref(false);
+    const hbToggleText = computed(() => hbEnabled.value ? "Enabled" : "Disabled");
+    const hbToggleClass = computed(() => "hb-toggle " + (hbEnabled.value ? "on" : "off"));
+    const sttEnabled = /* @__PURE__ */ ref(false);
+    const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
+    const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
+    const infoHtml = /* @__PURE__ */ ref("");
+    function escHtml2(s) {
+      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     }
-    function toOffsetDate(baseDate) {
-      const base = baseDate instanceof Date ? baseDate : new Date(String(baseDate));
-      return new Date(base.getTime() + heartbeatTimezoneOffsetMinutes * 6e4);
-    }
-    function formatOffsetDate(baseDate, options) {
-      return new Intl.DateTimeFormat(void 0, { ...options, timeZone: "UTC" }).format(toOffsetDate(baseDate));
-    }
-    function greetingForHour(h2) {
-      if (h2 < 5) return "Night mode.";
-      if (h2 < 12) return "Good morning.";
-      if (h2 < 18) return "Good afternoon.";
-      if (h2 < 22) return "Good evening.";
-      return "Wind down and ship clean.";
-    }
-    function isNightHour(hour) {
-      return hour < 5 || hour >= 22;
-    }
-    function applyVisualMode(hour) {
-      const night = isNightHour(hour);
-      document.body.classList.toggle("night-mode", night);
-      document.body.classList.toggle("day-mode", !night);
-      document.body.dataset.mode = night ? "night" : "day";
-      if (msgEl) msgEl.textContent = night ? "Night mode." : greetingForHour(hour);
-    }
-    function renderClock() {
-      if (!clockEl || !dateEl) return;
-      const now = /* @__PURE__ */ new Date();
-      const shifted = toOffsetDate(now);
-      const rawH = shifted.getUTCHours();
-      const hh = use12Hour ? String(rawH % 12 || 12).padStart(2, "0") : String(rawH).padStart(2, "0");
-      const mm = String(shifted.getUTCMinutes()).padStart(2, "0");
-      const ss = String(shifted.getUTCSeconds()).padStart(2, "0");
-      const suffix = use12Hour ? rawH >= 12 ? " PM" : " AM" : "";
-      clockEl.textContent = hh + ":" + mm + ":" + ss + suffix;
-      dateEl.textContent = formatOffsetDate(now, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        year: "numeric"
-      });
-      applyVisualMode(rawH);
-      clockEl.classList.remove("ms-pulse");
-      requestAnimationFrame(() => clockEl == null ? void 0 : clockEl.classList.add("ms-pulse"));
-    }
-    function renderSchedulesList(schedules) {
-      if (!quickJobsList) return;
-      const items = Array.isArray(schedules) ? schedules : [];
-      lastRenderedSchedules = items;
-      if (!items.length) {
-        quickJobsList.innerHTML = '<div class="quick-jobs-empty">No scheduled tasks yet.</div>';
-        if (quickJobsNext) quickJobsNext.textContent = "No schedules";
-        return;
-      }
-      if (quickJobsNext) quickJobsNext.textContent = items.length + " schedule" + (items.length === 1 ? "" : "s");
-      quickJobsList.innerHTML = items.map((t) => {
-        const rec = t.recurrence || {};
-        const recInterval = rec.interval;
-        const cadence = rec.cron ? "cron: " + rec.cron : recInterval ? "every " + recInterval.every_hours + "h @ " + recInterval.start : "--";
-        const enabled = rec.enabled !== false;
-        const agent = String(t.agent || "--");
-        const headline = String(t.headline || t.title || t.id || "--");
-        const count = rec.count != null ? " (" + rec.count + " fired)" : "";
-        return '<div class="quick-job-item"><div class="quick-job-item-main"><div class="quick-job-line"><span class="quick-job-item-name">' + escHtml(headline) + '</span><span class="quick-job-item-time">' + escHtml(agent) + '</span><span class="quick-job-item-cooldown">' + escHtml(String(cadence)) + escHtml(count) + '</span></div><div style="font-size:11px;opacity:0.6;padding:2px 0 4px;">' + (enabled ? '<span style="color:#a8f1ca">● active</span>' : '<span style="color:#ffd39f">⏸ paused</span>') + '</div></div><div style="display:flex;gap:6px;">' + (enabled ? '<button class="quick-job-delete" type="button" data-pause-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Pause</button>' : '<button class="quick-job-delete" type="button" data-resume-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Resume</button>') + '<button class="quick-job-delete" type="button" data-delete-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Delete</button></div></div>';
-      }).join("");
-    }
-    async function loadAndRenderSchedules() {
-      try {
-        const res = await fetch("/api/tasks/scheduled", { cache: "no-store" });
-        if (!res.ok) throw new Error("status " + res.status);
-        const out = await res.json();
-        renderSchedulesList(Array.isArray(out.templates) ? out.templates : []);
-      } catch {
-        renderSchedulesList([]);
-      }
-    }
-    function smoothScrollTo(top) {
-      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
-      const start = window.scrollY;
-      const target = Math.max(0, top);
-      const distance = target - start;
-      if (Math.abs(distance) < 1) return;
-      const duration = 560;
-      const t0 = performance.now();
-      const step = (now) => {
-        const p2 = Math.min(1, (now - t0) / duration);
-        const eased = p2 < 0.5 ? 4 * p2 * p2 * p2 : 1 - Math.pow(-2 * p2 + 2, 3) / 2;
-        window.scrollTo(0, start + distance * eased);
-        if (p2 < 1) {
-          scrollAnimFrame = requestAnimationFrame(step);
-        } else {
-          scrollAnimFrame = 0;
-        }
-      };
-      scrollAnimFrame = requestAnimationFrame(step);
-    }
-    function focusQuickView(view) {
-      const target = view === "jobs" ? quickJobsView : quickJobForm;
-      if (!target) return;
-      const y2 = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 44);
-      smoothScrollTo(y2);
-    }
-    function setQuickView(view, options) {
-      if (!quickJobsView || !quickJobForm) return;
-      const showJobs = view === "jobs";
-      quickJobsView.classList.toggle("quick-view-hidden", !showJobs);
-      quickJobForm.classList.toggle("quick-view-hidden", showJobs);
-      quickView = showJobs ? "jobs" : "create";
-      if (options == null ? void 0 : options.user) quickViewChosenByUser = true;
-      if (options == null ? void 0 : options.scroll) focusQuickView(quickView);
-    }
-    function syncQuickViewForSchedules() {
-      const count = lastRenderedSchedules.length;
-      if (count === 0) {
-        if (quickViewInitialized && quickView === "jobs" && quickViewChosenByUser) return;
-        setQuickView("create");
-        quickViewInitialized = true;
-        return;
-      }
-      if (!quickViewInitialized) {
-        setQuickView("jobs");
-        quickViewInitialized = true;
-      }
-    }
-    async function populateQuickTaskDropdowns() {
-      try {
-        const res = await fetch("/api/agents", { cache: "no-store" });
-        if (res.ok && quickTaskAgent) {
-          const data = await res.json();
-          const agents = Array.isArray(data.agents) ? data.agents : [];
-          quickTaskAgent.innerHTML = agents.map(
-            (a) => '<option value="' + escHtml(a.name) + '"' + (a.name === "alice" ? " selected" : "") + ">" + escHtml((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>"
-          ).join("");
-        }
-      } catch {
-      }
-    }
-    function updateBriefCount() {
-      if (quickTaskBrief && quickJobCount) {
-        quickJobCount.textContent = String((quickTaskBrief.value || "").trim().length) + " chars";
-      }
-    }
-    function syncScheduleSection() {
-      if (!quickTaskRecurring || !quickTaskScheduleSection) return;
-      quickTaskScheduleSection.classList.toggle("quick-view-hidden", !quickTaskRecurring.checked);
-    }
-    function syncCronIntervalSections() {
-      const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-      if (quickCronSection) quickCronSection.classList.toggle("quick-view-hidden", isInterval);
-      if (quickIntervalSection) quickIntervalSection.classList.toggle("quick-view-hidden", !isInterval);
+    function renderTechInfo(data) {
+      const files = (data == null ? void 0 : data.files) ?? {};
+      const sections = [
+        { title: "daemon", value: (data == null ? void 0 : data.daemon) ?? null },
+        { title: "settings.json", value: files.settingsJson ?? null },
+        { title: "session.json", value: files.sessionJson ?? null },
+        { title: "state.json", value: files.stateJson ?? null }
+      ];
+      return sections.map(
+        (s) => `<div class="info-section"><div class="info-title">${escHtml2(s.title)}</div><pre class="info-json">${escHtml2(JSON.stringify(s.value, null, 2))}</pre></div>`
+      ).join("");
     }
     async function loadSettings() {
+      var _a2, _b;
+      hbInfo.value = "syncing...";
       try {
         const res = await fetch("/api/settings");
         const data = await res.json();
-        heartbeatTimezoneOffsetMinutes = clampTimezoneOffsetMinutes(data == null ? void 0 : data.timezoneOffsetMinutes);
-        renderClock();
-        loadAndRenderSchedules();
+        hbEnabled.value = Boolean((_a2 = data == null ? void 0 : data.heartbeat) == null ? void 0 : _a2.enabled);
+        hbInterval.value = Number((_b = data == null ? void 0 : data.heartbeat) == null ? void 0 : _b.interval) || 15;
+        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
       } catch {
+        hbInfo.value = "unavailable";
       }
     }
-    function escSummary(s) {
-      return String(s).replace(
-        /[&<>"']/g,
-        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
-      );
-    }
-    function renderCell(name, counts) {
-      const open = counts.open || 0;
-      const waiting = counts.waiting || 0;
-      const done = counts.done || 0;
-      const failed = counts.failed || 0;
-      const archived = counts.archived || 0;
-      function countSpan(value, status, icon, label) {
-        const clsBase = value > 0 ? "multi-agent-count-" + status : "multi-agent-count-zero";
-        const clsLink = value > 0 ? " multi-agent-count-link" : "";
-        const dataAttrs = value > 0 ? ' data-agent="' + escSummary(name) + '" data-status="' + status + '" role="button" tabindex="0"' : "";
-        return '<span class="' + clsBase + clsLink + '" title="' + label + '"' + dataAttrs + ">" + icon + " " + value + "</span>";
-      }
-      return '<div class="multi-agent-cell"><div class="multi-agent-cell-name">' + escSummary(name) + '</div><div class="multi-agent-cell-counts">' + countSpan(open, "open", "○", "open") + countSpan(waiting, "waiting", "⏳", "waiting") + countSpan(done, "done", "✓", "done") + countSpan(failed, "failed", "✗", "failed") + countSpan(archived, "archived", "📦", "archived") + "</div></div>";
-    }
-    function navigateToTasksDir(agent, status) {
-      if (!agent || !status) return;
-      const dir = "agents/" + agent + "/tasks/" + status;
-      ui.filesNav = { path: dir, kind: "dir" };
-      router2.push("/files");
-    }
-    async function fetchSummary() {
-      if (!multiAgentPanel || !multiAgentGrid || !multiAgentSub) return;
+    async function loadVoiceSettings() {
       try {
-        const res = await fetch("/api/multi-agent/summary", { cache: "no-store" });
+        const res = await fetch("/api/settings/voice");
         const data = await res.json();
-        if (!data.ok || !data.summary) {
-          multiAgentSub.textContent = "Unavailable";
-          multiAgentGrid.innerHTML = "";
-          if (multiAgentExtras) multiAgentExtras.innerHTML = "";
-          multiAgentPanel.removeAttribute("hidden");
-          return;
-        }
-        const s = data.summary;
-        if (!s.enabled) {
-          multiAgentPanel.setAttribute("hidden", "");
-          return;
-        }
-        multiAgentPanel.removeAttribute("hidden");
-        const totals = s.totals || {};
-        multiAgentSub.textContent = (totals.open || 0) + " open · " + (totals.waiting || 0) + " waiting · " + (totals.done || 0) + " done · " + (totals.failed || 0) + " failed · " + (totals.archived || 0) + " archived";
-        const byAgent = s.byAgent || {};
-        const names = Object.keys(byAgent).sort();
-        multiAgentGrid.innerHTML = names.map((n) => renderCell(n, byAgent[n])).join("");
-        if (multiAgentExtras) {
-          const extraLines = [];
-          for (const item of s.waitingUser || []) {
-            extraLines.push('<div class="multi-agent-extras-line">⏳ ' + escSummary(item.agent) + ": " + escSummary(item.summary || item.file) + "</div>");
-          }
-          for (const pi of s.paused || []) {
-            extraLines.push('<div class="multi-agent-extras-line paused">⏸ ' + escSummary(pi.agent) + ": " + escSummary(pi.summary || pi.file) + "</div>");
-          }
-          for (const e of s.escalated || []) {
-            extraLines.push('<div class="multi-agent-extras-line escalated">↑ ' + escSummary(e.agent) + ": " + escSummary(e.file) + "</div>");
-          }
-          const unreadable = s.unreadable || [];
-          if (unreadable.length > 0) {
-            const label = unreadable.length + " envelope" + (unreadable.length === 1 ? "" : "s") + " unreadable";
-            const listItems = unreadable.map((u) => escSummary(u.agent) + "/" + escSummary(u.file)).join(", ");
-            extraLines.push('<div class="multi-agent-extras-line unreadable" title="' + escSummary(listItems) + '">⚠ ' + escSummary(label) + "</div>");
-          }
-          multiAgentExtras.innerHTML = extraLines.join("");
-        }
-      } catch (err) {
-        if (multiAgentSub) multiAgentSub.textContent = "Error: " + (err instanceof Error ? err.message : String(err));
+        if (!data.ok) return;
+        const v2 = data.voice ?? {};
+        const hasApiKey = Boolean(v2.hasApiKey);
+        sttEnabled.value = Boolean(v2.sttEnabled && hasApiKey);
+      } catch (_2) {
       }
     }
-    async function onScheduleClick(event) {
-      const target = event.target;
-      if (!target) return;
-      const pauseBtn = target.closest("[data-pause-schedule]");
-      if (pauseBtn) {
-        const agent = pauseBtn.getAttribute("data-pause-schedule") || "";
-        const id = pauseBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        pauseBtn.disabled = true;
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/pause", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "pause failed");
-          await loadAndRenderSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          pauseBtn.disabled = false;
-        }
-        return;
+    watch(() => ui.settingsOpen, (open) => {
+      if (open) {
+        loadSettings();
+        loadVoiceSettings();
       }
-      const resumeBtn = target.closest("[data-resume-schedule]");
-      if (resumeBtn) {
-        const agent = resumeBtn.getAttribute("data-resume-schedule") || "";
-        const id = resumeBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        resumeBtn.disabled = true;
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/resume", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ agent })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "resume failed");
-          await loadAndRenderSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          resumeBtn.disabled = false;
-        }
-        return;
-      }
-      const deleteBtn = target.closest("[data-delete-schedule]");
-      if (deleteBtn) {
-        const agent = deleteBtn.getAttribute("data-delete-schedule") || "";
-        const id = deleteBtn.getAttribute("data-schedule-id") || "";
-        if (!agent || !id) return;
-        deleteBtn.disabled = true;
-        if (quickJobsStatus) quickJobsStatus.textContent = "Deleting…";
-        try {
-          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "?agent=" + encodeURIComponent(agent), { method: "DELETE" });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "delete failed");
-          if (quickJobsStatus) quickJobsStatus.textContent = "Deleted.";
-          await loadAndRenderSchedules();
-          syncQuickViewForSchedules();
-        } catch (err) {
-          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
-        } finally {
-          deleteBtn.disabled = false;
-        }
-      }
+    });
+    function toggleClock() {
+      use12Hour.value = !use12Hour.value;
+      localStorage.setItem("clock.format", use12Hour.value ? "12" : "24");
     }
-    async function onFormSubmit(event) {
-      event.preventDefault();
-      const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
-      const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
-      const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
-      if (!agent || !headline || !brief) {
-        if (quickJobStatus) quickJobStatus.textContent = "Agent, title, and description are required.";
-        return;
-      }
-      const isRecurring = quickTaskRecurring ? quickTaskRecurring.checked : false;
-      if (quickJobSubmit) quickJobSubmit.disabled = true;
-      if (quickJobStatus) quickJobStatus.textContent = isRecurring ? "Saving schedule…" : "Creating task…";
+    function toggleHeader() {
+      headerHidden.value = !headerHidden.value;
+      localStorage.setItem("header.hidden", headerHidden.value ? "1" : "0");
+      document.body.classList.toggle("hide-header", headerHidden.value);
+    }
+    function toggleDebug() {
+      debugEnabled.value = !debugEnabled.value;
+      localStorage.setItem("debug.enabled", debugEnabled.value ? "1" : "0");
+    }
+    async function toggleHb() {
+      if (hbBusy.value) return;
+      hbBusy.value = true;
+      const next = !hbEnabled.value;
+      hbEnabled.value = next;
+      hbInfo.value = next ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
       try {
-        if (isRecurring) {
-          const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
-          const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
-          const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
-          const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
-          if (!isInterval && !cron) {
-            if (quickJobStatus) quickJobStatus.textContent = "Enter a cron expression.";
-            return;
-          }
-          const recurrence = isInterval ? { interval: { start: intervalStart || "08:00", every_hours: intervalHours }, enabled: true, skip_if_active: true } : { cron, enabled: true, skip_if_active: true };
-          const res = await fetch("/api/tasks/schedule", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief, recurrence })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "failed");
-          if (quickJobStatus) quickJobStatus.textContent = "Schedule created.";
-          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "schedule");
-          if (quickTaskHeadline) quickTaskHeadline.value = "";
-          if (quickTaskBrief) quickTaskBrief.value = "";
-          setQuickView("jobs", { scroll: true });
-          await loadAndRenderSchedules();
-          syncQuickViewForSchedules();
-        } else {
-          const res = await fetch("/api/tasks/new", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief })
-          });
-          const out = await res.json();
-          if (!out.ok) throw new Error(out.error || "failed");
-          if (quickJobStatus) quickJobStatus.textContent = "Task created.";
-          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "task");
-          if (quickTaskHeadline) quickTaskHeadline.value = "";
-          if (quickTaskBrief) quickTaskBrief.value = "";
-          setQuickView("jobs", { scroll: true });
+        const res = await fetch("/api/settings/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled: next })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "save failed");
+        if (out.heartbeat) {
+          hbEnabled.value = Boolean(out.heartbeat.enabled);
+          hbInterval.value = Number(out.heartbeat.interval) || hbInterval.value;
+          hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
         }
-      } catch (err) {
-        if (quickJobStatus) quickJobStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
+      } catch {
+        hbEnabled.value = !next;
+        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
       } finally {
-        if (quickJobSubmit) quickJobSubmit.disabled = false;
+        hbBusy.value = false;
       }
     }
-    onMounted(() => {
-      clockEl = document.getElementById("clock");
-      dateEl = document.getElementById("date");
-      msgEl = document.getElementById("message");
-      quickJobsView = document.getElementById("quick-jobs-view");
-      quickJobForm = document.getElementById("quick-job-form");
-      quickOpenCreate = document.getElementById("quick-open-create");
-      quickBackJobs = document.getElementById("quick-back-jobs");
-      quickJobSubmit = document.getElementById("quick-job-submit");
-      quickJobStatus = document.getElementById("quick-job-status");
-      quickJobsStatus = document.getElementById("quick-jobs-status");
-      quickJobsNext = document.getElementById("quick-jobs-next");
-      quickJobCount = document.getElementById("quick-job-count");
-      quickJobsList = document.getElementById("quick-jobs-list");
-      quickTaskAgent = document.getElementById("quick-task-agent");
-      quickTaskHeadline = document.getElementById("quick-task-headline");
-      quickTaskBrief = document.getElementById("quick-task-brief");
-      quickTaskRecurring = document.getElementById("quick-task-recurring");
-      quickTaskScheduleSection = document.getElementById("quick-task-schedule-section");
-      quickTaskModeCron = document.getElementById("quick-task-mode-cron");
-      quickTaskModeInterval = document.getElementById("quick-task-mode-interval");
-      quickCronSection = document.getElementById("quick-cron-section");
-      quickIntervalSection = document.getElementById("quick-interval-section");
-      quickTaskCron = document.getElementById("quick-task-cron");
-      quickTaskIntervalStart = document.getElementById("quick-task-interval-start");
-      quickTaskIntervalHours = document.getElementById("quick-task-interval-hours");
-      multiAgentPanel = document.getElementById("multi-agent-panel");
-      multiAgentGrid = document.getElementById("multi-agent-grid");
-      multiAgentSub = document.getElementById("multi-agent-sub");
-      multiAgentExtras = document.getElementById("multi-agent-extras");
-      multiAgentRefresh = document.getElementById("multi-agent-refresh");
-      renderClock();
-      clockInterval = setInterval(renderClock, 1e3);
-      setQuickView(quickView);
-      loadSettings();
-      quickOpenCreate == null ? void 0 : quickOpenCreate.addEventListener("click", () => setQuickView("create", { scroll: true, user: true }));
-      quickBackJobs == null ? void 0 : quickBackJobs.addEventListener("click", () => setQuickView("jobs", { scroll: true, user: true }));
-      quickTaskBrief == null ? void 0 : quickTaskBrief.addEventListener("input", updateBriefCount);
-      quickTaskRecurring == null ? void 0 : quickTaskRecurring.addEventListener("change", syncScheduleSection);
-      quickTaskModeCron == null ? void 0 : quickTaskModeCron.addEventListener("change", syncCronIntervalSections);
-      quickTaskModeInterval == null ? void 0 : quickTaskModeInterval.addEventListener("change", syncCronIntervalSections);
-      syncScheduleSection();
-      syncCronIntervalSections();
-      populateQuickTaskDropdowns();
-      quickJobForm == null ? void 0 : quickJobForm.addEventListener("submit", onFormSubmit);
-      document.addEventListener("click", onScheduleClick);
-      multiAgentRefresh == null ? void 0 : multiAgentRefresh.addEventListener("click", fetchSummary);
-      fetchSummary();
-      summaryInterval = setInterval(fetchSummary, 3e4);
-      const openTasksBtn = document.getElementById("multi-agent-open-tasks-btn");
-      openTasksBtn == null ? void 0 : openTasksBtn.addEventListener("click", () => router2.push("/tasks"));
-      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("click", (ev) => {
-        const link = ev.target.closest(".multi-agent-count-link");
-        if (!link) return;
-        ev.preventDefault();
-        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
-      });
-      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("keydown", (ev) => {
-        if (ev.key !== "Enter" && ev.key !== " ") return;
-        const link = ev.target.closest(".multi-agent-count-link");
-        if (!link) return;
-        ev.preventDefault();
-        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
-      });
-    });
-    onBeforeUnmount(() => {
-      if (clockInterval) clearInterval(clockInterval);
-      if (summaryInterval) clearInterval(summaryInterval);
-      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
-      document.removeEventListener("click", onScheduleClick);
-    });
+    function openHbConfig() {
+      ui.hbModalOpen = true;
+    }
+    async function toggleStt() {
+      sttEnabled.value = !sttEnabled.value;
+      try {
+        await fetch("/api/settings/voice", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sttEnabled: sttEnabled.value })
+        });
+      } catch (_2) {
+      }
+    }
+    async function openInfo() {
+      ui.infoOpen = true;
+      infoHtml.value = '<div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div>';
+      try {
+        const res = await fetch("/api/technical-info");
+        const data = await res.json();
+        infoHtml.value = renderTechInfo(data);
+      } catch (err) {
+        infoHtml.value = `<div class="info-section"><div class="info-title">Error</div><pre class="info-json">${escHtml2(String(err))}</pre></div>`;
+      }
+    }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$f, [..._cache[0] || (_cache[0] = [
-        createBaseVNode("section", { class: "hero" }, [
-          createBaseVNode("div", {
-            class: "logo-art",
-            role: "img",
-            "aria-label": "Caravel ship logo"
-          }, [
-            createBaseVNode("svg", {
-              class: "logo-ship",
-              viewBox: "0 0 120 96",
-              width: "120",
-              height: "96",
-              fill: "none",
-              "aria-hidden": "true"
-            }, [
-              createBaseVNode("path", {
-                d: "M34 70 V30 M58 70 V14 M84 60 V28",
-                stroke: "currentColor",
-                "stroke-width": "1.6",
-                "stroke-linecap": "round",
-                opacity: "0.55"
+      return openBlock(), createElementBlock(Fragment, null, [
+        createVNode(_sfc_main$l, {
+          id: "settings-modal",
+          open: unref(ui).settingsOpen,
+          onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
+          size: "md",
+          title: "Settings"
+        }, {
+          default: withCtx(() => [
+            createBaseVNode("div", _hoisted_1$e, [
+              createVNode(_sfc_main$k, {
+                label: "💓 Heartbeat",
+                meta: hbInfo.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("div", _hoisted_2$9, [
+                    createBaseVNode("button", {
+                      class: "hb-config",
+                      id: "hb-config",
+                      type: "button",
+                      onClick: openHbConfig
+                    }, "Configure"),
+                    createBaseVNode("button", {
+                      class: normalizeClass(hbToggleClass.value),
+                      id: "hb-toggle",
+                      type: "button",
+                      disabled: hbBusy.value,
+                      onClick: toggleHb
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$7)
+                  ])
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$k, {
+                label: "🕒 Clock",
+                meta: clockInfo.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (use12Hour.value ? "on" : "off")),
+                    id: "clock-toggle",
+                    type: "button",
+                    onClick: toggleClock
+                  }, toDisplayString(clockText.value), 3)
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$k, {
+                label: "🔗 GitHub Banner",
+                meta: "Star on GitHub header bar"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (headerHidden.value ? "off" : "on")),
+                    id: "header-toggle",
+                    type: "button",
+                    onClick: toggleHeader
+                  }, toDisplayString(headerHidden.value ? "Off" : "On"), 3)
+                ]),
+                _: 1
               }),
-              createBaseVNode("path", {
-                d: "M12 59 L52 24 M28 45 L80 6 M64 53 L102 22",
-                stroke: "currentColor",
-                "stroke-width": "1.4",
-                "stroke-linecap": "round",
-                opacity: "0.5"
+              createVNode(_sfc_main$k, {
+                label: "🐞 Debug",
+                meta: "Show chat thread/session ids"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (debugEnabled.value ? "on" : "off")),
+                    id: "debug-toggle",
+                    type: "button",
+                    onClick: toggleDebug
+                  }, toDisplayString(debugEnabled.value ? "On" : "Off"), 3)
+                ]),
+                _: 1
               }),
-              createBaseVNode("path", {
-                d: "M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z",
-                fill: "currentColor",
-                opacity: "0.6"
+              createVNode(_sfc_main$k, {
+                label: "🎙️ Voice — STT",
+                meta: sttMeta.value
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass("hb-toggle " + (sttEnabled.value ? "on" : "off")),
+                    id: "voice-stt-toggle",
+                    type: "button",
+                    onClick: toggleStt
+                  }, toDisplayString(sttText.value), 3)
+                ]),
+                _: 1
+              }, 8, ["meta"]),
+              createVNode(_sfc_main$k, {
+                label: "🎙️ Mic (STT)",
+                meta: "Dictate and voice chat"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
+                    id: "voice-mic-toggle",
+                    type: "button",
+                    onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
+                  }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
+                ]),
+                _: 1
               }),
-              createBaseVNode("path", {
-                d: "M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z",
-                fill: "currentColor",
-                opacity: "0.92"
+              createVNode(_sfc_main$k, {
+                label: "🔊 Speaker (TTS)",
+                meta: "Read aloud and voice replies"
+              }, {
+                extra: withCtx(() => [..._cache[4] || (_cache[4] = [
+                  createBaseVNode("div", {
+                    class: "settings-error-note",
+                    id: "tts-error-note",
+                    hidden: ""
+                  }, "DeepGram not configured", -1)
+                ])]),
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
+                    id: "voice-tts-toggle",
+                    type: "button",
+                    onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
+                  }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
+                ]),
+                _: 1
               }),
-              createBaseVNode("path", {
-                d: "M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z",
-                fill: "currentColor",
-                opacity: "0.74"
-              }),
-              createBaseVNode("path", {
-                d: "M58 14 h12 l-3.5 3 l3.5 3 h-12 Z",
-                fill: "currentColor",
-                opacity: "0.9"
-              }),
-              createBaseVNode("path", {
-                d: "M82 70 V60 H102 L100 70 Z",
-                fill: "currentColor",
-                opacity: "0.85"
-              }),
-              createBaseVNode("path", {
-                d: "M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z",
-                fill: "currentColor"
+              createVNode(_sfc_main$k, {
+                label: "🧾 Advanced",
+                meta: "Technical runtime and JSON files"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("button", {
+                    class: "hb-toggle on",
+                    id: "info-open",
+                    type: "button",
+                    onClick: openInfo
+                  }, "Info")
+                ]),
+                _: 1
               })
             ])
           ]),
-          createBaseVNode("div", {
-            class: "brand-name",
-            "aria-label": "Caravel"
-          }, "Caravel"),
-          createBaseVNode("div", {
-            class: "time",
-            id: "clock"
-          }, "--:--:--"),
-          createBaseVNode("div", {
-            class: "date",
-            id: "date"
-          }, "Loading date..."),
-          createBaseVNode("div", {
-            class: "message",
-            id: "message"
-          }, "Welcome back."),
-          createBaseVNode("a", {
-            class: "repo-cta",
-            href: "https://github.com/caravelhq/caravel",
-            target: "_blank",
-            rel: "noopener noreferrer",
-            "aria-label": "Star Caravel on GitHub"
+          _: 1
+        }, 8, ["open"]),
+        (openBlock(), createBlock(Teleport, { to: "body" }, [
+          createVNode(_sfc_main$l, {
+            id: "info-modal",
+            open: unref(ui).infoOpen,
+            onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
+            size: "lg",
+            title: "Technical Info"
+          }, {
+            default: withCtx(() => [
+              createBaseVNode("div", {
+                id: "info-body",
+                class: "info-body",
+                innerHTML: infoHtml.value
+              }, null, 8, _hoisted_4$6)
+            ]),
+            _: 1
+          }, 8, ["open"])
+        ]))
+      ], 64);
+    };
+  }
+});
+const _hoisted_1$d = {
+  class: "hb-field",
+  for: "hb-interval-input"
+};
+const _hoisted_2$8 = ["disabled"];
+const _hoisted_3$6 = {
+  class: "hb-field",
+  for: "hb-prompt-input"
+};
+const _hoisted_4$5 = ["disabled"];
+const _hoisted_5$4 = { class: "hb-actions" };
+const _hoisted_6$3 = {
+  class: "hb-status",
+  id: "hb-modal-status"
+};
+const _hoisted_7$2 = { class: "hb-buttons" };
+const _hoisted_8$2 = ["disabled"];
+const _hoisted_9$2 = ["disabled"];
+const _sfc_main$i = /* @__PURE__ */ defineComponent({
+  __name: "HeartbeatBar",
+  setup(__props) {
+    const ui = useUiStore();
+    const interval = /* @__PURE__ */ ref(15);
+    const prompt = /* @__PURE__ */ ref("");
+    const status = /* @__PURE__ */ ref("");
+    const busy = /* @__PURE__ */ ref(false);
+    watch(() => ui.hbModalOpen, async (open) => {
+      if (!open) return;
+      status.value = "Loading...";
+      busy.value = false;
+      try {
+        const res = await fetch("/api/settings/heartbeat");
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "failed to load heartbeat");
+        const hb = out.heartbeat || {};
+        interval.value = Number(hb.interval) || 15;
+        prompt.value = typeof hb.prompt === "string" ? hb.prompt : "";
+        status.value = "";
+      } catch (err) {
+        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
+      }
+    });
+    function close() {
+      ui.hbModalOpen = false;
+      status.value = "";
+      busy.value = false;
+    }
+    async function save2(e) {
+      e.preventDefault();
+      if (busy.value) return;
+      const iv = Number(String(interval.value).trim());
+      const pr = String(prompt.value).trim();
+      if (!Number.isFinite(iv) || iv < 1 || iv > 1440) {
+        status.value = "Interval must be 1-1440 minutes.";
+        return;
+      }
+      if (!pr) {
+        status.value = "Prompt is required.";
+        return;
+      }
+      busy.value = true;
+      status.value = "Saving...";
+      try {
+        const res = await fetch("/api/settings/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interval: iv, prompt: pr })
+        });
+        const out = await res.json();
+        if (!out.ok) throw new Error(out.error || "save failed");
+        if (out.heartbeat) {
+          interval.value = Number(out.heartbeat.interval) || iv;
+          prompt.value = typeof out.heartbeat.prompt === "string" ? out.heartbeat.prompt : pr;
+        }
+        status.value = "Saved.";
+        setTimeout(() => close(), 120);
+      } catch (err) {
+        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
+        busy.value = false;
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(_sfc_main$l, {
+        id: "hb-modal",
+        open: unref(ui).hbModalOpen,
+        onClose: close,
+        size: "lg",
+        title: "Heartbeat Configuration"
+      }, {
+        default: withCtx(() => [
+          createBaseVNode("form", {
+            class: "hb-form",
+            id: "hb-form",
+            onSubmit: save2
           }, [
-            createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
-            createBaseVNode("span", { class: "repo-star" }, "★")
-          ]),
-          createBaseVNode("section", {
-            class: "multi-agent-panel",
-            id: "multi-agent-panel",
-            hidden: ""
+            createBaseVNode("label", _hoisted_1$d, [
+              _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
+              withDirectives(createBaseVNode("input", {
+                class: "hb-input",
+                id: "hb-interval-input",
+                type: "number",
+                min: "1",
+                max: "1440",
+                step: "1",
+                required: "",
+                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
+                disabled: busy.value
+              }, null, 8, _hoisted_2$8), [
+                [
+                  vModelText,
+                  interval.value,
+                  void 0,
+                  { number: true }
+                ]
+              ])
+            ]),
+            createBaseVNode("label", _hoisted_3$6, [
+              _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
+              withDirectives(createBaseVNode("textarea", {
+                class: "hb-textarea",
+                id: "hb-prompt-input",
+                placeholder: "What should heartbeat run?",
+                required: "",
+                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
+                disabled: busy.value
+              }, null, 8, _hoisted_4$5), [
+                [vModelText, prompt.value]
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_5$4, [
+              createBaseVNode("div", _hoisted_6$3, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$2, [
+                createBaseVNode("button", {
+                  class: "hb-btn ghost",
+                  id: "hb-cancel-btn",
+                  type: "button",
+                  disabled: busy.value,
+                  onClick: close
+                }, "Cancel", 8, _hoisted_8$2),
+                createBaseVNode("button", {
+                  class: "hb-btn solid",
+                  id: "hb-save-btn",
+                  type: "submit",
+                  disabled: busy.value
+                }, "Save", 8, _hoisted_9$2)
+              ])
+            ])
+          ], 32)
+        ]),
+        _: 1
+      }, 8, ["open"]);
+    };
+  }
+});
+const _sfc_main$h = /* @__PURE__ */ defineComponent({
+  __name: "AudioModal",
+  setup(__props) {
+    const ui = useUiStore();
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(_sfc_main$l, {
+        id: "audio-action-modal",
+        open: unref(ui).audioModalOpen,
+        onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
+        size: "sm",
+        dismissible: false
+      }, {
+        default: withCtx(() => [..._cache[1] || (_cache[1] = [
+          createBaseVNode("div", {
+            class: "audio-action-card",
+            id: "audio-action-card"
           }, [
-            createBaseVNode("div", { class: "multi-agent-head" }, [
-              createBaseVNode("div", null, [
-                createBaseVNode("div", { class: "multi-agent-title" }, "Multi-Agent Tasks"),
-                createBaseVNode("div", {
-                  class: "multi-agent-sub",
-                  id: "multi-agent-sub"
-                }, "Loading...")
-              ]),
-              createBaseVNode("div", { class: "multi-agent-head-actions" }, [
+            createBaseVNode("div", {
+              class: "audio-action-icon",
+              id: "audio-action-icon"
+            }),
+            createBaseVNode("div", {
+              class: "audio-action-label",
+              id: "audio-action-label"
+            }, "Recording..."),
+            createBaseVNode("div", {
+              class: "audio-player-resume",
+              id: "audio-player-resume",
+              hidden: ""
+            }, [
+              createBaseVNode("div", {
+                class: "audio-player-resume-msg",
+                id: "audio-player-resume-msg"
+              }),
+              createBaseVNode("div", { class: "audio-player-resume-btns" }, [
                 createBaseVNode("button", {
-                  class: "multi-agent-action",
-                  id: "multi-agent-open-tasks-btn",
-                  type: "button",
-                  title: "Open the Tasks panel"
-                }, "Open Tasks"),
+                  class: "audio-player-resume-btn is-restart",
+                  id: "audio-resume-restart",
+                  type: "button"
+                }, "Start over"),
                 createBaseVNode("button", {
-                  class: "multi-agent-refresh",
-                  id: "multi-agent-refresh",
-                  type: "button",
-                  title: "Refresh"
-                }, "↻")
+                  class: "audio-player-resume-btn is-resume",
+                  id: "audio-resume-continue",
+                  type: "button"
+                }, "Resume")
               ])
             ]),
             createBaseVNode("div", {
-              class: "multi-agent-grid",
-              id: "multi-agent-grid"
-            }),
+              class: "audio-player-progress",
+              id: "audio-player-progress",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "audio-player-bar-wrap" }, [
+                createBaseVNode("div", {
+                  class: "audio-player-bar",
+                  id: "audio-player-bar"
+                })
+              ]),
+              createBaseVNode("div", {
+                class: "audio-player-counter",
+                id: "audio-player-counter"
+              }, "0 / 0")
+            ]),
             createBaseVNode("div", {
-              class: "multi-agent-extras",
-              id: "multi-agent-extras"
-            })
+              class: "audio-player-transcript",
+              id: "audio-player-transcript",
+              hidden: ""
+            }),
+            createBaseVNode("div", { class: "audio-player-controls" }, [
+              createBaseVNode("button", {
+                class: "audio-player-skip",
+                id: "audio-skip-back",
+                type: "button",
+                "aria-label": "Previous",
+                hidden: ""
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-backward-step" })
+              ]),
+              createBaseVNode("button", {
+                class: "audio-action-stop",
+                id: "audio-action-stop",
+                type: "button",
+                "aria-label": "Stop"
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-stop" }),
+                createBaseVNode("span", null, "Stop")
+              ]),
+              createBaseVNode("button", {
+                class: "audio-player-skip",
+                id: "audio-skip-forward",
+                type: "button",
+                "aria-label": "Next",
+                hidden: ""
+              }, [
+                createBaseVNode("i", { class: "fa-solid fa-forward-step" })
+              ])
+            ])
+          ], -1)
+        ])]),
+        _: 1
+      }, 8, ["open"]);
+    };
+  }
+});
+const _hoisted_1$c = ["disabled"];
+const _sfc_main$g = /* @__PURE__ */ defineComponent({
+  __name: "GlobalMic",
+  setup(__props) {
+    const ui = useUiStore();
+    function triggerMic() {
+      document.dispatchEvent(new CustomEvent("voice:dictate"));
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("button", {
+        id: "global-mic",
+        class: "global-mic",
+        type: "button",
+        title: "Dictate into focused field",
+        "aria-label": "Dictate",
+        disabled: !unref(ui).micEnabled,
+        onClick: triggerMic
+      }, [..._cache[0] || (_cache[0] = [
+        createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
+      ])], 8, _hoisted_1$c);
+    };
+  }
+});
+const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
+  const mode = /* @__PURE__ */ ref("idle");
+  const recording = /* @__PURE__ */ ref(false);
+  const transcribing = /* @__PURE__ */ ref(false);
+  const playing = /* @__PURE__ */ ref(false);
+  const transcript = /* @__PURE__ */ ref([]);
+  const statusText = /* @__PURE__ */ ref("Press and hold to talk");
+  const genToken = /* @__PURE__ */ ref(0);
+  const isOpen = computed(() => mode.value !== "idle");
+  function openChatMode() {
+    mode.value = "chat";
+    transcript.value = [];
+    statusText.value = "Press and hold to talk";
+  }
+  function openTaskCreatorMode() {
+    mode.value = "task-creator";
+    transcript.value = [];
+    statusText.value = "Describe the task you want to create";
+  }
+  function close() {
+    cancelAudio();
+    mode.value = "idle";
+    recording.value = false;
+    transcribing.value = false;
+    playing.value = false;
+    transcript.value = [];
+  }
+  function cancelAudio() {
+    genToken.value++;
+    playing.value = false;
+  }
+  function addTranscript(entry) {
+    transcript.value.push(entry);
+  }
+  function updateLastAssistant(text, state) {
+    const last = transcript.value[transcript.value.length - 1];
+    if (last && last.role === "assistant") {
+      last.text = text;
+      last.state = state;
+    } else {
+      transcript.value.push({ role: "assistant", text, state });
+    }
+  }
+  return {
+    mode,
+    recording,
+    transcribing,
+    playing,
+    transcript,
+    statusText,
+    genToken,
+    isOpen,
+    openChatMode,
+    openTaskCreatorMode,
+    close,
+    cancelAudio,
+    addTranscript,
+    updateLastAssistant
+  };
+});
+const _hoisted_1$b = ["hidden"];
+const _hoisted_2$7 = ["hidden"];
+const _sfc_main$f = /* @__PURE__ */ defineComponent({
+  __name: "GlobalSpeaker",
+  setup(__props) {
+    const ui = useUiStore();
+    useVoiceStore();
+    const route = useRoute();
+    const onChat = computed(() => route.path === "/chat");
+    function openVoiceMode() {
+      document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
+    }
+    function openTaskCreator() {
+      document.dispatchEvent(new CustomEvent("voice:open-task-creator"));
+    }
+    function toggleReadAloud() {
+      document.dispatchEvent(new CustomEvent("voice:read-aloud-toggle"));
+    }
+    function toggleSpeaker() {
+      ui.ttsEnabled = !ui.ttsEnabled;
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock(Fragment, null, [
+        createBaseVNode("button", {
+          id: "global-voice-mode",
+          class: "global-voice-mode",
+          type: "button",
+          title: "Voice chat mode",
+          "aria-label": "Voice chat mode",
+          hidden: !onChat.value || !unref(ui).micEnabled,
+          onClick: openVoiceMode
+        }, [..._cache[0] || (_cache[0] = [
+          createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
+        ])], 8, _hoisted_1$b),
+        createBaseVNode("button", {
+          id: "global-voice-task",
+          class: "global-voice-task",
+          type: "button",
+          title: "Voice task creator",
+          "aria-label": "Voice task creator",
+          hidden: "",
+          onClick: openTaskCreator
+        }, [..._cache[1] || (_cache[1] = [
+          createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
+        ])]),
+        createBaseVNode("button", {
+          id: "global-read-aloud",
+          class: "global-read-aloud",
+          type: "button",
+          title: "Read to me",
+          "aria-label": "Read to me",
+          hidden: "",
+          disabled: "",
+          onClick: toggleReadAloud
+        }, [..._cache[2] || (_cache[2] = [
+          createBaseVNode("i", { class: "fa-solid fa-headphones" }, null, -1)
+        ])]),
+        createBaseVNode("button", {
+          id: "global-speaker",
+          class: "global-speaker",
+          type: "button",
+          title: "Enable auto-read",
+          "aria-label": "Enable auto-read",
+          hidden: !unref(ui).ttsEnabled,
+          onClick: toggleSpeaker
+        }, [..._cache[3] || (_cache[3] = [
+          createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
+        ])], 8, _hoisted_2$7)
+      ], 64);
+    };
+  }
+});
+const MAX_ENTRIES = 64;
+const UNHEALTHY_MS = 1e4;
+const FALLBACK_MS = 15e3;
+const LIVE_URL = "/api/live";
+const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
+  const entries = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  const topicMap = /* @__PURE__ */ new Map();
+  let es = null;
+  let unhealthyTimer = null;
+  let fallbackTimer = null;
+  let overflowLogged = false;
+  function touch(entry2) {
+    entry2.touchedAt = Date.now();
+  }
+  function evict() {
+    var _a2;
+    if (entries.size <= MAX_ENTRIES) {
+      overflowLogged = false;
+      return;
+    }
+    let oldest = null;
+    let oldestTime = Infinity;
+    for (const [key, e] of entries) {
+      if (e.refs === 0 && e.touchedAt < oldestTime) {
+        oldest = key;
+        oldestTime = e.touchedAt;
+      }
+    }
+    if (oldest) {
+      const e = entries.get(oldest);
+      for (const topic of e.spec.topics) {
+        (_a2 = topicMap.get(topic)) == null ? void 0 : _a2.delete(oldest);
+      }
+      entries.delete(oldest);
+    } else if (!overflowLogged) {
+      console.warn("[live] resource cache overflow: all 64 entries are bound — possible leak");
+      overflowLogged = true;
+    }
+  }
+  function registerTopics(key, spec) {
+    for (const topic of spec.topics) {
+      if (!topicMap.has(topic)) topicMap.set(topic, /* @__PURE__ */ new Set());
+      topicMap.get(topic).add(key);
+    }
+  }
+  async function doFetch(key, entry2) {
+    if (entry2.inflight) {
+      entry2.dirty = true;
+      return;
+    }
+    entry2.inflight = true;
+    entry2.dirty = false;
+    try {
+      const data = await entry2.spec.fetch();
+      entry2.data = data;
+      entry2.status = "ready";
+      entry2.fetchedAt = Date.now();
+      touch(entry2);
+      entry2.error = null;
+    } catch (err) {
+      entry2.status = "error";
+      entry2.error = String(err);
+    } finally {
+      entry2.inflight = false;
+      if (entry2.dirty && entry2.refs > 0) {
+        doFetch(key, entry2).catch(() => {
+        });
+      }
+    }
+  }
+  function bind(key, spec) {
+    let entry2 = entries.get(key);
+    const isNew = !entry2;
+    if (isNew) {
+      entry2 = {
+        data: null,
+        status: "idle",
+        error: null,
+        fetchedAt: null,
+        refs: 0,
+        touchedAt: Date.now(),
+        spec,
+        inflight: false,
+        dirty: false
+      };
+      entries.set(key, entry2);
+      registerTopics(key, spec);
+    } else {
+      touch(entry2);
+    }
+    const wasUnbound = entry2.refs === 0;
+    entry2.refs++;
+    if (isNew) evict();
+    if (wasUnbound) {
+      doFetch(key, entry2).catch(() => {
+      });
+    }
+  }
+  function unbind(key) {
+    const entry2 = entries.get(key);
+    if (!entry2) return;
+    entry2.refs = Math.max(0, entry2.refs - 1);
+    touch(entry2);
+  }
+  function entry(key) {
+    const e = entries.get(key);
+    if (e) touch(e);
+    return e;
+  }
+  function prefetch(key, spec) {
+    if (entries.has(key)) return;
+    const e = {
+      data: null,
+      status: "idle",
+      error: null,
+      fetchedAt: null,
+      refs: 0,
+      touchedAt: Date.now(),
+      spec,
+      inflight: false,
+      dirty: false
+    };
+    entries.set(key, e);
+    registerTopics(key, spec);
+    evict();
+    doFetch(key, e).catch(() => {
+    });
+  }
+  function handleEvent(topic, hint) {
+    const keys = topicMap.get(topic);
+    if (!keys) return;
+    for (const key of keys) {
+      const e = entries.get(key);
+      if (!e) continue;
+      touch(e);
+      if (e.refs > 0) {
+        doFetch(key, e).catch(() => {
+        });
+      } else {
+        e.status = "idle";
+      }
+    }
+  }
+  function refetchAllBound() {
+    for (const [key, e] of entries) {
+      if (e.refs > 0) doFetch(key, e).catch(() => {
+      });
+    }
+  }
+  function startFallback() {
+    if (fallbackTimer) return;
+    fallbackTimer = setInterval(refetchAllBound, FALLBACK_MS);
+  }
+  function clearFallback() {
+    if (fallbackTimer) {
+      clearInterval(fallbackTimer);
+      fallbackTimer = null;
+    }
+  }
+  function startUnhealthyTimer() {
+    if (unhealthyTimer) return;
+    unhealthyTimer = setTimeout(() => {
+      unhealthyTimer = null;
+      startFallback();
+    }, UNHEALTHY_MS);
+  }
+  function clearUnhealthyTimer() {
+    if (unhealthyTimer) {
+      clearTimeout(unhealthyTimer);
+      unhealthyTimer = null;
+    }
+  }
+  function connect() {
+    if (es) {
+      es.close();
+      es = null;
+    }
+    es = new EventSource(LIVE_URL);
+    es.addEventListener("message", (ev) => {
+      let payload;
+      try {
+        payload = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      const { topic, hint = {} } = payload;
+      if (topic === "hello") {
+        clearUnhealthyTimer();
+        clearFallback();
+        refetchAllBound();
+        return;
+      }
+      if (topic === "resync") {
+        refetchAllBound();
+        return;
+      }
+      handleEvent(topic);
+    });
+    es.addEventListener("error", () => {
+      startUnhealthyTimer();
+    });
+    es.addEventListener("open", () => {
+      clearUnhealthyTimer();
+    });
+  }
+  function disconnect() {
+    if (es) {
+      es.close();
+      es = null;
+    }
+    clearUnhealthyTimer();
+    clearFallback();
+  }
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") refetchAllBound();
+    });
+    window.addEventListener("pageshow", () => refetchAllBound());
+  }
+  connect();
+  return { entries, bind, unbind, entry, prefetch, connect, disconnect };
+});
+const _hoisted_1$a = { class: "dock-shell" };
+const _hoisted_2$6 = {
+  class: "side-bubble",
+  id: "jobs-bubble",
+  "aria-live": "polite"
+};
+const _hoisted_3$5 = { class: "side-value" };
+const _hoisted_4$4 = {
+  class: "side-bubble",
+  id: "tasks-bubble",
+  "aria-live": "polite"
+};
+const _hoisted_5$3 = { class: "side-value" };
+const _hoisted_6$2 = {
+  class: "dock",
+  id: "dock",
+  "aria-live": "polite"
+};
+const _hoisted_7$1 = { id: "dock-pills" };
+const _hoisted_8$1 = { class: "pill-label" };
+const _hoisted_9$1 = { class: "pill-icon" };
+const _hoisted_10$1 = { class: "pill-value" };
+const _hoisted_11 = {
+  class: "side-bubble",
+  id: "uptime-bubble",
+  "aria-live": "polite"
+};
+const _hoisted_12 = { class: "side-value" };
+const _sfc_main$e = /* @__PURE__ */ defineComponent({
+  __name: "StatusDock",
+  setup(__props) {
+    const live = useLiveStore();
+    const STATE_SPEC = {
+      topics: ["state"],
+      fetch: () => fetch("/api/state", { cache: "no-store" }).then((r) => r.json())
+    };
+    onMounted(() => live.bind("state", STATE_SPEC));
+    onBeforeUnmount(() => live.unbind("state"));
+    const stateEntry = computed(() => live.entry("state"));
+    const stateData = computed(() => {
+      var _a2;
+      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.data) ?? null;
+    });
+    const isOffline = computed(() => {
+      var _a2;
+      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.status) === "error";
+    });
+    let uptimeTick = null;
+    const now = /* @__PURE__ */ ref(Date.now());
+    onMounted(() => {
+      uptimeTick = setInterval(() => {
+        now.value = Date.now();
+      }, 1e3);
+    });
+    onBeforeUnmount(() => {
+      if (uptimeTick) clearInterval(uptimeTick);
+    });
+    function fmtDur(ms) {
+      if (ms == null || ms < 0) return "n/a";
+      const s = Math.floor(ms / 1e3);
+      const d2 = Math.floor(s / 86400);
+      if (d2 > 0) {
+        const h22 = Math.floor(s % 86400 / 3600);
+        return `${d2}d ${h22}h`;
+      }
+      const h2 = Math.floor(s / 3600);
+      const m2 = Math.floor(s % 3600 / 60);
+      const ss = s % 60;
+      if (h2 > 0) return `${h2}h ${m2}m`;
+      if (m2 > 0) return `${m2}m ${ss}s`;
+      return `${ss}s`;
+    }
+    const jobsCount = computed(() => {
+      var _a2;
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      return String(((_a2 = d2 == null ? void 0 : d2.jobs) == null ? void 0 : _a2.length) ?? 0);
+    });
+    const tasksCount = computed(() => {
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      return String((d2 == null ? void 0 : d2.tasksActive) ?? 0);
+    });
+    const uptime = computed(() => {
+      var _a2;
+      if (isOffline.value) return "-";
+      const d2 = stateData.value;
+      const startedAt = (_a2 = d2 == null ? void 0 : d2.daemon) == null ? void 0 : _a2.startedAt;
+      if (!startedAt) return "-";
+      return fmtDur(now.value - startedAt);
+    });
+    const pills = computed(() => {
+      var _a2, _b;
+      if (isOffline.value) {
+        return [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
+      }
+      const d2 = stateData.value;
+      if (!d2) return [];
+      const out = [];
+      if ((_a2 = d2.telegram) == null ? void 0 : _a2.configured) {
+        const n = d2.telegram.allowedUserCount;
+        out.push({ cls: "ok", icon: "✈️", label: "Telegram", value: `${n} user${n !== 1 ? "s" : ""}` });
+      }
+      if ((_b = d2.discord) == null ? void 0 : _b.configured) {
+        const n = d2.discord.allowedUserCount;
+        out.push({ cls: "ok", icon: "🎮", label: "Discord", value: `${n} user${n !== 1 ? "s" : ""}` });
+      }
+      return out;
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$a, [
+        createBaseVNode("aside", _hoisted_2$6, [
+          _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
+          createBaseVNode("div", _hoisted_3$5, toDisplayString(jobsCount.value), 1),
+          _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
+        ]),
+        createBaseVNode("aside", _hoisted_4$4, [
+          _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
+          createBaseVNode("div", _hoisted_5$3, toDisplayString(tasksCount.value), 1),
+          _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
+        ]),
+        createBaseVNode("footer", _hoisted_6$2, [
+          createVNode(_sfc_main$f),
+          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+          createVNode(_sfc_main$g),
+          createBaseVNode("div", _hoisted_7$1, [
+            (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
+              return openBlock(), createElementBlock("div", {
+                key: pill.label,
+                class: normalizeClass(["pill", pill.cls])
+              }, [
+                createBaseVNode("div", _hoisted_8$1, [
+                  createBaseVNode("span", _hoisted_9$1, toDisplayString(pill.icon), 1),
+                  createTextVNode(toDisplayString(pill.label), 1)
+                ]),
+                createBaseVNode("div", _hoisted_10$1, toDisplayString(pill.value), 1)
+              ], 2);
+            }), 128))
           ])
-        ], -1),
-        createStaticVNode('<section class="quick-jobs-view" id="quick-jobs-view"><div class="quick-jobs-header"><div class="quick-jobs-next" id="quick-jobs-next">No schedules</div><button class="quick-open-create" id="quick-open-create" type="button">+ New Task</button></div><div class="quick-jobs-list" id="quick-jobs-list"><div class="quick-jobs-empty">Loading...</div></div><div class="quick-jobs-status" id="quick-jobs-status"></div></section><form class="quick-job-form quick-view-hidden" id="quick-job-form"><div class="quick-job-form-head"><button class="quick-back-jobs" id="quick-back-jobs" type="button">← Schedules</button><h2 class="quick-job-form-title">New Task</h2></div><div class="quick-field"><label class="quick-label" for="quick-task-agent">Agent</label><select class="quick-select" id="quick-task-agent"><option value="alice">alice</option></select></div><div class="quick-field"><label class="quick-label" for="quick-task-headline">Title</label><input class="quick-input" id="quick-task-headline" type="text" placeholder="Short task title" autocomplete="off"></div><div class="quick-field"><label class="quick-label" for="quick-task-brief">Description <span class="quick-count" id="quick-job-count">0 chars</span></label><textarea class="quick-textarea" id="quick-task-brief" rows="4" placeholder="What should the agent do?"></textarea></div><div class="quick-field quick-field-check"><label class="quick-check-label"><input type="checkbox" id="quick-task-recurring"> Recurring </label></div><section class="quick-view-hidden quick-schedule-section" id="quick-task-schedule-section"><div class="quick-field quick-field-radios"><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-interval" checked> Interval </label><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-cron"> Cron </label></div><section id="quick-interval-section"><div class="quick-field"><label class="quick-label" for="quick-task-interval-start">Start time (HH:MM)</label><input class="quick-input" id="quick-task-interval-start" type="text" placeholder="08:00"></div><div class="quick-field"><label class="quick-label" for="quick-task-interval-hours">Every (hours)</label><input class="quick-input" id="quick-task-interval-hours" type="number" value="24" min="1" max="168"></div></section><section class="quick-view-hidden" id="quick-cron-section"><div class="quick-field"><label class="quick-label" for="quick-task-cron">Cron expression</label><input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" autocomplete="off"></div></section></section><div class="quick-field quick-field-submit"><button class="quick-submit" id="quick-job-submit" type="submit">Create</button><div class="quick-job-status" id="quick-job-status"></div></div></form>', 2)
-      ])]);
+        ]),
+        createBaseVNode("aside", _hoisted_11, [
+          _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
+          createBaseVNode("div", _hoisted_12, toDisplayString(uptime.value), 1),
+          _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
+        ])
+      ]);
+    };
+  }
+});
+function stripMarkdown(text) {
+  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/^[-*+]\s+/gm, "").replace(/^\d+\.\s+/gm, "").replace(/^>\s+/gm, "").replace(/~~([^~]+)~~/g, "$1").replace(/__([^_]+)__/g, "$1").replace(/_([^_]+)_/g, "$1").replace(/\|/g, "  ").replace(/^[-:|]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+function esc(t) {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function extractChunks(pending, isDone) {
+  const chunks = [];
+  let consumed = 0;
+  const blocks = pending.split(/(\n\n+)/);
+  let pos = 0;
+  for (let b2 = 0; b2 < blocks.length; b2++) {
+    const part = blocks[b2];
+    if (/^\n\n+$/.test(part)) {
+      pos += part.length;
+      continue;
+    }
+    const hasTrailingSep = b2 + 1 < blocks.length && /^\n\n+$/.test(blocks[b2 + 1]);
+    const isComplete = hasTrailingSep || isDone;
+    if (isComplete) {
+      const trimmed = part.trim();
+      if (trimmed.length > 250) {
+        const re2 = /[.!?]\s+/g;
+        let m2;
+        let sentStart = 0;
+        while ((m2 = re2.exec(trimmed)) !== null) {
+          const end = m2.index + m2[0].length;
+          const sent = trimmed.slice(sentStart, end).trim();
+          if (sent) chunks.push(sent);
+          sentStart = end;
+        }
+        const tail = trimmed.slice(sentStart).trim();
+        if (tail) chunks.push(tail);
+      } else if (trimmed) {
+        chunks.push(trimmed);
+      }
+      pos += part.length;
+      consumed = pos;
+    } else {
+      const re2 = /[.!?]\s+/g;
+      let m2;
+      let sentStart2 = 0;
+      let lastSentEnd = 0;
+      while ((m2 = re2.exec(part)) !== null) {
+        const end2 = m2.index + m2[0].length;
+        const sent2 = part.slice(sentStart2, end2).trim();
+        if (sent2) chunks.push(sent2);
+        sentStart2 = end2;
+        lastSentEnd = end2;
+      }
+      consumed = pos + lastSentEnd;
+      break;
+    }
+  }
+  return { chunks, consumed };
+}
+const MIME_CANDIDATES = [
+  "audio/ogg;codecs=opus",
+  "audio/ogg",
+  "audio/webm;codecs=opus",
+  "audio/webm"
+];
+function detectMimeType() {
+  if (typeof MediaRecorder === "undefined") return null;
+  for (const c of MIME_CANDIDATES) {
+    if (MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return null;
+}
+const SPEAK_MAX_CONCURRENT = 2;
+let speakInFlight = 0;
+const speakWaiters = [];
+function speakFetch(text) {
+  return new Promise((resolve2) => {
+    if (speakInFlight < SPEAK_MAX_CONCURRENT) {
+      speakInFlight++;
+      resolve2();
+    } else speakWaiters.push(() => {
+      speakInFlight++;
+      resolve2();
+    });
+  }).then(
+    () => fetch("/api/voice/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    }).finally(() => {
+      speakInFlight--;
+      const next = speakWaiters.shift();
+      if (next) next();
+    })
+  );
+}
+const _hoisted_1$9 = {
+  class: "voice-mode-overlay",
+  role: "dialog",
+  "aria-modal": "true",
+  "aria-live": "polite"
+};
+const _hoisted_2$5 = ["innerHTML"];
+const _hoisted_3$4 = { class: "vm-controls" };
+const _hoisted_4$3 = { class: "voice-mode-status" };
+const HOLD_MS$1 = 250;
+const _sfc_main$d = /* @__PURE__ */ defineComponent({
+  __name: "VoiceModeOverlay",
+  setup(__props) {
+    const voice = useVoiceStore();
+    const mimeType = detectMimeType();
+    let recorder = null;
+    let chunks = [];
+    let stream = null;
+    let busy = false;
+    let audioQueue = [];
+    let queueRunning = false;
+    let queueGen = 0;
+    let currentAudio = null;
+    let spokenChunks = [];
+    let turnCursor = 0;
+    let holdTimer = null;
+    let holdMode = false;
+    let pressStart = 0;
+    let prevVmChunk;
+    let fastPollController = null;
+    const statusText = /* @__PURE__ */ ref("Press and hold to talk");
+    const btnClass = /* @__PURE__ */ ref("");
+    const transcriptHtml = /* @__PURE__ */ ref("");
+    const isListening = /* @__PURE__ */ ref(false);
+    function setStatus(text, cls) {
+      statusText.value = text;
+      btnClass.value = cls;
+    }
+    function renderTranscript() {
+      if (!spokenChunks.length) {
+        transcriptHtml.value = "";
+        return;
+      }
+      transcriptHtml.value = spokenChunks.map((chunk, i) => {
+        const active = i === spokenChunks.length - 1;
+        return `<div class="vm-reply${active ? " vm-active" : ""}">${esc(chunk)}</div>`;
+      }).join("");
+    }
+    function stopAudio() {
+      queueGen++;
+      if (fastPollController) {
+        fastPollController.abort();
+        fastPollController = null;
+      }
+      spokenChunks = [];
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = "";
+        currentAudio = null;
+      }
+      audioQueue = [];
+      queueRunning = false;
+      voice.playing = false;
+      renderTranscript();
+    }
+    function enqueueChunk(chunkText) {
+      const stripped = stripMarkdown(chunkText).trim();
+      if (!stripped) return;
+      const displayText = chunkText.trim();
+      const gen = queueGen;
+      const p2 = speakFetch(stripped).then((res) => {
+        if (gen !== queueGen) return null;
+        if (!res.ok) {
+          return res.json().catch(() => ({})).then(() => ({ audio: null, url: null, text: displayText }));
+        }
+        return res.blob().then((blob) => {
+          if (gen !== queueGen) return null;
+          const url = URL.createObjectURL(blob);
+          return { audio: new Audio(url), url, text: displayText };
+        });
+      }).catch(() => ({ audio: null, url: null, text: displayText }));
+      audioQueue.push(p2);
+      if (!queueRunning) runQueue(gen);
+    }
+    async function runQueue(gen) {
+      if (queueRunning) return;
+      queueRunning = true;
+      while (audioQueue.length > 0 && gen === queueGen) {
+        const item = await audioQueue.shift();
+        if (gen !== queueGen) {
+          if (item == null ? void 0 : item.url) URL.revokeObjectURL(item.url);
+          continue;
+        }
+        if (!item) continue;
+        spokenChunks.push(item.text);
+        renderTranscript();
+        if (!item.audio) continue;
+        setStatus("Speaking…", "speaking");
+        voice.playing = true;
+        currentAudio = item.audio;
+        await new Promise((resolve2) => {
+          item.audio.onended = () => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          };
+          item.audio.onerror = () => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          };
+          item.audio.play().catch(() => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          });
+        });
+      }
+      if (gen === queueGen) {
+        queueRunning = false;
+        busy = false;
+        voice.playing = false;
+        if (voice.mode === "chat") setStatus("Press and hold to talk", "");
+      }
+    }
+    function onAssistantChunk(fullText, isDone) {
+      if (voice.mode !== "chat") return;
+      if (fullText.length < turnCursor) {
+        turnCursor = 0;
+        stopAudio();
+      }
+      const pending = fullText.slice(turnCursor);
+      if (!pending) return;
+      const result = extractChunks(pending, isDone);
+      if (result.consumed > 0) turnCursor += result.consumed;
+      for (const chunk of result.chunks) {
+        if (chunk.trim()) enqueueChunk(chunk);
+      }
+      if (result.chunks.length) busy = true;
+    }
+    async function streamChatReply(chatId) {
+      var _a2;
+      if (!chatId) return;
+      if (fastPollController) {
+        fastPollController.abort();
+      }
+      const controller = new AbortController();
+      fastPollController = controller;
+      const gen = queueGen;
+      while (!controller.signal.aborted && gen === queueGen) {
+        await new Promise((r) => setTimeout(r, 200));
+        if (controller.signal.aborted || gen !== queueGen) break;
+        try {
+          const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`, {
+            signal: controller.signal
+          });
+          if (!res.ok) break;
+          const data = await res.json();
+          if (!(data == null ? void 0 : data.ok) || !((_a2 = data == null ? void 0 : data.chat) == null ? void 0 : _a2.messages)) continue;
+          const msgs = data.chat.messages;
+          const lastAssistant = [...msgs].reverse().find((m2) => m2.role === "assistant");
+          if (!(lastAssistant == null ? void 0 : lastAssistant.text)) continue;
+          const st = lastAssistant.state;
+          const isDone = !st || st === "done";
+          if (isDone || st === "streaming" || st === "background") {
+            onAssistantChunk(lastAssistant.text, isDone);
+            if (isDone && voice.mode === "chat") setStatus("Press and hold to talk", "");
+          }
+          if (isDone) break;
+        } catch (e) {
+          if ((e == null ? void 0 : e.name) === "AbortError") break;
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
+      if (fastPollController === controller) fastPollController = null;
+    }
+    function stopStream() {
+      stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    async function startRecording() {
+      if (busy || !mimeType) return;
+      busy = true;
+      stopAudio();
+      setStatus("Requesting microphone…", "");
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch {
+        setStatus("Microphone unavailable", "");
+        busy = false;
+        return;
+      }
+      chunks = [];
+      try {
+        recorder = new MediaRecorder(stream, { mimeType });
+      } catch {
+        stopStream();
+        setStatus("Press and hold to talk", "");
+        busy = false;
+        return;
+      }
+      recorder.ondataavailable = (e) => {
+        var _a2;
+        if (((_a2 = e.data) == null ? void 0 : _a2.size) > 0) chunks.push(e.data);
+      };
+      setStatus("Listening… (release to send)", "listening");
+      transcriptHtml.value = "";
+      isListening.value = true;
+      voice.recording = true;
+      recorder.start(200);
+    }
+    async function stopAndSubmit() {
+      if (!recorder || recorder.state === "inactive") return;
+      recorder.onstop = async () => {
+        isListening.value = false;
+        voice.recording = false;
+        setStatus("Transcribing…", "processing");
+        const blob = new Blob(chunks, { type: mimeType });
+        chunks = [];
+        recorder = null;
+        stopStream();
+        voice.transcribing = true;
+        let text = "";
+        try {
+          const ext = mimeType.includes("webm") ? ".webm" : ".ogg";
+          const fd = new FormData();
+          fd.append("audio", blob, `vm-island${ext}`);
+          const res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+          const data = await res.json();
+          if (data.ok && data.text) {
+            text = data.text.trim();
+          } else {
+            setStatus("Transcription failed — try again", "");
+            busy = false;
+            voice.transcribing = false;
+            return;
+          }
+        } catch {
+          setStatus("Request failed — try again", "");
+          busy = false;
+          voice.transcribing = false;
+          return;
+        }
+        voice.transcribing = false;
+        if (!text) {
+          setStatus("Nothing heard — try again", "");
+          busy = false;
+          return;
+        }
+        transcriptHtml.value = `<div class="vm-heard">"${esc(text)}"</div>`;
+        setStatus("Sending…", "processing");
+        const chatId = window.__chatSessionId;
+        try {
+          await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text, chatId })
+          });
+          spokenChunks = [];
+          turnCursor = 0;
+          streamChatReply(chatId);
+        } catch {
+          console.error("[voice-island] chat send failed");
+        }
+        setStatus("Waiting for reply…", "processing");
+      };
+      recorder.stop();
+    }
+    function pressDown(e) {
+      e.preventDefault();
+      pressStart = Date.now();
+      holdTimer = setTimeout(() => {
+        holdMode = true;
+        if (!busy && (!recorder || recorder.state === "inactive")) startRecording();
+      }, HOLD_MS$1);
+    }
+    function pressUp(e) {
+      e.preventDefault();
+      if (holdTimer) clearTimeout(holdTimer);
+      const dur = Date.now() - pressStart;
+      if (holdMode) {
+        holdMode = false;
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
+      } else if (dur < HOLD_MS$1) {
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
+        else if (!busy) startRecording();
+      }
+    }
+    function pressLeave() {
+      if (holdMode) {
+        holdMode = false;
+        if (holdTimer) clearTimeout(holdTimer);
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
+      }
+    }
+    function restoreVmHook() {
+      window.__vmOnAssistantChunk = prevVmChunk;
+      prevVmChunk = void 0;
+    }
+    function openMode() {
+      busy = false;
+      spokenChunks = [];
+      turnCursor = 0;
+      setStatus("Press and hold to talk", "");
+      isListening.value = false;
+      transcriptHtml.value = "";
+      const hist = window.__chatHistory;
+      if (Array.isArray(hist) && hist.length) {
+        const last = hist[hist.length - 1];
+        if ((last == null ? void 0 : last.role) === "assistant" && last.text) turnCursor = last.text.length;
+      }
+      prevVmChunk = window.__vmOnAssistantChunk;
+      window.__vmOnAssistantChunk = onAssistantChunk;
+    }
+    function closeMode() {
+      stopStream();
+      stopAudio();
+      busy = false;
+      if ((recorder == null ? void 0 : recorder.state) !== "inactive") {
+        recorder == null ? void 0 : recorder.stop();
+        recorder = null;
+      }
+      restoreVmHook();
+    }
+    watch(
+      () => voice.mode,
+      (mode, prev) => {
+        if (mode === "chat" && prev !== "chat") openMode();
+        if (prev === "chat" && mode !== "chat") closeMode();
+      }
+    );
+    onMounted(() => {
+      if (voice.mode === "chat") openMode();
+    });
+    onBeforeUnmount(() => {
+      stopStream();
+      stopAudio();
+      if (voice.mode === "chat") restoreVmHook();
+    });
+    function close() {
+      closeMode();
+      voice.close();
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$9, [
+        createBaseVNode("div", {
+          class: "voice-mode-transcript",
+          innerHTML: transcriptHtml.value
+        }, null, 8, _hoisted_2$5),
+        createBaseVNode("div", _hoisted_3$4, [
+          createBaseVNode("div", _hoisted_4$3, toDisplayString(statusText.value), 1),
+          createBaseVNode("button", {
+            class: normalizeClass(["voice-mode-btn", btnClass.value]),
+            type: "button",
+            "aria-label": "Push to talk",
+            onMousedown: pressDown,
+            onTouchstart: withModifiers(pressDown, ["prevent"]),
+            onMouseup: pressUp,
+            onTouchend: withModifiers(pressUp, ["prevent"]),
+            onMouseleave: pressLeave
+          }, [
+            createBaseVNode("i", {
+              class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
+            }, null, 2)
+          ], 34),
+          createBaseVNode("button", {
+            class: "voice-mode-close",
+            type: "button",
+            "aria-label": "Exit voice mode",
+            onClick: close
+          }, [..._cache[0] || (_cache[0] = [
+            createBaseVNode("i", { class: "fa-solid fa-xmark" }, null, -1)
+          ])])
+        ])
+      ]);
+    };
+  }
+});
+const useTaskCreatorStore = /* @__PURE__ */ defineStore("task-creator", () => {
+  const conversation = /* @__PURE__ */ ref([]);
+  const draft = /* @__PURE__ */ ref(null);
+  const submitting = /* @__PURE__ */ ref(false);
+  const lastError = /* @__PURE__ */ ref(null);
+  const createdTaskId = /* @__PURE__ */ ref(null);
+  const SYSTEM_PROMPT = `You are a task-extraction assistant for a multi-agent system called Caravel. The user will describe a task they want to delegate to one of their AI agents. Your job is to extract the key fields and confirm back.
+
+Known agents: alice (ops/admin), bob (code/dev), sam (strategy), ray (research), mark (marketing), cliff (code review).
+
+Listen to the user's description and respond with:
+1. A SHORT spoken acknowledgement (1-2 sentences, natural and direct)
+2. Your extraction as a JSON block wrapped in <task> ... </task> tags
+
+JSON fields:
+- to: agent name (default "alice")
+- headline: short task title (max 80 chars)
+- brief: full task description as the agent will read it
+- project: project slug if mentioned (e.g. "caravel"), or null
+- priority: "P0"|"P1"|"P2"|"P3" (default "P2")
+- kind: "research"|"code"|"review"|"summarise"|"decide"|"other" (default "research")
+
+Do not ask clarifying questions unless a critical field is truly ambiguous. Make a sensible default call for anything unclear.
+
+Example response:
+"Got it — I'll set that up for Alice at P2.
+
+<task>
+{
+  "to": "alice",
+  "headline": "Summarise last week's completed tasks",
+  "brief": "Review all tasks completed in the past 7 days across all agents and draft a short summary for Kelly, highlighting any patterns or blockers.",
+  "project": "caravel",
+  "priority": "P2",
+  "kind": "summarise"
+}
+</task>"`;
+  function reset() {
+    conversation.value = [{ role: "system", text: SYSTEM_PROMPT }];
+    draft.value = null;
+    submitting.value = false;
+    lastError.value = null;
+    createdTaskId.value = null;
+  }
+  function addUserMessage(text) {
+    conversation.value.push({ role: "user", text });
+  }
+  function addAssistantMessage(text) {
+    conversation.value.push({ role: "assistant", text });
+  }
+  function parseTaskFromReply(reply) {
+    const match = reply.match(/<task>\s*([\s\S]*?)\s*<\/task>/i);
+    if (!match) return null;
+    try {
+      const obj = JSON.parse(match[1]);
+      return {
+        to: typeof obj.to === "string" ? obj.to : "alice",
+        headline: typeof obj.headline === "string" ? obj.headline.slice(0, 80) : "New task",
+        brief: typeof obj.brief === "string" ? obj.brief : "",
+        project: typeof obj.project === "string" ? obj.project : null,
+        priority: /^P[0-3]$/.test(obj.priority) ? obj.priority : "P2",
+        kind: ["research", "code", "review", "summarise", "decide", "other"].includes(obj.kind) ? obj.kind : "research"
+      };
+    } catch {
+      return null;
+    }
+  }
+  function setDraft(d2) {
+    draft.value = { ...d2 };
+  }
+  function updateDraftField(field, value) {
+    if (draft.value) {
+      draft.value[field] = value;
+    }
+  }
+  async function submitDraft() {
+    if (!draft.value) return { ok: false, error: "No draft" };
+    submitting.value = true;
+    lastError.value = null;
+    try {
+      const payload = {
+        to: draft.value.to,
+        from: "user",
+        kind: draft.value.kind,
+        priority: draft.value.priority,
+        headline: draft.value.headline,
+        brief: draft.value.brief,
+        project: draft.value.project || null
+      };
+      const res = await fetch("/api/tasks/new", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        lastError.value = data.error || "Unknown error";
+        return { ok: false, error: lastError.value ?? "Unknown error" };
+      }
+      createdTaskId.value = data.id;
+      return { ok: true, id: data.id };
+    } catch (err) {
+      lastError.value = String(err);
+      return { ok: false, error: lastError.value ?? "Unknown error" };
+    } finally {
+      submitting.value = false;
+    }
+  }
+  return {
+    conversation,
+    draft,
+    submitting,
+    lastError,
+    createdTaskId,
+    SYSTEM_PROMPT,
+    reset,
+    addUserMessage,
+    addAssistantMessage,
+    parseTaskFromReply,
+    setDraft,
+    updateDraftField,
+    submitDraft
+  };
+});
+const _hoisted_1$8 = {
+  key: 0,
+  class: "vtc-success text-center py-4"
+};
+const _hoisted_2$4 = {
+  key: 0,
+  class: "vtc-claude-reply mb-3 p-3 rounded"
+};
+const _hoisted_3$3 = { class: "row g-2 mb-2" };
+const _hoisted_4$2 = { class: "col-6" };
+const _hoisted_5$2 = { class: "col-6" };
+const _hoisted_6$1 = { class: "d-flex gap-2 justify-content-end" };
+const _hoisted_7 = {
+  key: 2,
+  class: "vtc-capture text-center py-3"
+};
+const _hoisted_8 = { class: "voice-mode-status mb-4" };
+const _hoisted_9 = {
+  key: 0,
+  class: "vm-heard mt-2"
+};
+const _hoisted_10 = {
+  key: 1,
+  class: "vm-reply vm-active mt-2"
+};
+const HOLD_MS = 250;
+const _sfc_main$c = /* @__PURE__ */ defineComponent({
+  __name: "VoiceTaskCreator",
+  setup(__props) {
+    const voice = useVoiceStore();
+    const taskCreator = useTaskCreatorStore();
+    const mimeType = detectMimeType();
+    let recorder = null;
+    let chunks = [];
+    let stream = null;
+    let busy = false;
+    let audioQueue = [];
+    let queueRunning = false;
+    let queueGen = 0;
+    let currentAudio = null;
+    let pollTimer = null;
+    const showModal = /* @__PURE__ */ ref(false);
+    const statusText = /* @__PURE__ */ ref("Describe the task you want to create");
+    const isListening = /* @__PURE__ */ ref(false);
+    const isProcessing = /* @__PURE__ */ ref(false);
+    const heardText = /* @__PURE__ */ ref("");
+    const replyText = /* @__PURE__ */ ref("");
+    const submitError = /* @__PURE__ */ ref("");
+    const submitted = /* @__PURE__ */ ref(false);
+    const draftTo = /* @__PURE__ */ ref("");
+    const draftHeadline = /* @__PURE__ */ ref("");
+    const draftBrief = /* @__PURE__ */ ref("");
+    const draftProject = /* @__PURE__ */ ref("");
+    const draftPriority = /* @__PURE__ */ ref("P2");
+    const draftKind = /* @__PURE__ */ ref("research");
+    const hasDraft = computed(() => taskCreator.draft !== null);
+    const isSubmitting = computed(() => taskCreator.submitting);
+    const priorityOptions = ["P0", "P1", "P2", "P3"];
+    const kindOptions = ["research", "code", "review", "summarise", "decide", "other"];
+    function stopAudio() {
+      queueGen++;
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.src = "";
+        currentAudio = null;
+      }
+      audioQueue = [];
+      queueRunning = false;
+    }
+    function enqueueChunk(chunkText) {
+      const stripped = stripMarkdown(chunkText).trim();
+      if (!stripped) return;
+      const gen = queueGen;
+      const p2 = speakFetch(stripped).then((res) => {
+        if (gen !== queueGen) return null;
+        if (!res.ok) return { audio: null, url: null, text: chunkText };
+        return res.blob().then((blob) => {
+          if (gen !== queueGen) return null;
+          const url = URL.createObjectURL(blob);
+          return { audio: new Audio(url), url, text: chunkText };
+        });
+      }).catch(() => ({ audio: null, url: null, text: chunkText }));
+      audioQueue.push(p2);
+      if (!queueRunning) runQueue(gen);
+    }
+    async function runQueue(gen) {
+      if (queueRunning) return;
+      queueRunning = true;
+      while (audioQueue.length > 0 && gen === queueGen) {
+        const item = await audioQueue.shift();
+        if (gen !== queueGen) {
+          if (item == null ? void 0 : item.url) URL.revokeObjectURL(item.url);
+          continue;
+        }
+        if (!(item == null ? void 0 : item.audio)) continue;
+        currentAudio = item.audio;
+        await new Promise((resolve2) => {
+          item.audio.onended = () => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          };
+          item.audio.onerror = () => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          };
+          item.audio.play().catch(() => {
+            URL.revokeObjectURL(item.url);
+            currentAudio = null;
+            resolve2();
+          });
+        });
+      }
+      if (gen === queueGen) queueRunning = false;
+    }
+    function speakReply(fullReply) {
+      const spoken = fullReply.replace(/<task>[\s\S]*?<\/task>/gi, "").trim();
+      if (!spoken) return;
+      const sentences = spoken.match(/[^.!?]+[.!?]+/g) ?? [spoken];
+      for (const s of sentences) {
+        if (s.trim()) enqueueChunk(s.trim());
+      }
+    }
+    function stopStream() {
+      stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+    }
+    async function startRecording() {
+      if (busy || !mimeType) return;
+      busy = true;
+      stopAudio();
+      statusText.value = "Requesting microphone…";
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch {
+        statusText.value = "Microphone unavailable";
+        busy = false;
+        return;
+      }
+      chunks = [];
+      try {
+        recorder = new MediaRecorder(stream, { mimeType });
+      } catch {
+        stopStream();
+        statusText.value = "Describe the task you want to create";
+        busy = false;
+        return;
+      }
+      recorder.ondataavailable = (e) => {
+        var _a2;
+        if (((_a2 = e.data) == null ? void 0 : _a2.size) > 0) chunks.push(e.data);
+      };
+      statusText.value = "Listening… (release to send)";
+      heardText.value = "";
+      replyText.value = "";
+      isListening.value = true;
+      recorder.start(200);
+    }
+    async function stopAndExtract() {
+      if (!recorder || recorder.state === "inactive") return;
+      recorder.onstop = async () => {
+        isListening.value = false;
+        statusText.value = "Transcribing…";
+        isProcessing.value = true;
+        const blob = new Blob(chunks, { type: mimeType });
+        chunks = [];
+        recorder = null;
+        stopStream();
+        let text = "";
+        try {
+          const ext = mimeType.includes("webm") ? ".webm" : ".ogg";
+          const fd = new FormData();
+          fd.append("audio", blob, `task-creator${ext}`);
+          const res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
+          const data = await res.json();
+          if (data.ok && data.text) {
+            text = data.text.trim();
+          } else {
+            statusText.value = "Transcription failed — try again";
+            busy = false;
+            isProcessing.value = false;
+            return;
+          }
+        } catch {
+          statusText.value = "Request failed — try again";
+          busy = false;
+          isProcessing.value = false;
+          return;
+        }
+        if (!text) {
+          statusText.value = "Nothing heard — try again";
+          busy = false;
+          isProcessing.value = false;
+          return;
+        }
+        heardText.value = text;
+        statusText.value = "Extracting task…";
+        taskCreator.addUserMessage(text);
+        await extractTask(text);
+        busy = false;
+        isProcessing.value = false;
+      };
+      recorder.stop();
+    }
+    async function extractTask(userText) {
+      const ephemeralChatId = `voice-task-${Date.now()}`;
+      const embeddedMessage = buildEmbeddedMessage(userText);
+      try {
+        const postRes = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: embeddedMessage, chatId: ephemeralChatId })
+        });
+        const postData = await postRes.json();
+        if (!postData.ok) {
+          statusText.value = "Extraction failed — try again";
+          return;
+        }
+      } catch {
+        statusText.value = "Request failed — try again";
+        return;
+      }
+      statusText.value = "Thinking…";
+      const reply = await pollForReply(ephemeralChatId);
+      if (!reply) {
+        statusText.value = "No reply — try again";
+        return;
+      }
+      taskCreator.addAssistantMessage(reply);
+      replyText.value = reply;
+      speakReply(reply);
+      const draft = taskCreator.parseTaskFromReply(reply);
+      if (draft) {
+        taskCreator.setDraft(draft);
+        draftTo.value = draft.to;
+        draftHeadline.value = draft.headline;
+        draftBrief.value = draft.brief;
+        draftProject.value = draft.project ?? "";
+        draftPriority.value = draft.priority;
+        draftKind.value = draft.kind;
+        statusText.value = "Review and confirm";
+      } else {
+        statusText.value = "Couldn't extract task — try again";
+      }
+    }
+    function buildEmbeddedMessage(userText) {
+      return `[VOICE TASK CREATOR — extract a task from the user's spoken request]
+
+${taskCreator.SYSTEM_PROMPT}
+
+---
+
+User's voice request: "${userText}"`;
+    }
+    async function pollForReply(chatId, maxMs = 3e4) {
+      const deadline = Date.now() + maxMs;
+      while (Date.now() < deadline) {
+        await delay3(600);
+        try {
+          const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
+          const data = await res.json();
+          if (!data.ok || !data.chat) continue;
+          const messages = data.chat.messages ?? [];
+          const last = messages[messages.length - 1];
+          if (!last) continue;
+          if (last.role === "assistant" && last.state === "done") return last.text ?? null;
+          if (last.role === "assistant") {
+            statusText.value = "Thinking…";
+          }
+        } catch {
+        }
+      }
+      return null;
+    }
+    function delay3(ms) {
+      return new Promise((resolve2) => {
+        pollTimer = setTimeout(resolve2, ms);
+      });
+    }
+    async function submitTask() {
+      if (!taskCreator.draft) return;
+      taskCreator.updateDraftField("to", draftTo.value);
+      taskCreator.updateDraftField("headline", draftHeadline.value);
+      taskCreator.updateDraftField("brief", draftBrief.value);
+      taskCreator.updateDraftField("project", draftProject.value || null);
+      taskCreator.updateDraftField("priority", draftPriority.value);
+      taskCreator.updateDraftField("kind", draftKind.value);
+      submitError.value = "";
+      const result = await taskCreator.submitDraft();
+      if (result.ok) {
+        submitted.value = true;
+        document.dispatchEvent(new CustomEvent("voice:task-created", { detail: { id: result.id } }));
+        speakReply("Task created — I've queued it for you.");
+        setTimeout(() => {
+          if (voice.mode === "task-creator") voice.close();
+        }, 3e3);
+      } else {
+        submitError.value = result.error ?? "Unknown error";
+      }
+    }
+    let holdTimer2 = null;
+    let holdMode = false;
+    let pressStart = 0;
+    function pressDown(e) {
+      e.preventDefault();
+      pressStart = Date.now();
+      holdTimer2 = setTimeout(() => {
+        holdMode = true;
+        if (!busy && (!recorder || recorder.state === "inactive")) startRecording();
+      }, HOLD_MS);
+    }
+    function pressUp(e) {
+      e.preventDefault();
+      if (holdTimer2) clearTimeout(holdTimer2);
+      const dur = Date.now() - pressStart;
+      if (holdMode) {
+        holdMode = false;
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
+      } else if (dur < HOLD_MS) {
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
+        else if (!busy) startRecording();
+      }
+    }
+    function pressLeave() {
+      if (holdMode) {
+        holdMode = false;
+        if (holdTimer2) clearTimeout(holdTimer2);
+        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
+      }
+    }
+    function openMode() {
+      taskCreator.reset();
+      busy = false;
+      statusText.value = "Describe the task you want to create";
+      isListening.value = false;
+      isProcessing.value = false;
+      heardText.value = "";
+      replyText.value = "";
+      submitError.value = "";
+      submitted.value = false;
+    }
+    function closeMode() {
+      stopStream();
+      stopAudio();
+      busy = false;
+      if ((recorder == null ? void 0 : recorder.state) !== "inactive") {
+        recorder == null ? void 0 : recorder.stop();
+        recorder = null;
+      }
+      if (pollTimer) clearTimeout(pollTimer);
+    }
+    function cancel() {
+      closeMode();
+      voice.close();
+    }
+    function resetDraft() {
+      taskCreator.reset();
+      heardText.value = "";
+      replyText.value = "";
+      submitted.value = false;
+      statusText.value = "Describe the task you want to create";
+    }
+    function onModalHide() {
+      if (voice.mode === "task-creator") cancel();
+    }
+    watch(
+      () => voice.mode,
+      (mode, prev) => {
+        if (mode === "task-creator" && prev !== "task-creator") {
+          openMode();
+          showModal.value = true;
+        }
+        if (prev === "task-creator" && mode !== "task-creator") {
+          showModal.value = false;
+          closeMode();
+        }
+      }
+    );
+    onMounted(() => {
+      if (voice.mode === "task-creator") {
+        openMode();
+        showModal.value = true;
+      }
+    });
+    onBeforeUnmount(() => {
+      closeMode();
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(unref(BModal_default), {
+        modelValue: showModal.value,
+        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => showModal.value = $event),
+        size: "lg",
+        "no-close-on-backdrop": "",
+        "hide-footer": "",
+        scrollable: "",
+        centered: "",
+        onHide: onModalHide
+      }, {
+        title: withCtx(() => [..._cache[7] || (_cache[7] = [
+          createBaseVNode("span", { class: "vtc-modal-title" }, [
+            createBaseVNode("i", {
+              class: "fa-solid fa-list-check me-2",
+              style: { "color": "#6ee7b7" }
+            }),
+            createTextVNode(" Create a task from voice ")
+          ], -1)
+        ])]),
+        default: withCtx(() => [
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$8, [..._cache[8] || (_cache[8] = [
+            createBaseVNode("i", { class: "fa-solid fa-circle-check vtc-success-icon mb-3" }, null, -1),
+            createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
+            createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
+          ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$4, [
+              _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
+              createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
+            ])) : createCommentVNode("", true),
+            createVNode(unref(BFormGroup_default), {
+              label: "Agent",
+              "label-for": "vtc-to",
+              class: "mb-2"
+            }, {
+              default: withCtx(() => [
+                createVNode(unref(BFormInput_default), {
+                  id: "vtc-to",
+                  modelValue: draftTo.value,
+                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draftTo.value = $event),
+                  size: "sm"
+                }, null, 8, ["modelValue"])
+              ]),
+              _: 1
+            }),
+            createBaseVNode("div", _hoisted_3$3, [
+              createBaseVNode("div", _hoisted_4$2, [
+                createVNode(unref(BFormGroup_default), {
+                  label: "Priority",
+                  "label-for": "vtc-priority"
+                }, {
+                  default: withCtx(() => [
+                    createVNode(unref(BFormSelect_default), {
+                      id: "vtc-priority",
+                      modelValue: draftPriority.value,
+                      "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draftPriority.value = $event),
+                      size: "sm"
+                    }, {
+                      default: withCtx(() => [
+                        (openBlock(), createElementBlock(Fragment, null, renderList(priorityOptions, (p2) => {
+                          return createVNode(unref(BFormSelectOption_default), {
+                            key: p2,
+                            value: p2
+                          }, {
+                            default: withCtx(() => [
+                              createTextVNode(toDisplayString(p2), 1)
+                            ]),
+                            _: 2
+                          }, 1032, ["value"]);
+                        }), 64))
+                      ]),
+                      _: 1
+                    }, 8, ["modelValue"])
+                  ]),
+                  _: 1
+                })
+              ]),
+              createBaseVNode("div", _hoisted_5$2, [
+                createVNode(unref(BFormGroup_default), {
+                  label: "Kind",
+                  "label-for": "vtc-kind"
+                }, {
+                  default: withCtx(() => [
+                    createVNode(unref(BFormSelect_default), {
+                      id: "vtc-kind",
+                      modelValue: draftKind.value,
+                      "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draftKind.value = $event),
+                      size: "sm"
+                    }, {
+                      default: withCtx(() => [
+                        (openBlock(), createElementBlock(Fragment, null, renderList(kindOptions, (k) => {
+                          return createVNode(unref(BFormSelectOption_default), {
+                            key: k,
+                            value: k
+                          }, {
+                            default: withCtx(() => [
+                              createTextVNode(toDisplayString(k), 1)
+                            ]),
+                            _: 2
+                          }, 1032, ["value"]);
+                        }), 64))
+                      ]),
+                      _: 1
+                    }, 8, ["modelValue"])
+                  ]),
+                  _: 1
+                })
+              ])
+            ]),
+            createVNode(unref(BFormGroup_default), {
+              label: "Project",
+              "label-for": "vtc-project",
+              class: "mb-2"
+            }, {
+              default: withCtx(() => [
+                createVNode(unref(BFormInput_default), {
+                  id: "vtc-project",
+                  modelValue: draftProject.value,
+                  "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draftProject.value = $event),
+                  size: "sm",
+                  placeholder: "(none)"
+                }, null, 8, ["modelValue"])
+              ]),
+              _: 1
+            }),
+            createVNode(unref(BFormGroup_default), {
+              label: "Headline",
+              "label-for": "vtc-headline",
+              class: "mb-2"
+            }, {
+              default: withCtx(() => [
+                createVNode(unref(BFormInput_default), {
+                  id: "vtc-headline",
+                  modelValue: draftHeadline.value,
+                  "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draftHeadline.value = $event),
+                  size: "sm"
+                }, null, 8, ["modelValue"])
+              ]),
+              _: 1
+            }),
+            createVNode(unref(BFormGroup_default), {
+              label: "Brief",
+              "label-for": "vtc-brief",
+              class: "mb-3"
+            }, {
+              default: withCtx(() => [
+                createVNode(unref(BFormTextarea_default), {
+                  id: "vtc-brief",
+                  modelValue: draftBrief.value,
+                  "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draftBrief.value = $event),
+                  rows: "4",
+                  size: "sm"
+                }, null, 8, ["modelValue"])
+              ]),
+              _: 1
+            }),
+            submitError.value ? (openBlock(), createBlock(unref(BAlert_default), {
+              key: 1,
+              variant: "danger",
+              "model-value": true,
+              class: "mb-3"
+            }, {
+              default: withCtx(() => [
+                createTextVNode(toDisplayString(submitError.value), 1)
+              ]),
+              _: 1
+            })) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_6$1, [
+              createVNode(unref(BButton_default), {
+                variant: "secondary",
+                size: "sm",
+                onClick: resetDraft
+              }, {
+                default: withCtx(() => [..._cache[10] || (_cache[10] = [
+                  createBaseVNode("i", { class: "fa-solid fa-rotate-left me-1" }, null, -1),
+                  createTextVNode(" Redo ", -1)
+                ])]),
+                _: 1
+              }),
+              createVNode(unref(BButton_default), {
+                variant: "success",
+                size: "sm",
+                disabled: isSubmitting.value,
+                onClick: submitTask
+              }, {
+                default: withCtx(() => [
+                  _cache[11] || (_cache[11] = createBaseVNode("i", { class: "fa-solid fa-paper-plane me-1" }, null, -1)),
+                  createTextVNode(" " + toDisplayString(isSubmitting.value ? "Creating…" : "Create Task"), 1)
+                ]),
+                _: 1
+              }, 8, ["disabled"])
+            ])
+          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7, [
+            createBaseVNode("div", _hoisted_8, toDisplayString(statusText.value), 1),
+            createBaseVNode("button", {
+              class: normalizeClass(["voice-mode-btn mx-auto mb-4", { listening: isListening.value, processing: isProcessing.value }]),
+              type: "button",
+              "aria-label": "Hold to describe task",
+              onMousedown: pressDown,
+              onTouchstart: withModifiers(pressDown, ["prevent"]),
+              onMouseup: pressUp,
+              onTouchend: withModifiers(pressUp, ["prevent"]),
+              onMouseleave: pressLeave
+            }, [
+              createBaseVNode("i", {
+                class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
+              }, null, 2)
+            ], 34),
+            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
+          ]))
+        ]),
+        _: 1
+      }, 8, ["modelValue"]);
+    };
+  }
+});
+const _export_sfc = (sfc, props) => {
+  const target = sfc.__vccOpts || sfc;
+  for (const [key, val] of props) {
+    target[key] = val;
+  }
+  return target;
+};
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-9d3f47dd"]]);
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
+  __name: "VoiceIsland",
+  setup(__props) {
+    const voice = useVoiceStore();
+    function onOpenChatMode() {
+      voice.openChatMode();
+    }
+    function onOpenTaskCreator() {
+      voice.openTaskCreatorMode();
+    }
+    function onClose() {
+      voice.close();
+    }
+    onMounted(() => {
+      document.addEventListener("voice:open-chat-mode", onOpenChatMode);
+      document.addEventListener("voice:open-task-creator", onOpenTaskCreator);
+      document.addEventListener("voice:close", onClose);
+      document.dispatchEvent(new CustomEvent("voice:island-ready"));
+    });
+    onBeforeUnmount(() => {
+      document.removeEventListener("voice:open-chat-mode", onOpenChatMode);
+      document.removeEventListener("voice:open-task-creator", onOpenTaskCreator);
+      document.removeEventListener("voice:close", onClose);
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(Teleport, { to: "body" }, [
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$d, { key: 0 })) : createCommentVNode("", true),
+        createVNode(VoiceTaskCreator)
+      ]);
     };
   }
 });
@@ -21042,3332 +22734,6 @@ function stripFrontmatter(src) {
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
 }
-const _hoisted_1$e = {
-  id: "chat-panel",
-  class: "chat-panel"
-};
-const CHAT_ID_KEY = "caravel.chat.id";
-const CHAT_POLL_FAST_MS = 500;
-const CHAT_POLL_IDLE_MS = 1e4;
-const _sfc_main$h = /* @__PURE__ */ defineComponent({
-  __name: "ChatPage",
-  setup(__props) {
-    let chatHistory = [];
-    let chatSessionId = "";
-    let chatListCache = [];
-    let chatServerUpdatedAt = null;
-    let chatPollTimer = null;
-    let agentsCache = [];
-    let chatAgentLocked = null;
-    let pendingAgentId = null;
-    let agentsFetched = false;
-    let chatMessages = null;
-    let chatInput = null;
-    let chatSend = null;
-    let chatForm = null;
-    function $2(id) {
-      return document.getElementById(id);
-    }
-    function generateChatId() {
-      const id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
-      localStorage.setItem(CHAT_ID_KEY, id);
-      return id;
-    }
-    function cleanHistory(arr) {
-      if (!Array.isArray(arr)) return [];
-      return arr.filter((m2) => {
-        if (m2.role === "assistant" && m2.text && m2.text.startsWith("[Failed:")) return false;
-        return true;
-      });
-    }
-    function hasActiveWork() {
-      for (const m2 of chatHistory) {
-        const s = m2.state;
-        if (s === "pending" || s === "sent" || s === "thinking" || s === "streaming" || s === "background") return true;
-      }
-      return false;
-    }
-    function orderedChatAgents() {
-      let coord = null;
-      const rest = [];
-      for (const a of agentsCache) {
-        if (!a || !a.name) continue;
-        if (a.name === "alice") coord = a;
-        else rest.push(a);
-      }
-      return coord ? [coord, ...rest] : rest;
-    }
-    function defaultChatAgentName() {
-      const match = agentsCache.find((a) => a.name === "alice");
-      if (match) return match.name;
-      return agentsCache.length > 0 ? agentsCache[0].name : null;
-    }
-    function findAgent(id) {
-      if (!id) return null;
-      return agentsCache.find((a) => a.name === id) || null;
-    }
-    function effectiveAgentId() {
-      return chatAgentLocked || pendingAgentId || null;
-    }
-    function agentPicked() {
-      if (agentsFetched && agentsCache.length === 0) return true;
-      return !!(chatAgentLocked || pendingAgentId);
-    }
-    function updateAgentBadge() {
-      const el = $2("chat-agent-badge");
-      const id = effectiveAgentId();
-      const agent = findAgent(id);
-      if (chatInput) {
-        chatInput.placeholder = agent ? `Message ${agent.displayName}…` : "Message…";
-      }
-      if (!el) return;
-      if (!agent) {
-        el.hidden = true;
-        el.textContent = "";
-        el.title = "";
-        el.dataset.locked = "";
-        return;
-      }
-      el.hidden = false;
-      el.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
-      el.title = (agent.description || "") + (chatAgentLocked ? " (locked for this chat)" : " (not yet locked — send first message to confirm)");
-      el.dataset.locked = chatAgentLocked ? "1" : "0";
-    }
-    function updateSendDisabled() {
-      if (!chatSend) return;
-      chatSend.disabled = !agentPicked();
-    }
-    function updateSessionBadge(session) {
-      const el = $2("chat-session-badge");
-      if (!el) return;
-      const chatFp = chatSessionId ? chatSessionId.slice(0, 8) : "";
-      if (!session || !session.sessionId) {
-        el.hidden = false;
-        el.textContent = "thread " + chatFp + " · no session yet";
-        el.title = "No Claude session has been created for this chat yet.";
-        el.dataset.sessionId = "";
-        return;
-      }
-      const sidFp = session.sessionId.slice(0, 8);
-      const turns = typeof session.turnCount === "number" ? session.turnCount : 0;
-      el.hidden = false;
-      el.textContent = "thread " + chatFp + " → " + sidFp + " · " + turns + " turn" + (turns === 1 ? "" : "s");
-      el.title = "thread: " + chatSessionId + "\nsession: " + session.sessionId + "\n(click to copy session id)";
-      el.dataset.sessionId = session.sessionId;
-    }
-    function updateChatNameInput(name, preview) {
-      const toolbar = $2("chat-name-input");
-      const inline = $2("chat-new-title-input");
-      const autoSuggestion = (preview ? String(preview).trim().slice(0, 50) : "") || "Untitled chat";
-      if (toolbar) {
-        toolbar.value = name || "";
-        toolbar.dataset.committed = name || "";
-        toolbar.setAttribute("placeholder", autoSuggestion);
-      }
-      if (inline) {
-        inline.value = name || "";
-        inline.dataset.committed = name || "";
-      }
-      refreshChatTitleVisibility();
-    }
-    function refreshChatTitleVisibility() {
-      const toolbar = $2("chat-name-input");
-      const inline = $2("chat-new-title-input");
-      const isEmpty = !chatHistory || chatHistory.length === 0;
-      if (toolbar) toolbar.hidden = isEmpty;
-      if (inline) inline.hidden = !isEmpty;
-    }
-    function schedulePoll() {
-      if (chatPollTimer) clearTimeout(chatPollTimer);
-      const delay3 = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
-      chatPollTimer = setTimeout(() => {
-        pollChat().finally(schedulePoll);
-      }, delay3);
-    }
-    async function pollChat(opts) {
-      if (document.visibilityState !== "visible") return;
-      try {
-        let url = "/api/chats/" + encodeURIComponent(chatSessionId);
-        if (chatServerUpdatedAt && !(opts == null ? void 0 : opts.force)) url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
-        const res = await fetch(url);
-        const data = await res.json();
-        if (!data || !data.ok) return;
-        updateSessionBadge(data.session);
-        if (data.unchanged) {
-          if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
-          return;
-        }
-        if (data.chat && data.chat.messages) {
-          chatHistory = cleanHistory(data.chat.messages);
-          chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
-          if (data.chat.agentId && chatAgentLocked !== data.chat.agentId) {
-            chatAgentLocked = data.chat.agentId;
-            updateAgentBadge();
-            updateSendDisabled();
-          }
-          renderChatHistory();
-          if (typeof window.__vmOnAssistantChunk === "function") {
-            const lastMsg = chatHistory[chatHistory.length - 1];
-            if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
-              const st = lastMsg.state;
-              const isDone = !st || st === "done";
-              if (isDone || st === "streaming" || st === "background") {
-                window.__vmOnAssistantChunk(lastMsg.text, isDone);
-              }
-            }
-          }
-        }
-      } catch (_2) {
-      }
-    }
-    async function loadChatFromServer() {
-      try {
-        const res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
-        const data = await res.json();
-        if (data.ok && data.chat) {
-          chatServerUpdatedAt = data.chat.updatedAt || null;
-          chatHistory = cleanHistory(data.chat.messages || []);
-          chatAgentLocked = data.chat.agentId || null;
-          renderChatHistory();
-          updateAgentBadge();
-          updateSendDisabled();
-        }
-        if (data && data.ok) updateSessionBadge(data.session);
-      } catch (_2) {
-      }
-    }
-    async function loadChatList() {
-      try {
-        const res = await fetch("/api/chats");
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.chats)) {
-          chatListCache = data.chats;
-          renderChatList();
-        }
-      } catch (_2) {
-      }
-    }
-    async function loadAgents() {
-      try {
-        const res = await fetch("/api/agents");
-        const data = await res.json();
-        if (data && data.ok && Array.isArray(data.agents)) agentsCache = data.agents;
-      } catch (_2) {
-      }
-      agentsFetched = true;
-      if (!pendingAgentId && !chatAgentLocked) pendingAgentId = defaultChatAgentName();
-      renderChatHistory();
-      updateAgentBadge();
-    }
-    function renderChatList() {
-      const listEl = $2("chat-history-list");
-      if (!listEl) return;
-      listEl.textContent = "";
-      if (!chatListCache.length) {
-        const empty = document.createElement("div");
-        empty.className = "chat-history-empty";
-        empty.textContent = "No saved chats";
-        listEl.appendChild(empty);
-        return;
-      }
-      for (const chat of chatListCache) {
-        const isActive = chat.id === chatSessionId;
-        const row = document.createElement("div");
-        row.className = "chat-history-row" + (isActive ? " chat-history-row-active" : "");
-        row.dataset.chatId = chat.id;
-        const item = document.createElement("button");
-        item.className = "chat-history-item" + (isActive ? " chat-history-active" : "");
-        item.type = "button";
-        item.dataset.chatId = chat.id;
-        const preview = document.createElement("span");
-        preview.className = "chat-history-preview";
-        const agentForRow = findAgent(chat.agentId || null);
-        const prefix = agentForRow && agentForRow.emoji ? agentForRow.emoji + " " : "";
-        preview.textContent = prefix + (chat.name || chat.preview || "(empty)");
-        const meta = document.createElement("span");
-        meta.className = "chat-history-meta";
-        const d2 = new Date(chat.updatedAt || 0);
-        meta.textContent = (chat.messageCount || 0) + " msgs · " + d2.toLocaleDateString();
-        item.appendChild(preview);
-        item.appendChild(meta);
-        item.addEventListener("click", () => switchToChat(chat.id));
-        row.appendChild(item);
-        const renameBtn = document.createElement("button");
-        renameBtn.className = "chat-history-rename-btn";
-        renameBtn.type = "button";
-        renameBtn.title = chat.name ? "Rename chat" : "Name this chat";
-        renameBtn.setAttribute("aria-label", renameBtn.title);
-        renameBtn.textContent = "✏️";
-        renameBtn.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          beginInlineRename(chat);
-        });
-        row.appendChild(renameBtn);
-        if (isActive) {
-          const syncBtn = document.createElement("button");
-          syncBtn.className = "chat-history-sync-btn";
-          syncBtn.type = "button";
-          syncBtn.title = "Force resync from server";
-          syncBtn.setAttribute("aria-label", "Force resync from server");
-          syncBtn.textContent = "↻";
-          syncBtn.addEventListener("click", (ev) => {
-            ev.stopPropagation();
-            pollChat({ force: true });
-          });
-          row.appendChild(syncBtn);
-        }
-        listEl.appendChild(row);
-      }
-    }
-    function beginInlineRename(chat) {
-      const listEl = $2("chat-history-list");
-      if (!listEl) return;
-      const row = listEl.querySelector('.chat-history-row[data-chat-id="' + chat.id + '"]');
-      if (!row || row.querySelector(".chat-history-rename-input")) return;
-      const item = row.querySelector(".chat-history-item");
-      if (!item) return;
-      item.style.display = "none";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "chat-history-rename-input";
-      input.value = chat.name || "";
-      input.placeholder = chat.preview || "Chat name";
-      input.maxLength = 80;
-      const commit = (save2) => {
-        if (!input.parentNode) return;
-        input.disabled = true;
-        if (save2) {
-          const name = input.value.trim();
-          submitChatRename(chat.id, name).then(() => loadChatList());
-        } else {
-          input.remove();
-          item.style.display = "";
-        }
-      };
-      input.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") {
-          ev.preventDefault();
-          commit(true);
-        } else if (ev.key === "Escape") {
-          ev.preventDefault();
-          commit(false);
-        }
-      });
-      input.addEventListener("blur", () => commit(true));
-      row.insertBefore(input, row.firstChild);
-      input.focus();
-      input.select();
-    }
-    async function submitChatRename(id, name) {
-      try {
-        await fetch("/api/chats/" + encodeURIComponent(id), {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name })
-        });
-      } catch (_2) {
-      }
-    }
-    async function switchToChat(id) {
-      chatSessionId = id;
-      window.__chatSessionId = id;
-      localStorage.setItem(CHAT_ID_KEY, id);
-      chatServerUpdatedAt = null;
-      chatAgentLocked = null;
-      pendingAgentId = null;
-      let fetchedName = "";
-      let fetchedPreview = "";
-      try {
-        const res = await fetch("/api/chats/" + encodeURIComponent(id));
-        const data = await res.json();
-        if (data.ok && data.chat) {
-          chatHistory = cleanHistory(data.chat.messages);
-          chatServerUpdatedAt = data.chat.updatedAt || null;
-          chatAgentLocked = data.chat.agentId || null;
-          fetchedName = data.chat.name || "";
-          fetchedPreview = data.chat.preview || "";
-        } else {
-          chatHistory = [];
-        }
-      } catch (_2) {
-        chatHistory = [];
-      }
-      if (!chatAgentLocked && !pendingAgentId && agentsCache.length > 0) {
-        pendingAgentId = defaultChatAgentName();
-      }
-      updateAgentBadge();
-      updateChatNameInput(fetchedName, fetchedPreview);
-      updateSendDisabled();
-      renderChatHistory();
-      schedulePoll();
-      const dropdown = $2("chat-history-dropdown");
-      if (dropdown) dropdown.hidden = true;
-      loadChatList();
-    }
-    function startNewChat() {
-      chatSessionId = generateChatId();
-      chatHistory = [];
-      chatServerUpdatedAt = null;
-      chatAgentLocked = null;
-      pendingAgentId = null;
-      if (agentsCache.length > 0) pendingAgentId = defaultChatAgentName();
-      updateAgentBadge();
-      updateChatNameInput("");
-      updateSendDisabled();
-      renderChatHistory();
-      schedulePoll();
-      const dropdown = $2("chat-history-dropdown");
-      if (dropdown) dropdown.hidden = true;
-      loadChatList();
-    }
-    function createChatEmptyState() {
-      const empty = document.createElement("div");
-      empty.className = "chat-empty";
-      if (!agentsFetched) {
-        empty.textContent = "Loading agents…";
-        return empty;
-      }
-      if (agentsCache.length === 0) {
-        empty.textContent = "Send a message to start chatting with the daemon.";
-        return empty;
-      }
-      const head = document.createElement("div");
-      head.className = "chat-picker-head";
-      head.textContent = "Pick an agent to start this chat";
-      empty.appendChild(head);
-      const sub = document.createElement("div");
-      sub.className = "chat-picker-sub";
-      sub.textContent = "Agent is locked once you send the first message.";
-      empty.appendChild(sub);
-      const list = document.createElement("div");
-      list.className = "chat-picker-list";
-      for (const agent of orderedChatAgents()) {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "chat-picker-item";
-        if (pendingAgentId === agent.name) item.classList.add("chat-picker-item-active");
-        const title = document.createElement("div");
-        title.className = "chat-picker-item-title";
-        title.textContent = (agent.emoji ? agent.emoji + " " : "") + (agent.displayName || agent.name);
-        item.appendChild(title);
-        const desc = document.createElement("div");
-        desc.className = "chat-picker-item-desc";
-        desc.textContent = agent.description || "";
-        item.appendChild(desc);
-        item.addEventListener("click", () => {
-          pendingAgentId = agent.name;
-          updateAgentBadge();
-          updateSendDisabled();
-          list.querySelectorAll(".chat-picker-item").forEach((el) => {
-            el.classList.toggle("chat-picker-item-active", el === item);
-          });
-        });
-        list.appendChild(item);
-      }
-      empty.appendChild(list);
-      return empty;
-    }
-    function createChatMessageEl() {
-      const msgEl = document.createElement("div");
-      const roleEl = document.createElement("div");
-      roleEl.className = "chat-msg-role";
-      const textEl = document.createElement("div");
-      textEl.className = "chat-msg-text";
-      msgEl.appendChild(roleEl);
-      msgEl.appendChild(textEl);
-      return msgEl;
-    }
-    function syncChatMessageEl(msgEl, msg) {
-      let roleEl = msgEl.querySelector(".chat-msg-role");
-      let textEl = msgEl.querySelector(".chat-msg-text");
-      if (!roleEl || !textEl) {
-        msgEl.textContent = "";
-        roleEl = document.createElement("div");
-        roleEl.className = "chat-msg-role";
-        textEl = document.createElement("div");
-        textEl.className = "chat-msg-text";
-        msgEl.appendChild(roleEl);
-        msgEl.appendChild(textEl);
-      }
-      const isUser = msg.role === "user";
-      const state = msg.state || (isUser ? "sent" : "done");
-      let cls = "chat-msg " + (isUser ? "chat-msg-user" : "chat-msg-assistant");
-      if (state === "streaming") cls += " chat-msg-streaming";
-      if (state === "error") cls += " chat-msg-error";
-      if (isUser && state === "pending") cls += " chat-msg-user-pending";
-      msgEl.className = cls;
-      roleEl.textContent = "";
-      const roleText = document.createElement("span");
-      roleText.className = "chat-msg-role-label";
-      roleText.textContent = isUser ? "You" : "Claude";
-      roleEl.appendChild(roleText);
-      if (isUser && state === "pending") {
-        const pill = document.createElement("span");
-        pill.className = "chat-msg-pill";
-        pill.textContent = "queued";
-        roleEl.appendChild(pill);
-      }
-      textEl.innerHTML = renderMarkdown(msg.text || "");
-      msgEl.querySelectorAll(".chat-msg-meta").forEach((el) => el.remove());
-      if (!isUser) {
-        let metaLabel = "";
-        let metaClass = "";
-        if (state === "thinking") {
-          metaClass = "chat-msg-thinking";
-          metaLabel = "thinking…";
-        } else if (state === "background") {
-          metaClass = "chat-msg-background";
-          metaLabel = "⚙ working in background…";
-        }
-        if (metaLabel) {
-          const meta = document.createElement("div");
-          meta.className = "chat-msg-meta " + metaClass;
-          const labelSpan = document.createElement("span");
-          labelSpan.className = "chat-msg-meta-label";
-          labelSpan.textContent = metaLabel;
-          meta.appendChild(labelSpan);
-          const stopBtn = document.createElement("button");
-          stopBtn.type = "button";
-          stopBtn.className = "chat-msg-stop-inline";
-          stopBtn.title = "Stop this response";
-          stopBtn.setAttribute("aria-label", "Stop this response");
-          stopBtn.textContent = "stop";
-          stopBtn.addEventListener("click", () => {
-            stopBtn.disabled = true;
-            interruptCurrent({ sendAfter: true });
-          });
-          meta.appendChild(stopBtn);
-          msgEl.appendChild(meta);
-        }
-        const isActive = state === "thinking" || state === "streaming" || state === "background";
-        msgEl.dataset.active = isActive ? "1" : "0";
-      }
-    }
-    function updateInterruptBtn() {
-      const btn = $2("chat-interrupt");
-      if (!btn) return;
-      const live = chatHistory.some((m2) => {
-        if (m2.role !== "assistant") return false;
-        const s = m2.state;
-        return s === "thinking" || s === "streaming" || s === "background";
-      });
-      btn.hidden = !live;
-      if (live) btn.disabled = false;
-    }
-    function renderChatHistory() {
-      const w2 = window;
-      if (typeof w2.__updateSpeakerDisabled === "function") w2.__updateSpeakerDisabled();
-      refreshChatTitleVisibility();
-      if (!chatMessages) return;
-      if (!chatHistory.length) {
-        if (chatMessages.children.length !== 1 || !chatMessages.firstElementChild || !chatMessages.firstElementChild.classList.contains("chat-empty")) {
-          chatMessages.textContent = "";
-          chatMessages.appendChild(createChatEmptyState());
-        }
-        return;
-      }
-      if (chatMessages.firstElementChild && chatMessages.firstElementChild.classList.contains("chat-empty")) {
-        chatMessages.textContent = "";
-      }
-      const msgEls = chatMessages.querySelectorAll(".chat-msg");
-      for (let i = 0; i < chatHistory.length; i++) {
-        let msgEl = msgEls[i];
-        if (!msgEl) {
-          msgEl = createChatMessageEl();
-          chatMessages.appendChild(msgEl);
-        }
-        syncChatMessageEl(msgEl, chatHistory[i]);
-      }
-      const allMsgEls = chatMessages.querySelectorAll(".chat-msg");
-      for (let j2 = allMsgEls.length - 1; j2 >= chatHistory.length; j2--) {
-        allMsgEls[j2].remove();
-      }
-      updateInterruptBtn();
-      requestAnimationFrame(() => {
-        if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-      });
-    }
-    function autoResizeChatInput() {
-      if (!chatInput) return;
-      chatInput.style.height = "auto";
-      chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + "px";
-    }
-    async function sendChat() {
-      if (!chatInput) return;
-      const message = (chatInput.value || "").trim();
-      if (!message) return;
-      if (!agentPicked()) return;
-      chatInput.value = "";
-      autoResizeChatInput();
-      const w2 = window;
-      if (typeof w2.__ttsResetAutoRead === "function") w2.__ttsResetAutoRead();
-      chatHistory.push({ role: "user", text: message, state: "pending" });
-      if (!chatAgentLocked && pendingAgentId) {
-        chatAgentLocked = pendingAgentId;
-        updateAgentBadge();
-        updateSendDisabled();
-      }
-      renderChatHistory();
-      const payload = { message, chatId: chatSessionId };
-      if (chatAgentLocked) payload.agentId = chatAgentLocked;
-      else if (pendingAgentId) payload.agentId = pendingAgentId;
-      try {
-        await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      } catch (_2) {
-      }
-      pollChat().finally(schedulePoll);
-      if (chatInput) chatInput.focus();
-    }
-    async function interruptCurrent(opts) {
-      try {
-        await fetch("/api/chat/interrupt", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chatId: chatSessionId })
-        });
-      } catch (_2) {
-      }
-      if ((opts == null ? void 0 : opts.sendAfter) && chatInput && (chatInput.value || "").trim()) {
-        await sendChat();
-      } else {
-        await pollChat();
-      }
-      schedulePoll();
-    }
-    function wireChatNameInput(el, peerSel) {
-      if (!el) return;
-      el.dataset.committed = el.value || "";
-      const commit = () => {
-        const v2 = (el.value || "").trim();
-        if (!chatSessionId) return;
-        if (v2 === (el.dataset.committed || "")) return;
-        el.dataset.committed = v2;
-        const peer = peerSel ? document.querySelector(peerSel) : null;
-        if (peer) {
-          peer.value = v2;
-          peer.dataset.committed = v2;
-        }
-        submitChatRename(chatSessionId, v2).then(() => loadChatList()).catch(() => {
-        });
-      };
-      el.addEventListener("blur", commit);
-      el.addEventListener("keydown", (ev) => {
-        if (ev.key === "Enter") {
-          ev.preventDefault();
-          commit();
-          el.blur();
-        }
-      });
-    }
-    function onVisibilityChange() {
-      if (document.visibilityState === "visible") pollChat();
-    }
-    onMounted(() => {
-      chatMessages = $2("chat-messages");
-      chatInput = $2("chat-input");
-      chatSend = $2("chat-send");
-      chatForm = $2("chat-form");
-      const injectedSessionId = window.__chatSessionId;
-      const injectedAgentId = window.__pendingAgentId;
-      if (injectedSessionId) {
-        chatSessionId = injectedSessionId;
-        localStorage.setItem(CHAT_ID_KEY, injectedSessionId);
-        if (injectedAgentId) pendingAgentId = injectedAgentId;
-        delete window.__chatSessionId;
-        delete window.__pendingAgentId;
-      } else {
-        chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
-      }
-      window.__chatSessionId = chatSessionId;
-      window.__chatHistory = chatHistory;
-      wireChatNameInput($2("chat-name-input"), "#chat-new-title-input");
-      wireChatNameInput($2("chat-new-title-input"), "#chat-name-input");
-      const badge = $2("chat-session-badge");
-      if (badge) {
-        badge.addEventListener("click", () => {
-          const sid = badge.dataset.sessionId || "";
-          if (!sid) return;
-          try {
-            navigator.clipboard.writeText(sid);
-          } catch (_2) {
-          }
-          const original = badge.textContent;
-          badge.textContent = "copied";
-          setTimeout(() => {
-            badge.textContent = original;
-          }, 900);
-        });
-      }
-      const historyBtn = $2("chat-history-btn");
-      const historyDropdown = $2("chat-history-dropdown");
-      if (historyBtn && historyDropdown) {
-        historyBtn.addEventListener("click", () => {
-          const showing = !historyDropdown.hidden;
-          historyDropdown.hidden = showing;
-          if (!showing) loadChatList();
-        });
-        document.addEventListener("click", (e) => {
-          if (!historyDropdown.hidden && !historyBtn.contains(e.target) && !historyDropdown.contains(e.target)) {
-            historyDropdown.hidden = true;
-          }
-        });
-      }
-      const newBtn = $2("chat-new-btn");
-      if (newBtn) newBtn.addEventListener("click", () => startNewChat());
-      const deleteBtn = $2("chat-delete");
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", async () => {
-          if (!chatSessionId || chatHistory.length === 0) {
-            startNewChat();
-            return;
-          }
-          const n = chatHistory.length;
-          const suffix = n === 1 ? " message" : " messages";
-          if (!window.confirm("Delete this chat? " + n + suffix + " will be permanently removed.")) return;
-          const idToDelete = chatSessionId;
-          try {
-            await fetch("/api/chats/" + encodeURIComponent(idToDelete), { method: "DELETE" });
-          } catch (_2) {
-          }
-          startNewChat();
-        });
-      }
-      if (chatForm) {
-        chatForm.addEventListener("submit", (e) => {
-          e.preventDefault();
-          sendChat();
-        });
-      }
-      const interruptBtn = $2("chat-interrupt");
-      if (interruptBtn) {
-        interruptBtn.addEventListener("click", () => {
-          interruptBtn.disabled = true;
-          interruptCurrent({ sendAfter: true });
-        });
-      }
-      if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
-      document.addEventListener("visibilitychange", onVisibilityChange);
-      if (chatInput) chatInput.focus();
-      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
-      loadAgents().then(() => loadChatFromServer()).finally(schedulePoll);
-    });
-    onBeforeUnmount(() => {
-      if (chatPollTimer) {
-        clearTimeout(chatPollTimer);
-        chatPollTimer = null;
-      }
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$e, [..._cache[0] || (_cache[0] = [
-        createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
-      ])]);
-    };
-  }
-});
-const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
-  const view = /* @__PURE__ */ ref("projects");
-  const filter = /* @__PURE__ */ ref("all");
-  const cache = /* @__PURE__ */ ref([]);
-  const expanded = /* @__PURE__ */ ref({});
-  const collapsed = /* @__PURE__ */ ref({});
-  const bulkSelected = /* @__PURE__ */ ref({});
-  const multiSelectActive = /* @__PURE__ */ ref(false);
-  const pane = /* @__PURE__ */ ref("empty");
-  const pickerCollapsed = /* @__PURE__ */ ref(false);
-  const currentTaskId = /* @__PURE__ */ ref(null);
-  const currentTaskProject = /* @__PURE__ */ ref(null);
-  const currentViewMode = /* @__PURE__ */ ref("task");
-  const currentProjectSlug = /* @__PURE__ */ ref(null);
-  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
-  const loaded = /* @__PURE__ */ ref(false);
-  return {
-    view,
-    filter,
-    cache,
-    expanded,
-    collapsed,
-    bulkSelected,
-    multiSelectActive,
-    pane,
-    pickerCollapsed,
-    currentTaskId,
-    currentTaskProject,
-    currentViewMode,
-    currentProjectSlug,
-    taskFromProjectSlug,
-    loaded
-  };
-});
-const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
-  const tiers = /* @__PURE__ */ ref(null);
-  const lastFetch = /* @__PURE__ */ ref(0);
-  async function fetch2() {
-    try {
-      const res = await window.fetch("/api/tasks/attention");
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.ok && data.tiers) {
-        tiers.value = data.tiers;
-        lastFetch.value = Date.now();
-      }
-    } catch (_2) {
-    }
-  }
-  return { tiers, lastFetch, fetch: fetch2 };
-});
-const MAX_ENTRIES = 64;
-const UNHEALTHY_MS = 1e4;
-const FALLBACK_MS = 15e3;
-const LIVE_URL = "/api/live";
-const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
-  const entries = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  const topicMap = /* @__PURE__ */ new Map();
-  let es = null;
-  let unhealthyTimer = null;
-  let fallbackTimer = null;
-  let overflowLogged = false;
-  function touch(entry2) {
-    entry2.touchedAt = Date.now();
-  }
-  function evict() {
-    var _a2;
-    if (entries.size <= MAX_ENTRIES) {
-      overflowLogged = false;
-      return;
-    }
-    let oldest = null;
-    let oldestTime = Infinity;
-    for (const [key, e] of entries) {
-      if (e.refs === 0 && e.touchedAt < oldestTime) {
-        oldest = key;
-        oldestTime = e.touchedAt;
-      }
-    }
-    if (oldest) {
-      const e = entries.get(oldest);
-      for (const topic of e.spec.topics) {
-        (_a2 = topicMap.get(topic)) == null ? void 0 : _a2.delete(oldest);
-      }
-      entries.delete(oldest);
-    } else if (!overflowLogged) {
-      console.warn("[live] resource cache overflow: all 64 entries are bound — possible leak");
-      overflowLogged = true;
-    }
-  }
-  function registerTopics(key, spec) {
-    for (const topic of spec.topics) {
-      if (!topicMap.has(topic)) topicMap.set(topic, /* @__PURE__ */ new Set());
-      topicMap.get(topic).add(key);
-    }
-  }
-  async function doFetch(key, entry2) {
-    if (entry2.inflight) {
-      entry2.dirty = true;
-      return;
-    }
-    entry2.inflight = true;
-    entry2.dirty = false;
-    try {
-      const data = await entry2.spec.fetch();
-      entry2.data = data;
-      entry2.status = "ready";
-      entry2.fetchedAt = Date.now();
-      touch(entry2);
-      entry2.error = null;
-    } catch (err) {
-      entry2.status = "error";
-      entry2.error = String(err);
-    } finally {
-      entry2.inflight = false;
-      if (entry2.dirty && entry2.refs > 0) {
-        doFetch(key, entry2).catch(() => {
-        });
-      }
-    }
-  }
-  function bind(key, spec) {
-    let entry2 = entries.get(key);
-    const isNew = !entry2;
-    if (isNew) {
-      entry2 = {
-        data: null,
-        status: "idle",
-        error: null,
-        fetchedAt: null,
-        refs: 0,
-        touchedAt: Date.now(),
-        spec,
-        inflight: false,
-        dirty: false
-      };
-      entries.set(key, entry2);
-      registerTopics(key, spec);
-    } else {
-      touch(entry2);
-    }
-    const wasUnbound = entry2.refs === 0;
-    entry2.refs++;
-    if (isNew) evict();
-    if (wasUnbound) {
-      doFetch(key, entry2).catch(() => {
-      });
-    }
-  }
-  function unbind(key) {
-    const entry2 = entries.get(key);
-    if (!entry2) return;
-    entry2.refs = Math.max(0, entry2.refs - 1);
-    touch(entry2);
-  }
-  function entry(key) {
-    const e = entries.get(key);
-    if (e) touch(e);
-    return e;
-  }
-  function prefetch(key, spec) {
-    if (entries.has(key)) return;
-    const e = {
-      data: null,
-      status: "idle",
-      error: null,
-      fetchedAt: null,
-      refs: 0,
-      touchedAt: Date.now(),
-      spec,
-      inflight: false,
-      dirty: false
-    };
-    entries.set(key, e);
-    registerTopics(key, spec);
-    evict();
-    doFetch(key, e).catch(() => {
-    });
-  }
-  function handleEvent(topic, hint) {
-    const keys = topicMap.get(topic);
-    if (!keys) return;
-    for (const key of keys) {
-      const e = entries.get(key);
-      if (!e) continue;
-      touch(e);
-      if (e.refs > 0) {
-        doFetch(key, e).catch(() => {
-        });
-      } else {
-        e.status = "idle";
-      }
-    }
-  }
-  function refetchAllBound() {
-    for (const [key, e] of entries) {
-      if (e.refs > 0) doFetch(key, e).catch(() => {
-      });
-    }
-  }
-  function startFallback() {
-    if (fallbackTimer) return;
-    fallbackTimer = setInterval(refetchAllBound, FALLBACK_MS);
-  }
-  function clearFallback() {
-    if (fallbackTimer) {
-      clearInterval(fallbackTimer);
-      fallbackTimer = null;
-    }
-  }
-  function startUnhealthyTimer() {
-    if (unhealthyTimer) return;
-    unhealthyTimer = setTimeout(() => {
-      unhealthyTimer = null;
-      startFallback();
-    }, UNHEALTHY_MS);
-  }
-  function clearUnhealthyTimer() {
-    if (unhealthyTimer) {
-      clearTimeout(unhealthyTimer);
-      unhealthyTimer = null;
-    }
-  }
-  function connect() {
-    if (es) {
-      es.close();
-      es = null;
-    }
-    es = new EventSource(LIVE_URL);
-    es.addEventListener("message", (ev) => {
-      let payload;
-      try {
-        payload = JSON.parse(ev.data);
-      } catch {
-        return;
-      }
-      const { topic, hint = {} } = payload;
-      if (topic === "hello") {
-        clearUnhealthyTimer();
-        clearFallback();
-        refetchAllBound();
-        return;
-      }
-      if (topic === "resync") {
-        refetchAllBound();
-        return;
-      }
-      handleEvent(topic);
-    });
-    es.addEventListener("error", () => {
-      startUnhealthyTimer();
-    });
-    es.addEventListener("open", () => {
-      clearUnhealthyTimer();
-    });
-  }
-  function disconnect() {
-    if (es) {
-      es.close();
-      es = null;
-    }
-    clearUnhealthyTimer();
-    clearFallback();
-  }
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") refetchAllBound();
-    });
-    window.addEventListener("pageshow", () => refetchAllBound());
-  }
-  connect();
-  return { entries, bind, unbind, entry, prefetch, connect, disconnect };
-});
-function escapeHtml$1(s) {
-  return escHtml(String(s == null ? "" : s));
-}
-function isPanelNarrow(panelId, threshold) {
-  const el = document.getElementById(panelId);
-  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
-  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
-}
-function timeAgo(iso) {
-  if (!iso) return "";
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return "";
-  const diff = Math.max(0, Date.now() - t);
-  const mins = Math.floor(diff / 6e4);
-  if (mins < 1) return "just now";
-  if (mins < 60) return mins + "m ago";
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + "h ago";
-  return Math.floor(hrs / 24) + "d ago";
-}
-function statusClass(status) {
-  if (!status) return "is-open";
-  if (status === "open" || status === "claimed") return "is-open";
-  if (status.indexOf("waiting:") === 0) return "is-waiting";
-  if (status === "paused") return "is-paused";
-  if (status === "done") return "is-done";
-  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
-  return "is-open";
-}
-function shorten(s, n) {
-  const str2 = String(s || "");
-  if (str2.length <= n) return str2;
-  return str2.slice(0, n - 1) + "…";
-}
-function shortenStatusLabel(s) {
-  if (!s) return "?";
-  if (s === "paused") return "paused";
-  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
-  if (s.indexOf("failed:") === 0) {
-    const rest = s.slice("failed:".length);
-    return rest === "other" ? "failed" : "fail " + rest;
-  }
-  return s;
-}
-function fmtDaysHours(ms) {
-  if (!Number.isFinite(ms) || ms < 0) return "—";
-  const seconds = Math.floor(ms / 1e3);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(seconds % 86400 / 3600);
-  if (days > 0) return days + "d " + hours + "h";
-  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
-}
-function suggestChildHeadline(parentHeadline, source) {
-  const base = String(parentHeadline || "").slice(0, 56);
-  return base + " — rework";
-}
-function renderNextTargetPicker(currentAgent, agentsCache) {
-  let options = "";
-  const agents = Array.isArray(agentsCache) ? agentsCache : [];
-  for (const a of agents) {
-    if (!a || !a.name) continue;
-    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-    const selected = a.name === currentAgent ? " selected" : "";
-    options += '<option value="' + escapeHtml$1(a.name) + '"' + selected + ">" + escapeHtml$1(label) + "</option>";
-  }
-  if (!options && currentAgent) {
-    options = '<option value="' + escapeHtml$1(currentAgent) + '" selected>' + escapeHtml$1(currentAgent) + "</option>";
-  }
-  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
-}
-function countActiveDescendants(taskId, cache) {
-  if (!taskId || !cache.length) return 0;
-  const byParent = {};
-  for (const t of cache) {
-    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-    if (!p2) continue;
-    (byParent[p2] = byParent[p2] || []).push(t);
-  }
-  const queue2 = [taskId];
-  const seen = { [taskId]: true };
-  let count = 0;
-  while (queue2.length > 0) {
-    const cur = queue2.shift();
-    for (const kid of byParent[cur] || []) {
-      if (seen[kid.id]) continue;
-      seen[kid.id] = true;
-      if (!kid.closed || !kid.closed.status) count++;
-      queue2.push(kid.id);
-    }
-  }
-  return count;
-}
-function shortId(id) {
-  return String(id || "").replace(/^TSK-\d{4}-/, "");
-}
-function tierRow(rowCls, row, showCheckbox) {
-  const full = escapeHtml$1(row.id || "");
-  const shrt = escapeHtml$1(shortId(row.id));
-  const headline = escapeHtml$1(row.headline || row.id || "");
-  const label = escapeHtml$1(shorten(row.label || row.headline || row.id || "", 120));
-  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml$1(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
-  return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
-}
-function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
-  const count = tier && tier.count || 0;
-  const rows = tier && tier.rows || [];
-  const selectAll = showCheckbox && count > 0 ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />' : "";
-  let h2 = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
-  for (const row of rows) {
-    h2 += tierRow(rowCls, row, showCheckbox);
-  }
-  if (count > rows.length) {
-    h2 += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
-  }
-  return h2;
-}
-function renderAttentionTiers(el, tiers) {
-  if (!el) return;
-  if (!tiers) {
-    el.hidden = true;
-    return;
-  }
-  let html = "";
-  html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
-  html += renderTierSection(tiers.failed, "tasks-tier-head-failed", "tasks-tier-row-failed", "✗", "Triage", false);
-  html += renderTierSection(tiers.blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
-  html += renderTierSection(tiers.paused, "tasks-tier-head-paused", "tasks-tier-row-paused", "⏸", "Paused", false);
-  html += renderTierSection(tiers.reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read", true);
-  el.innerHTML = html;
-  el.hidden = html === "";
-}
-function passesFilter(t, filter) {
-  if (filter === "all") return true;
-  const s = (t.status || "").toLowerCase();
-  if (filter === "open") return s === "open" || s === "claimed";
-  if (filter === "waiting") return s.indexOf("waiting:") === 0;
-  if (filter === "done") return s === "done";
-  if (filter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
-  return true;
-}
-function buildTaskTree(tasks) {
-  const byId = {};
-  for (const t of tasks) byId[t.id] = t;
-  function idDerivedAncestor(id) {
-    let cur = id;
-    while (true) {
-      const m2 = /^(.+)\.[0-9]+$/.exec(cur);
-      if (!m2) return null;
-      cur = m2[1];
-      if (byId[cur]) return cur;
-    }
-  }
-  function dotDepth(id) {
-    return (String(id).match(/\./g) || []).length;
-  }
-  function effectiveParent(t) {
-    const pid = t.parent && t.parent !== "null" ? t.parent : null;
-    if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
-      const idAnc = idDerivedAncestor(t.id);
-      if (idAnc) return idAnc;
-    }
-    if (pid && pid !== t.id && byId[pid]) {
-      const seen = { [t.id]: true };
-      let cur = byId[pid];
-      let cyclic = false;
-      while (cur) {
-        if (seen[cur.id]) {
-          cyclic = true;
-          break;
-        }
-        seen[cur.id] = true;
-        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
-        if (!nextId || nextId === cur.id || !byId[nextId]) break;
-        cur = byId[nextId];
-      }
-      if (!cyclic) return pid;
-    }
-    return idDerivedAncestor(t.id);
-  }
-  const roots = [];
-  const childrenOf = {};
-  for (const t of tasks) {
-    const parentId = effectiveParent(t);
-    if (parentId) {
-      (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
-    } else {
-      roots.push(t);
-    }
-  }
-  function byUpdatedDesc(a, b2) {
-    return (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0);
-  }
-  function byIdAsc(a, b2) {
-    return String(a.id).localeCompare(String(b2.id));
-  }
-  roots.sort(byUpdatedDesc);
-  Object.keys(childrenOf).forEach((k) => childrenOf[k].sort(byIdAsc));
-  return { roots, childrenOf };
-}
-function buildByParent(cache) {
-  const bp = {};
-  for (const t of cache) {
-    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-    if (!p2) continue;
-    (bp[p2] = bp[p2] || []).push(t);
-  }
-  return bp;
-}
-function countNonTerminalDescendants(taskId, byParent) {
-  const queue2 = [taskId];
-  const seen = { [taskId]: true };
-  let count = 0;
-  while (queue2.length > 0) {
-    const cur = queue2.shift();
-    for (const kid of byParent[cur] || []) {
-      if (seen[kid.id]) continue;
-      seen[kid.id] = true;
-      const s = kid.status || "";
-      const terminal = s === "done" || s.indexOf("failed:") === 0;
-      if (!terminal) count++;
-      queue2.push(kid.id);
-    }
-  }
-  return count;
-}
-function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTaskId) {
-  let rowStatus = statusClass(t.status);
-  const marker = depth === 0 ? "●" : "└";
-  const headline = t.headline || t.summary && t.summary.brief || t.brief || "(no headline)";
-  let rowClass = "tasks-tree-row";
-  if (t.id === currentTaskId) rowClass += " is-active";
-  if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
-  if (t.status === "paused") rowClass += " is-paused";
-  if (t.closed && t.closed.status) rowClass += " is-closed";
-  if (depth === 0) rowClass += " is-root";
-  let queuedBadge = "";
-  if (queuedCount > 0) {
-    rowClass += " has-queued";
-    rowStatus = "is-open";
-    queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
-  }
-  const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
-  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml$1(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
-  const rawStatus = t.status || "?";
-  const shortStatus = shortenStatusLabel(rawStatus);
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml$1(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml$1(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml$1(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml$1(rawStatus) + '">' + escapeHtml$1(shortStatus) + "</span>") + "</div></div></div>";
-}
-function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
-  if (seen[node.id] || depth > 32) return;
-  seen[node.id] = true;
-  const kids = tree.childrenOf[node.id] || [];
-  const hasChildren = kids.length > 0;
-  const queuedCount = countNonTerminalDescendants(node.id, byParent);
-  if (queuedCount > 0 && hasChildren && !(node.id in expanded)) {
-    expanded[node.id] = true;
-  }
-  const isExpanded = !!expanded[node.id];
-  out.push(renderTreeRow(node, depth, hasChildren, isExpanded, queuedCount, currentTaskId));
-  if (!hasChildren || !isExpanded) return;
-  for (const kid of kids) {
-    renderTreeBranch(tree, kid, depth + 1, out, expanded, byParent, currentTaskId, seen);
-  }
-}
-function expandAncestors(taskId, cache, expanded) {
-  if (!taskId) return;
-  const byId = {};
-  for (const t of cache) byId[t.id] = t;
-  function depth(id) {
-    return (String(id).match(/\./g) || []).length;
-  }
-  function idDerived(id) {
-    let cur2 = id;
-    while (true) {
-      const m2 = /^(.+)\.[0-9]+$/.exec(cur2);
-      if (!m2) return null;
-      cur2 = m2[1];
-      if (byId[cur2]) return cur2;
-    }
-  }
-  function ancestorOf(id) {
-    const t = byId[id];
-    if (t) {
-      const p2 = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
-      if (p2 && byId[p2] && depth(p2) >= depth(id)) {
-        const derived = idDerived(id);
-        if (derived) return derived;
-      }
-      if (p2 && byId[p2]) return p2;
-    }
-    return idDerived(id);
-  }
-  const seen = {};
-  let cur = ancestorOf(taskId);
-  while (cur && !seen[cur]) {
-    seen[cur] = true;
-    expanded[cur] = true;
-    cur = ancestorOf(cur);
-  }
-}
-function currentStatusClass(status) {
-  const s = (status || "").toLowerCase();
-  if (s === "done") return "status-done";
-  if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
-  if (s === "waiting:on:user") return "status-waiting-user";
-  if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
-  if (s === "waiting:on:limits") return "status-waiting-limits";
-  if (s.indexOf("waiting:") === 0) return "status-waiting-other";
-  if (s === "claimed") return "status-claimed";
-  return "status-open";
-}
-function renderCurrentRow(task, currentTaskId, currentSelected) {
-  const sc = currentStatusClass(task.status);
-  const isClaimed = task.status === "claimed";
-  const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
-  const meta = [
-    escapeHtml$1(task.agent || task.to || "?"),
-    escapeHtml$1(shortenStatusLabel(task.status || "?")),
-    ...task.updated ? [escapeHtml$1(timeAgo(task.updated))] : []
-  ];
-  let rowClass = "tasks-current-row " + sc;
-  if (task.id === currentTaskId) rowClass += " is-active";
-  const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
-  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml$1(task.id) + '" data-task-agent="' + escapeHtml$1(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml$1(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml$1(task.id) + '">' + escapeHtml$1(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml$1(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
-}
-function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
-  const filtered = cache.filter((t) => passesFilter(t, filter));
-  if (filtered.length === 0) {
-    tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
-    return;
-  }
-  const groups = {};
-  for (const t of filtered) {
-    const key = t.project || "__unassigned";
-    (groups[key] = groups[key] || []).push(t);
-  }
-  const projectKeys = Object.keys(groups).sort((a, b2) => {
-    if (a === "__unassigned" && b2 !== "__unassigned") return 1;
-    if (b2 === "__unassigned" && a !== "__unassigned") return -1;
-    const aLatest = groups[a].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
-    const bLatest = groups[b2].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
-    return bLatest - aLatest;
-  });
-  let html = "";
-  const byParent = buildByParent(filtered);
-  for (const groupKey of projectKeys) {
-    const rows = groups[groupKey];
-    const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
-    const isCollapsed = !!collapsed[groupKey];
-    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml$1(groupKey) + '">';
-    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml$1(groupKey) + '">';
-    html += '<span class="tasks-current-group-chevron"></span>';
-    html += '<span class="tasks-current-group-name">' + escapeHtml$1(displayName) + "</span>";
-    html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
-    html += '<div class="tasks-current-group-body">';
-    const tree = buildTaskTree(rows);
-    const out = [];
-    for (const root of tree.roots) {
-      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
-    }
-    html += out.join("") + "</div></div>";
-  }
-  tasksTree.innerHTML = html;
-}
-function updateGroupSelectAll(groupEl) {
-  if (!groupEl) return;
-  const allCb = groupEl.querySelector(".current-group-select-all");
-  if (!allCb) return;
-  const rowCbs = groupEl.querySelectorAll(".current-row-select");
-  if (rowCbs.length === 0) return;
-  let checkedCount = 0;
-  rowCbs.forEach((cb) => {
-    if (cb.checked) checkedCount++;
-  });
-  if (checkedCount === 0) {
-    allCb.checked = false;
-    allCb.indeterminate = false;
-  } else if (checkedCount === rowCbs.length) {
-    allCb.checked = true;
-    allCb.indeterminate = false;
-  } else {
-    allCb.checked = false;
-    allCb.indeterminate = true;
-  }
-}
-function handleRowCheckboxChange(ev, bulkSelected, updateBulkBar) {
-  const cb = ev.target;
-  if (!cb || cb.type !== "checkbox") return;
-  if (cb.classList.contains("current-row-select")) {
-    const taskId = cb.getAttribute("data-task-id") || "";
-    const agent = cb.getAttribute("data-task-agent") || "";
-    const defaultStatus = cb.getAttribute("data-task-default-status") || "cancelled";
-    if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
-    else delete bulkSelected[taskId];
-    updateBulkBar();
-    updateGroupSelectAll(cb.closest("[data-project-key]"));
-    return;
-  }
-  if (cb.classList.contains("current-group-select-all")) {
-    const groupEl = cb.closest("[data-project-key]");
-    const rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
-    rowCbs.forEach((rCb) => {
-      const rId = rCb.getAttribute("data-task-id") || "";
-      const rAgent = rCb.getAttribute("data-task-agent") || "";
-      const rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
-      if (cb.checked) {
-        bulkSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
-        rCb.checked = true;
-      } else {
-        delete bulkSelected[rId];
-        rCb.checked = false;
-      }
-    });
-    updateBulkBar();
-  }
-}
-function createBulkBar(tasksTreeEl, getBulkSelected, getMultiSelectActive, setMultiSelectActive, clearSelection, rerenderPicker, fetchTasks) {
-  const bar = document.createElement("div");
-  bar.className = "tasks-bulk-bar";
-  bar.hidden = true;
-  bar.innerHTML = '<span class="bulk-bar-count"></span><input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…"><button type="button" class="bulk-bar-close is-primary"></button><button type="button" class="bulk-bar-clear">Clear</button><button type="button" class="bulk-bar-done">Done</button><span class="bulk-bar-status"></span>';
-  const closeBtn = bar.querySelector(".bulk-bar-close");
-  const clearBtn = bar.querySelector(".bulk-bar-clear");
-  const doneBtn = bar.querySelector(".bulk-bar-done");
-  const statusEl = bar.querySelector(".bulk-bar-status");
-  const reasonEl = bar.querySelector(".bulk-bar-reason");
-  async function submitBulkClose() {
-    const selected = getBulkSelected();
-    const ids = Object.keys(selected);
-    if (ids.length === 0) return;
-    const reason = (reasonEl ? reasonEl.value : "").trim();
-    if (closeBtn) closeBtn.disabled = true;
-    if (statusEl) {
-      statusEl.textContent = "Closing…";
-      statusEl.className = "bulk-bar-status";
-    }
-    let closed = 0, failed = 0;
-    for (const id of ids) {
-      const sel = selected[id];
-      if (!sel) continue;
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(id) + "/close", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent: sel.agent, reason, status: sel.defaultStatus })
-        });
-        const data = await res.json();
-        if (data && data.ok) closed++;
-        else failed++;
-      } catch (_2) {
-        failed++;
-      }
-    }
-    clearSelection();
-    if (statusEl) {
-      statusEl.textContent = failed > 0 ? "Closed " + closed + " · " + failed + " failed." : "Closed " + closed + ".";
-      statusEl.className = "bulk-bar-status is-ok";
-    }
-    if (closeBtn) closeBtn.disabled = false;
-    fetchTasks();
-  }
-  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
-  if (clearBtn) clearBtn.addEventListener("click", () => {
-    clearSelection();
-    rerenderPicker();
-  });
-  if (doneBtn) doneBtn.addEventListener("click", () => {
-    setMultiSelectActive(false);
-    clearSelection();
-    tasksTreeEl.classList.remove("is-multiselect-active");
-    updateBar();
-    rerenderPicker();
-  });
-  function updateBar() {
-    const selected = getBulkSelected();
-    const ids = Object.keys(selected);
-    const multiActive = getMultiSelectActive();
-    if (ids.length === 0 && !multiActive) {
-      bar.hidden = true;
-      return;
-    }
-    bar.hidden = false;
-    const countEl = bar.querySelector(".bulk-bar-count");
-    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
-    if (closeBtn) {
-      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
-      closeBtn.hidden = ids.length === 0;
-    }
-    if (clearBtn) clearBtn.hidden = ids.length === 0;
-    if (statusEl) statusEl.textContent = "";
-  }
-  bar.update = updateBar;
-  if (tasksTreeEl.parentNode) {
-    tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);
-  }
-  return bar;
-}
-function hideClosedKey(slug) {
-  return "caravel.project.hideClosed." + (slug || "__unassigned__");
-}
-function getProjectHideClosed(slug) {
-  try {
-    return !!(window.localStorage && window.localStorage.getItem(hideClosedKey(slug)) === "1");
-  } catch (_2) {
-    return false;
-  }
-}
-function setProjectHideClosed(slug, hide) {
-  try {
-    if (!window.localStorage) return;
-    if (hide) window.localStorage.setItem(hideClosedKey(slug), "1");
-    else window.localStorage.removeItem(hideClosedKey(slug));
-  } catch (_2) {
-  }
-}
-let projectsOverviewCache = null;
-function invalidateProjectsCache() {
-  projectsOverviewCache = null;
-}
-async function loadProjectsOverview() {
-  if (projectsOverviewCache !== null) return projectsOverviewCache;
-  try {
-    const res = await fetch("/api/projects?counts=1", { cache: "no-store" });
-    const data = await res.json();
-    projectsOverviewCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
-  } catch (_2) {
-    projectsOverviewCache = [];
-  }
-  return projectsOverviewCache;
-}
-function renderProjectCard(card, currentProjectSlug) {
-  const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
-  const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
-  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml$1(card.jira) + "</span>" : "";
-  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml$1(card.status) + "</span>" : "";
-  const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
-  const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
-  const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
-  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml$1(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml$1(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml$1(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml$1(touched) + "</span></div></div>";
-}
-function renderProjectsView(tasksTreeEl, currentProjectSlug) {
-  tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
-  loadProjectsOverview().then((cards) => {
-    if (!cards.length) {
-      tasksTreeEl.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
-      return;
-    }
-    cards.sort((a, b2) => {
-      if (a.slug === "" && b2.slug !== "") return 1;
-      if (b2.slug === "" && a.slug !== "") return -1;
-      const ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
-      const tb = b2.lastTouched ? Date.parse(b2.lastTouched) || 0 : 0;
-      if (tb !== ta) return tb - ta;
-      return a.slug.localeCompare(b2.slug);
-    });
-    let html = '<div class="tasks-projects-grid">';
-    for (const card of cards) html += renderProjectCard(card, currentProjectSlug);
-    html += "</div>";
-    tasksTreeEl.innerHTML = html;
-  }).catch((err) => {
-    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml$1(String(err.message || err)) + "</div>";
-  });
-}
-function renderDocCard(doc2, kind) {
-  const title = doc2.title || doc2.filename || "(untitled)";
-  const desc = doc2.description ? escapeHtml$1(shorten(doc2.description, 140)) : "";
-  const meta = [];
-  if (doc2.doc_type) meta.push(escapeHtml$1(doc2.doc_type));
-  if (doc2.last_updated) meta.push(escapeHtml$1(doc2.last_updated));
-  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml$1(kind || "other") + '" data-open-file="' + escapeHtml$1(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml$1(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
-}
-function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
-  var _a2, _b;
-  const { slug } = summary;
-  const displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
-  const hideClosed = getProjectHideClosed(slug);
-  let headParts = '<div class="tasks-project-head">';
-  headParts += '<div class="tasks-project-head-row">';
-  headParts += '<div class="tasks-project-title">' + escapeHtml$1(displayName) + "</div>";
-  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml$1(summary.jira) + "</span>";
-  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml$1(summary.status) + "</span>";
-  headParts += "</div>";
-  if (summary.title && slug && slug !== "") {
-    headParts += '<div class="tasks-project-slug">' + escapeHtml$1(slug) + "</div>";
-  }
-  const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
-  const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
-  headParts += '<div class="tasks-project-metrics">';
-  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml$1(medClose) + "</span></span>";
-  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml$1(medAge) + "</span></span>";
-  headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
-  headParts += "</div>";
-  headParts += '<div class="tasks-project-actions">';
-  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml$1(slug) + '">+ New task here</button>';
-  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml$1(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
-  headParts += "</div></div>";
-  const docs = summary.docs || { primary: [], fdps: [], other: [] };
-  let docsHtml = "";
-  if (docs.primary.length || docs.fdps.length || docs.other.length) {
-    docsHtml += '<div class="tasks-project-docs"><div class="tasks-project-docs-head">Documents</div><div class="tasks-project-docs-grid">';
-    for (const d2 of docs.primary) docsHtml += renderDocCard(d2, "primary");
-    for (const d2 of docs.fdps) docsHtml += renderDocCard(d2, "fdp");
-    docsHtml += "</div>";
-    if (docs.other.length) {
-      docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ")</summary>";
-      docsHtml += '<div class="tasks-project-docs-grid">';
-      for (const d2 of docs.other) docsHtml += renderDocCard(d2, "other");
-      docsHtml += "</div></details>";
-    }
-    docsHtml += "</div>";
-  }
-  let leavesHtml = '<div class="tasks-project-section"><div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ")</div>";
-  if (summary.leaves.length === 0) {
-    leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
-  } else {
-    leavesHtml += '<div class="tasks-current">';
-    const sorted = summary.leaves.slice().sort((a, b2) => (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0));
-    for (const t of sorted) leavesHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
-    leavesHtml += "</div>";
-  }
-  leavesHtml += "</div>";
-  const familiesScoped = hideClosed ? summary.families.filter((t) => !(t.closed && t.closed.status)) : summary.families;
-  let familiesHtml = "";
-  if (familiesScoped.length > 0) {
-    familiesHtml += '<div class="tasks-project-section"><div class="tasks-project-section-head">Family trees</div><div class="tasks-project-trees">';
-    const tree = buildTaskTree(familiesScoped);
-    const byParent = {};
-    for (const t of familiesScoped) {
-      const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-      if (!p2) continue;
-      (byParent[p2] = byParent[p2] || []).push(t);
-    }
-    for (const root of tree.roots) expanded[root.id] = true;
-    const out = [];
-    for (const root of tree.roots) {
-      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
-    }
-    familiesHtml += out.join("") + "</div></div>";
-  }
-  let closedHtml = "";
-  if (summary.closedTasks.length > 0 && !hideClosed) {
-    closedHtml += '<details class="tasks-project-section tasks-project-closed">';
-    closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ")</summary>";
-    closedHtml += '<div class="tasks-current">';
-    for (const t of summary.closedTasks) closedHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
-    closedHtml += "</div></details>";
-  }
-  projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
-}
-let projectsCache = null;
-async function ensureProjectsLoaded(select) {
-  if (!select) return;
-  if (projectsCache !== null) {
-    populateProjectSelect(select, projectsCache);
-    return;
-  }
-  try {
-    const res = await fetch("/api/projects", { cache: "no-store" });
-    const data = await res.json();
-    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
-  } catch (_2) {
-    projectsCache = [];
-  }
-  populateProjectSelect(select, projectsCache);
-}
-function populateProjectSelect(select, projects) {
-  const current = select.value;
-  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
-  for (const p2 of projects) {
-    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
-    html += '<option value="' + escapeHtml$1(p2.slug) + '">' + escapeHtml$1(label) + "</option>";
-  }
-  select.innerHTML = html;
-  if (current && Array.from(select.options).some((o) => o.value === current)) {
-    select.value = current;
-  }
-}
-function renderSection(title, bodyHtml, openByDefault) {
-  if (!bodyHtml) return "";
-  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml$1(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
-}
-function renderPanelCard(card, isCurrent, currentTaskId, cache) {
-  var _a2;
-  if (!card) return "";
-  const brief = (card.brief || "").trim();
-  const summaryResponse = ((_a2 = card.summary) == null ? void 0 : _a2.response) ? String(card.summary.response).trim() : "";
-  const ctx = card.context || [];
-  const statusLower = (card.status || "").toLowerCase();
-  const isTerminal = statusLower.startsWith("done") || statusLower.startsWith("failed") || statusLower === "escalated";
-  const isClaimed = card.status === "claimed";
-  const isWaitingUser = card.status === "waiting:on:user";
-  const isPaused = card.status === "paused";
-  const isClosed = !!(card.closed && card.closed.status);
-  const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
-  const ctxLines = ctx.map((c) => {
-    const safe = escapeHtml$1(c);
-    if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
-    if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
-    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
-  }).join("");
-  const metaParts = [];
-  metaParts.push(escapeHtml$1(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml$1(card.to || "?"));
-  if (card.kind) metaParts.push(escapeHtml$1(card.kind));
-  if (card.priority) metaParts.push(escapeHtml$1(card.priority));
-  const projectLabel = card.project ? card.project : "Unassigned";
-  metaParts.push(
-    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml$1(card.id) + '" data-project-agent="' + escapeHtml$1(card.agent || card.to || "") + '" data-project-current="' + escapeHtml$1(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml$1(projectLabel) + "</span>"
-  );
-  if (card.updated) metaParts.push(escapeHtml$1(timeAgo(card.updated)));
-  const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
-  let sections = "";
-  if (isTerminal && !isClosed) {
-    const picker = renderNextTargetPicker(card.agent || "", []);
-    const suggest = suggestChildHeadline(card.headline || card.id);
-    sections += renderSection(
-      "⏳ Continue",
-      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml$1(card.agent || "") + '" data-next-id="' + escapeHtml$1(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml$1(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
-      true
-    );
-  }
-  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml$1(brief) + "</div>", true);
-  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml$1(summaryResponse) + "</div>", true);
-  if (isClosed) {
-    const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
-    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml$1(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml$1(card.closed.by || "?") + (closedAt ? " · " + escapeHtml$1(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml$1(card.closed.reason) + "</div>" : "") + "</div>";
-  }
-  const actions = [];
-  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml$1(card.id) + '" data-followon-agent="' + escapeHtml$1(card.agent || card.to || "") + '" type="button">↳ Next</button>');
-  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml$1(card.id) + '" type="button">💬 Chat</button>');
-  if (!isClaimed && !isClosed) {
-    if (isTerminal) {
-      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml$1(card.agent || "") + '" data-done-reading-id="' + escapeHtml$1(card.id) + '" type="button">✓ Done reading</button>');
-    } else {
-      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml$1(card.id) + '" type="button">✕ Cancel</button>');
-    }
-  }
-  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml$1(card.id) + '" type="button">✕ Abort</button>');
-  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml$1(card.agent || "") + '" data-reopen-task="' + escapeHtml$1(card.id) + '" type="button">↻ Reopen</button>');
-  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml$1(card.agent || "") + '" data-resume-task="' + escapeHtml$1(card.id) + '" type="button">▷ Resume</button>');
-  sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
-  {
-    const chatPicker = renderNextTargetPicker(card.agent || "", []);
-    const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
-    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml$1(card.id) + '" data-chat-parent-agent="' + escapeHtml$1(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml$1(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
-  }
-  if (!isClaimed && !isClosed) {
-    const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
-    const activeCount = countActiveDescendants(card.id, cache);
-    const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
-    const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
-    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml$1(card.agent || "") + '" data-close-id="' + escapeHtml$1(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml$1(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
-  }
-  if (isClaimed && !isClosed) {
-    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml$1(card.agent || "") + '" data-abort-id="' + escapeHtml$1(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
-  }
-  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(envelopePath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(envelopePath) + "</button></div>";
-  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(card.reportPath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(card.reportPath) + "</button></div>";
-  sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
-  if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
-  return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
-}
-function renderReportPane(card) {
-  if (!card || !card.reportPath) return "";
-  const safeTaskId = escapeHtml$1(card.id || "");
-  const allPaths = [card.reportPath];
-  for (const d2 of card.deliverables || []) {
-    if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
-  }
-  function docNode(path, isActive, scanExtras) {
-    const fname = path.split("/").pop() || path;
-    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
-    const sp = escapeHtml$1(path);
-    const sFolder = escapeHtml$1(folder);
-    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
-  }
-  const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
-  const pillsHidden = allPaths.length <= 1;
-  const pillsHtml = pillsHidden ? "" : allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml$1(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
-  ).join("");
-  return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
-}
-const KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
-function resolveReportPath(primaryPath, href) {
-  if (!href) return null;
-  let clean = href.split("#")[0].split("?")[0];
-  if (!clean) return null;
-  if (/^https?:/i.test(clean) || clean.startsWith("mailto:")) return null;
-  if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
-  const parts = clean.split("/");
-  for (let k = parts.length - 1; k >= 0; k--) {
-    if (KNOWN_TOP_DIRS.includes(parts[k]) && k < parts.length - 1) return parts.slice(k).join("/");
-  }
-  const lead = clean.replace(/^\.\//, "");
-  const primaryDir = primaryPath.includes("/") ? primaryPath.substring(0, primaryPath.lastIndexOf("/")) : "";
-  const baseParts = primaryDir.split("/").filter(Boolean);
-  for (const p2 of lead.split("/")) {
-    if (!p2 || p2 === ".") continue;
-    if (p2 === "..") {
-      if (!baseParts.length) return null;
-      baseParts.pop();
-      continue;
-    }
-    baseParts.push(p2);
-  }
-  return baseParts.length ? baseParts.join("/") : null;
-}
-function appendReportExtras(primaryNode) {
-  const primaryPath = primaryNode.getAttribute("data-report-path") || "";
-  const doc2 = primaryNode.closest(".task-panel-report-doc");
-  if (!doc2) return;
-  const pane = doc2.closest(".task-panel-report-pane");
-  if (!pane) return;
-  const docsHost = pane.querySelector(".task-panel-report-docs");
-  const pills = pane.querySelector(".task-panel-doc-pills");
-  if (!docsHost || !pills) return;
-  const seen = { [primaryPath]: true };
-  const anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
-  const paths = [];
-  for (const a of Array.from(anchors)) {
-    const href = a.getAttribute("href") || "";
-    if (!href || href.startsWith("#")) continue;
-    const resolved = resolveReportPath(primaryPath, href);
-    if (!resolved) continue;
-    if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
-    a.setAttribute("href", "#" + resolved);
-    a.setAttribute("data-open-file", resolved);
-    if (seen[resolved]) continue;
-    seen[resolved] = true;
-    paths.push(resolved);
-  }
-  if (!paths.length) return;
-  for (const path of paths) {
-    const fname = path.split("/").pop() || path;
-    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
-    const node = document.createElement("div");
-    node.className = "task-panel-report-doc";
-    node.setAttribute("data-doc-path", path);
-    node.hidden = true;
-    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml$1(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml$1(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
-    docsHost.appendChild(node);
-  }
-  const allPaths = [primaryPath, ...paths];
-  pills.innerHTML = allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + "</button>"
-  ).join("");
-  pills.hidden = false;
-  for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
-    loadReportNode(reportEl);
-  }
-}
-function setActiveReportDoc(pane, path) {
-  if (!pane || !path) return;
-  pane.querySelectorAll(".task-panel-report-doc").forEach((d2) => {
-    const match = d2.getAttribute("data-doc-path") === path;
-    d2.classList.toggle("is-active", match);
-    d2.hidden = !match;
-  });
-  pane.querySelectorAll(".task-panel-doc-pill").forEach((p2) => {
-    p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
-  });
-}
-function loadReportNode(node) {
-  if (!node || node.getAttribute("data-loaded") !== "false") return;
-  node.setAttribute("data-loaded", "loading");
-  node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
-  const path = node.getAttribute("data-report-path") || "";
-  fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
-    if (!data.ok) throw new Error(data.error || "failed");
-    node.setAttribute("data-loaded", "true");
-    if (data.markdown) {
-      const raw = data.content || "";
-      const { body } = stripFrontmatter(raw);
-      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml$1(fmMatch[1]) + "</pre>" : "";
-      node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
-    } else {
-      const pre = document.createElement("pre");
-      pre.className = "task-panel-report-raw";
-      pre.textContent = data.content;
-      node.innerHTML = "";
-      node.appendChild(pre);
-    }
-    if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
-  }).catch((err) => {
-    node.setAttribute("data-loaded", "false");
-    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
-  });
-}
-const _hoisted_1$d = {
-  id: "tasks-panel",
-  class: "tasks-panel"
-};
-const _sfc_main$g = /* @__PURE__ */ defineComponent({
-  __name: "TasksPage",
-  setup(__props) {
-    const tasksStore = useTasksStore();
-    const attentionStore = useAttentionStore();
-    const live = useLiveStore();
-    const ui = useUiStore();
-    let tasksTreeEl = null;
-    let tasksViewTabsEl = null;
-    let tasksFilterChipsEl = null;
-    let tasksSidebarEl = null;
-    let tasksPickerToggleEl = null;
-    let tasksProjectBtnEl = null;
-    let tasksRefreshBtnEl = null;
-    let tasksNewBtnEl = null;
-    let tasksViewerEl = null;
-    let tasksProjectPaneEl = null;
-    let tasksEmptyEl = null;
-    let tasksNewFormEl = null;
-    let tasksUserBlockedEl = null;
-    let bulkBarEl = null;
-    let taskPanelBodyEl = null;
-    let taskPanelHeadlineEl = null;
-    let taskPanelIdEl = null;
-    let taskPanelStatusEl = null;
-    let longPressTimer = null;
-    let lpStartX = 0, lpStartY = 0;
-    const router2 = useRouter();
-    let currentTaskChain = null;
-    watch(() => attentionStore.tiers, (tiers) => {
-      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
-    });
-    function setRightPaneMode(mode) {
-      tasksStore.pane = mode;
-      if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
-      if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
-      if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
-      if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
-      const panel = document.getElementById("tasks-panel");
-      const collapse = mode !== "empty";
-      if (isPanelNarrow("tasks-panel", 1199)) {
-        if (tasksSidebarEl) tasksSidebarEl.classList.toggle("tasks-sidebar-collapsed", collapse);
-        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", collapse ? "false" : "true");
-        if (panel) panel.classList.toggle("tasks-list-hidden", collapse);
-      } else {
-        if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
-        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
-        if (panel) panel.classList.remove("tasks-list-hidden");
-      }
-    }
-    function updateBulkBar() {
-      if (bulkBarEl && typeof bulkBarEl.update === "function") {
-        bulkBarEl.update();
-      }
-    }
-    function renderTaskPicker() {
-      if (!tasksTreeEl) return;
-      const view = tasksStore.view;
-      const filter = tasksStore.filter;
-      const expanded = tasksStore.expanded;
-      const collapsed = tasksStore.collapsed;
-      const currentTaskId = tasksStore.currentTaskId;
-      const bulkSelected = tasksStore.bulkSelected;
-      tasksStore.multiSelectActive;
-      if (view === "projects") {
-        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
-      } else if (view === "all") {
-        renderAllTasksView(tasksTreeEl, tasksStore.cache, filter, currentTaskId, bulkSelected, expanded, collapsed);
-      } else {
-        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
-      }
-      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, attentionStore.tiers);
-      if (tasksProjectBtnEl) {
-        const hasProject = !!tasksStore.currentTaskProject;
-        tasksProjectBtnEl.disabled = !hasProject;
-        tasksProjectBtnEl.setAttribute("aria-disabled", hasProject ? "false" : "true");
-      }
-    }
-    async function fetchTasks() {
-      if (!tasksTreeEl) return;
-      tasksTreeEl.innerHTML = '<div class="tasks-loading">Loading…</div>';
-      try {
-        const res = await fetch("/api/tasks?limit=120", { cache: "no-store" });
-        const data = await res.json();
-        if (!data.ok || !Array.isArray(data.tasks)) {
-          tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Unable to load tasks.</div>';
-          return;
-        }
-        tasksStore.cache = data.tasks;
-        tasksStore.loaded = true;
-        renderTaskPicker();
-      } catch (err) {
-        tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Error: ' + String(err.message || err) + "</div>";
-      }
-    }
-    async function openTaskPanel(taskId) {
-      if (!taskId || !taskPanelBodyEl) return;
-      const prevPane = tasksStore.pane;
-      const sameTask = taskId === tasksStore.currentTaskId;
-      if (prevPane === "project") tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
-      else if (!sameTask) tasksStore.taskFromProjectSlug = null;
-      tasksStore.currentTaskId = taskId;
-      tasksStore.currentTaskProject = null;
-      setRightPaneMode("view");
-      if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
-      if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";
-      if (taskPanelStatusEl) {
-        taskPanelStatusEl.textContent = "";
-        taskPanelStatusEl.className = "tasks-viewer-status";
-      }
-      taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
-      expandAncestors(taskId, tasksStore.cache, tasksStore.expanded);
-      renderTaskPicker();
-      if (tasksTreeEl) {
-        tasksTreeEl.querySelectorAll(".tasks-tree-row, .tasks-current-row").forEach((r) => {
-          r.classList.toggle("is-active", r.getAttribute("data-task-id") === taskId);
-        });
-      }
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
-        const data = await res.json();
-        if (!data.ok || !data.chain) {
-          taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Unable to load task.</div>';
-          return;
-        }
-        currentTaskChain = data.chain;
-        const task = data.chain.task;
-        if (task) {
-          tasksStore.currentTaskProject = task.project || null;
-          if (tasksProjectBtnEl) {
-            tasksProjectBtnEl.disabled = !task.project;
-            tasksProjectBtnEl.setAttribute("aria-disabled", task.project ? "false" : "true");
-          }
-          if (taskPanelHeadlineEl) {
-            taskPanelHeadlineEl.textContent = task.headline || task.brief || "Task " + taskId;
-            taskPanelHeadlineEl.dataset.taskId = task.id || "";
-            taskPanelHeadlineEl.dataset.agent = task.agent || task.to || "";
-            taskPanelHeadlineEl.dataset.locked = task.status === "claimed" ? "true" : "false";
-            taskPanelHeadlineEl.title = task.status === "claimed" ? "Cannot rename while the worker is claimed" : "Click to rename — Enter to save, Esc to cancel";
-            taskPanelHeadlineEl.classList.toggle("is-editable", task.status !== "claimed");
-          }
-          if (taskPanelStatusEl) {
-            taskPanelStatusEl.textContent = task.status || "?";
-            taskPanelStatusEl.className = "tasks-viewer-status " + statusClass(task.status);
-          }
-        }
-        const viewMode = tasksStore.currentViewMode;
-        const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
-        const reportHtml = (task == null ? void 0 : task.reportPath) ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
-        taskPanelBodyEl.innerHTML = '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + '</div><div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
-        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => loadReportNode(rn));
-      } catch (err) {
-        taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
-      }
-    }
-    async function openProjectPanel(slug) {
-      tasksStore.currentProjectSlug = slug;
-      setRightPaneMode("project");
-      if (!tasksProjectPaneEl) return;
-      tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Loading project…</div>';
-      if (tasksTreeEl) {
-        tasksTreeEl.querySelectorAll(".tasks-project-card").forEach((card) => {
-          card.classList.toggle("is-active", card.getAttribute("data-project-slug") === slug);
-        });
-      }
-      try {
-        const res = await fetch("/api/projects/" + encodeURIComponent(slug || ""), { cache: "no-store" });
-        const data = await res.json();
-        if (!data.ok || !data.summary) {
-          tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Unable to load project.</div>';
-          return;
-        }
-        renderProjectPage(
-          tasksProjectPaneEl,
-          data.summary,
-          tasksStore.expanded,
-          tasksStore.currentTaskId,
-          tasksStore.bulkSelected
-        );
-      } catch (err) {
-        tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
-      }
-    }
-    function setViewMode(mode) {
-      tasksStore.currentViewMode = mode;
-      taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelectorAll(".tasks-viewer-pane").forEach((p2) => {
-        p2.hidden = p2.getAttribute("data-pane") !== mode;
-      });
-      document.querySelectorAll(".tasks-viewer-tab").forEach((t) => {
-        const isActive = t.getAttribute("data-view") === mode;
-        t.classList.toggle("is-active", isActive);
-        t.setAttribute("aria-selected", isActive ? "true" : "false");
-      });
-    }
-    async function submitNext(wrapper) {
-      if (!wrapper) return;
-      const agent = wrapper.getAttribute("data-next-agent") || "";
-      const taskId = wrapper.getAttribute("data-next-id") || "";
-      const source = wrapper.getAttribute("data-next-source") || "revisit";
-      const input = wrapper.querySelector(".task-panel-next-input");
-      const btn = wrapper.querySelector(".task-panel-next-submit");
-      const statusEl = wrapper.querySelector(".task-panel-next-status");
-      const targetSel = wrapper.querySelector(".task-panel-next-target-select");
-      const headlineEl = wrapper.querySelector(".task-panel-next-headline-input");
-      const instruction = ((input == null ? void 0 : input.value) || "").trim();
-      if (!instruction) {
-        if (statusEl) {
-          statusEl.textContent = "Type an instruction first.";
-          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
-        }
-        return;
-      }
-      if (btn) btn.disabled = true;
-      if (statusEl) {
-        statusEl.textContent = "Spawning child…";
-        statusEl.className = "task-panel-unblock-status task-panel-next-status";
-      }
-      try {
-        const payload = { agent, instruction, source };
-        const target = targetSel == null ? void 0 : targetSel.value;
-        if (target && target !== agent) payload.target = target;
-        const headline = ((headlineEl == null ? void 0 : headlineEl.value) || "").trim();
-        if (headline) payload.headline = headline;
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (!data.ok) {
-          if (statusEl) {
-            statusEl.textContent = "Error: " + (data.error || "unknown");
-            statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
-          }
-          if (btn) btn.disabled = false;
-          return;
-        }
-        if (statusEl) {
-          statusEl.textContent = "Child " + (data.id || "?") + " queued.";
-          statusEl.className = "task-panel-unblock-status task-panel-next-status is-ok";
-        }
-        if (data.id) openTaskPanel(data.id);
-        fetchTasks();
-        attentionStore.fetch();
-      } catch (err) {
-        if (statusEl) {
-          statusEl.textContent = "Error: " + String(err.message || err);
-          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
-        }
-        if (btn) btn.disabled = false;
-      }
-    }
-    async function submitClose(wrapper) {
-      if (!wrapper) return;
-      const agent = wrapper.getAttribute("data-close-agent") || "";
-      const taskId = wrapper.getAttribute("data-close-id") || "";
-      const defaultStatus = wrapper.getAttribute("data-close-default-status") || "closed";
-      const input = wrapper.querySelector(".task-panel-close-input");
-      const cascadeBox = wrapper.querySelector(".task-panel-close-cascade-checkbox");
-      const btn = wrapper.querySelector(".task-panel-close-submit");
-      const statusEl = wrapper.querySelector(".task-panel-close-status");
-      if (!agent || !taskId) return;
-      if (btn) btn.disabled = true;
-      if (statusEl) {
-        statusEl.textContent = "Closing…";
-        statusEl.className = "task-panel-close-status task-panel-unblock-status";
-      }
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim(), status: defaultStatus, cascade: !!(cascadeBox == null ? void 0 : cascadeBox.checked) })
-        });
-        const data = await res.json();
-        if (!data.ok) {
-          if (statusEl) {
-            statusEl.textContent = "Error: " + (data.error || "unknown");
-            statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
-          }
-          if (btn) btn.disabled = false;
-          return;
-        }
-        if (statusEl) {
-          statusEl.textContent = "Closed.";
-          statusEl.className = "task-panel-close-status task-panel-unblock-status is-ok";
-        }
-        openTaskPanel(taskId);
-        fetchTasks();
-        attentionStore.fetch();
-      } catch (err) {
-        if (statusEl) {
-          statusEl.textContent = "Error: " + String(err.message || err);
-          statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
-        }
-        if (btn) btn.disabled = false;
-      }
-    }
-    async function submitDoneReading(agent, taskId, btn) {
-      if (!agent || !taskId) return;
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent, reason: "", status: "closed", cascade: false })
-        });
-        const data = await res.json();
-        if (!data.ok) return;
-        openTaskPanel(taskId);
-        fetchTasks();
-        attentionStore.fetch();
-      } catch (_2) {
-      } finally {
-        if (btn) btn.disabled = false;
-      }
-    }
-    async function submitAbort(wrapper) {
-      if (!wrapper) return;
-      const agent = wrapper.getAttribute("data-abort-agent") || "";
-      const taskId = wrapper.getAttribute("data-abort-id") || "";
-      const input = wrapper.querySelector(".task-panel-abort-input");
-      const btn = wrapper.querySelector(".task-panel-abort-submit");
-      const statusEl = wrapper.querySelector(".task-panel-abort-status");
-      if (!agent || !taskId) return;
-      if (btn) btn.disabled = true;
-      if (statusEl) {
-        statusEl.textContent = "Killing worker…";
-        statusEl.className = "task-panel-abort-status task-panel-unblock-status";
-      }
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/abort", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim() })
-        });
-        const data = await res.json();
-        if (!data.ok) {
-          if (statusEl) {
-            statusEl.textContent = "Error: " + (data.error || "unknown");
-            statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
-          }
-          if (btn) btn.disabled = false;
-          return;
-        }
-        if (statusEl) {
-          statusEl.textContent = data.mode === "stale" ? "Cancelled (stale claim cleared)." : "Worker killed — finalising…";
-          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-ok";
-        }
-        setTimeout(() => {
-          openTaskPanel(taskId);
-          fetchTasks();
-          attentionStore.fetch();
-        }, data.mode === "stale" ? 0 : 1200);
-      } catch (err) {
-        if (statusEl) {
-          statusEl.textContent = "Error: " + String(err.message || err);
-          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
-        }
-        if (btn) btn.disabled = false;
-      }
-    }
-    async function submitReopen(btn) {
-      if (!btn) return;
-      const agent = btn.getAttribute("data-reopen-agent") || "";
-      const taskId = btn.getAttribute("data-reopen-task") || "";
-      if (!agent || !taskId) return;
-      btn.disabled = true;
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/reopen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
-        const data = await res.json();
-        if (!data.ok) {
-          btn.disabled = false;
-          return;
-        }
-        openTaskPanel(taskId);
-        fetchTasks();
-        attentionStore.fetch();
-      } catch (_2) {
-        btn.disabled = false;
-      }
-    }
-    async function submitResume(btn) {
-      if (!btn) return;
-      const agent = btn.getAttribute("data-resume-agent") || "";
-      const taskId = btn.getAttribute("data-resume-task") || "";
-      if (!agent || !taskId) return;
-      btn.disabled = true;
-      try {
-        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/resume", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
-        const data = await res.json();
-        if (!data.ok) {
-          btn.disabled = false;
-          return;
-        }
-        openTaskPanel(taskId);
-        fetchTasks();
-        attentionStore.fetch();
-      } catch (_2) {
-        btn.disabled = false;
-      }
-    }
-    function launchChatForTask(taskId, parentAgent, msgEl) {
-      if (!taskId) return;
-      if (!parentAgent) return;
-      const taskRoot = String(taskId).split(".")[0];
-      const threadId = "task-" + taskRoot + "-" + parentAgent;
-      const typedMsg = ((msgEl == null ? void 0 : msgEl.value) || "").trim();
-      const initialMsg = typedMsg ? "Continue after " + taskId + "\n" + typedMsg : "Continue after " + taskId + "\n";
-      window.__chatSessionId = threadId;
-      window.__pendingAgentId = parentAgent;
-      router2.push("/chat").then(() => {
-        setTimeout(() => {
-          const chatInput = document.getElementById("chat-input");
-          if (!chatInput) return;
-          chatInput.value = initialMsg;
-          try {
-            chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
-          } catch (_2) {
-          }
-          chatInput.focus();
-          chatInput.dispatchEvent(new Event("input", { bubbles: true }));
-        }, 50);
-      });
-    }
-    function openFollowOnForm(sourceTaskId, sourceAgent) {
-      var _a2;
-      if (!tasksNewFormEl || !sourceTaskId) return;
-      const chain = currentTaskChain;
-      let sourceCard = null;
-      const childReviewPaths = [];
-      if (chain) {
-        if (((_a2 = chain.task) == null ? void 0 : _a2.id) === sourceTaskId) {
-          sourceCard = chain.task;
-          for (const ch of chain.children || []) {
-            const rp = ch.reportPath;
-            if (rp) childReviewPaths.push(rp);
-          }
-        } else {
-          const all = [...chain.ancestors || [], ...chain.children || []];
-          sourceCard = all.find((a) => a.id === sourceTaskId) || null;
-        }
-      }
-      const contextLines = [];
-      if (sourceCard == null ? void 0 : sourceCard.reportPath) {
-        contextLines.push(sourceCard.reportPath);
-        for (const d2 of sourceCard.deliverables || []) contextLines.push(d2);
-      }
-      for (const rp of childReviewPaths) {
-        if (!contextLines.includes(rp)) contextLines.push(rp);
-      }
-      const srcHeadline = String((sourceCard == null ? void 0 : sourceCard.headline) || sourceTaskId);
-      const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
-      const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
-      tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
-      const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
-      const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
-      if (parentChipEl) parentChipEl.removeAttribute("hidden");
-      if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
-      const headlineEl = document.getElementById("multi-agent-new-headline");
-      if (headlineEl) headlineEl.value = headlineSuggest;
-      const briefEl = document.getElementById("multi-agent-new-brief");
-      if (briefEl) briefEl.value = briefSuggest;
-      const ctxEl = document.getElementById("multi-agent-new-context");
-      if (ctxEl) ctxEl.value = contextLines.join("\n");
-      if (sourceCard == null ? void 0 : sourceCard.project) {
-        const projEl = document.getElementById("multi-agent-new-project");
-        if (projEl) ensureProjectsLoaded(projEl).then(() => {
-          if (projEl) projEl.value = sourceCard.project;
-        });
-      }
-      setRightPaneMode("new");
-      headlineEl == null ? void 0 : headlineEl.focus();
-    }
-    function onPanelBodyClick(ev) {
-      var _a2, _b, _c, _d, _e2;
-      const t = ev.target;
-      const nextBtn = t.closest(".task-panel-next-submit");
-      if (nextBtn) {
-        ev.preventDefault();
-        submitNext(nextBtn.closest(".task-panel-next"));
-        return;
-      }
-      const throwBtn = t.closest("[data-throw-path]");
-      if (throwBtn) {
-        ev.preventDefault();
-        const path = throwBtn.getAttribute("data-throw-path") || "";
-        const kind = throwBtn.getAttribute("data-throw-kind") || "report";
-        const fn = window.__throwToReadingPane;
-        if (path && typeof fn === "function") fn({ kind, path });
-        return;
-      }
-      const pillBtn = t.closest("[data-doc-pill]");
-      if (pillBtn) {
-        ev.preventDefault();
-        setActiveReportDoc(pillBtn.closest(".task-panel-report-pane"), pillBtn.getAttribute("data-doc-pill") || "");
-        return;
-      }
-      const doneReadingBtn = t.closest("[data-done-reading-id]");
-      if (doneReadingBtn) {
-        ev.preventDefault();
-        doneReadingBtn.disabled = true;
-        submitDoneReading(doneReadingBtn.getAttribute("data-done-reading-agent") || "", doneReadingBtn.getAttribute("data-done-reading-id") || "", doneReadingBtn);
-        return;
-      }
-      const toggleCloseBtn = t.closest("[data-toggle-close]");
-      if (toggleCloseBtn) {
-        ev.preventDefault();
-        const closeForm = (_a2 = toggleCloseBtn.closest(".task-panel-card")) == null ? void 0 : _a2.querySelector(".task-panel-close-form");
-        if (closeForm) {
-          closeForm.hidden = false;
-          (_b = closeForm.querySelector(".task-panel-close-input")) == null ? void 0 : _b.focus();
-          closeForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
-        return;
-      }
-      const closeSubmitBtn = t.closest(".task-panel-close-submit");
-      if (closeSubmitBtn) {
-        ev.preventDefault();
-        submitClose(closeSubmitBtn.closest(".task-panel-close-form"));
-        return;
-      }
-      const closeCancelBtn = t.closest(".task-panel-close-cancel");
-      if (closeCancelBtn) {
-        ev.preventDefault();
-        const f = closeCancelBtn.closest(".task-panel-close-form");
-        if (f) f.hidden = true;
-        return;
-      }
-      const toggleAbortBtn = t.closest("[data-toggle-abort]");
-      if (toggleAbortBtn) {
-        ev.preventDefault();
-        const abortForm = (_c = toggleAbortBtn.closest(".task-panel-card")) == null ? void 0 : _c.querySelector(".task-panel-abort-form");
-        if (abortForm) {
-          abortForm.hidden = false;
-          (_d = abortForm.querySelector(".task-panel-abort-input")) == null ? void 0 : _d.focus();
-          abortForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-        }
-        return;
-      }
-      const abortSubmitBtn = t.closest(".task-panel-abort-submit");
-      if (abortSubmitBtn) {
-        ev.preventDefault();
-        submitAbort(abortSubmitBtn.closest(".task-panel-abort-form"));
-        return;
-      }
-      const abortCancelBtn = t.closest(".task-panel-abort-cancel");
-      if (abortCancelBtn) {
-        ev.preventDefault();
-        const f = abortCancelBtn.closest(".task-panel-abort-form");
-        if (f) f.hidden = true;
-        return;
-      }
-      const reopenBtn = t.closest("[data-reopen-task]");
-      if (reopenBtn) {
-        ev.preventDefault();
-        submitReopen(reopenBtn);
-        return;
-      }
-      const resumeBtn = t.closest("[data-resume-task]");
-      if (resumeBtn) {
-        ev.preventDefault();
-        submitResume(resumeBtn);
-        return;
-      }
-      const followonBtn = t.closest("[data-followon-task]");
-      if (followonBtn) {
-        ev.preventDefault();
-        const continueForm = taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelector(".task-panel-next");
-        if (continueForm) {
-          continueForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          (_e2 = continueForm.querySelector(".task-panel-next-input")) == null ? void 0 : _e2.focus();
-          const det = continueForm.closest("details");
-          if (det) det.open = true;
-        } else {
-          openFollowOnForm(followonBtn.getAttribute("data-followon-task") || "", followonBtn.getAttribute("data-followon-agent") || "");
-        }
-        return;
-      }
-      const openTaskBtn = t.closest("[data-open-task]");
-      if (openTaskBtn) {
-        ev.preventDefault();
-        openTaskPanel(openTaskBtn.getAttribute("data-open-task") || "");
-        return;
-      }
-      const openFileBtn = t.closest("[data-open-file]");
-      if (openFileBtn) {
-        ev.preventDefault();
-        const filePath = openFileBtn.getAttribute("data-open-file");
-        if (!filePath) return;
-        if (ev.altKey) {
-          const fn = window.__throwToReadingPane;
-          if (typeof fn === "function") fn({ kind: "report", path: filePath });
-        } else {
-          ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
-          router2.push("/files");
-        }
-        return;
-      }
-      const openFolderBtn = t.closest("[data-open-folder]");
-      if (openFolderBtn) {
-        ev.preventDefault();
-        const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
-        ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || void 0 };
-        router2.push("/files");
-        return;
-      }
-      const toggleChatBtn = t.closest("[data-toggle-chat]");
-      if (toggleChatBtn) {
-        ev.preventDefault();
-        const chatCard = toggleChatBtn.closest(".task-panel-card");
-        const chatFormEl = chatCard == null ? void 0 : chatCard.querySelector(".task-panel-chat-form");
-        const chatAgent = (chatFormEl == null ? void 0 : chatFormEl.getAttribute("data-chat-parent-agent")) || "";
-        const chatMsgEl = (chatFormEl == null ? void 0 : chatFormEl.querySelector(".task-panel-chat-msg-input")) || null;
-        launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat") || "", chatAgent, chatMsgEl);
-        return;
-      }
-    }
-    let agentsCache = [];
-    async function loadAgentsForForm() {
-      try {
-        const res = await fetch("/api/agents");
-        const data = await res.json();
-        if ((data == null ? void 0 : data.ok) && Array.isArray(data.agents)) agentsCache = data.agents;
-      } catch (_2) {
-      }
-      populateTaskTargetSelect();
-    }
-    function populateTaskTargetSelect() {
-      const sel = document.getElementById("multi-agent-new-to");
-      if (!sel) return;
-      const prev = sel.value;
-      const coord = agentsCache.find((a) => a.name === "alice");
-      const rest = agentsCache.filter((a) => a.name !== "alice");
-      const ordered = coord ? [coord, ...rest] : rest;
-      sel.innerHTML = ordered.map((a) => {
-        const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-        return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
-      }).join("");
-      if (prev) sel.value = prev;
-    }
-    function updateHeadlineCount() {
-      const input = document.getElementById("multi-agent-new-headline");
-      const counter = document.getElementById("multi-agent-new-headline-count");
-      if (!input || !counter) return;
-      const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
-      counter.textContent = words + " / 10 words";
-      counter.classList.toggle("is-over", words > 10);
-    }
-    function clearParentChip() {
-      if (!tasksNewFormEl) return;
-      tasksNewFormEl.removeAttribute("data-parent");
-      const chipEl = document.getElementById("multi-agent-new-parent-chip");
-      const chipIdEl = document.getElementById("multi-agent-new-parent-id");
-      if (chipEl) chipEl.setAttribute("hidden", "");
-      if (chipIdEl) chipIdEl.textContent = "";
-    }
-    async function submitNewTask(ev) {
-      var _a2, _b, _c, _d, _e2, _f, _g, _h;
-      ev.preventDefault();
-      const headline = ((_a2 = document.getElementById("multi-agent-new-headline")) == null ? void 0 : _a2.value.trim()) || "";
-      const to = ((_b = document.getElementById("multi-agent-new-to")) == null ? void 0 : _b.value) || "";
-      const kind = ((_c = document.getElementById("multi-agent-new-kind")) == null ? void 0 : _c.value) || "";
-      const from = ((_d = document.getElementById("multi-agent-new-from")) == null ? void 0 : _d.value.trim()) || "user";
-      const brief = ((_e2 = document.getElementById("multi-agent-new-brief")) == null ? void 0 : _e2.value.trim()) || "";
-      const output = ((_f = document.getElementById("multi-agent-new-output")) == null ? void 0 : _f.value.trim()) || "";
-      const contextRaw = ((_g = document.getElementById("multi-agent-new-context")) == null ? void 0 : _g.value.trim()) || "";
-      const context = contextRaw ? contextRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
-      const needsRaw = ((_h = document.getElementById("multi-agent-new-needs")) == null ? void 0 : _h.value.trim()) || "";
-      const needs = needsRaw ? needsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
-      const newStatus = document.getElementById("multi-agent-new-status");
-      const submitBtn = document.getElementById("multi-agent-new-submit");
-      const headlineWords = headline.split(/\s+/).filter(Boolean).length;
-      if (!headline) {
-        if (newStatus) {
-          newStatus.textContent = "Headline is required (≤10 words).";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (headlineWords > 10) {
-        if (newStatus) {
-          newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`;
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (!brief) {
-        if (newStatus) {
-          newStatus.textContent = "Brief is required.";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (!to) {
-        populateTaskTargetSelect();
-        if (newStatus) {
-          newStatus.textContent = "Pick a target agent.";
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        return;
-      }
-      if (newStatus) {
-        newStatus.textContent = "Dispatching…";
-        newStatus.className = "multi-agent-new-status";
-      }
-      if (submitBtn) submitBtn.disabled = true;
-      try {
-        const payload = { headline, to, from: from || "user", kind, brief, output_format: output, context };
-        if (needs.length > 0) payload.needs = needs;
-        const projectEl = document.getElementById("multi-agent-new-project");
-        if (projectEl) {
-          const projVal = (projectEl.value || "").trim();
-          if (projVal === "__none__") payload.project = null;
-          else if (projVal) payload.project = projVal;
-        }
-        const parentAttr = tasksNewFormEl == null ? void 0 : tasksNewFormEl.getAttribute("data-parent");
-        if (parentAttr) payload.parent = parentAttr;
-        const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (!data.ok) {
-          if (newStatus) {
-            newStatus.textContent = "Error: " + (data.error || "unknown");
-            newStatus.className = "multi-agent-new-status is-error";
-          }
-          if (submitBtn) submitBtn.disabled = false;
-          return;
-        }
-        if (newStatus) {
-          newStatus.textContent = "Dispatched " + data.id;
-          newStatus.className = "multi-agent-new-status is-ok";
-        }
-        ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach((id) => {
-          const el = document.getElementById(id);
-          if (el) el.value = "";
-        });
-        clearParentChip();
-        updateHeadlineCount();
-        if (submitBtn) submitBtn.disabled = false;
-        fetchTasks();
-        attentionStore.fetch();
-        if (data.id) openTaskPanel(data.id);
-        else setRightPaneMode("empty");
-      } catch (err) {
-        if (newStatus) {
-          newStatus.textContent = "Error: " + String(err.message || err);
-          newStatus.className = "multi-agent-new-status is-error";
-        }
-        if (submitBtn) submitBtn.disabled = false;
-      }
-    }
-    function onTreeChange(ev) {
-      handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
-    }
-    function onTreeClick(ev) {
-      const target = ev.target;
-      if (target && target.type === "checkbox") {
-        ev.stopPropagation();
-        return;
-      }
-      const groupHead = target.closest("[data-toggle-group]");
-      if (groupHead) {
-        ev.preventDefault();
-        const gk = groupHead.getAttribute("data-toggle-group");
-        if (gk) {
-          if (tasksStore.collapsed[gk]) delete tasksStore.collapsed[gk];
-          else tasksStore.collapsed[gk] = true;
-          renderTaskPicker();
-        }
-        return;
-      }
-      const projectCard = target.closest(".tasks-project-card");
-      if (projectCard) {
-        ev.preventDefault();
-        const slug = projectCard.getAttribute("data-project-slug");
-        if (slug !== null) {
-          tasksStore.taskFromProjectSlug = null;
-          openProjectPanel(slug);
-        }
-        return;
-      }
-      const tierRow2 = target.closest("[data-open-task]");
-      if (tierRow2) {
-        ev.preventDefault();
-        const taskId = tierRow2.getAttribute("data-open-task");
-        if (taskId) openTaskPanel(taskId);
-        return;
-      }
-      const chevron = target.closest("[data-toggle-expand]");
-      if (chevron) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const pid = chevron.getAttribute("data-toggle-expand");
-        if (pid) {
-          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
-          else tasksStore.expanded[pid] = true;
-          renderTaskPicker();
-        }
-        return;
-      }
-      const row = target.closest(".tasks-tree-row, .tasks-current-row");
-      if (row) {
-        const taskId = row.getAttribute("data-task-id");
-        if (taskId) openTaskPanel(taskId);
-      }
-    }
-    function onTreeKeydown(ev) {
-      if (ev.key !== "Enter" && ev.key !== " ") return;
-      if (ev.target.type === "checkbox") return;
-      const row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
-      if (!row) return;
-      ev.preventDefault();
-      const taskId = row.getAttribute("data-task-id");
-      if (taskId) openTaskPanel(taskId);
-    }
-    function onProjectPaneClick(ev) {
-      const target = ev.target;
-      if (target.type === "checkbox") {
-        ev.stopPropagation();
-        return;
-      }
-      const docBtn = target.closest("[data-open-file]");
-      if (docBtn) {
-        ev.preventDefault();
-        const path = docBtn.getAttribute("data-open-file");
-        if (path) {
-          ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
-          router2.push("/files");
-        }
-        return;
-      }
-      const newHere = target.closest("[data-project-new-task]");
-      if (newHere) {
-        ev.preventDefault();
-        const newSlug = newHere.getAttribute("data-project-new-task");
-        if (newSlug) openNewTaskFormForProject(newSlug);
-        return;
-      }
-      const chevron = target.closest("[data-toggle-expand]");
-      if (chevron) {
-        ev.preventDefault();
-        ev.stopPropagation();
-        const pid = chevron.getAttribute("data-toggle-expand");
-        if (pid && tasksStore.currentProjectSlug !== null) {
-          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
-          else tasksStore.expanded[pid] = true;
-          openProjectPanel(tasksStore.currentProjectSlug);
-        }
-        return;
-      }
-      const row = target.closest(".tasks-tree-row, .tasks-current-row");
-      if (row) {
-        const taskId = row.getAttribute("data-task-id");
-        if (taskId) {
-          tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
-          openTaskPanel(taskId);
-        }
-      }
-    }
-    function onProjectPaneChange(ev) {
-      const target = ev.target;
-      if (target.type === "checkbox" && (target.classList.contains("current-row-select") || target.classList.contains("current-group-select-all"))) {
-        handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
-        return;
-      }
-      const toggle = target.closest ? target.closest("[data-project-hide-closed]") : null;
-      if (toggle) {
-        const s = toggle.getAttribute("data-project-hide-closed") || "";
-        setProjectHideClosed(s, toggle.checked);
-        if (tasksStore.currentProjectSlug !== null) openProjectPanel(tasksStore.currentProjectSlug);
-      }
-    }
-    function openNewTaskFormForProject(slug) {
-      if (!tasksNewFormEl) return;
-      tasksNewFormEl.removeAttribute("data-parent");
-      const chip = document.getElementById("multi-agent-new-parent-chip");
-      const chipId = document.getElementById("multi-agent-new-parent-id");
-      if (chip) chip.setAttribute("hidden", "");
-      if (chipId) chipId.textContent = "";
-      const projectSelect = document.getElementById("multi-agent-new-project");
-      if (projectSelect) {
-        ensureProjectsLoaded(projectSelect).then(() => {
-          if (slug && slug !== "__none__") projectSelect.value = slug;
-        });
-      }
-      setRightPaneMode("new");
-      const headlineEl = document.getElementById("multi-agent-new-headline");
-      if (headlineEl) headlineEl.focus();
-    }
-    onMounted(() => {
-      tasksTreeEl = document.getElementById("tasks-tree");
-      tasksViewTabsEl = document.getElementById("tasks-view-tabs");
-      tasksFilterChipsEl = document.getElementById("tasks-filter-chips");
-      tasksSidebarEl = document.getElementById("tasks-sidebar");
-      tasksPickerToggleEl = document.getElementById("tasks-picker-toggle");
-      tasksProjectBtnEl = document.getElementById("tasks-project-btn");
-      tasksRefreshBtnEl = document.getElementById("tasks-refresh");
-      tasksNewBtnEl = document.getElementById("tasks-new-btn");
-      tasksViewerEl = document.getElementById("tasks-viewer");
-      tasksProjectPaneEl = document.getElementById("tasks-project-pane");
-      tasksEmptyEl = document.getElementById("tasks-empty");
-      tasksNewFormEl = document.getElementById("multi-agent-new");
-      tasksUserBlockedEl = document.getElementById("tasks-user-blocked");
-      taskPanelBodyEl = document.getElementById("tasks-viewer-body");
-      taskPanelHeadlineEl = document.getElementById("tasks-viewer-headline");
-      taskPanelIdEl = document.getElementById("tasks-viewer-id");
-      taskPanelStatusEl = document.getElementById("tasks-viewer-status");
-      document.querySelectorAll(".tasks-viewer-tab").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const v2 = btn.getAttribute("data-view");
-          if (v2) setViewMode(v2);
-        });
-      });
-      if (taskPanelBodyEl) {
-        taskPanelBodyEl.addEventListener("click", onPanelBodyClick);
-      }
-      if (taskPanelHeadlineEl) {
-        taskPanelHeadlineEl.addEventListener("click", async () => {
-          const el = taskPanelHeadlineEl;
-          if (el.dataset.locked === "true") return;
-          const taskId = el.dataset.taskId;
-          if (!taskId) return;
-          const current = el.textContent || "";
-          const input = document.createElement("input");
-          input.type = "text";
-          input.className = "tasks-viewer-headline-input";
-          input.value = current;
-          input.style.width = "100%";
-          el.replaceWith(input);
-          input.focus();
-          input.select();
-          const restore = () => {
-            if (!input.isConnected) return;
-            input.replaceWith(el);
-          };
-          input.addEventListener("keydown", async (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              const next = input.value.trim();
-              if (!next || next === current) {
-                restore();
-                return;
-              }
-              try {
-                await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/rename", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ headline: next })
-                });
-                el.textContent = next;
-              } catch (_2) {
-              }
-              if (input.isConnected) restore();
-            } else if (e.key === "Escape") {
-              restore();
-            }
-          });
-          input.addEventListener("blur", restore);
-        });
-      }
-      if (tasksTreeEl) {
-        bulkBarEl = createBulkBar(
-          tasksTreeEl,
-          () => tasksStore.bulkSelected,
-          () => tasksStore.multiSelectActive,
-          (v2) => {
-            tasksStore.multiSelectActive = v2;
-          },
-          () => {
-            tasksStore.bulkSelected = {};
-          },
-          renderTaskPicker,
-          fetchTasks
-        );
-        tasksTreeEl.addEventListener("change", onTreeChange);
-        tasksTreeEl.addEventListener("click", onTreeClick);
-        tasksTreeEl.addEventListener("keydown", onTreeKeydown);
-        tasksTreeEl.addEventListener("pointerdown", (ev) => {
-          if (ev.pointerType !== "touch") return;
-          if (ev.target.type === "checkbox") return;
-          const row = ev.target.closest(".tasks-current-row");
-          if (!row) return;
-          lpStartX = ev.clientX;
-          lpStartY = ev.clientY;
-          longPressTimer = setTimeout(() => {
-            longPressTimer = null;
-            tasksStore.multiSelectActive = true;
-            tasksTreeEl.classList.add("is-multiselect-active");
-            updateBulkBar();
-            if (navigator.vibrate) navigator.vibrate(40);
-          }, 500);
-        });
-        tasksTreeEl.addEventListener("pointermove", (ev) => {
-          if (!longPressTimer) return;
-          const dx = ev.clientX - lpStartX, dy = ev.clientY - lpStartY;
-          if (dx * dx + dy * dy > 64) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-          }
-        });
-        const cancelLP = () => {
-          if (longPressTimer) {
-            clearTimeout(longPressTimer);
-            longPressTimer = null;
-          }
-        };
-        tasksTreeEl.addEventListener("pointerup", cancelLP);
-        tasksTreeEl.addEventListener("pointercancel", cancelLP);
-      }
-      if (tasksProjectPaneEl) {
-        tasksProjectPaneEl.addEventListener("click", onProjectPaneClick);
-        tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
-      }
-      if (tasksUserBlockedEl) {
-        tasksUserBlockedEl.addEventListener("click", (ev) => {
-          const row = ev.target.closest("[data-open-task]");
-          if (!row) return;
-          ev.preventDefault();
-          const taskId = row.getAttribute("data-open-task");
-          if (taskId) openTaskPanel(taskId);
-        });
-      }
-      if (tasksViewTabsEl) {
-        tasksViewTabsEl.addEventListener("click", (ev) => {
-          const btn = ev.target.closest(".tasks-view-tab");
-          if (!btn) return;
-          const v2 = btn.getAttribute("data-view");
-          if (!v2 || v2 === tasksStore.view) return;
-          tasksStore.view = v2;
-          tasksStore.taskFromProjectSlug = null;
-          tasksViewTabsEl.querySelectorAll(".tasks-view-tab").forEach((t) => {
-            const isActive = t === btn;
-            t.classList.toggle("is-active", isActive);
-            t.setAttribute("aria-selected", isActive ? "true" : "false");
-          });
-          if (v2 === "projects") invalidateProjectsCache();
-          else if (tasksProjectPaneEl && !tasksProjectPaneEl.hidden) {
-            setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
-          }
-          renderTaskPicker();
-        });
-      }
-      if (tasksFilterChipsEl) {
-        tasksFilterChipsEl.addEventListener("click", (ev) => {
-          const chip = ev.target.closest(".tasks-filter-chip");
-          if (!chip) return;
-          const f = chip.getAttribute("data-filter");
-          if (!f) return;
-          tasksStore.filter = f;
-          tasksFilterChipsEl.querySelectorAll(".tasks-filter-chip").forEach((c) => {
-            c.classList.toggle("is-active", c === chip);
-          });
-          renderTaskPicker();
-        });
-      }
-      if (tasksRefreshBtnEl) {
-        tasksRefreshBtnEl.addEventListener("click", () => {
-          invalidateProjectsCache();
-          fetchTasks();
-        });
-      }
-      if (tasksPickerToggleEl) {
-        tasksPickerToggleEl.addEventListener("click", () => {
-          if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
-          if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
-          const panel = document.getElementById("tasks-panel");
-          if (panel) panel.classList.remove("tasks-list-hidden");
-        });
-      }
-      if (tasksProjectBtnEl) {
-        tasksProjectBtnEl.addEventListener("click", () => {
-          if (tasksProjectBtnEl.disabled || !tasksStore.currentTaskProject) return;
-          openProjectPanel(tasksStore.currentTaskProject);
-        });
-      }
-      if (tasksNewBtnEl && tasksNewFormEl) {
-        tasksNewBtnEl.addEventListener("click", () => {
-          tasksNewFormEl.removeAttribute("data-parent");
-          const chip = document.getElementById("multi-agent-new-parent-chip");
-          const chipId = document.getElementById("multi-agent-new-parent-id");
-          if (chip) chip.setAttribute("hidden", "");
-          if (chipId) chipId.textContent = "";
-          const projectSelect = document.getElementById("multi-agent-new-project");
-          if (projectSelect) ensureProjectsLoaded(projectSelect);
-          setRightPaneMode("new");
-          const hl = document.getElementById("multi-agent-new-headline");
-          if (hl) hl.focus();
-        });
-      }
-      const cancelBtn = document.getElementById("multi-agent-new-cancel");
-      if (cancelBtn) cancelBtn.addEventListener("click", () => {
-        clearParentChip();
-        const newStatusEl = document.getElementById("multi-agent-new-status");
-        if (newStatusEl) newStatusEl.textContent = "";
-        setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
-      });
-      const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
-      if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
-      const headlineInput = document.getElementById("multi-agent-new-headline");
-      if (headlineInput) {
-        headlineInput.addEventListener("input", updateHeadlineCount);
-        updateHeadlineCount();
-      }
-      if (tasksNewFormEl) {
-        tasksNewFormEl.addEventListener("submit", submitNewTask);
-      }
-      loadAgentsForForm();
-      live.bind("attention", {
-        topics: ["attention", "tasks"],
-        fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
-      });
-      if (!tasksStore.loaded) {
-        fetchTasks();
-      } else {
-        renderTaskPicker();
-        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
-          openTaskPanel(tasksStore.currentTaskId);
-        } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
-          openProjectPanel(tasksStore.currentProjectSlug);
-        }
-      }
-    });
-    onBeforeUnmount(() => {
-      live.unbind("attention");
-      if (longPressTimer !== null) clearTimeout(longPressTimer);
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$d, [..._cache[0] || (_cache[0] = [
-        createBaseVNode("div", {
-          class: "tasks-view-tabs",
-          id: "tasks-view-tabs",
-          role: "tablist",
-          "aria-label": "Tasks view"
-        }, [
-          createBaseVNode("button", {
-            type: "button",
-            class: "tasks-view-tab is-active",
-            "data-view": "projects",
-            role: "tab",
-            "aria-selected": "true"
-          }, "Projects"),
-          createBaseVNode("button", {
-            type: "button",
-            class: "tasks-view-tab",
-            "data-view": "all",
-            role: "tab",
-            "aria-selected": "false"
-          }, "All")
-        ], -1),
-        createBaseVNode("div", { class: "tasks-toolbar" }, [
-          createBaseVNode("div", { class: "tasks-toolbar-left" }, [
-            createBaseVNode("button", {
-              id: "tasks-picker-toggle",
-              class: "tasks-toolbar-btn tasks-picker-toggle",
-              type: "button",
-              "aria-expanded": "true",
-              title: "Show task list"
-            }, "List"),
-            createBaseVNode("button", {
-              id: "tasks-project-btn",
-              class: "tasks-toolbar-btn",
-              type: "button",
-              title: "Go to project for this task",
-              disabled: "",
-              "aria-disabled": "true"
-            }, "Project")
-          ]),
-          createBaseVNode("div", {
-            class: "tasks-filter-chips",
-            id: "tasks-filter-chips",
-            role: "tablist",
-            "aria-label": "Filter tasks by status"
-          }, [
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-filter-chip is-active",
-              "data-filter": "all"
-            }, "All"),
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-filter-chip",
-              "data-filter": "open"
-            }, "Open"),
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-filter-chip",
-              "data-filter": "waiting"
-            }, "Waiting"),
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-filter-chip",
-              "data-filter": "done"
-            }, "Done"),
-            createBaseVNode("button", {
-              type: "button",
-              class: "tasks-filter-chip",
-              "data-filter": "failed"
-            }, "Failed")
-          ]),
-          createBaseVNode("div", { class: "tasks-toolbar-right" }, [
-            createBaseVNode("button", {
-              id: "tasks-new-btn",
-              class: "tasks-toolbar-btn",
-              type: "button",
-              title: "Create a new task"
-            }, "+ New"),
-            createBaseVNode("button", {
-              id: "tasks-refresh",
-              class: "tasks-toolbar-btn",
-              type: "button",
-              title: "Refresh",
-              "aria-label": "Refresh"
-            }, "↻")
-          ])
-        ], -1),
-        createBaseVNode("div", { class: "tasks-split" }, [
-          createBaseVNode("div", {
-            class: "tasks-sidebar",
-            id: "tasks-sidebar"
-          }, [
-            createBaseVNode("div", {
-              id: "tasks-user-blocked",
-              class: "tasks-user-blocked",
-              hidden: ""
-            }),
-            createBaseVNode("div", {
-              class: "tasks-tree",
-              id: "tasks-tree"
-            }, [
-              createBaseVNode("div", { class: "tasks-loading" }, "Loading…")
-            ])
-          ]),
-          createBaseVNode("div", {
-            class: "tasks-content",
-            id: "tasks-content"
-          }, [
-            createBaseVNode("div", {
-              class: "tasks-viewer",
-              id: "tasks-viewer",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "tasks-viewer-head" }, [
-                createBaseVNode("div", { class: "tasks-viewer-headline-wrap" }, [
-                  createBaseVNode("div", {
-                    class: "tasks-viewer-id",
-                    id: "tasks-viewer-id"
-                  }),
-                  createBaseVNode("div", {
-                    class: "tasks-viewer-headline",
-                    id: "tasks-viewer-headline"
-                  }, "Task")
-                ]),
-                createBaseVNode("div", { class: "tasks-viewer-status-wrap" }, [
-                  createBaseVNode("span", {
-                    class: "tasks-viewer-status",
-                    id: "tasks-viewer-status"
-                  })
-                ])
-              ]),
-              createBaseVNode("div", {
-                class: "tasks-viewer-tabs",
-                role: "tablist",
-                "aria-label": "Task views"
-              }, [
-                createBaseVNode("button", {
-                  type: "button",
-                  class: "tasks-viewer-tab is-active",
-                  "data-view": "task",
-                  role: "tab",
-                  "aria-selected": "true"
-                }, "Task"),
-                createBaseVNode("button", {
-                  type: "button",
-                  class: "tasks-viewer-tab",
-                  "data-view": "report",
-                  role: "tab",
-                  "aria-selected": "false"
-                }, "Report")
-              ]),
-              createBaseVNode("div", {
-                class: "tasks-viewer-body",
-                id: "tasks-viewer-body"
-              }, [
-                createBaseVNode("div", { class: "task-panel-loading" }, "Loading task…")
-              ])
-            ]),
-            createBaseVNode("div", {
-              class: "tasks-project-pane",
-              id: "tasks-project-pane",
-              hidden: ""
-            }),
-            createBaseVNode("div", {
-              class: "tasks-empty",
-              id: "tasks-empty"
-            }, [
-              createTextVNode("Select a task on the left, or click "),
-              createBaseVNode("strong", null, "+ New"),
-              createTextVNode(" to create one.")
-            ]),
-            createBaseVNode("form", {
-              class: "multi-agent-new tasks-new-form",
-              id: "multi-agent-new",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "multi-agent-new-head" }, "Create task"),
-              createBaseVNode("div", {
-                class: "multi-agent-new-parent",
-                id: "multi-agent-new-parent-chip",
-                hidden: ""
-              }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("↳ child of "),
-                  createBaseVNode("strong", { id: "multi-agent-new-parent-id" })
-                ]),
-                createBaseVNode("button", {
-                  type: "button",
-                  class: "multi-agent-new-parent-clear",
-                  id: "multi-agent-new-parent-clear",
-                  title: "Clear parent"
-                }, "✕")
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("Headline "),
-                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
-                ]),
-                createBaseVNode("input", {
-                  id: "multi-agent-new-headline",
-                  type: "text",
-                  maxlength: "120",
-                  placeholder: "BLE plugin survey",
-                  required: ""
-                }),
-                createBaseVNode("span", {
-                  class: "multi-agent-new-counter",
-                  id: "multi-agent-new-headline-count"
-                }, "0 / 10 words")
-              ]),
-              createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "Target"),
-                  createBaseVNode("select", { id: "multi-agent-new-to" })
-                ]),
-                createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                  createBaseVNode("span", null, "Project"),
-                  createBaseVNode("select", { id: "multi-agent-new-project" }, [
-                    createBaseVNode("option", { value: "" }, "(auto from context)"),
-                    createBaseVNode("option", { value: "__none__" }, "(none / unassigned)")
-                  ])
-                ])
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, "Brief"),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-brief",
-                  rows: "4",
-                  placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
-                  required: ""
-                })
-              ]),
-              createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                createBaseVNode("span", null, [
-                  createTextVNode("Depends on "),
-                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
-                ]),
-                createBaseVNode("textarea", {
-                  id: "multi-agent-new-needs",
-                  rows: "2",
-                  placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
-                })
-              ]),
-              createBaseVNode("details", {
-                class: "multi-agent-new-advanced",
-                id: "multi-agent-new-advanced"
-              }, [
-                createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced"),
-                createBaseVNode("div", { class: "multi-agent-new-advanced-body" }, [
-                  createBaseVNode("div", { class: "multi-agent-new-grid" }, [
-                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                      createBaseVNode("span", null, "Kind"),
-                      createBaseVNode("select", { id: "multi-agent-new-kind" }, [
-                        createBaseVNode("option", { value: "research" }, "research"),
-                        createBaseVNode("option", { value: "code" }, "code"),
-                        createBaseVNode("option", { value: "review" }, "review"),
-                        createBaseVNode("option", { value: "summarise" }, "summarise"),
-                        createBaseVNode("option", { value: "decide" }, "decide"),
-                        createBaseVNode("option", { value: "other" }, "other")
-                      ])
-                    ]),
-                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
-                      createBaseVNode("span", null, "From"),
-                      createBaseVNode("input", {
-                        id: "multi-agent-new-from",
-                        type: "text",
-                        value: "user"
-                      })
-                    ])
-                  ]),
-                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                    createBaseVNode("span", null, "Output format"),
-                    createBaseVNode("textarea", {
-                      id: "multi-agent-new-output",
-                      rows: "2",
-                      placeholder: "What 'done' looks like."
-                    })
-                  ]),
-                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
-                    createBaseVNode("span", null, "Context (one per line — file path, jira:KEY, or URL)"),
-                    createBaseVNode("textarea", {
-                      id: "multi-agent-new-context",
-                      rows: "2",
-                      placeholder: "Notes/Projects/...\njira:WAL-XX"
-                    })
-                  ])
-                ])
-              ]),
-              createBaseVNode("div", { class: "multi-agent-new-actions" }, [
-                createBaseVNode("span", {
-                  class: "multi-agent-new-status",
-                  id: "multi-agent-new-status"
-                }),
-                createBaseVNode("button", {
-                  class: "multi-agent-new-cancel",
-                  id: "multi-agent-new-cancel",
-                  type: "button"
-                }, "Cancel"),
-                createBaseVNode("button", {
-                  class: "multi-agent-new-submit",
-                  id: "multi-agent-new-submit",
-                  type: "submit"
-                }, "Dispatch")
-              ])
-            ])
-          ])
-        ], -1)
-      ])]);
-    };
-  }
-});
 /*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT */
 function isNothing(subject) {
   return typeof subject === "undefined" || subject === null;
@@ -26304,8 +24670,8 @@ var load_1 = load$1;
 var loader = {
   load: load_1
 };
-var load$2 = loader.load;
-const escapeHtml = (s) => String(s).replace(
+var load = loader.load;
+const escapeHtml$1 = (s) => String(s).replace(
   /[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
 );
@@ -26315,12 +24681,12 @@ function renderValue(value, depth) {
   if (typeof value === "boolean") return `<span class="yaml-bool">${value}</span>`;
   if (typeof value === "number") return `<span class="yaml-num">${value}</span>`;
   if (typeof value === "string") {
-    if (value.includes("\n")) return `<pre class="yaml-block">${escapeHtml(value)}</pre>`;
-    return `<span class="yaml-str">${escapeHtml(value)}</span>`;
+    if (value.includes("\n")) return `<pre class="yaml-block">${escapeHtml$1(value)}</pre>`;
+    return `<span class="yaml-str">${escapeHtml$1(value)}</span>`;
   }
   if (value instanceof Date) {
     if (Number.isFinite(value.getTime()))
-      return `<span class="yaml-str">${escapeHtml(value.toISOString())}</span>`;
+      return `<span class="yaml-str">${escapeHtml$1(value.toISOString())}</span>`;
     return '<span class="yaml-null">invalid date</span>';
   }
   if (Array.isArray(value)) {
@@ -26329,7 +24695,7 @@ function renderValue(value, depth) {
     return `<ul class="yaml-array">${items}</ul>`;
   }
   if (isPlainObject(value)) return renderObject(value, depth + 1);
-  return `<span class="yaml-str">${escapeHtml(String(value))}</span>`;
+  return `<span class="yaml-str">${escapeHtml$1(String(value))}</span>`;
 }
 function renderStatusPill(value) {
   const lower = value.toLowerCase();
@@ -26338,13 +24704,13 @@ function renderStatusPill(value) {
   else if (lower.startsWith("failed")) cls = "yaml-status-failed";
   else if (lower.startsWith("waiting")) cls = "yaml-status-waiting";
   else if (lower === "claimed") cls = "yaml-status-claimed";
-  return `<span class="yaml-status ${cls}">${escapeHtml(value)}</span>`;
+  return `<span class="yaml-status ${cls}">${escapeHtml$1(value)}</span>`;
 }
 function renderObject(obj, depth) {
   const entries = Object.entries(obj);
   if (entries.length === 0) return '<span class="yaml-empty">{}</span>';
   const rows = entries.map(([key, value]) => {
-    const keyHtml = `<span class="yaml-key">${escapeHtml(key)}</span>`;
+    const keyHtml = `<span class="yaml-key">${escapeHtml$1(key)}</span>`;
     const isComplex = isPlainObject(value) || Array.isArray(value) && value.length > 0 || typeof value === "string" && value.includes("\n");
     if (key === "status" && typeof value === "string" && !isComplex) {
       return `<div class="yaml-row yaml-row-simple" data-depth="${depth}">${keyHtml}<span class="yaml-colon">:</span> ${renderStatusPill(value)}</div>`;
@@ -26359,20 +24725,489 @@ function renderObject(obj, depth) {
 function yamlRender(src) {
   if (!src) return "";
   try {
-    const parsed = load$2(src);
+    const parsed = load(src);
     if (parsed === null || parsed === void 0)
       return '<div class="yaml-empty">empty document</div>';
     return `<div class="yaml-doc">${renderValue(parsed, 0)}</div>`;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return `<div class="yaml-error">YAML parse error: ${escapeHtml(msg)}</div><pre class="yaml-raw">${escapeHtml(src)}</pre>`;
+    return `<div class="yaml-error">YAML parse error: ${escapeHtml$1(msg)}</div><pre class="yaml-raw">${escapeHtml$1(src)}</pre>`;
   }
 }
-const _hoisted_1$c = {
+function escHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function fmtSize(bytes) {
+  if (bytes == null) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+function fileIcon(entry) {
+  if (entry.type === "directory") return "📁";
+  const ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
+  const lx = ext.toLowerCase();
+  if (lx === "md" || lx === "markdown" || lx === "mdx") return "📝";
+  if (lx === "ts" || lx === "js" || lx === "mjs") return "📦";
+  if (lx === "json") return "📋";
+  if (lx === "sh" || lx === "bash") return "⚙️";
+  if (lx === "yml" || lx === "yaml") return "📑";
+  if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(lx) !== -1) return "🖼️";
+  return "📄";
+}
+function detectLang(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  if (ext === "json") return "json";
+  if (["js", "mjs", "cjs", "ts", "tsx", "jsx"].indexOf(ext) !== -1) return "js";
+  if (ext === "py") return "py";
+  if (ext === "vue") return "vue";
+  if (ext === "html" || ext === "htm") return "html";
+  if (["css", "scss", "sass", "less"].indexOf(ext) !== -1) return "css";
+  return "";
+}
+function isYaml(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  return ext === "yaml" || ext === "yml";
+}
+function isImageFile(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
+}
+function highlightCode(src, lang) {
+  if (lang === "json") return highlightJson(src);
+  if (lang === "js") return highlightJs(src);
+  if (lang === "py") return highlightPy(src);
+  if (lang === "vue") return highlightVue(src);
+  if (lang === "html") return highlightHtml(src);
+  if (lang === "css") return highlightCss(src);
+  return escHtml(src);
+}
+function highlightJson(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === '"') {
+      const start = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === '"') {
+          i++;
+          break;
+        }
+        i++;
+      }
+      const str2 = src.slice(start, i);
+      let j2 = i;
+      while (j2 < len && /\s/.test(src[j2])) j2++;
+      if (src[j2] === ":") {
+        out += '<span class="syn-key">' + escHtml(str2) + "</span>";
+      } else {
+        out += '<span class="syn-str">' + escHtml(str2) + "</span>";
+      }
+      continue;
+    }
+    if (ch === "-" || ch >= "0" && ch <= "9") {
+      const nStart = i;
+      if (ch === "-") i++;
+      while (i < len && /[0-9.eE+\-]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (src.slice(i, i + 4) === "true" || src.slice(i, i + 5) === "false") {
+      const kw = src.slice(i, i + 4) === "true" ? "true" : "false";
+      out += '<span class="syn-bool">' + kw + "</span>";
+      i += kw.length;
+      continue;
+    }
+    if (src.slice(i, i + 4) === "null") {
+      out += '<span class="syn-null">null</span>';
+      i += 4;
+      continue;
+    }
+    if ("{}[],:".indexOf(ch) >= 0) {
+      out += '<span class="syn-punct">' + escHtml(ch) + "</span>";
+      i++;
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+const JS_KEYWORDS = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|as|interface|type|enum|implements|public|private|protected|readonly|abstract)$/;
+const JS_BUILTINS = /^(true|false|null|undefined|NaN|Infinity|console|Math|JSON|Object|Array|String|Number|Boolean|Promise|Date|RegExp|Error|window|document|globalThis)$/;
+function highlightJs(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "/" && src[i + 1] === "/") {
+      const end = src.indexOf("\n", i);
+      const e = end === -1 ? len : end;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
+      i = e;
+      continue;
+    }
+    if (ch === "/" && src[i + 1] === "*") {
+      let bend = src.indexOf("*/", i + 2);
+      if (bend === -1) bend = len;
+      else bend += 2;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, bend)) + "</span>";
+      i = bend;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === quote) {
+          i++;
+          break;
+        }
+        if (quote === "`" && src[i] === "$" && src[i + 1] === "{") {
+          let depth = 1;
+          i += 2;
+          while (i < len && depth > 0) {
+            if (src[i] === "{") depth++;
+            else if (src[i] === "}") depth--;
+            i++;
+          }
+          continue;
+        }
+        i++;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(ch)) {
+      const idStart = i;
+      while (i < len && /[A-Za-z0-9_$]/.test(src[i])) i++;
+      const word = src.slice(idStart, i);
+      if (JS_KEYWORDS.test(word)) {
+        out += '<span class="syn-kw">' + word + "</span>";
+      } else if (JS_BUILTINS.test(word)) {
+        out += '<span class="syn-builtin">' + word + "</span>";
+      } else if (src[i] === "(") {
+        out += '<span class="syn-fn">' + word + "</span>";
+      } else {
+        out += escHtml(word);
+      }
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+const PY_KEYWORDS = /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|match|case)$/;
+const PY_BUILTINS = /^(abs|all|any|bool|bytes|callable|chr|dict|dir|enumerate|filter|float|format|frozenset|getattr|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|map|max|min|next|object|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|str|sum|super|tuple|type|vars|zip|self|cls)$/;
+function highlightPy(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "@" && /[A-Za-z_]/.test(src[i + 1] || "")) {
+      const dStart = i;
+      i++;
+      while (i < len && /[A-Za-z0-9_.]/.test(src[i])) i++;
+      out += '<span class="syn-decor">' + escHtml(src.slice(dStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "#") {
+      const end = src.indexOf("\n", i);
+      const e = end === -1 ? len : end;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
+      i = e;
+      continue;
+    }
+    if ((ch === '"' || ch === "'") && src[i + 1] === ch && src[i + 2] === ch) {
+      const tq = ch + ch + ch;
+      const tStart = i;
+      i += 3;
+      const tEnd = src.indexOf(tq, i);
+      if (tEnd === -1) {
+        i = len;
+      } else {
+        i = tEnd + 3;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(tStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === quote) {
+          i++;
+          break;
+        }
+        if (src[i] === "\n") break;
+        i++;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (/[A-Za-z_]/.test(ch)) {
+      const idStart = i;
+      while (i < len && /[A-Za-z0-9_]/.test(src[i])) i++;
+      const word = src.slice(idStart, i);
+      if (PY_KEYWORDS.test(word)) {
+        out += '<span class="syn-kw">' + word + "</span>";
+      } else if (PY_BUILTINS.test(word)) {
+        out += '<span class="syn-builtin">' + word + "</span>";
+      } else if (src[i] === "(") {
+        out += '<span class="syn-fn">' + word + "</span>";
+      } else {
+        out += escHtml(word);
+      }
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+function highlightHtmlTag(tag) {
+  let out = "";
+  const len = tag.length;
+  if (len < 2) return escHtml(tag);
+  out += '<span class="syn-punct">&lt;</span>';
+  let i = 1;
+  if (tag[i] === "/") {
+    out += '<span class="syn-punct">/</span>';
+    i++;
+  }
+  const nameStart = i;
+  while (i < len && /[a-zA-Z0-9\-]/.test(tag[i])) i++;
+  if (i > nameStart) {
+    out += '<span class="syn-tag">' + escHtml(tag.slice(nameStart, i)) + "</span>";
+  }
+  while (i < len && tag[i] !== ">") {
+    if (/\s/.test(tag[i])) {
+      out += tag[i];
+      i++;
+      continue;
+    }
+    if (tag[i] === "/") {
+      out += '<span class="syn-punct">/</span>';
+      i++;
+      continue;
+    }
+    const aStart = i;
+    while (i < len && /[a-zA-Z0-9:@\-._]/.test(tag[i])) i++;
+    if (i > aStart) {
+      out += '<span class="syn-attr">' + escHtml(tag.slice(aStart, i)) + "</span>";
+    } else {
+      out += escHtml(tag[i]);
+      i++;
+      continue;
+    }
+    if (tag[i] === "=") {
+      out += '<span class="syn-punct">=</span>';
+      i++;
+      if (tag[i] === '"' || tag[i] === "'") {
+        const quote = tag[i];
+        const vStart = i;
+        i++;
+        while (i < len && tag[i] !== quote) i++;
+        if (i < len) i++;
+        out += '<span class="syn-str">' + escHtml(tag.slice(vStart, i)) + "</span>";
+      } else {
+        const uStart = i;
+        while (i < len && !/[\s>]/.test(tag[i])) i++;
+        out += '<span class="syn-str">' + escHtml(tag.slice(uStart, i)) + "</span>";
+      }
+    }
+  }
+  if (i < len && tag[i] === ">") out += '<span class="syn-punct">&gt;</span>';
+  return out;
+}
+function highlightHtml(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    if (src.slice(i, i + 4) === "<!--") {
+      let end = src.indexOf("-->", i + 4);
+      end = end === -1 ? len : end + 3;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    if (src[i] === "<") {
+      const tagEnd = src.indexOf(">", i);
+      if (tagEnd === -1) {
+        out += escHtml(src.slice(i));
+        break;
+      }
+      out += highlightHtmlTag(src.slice(i, tagEnd + 1));
+      i = tagEnd + 1;
+      continue;
+    }
+    if (src[i] === "{" && src[i + 1] === "{") {
+      const iend = src.indexOf("}}", i + 2);
+      if (iend === -1) {
+        out += escHtml(src.slice(i));
+        break;
+      }
+      const end = iend + 2;
+      out += '<span class="syn-interp">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    out += escHtml(src[i]);
+    i++;
+  }
+  return out;
+}
+function highlightCss(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  let depth = 0;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "/" && src[i + 1] === "*") {
+      let end = src.indexOf("*/", i + 2);
+      end = end === -1 ? len : end + 2;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len && src[i] !== quote) {
+        if (src[i] === "\\" && i + 1 < len) i++;
+        i++;
+      }
+      if (i < len) i++;
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "{") {
+      depth++;
+      out += '<span class="syn-punct">{</span>';
+      i++;
+      continue;
+    }
+    if (ch === "}") {
+      if (depth > 0) depth--;
+      out += '<span class="syn-punct">}</span>';
+      i++;
+      continue;
+    }
+    if (ch === "@" && /[a-zA-Z]/.test(src[i + 1] || "")) {
+      const aStart = i;
+      i++;
+      while (i < len && /[a-zA-Z\-]/.test(src[i])) i++;
+      out += '<span class="syn-kw">' + escHtml(src.slice(aStart, i)) + "</span>";
+      continue;
+    }
+    if (depth > 0 && /[a-zA-Z\-]/.test(ch)) {
+      const pStart = i;
+      while (i < len && /[a-zA-Z0-9\-]/.test(src[i])) i++;
+      let j2 = i;
+      while (j2 < len && /\s/.test(src[j2])) j2++;
+      if (src[j2] === ":") {
+        out += '<span class="syn-key">' + escHtml(src.slice(pStart, i)) + "</span>";
+      } else {
+        out += escHtml(src.slice(pStart, i));
+      }
+      continue;
+    }
+    if (depth > 0 && ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9.]/.test(src[i])) i++;
+      while (i < len && /[a-zA-Z%]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "#" && /[0-9a-fA-F]/.test(src[i + 1] || "")) {
+      const hStart = i;
+      i++;
+      while (i < len && /[0-9a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(hStart, i)) + "</span>";
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+function highlightVue(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  const blockRe = /<(template|script|style)(\s[^>]*?)?>/i;
+  while (i < len) {
+    const rest = src.slice(i);
+    const m2 = blockRe.exec(rest);
+    if (!m2) {
+      out += escHtml(rest);
+      break;
+    }
+    out += escHtml(rest.slice(0, m2.index));
+    const blockName = m2[1].toLowerCase();
+    const openTag = m2[0];
+    out += highlightHtmlTag(openTag);
+    const contentStart = m2.index + openTag.length;
+    const closeRe = new RegExp("</" + blockName + "\\s*>", "i");
+    const close = closeRe.exec(rest.slice(contentStart));
+    if (!close) {
+      const tailContent = rest.slice(contentStart);
+      out += highlightVueBlockContent(tailContent, blockName);
+      break;
+    }
+    const content = rest.slice(contentStart, contentStart + close.index);
+    out += highlightVueBlockContent(content, blockName);
+    const closeTag = close[0];
+    out += highlightHtmlTag(closeTag);
+    i += contentStart + close.index + closeTag.length;
+  }
+  return out;
+}
+function highlightVueBlockContent(content, blockName) {
+  if (blockName === "script") return highlightJs(content);
+  if (blockName === "style") return highlightCss(content);
+  return highlightHtml(content);
+}
+const _hoisted_1$7 = {
   ref: "content",
   class: "files-content"
 };
-const _sfc_main$f = /* @__PURE__ */ defineComponent({
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -26688,22 +25523,3176 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
       filesContent.appendChild(wrap);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$c, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", { class: "files-empty" }, "Select a file to view", -1)
       ])], 512);
     };
   }
 });
-const _hoisted_1$b = {
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+  __name: "FileView",
+  props: {
+    resource: {}
+  },
+  setup(__props) {
+    return (_ctx, _cache) => {
+      return __props.resource.kind === "file" ? (openBlock(), createBlock(_sfc_main$a, {
+        key: 0,
+        path: __props.resource.path,
+        branch: __props.resource.branch,
+        kind: "file"
+      }, null, 8, ["path", "branch"])) : createCommentVNode("", true);
+    };
+  }
+});
+const _sfc_main$8 = /* @__PURE__ */ defineComponent({
+  __name: "ReportView",
+  props: {
+    resource: {}
+  },
+  setup(__props) {
+    const props = __props;
+    const reportPath = computed(() => {
+      if (props.resource.kind !== "report") return "";
+      if (props.resource.path) return props.resource.path;
+      return props.resource.taskId;
+    });
+    return (_ctx, _cache) => {
+      return __props.resource.kind === "report" && reportPath.value ? (openBlock(), createBlock(_sfc_main$a, {
+        key: 0,
+        path: reportPath.value,
+        kind: "report"
+      }, null, 8, ["path"])) : createCommentVNode("", true);
+    };
+  }
+});
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref("projects");
+  const filter = /* @__PURE__ */ ref("all");
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const pane = /* @__PURE__ */ ref("empty");
+  const pickerCollapsed = /* @__PURE__ */ ref(false);
+  const currentTaskId = /* @__PURE__ */ ref(null);
+  const currentTaskProject = /* @__PURE__ */ ref(null);
+  const currentViewMode = /* @__PURE__ */ ref("task");
+  const currentProjectSlug = /* @__PURE__ */ ref(null);
+  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
+  const loaded = /* @__PURE__ */ ref(false);
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    pane,
+    pickerCollapsed,
+    currentTaskId,
+    currentTaskProject,
+    currentViewMode,
+    currentProjectSlug,
+    taskFromProjectSlug,
+    loaded
+  };
+});
+const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
+  const tiers = /* @__PURE__ */ ref(null);
+  const lastFetch = /* @__PURE__ */ ref(0);
+  async function fetch2() {
+    try {
+      const res = await window.fetch("/api/tasks/attention");
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.ok && data.tiers) {
+        tiers.value = data.tiers;
+        lastFetch.value = Date.now();
+      }
+    } catch (_2) {
+    }
+  }
+  return { tiers, lastFetch, fetch: fetch2 };
+});
+function escapeHtml(s) {
+  return escHtml(String(s == null ? "" : s));
+}
+function isPanelNarrow(panelId, threshold) {
+  const el = document.getElementById(panelId);
+  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
+}
+function timeAgo(iso) {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
+  const mins = Math.floor(diff / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
+function statusClass(status) {
+  if (!status) return "is-open";
+  if (status === "open" || status === "claimed") return "is-open";
+  if (status.indexOf("waiting:") === 0) return "is-waiting";
+  if (status === "paused") return "is-paused";
+  if (status === "done") return "is-done";
+  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
+  return "is-open";
+}
+function shorten(s, n) {
+  const str2 = String(s || "");
+  if (str2.length <= n) return str2;
+  return str2.slice(0, n - 1) + "…";
+}
+function shortenStatusLabel(s) {
+  if (!s) return "?";
+  if (s === "paused") return "paused";
+  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
+  if (s.indexOf("failed:") === 0) {
+    const rest = s.slice("failed:".length);
+    return rest === "other" ? "failed" : "fail " + rest;
+  }
+  return s;
+}
+function fmtDaysHours(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  const seconds = Math.floor(ms / 1e3);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  if (days > 0) return days + "d " + hours + "h";
+  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
+}
+function suggestChildHeadline(parentHeadline, source) {
+  const base = String(parentHeadline || "").slice(0, 56);
+  return base + " — rework";
+}
+function renderNextTargetPicker(currentAgent, agentsCache) {
+  let options = "";
+  const agents = Array.isArray(agentsCache) ? agentsCache : [];
+  for (const a of agents) {
+    if (!a || !a.name) continue;
+    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+    const selected = a.name === currentAgent ? " selected" : "";
+    options += '<option value="' + escapeHtml(a.name) + '"' + selected + ">" + escapeHtml(label) + "</option>";
+  }
+  if (!options && currentAgent) {
+    options = '<option value="' + escapeHtml(currentAgent) + '" selected>' + escapeHtml(currentAgent) + "</option>";
+  }
+  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
+}
+function countActiveDescendants(taskId, cache) {
+  if (!taskId || !cache.length) return 0;
+  const byParent = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (byParent[p2] = byParent[p2] || []).push(t);
+  }
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      if (!kid.closed || !kid.closed.status) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function shortId(id) {
+  return String(id || "").replace(/^TSK-\d{4}-/, "");
+}
+function tierRow(rowCls, row, showCheckbox) {
+  const full = escapeHtml(row.id || "");
+  const shrt = escapeHtml(shortId(row.id));
+  const headline = escapeHtml(row.headline || row.id || "");
+  const label = escapeHtml(shorten(row.label || row.headline || row.id || "", 120));
+  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
+  return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
+}
+function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
+  const count = tier && tier.count || 0;
+  const rows = tier && tier.rows || [];
+  const selectAll = showCheckbox && count > 0 ? '<input type="checkbox" class="tier-report-select-all current-group-select-all" title="Select all reports" />' : "";
+  let h2 = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
+  for (const row of rows) {
+    h2 += tierRow(rowCls, row, showCheckbox);
+  }
+  if (count > rows.length) {
+    h2 += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
+  }
+  return h2;
+}
+function renderAttentionTiers(el, tiers) {
+  if (!el) return;
+  if (!tiers) {
+    el.hidden = true;
+    return;
+  }
+  let html = "";
+  html += renderTierSection(tiers.unclassified, "tasks-tier-head-unclassified", "tasks-tier-row-unclassified", "⚠", "Unclassified", false);
+  html += renderTierSection(tiers.failed, "tasks-tier-head-failed", "tasks-tier-row-failed", "✗", "Triage", false);
+  html += renderTierSection(tiers.blocked, "tasks-tier-head-blocked", "tasks-tier-row-blocked", "⊘", "Unblock", false);
+  html += renderTierSection(tiers.paused, "tasks-tier-head-paused", "tasks-tier-row-paused", "⏸", "Paused", false);
+  html += renderTierSection(tiers.reports, "tasks-tier-head-reports", "tasks-tier-row-reports", "▶", "Read", true);
+  el.innerHTML = html;
+  el.hidden = html === "";
+}
+function passesFilter(t, filter) {
+  if (filter === "all") return true;
+  const s = (t.status || "").toLowerCase();
+  if (filter === "open") return s === "open" || s === "claimed";
+  if (filter === "waiting") return s.indexOf("waiting:") === 0;
+  if (filter === "done") return s === "done";
+  if (filter === "failed") return s.indexOf("failed:") === 0 || s === "escalated";
+  return true;
+}
+function buildTaskTree(tasks) {
+  const byId = {};
+  for (const t of tasks) byId[t.id] = t;
+  function idDerivedAncestor(id) {
+    let cur = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur);
+      if (!m2) return null;
+      cur = m2[1];
+      if (byId[cur]) return cur;
+    }
+  }
+  function dotDepth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function effectiveParent(t) {
+    const pid = t.parent && t.parent !== "null" ? t.parent : null;
+    if (pid && pid !== t.id && byId[pid] && dotDepth(pid) >= dotDepth(t.id)) {
+      const idAnc = idDerivedAncestor(t.id);
+      if (idAnc) return idAnc;
+    }
+    if (pid && pid !== t.id && byId[pid]) {
+      const seen = { [t.id]: true };
+      let cur = byId[pid];
+      let cyclic = false;
+      while (cur) {
+        if (seen[cur.id]) {
+          cyclic = true;
+          break;
+        }
+        seen[cur.id] = true;
+        const nextId = cur.parent && cur.parent !== "null" ? cur.parent : null;
+        if (!nextId || nextId === cur.id || !byId[nextId]) break;
+        cur = byId[nextId];
+      }
+      if (!cyclic) return pid;
+    }
+    return idDerivedAncestor(t.id);
+  }
+  const roots = [];
+  const childrenOf = {};
+  for (const t of tasks) {
+    const parentId = effectiveParent(t);
+    if (parentId) {
+      (childrenOf[parentId] = childrenOf[parentId] || []).push(t);
+    } else {
+      roots.push(t);
+    }
+  }
+  function byUpdatedDesc(a, b2) {
+    return (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0);
+  }
+  function byIdAsc(a, b2) {
+    return String(a.id).localeCompare(String(b2.id));
+  }
+  roots.sort(byUpdatedDesc);
+  Object.keys(childrenOf).forEach((k) => childrenOf[k].sort(byIdAsc));
+  return { roots, childrenOf };
+}
+function buildByParent(cache) {
+  const bp = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (bp[p2] = bp[p2] || []).push(t);
+  }
+  return bp;
+}
+function countNonTerminalDescendants(taskId, byParent) {
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      const s = kid.status || "";
+      const terminal = s === "done" || s.indexOf("failed:") === 0;
+      if (!terminal) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTaskId) {
+  let rowStatus = statusClass(t.status);
+  const marker = depth === 0 ? "●" : "└";
+  const headline = t.headline || t.summary && t.summary.brief || t.brief || "(no headline)";
+  let rowClass = "tasks-tree-row";
+  if (t.id === currentTaskId) rowClass += " is-active";
+  if (t.status === "waiting:on:user") rowClass += " is-waiting-user";
+  if (t.status === "paused") rowClass += " is-paused";
+  if (t.closed && t.closed.status) rowClass += " is-closed";
+  if (depth === 0) rowClass += " is-root";
+  let queuedBadge = "";
+  if (queuedCount > 0) {
+    rowClass += " has-queued";
+    rowStatus = "is-open";
+    queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
+  }
+  const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
+  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
+  const rawStatus = t.status || "?";
+  const shortStatus = shortenStatusLabel(rawStatus);
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml(rawStatus) + '">' + escapeHtml(shortStatus) + "</span>") + "</div></div></div>";
+}
+function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
+  if (seen[node.id] || depth > 32) return;
+  seen[node.id] = true;
+  const kids = tree.childrenOf[node.id] || [];
+  const hasChildren = kids.length > 0;
+  const queuedCount = countNonTerminalDescendants(node.id, byParent);
+  if (queuedCount > 0 && hasChildren && !(node.id in expanded)) {
+    expanded[node.id] = true;
+  }
+  const isExpanded = !!expanded[node.id];
+  out.push(renderTreeRow(node, depth, hasChildren, isExpanded, queuedCount, currentTaskId));
+  if (!hasChildren || !isExpanded) return;
+  for (const kid of kids) {
+    renderTreeBranch(tree, kid, depth + 1, out, expanded, byParent, currentTaskId, seen);
+  }
+}
+function expandAncestors(taskId, cache, expanded) {
+  if (!taskId) return;
+  const byId = {};
+  for (const t of cache) byId[t.id] = t;
+  function depth(id) {
+    return (String(id).match(/\./g) || []).length;
+  }
+  function idDerived(id) {
+    let cur2 = id;
+    while (true) {
+      const m2 = /^(.+)\.[0-9]+$/.exec(cur2);
+      if (!m2) return null;
+      cur2 = m2[1];
+      if (byId[cur2]) return cur2;
+    }
+  }
+  function ancestorOf(id) {
+    const t = byId[id];
+    if (t) {
+      const p2 = t.parent && t.parent !== "null" && t.parent !== id ? t.parent : null;
+      if (p2 && byId[p2] && depth(p2) >= depth(id)) {
+        const derived = idDerived(id);
+        if (derived) return derived;
+      }
+      if (p2 && byId[p2]) return p2;
+    }
+    return idDerived(id);
+  }
+  const seen = {};
+  let cur = ancestorOf(taskId);
+  while (cur && !seen[cur]) {
+    seen[cur] = true;
+    expanded[cur] = true;
+    cur = ancestorOf(cur);
+  }
+}
+function currentStatusClass(status) {
+  const s = (status || "").toLowerCase();
+  if (s === "done") return "status-done";
+  if (s.indexOf("failed") === 0 || s === "escalated") return "status-failed";
+  if (s === "waiting:on:user") return "status-waiting-user";
+  if (s.indexOf("waiting:on:task") === 0) return "status-waiting-task";
+  if (s === "waiting:on:limits") return "status-waiting-limits";
+  if (s.indexOf("waiting:") === 0) return "status-waiting-other";
+  if (s === "claimed") return "status-claimed";
+  return "status-open";
+}
+function renderCurrentRow(task, currentTaskId, currentSelected) {
+  const sc = currentStatusClass(task.status);
+  const isClaimed = task.status === "claimed";
+  const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
+  const meta = [
+    escapeHtml(task.agent || task.to || "?"),
+    escapeHtml(shortenStatusLabel(task.status || "?")),
+    ...task.updated ? [escapeHtml(timeAgo(task.updated))] : []
+  ];
+  let rowClass = "tasks-current-row " + sc;
+  if (task.id === currentTaskId) rowClass += " is-active";
+  const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
+  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml(task.id) + '" data-task-agent="' + escapeHtml(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
+}
+function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
+  const filtered = cache.filter((t) => passesFilter(t, filter));
+  if (filtered.length === 0) {
+    tasksTree.innerHTML = '<div class="tasks-tree-empty">No tasks match this filter.</div>';
+    return;
+  }
+  const groups = {};
+  for (const t of filtered) {
+    const key = t.project || "__unassigned";
+    (groups[key] = groups[key] || []).push(t);
+  }
+  const projectKeys = Object.keys(groups).sort((a, b2) => {
+    if (a === "__unassigned" && b2 !== "__unassigned") return 1;
+    if (b2 === "__unassigned" && a !== "__unassigned") return -1;
+    const aLatest = groups[a].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    const bLatest = groups[b2].reduce((m2, t) => Math.max(m2, Date.parse(t.updated || "0") || 0), 0);
+    return bLatest - aLatest;
+  });
+  let html = "";
+  const byParent = buildByParent(filtered);
+  for (const groupKey of projectKeys) {
+    const rows = groups[groupKey];
+    const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
+    const isCollapsed = !!collapsed[groupKey];
+    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml(groupKey) + '">';
+    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
+    html += '<span class="tasks-current-group-chevron"></span>';
+    html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + "</span>";
+    html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
+    html += '<div class="tasks-current-group-body">';
+    const tree = buildTaskTree(rows);
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    html += out.join("") + "</div></div>";
+  }
+  tasksTree.innerHTML = html;
+}
+function updateGroupSelectAll(groupEl) {
+  if (!groupEl) return;
+  const allCb = groupEl.querySelector(".current-group-select-all");
+  if (!allCb) return;
+  const rowCbs = groupEl.querySelectorAll(".current-row-select");
+  if (rowCbs.length === 0) return;
+  let checkedCount = 0;
+  rowCbs.forEach((cb) => {
+    if (cb.checked) checkedCount++;
+  });
+  if (checkedCount === 0) {
+    allCb.checked = false;
+    allCb.indeterminate = false;
+  } else if (checkedCount === rowCbs.length) {
+    allCb.checked = true;
+    allCb.indeterminate = false;
+  } else {
+    allCb.checked = false;
+    allCb.indeterminate = true;
+  }
+}
+function handleRowCheckboxChange(ev, bulkSelected, updateBulkBar) {
+  const cb = ev.target;
+  if (!cb || cb.type !== "checkbox") return;
+  if (cb.classList.contains("current-row-select")) {
+    const taskId = cb.getAttribute("data-task-id") || "";
+    const agent = cb.getAttribute("data-task-agent") || "";
+    const defaultStatus = cb.getAttribute("data-task-default-status") || "cancelled";
+    if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
+    else delete bulkSelected[taskId];
+    updateBulkBar();
+    updateGroupSelectAll(cb.closest("[data-project-key]"));
+    return;
+  }
+  if (cb.classList.contains("current-group-select-all")) {
+    const groupEl = cb.closest("[data-project-key]");
+    const rowCbs = groupEl ? groupEl.querySelectorAll(".current-row-select") : [];
+    rowCbs.forEach((rCb) => {
+      const rId = rCb.getAttribute("data-task-id") || "";
+      const rAgent = rCb.getAttribute("data-task-agent") || "";
+      const rStatus = rCb.getAttribute("data-task-default-status") || "cancelled";
+      if (cb.checked) {
+        bulkSelected[rId] = { agent: rAgent, defaultStatus: rStatus };
+        rCb.checked = true;
+      } else {
+        delete bulkSelected[rId];
+        rCb.checked = false;
+      }
+    });
+    updateBulkBar();
+  }
+}
+function createBulkBar(tasksTreeEl, getBulkSelected, getMultiSelectActive, setMultiSelectActive, clearSelection, rerenderPicker, fetchTasks) {
+  const bar = document.createElement("div");
+  bar.className = "tasks-bulk-bar";
+  bar.hidden = true;
+  bar.innerHTML = '<span class="bulk-bar-count"></span><input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…"><button type="button" class="bulk-bar-close is-primary"></button><button type="button" class="bulk-bar-clear">Clear</button><button type="button" class="bulk-bar-done">Done</button><span class="bulk-bar-status"></span>';
+  const closeBtn = bar.querySelector(".bulk-bar-close");
+  const clearBtn = bar.querySelector(".bulk-bar-clear");
+  const doneBtn = bar.querySelector(".bulk-bar-done");
+  const statusEl = bar.querySelector(".bulk-bar-status");
+  const reasonEl = bar.querySelector(".bulk-bar-reason");
+  async function submitBulkClose() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    if (ids.length === 0) return;
+    const reason = (reasonEl ? reasonEl.value : "").trim();
+    if (closeBtn) closeBtn.disabled = true;
+    if (statusEl) {
+      statusEl.textContent = "Closing…";
+      statusEl.className = "bulk-bar-status";
+    }
+    let closed = 0, failed = 0;
+    for (const id of ids) {
+      const sel = selected[id];
+      if (!sel) continue;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(id) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent: sel.agent, reason, status: sel.defaultStatus })
+        });
+        const data = await res.json();
+        if (data && data.ok) closed++;
+        else failed++;
+      } catch (_2) {
+        failed++;
+      }
+    }
+    clearSelection();
+    if (statusEl) {
+      statusEl.textContent = failed > 0 ? "Closed " + closed + " · " + failed + " failed." : "Closed " + closed + ".";
+      statusEl.className = "bulk-bar-status is-ok";
+    }
+    if (closeBtn) closeBtn.disabled = false;
+    fetchTasks();
+  }
+  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    clearSelection();
+    rerenderPicker();
+  });
+  if (doneBtn) doneBtn.addEventListener("click", () => {
+    setMultiSelectActive(false);
+    clearSelection();
+    tasksTreeEl.classList.remove("is-multiselect-active");
+    updateBar();
+    rerenderPicker();
+  });
+  function updateBar() {
+    const selected = getBulkSelected();
+    const ids = Object.keys(selected);
+    const multiActive = getMultiSelectActive();
+    if (ids.length === 0 && !multiActive) {
+      bar.hidden = true;
+      return;
+    }
+    bar.hidden = false;
+    const countEl = bar.querySelector(".bulk-bar-count");
+    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
+    if (closeBtn) {
+      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
+      closeBtn.hidden = ids.length === 0;
+    }
+    if (clearBtn) clearBtn.hidden = ids.length === 0;
+    if (statusEl) statusEl.textContent = "";
+  }
+  bar.update = updateBar;
+  if (tasksTreeEl.parentNode) {
+    tasksTreeEl.parentNode.insertBefore(bar, tasksTreeEl);
+  }
+  return bar;
+}
+function hideClosedKey(slug) {
+  return "caravel.project.hideClosed." + (slug || "__unassigned__");
+}
+function getProjectHideClosed(slug) {
+  try {
+    return !!(window.localStorage && window.localStorage.getItem(hideClosedKey(slug)) === "1");
+  } catch (_2) {
+    return false;
+  }
+}
+function setProjectHideClosed(slug, hide) {
+  try {
+    if (!window.localStorage) return;
+    if (hide) window.localStorage.setItem(hideClosedKey(slug), "1");
+    else window.localStorage.removeItem(hideClosedKey(slug));
+  } catch (_2) {
+  }
+}
+let projectsOverviewCache = null;
+function invalidateProjectsCache() {
+  projectsOverviewCache = null;
+}
+async function loadProjectsOverview() {
+  if (projectsOverviewCache !== null) return projectsOverviewCache;
+  try {
+    const res = await fetch("/api/projects?counts=1", { cache: "no-store" });
+    const data = await res.json();
+    projectsOverviewCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsOverviewCache = [];
+  }
+  return projectsOverviewCache;
+}
+function renderProjectCard(card, currentProjectSlug) {
+  const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
+  const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
+  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml(card.jira) + "</span>" : "";
+  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml(card.status) + "</span>" : "";
+  const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
+  const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
+  const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
+  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml(touched) + "</span></div></div>";
+}
+function renderProjectsView(tasksTreeEl, currentProjectSlug) {
+  tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
+  loadProjectsOverview().then((cards) => {
+    if (!cards.length) {
+      tasksTreeEl.innerHTML = '<div class="tasks-current-empty">No projects yet. Tag a task with <code>project: &lt;slug&gt;</code> or create a <code>Notes/Projects/&lt;slug&gt;/</code> folder.</div>';
+      return;
+    }
+    cards.sort((a, b2) => {
+      if (a.slug === "" && b2.slug !== "") return 1;
+      if (b2.slug === "" && a.slug !== "") return -1;
+      const ta = a.lastTouched ? Date.parse(a.lastTouched) || 0 : 0;
+      const tb = b2.lastTouched ? Date.parse(b2.lastTouched) || 0 : 0;
+      if (tb !== ta) return tb - ta;
+      return a.slug.localeCompare(b2.slug);
+    });
+    let html = '<div class="tasks-projects-grid">';
+    for (const card of cards) html += renderProjectCard(card, currentProjectSlug);
+    html += "</div>";
+    tasksTreeEl.innerHTML = html;
+  }).catch((err) => {
+    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml(String(err.message || err)) + "</div>";
+  });
+}
+function renderDocCard(doc2, kind) {
+  const title = doc2.title || doc2.filename || "(untitled)";
+  const desc = doc2.description ? escapeHtml(shorten(doc2.description, 140)) : "";
+  const meta = [];
+  if (doc2.doc_type) meta.push(escapeHtml(doc2.doc_type));
+  if (doc2.last_updated) meta.push(escapeHtml(doc2.last_updated));
+  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml(kind || "other") + '" data-open-file="' + escapeHtml(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
+}
+function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
+  var _a2, _b;
+  const { slug } = summary;
+  const displayName = summary.title || (slug === "" ? "(Unassigned)" : slug);
+  const hideClosed = getProjectHideClosed(slug);
+  let headParts = '<div class="tasks-project-head">';
+  headParts += '<div class="tasks-project-head-row">';
+  headParts += '<div class="tasks-project-title">' + escapeHtml(displayName) + "</div>";
+  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml(summary.jira) + "</span>";
+  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml(summary.status) + "</span>";
+  headParts += "</div>";
+  if (summary.title && slug && slug !== "") {
+    headParts += '<div class="tasks-project-slug">' + escapeHtml(slug) + "</div>";
+  }
+  const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
+  const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
+  headParts += '<div class="tasks-project-metrics">';
+  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml(medClose) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml(medAge) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
+  headParts += "</div>";
+  headParts += '<div class="tasks-project-actions">';
+  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml(slug) + '">+ New task here</button>';
+  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
+  headParts += "</div></div>";
+  const docs = summary.docs || { primary: [], fdps: [], other: [] };
+  let docsHtml = "";
+  if (docs.primary.length || docs.fdps.length || docs.other.length) {
+    docsHtml += '<div class="tasks-project-docs"><div class="tasks-project-docs-head">Documents</div><div class="tasks-project-docs-grid">';
+    for (const d2 of docs.primary) docsHtml += renderDocCard(d2, "primary");
+    for (const d2 of docs.fdps) docsHtml += renderDocCard(d2, "fdp");
+    docsHtml += "</div>";
+    if (docs.other.length) {
+      docsHtml += '<details class="tasks-project-docs-other"><summary>Other docs (' + docs.other.length + ")</summary>";
+      docsHtml += '<div class="tasks-project-docs-grid">';
+      for (const d2 of docs.other) docsHtml += renderDocCard(d2, "other");
+      docsHtml += "</div></details>";
+    }
+    docsHtml += "</div>";
+  }
+  let leavesHtml = '<div class="tasks-project-section"><div class="tasks-project-section-head">Active leaves (' + summary.leaves.length + ")</div>";
+  if (summary.leaves.length === 0) {
+    leavesHtml += '<div class="tasks-current-empty">No active leaves — inbox zero for this project. ✨</div>';
+  } else {
+    leavesHtml += '<div class="tasks-current">';
+    const sorted = summary.leaves.slice().sort((a, b2) => (Date.parse(b2.updated || "0") || 0) - (Date.parse(a.updated || "0") || 0));
+    for (const t of sorted) leavesHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    leavesHtml += "</div>";
+  }
+  leavesHtml += "</div>";
+  const familiesScoped = hideClosed ? summary.families.filter((t) => !(t.closed && t.closed.status)) : summary.families;
+  let familiesHtml = "";
+  if (familiesScoped.length > 0) {
+    familiesHtml += '<div class="tasks-project-section"><div class="tasks-project-section-head">Family trees</div><div class="tasks-project-trees">';
+    const tree = buildTaskTree(familiesScoped);
+    const byParent = {};
+    for (const t of familiesScoped) {
+      const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+      if (!p2) continue;
+      (byParent[p2] = byParent[p2] || []).push(t);
+    }
+    for (const root of tree.roots) expanded[root.id] = true;
+    const out = [];
+    for (const root of tree.roots) {
+      renderTreeBranch(tree, root, 0, out, expanded, byParent, currentTaskId);
+    }
+    familiesHtml += out.join("") + "</div></div>";
+  }
+  let closedHtml = "";
+  if (summary.closedTasks.length > 0 && !hideClosed) {
+    closedHtml += '<details class="tasks-project-section tasks-project-closed">';
+    closedHtml += '<summary class="tasks-project-section-head">Closed (' + summary.closedTasks.length + ")</summary>";
+    closedHtml += '<div class="tasks-current">';
+    for (const t of summary.closedTasks) closedHtml += renderCurrentRow(t, currentTaskId, bulkSelected);
+    closedHtml += "</div></details>";
+  }
+  projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
+}
+let projectsCache = null;
+async function ensureProjectsLoaded(select) {
+  if (!select) return;
+  if (projectsCache !== null) {
+    populateProjectSelect(select, projectsCache);
+    return;
+  }
+  try {
+    const res = await fetch("/api/projects", { cache: "no-store" });
+    const data = await res.json();
+    projectsCache = data && data.ok && Array.isArray(data.projects) ? data.projects : [];
+  } catch (_2) {
+    projectsCache = [];
+  }
+  populateProjectSelect(select, projectsCache);
+}
+function populateProjectSelect(select, projects) {
+  const current = select.value;
+  let html = '<option value="">(auto from context)</option><option value="__none__">(none / unassigned)</option>';
+  for (const p2 of projects) {
+    const label = p2.title ? p2.slug + " — " + p2.title : p2.slug;
+    html += '<option value="' + escapeHtml(p2.slug) + '">' + escapeHtml(label) + "</option>";
+  }
+  select.innerHTML = html;
+  if (current && Array.from(select.options).some((o) => o.value === current)) {
+    select.value = current;
+  }
+}
+function renderSection(title, bodyHtml, openByDefault) {
+  if (!bodyHtml) return "";
+  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
+}
+function renderPanelCard(card, isCurrent, currentTaskId, cache) {
+  var _a2;
+  if (!card) return "";
+  const brief = (card.brief || "").trim();
+  const summaryResponse = ((_a2 = card.summary) == null ? void 0 : _a2.response) ? String(card.summary.response).trim() : "";
+  const ctx = card.context || [];
+  const statusLower = (card.status || "").toLowerCase();
+  const isTerminal = statusLower.startsWith("done") || statusLower.startsWith("failed") || statusLower === "escalated";
+  const isClaimed = card.status === "claimed";
+  const isWaitingUser = card.status === "waiting:on:user";
+  const isPaused = card.status === "paused";
+  const isClosed = !!(card.closed && card.closed.status);
+  const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
+  const ctxLines = ctx.map((c) => {
+    const safe = escapeHtml(c);
+    if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
+    if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
+    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
+  }).join("");
+  const metaParts = [];
+  metaParts.push(escapeHtml(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml(card.to || "?"));
+  if (card.kind) metaParts.push(escapeHtml(card.kind));
+  if (card.priority) metaParts.push(escapeHtml(card.priority));
+  const projectLabel = card.project ? card.project : "Unassigned";
+  metaParts.push(
+    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml(card.id) + '" data-project-agent="' + escapeHtml(card.agent || card.to || "") + '" data-project-current="' + escapeHtml(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml(projectLabel) + "</span>"
+  );
+  if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
+  const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
+  let sections = "";
+  if (isTerminal && !isClosed) {
+    const picker = renderNextTargetPicker(card.agent || "", []);
+    const suggest = suggestChildHeadline(card.headline || card.id);
+    sections += renderSection(
+      "⏳ Continue",
+      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
+      true
+    );
+  }
+  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + "</div>", true);
+  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + "</div>", true);
+  if (isClosed) {
+    const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
+    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml(card.closed.by || "?") + (closedAt ? " · " + escapeHtml(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml(card.closed.reason) + "</div>" : "") + "</div>";
+  }
+  const actions = [];
+  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
+  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
+  if (!isClaimed && !isClosed) {
+    if (isTerminal) {
+      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml(card.agent || "") + '" data-done-reading-id="' + escapeHtml(card.id) + '" type="button">✓ Done reading</button>');
+    } else {
+      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">✕ Cancel</button>');
+    }
+  }
+  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml(card.id) + '" type="button">✕ Abort</button>');
+  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
+  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml(card.agent || "") + '" data-resume-task="' + escapeHtml(card.id) + '" type="button">▷ Resume</button>');
+  sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
+  {
+    const chatPicker = renderNextTargetPicker(card.agent || "", []);
+    const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
+    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
+  }
+  if (!isClaimed && !isClosed) {
+    const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
+    const activeCount = countActiveDescendants(card.id, cache);
+    const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
+    const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
+    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
+  }
+  if (isClaimed && !isClosed) {
+    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
+  }
+  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(envelopePath) + "</button></div>";
+  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(card.reportPath) + "</button></div>";
+  sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
+  if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
+  return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
+}
+function renderReportPane(card) {
+  if (!card || !card.reportPath) return "";
+  const safeTaskId = escapeHtml(card.id || "");
+  const allPaths = [card.reportPath];
+  for (const d2 of card.deliverables || []) {
+    if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
+  }
+  function docNode(path, isActive, scanExtras) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const sp = escapeHtml(path);
+    const sFolder = escapeHtml(folder);
+    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
+  }
+  const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
+  const pillsHidden = allPaths.length <= 1;
+  const pillsHtml = pillsHidden ? "" : allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
+  ).join("");
+  return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
+}
+const KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
+function resolveReportPath(primaryPath, href) {
+  if (!href) return null;
+  let clean = href.split("#")[0].split("?")[0];
+  if (!clean) return null;
+  if (/^https?:/i.test(clean) || clean.startsWith("mailto:")) return null;
+  if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
+  const parts = clean.split("/");
+  for (let k = parts.length - 1; k >= 0; k--) {
+    if (KNOWN_TOP_DIRS.includes(parts[k]) && k < parts.length - 1) return parts.slice(k).join("/");
+  }
+  const lead = clean.replace(/^\.\//, "");
+  const primaryDir = primaryPath.includes("/") ? primaryPath.substring(0, primaryPath.lastIndexOf("/")) : "";
+  const baseParts = primaryDir.split("/").filter(Boolean);
+  for (const p2 of lead.split("/")) {
+    if (!p2 || p2 === ".") continue;
+    if (p2 === "..") {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+      continue;
+    }
+    baseParts.push(p2);
+  }
+  return baseParts.length ? baseParts.join("/") : null;
+}
+function appendReportExtras(primaryNode) {
+  const primaryPath = primaryNode.getAttribute("data-report-path") || "";
+  const doc2 = primaryNode.closest(".task-panel-report-doc");
+  if (!doc2) return;
+  const pane = doc2.closest(".task-panel-report-pane");
+  if (!pane) return;
+  const docsHost = pane.querySelector(".task-panel-report-docs");
+  const pills = pane.querySelector(".task-panel-doc-pills");
+  if (!docsHost || !pills) return;
+  const seen = { [primaryPath]: true };
+  const anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
+  const paths = [];
+  for (const a of Array.from(anchors)) {
+    const href = a.getAttribute("href") || "";
+    if (!href || href.startsWith("#")) continue;
+    const resolved = resolveReportPath(primaryPath, href);
+    if (!resolved) continue;
+    if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
+    a.setAttribute("href", "#" + resolved);
+    a.setAttribute("data-open-file", resolved);
+    if (seen[resolved]) continue;
+    seen[resolved] = true;
+    paths.push(resolved);
+  }
+  if (!paths.length) return;
+  for (const path of paths) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const node = document.createElement("div");
+    node.className = "task-panel-report-doc";
+    node.setAttribute("data-doc-path", path);
+    node.hidden = true;
+    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
+    docsHost.appendChild(node);
+  }
+  const allPaths = [primaryPath, ...paths];
+  pills.innerHTML = allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + "</button>"
+  ).join("");
+  pills.hidden = false;
+  for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
+    loadReportNode(reportEl);
+  }
+}
+function setActiveReportDoc(pane, path) {
+  if (!pane || !path) return;
+  pane.querySelectorAll(".task-panel-report-doc").forEach((d2) => {
+    const match = d2.getAttribute("data-doc-path") === path;
+    d2.classList.toggle("is-active", match);
+    d2.hidden = !match;
+  });
+  pane.querySelectorAll(".task-panel-doc-pill").forEach((p2) => {
+    p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
+  });
+}
+function loadReportNode(node) {
+  if (!node || node.getAttribute("data-loaded") !== "false") return;
+  node.setAttribute("data-loaded", "loading");
+  node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
+  const path = node.getAttribute("data-report-path") || "";
+  fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
+    if (!data.ok) throw new Error(data.error || "failed");
+    node.setAttribute("data-loaded", "true");
+    if (data.markdown) {
+      const raw = data.content || "";
+      const { body } = stripFrontmatter(raw);
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
+      node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
+    } else {
+      const pre = document.createElement("pre");
+      pre.className = "task-panel-report-raw";
+      pre.textContent = data.content;
+      node.innerHTML = "";
+      node.appendChild(pre);
+    }
+    if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
+  }).catch((err) => {
+    node.setAttribute("data-loaded", "false");
+    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml(String(err.message || err)) + "</div>";
+  });
+}
+const _hoisted_1$6 = {
+  id: "tasks-panel",
+  class: "tasks-panel"
+};
+const _sfc_main$7 = /* @__PURE__ */ defineComponent({
+  __name: "TasksPage",
+  setup(__props) {
+    const tasksStore = useTasksStore();
+    const attentionStore = useAttentionStore();
+    const live = useLiveStore();
+    const ui = useUiStore();
+    const ws = useWorkspaceStore();
+    let tasksTreeEl = null;
+    let tasksViewTabsEl = null;
+    let tasksFilterChipsEl = null;
+    let tasksSidebarEl = null;
+    let tasksPickerToggleEl = null;
+    let tasksProjectBtnEl = null;
+    let tasksRefreshBtnEl = null;
+    let tasksNewBtnEl = null;
+    let tasksViewerEl = null;
+    let tasksProjectPaneEl = null;
+    let tasksEmptyEl = null;
+    let tasksNewFormEl = null;
+    let tasksUserBlockedEl = null;
+    let bulkBarEl = null;
+    let taskPanelBodyEl = null;
+    let taskPanelHeadlineEl = null;
+    let taskPanelIdEl = null;
+    let taskPanelStatusEl = null;
+    let longPressTimer = null;
+    let lpStartX = 0, lpStartY = 0;
+    const router2 = useRouter();
+    let currentTaskChain = null;
+    watch(() => attentionStore.tiers, (tiers) => {
+      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
+    });
+    function setRightPaneMode(mode) {
+      tasksStore.pane = mode;
+      if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
+      if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
+      if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
+      if (tasksNewFormEl) tasksNewFormEl.hidden = mode !== "new";
+      const panel = document.getElementById("tasks-panel");
+      const collapse = mode !== "empty";
+      if (isPanelNarrow("tasks-panel", 1199)) {
+        if (tasksSidebarEl) tasksSidebarEl.classList.toggle("tasks-sidebar-collapsed", collapse);
+        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", collapse ? "false" : "true");
+        if (panel) panel.classList.toggle("tasks-list-hidden", collapse);
+      } else {
+        if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
+        if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
+        if (panel) panel.classList.remove("tasks-list-hidden");
+      }
+    }
+    function updateBulkBar() {
+      if (bulkBarEl && typeof bulkBarEl.update === "function") {
+        bulkBarEl.update();
+      }
+    }
+    function renderTaskPicker() {
+      if (!tasksTreeEl) return;
+      const view = tasksStore.view;
+      const filter = tasksStore.filter;
+      const expanded = tasksStore.expanded;
+      const collapsed = tasksStore.collapsed;
+      const currentTaskId = tasksStore.currentTaskId;
+      const bulkSelected = tasksStore.bulkSelected;
+      tasksStore.multiSelectActive;
+      if (view === "projects") {
+        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
+      } else if (view === "all") {
+        renderAllTasksView(tasksTreeEl, tasksStore.cache, filter, currentTaskId, bulkSelected, expanded, collapsed);
+      } else {
+        renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
+      }
+      if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, attentionStore.tiers);
+      if (tasksProjectBtnEl) {
+        const hasProject = !!tasksStore.currentTaskProject;
+        tasksProjectBtnEl.disabled = !hasProject;
+        tasksProjectBtnEl.setAttribute("aria-disabled", hasProject ? "false" : "true");
+      }
+    }
+    async function fetchTasks() {
+      if (!tasksTreeEl) return;
+      tasksTreeEl.innerHTML = '<div class="tasks-loading">Loading…</div>';
+      try {
+        const res = await fetch("/api/tasks?limit=120", { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !Array.isArray(data.tasks)) {
+          tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Unable to load tasks.</div>';
+          return;
+        }
+        tasksStore.cache = data.tasks;
+        tasksStore.loaded = true;
+        renderTaskPicker();
+      } catch (err) {
+        tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    async function openTaskPanel(taskId) {
+      if (!taskId || !taskPanelBodyEl) return;
+      const prevPane = tasksStore.pane;
+      const sameTask = taskId === tasksStore.currentTaskId;
+      if (prevPane === "project") tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
+      else if (!sameTask) tasksStore.taskFromProjectSlug = null;
+      tasksStore.currentTaskId = taskId;
+      tasksStore.currentTaskProject = null;
+      setRightPaneMode("view");
+      if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
+      if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";
+      if (taskPanelStatusEl) {
+        taskPanelStatusEl.textContent = "";
+        taskPanelStatusEl.className = "tasks-viewer-status";
+      }
+      taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Loading task…</div>';
+      expandAncestors(taskId, tasksStore.cache, tasksStore.expanded);
+      renderTaskPicker();
+      if (tasksTreeEl) {
+        tasksTreeEl.querySelectorAll(".tasks-tree-row, .tasks-current-row").forEach((r) => {
+          r.classList.toggle("is-active", r.getAttribute("data-task-id") === taskId);
+        });
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId), { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !data.chain) {
+          taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Unable to load task.</div>';
+          return;
+        }
+        currentTaskChain = data.chain;
+        const task = data.chain.task;
+        if (task) {
+          tasksStore.currentTaskProject = task.project || null;
+          if (tasksProjectBtnEl) {
+            tasksProjectBtnEl.disabled = !task.project;
+            tasksProjectBtnEl.setAttribute("aria-disabled", task.project ? "false" : "true");
+          }
+          if (taskPanelHeadlineEl) {
+            taskPanelHeadlineEl.textContent = task.headline || task.brief || "Task " + taskId;
+            taskPanelHeadlineEl.dataset.taskId = task.id || "";
+            taskPanelHeadlineEl.dataset.agent = task.agent || task.to || "";
+            taskPanelHeadlineEl.dataset.locked = task.status === "claimed" ? "true" : "false";
+            taskPanelHeadlineEl.title = task.status === "claimed" ? "Cannot rename while the worker is claimed" : "Click to rename — Enter to save, Esc to cancel";
+            taskPanelHeadlineEl.classList.toggle("is-editable", task.status !== "claimed");
+          }
+          if (taskPanelStatusEl) {
+            taskPanelStatusEl.textContent = task.status || "?";
+            taskPanelStatusEl.className = "tasks-viewer-status " + statusClass(task.status);
+          }
+        }
+        const viewMode = tasksStore.currentViewMode;
+        const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
+        const reportHtml = (task == null ? void 0 : task.reportPath) ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
+        taskPanelBodyEl.innerHTML = '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + '</div><div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
+        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => loadReportNode(rn));
+      } catch (err) {
+        taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    async function openProjectPanel(slug) {
+      tasksStore.currentProjectSlug = slug;
+      setRightPaneMode("project");
+      if (!tasksProjectPaneEl) return;
+      tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Loading project…</div>';
+      if (tasksTreeEl) {
+        tasksTreeEl.querySelectorAll(".tasks-project-card").forEach((card) => {
+          card.classList.toggle("is-active", card.getAttribute("data-project-slug") === slug);
+        });
+      }
+      try {
+        const res = await fetch("/api/projects/" + encodeURIComponent(slug || ""), { cache: "no-store" });
+        const data = await res.json();
+        if (!data.ok || !data.summary) {
+          tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Unable to load project.</div>';
+          return;
+        }
+        renderProjectPage(
+          tasksProjectPaneEl,
+          data.summary,
+          tasksStore.expanded,
+          tasksStore.currentTaskId,
+          tasksStore.bulkSelected
+        );
+      } catch (err) {
+        tasksProjectPaneEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
+      }
+    }
+    function setViewMode(mode) {
+      tasksStore.currentViewMode = mode;
+      taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelectorAll(".tasks-viewer-pane").forEach((p2) => {
+        p2.hidden = p2.getAttribute("data-pane") !== mode;
+      });
+      document.querySelectorAll(".tasks-viewer-tab").forEach((t) => {
+        const isActive = t.getAttribute("data-view") === mode;
+        t.classList.toggle("is-active", isActive);
+        t.setAttribute("aria-selected", isActive ? "true" : "false");
+      });
+    }
+    async function submitNext(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-next-agent") || "";
+      const taskId = wrapper.getAttribute("data-next-id") || "";
+      const source = wrapper.getAttribute("data-next-source") || "revisit";
+      const input = wrapper.querySelector(".task-panel-next-input");
+      const btn = wrapper.querySelector(".task-panel-next-submit");
+      const statusEl = wrapper.querySelector(".task-panel-next-status");
+      const targetSel = wrapper.querySelector(".task-panel-next-target-select");
+      const headlineEl = wrapper.querySelector(".task-panel-next-headline-input");
+      const instruction = ((input == null ? void 0 : input.value) || "").trim();
+      if (!instruction) {
+        if (statusEl) {
+          statusEl.textContent = "Type an instruction first.";
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+        }
+        return;
+      }
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Spawning child…";
+        statusEl.className = "task-panel-unblock-status task-panel-next-status";
+      }
+      try {
+        const payload = { agent, instruction, source };
+        const target = targetSel == null ? void 0 : targetSel.value;
+        if (target && target !== agent) payload.target = target;
+        const headline = ((headlineEl == null ? void 0 : headlineEl.value) || "").trim();
+        if (headline) payload.headline = headline;
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/next", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = "Child " + (data.id || "?") + " queued.";
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-ok";
+        }
+        if (data.id) openTaskPanel(data.id);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-unblock-status task-panel-next-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitClose(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-close-agent") || "";
+      const taskId = wrapper.getAttribute("data-close-id") || "";
+      const defaultStatus = wrapper.getAttribute("data-close-default-status") || "closed";
+      const input = wrapper.querySelector(".task-panel-close-input");
+      const cascadeBox = wrapper.querySelector(".task-panel-close-cascade-checkbox");
+      const btn = wrapper.querySelector(".task-panel-close-submit");
+      const statusEl = wrapper.querySelector(".task-panel-close-status");
+      if (!agent || !taskId) return;
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Closing…";
+        statusEl.className = "task-panel-close-status task-panel-unblock-status";
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim(), status: defaultStatus, cascade: !!(cascadeBox == null ? void 0 : cascadeBox.checked) })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = "Closed.";
+          statusEl.className = "task-panel-close-status task-panel-unblock-status is-ok";
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-close-status task-panel-unblock-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitDoneReading(agent, taskId, btn) {
+      if (!agent || !taskId) return;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/close", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: "", status: "closed", cascade: false })
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitAbort(wrapper) {
+      if (!wrapper) return;
+      const agent = wrapper.getAttribute("data-abort-agent") || "";
+      const taskId = wrapper.getAttribute("data-abort-id") || "";
+      const input = wrapper.querySelector(".task-panel-abort-input");
+      const btn = wrapper.querySelector(".task-panel-abort-submit");
+      const statusEl = wrapper.querySelector(".task-panel-abort-status");
+      if (!agent || !taskId) return;
+      if (btn) btn.disabled = true;
+      if (statusEl) {
+        statusEl.textContent = "Killing worker…";
+        statusEl.className = "task-panel-abort-status task-panel-unblock-status";
+      }
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/abort", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: ((input == null ? void 0 : input.value) || "").trim() })
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          if (statusEl) {
+            statusEl.textContent = "Error: " + (data.error || "unknown");
+            statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+          }
+          if (btn) btn.disabled = false;
+          return;
+        }
+        if (statusEl) {
+          statusEl.textContent = data.mode === "stale" ? "Cancelled (stale claim cleared)." : "Worker killed — finalising…";
+          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-ok";
+        }
+        setTimeout(() => {
+          openTaskPanel(taskId);
+          fetchTasks();
+          attentionStore.fetch();
+        }, data.mode === "stale" ? 0 : 1200);
+      } catch (err) {
+        if (statusEl) {
+          statusEl.textContent = "Error: " + String(err.message || err);
+          statusEl.className = "task-panel-abort-status task-panel-unblock-status is-error";
+        }
+        if (btn) btn.disabled = false;
+      }
+    }
+    async function submitReopen(btn) {
+      if (!btn) return;
+      const agent = btn.getAttribute("data-reopen-agent") || "";
+      const taskId = btn.getAttribute("data-reopen-task") || "";
+      if (!agent || !taskId) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/reopen", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+        const data = await res.json();
+        if (!data.ok) {
+          btn.disabled = false;
+          return;
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+        btn.disabled = false;
+      }
+    }
+    async function submitResume(btn) {
+      if (!btn) return;
+      const agent = btn.getAttribute("data-resume-agent") || "";
+      const taskId = btn.getAttribute("data-resume-task") || "";
+      if (!agent || !taskId) return;
+      btn.disabled = true;
+      try {
+        const res = await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/resume", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ agent }) });
+        const data = await res.json();
+        if (!data.ok) {
+          btn.disabled = false;
+          return;
+        }
+        openTaskPanel(taskId);
+        fetchTasks();
+        attentionStore.fetch();
+      } catch (_2) {
+        btn.disabled = false;
+      }
+    }
+    function launchChatForTask(taskId, parentAgent, msgEl) {
+      if (!taskId) return;
+      if (!parentAgent) return;
+      const taskRoot = String(taskId).split(".")[0];
+      const threadId = "task-" + taskRoot + "-" + parentAgent;
+      const typedMsg = ((msgEl == null ? void 0 : msgEl.value) || "").trim();
+      const initialMsg = typedMsg ? "Continue after " + taskId + "\n" + typedMsg : "Continue after " + taskId + "\n";
+      window.__chatSessionId = threadId;
+      window.__pendingAgentId = parentAgent;
+      router2.push("/chat").then(() => {
+        setTimeout(() => {
+          const chatInput = document.getElementById("chat-input");
+          if (!chatInput) return;
+          chatInput.value = initialMsg;
+          try {
+            chatInput.setSelectionRange(chatInput.value.length, chatInput.value.length);
+          } catch (_2) {
+          }
+          chatInput.focus();
+          chatInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }, 50);
+      });
+    }
+    function openFollowOnForm(sourceTaskId, sourceAgent) {
+      var _a2;
+      if (!tasksNewFormEl || !sourceTaskId) return;
+      const chain = currentTaskChain;
+      let sourceCard = null;
+      const childReviewPaths = [];
+      if (chain) {
+        if (((_a2 = chain.task) == null ? void 0 : _a2.id) === sourceTaskId) {
+          sourceCard = chain.task;
+          for (const ch of chain.children || []) {
+            const rp = ch.reportPath;
+            if (rp) childReviewPaths.push(rp);
+          }
+        } else {
+          const all = [...chain.ancestors || [], ...chain.children || []];
+          sourceCard = all.find((a) => a.id === sourceTaskId) || null;
+        }
+      }
+      const contextLines = [];
+      if (sourceCard == null ? void 0 : sourceCard.reportPath) {
+        contextLines.push(sourceCard.reportPath);
+        for (const d2 of sourceCard.deliverables || []) contextLines.push(d2);
+      }
+      for (const rp of childReviewPaths) {
+        if (!contextLines.includes(rp)) contextLines.push(rp);
+      }
+      const srcHeadline = String((sourceCard == null ? void 0 : sourceCard.headline) || sourceTaskId);
+      const headlineSuggest = ("Follow-on: " + srcHeadline.split(/\s+/).filter(Boolean).slice(0, 8).join(" ")).trim();
+      const briefSuggest = "Follow-on from " + sourceTaskId + " — " + srcHeadline.slice(0, 120) + ".\n\n";
+      tasksNewFormEl.setAttribute("data-parent", sourceTaskId);
+      const parentChipEl = document.getElementById("multi-agent-new-parent-chip");
+      const parentChipIdEl = document.getElementById("multi-agent-new-parent-id");
+      if (parentChipEl) parentChipEl.removeAttribute("hidden");
+      if (parentChipIdEl) parentChipIdEl.textContent = sourceTaskId;
+      const headlineEl = document.getElementById("multi-agent-new-headline");
+      if (headlineEl) headlineEl.value = headlineSuggest;
+      const briefEl = document.getElementById("multi-agent-new-brief");
+      if (briefEl) briefEl.value = briefSuggest;
+      const ctxEl = document.getElementById("multi-agent-new-context");
+      if (ctxEl) ctxEl.value = contextLines.join("\n");
+      if (sourceCard == null ? void 0 : sourceCard.project) {
+        const projEl = document.getElementById("multi-agent-new-project");
+        if (projEl) ensureProjectsLoaded(projEl).then(() => {
+          if (projEl) projEl.value = sourceCard.project;
+        });
+      }
+      setRightPaneMode("new");
+      headlineEl == null ? void 0 : headlineEl.focus();
+    }
+    function onPanelBodyClick(ev) {
+      var _a2, _b, _c, _d, _e2, _f, _g;
+      const t = ev.target;
+      const nextBtn = t.closest(".task-panel-next-submit");
+      if (nextBtn) {
+        ev.preventDefault();
+        submitNext(nextBtn.closest(".task-panel-next"));
+        return;
+      }
+      const throwBtn = t.closest("[data-throw-path]");
+      if (throwBtn) {
+        ev.preventDefault();
+        const path = throwBtn.getAttribute("data-throw-path") || "";
+        const kind = throwBtn.getAttribute("data-throw-kind") || "report";
+        if (path) {
+          if (kind === "report") {
+            const taskId = ((_a2 = path.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) ?? path;
+            ws.open({ kind: "report", taskId, path }, { side: true });
+          } else {
+            ws.open({ kind: "file", path }, { side: true });
+          }
+        }
+        return;
+      }
+      const pillBtn = t.closest("[data-doc-pill]");
+      if (pillBtn) {
+        ev.preventDefault();
+        setActiveReportDoc(pillBtn.closest(".task-panel-report-pane"), pillBtn.getAttribute("data-doc-pill") || "");
+        return;
+      }
+      const doneReadingBtn = t.closest("[data-done-reading-id]");
+      if (doneReadingBtn) {
+        ev.preventDefault();
+        doneReadingBtn.disabled = true;
+        submitDoneReading(doneReadingBtn.getAttribute("data-done-reading-agent") || "", doneReadingBtn.getAttribute("data-done-reading-id") || "", doneReadingBtn);
+        return;
+      }
+      const toggleCloseBtn = t.closest("[data-toggle-close]");
+      if (toggleCloseBtn) {
+        ev.preventDefault();
+        const closeForm = (_b = toggleCloseBtn.closest(".task-panel-card")) == null ? void 0 : _b.querySelector(".task-panel-close-form");
+        if (closeForm) {
+          closeForm.hidden = false;
+          (_c = closeForm.querySelector(".task-panel-close-input")) == null ? void 0 : _c.focus();
+          closeForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
+      const closeSubmitBtn = t.closest(".task-panel-close-submit");
+      if (closeSubmitBtn) {
+        ev.preventDefault();
+        submitClose(closeSubmitBtn.closest(".task-panel-close-form"));
+        return;
+      }
+      const closeCancelBtn = t.closest(".task-panel-close-cancel");
+      if (closeCancelBtn) {
+        ev.preventDefault();
+        const f = closeCancelBtn.closest(".task-panel-close-form");
+        if (f) f.hidden = true;
+        return;
+      }
+      const toggleAbortBtn = t.closest("[data-toggle-abort]");
+      if (toggleAbortBtn) {
+        ev.preventDefault();
+        const abortForm = (_d = toggleAbortBtn.closest(".task-panel-card")) == null ? void 0 : _d.querySelector(".task-panel-abort-form");
+        if (abortForm) {
+          abortForm.hidden = false;
+          (_e2 = abortForm.querySelector(".task-panel-abort-input")) == null ? void 0 : _e2.focus();
+          abortForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+        return;
+      }
+      const abortSubmitBtn = t.closest(".task-panel-abort-submit");
+      if (abortSubmitBtn) {
+        ev.preventDefault();
+        submitAbort(abortSubmitBtn.closest(".task-panel-abort-form"));
+        return;
+      }
+      const abortCancelBtn = t.closest(".task-panel-abort-cancel");
+      if (abortCancelBtn) {
+        ev.preventDefault();
+        const f = abortCancelBtn.closest(".task-panel-abort-form");
+        if (f) f.hidden = true;
+        return;
+      }
+      const reopenBtn = t.closest("[data-reopen-task]");
+      if (reopenBtn) {
+        ev.preventDefault();
+        submitReopen(reopenBtn);
+        return;
+      }
+      const resumeBtn = t.closest("[data-resume-task]");
+      if (resumeBtn) {
+        ev.preventDefault();
+        submitResume(resumeBtn);
+        return;
+      }
+      const followonBtn = t.closest("[data-followon-task]");
+      if (followonBtn) {
+        ev.preventDefault();
+        const continueForm = taskPanelBodyEl == null ? void 0 : taskPanelBodyEl.querySelector(".task-panel-next");
+        if (continueForm) {
+          continueForm.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          (_f = continueForm.querySelector(".task-panel-next-input")) == null ? void 0 : _f.focus();
+          const det = continueForm.closest("details");
+          if (det) det.open = true;
+        } else {
+          openFollowOnForm(followonBtn.getAttribute("data-followon-task") || "", followonBtn.getAttribute("data-followon-agent") || "");
+        }
+        return;
+      }
+      const openTaskBtn = t.closest("[data-open-task]");
+      if (openTaskBtn) {
+        ev.preventDefault();
+        openTaskPanel(openTaskBtn.getAttribute("data-open-task") || "");
+        return;
+      }
+      const openFileBtn = t.closest("[data-open-file]");
+      if (openFileBtn) {
+        ev.preventDefault();
+        const filePath = openFileBtn.getAttribute("data-open-file");
+        if (!filePath) return;
+        if (ev.altKey) {
+          const taskId = ((_g = filePath.split("/").pop()) == null ? void 0 : _g.replace(/\.md$/, "")) ?? filePath;
+          ws.open({ kind: "report", taskId, path: filePath }, { side: true });
+        } else {
+          ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
+          router2.push("/files");
+        }
+        return;
+      }
+      const openFolderBtn = t.closest("[data-open-folder]");
+      if (openFolderBtn) {
+        ev.preventDefault();
+        const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
+        ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || void 0 };
+        router2.push("/files");
+        return;
+      }
+      const toggleChatBtn = t.closest("[data-toggle-chat]");
+      if (toggleChatBtn) {
+        ev.preventDefault();
+        const chatCard = toggleChatBtn.closest(".task-panel-card");
+        const chatFormEl = chatCard == null ? void 0 : chatCard.querySelector(".task-panel-chat-form");
+        const chatAgent = (chatFormEl == null ? void 0 : chatFormEl.getAttribute("data-chat-parent-agent")) || "";
+        const chatMsgEl = (chatFormEl == null ? void 0 : chatFormEl.querySelector(".task-panel-chat-msg-input")) || null;
+        launchChatForTask(toggleChatBtn.getAttribute("data-toggle-chat") || "", chatAgent, chatMsgEl);
+        return;
+      }
+    }
+    let agentsCache = [];
+    async function loadAgentsForForm() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if ((data == null ? void 0 : data.ok) && Array.isArray(data.agents)) agentsCache = data.agents;
+      } catch (_2) {
+      }
+      populateTaskTargetSelect();
+    }
+    function populateTaskTargetSelect() {
+      const sel = document.getElementById("multi-agent-new-to");
+      if (!sel) return;
+      const prev = sel.value;
+      const coord = agentsCache.find((a) => a.name === "alice");
+      const rest = agentsCache.filter((a) => a.name !== "alice");
+      const ordered = coord ? [coord, ...rest] : rest;
+      sel.innerHTML = ordered.map((a) => {
+        const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+        return `<option value="${label.replace(/"/g, "&quot;")}">${label}</option>`.replace(/value="[^"]*"/, `value="${a.name.replace(/"/g, "&quot;")}"`);
+      }).join("");
+      if (prev) sel.value = prev;
+    }
+    function updateHeadlineCount() {
+      const input = document.getElementById("multi-agent-new-headline");
+      const counter = document.getElementById("multi-agent-new-headline-count");
+      if (!input || !counter) return;
+      const words = (input.value || "").trim().split(/\s+/).filter(Boolean).length;
+      counter.textContent = words + " / 10 words";
+      counter.classList.toggle("is-over", words > 10);
+    }
+    function clearParentChip() {
+      if (!tasksNewFormEl) return;
+      tasksNewFormEl.removeAttribute("data-parent");
+      const chipEl = document.getElementById("multi-agent-new-parent-chip");
+      const chipIdEl = document.getElementById("multi-agent-new-parent-id");
+      if (chipEl) chipEl.setAttribute("hidden", "");
+      if (chipIdEl) chipIdEl.textContent = "";
+    }
+    async function submitNewTask(ev) {
+      var _a2, _b, _c, _d, _e2, _f, _g, _h;
+      ev.preventDefault();
+      const headline = ((_a2 = document.getElementById("multi-agent-new-headline")) == null ? void 0 : _a2.value.trim()) || "";
+      const to = ((_b = document.getElementById("multi-agent-new-to")) == null ? void 0 : _b.value) || "";
+      const kind = ((_c = document.getElementById("multi-agent-new-kind")) == null ? void 0 : _c.value) || "";
+      const from = ((_d = document.getElementById("multi-agent-new-from")) == null ? void 0 : _d.value.trim()) || "user";
+      const brief = ((_e2 = document.getElementById("multi-agent-new-brief")) == null ? void 0 : _e2.value.trim()) || "";
+      const output = ((_f = document.getElementById("multi-agent-new-output")) == null ? void 0 : _f.value.trim()) || "";
+      const contextRaw = ((_g = document.getElementById("multi-agent-new-context")) == null ? void 0 : _g.value.trim()) || "";
+      const context = contextRaw ? contextRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
+      const needsRaw = ((_h = document.getElementById("multi-agent-new-needs")) == null ? void 0 : _h.value.trim()) || "";
+      const needs = needsRaw ? needsRaw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean) : [];
+      const newStatus = document.getElementById("multi-agent-new-status");
+      const submitBtn = document.getElementById("multi-agent-new-submit");
+      const headlineWords = headline.split(/\s+/).filter(Boolean).length;
+      if (!headline) {
+        if (newStatus) {
+          newStatus.textContent = "Headline is required (≤10 words).";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (headlineWords > 10) {
+        if (newStatus) {
+          newStatus.textContent = `Headline too long (${headlineWords} words; max 10).`;
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (!brief) {
+        if (newStatus) {
+          newStatus.textContent = "Brief is required.";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (!to) {
+        populateTaskTargetSelect();
+        if (newStatus) {
+          newStatus.textContent = "Pick a target agent.";
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        return;
+      }
+      if (newStatus) {
+        newStatus.textContent = "Dispatching…";
+        newStatus.className = "multi-agent-new-status";
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        const payload = { headline, to, from: from || "user", kind, brief, output_format: output, context };
+        if (needs.length > 0) payload.needs = needs;
+        const projectEl = document.getElementById("multi-agent-new-project");
+        if (projectEl) {
+          const projVal = (projectEl.value || "").trim();
+          if (projVal === "__none__") payload.project = null;
+          else if (projVal) payload.project = projVal;
+        }
+        const parentAttr = tasksNewFormEl == null ? void 0 : tasksNewFormEl.getAttribute("data-parent");
+        if (parentAttr) payload.parent = parentAttr;
+        const res = await fetch("/api/tasks/new", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (!data.ok) {
+          if (newStatus) {
+            newStatus.textContent = "Error: " + (data.error || "unknown");
+            newStatus.className = "multi-agent-new-status is-error";
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          return;
+        }
+        if (newStatus) {
+          newStatus.textContent = "Dispatched " + data.id;
+          newStatus.className = "multi-agent-new-status is-ok";
+        }
+        ["multi-agent-new-headline", "multi-agent-new-brief", "multi-agent-new-output", "multi-agent-new-context", "multi-agent-new-needs"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+        clearParentChip();
+        updateHeadlineCount();
+        if (submitBtn) submitBtn.disabled = false;
+        fetchTasks();
+        attentionStore.fetch();
+        if (data.id) openTaskPanel(data.id);
+        else setRightPaneMode("empty");
+      } catch (err) {
+        if (newStatus) {
+          newStatus.textContent = "Error: " + String(err.message || err);
+          newStatus.className = "multi-agent-new-status is-error";
+        }
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+    function onTreeChange(ev) {
+      handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
+    }
+    function onTreeClick(ev) {
+      const target = ev.target;
+      if (target && target.type === "checkbox") {
+        ev.stopPropagation();
+        return;
+      }
+      const groupHead = target.closest("[data-toggle-group]");
+      if (groupHead) {
+        ev.preventDefault();
+        const gk = groupHead.getAttribute("data-toggle-group");
+        if (gk) {
+          if (tasksStore.collapsed[gk]) delete tasksStore.collapsed[gk];
+          else tasksStore.collapsed[gk] = true;
+          renderTaskPicker();
+        }
+        return;
+      }
+      const projectCard = target.closest(".tasks-project-card");
+      if (projectCard) {
+        ev.preventDefault();
+        const slug = projectCard.getAttribute("data-project-slug");
+        if (slug !== null) {
+          tasksStore.taskFromProjectSlug = null;
+          openProjectPanel(slug);
+        }
+        return;
+      }
+      const tierRow2 = target.closest("[data-open-task]");
+      if (tierRow2) {
+        ev.preventDefault();
+        const taskId = tierRow2.getAttribute("data-open-task");
+        if (taskId) openTaskPanel(taskId);
+        return;
+      }
+      const chevron = target.closest("[data-toggle-expand]");
+      if (chevron) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const pid = chevron.getAttribute("data-toggle-expand");
+        if (pid) {
+          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
+          else tasksStore.expanded[pid] = true;
+          renderTaskPicker();
+        }
+        return;
+      }
+      const row = target.closest(".tasks-tree-row, .tasks-current-row");
+      if (row) {
+        const taskId = row.getAttribute("data-task-id");
+        if (taskId) openTaskPanel(taskId);
+      }
+    }
+    function onTreeKeydown(ev) {
+      if (ev.key !== "Enter" && ev.key !== " ") return;
+      if (ev.target.type === "checkbox") return;
+      const row = ev.target.closest(".tasks-tree-row, .tasks-current-row");
+      if (!row) return;
+      ev.preventDefault();
+      const taskId = row.getAttribute("data-task-id");
+      if (taskId) openTaskPanel(taskId);
+    }
+    function onProjectPaneClick(ev) {
+      const target = ev.target;
+      if (target.type === "checkbox") {
+        ev.stopPropagation();
+        return;
+      }
+      const docBtn = target.closest("[data-open-file]");
+      if (docBtn) {
+        ev.preventDefault();
+        const path = docBtn.getAttribute("data-open-file");
+        if (path) {
+          ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
+          router2.push("/files");
+        }
+        return;
+      }
+      const newHere = target.closest("[data-project-new-task]");
+      if (newHere) {
+        ev.preventDefault();
+        const newSlug = newHere.getAttribute("data-project-new-task");
+        if (newSlug) openNewTaskFormForProject(newSlug);
+        return;
+      }
+      const chevron = target.closest("[data-toggle-expand]");
+      if (chevron) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const pid = chevron.getAttribute("data-toggle-expand");
+        if (pid && tasksStore.currentProjectSlug !== null) {
+          if (tasksStore.expanded[pid]) delete tasksStore.expanded[pid];
+          else tasksStore.expanded[pid] = true;
+          openProjectPanel(tasksStore.currentProjectSlug);
+        }
+        return;
+      }
+      const row = target.closest(".tasks-tree-row, .tasks-current-row");
+      if (row) {
+        const taskId = row.getAttribute("data-task-id");
+        if (taskId) {
+          tasksStore.taskFromProjectSlug = tasksStore.currentProjectSlug;
+          openTaskPanel(taskId);
+        }
+      }
+    }
+    function onProjectPaneChange(ev) {
+      const target = ev.target;
+      if (target.type === "checkbox" && (target.classList.contains("current-row-select") || target.classList.contains("current-group-select-all"))) {
+        handleRowCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
+        return;
+      }
+      const toggle = target.closest ? target.closest("[data-project-hide-closed]") : null;
+      if (toggle) {
+        const s = toggle.getAttribute("data-project-hide-closed") || "";
+        setProjectHideClosed(s, toggle.checked);
+        if (tasksStore.currentProjectSlug !== null) openProjectPanel(tasksStore.currentProjectSlug);
+      }
+    }
+    function openNewTaskFormForProject(slug) {
+      if (!tasksNewFormEl) return;
+      tasksNewFormEl.removeAttribute("data-parent");
+      const chip = document.getElementById("multi-agent-new-parent-chip");
+      const chipId = document.getElementById("multi-agent-new-parent-id");
+      if (chip) chip.setAttribute("hidden", "");
+      if (chipId) chipId.textContent = "";
+      const projectSelect = document.getElementById("multi-agent-new-project");
+      if (projectSelect) {
+        ensureProjectsLoaded(projectSelect).then(() => {
+          if (slug && slug !== "__none__") projectSelect.value = slug;
+        });
+      }
+      setRightPaneMode("new");
+      const headlineEl = document.getElementById("multi-agent-new-headline");
+      if (headlineEl) headlineEl.focus();
+    }
+    onMounted(() => {
+      tasksTreeEl = document.getElementById("tasks-tree");
+      tasksViewTabsEl = document.getElementById("tasks-view-tabs");
+      tasksFilterChipsEl = document.getElementById("tasks-filter-chips");
+      tasksSidebarEl = document.getElementById("tasks-sidebar");
+      tasksPickerToggleEl = document.getElementById("tasks-picker-toggle");
+      tasksProjectBtnEl = document.getElementById("tasks-project-btn");
+      tasksRefreshBtnEl = document.getElementById("tasks-refresh");
+      tasksNewBtnEl = document.getElementById("tasks-new-btn");
+      tasksViewerEl = document.getElementById("tasks-viewer");
+      tasksProjectPaneEl = document.getElementById("tasks-project-pane");
+      tasksEmptyEl = document.getElementById("tasks-empty");
+      tasksNewFormEl = document.getElementById("multi-agent-new");
+      tasksUserBlockedEl = document.getElementById("tasks-user-blocked");
+      taskPanelBodyEl = document.getElementById("tasks-viewer-body");
+      taskPanelHeadlineEl = document.getElementById("tasks-viewer-headline");
+      taskPanelIdEl = document.getElementById("tasks-viewer-id");
+      taskPanelStatusEl = document.getElementById("tasks-viewer-status");
+      document.querySelectorAll(".tasks-viewer-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const v2 = btn.getAttribute("data-view");
+          if (v2) setViewMode(v2);
+        });
+      });
+      if (taskPanelBodyEl) {
+        taskPanelBodyEl.addEventListener("click", onPanelBodyClick);
+      }
+      if (taskPanelHeadlineEl) {
+        taskPanelHeadlineEl.addEventListener("click", async () => {
+          const el = taskPanelHeadlineEl;
+          if (el.dataset.locked === "true") return;
+          const taskId = el.dataset.taskId;
+          if (!taskId) return;
+          const current = el.textContent || "";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.className = "tasks-viewer-headline-input";
+          input.value = current;
+          input.style.width = "100%";
+          el.replaceWith(input);
+          input.focus();
+          input.select();
+          const restore = () => {
+            if (!input.isConnected) return;
+            input.replaceWith(el);
+          };
+          input.addEventListener("keydown", async (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              const next = input.value.trim();
+              if (!next || next === current) {
+                restore();
+                return;
+              }
+              try {
+                await fetch("/api/tasks/" + encodeURIComponent(taskId) + "/rename", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ headline: next })
+                });
+                el.textContent = next;
+              } catch (_2) {
+              }
+              if (input.isConnected) restore();
+            } else if (e.key === "Escape") {
+              restore();
+            }
+          });
+          input.addEventListener("blur", restore);
+        });
+      }
+      if (tasksTreeEl) {
+        bulkBarEl = createBulkBar(
+          tasksTreeEl,
+          () => tasksStore.bulkSelected,
+          () => tasksStore.multiSelectActive,
+          (v2) => {
+            tasksStore.multiSelectActive = v2;
+          },
+          () => {
+            tasksStore.bulkSelected = {};
+          },
+          renderTaskPicker,
+          fetchTasks
+        );
+        tasksTreeEl.addEventListener("change", onTreeChange);
+        tasksTreeEl.addEventListener("click", onTreeClick);
+        tasksTreeEl.addEventListener("keydown", onTreeKeydown);
+        tasksTreeEl.addEventListener("pointerdown", (ev) => {
+          if (ev.pointerType !== "touch") return;
+          if (ev.target.type === "checkbox") return;
+          const row = ev.target.closest(".tasks-current-row");
+          if (!row) return;
+          lpStartX = ev.clientX;
+          lpStartY = ev.clientY;
+          longPressTimer = setTimeout(() => {
+            longPressTimer = null;
+            tasksStore.multiSelectActive = true;
+            tasksTreeEl.classList.add("is-multiselect-active");
+            updateBulkBar();
+            if (navigator.vibrate) navigator.vibrate(40);
+          }, 500);
+        });
+        tasksTreeEl.addEventListener("pointermove", (ev) => {
+          if (!longPressTimer) return;
+          const dx = ev.clientX - lpStartX, dy = ev.clientY - lpStartY;
+          if (dx * dx + dy * dy > 64) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          }
+        });
+        const cancelLP = () => {
+          if (longPressTimer) {
+            clearTimeout(longPressTimer);
+            longPressTimer = null;
+          }
+        };
+        tasksTreeEl.addEventListener("pointerup", cancelLP);
+        tasksTreeEl.addEventListener("pointercancel", cancelLP);
+      }
+      if (tasksProjectPaneEl) {
+        tasksProjectPaneEl.addEventListener("click", onProjectPaneClick);
+        tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
+      }
+      if (tasksUserBlockedEl) {
+        tasksUserBlockedEl.addEventListener("click", (ev) => {
+          const row = ev.target.closest("[data-open-task]");
+          if (!row) return;
+          ev.preventDefault();
+          const taskId = row.getAttribute("data-open-task");
+          if (taskId) openTaskPanel(taskId);
+        });
+      }
+      if (tasksViewTabsEl) {
+        tasksViewTabsEl.addEventListener("click", (ev) => {
+          const btn = ev.target.closest(".tasks-view-tab");
+          if (!btn) return;
+          const v2 = btn.getAttribute("data-view");
+          if (!v2 || v2 === tasksStore.view) return;
+          tasksStore.view = v2;
+          tasksStore.taskFromProjectSlug = null;
+          tasksViewTabsEl.querySelectorAll(".tasks-view-tab").forEach((t) => {
+            const isActive = t === btn;
+            t.classList.toggle("is-active", isActive);
+            t.setAttribute("aria-selected", isActive ? "true" : "false");
+          });
+          if (v2 === "projects") invalidateProjectsCache();
+          else if (tasksProjectPaneEl && !tasksProjectPaneEl.hidden) {
+            setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
+          }
+          renderTaskPicker();
+        });
+      }
+      if (tasksFilterChipsEl) {
+        tasksFilterChipsEl.addEventListener("click", (ev) => {
+          const chip = ev.target.closest(".tasks-filter-chip");
+          if (!chip) return;
+          const f = chip.getAttribute("data-filter");
+          if (!f) return;
+          tasksStore.filter = f;
+          tasksFilterChipsEl.querySelectorAll(".tasks-filter-chip").forEach((c) => {
+            c.classList.toggle("is-active", c === chip);
+          });
+          renderTaskPicker();
+        });
+      }
+      if (tasksRefreshBtnEl) {
+        tasksRefreshBtnEl.addEventListener("click", () => {
+          invalidateProjectsCache();
+          fetchTasks();
+        });
+      }
+      if (tasksPickerToggleEl) {
+        tasksPickerToggleEl.addEventListener("click", () => {
+          if (tasksSidebarEl) tasksSidebarEl.classList.remove("tasks-sidebar-collapsed");
+          if (tasksPickerToggleEl) tasksPickerToggleEl.setAttribute("aria-expanded", "true");
+          const panel = document.getElementById("tasks-panel");
+          if (panel) panel.classList.remove("tasks-list-hidden");
+        });
+      }
+      if (tasksProjectBtnEl) {
+        tasksProjectBtnEl.addEventListener("click", () => {
+          if (tasksProjectBtnEl.disabled || !tasksStore.currentTaskProject) return;
+          openProjectPanel(tasksStore.currentTaskProject);
+        });
+      }
+      if (tasksNewBtnEl && tasksNewFormEl) {
+        tasksNewBtnEl.addEventListener("click", () => {
+          tasksNewFormEl.removeAttribute("data-parent");
+          const chip = document.getElementById("multi-agent-new-parent-chip");
+          const chipId = document.getElementById("multi-agent-new-parent-id");
+          if (chip) chip.setAttribute("hidden", "");
+          if (chipId) chipId.textContent = "";
+          const projectSelect = document.getElementById("multi-agent-new-project");
+          if (projectSelect) ensureProjectsLoaded(projectSelect);
+          setRightPaneMode("new");
+          const hl = document.getElementById("multi-agent-new-headline");
+          if (hl) hl.focus();
+        });
+      }
+      const cancelBtn = document.getElementById("multi-agent-new-cancel");
+      if (cancelBtn) cancelBtn.addEventListener("click", () => {
+        clearParentChip();
+        const newStatusEl = document.getElementById("multi-agent-new-status");
+        if (newStatusEl) newStatusEl.textContent = "";
+        setRightPaneMode(tasksStore.currentTaskId ? "view" : "empty");
+      });
+      const parentClearBtn = document.getElementById("multi-agent-new-parent-clear");
+      if (parentClearBtn) parentClearBtn.addEventListener("click", () => clearParentChip());
+      const headlineInput = document.getElementById("multi-agent-new-headline");
+      if (headlineInput) {
+        headlineInput.addEventListener("input", updateHeadlineCount);
+        updateHeadlineCount();
+      }
+      if (tasksNewFormEl) {
+        tasksNewFormEl.addEventListener("submit", submitNewTask);
+      }
+      loadAgentsForForm();
+      live.bind("attention", {
+        topics: ["attention", "tasks"],
+        fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
+      });
+      if (!tasksStore.loaded) {
+        fetchTasks();
+      } else {
+        renderTaskPicker();
+        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+          openTaskPanel(tasksStore.currentTaskId);
+        } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
+          openProjectPanel(tasksStore.currentProjectSlug);
+        }
+      }
+    });
+    onBeforeUnmount(() => {
+      live.unbind("attention");
+      if (longPressTimer !== null) clearTimeout(longPressTimer);
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$6, [..._cache[0] || (_cache[0] = [
+        createBaseVNode("div", {
+          class: "tasks-view-tabs",
+          id: "tasks-view-tabs",
+          role: "tablist",
+          "aria-label": "Tasks view"
+        }, [
+          createBaseVNode("button", {
+            type: "button",
+            class: "tasks-view-tab is-active",
+            "data-view": "projects",
+            role: "tab",
+            "aria-selected": "true"
+          }, "Projects"),
+          createBaseVNode("button", {
+            type: "button",
+            class: "tasks-view-tab",
+            "data-view": "all",
+            role: "tab",
+            "aria-selected": "false"
+          }, "All")
+        ], -1),
+        createBaseVNode("div", { class: "tasks-toolbar" }, [
+          createBaseVNode("div", { class: "tasks-toolbar-left" }, [
+            createBaseVNode("button", {
+              id: "tasks-picker-toggle",
+              class: "tasks-toolbar-btn tasks-picker-toggle",
+              type: "button",
+              "aria-expanded": "true",
+              title: "Show task list"
+            }, "List"),
+            createBaseVNode("button", {
+              id: "tasks-project-btn",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Go to project for this task",
+              disabled: "",
+              "aria-disabled": "true"
+            }, "Project")
+          ]),
+          createBaseVNode("div", {
+            class: "tasks-filter-chips",
+            id: "tasks-filter-chips",
+            role: "tablist",
+            "aria-label": "Filter tasks by status"
+          }, [
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip is-active",
+              "data-filter": "all"
+            }, "All"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "open"
+            }, "Open"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "waiting"
+            }, "Waiting"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "done"
+            }, "Done"),
+            createBaseVNode("button", {
+              type: "button",
+              class: "tasks-filter-chip",
+              "data-filter": "failed"
+            }, "Failed")
+          ]),
+          createBaseVNode("div", { class: "tasks-toolbar-right" }, [
+            createBaseVNode("button", {
+              id: "tasks-new-btn",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Create a new task"
+            }, "+ New"),
+            createBaseVNode("button", {
+              id: "tasks-refresh",
+              class: "tasks-toolbar-btn",
+              type: "button",
+              title: "Refresh",
+              "aria-label": "Refresh"
+            }, "↻")
+          ])
+        ], -1),
+        createBaseVNode("div", { class: "tasks-split" }, [
+          createBaseVNode("div", {
+            class: "tasks-sidebar",
+            id: "tasks-sidebar"
+          }, [
+            createBaseVNode("div", {
+              id: "tasks-user-blocked",
+              class: "tasks-user-blocked",
+              hidden: ""
+            }),
+            createBaseVNode("div", {
+              class: "tasks-tree",
+              id: "tasks-tree"
+            }, [
+              createBaseVNode("div", { class: "tasks-loading" }, "Loading…")
+            ])
+          ]),
+          createBaseVNode("div", {
+            class: "tasks-content",
+            id: "tasks-content"
+          }, [
+            createBaseVNode("div", {
+              class: "tasks-viewer",
+              id: "tasks-viewer",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "tasks-viewer-head" }, [
+                createBaseVNode("div", { class: "tasks-viewer-headline-wrap" }, [
+                  createBaseVNode("div", {
+                    class: "tasks-viewer-id",
+                    id: "tasks-viewer-id"
+                  }),
+                  createBaseVNode("div", {
+                    class: "tasks-viewer-headline",
+                    id: "tasks-viewer-headline"
+                  }, "Task")
+                ]),
+                createBaseVNode("div", { class: "tasks-viewer-status-wrap" }, [
+                  createBaseVNode("span", {
+                    class: "tasks-viewer-status",
+                    id: "tasks-viewer-status"
+                  })
+                ])
+              ]),
+              createBaseVNode("div", {
+                class: "tasks-viewer-tabs",
+                role: "tablist",
+                "aria-label": "Task views"
+              }, [
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "tasks-viewer-tab is-active",
+                  "data-view": "task",
+                  role: "tab",
+                  "aria-selected": "true"
+                }, "Task"),
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "tasks-viewer-tab",
+                  "data-view": "report",
+                  role: "tab",
+                  "aria-selected": "false"
+                }, "Report")
+              ]),
+              createBaseVNode("div", {
+                class: "tasks-viewer-body",
+                id: "tasks-viewer-body"
+              }, [
+                createBaseVNode("div", { class: "task-panel-loading" }, "Loading task…")
+              ])
+            ]),
+            createBaseVNode("div", {
+              class: "tasks-project-pane",
+              id: "tasks-project-pane",
+              hidden: ""
+            }),
+            createBaseVNode("div", {
+              class: "tasks-empty",
+              id: "tasks-empty"
+            }, [
+              createTextVNode("Select a task on the left, or click "),
+              createBaseVNode("strong", null, "+ New"),
+              createTextVNode(" to create one.")
+            ]),
+            createBaseVNode("form", {
+              class: "multi-agent-new tasks-new-form",
+              id: "multi-agent-new",
+              hidden: ""
+            }, [
+              createBaseVNode("div", { class: "multi-agent-new-head" }, "Create task"),
+              createBaseVNode("div", {
+                class: "multi-agent-new-parent",
+                id: "multi-agent-new-parent-chip",
+                hidden: ""
+              }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("↳ child of "),
+                  createBaseVNode("strong", { id: "multi-agent-new-parent-id" })
+                ]),
+                createBaseVNode("button", {
+                  type: "button",
+                  class: "multi-agent-new-parent-clear",
+                  id: "multi-agent-new-parent-clear",
+                  title: "Clear parent"
+                }, "✕")
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("Headline "),
+                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
+                ]),
+                createBaseVNode("input", {
+                  id: "multi-agent-new-headline",
+                  type: "text",
+                  maxlength: "120",
+                  placeholder: "BLE plugin survey",
+                  required: ""
+                }),
+                createBaseVNode("span", {
+                  class: "multi-agent-new-counter",
+                  id: "multi-agent-new-headline-count"
+                }, "0 / 10 words")
+              ]),
+              createBaseVNode("div", { class: "multi-agent-new-grid" }, [
+                createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                  createBaseVNode("span", null, "Target"),
+                  createBaseVNode("select", { id: "multi-agent-new-to" })
+                ]),
+                createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                  createBaseVNode("span", null, "Project"),
+                  createBaseVNode("select", { id: "multi-agent-new-project" }, [
+                    createBaseVNode("option", { value: "" }, "(auto from context)"),
+                    createBaseVNode("option", { value: "__none__" }, "(none / unassigned)")
+                  ])
+                ])
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, "Brief"),
+                createBaseVNode("textarea", {
+                  id: "multi-agent-new-brief",
+                  rows: "4",
+                  placeholder: "Why and what — specific enough that two workers wouldn't duplicate effort.",
+                  required: ""
+                })
+              ]),
+              createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                createBaseVNode("span", null, [
+                  createTextVNode("Depends on "),
+                  createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
+                ]),
+                createBaseVNode("textarea", {
+                  id: "multi-agent-new-needs",
+                  rows: "2",
+                  placeholder: "TSK-2026-08-01-0001\nTSK-2026-08-01-0002"
+                })
+              ]),
+              createBaseVNode("details", {
+                class: "multi-agent-new-advanced",
+                id: "multi-agent-new-advanced"
+              }, [
+                createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced"),
+                createBaseVNode("div", { class: "multi-agent-new-advanced-body" }, [
+                  createBaseVNode("div", { class: "multi-agent-new-grid" }, [
+                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                      createBaseVNode("span", null, "Kind"),
+                      createBaseVNode("select", { id: "multi-agent-new-kind" }, [
+                        createBaseVNode("option", { value: "research" }, "research"),
+                        createBaseVNode("option", { value: "code" }, "code"),
+                        createBaseVNode("option", { value: "review" }, "review"),
+                        createBaseVNode("option", { value: "summarise" }, "summarise"),
+                        createBaseVNode("option", { value: "decide" }, "decide"),
+                        createBaseVNode("option", { value: "other" }, "other")
+                      ])
+                    ]),
+                    createBaseVNode("label", { class: "multi-agent-new-field" }, [
+                      createBaseVNode("span", null, "From"),
+                      createBaseVNode("input", {
+                        id: "multi-agent-new-from",
+                        type: "text",
+                        value: "user"
+                      })
+                    ])
+                  ]),
+                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                    createBaseVNode("span", null, "Output format"),
+                    createBaseVNode("textarea", {
+                      id: "multi-agent-new-output",
+                      rows: "2",
+                      placeholder: "What 'done' looks like."
+                    })
+                  ]),
+                  createBaseVNode("label", { class: "multi-agent-new-block" }, [
+                    createBaseVNode("span", null, "Context (one per line — file path, jira:KEY, or URL)"),
+                    createBaseVNode("textarea", {
+                      id: "multi-agent-new-context",
+                      rows: "2",
+                      placeholder: "Notes/Projects/...\njira:WAL-XX"
+                    })
+                  ])
+                ])
+              ]),
+              createBaseVNode("div", { class: "multi-agent-new-actions" }, [
+                createBaseVNode("span", {
+                  class: "multi-agent-new-status",
+                  id: "multi-agent-new-status"
+                }),
+                createBaseVNode("button", {
+                  class: "multi-agent-new-cancel",
+                  id: "multi-agent-new-cancel",
+                  type: "button"
+                }, "Cancel"),
+                createBaseVNode("button", {
+                  class: "multi-agent-new-submit",
+                  id: "multi-agent-new-submit",
+                  type: "submit"
+                }, "Dispatch")
+              ])
+            ])
+          ])
+        ], -1)
+      ])]);
+    };
+  }
+});
+const _hoisted_1$5 = {
+  id: "chat-panel",
+  class: "chat-panel"
+};
+const CHAT_ID_KEY = "caravel.chat.id";
+const CHAT_POLL_FAST_MS = 500;
+const CHAT_POLL_IDLE_MS = 1e4;
+const _sfc_main$6 = /* @__PURE__ */ defineComponent({
+  __name: "ChatPage",
+  setup(__props) {
+    let chatHistory = [];
+    let chatSessionId = "";
+    let chatListCache = [];
+    let chatServerUpdatedAt = null;
+    let chatPollTimer = null;
+    let historyClickHandler = null;
+    let agentsCache = [];
+    let chatAgentLocked = null;
+    let pendingAgentId = null;
+    let agentsFetched = false;
+    let chatMessages = null;
+    let chatInput = null;
+    let chatSend = null;
+    let chatForm = null;
+    function $2(id) {
+      return document.getElementById(id);
+    }
+    function generateChatId() {
+      const id = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+      localStorage.setItem(CHAT_ID_KEY, id);
+      return id;
+    }
+    function cleanHistory(arr) {
+      if (!Array.isArray(arr)) return [];
+      return arr.filter((m2) => {
+        if (m2.role === "assistant" && m2.text && m2.text.startsWith("[Failed:")) return false;
+        return true;
+      });
+    }
+    function hasActiveWork() {
+      for (const m2 of chatHistory) {
+        const s = m2.state;
+        if (s === "pending" || s === "sent" || s === "thinking" || s === "streaming" || s === "background") return true;
+      }
+      return false;
+    }
+    function orderedChatAgents() {
+      let coord = null;
+      const rest = [];
+      for (const a of agentsCache) {
+        if (!a || !a.name) continue;
+        if (a.name === "alice") coord = a;
+        else rest.push(a);
+      }
+      return coord ? [coord, ...rest] : rest;
+    }
+    function defaultChatAgentName() {
+      const match = agentsCache.find((a) => a.name === "alice");
+      if (match) return match.name;
+      return agentsCache.length > 0 ? agentsCache[0].name : null;
+    }
+    function findAgent(id) {
+      if (!id) return null;
+      return agentsCache.find((a) => a.name === id) || null;
+    }
+    function effectiveAgentId() {
+      return chatAgentLocked || pendingAgentId || null;
+    }
+    function agentPicked() {
+      if (agentsFetched && agentsCache.length === 0) return true;
+      return !!(chatAgentLocked || pendingAgentId);
+    }
+    function updateAgentBadge() {
+      const el = $2("chat-agent-badge");
+      const id = effectiveAgentId();
+      const agent = findAgent(id);
+      if (chatInput) {
+        chatInput.placeholder = agent ? `Message ${agent.displayName}…` : "Message…";
+      }
+      if (!el) return;
+      if (!agent) {
+        el.hidden = true;
+        el.textContent = "";
+        el.title = "";
+        el.dataset.locked = "";
+        return;
+      }
+      el.hidden = false;
+      el.textContent = (agent.emoji ? agent.emoji + " " : "") + agent.displayName;
+      el.title = (agent.description || "") + (chatAgentLocked ? " (locked for this chat)" : " (not yet locked — send first message to confirm)");
+      el.dataset.locked = chatAgentLocked ? "1" : "0";
+    }
+    function updateSendDisabled() {
+      if (!chatSend) return;
+      chatSend.disabled = !agentPicked();
+    }
+    function updateSessionBadge(session) {
+      const el = $2("chat-session-badge");
+      if (!el) return;
+      const chatFp = chatSessionId ? chatSessionId.slice(0, 8) : "";
+      if (!session || !session.sessionId) {
+        el.hidden = false;
+        el.textContent = "thread " + chatFp + " · no session yet";
+        el.title = "No Claude session has been created for this chat yet.";
+        el.dataset.sessionId = "";
+        return;
+      }
+      const sidFp = session.sessionId.slice(0, 8);
+      const turns = typeof session.turnCount === "number" ? session.turnCount : 0;
+      el.hidden = false;
+      el.textContent = "thread " + chatFp + " → " + sidFp + " · " + turns + " turn" + (turns === 1 ? "" : "s");
+      el.title = "thread: " + chatSessionId + "\nsession: " + session.sessionId + "\n(click to copy session id)";
+      el.dataset.sessionId = session.sessionId;
+    }
+    function updateChatNameInput(name, preview) {
+      const toolbar = $2("chat-name-input");
+      const inline = $2("chat-new-title-input");
+      const autoSuggestion = (preview ? String(preview).trim().slice(0, 50) : "") || "Untitled chat";
+      if (toolbar) {
+        toolbar.value = name || "";
+        toolbar.dataset.committed = name || "";
+        toolbar.setAttribute("placeholder", autoSuggestion);
+      }
+      if (inline) {
+        inline.value = name || "";
+        inline.dataset.committed = name || "";
+      }
+      refreshChatTitleVisibility();
+    }
+    function refreshChatTitleVisibility() {
+      const toolbar = $2("chat-name-input");
+      const inline = $2("chat-new-title-input");
+      const isEmpty = !chatHistory || chatHistory.length === 0;
+      if (toolbar) toolbar.hidden = isEmpty;
+      if (inline) inline.hidden = !isEmpty;
+    }
+    function schedulePoll() {
+      if (chatPollTimer) clearTimeout(chatPollTimer);
+      const delay3 = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
+      chatPollTimer = setTimeout(() => {
+        pollChat().finally(schedulePoll);
+      }, delay3);
+    }
+    async function pollChat(opts) {
+      if (document.visibilityState !== "visible") return;
+      try {
+        let url = "/api/chats/" + encodeURIComponent(chatSessionId);
+        if (chatServerUpdatedAt && !(opts == null ? void 0 : opts.force)) url += "?since=" + encodeURIComponent(chatServerUpdatedAt);
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data || !data.ok) return;
+        updateSessionBadge(data.session);
+        if (data.unchanged) {
+          if (data.updatedAt) chatServerUpdatedAt = data.updatedAt;
+          return;
+        }
+        if (data.chat && data.chat.messages) {
+          chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || chatServerUpdatedAt;
+          if (data.chat.agentId && chatAgentLocked !== data.chat.agentId) {
+            chatAgentLocked = data.chat.agentId;
+            updateAgentBadge();
+            updateSendDisabled();
+          }
+          renderChatHistory();
+          if (typeof window.__vmOnAssistantChunk === "function") {
+            const lastMsg = chatHistory[chatHistory.length - 1];
+            if (lastMsg && lastMsg.role === "assistant" && lastMsg.text) {
+              const st = lastMsg.state;
+              const isDone = !st || st === "done";
+              if (isDone || st === "streaming" || st === "background") {
+                window.__vmOnAssistantChunk(lastMsg.text, isDone);
+              }
+            }
+          }
+        }
+      } catch (_2) {
+      }
+    }
+    async function loadChatFromServer() {
+      try {
+        const res = await fetch("/api/chats/" + encodeURIComponent(chatSessionId));
+        const data = await res.json();
+        if (data.ok && data.chat) {
+          chatServerUpdatedAt = data.chat.updatedAt || null;
+          chatHistory = cleanHistory(data.chat.messages || []);
+          chatAgentLocked = data.chat.agentId || null;
+          renderChatHistory();
+          updateAgentBadge();
+          updateSendDisabled();
+        }
+        if (data && data.ok) updateSessionBadge(data.session);
+      } catch (_2) {
+      }
+    }
+    async function loadChatList() {
+      try {
+        const res = await fetch("/api/chats");
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.chats)) {
+          chatListCache = data.chats;
+          renderChatList();
+        }
+      } catch (_2) {
+      }
+    }
+    async function loadAgents() {
+      try {
+        const res = await fetch("/api/agents");
+        const data = await res.json();
+        if (data && data.ok && Array.isArray(data.agents)) agentsCache = data.agents;
+      } catch (_2) {
+      }
+      agentsFetched = true;
+      if (!pendingAgentId && !chatAgentLocked) pendingAgentId = defaultChatAgentName();
+      renderChatHistory();
+      updateAgentBadge();
+    }
+    function renderChatList() {
+      const listEl = $2("chat-history-list");
+      if (!listEl) return;
+      listEl.textContent = "";
+      if (!chatListCache.length) {
+        const empty = document.createElement("div");
+        empty.className = "chat-history-empty";
+        empty.textContent = "No saved chats";
+        listEl.appendChild(empty);
+        return;
+      }
+      for (const chat of chatListCache) {
+        const isActive = chat.id === chatSessionId;
+        const row = document.createElement("div");
+        row.className = "chat-history-row" + (isActive ? " chat-history-row-active" : "");
+        row.dataset.chatId = chat.id;
+        const item = document.createElement("button");
+        item.className = "chat-history-item" + (isActive ? " chat-history-active" : "");
+        item.type = "button";
+        item.dataset.chatId = chat.id;
+        const preview = document.createElement("span");
+        preview.className = "chat-history-preview";
+        const agentForRow = findAgent(chat.agentId || null);
+        const prefix = agentForRow && agentForRow.emoji ? agentForRow.emoji + " " : "";
+        preview.textContent = prefix + (chat.name || chat.preview || "(empty)");
+        const meta = document.createElement("span");
+        meta.className = "chat-history-meta";
+        const d2 = new Date(chat.updatedAt || 0);
+        meta.textContent = (chat.messageCount || 0) + " msgs · " + d2.toLocaleDateString();
+        item.appendChild(preview);
+        item.appendChild(meta);
+        item.addEventListener("click", () => switchToChat(chat.id));
+        row.appendChild(item);
+        const renameBtn = document.createElement("button");
+        renameBtn.className = "chat-history-rename-btn";
+        renameBtn.type = "button";
+        renameBtn.title = chat.name ? "Rename chat" : "Name this chat";
+        renameBtn.setAttribute("aria-label", renameBtn.title);
+        renameBtn.textContent = "✏️";
+        renameBtn.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          beginInlineRename(chat);
+        });
+        row.appendChild(renameBtn);
+        if (isActive) {
+          const syncBtn = document.createElement("button");
+          syncBtn.className = "chat-history-sync-btn";
+          syncBtn.type = "button";
+          syncBtn.title = "Force resync from server";
+          syncBtn.setAttribute("aria-label", "Force resync from server");
+          syncBtn.textContent = "↻";
+          syncBtn.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            pollChat({ force: true });
+          });
+          row.appendChild(syncBtn);
+        }
+        listEl.appendChild(row);
+      }
+    }
+    function beginInlineRename(chat) {
+      const listEl = $2("chat-history-list");
+      if (!listEl) return;
+      const row = listEl.querySelector('.chat-history-row[data-chat-id="' + chat.id + '"]');
+      if (!row || row.querySelector(".chat-history-rename-input")) return;
+      const item = row.querySelector(".chat-history-item");
+      if (!item) return;
+      item.style.display = "none";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "chat-history-rename-input";
+      input.value = chat.name || "";
+      input.placeholder = chat.preview || "Chat name";
+      input.maxLength = 80;
+      const commit = (save2) => {
+        if (!input.parentNode) return;
+        input.disabled = true;
+        if (save2) {
+          const name = input.value.trim();
+          submitChatRename(chat.id, name).then(() => loadChatList());
+        } else {
+          input.remove();
+          item.style.display = "";
+        }
+      };
+      input.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          commit(true);
+        } else if (ev.key === "Escape") {
+          ev.preventDefault();
+          commit(false);
+        }
+      });
+      input.addEventListener("blur", () => commit(true));
+      row.insertBefore(input, row.firstChild);
+      input.focus();
+      input.select();
+    }
+    async function submitChatRename(id, name) {
+      try {
+        await fetch("/api/chats/" + encodeURIComponent(id), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name })
+        });
+      } catch (_2) {
+      }
+    }
+    async function switchToChat(id) {
+      chatSessionId = id;
+      window.__chatSessionId = id;
+      localStorage.setItem(CHAT_ID_KEY, id);
+      chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
+      let fetchedName = "";
+      let fetchedPreview = "";
+      try {
+        const res = await fetch("/api/chats/" + encodeURIComponent(id));
+        const data = await res.json();
+        if (data.ok && data.chat) {
+          chatHistory = cleanHistory(data.chat.messages);
+          chatServerUpdatedAt = data.chat.updatedAt || null;
+          chatAgentLocked = data.chat.agentId || null;
+          fetchedName = data.chat.name || "";
+          fetchedPreview = data.chat.preview || "";
+        } else {
+          chatHistory = [];
+        }
+      } catch (_2) {
+        chatHistory = [];
+      }
+      if (!chatAgentLocked && !pendingAgentId && agentsCache.length > 0) {
+        pendingAgentId = defaultChatAgentName();
+      }
+      updateAgentBadge();
+      updateChatNameInput(fetchedName, fetchedPreview);
+      updateSendDisabled();
+      renderChatHistory();
+      schedulePoll();
+      const dropdown = $2("chat-history-dropdown");
+      if (dropdown) dropdown.hidden = true;
+      loadChatList();
+    }
+    function startNewChat() {
+      chatSessionId = generateChatId();
+      chatHistory = [];
+      chatServerUpdatedAt = null;
+      chatAgentLocked = null;
+      pendingAgentId = null;
+      if (agentsCache.length > 0) pendingAgentId = defaultChatAgentName();
+      updateAgentBadge();
+      updateChatNameInput("");
+      updateSendDisabled();
+      renderChatHistory();
+      schedulePoll();
+      const dropdown = $2("chat-history-dropdown");
+      if (dropdown) dropdown.hidden = true;
+      loadChatList();
+    }
+    function createChatEmptyState() {
+      const empty = document.createElement("div");
+      empty.className = "chat-empty";
+      if (!agentsFetched) {
+        empty.textContent = "Loading agents…";
+        return empty;
+      }
+      if (agentsCache.length === 0) {
+        empty.textContent = "Send a message to start chatting with the daemon.";
+        return empty;
+      }
+      const head = document.createElement("div");
+      head.className = "chat-picker-head";
+      head.textContent = "Pick an agent to start this chat";
+      empty.appendChild(head);
+      const sub = document.createElement("div");
+      sub.className = "chat-picker-sub";
+      sub.textContent = "Agent is locked once you send the first message.";
+      empty.appendChild(sub);
+      const list = document.createElement("div");
+      list.className = "chat-picker-list";
+      for (const agent of orderedChatAgents()) {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "chat-picker-item";
+        if (pendingAgentId === agent.name) item.classList.add("chat-picker-item-active");
+        const title = document.createElement("div");
+        title.className = "chat-picker-item-title";
+        title.textContent = (agent.emoji ? agent.emoji + " " : "") + (agent.displayName || agent.name);
+        item.appendChild(title);
+        const desc = document.createElement("div");
+        desc.className = "chat-picker-item-desc";
+        desc.textContent = agent.description || "";
+        item.appendChild(desc);
+        item.addEventListener("click", () => {
+          pendingAgentId = agent.name;
+          updateAgentBadge();
+          updateSendDisabled();
+          list.querySelectorAll(".chat-picker-item").forEach((el) => {
+            el.classList.toggle("chat-picker-item-active", el === item);
+          });
+        });
+        list.appendChild(item);
+      }
+      empty.appendChild(list);
+      return empty;
+    }
+    function createChatMessageEl() {
+      const msgEl = document.createElement("div");
+      const roleEl = document.createElement("div");
+      roleEl.className = "chat-msg-role";
+      const textEl = document.createElement("div");
+      textEl.className = "chat-msg-text";
+      msgEl.appendChild(roleEl);
+      msgEl.appendChild(textEl);
+      return msgEl;
+    }
+    function syncChatMessageEl(msgEl, msg) {
+      let roleEl = msgEl.querySelector(".chat-msg-role");
+      let textEl = msgEl.querySelector(".chat-msg-text");
+      if (!roleEl || !textEl) {
+        msgEl.textContent = "";
+        roleEl = document.createElement("div");
+        roleEl.className = "chat-msg-role";
+        textEl = document.createElement("div");
+        textEl.className = "chat-msg-text";
+        msgEl.appendChild(roleEl);
+        msgEl.appendChild(textEl);
+      }
+      const isUser = msg.role === "user";
+      const state = msg.state || (isUser ? "sent" : "done");
+      let cls = "chat-msg " + (isUser ? "chat-msg-user" : "chat-msg-assistant");
+      if (state === "streaming") cls += " chat-msg-streaming";
+      if (state === "error") cls += " chat-msg-error";
+      if (isUser && state === "pending") cls += " chat-msg-user-pending";
+      msgEl.className = cls;
+      roleEl.textContent = "";
+      const roleText = document.createElement("span");
+      roleText.className = "chat-msg-role-label";
+      roleText.textContent = isUser ? "You" : "Claude";
+      roleEl.appendChild(roleText);
+      if (isUser && state === "pending") {
+        const pill = document.createElement("span");
+        pill.className = "chat-msg-pill";
+        pill.textContent = "queued";
+        roleEl.appendChild(pill);
+      }
+      textEl.innerHTML = renderMarkdown(msg.text || "");
+      msgEl.querySelectorAll(".chat-msg-meta").forEach((el) => el.remove());
+      if (!isUser) {
+        let metaLabel = "";
+        let metaClass = "";
+        if (state === "thinking") {
+          metaClass = "chat-msg-thinking";
+          metaLabel = "thinking…";
+        } else if (state === "background") {
+          metaClass = "chat-msg-background";
+          metaLabel = "⚙ working in background…";
+        }
+        if (metaLabel) {
+          const meta = document.createElement("div");
+          meta.className = "chat-msg-meta " + metaClass;
+          const labelSpan = document.createElement("span");
+          labelSpan.className = "chat-msg-meta-label";
+          labelSpan.textContent = metaLabel;
+          meta.appendChild(labelSpan);
+          const stopBtn = document.createElement("button");
+          stopBtn.type = "button";
+          stopBtn.className = "chat-msg-stop-inline";
+          stopBtn.title = "Stop this response";
+          stopBtn.setAttribute("aria-label", "Stop this response");
+          stopBtn.textContent = "stop";
+          stopBtn.addEventListener("click", () => {
+            stopBtn.disabled = true;
+            interruptCurrent({ sendAfter: true });
+          });
+          meta.appendChild(stopBtn);
+          msgEl.appendChild(meta);
+        }
+        const isActive = state === "thinking" || state === "streaming" || state === "background";
+        msgEl.dataset.active = isActive ? "1" : "0";
+      }
+    }
+    function updateInterruptBtn() {
+      const btn = $2("chat-interrupt");
+      if (!btn) return;
+      const live = chatHistory.some((m2) => {
+        if (m2.role !== "assistant") return false;
+        const s = m2.state;
+        return s === "thinking" || s === "streaming" || s === "background";
+      });
+      btn.hidden = !live;
+      if (live) btn.disabled = false;
+    }
+    function renderChatHistory() {
+      const w2 = window;
+      if (typeof w2.__updateSpeakerDisabled === "function") w2.__updateSpeakerDisabled();
+      refreshChatTitleVisibility();
+      if (!chatMessages) return;
+      if (!chatHistory.length) {
+        if (chatMessages.children.length !== 1 || !chatMessages.firstElementChild || !chatMessages.firstElementChild.classList.contains("chat-empty")) {
+          chatMessages.textContent = "";
+          chatMessages.appendChild(createChatEmptyState());
+        }
+        return;
+      }
+      if (chatMessages.firstElementChild && chatMessages.firstElementChild.classList.contains("chat-empty")) {
+        chatMessages.textContent = "";
+      }
+      const msgEls = chatMessages.querySelectorAll(".chat-msg");
+      for (let i = 0; i < chatHistory.length; i++) {
+        let msgEl = msgEls[i];
+        if (!msgEl) {
+          msgEl = createChatMessageEl();
+          chatMessages.appendChild(msgEl);
+        }
+        syncChatMessageEl(msgEl, chatHistory[i]);
+      }
+      const allMsgEls = chatMessages.querySelectorAll(".chat-msg");
+      for (let j2 = allMsgEls.length - 1; j2 >= chatHistory.length; j2--) {
+        allMsgEls[j2].remove();
+      }
+      updateInterruptBtn();
+      requestAnimationFrame(() => {
+        if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+      });
+    }
+    function autoResizeChatInput() {
+      if (!chatInput) return;
+      chatInput.style.height = "auto";
+      chatInput.style.height = Math.min(chatInput.scrollHeight, 160) + "px";
+    }
+    async function sendChat() {
+      if (!chatInput) return;
+      const message = (chatInput.value || "").trim();
+      if (!message) return;
+      if (!agentPicked()) return;
+      chatInput.value = "";
+      autoResizeChatInput();
+      const w2 = window;
+      if (typeof w2.__ttsResetAutoRead === "function") w2.__ttsResetAutoRead();
+      chatHistory.push({ role: "user", text: message, state: "pending" });
+      if (!chatAgentLocked && pendingAgentId) {
+        chatAgentLocked = pendingAgentId;
+        updateAgentBadge();
+        updateSendDisabled();
+      }
+      renderChatHistory();
+      const payload = { message, chatId: chatSessionId };
+      if (chatAgentLocked) payload.agentId = chatAgentLocked;
+      else if (pendingAgentId) payload.agentId = pendingAgentId;
+      try {
+        await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch (_2) {
+      }
+      pollChat().finally(schedulePoll);
+      if (chatInput) chatInput.focus();
+    }
+    async function interruptCurrent(opts) {
+      try {
+        await fetch("/api/chat/interrupt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId: chatSessionId })
+        });
+      } catch (_2) {
+      }
+      if ((opts == null ? void 0 : opts.sendAfter) && chatInput && (chatInput.value || "").trim()) {
+        await sendChat();
+      } else {
+        await pollChat();
+      }
+      schedulePoll();
+    }
+    function wireChatNameInput(el, peerSel) {
+      if (!el) return;
+      el.dataset.committed = el.value || "";
+      const commit = () => {
+        const v2 = (el.value || "").trim();
+        if (!chatSessionId) return;
+        if (v2 === (el.dataset.committed || "")) return;
+        el.dataset.committed = v2;
+        const peer = peerSel ? document.querySelector(peerSel) : null;
+        if (peer) {
+          peer.value = v2;
+          peer.dataset.committed = v2;
+        }
+        submitChatRename(chatSessionId, v2).then(() => loadChatList()).catch(() => {
+        });
+      };
+      el.addEventListener("blur", commit);
+      el.addEventListener("keydown", (ev) => {
+        if (ev.key === "Enter") {
+          ev.preventDefault();
+          commit();
+          el.blur();
+        }
+      });
+    }
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") pollChat();
+    }
+    onMounted(() => {
+      chatMessages = $2("chat-messages");
+      chatInput = $2("chat-input");
+      chatSend = $2("chat-send");
+      chatForm = $2("chat-form");
+      const injectedSessionId = window.__chatSessionId;
+      const injectedAgentId = window.__pendingAgentId;
+      if (injectedSessionId) {
+        chatSessionId = injectedSessionId;
+        localStorage.setItem(CHAT_ID_KEY, injectedSessionId);
+        if (injectedAgentId) pendingAgentId = injectedAgentId;
+        delete window.__chatSessionId;
+        delete window.__pendingAgentId;
+      } else {
+        chatSessionId = localStorage.getItem(CHAT_ID_KEY) || generateChatId();
+      }
+      window.__chatSessionId = chatSessionId;
+      window.__chatHistory = chatHistory;
+      wireChatNameInput($2("chat-name-input"), "#chat-new-title-input");
+      wireChatNameInput($2("chat-new-title-input"), "#chat-name-input");
+      const badge = $2("chat-session-badge");
+      if (badge) {
+        badge.addEventListener("click", () => {
+          const sid = badge.dataset.sessionId || "";
+          if (!sid) return;
+          try {
+            navigator.clipboard.writeText(sid);
+          } catch (_2) {
+          }
+          const original = badge.textContent;
+          badge.textContent = "copied";
+          setTimeout(() => {
+            badge.textContent = original;
+          }, 900);
+        });
+      }
+      const historyBtn = $2("chat-history-btn");
+      const historyDropdown = $2("chat-history-dropdown");
+      if (historyBtn && historyDropdown) {
+        historyBtn.addEventListener("click", () => {
+          const showing = !historyDropdown.hidden;
+          historyDropdown.hidden = showing;
+          if (!showing) loadChatList();
+        });
+        historyClickHandler = (e) => {
+          if (!historyDropdown.hidden && !historyBtn.contains(e.target) && !historyDropdown.contains(e.target)) {
+            historyDropdown.hidden = true;
+          }
+        };
+        document.addEventListener("click", historyClickHandler);
+      }
+      const newBtn = $2("chat-new-btn");
+      if (newBtn) newBtn.addEventListener("click", () => startNewChat());
+      const deleteBtn = $2("chat-delete");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", async () => {
+          if (!chatSessionId || chatHistory.length === 0) {
+            startNewChat();
+            return;
+          }
+          const n = chatHistory.length;
+          const suffix = n === 1 ? " message" : " messages";
+          if (!window.confirm("Delete this chat? " + n + suffix + " will be permanently removed.")) return;
+          const idToDelete = chatSessionId;
+          try {
+            await fetch("/api/chats/" + encodeURIComponent(idToDelete), { method: "DELETE" });
+          } catch (_2) {
+          }
+          startNewChat();
+        });
+      }
+      if (chatForm) {
+        chatForm.addEventListener("submit", (e) => {
+          e.preventDefault();
+          sendChat();
+        });
+      }
+      const interruptBtn = $2("chat-interrupt");
+      if (interruptBtn) {
+        interruptBtn.addEventListener("click", () => {
+          interruptBtn.disabled = true;
+          interruptCurrent({ sendAfter: true });
+        });
+      }
+      if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
+      document.addEventListener("visibilitychange", onVisibilityChange);
+      if (chatInput) chatInput.focus();
+      if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+      loadAgents().then(() => loadChatFromServer()).finally(schedulePoll);
+    });
+    onBeforeUnmount(() => {
+      if (chatPollTimer) {
+        clearTimeout(chatPollTimer);
+        chatPollTimer = null;
+      }
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (historyClickHandler) {
+        document.removeEventListener("click", historyClickHandler);
+        historyClickHandler = null;
+      }
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", _hoisted_1$5, [..._cache[0] || (_cache[0] = [
+        createStaticVNode('<div class="chat-toolbar"><div class="chat-toolbar-left"><button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button><span id="chat-agent-badge" class="chat-agent-badge" hidden></span><input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden></div><button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button><button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button><div id="chat-history-dropdown" class="chat-history-dropdown" hidden><div class="chat-history-head"><span>Saved Chats</span><button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button></div><div id="chat-history-list" class="chat-history-list"></div></div></div><div id="chat-messages" class="chat-messages"></div><div class="chat-input-area"><input id="chat-new-title-input" class="chat-new-title-input" type="text" placeholder="Chat name/title" autocomplete="off" hidden><form id="chat-form" class="chat-form"><textarea id="chat-input" class="chat-input" placeholder="Message..." rows="3" autocomplete="off"></textarea><div class="chat-actions"><button id="chat-interrupt" class="chat-interrupt" type="button" hidden title="Stop current run" aria-label="Interrupt">✋</button><button id="chat-send" class="chat-send" type="submit" title="Send message" aria-label="Send">↑</button></div><button id="chat-cancel" class="chat-cancel" type="button" hidden>Cancel</button></form></div>', 3)
+      ])]);
+    };
+  }
+});
+const _hoisted_1$4 = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$a = { class: "files-toolbar" };
-const _hoisted_3$9 = { class: "files-toolbar-row files-toolbar-row-branch" };
-const _hoisted_4$8 = { class: "files-nav-group" };
-const _hoisted_5$5 = ["title"];
-const _hoisted_6$4 = { class: "files-split" };
-const _sfc_main$e = /* @__PURE__ */ defineComponent({
+const _hoisted_2$3 = { class: "files-toolbar" };
+const _hoisted_3$2 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_4$1 = { class: "files-nav-group" };
+const _hoisted_5$1 = ["title"];
+const _hoisted_6 = { class: "files-split" };
+const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
     const activeFilePath = /* @__PURE__ */ ref("");
@@ -26726,6 +28715,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     let filesSkipHistoryPush = false;
     let filesLoaded = false;
     const ui = useUiStore();
+    const ws = useWorkspaceStore();
     const router2 = useRouter();
     const filesBackTaskId = /* @__PURE__ */ ref("");
     function isPanelNarrow2(panelId, threshold) {
@@ -26909,8 +28899,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
             throwBtn.title = "Open in reading pane";
             throwBtn.addEventListener("click", (ev) => {
               ev.stopPropagation();
-              const fn = window.__throwToReadingPane;
-              if (typeof fn === "function") fn({ kind: "file", path: entry.path });
+              ws.open({ kind: "file", path: entry.path }, { side: true });
             });
             item.appendChild(throwBtn);
             item.draggable = true;
@@ -26998,16 +28987,16 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
       router2.push("/tasks");
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$b, [
-        createBaseVNode("div", _hoisted_2$a, [
-          createBaseVNode("div", _hoisted_3$9, [
+      return openBlock(), createElementBlock("div", _hoisted_1$4, [
+        createBaseVNode("div", _hoisted_2$3, [
+          createBaseVNode("div", _hoisted_3$2, [
             _cache[2] || (_cache[2] = createBaseVNode("select", {
               id: "files-branch-select",
               class: "files-branch-select",
               title: "Branch",
               hidden: ""
             }, null, -1)),
-            createBaseVNode("div", _hoisted_4$8, [
+            createBaseVNode("div", _hoisted_4$1, [
               _cache[0] || (_cache[0] = createBaseVNode("button", {
                 id: "files-nav-back",
                 class: "files-nav-btn",
@@ -27031,7 +29020,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
                 type: "button",
                 title: "Back to " + filesBackTaskId.value,
                 onClick: goBackToTask
-              }, "← Task", 8, _hoisted_5$5)) : createCommentVNode("", true)
+              }, "← Task", 8, _hoisted_5$1)) : createCommentVNode("", true)
             ])
           ]),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "files-toolbar-row files-toolbar-row-crumb" }, [
@@ -27057,7 +29046,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
             "aria-hidden": "true"
           }, "▾")
         ], -1)),
-        createBaseVNode("div", _hoisted_6$4, [
+        createBaseVNode("div", _hoisted_6, [
           _cache[4] || (_cache[4] = createBaseVNode("div", {
             class: "files-sidebar",
             id: "files-sidebar"
@@ -27069,7 +29058,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
               createBaseVNode("div", { class: "files-loading" }, "Loading...")
             ])
           ], -1)),
-          createVNode(_sfc_main$f, {
+          createVNode(_sfc_main$a, {
             path: activeFilePath.value,
             branch: activeBranch.value || void 0,
             kind: "file"
@@ -27079,2627 +29068,824 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const router = createRouter({
-  history: createWebHashHistory(),
-  // Map router-link active state to the existing tab-btn-active CSS class.
-  linkActiveClass: "tab-btn-active",
-  linkExactActiveClass: "tab-btn-active",
-  routes: [
-    { path: "/dashboard", component: _sfc_main$i },
-    { path: "/chat", component: _sfc_main$h },
-    { path: "/tasks", component: _sfc_main$g },
-    { path: "/files", component: _sfc_main$e },
-    { path: "/", redirect: "/dashboard" },
-    { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
-  ]
-});
-function load(key, fallback) {
-  try {
-    const v2 = localStorage.getItem("reading." + key);
-    if (v2 === null) return fallback;
-    return JSON.parse(v2);
-  } catch {
-    return fallback;
-  }
-}
-function save(key, value) {
-  try {
-    localStorage.setItem("reading." + key, JSON.stringify(value));
-  } catch {
-  }
-}
-const useReadingStore = /* @__PURE__ */ defineStore("reading", () => {
-  if (typeof localStorage !== "undefined" && localStorage.getItem("split.enabled") === "1") {
-    localStorage.setItem("reading.open", "true");
-    localStorage.removeItem("split.enabled");
-  }
-  const open = /* @__PURE__ */ ref(load("open", false));
-  const side = /* @__PURE__ */ ref(load("side", "right"));
-  const width = /* @__PURE__ */ ref(load("width", 380));
-  const stack2 = /* @__PURE__ */ ref(load("stack", []));
-  const activeIndex = /* @__PURE__ */ ref(0);
-  const dragActive = /* @__PURE__ */ ref(false);
-  function setOpen(v2) {
-    open.value = v2;
-    save("open", v2);
-  }
-  function toggle() {
-    setOpen(!open.value);
-  }
-  function setSide(s) {
-    side.value = s;
-    save("side", s);
-  }
-  function setWidth(w2) {
-    width.value = w2;
-    save("width", w2);
-  }
-  function throwRef(ref2) {
-    const existing = stack2.value.findIndex((r) => r.path === ref2.path);
-    if (existing !== -1) {
-      activeIndex.value = existing;
-    } else {
-      stack2.value.push(ref2);
-      activeIndex.value = stack2.value.length - 1;
-      save("stack", stack2.value);
-    }
-    setOpen(true);
-  }
-  function activate(index) {
-    if (index >= 0 && index < stack2.value.length) {
-      activeIndex.value = index;
-    }
-  }
-  function closeItem(index) {
-    stack2.value.splice(index, 1);
-    save("stack", stack2.value);
-    if (activeIndex.value >= stack2.value.length) {
-      activeIndex.value = Math.max(0, stack2.value.length - 1);
-    }
-  }
-  function setDragActive(v2) {
-    dragActive.value = v2;
-  }
-  return {
-    open,
-    side,
-    width,
-    stack: stack2,
-    activeIndex,
-    dragActive,
-    setOpen,
-    toggle,
-    setSide,
-    setWidth,
-    throwRef,
-    activate,
-    closeItem,
-    setDragActive
-  };
-});
-const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$a = ["data-size"];
-const _hoisted_2$9 = {
-  key: 0,
-  class: "base-modal-head"
-};
-const _hoisted_3$8 = { class: "base-modal-title" };
-const _hoisted_4$7 = { class: "base-modal-body" };
-const _hoisted_5$4 = {
-  key: 0,
-  class: "base-modal-footer"
-};
-const _sfc_main$d = /* @__PURE__ */ defineComponent({
-  __name: "BaseModal",
+const _sfc_main$4 = /* @__PURE__ */ defineComponent({
+  __name: "LegacyPageView",
   props: {
-    open: { type: Boolean },
-    size: { default: "md" },
-    title: {},
-    dismissible: { type: Boolean, default: true }
-  },
-  emits: ["close"],
-  setup(__props, { emit: __emit }) {
-    const props = __props;
-    const emit2 = __emit;
-    useModalsStore();
-    const dialogRef = /* @__PURE__ */ ref(null);
-    let scrollLockCount = 0;
-    function lockScroll() {
-      scrollLockCount++;
-      if (scrollLockCount === 1) document.body.style.overflow = "hidden";
-    }
-    function unlockScroll() {
-      scrollLockCount = Math.max(0, scrollLockCount - 1);
-      if (scrollLockCount === 0) document.body.style.overflow = "";
-    }
-    function openDialog() {
-      const el = dialogRef.value;
-      if (!el || el.open) return;
-      el.showModal();
-      lockScroll();
-    }
-    function closeDialog() {
-      const el = dialogRef.value;
-      if (!el || !el.open) return;
-      el.close();
-      unlockScroll();
-    }
-    onMounted(() => {
-      if (props.open) openDialog();
-    });
-    watch(() => props.open, (val) => {
-      if (val) openDialog();
-      else closeDialog();
-    });
-    onBeforeUnmount(() => {
-      if (props.open) unlockScroll();
-    });
-    function onCancel(ev) {
-      ev.preventDefault();
-      if (props.dismissible) emit2("close");
-    }
-    function onDialogClick(ev) {
-      if (!props.dismissible) return;
-      if (ev.target === dialogRef.value) emit2("close");
-    }
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("dialog", {
-        ref_key: "dialogRef",
-        ref: dialogRef,
-        "data-size": __props.size,
-        class: "base-modal",
-        "aria-modal": true,
-        onCancel,
-        onClick: onDialogClick
-      }, [
-        createBaseVNode("div", {
-          class: "base-modal-inner",
-          onClick: _cache[1] || (_cache[1] = withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$9, [
-              createBaseVNode("span", _hoisted_3$8, toDisplayString(__props.title), 1),
-              __props.dismissible ? (openBlock(), createElementBlock("button", {
-                key: 0,
-                class: "base-modal-close",
-                type: "button",
-                "aria-label": "Close",
-                onClick: _cache[0] || (_cache[0] = ($event) => emit2("close"))
-              }, "×")) : createCommentVNode("", true)
-            ])) : createCommentVNode("", true)
-          ]),
-          createBaseVNode("div", _hoisted_4$7, [
-            renderSlot(_ctx.$slots, "default")
-          ]),
-          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$4, [
-            renderSlot(_ctx.$slots, "footer")
-          ])) : createCommentVNode("", true)
-        ])
-      ], 40, _hoisted_1$a);
-    };
-  }
-});
-const _hoisted_1$9 = { class: "setting-item" };
-const _hoisted_2$8 = { class: "setting-main" };
-const _hoisted_3$7 = { class: "settings-label" };
-const _hoisted_4$6 = {
-  key: 0,
-  class: "settings-meta"
-};
-const _sfc_main$c = /* @__PURE__ */ defineComponent({
-  __name: "SettingRow",
-  props: {
-    label: {},
-    meta: {}
+    resource: {}
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$9, [
-        createBaseVNode("div", _hoisted_2$8, [
-          createBaseVNode("div", _hoisted_3$7, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$6, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
-          renderSlot(_ctx.$slots, "extra")
-        ]),
-        renderSlot(_ctx.$slots, "default")
-      ]);
+      return __props.resource.kind === "legacy" && __props.resource.page === "tasks" ? (openBlock(), createBlock(_sfc_main$7, { key: 0 })) : __props.resource.kind === "legacy" && __props.resource.page === "chat" ? (openBlock(), createBlock(_sfc_main$6, { key: 1 })) : __props.resource.kind === "legacy" && __props.resource.page === "files" ? (openBlock(), createBlock(_sfc_main$5, { key: 2 })) : createCommentVNode("", true);
     };
   }
 });
-const _hoisted_1$8 = { class: "settings-stack" };
-const _hoisted_2$7 = { class: "setting-actions" };
-const _hoisted_3$6 = ["disabled"];
-const _hoisted_4$5 = ["innerHTML"];
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
-  __name: "SettingsModal",
+const _hoisted_1$3 = { id: "dashboard-panel" };
+const _sfc_main$3 = /* @__PURE__ */ defineComponent({
+  __name: "DashboardPage",
   setup(__props) {
+    const router2 = useRouter();
     const ui = useUiStore();
-    const use12Hour = /* @__PURE__ */ ref(localStorage.getItem("clock.format") === "12");
-    const clockText = computed(() => use12Hour.value ? "12h" : "24h");
-    const clockInfo = computed(() => use12Hour.value ? "12-hour format" : "24-hour format");
-    const headerHidden = /* @__PURE__ */ ref(localStorage.getItem("header.hidden") === "1");
-    const debugEnabled = /* @__PURE__ */ ref(localStorage.getItem("debug.enabled") === "1");
-    const hbEnabled = /* @__PURE__ */ ref(false);
-    const hbInterval = /* @__PURE__ */ ref(15);
-    const hbInfo = /* @__PURE__ */ ref("syncing...");
-    const hbBusy = /* @__PURE__ */ ref(false);
-    const hbToggleText = computed(() => hbEnabled.value ? "Enabled" : "Disabled");
-    const hbToggleClass = computed(() => "hb-toggle " + (hbEnabled.value ? "on" : "off"));
-    const sttEnabled = /* @__PURE__ */ ref(false);
-    const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
-    const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
-    const infoHtml = /* @__PURE__ */ ref("");
-    function escHtml2(s) {
-      return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    let heartbeatTimezoneOffsetMinutes = 0;
+    let use12Hour = localStorage.getItem("clock.format") === "12";
+    let quickView = "jobs";
+    let quickViewInitialized = false;
+    let quickViewChosenByUser = false;
+    let lastRenderedSchedules = [];
+    let scrollAnimFrame = 0;
+    let clockInterval = null;
+    let summaryInterval = null;
+    let clockEl = null;
+    let dateEl = null;
+    let msgEl = null;
+    let quickJobsView = null;
+    let quickJobForm = null;
+    let quickOpenCreate = null;
+    let quickBackJobs = null;
+    let quickJobSubmit = null;
+    let quickJobStatus = null;
+    let quickJobsStatus = null;
+    let quickJobsNext = null;
+    let quickJobCount = null;
+    let quickJobsList = null;
+    let quickTaskAgent = null;
+    let quickTaskHeadline = null;
+    let quickTaskBrief = null;
+    let quickTaskRecurring = null;
+    let quickTaskScheduleSection = null;
+    let quickTaskModeCron = null;
+    let quickTaskModeInterval = null;
+    let quickCronSection = null;
+    let quickIntervalSection = null;
+    let quickTaskCron = null;
+    let quickTaskIntervalStart = null;
+    let quickTaskIntervalHours = null;
+    let multiAgentPanel = null;
+    let multiAgentGrid = null;
+    let multiAgentSub = null;
+    let multiAgentExtras = null;
+    let multiAgentRefresh = null;
+    function clampTimezoneOffsetMinutes(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return 0;
+      return Math.max(-720, Math.min(840, Math.round(n)));
     }
-    function renderTechInfo(data) {
-      const files = (data == null ? void 0 : data.files) ?? {};
-      const sections = [
-        { title: "daemon", value: (data == null ? void 0 : data.daemon) ?? null },
-        { title: "settings.json", value: files.settingsJson ?? null },
-        { title: "session.json", value: files.sessionJson ?? null },
-        { title: "state.json", value: files.stateJson ?? null }
-      ];
-      return sections.map(
-        (s) => `<div class="info-section"><div class="info-title">${escHtml2(s.title)}</div><pre class="info-json">${escHtml2(JSON.stringify(s.value, null, 2))}</pre></div>`
-      ).join("");
+    function toOffsetDate(baseDate) {
+      const base = baseDate instanceof Date ? baseDate : new Date(String(baseDate));
+      return new Date(base.getTime() + heartbeatTimezoneOffsetMinutes * 6e4);
+    }
+    function formatOffsetDate(baseDate, options) {
+      return new Intl.DateTimeFormat(void 0, { ...options, timeZone: "UTC" }).format(toOffsetDate(baseDate));
+    }
+    function greetingForHour(h2) {
+      if (h2 < 5) return "Night mode.";
+      if (h2 < 12) return "Good morning.";
+      if (h2 < 18) return "Good afternoon.";
+      if (h2 < 22) return "Good evening.";
+      return "Wind down and ship clean.";
+    }
+    function isNightHour(hour) {
+      return hour < 5 || hour >= 22;
+    }
+    function applyVisualMode(hour) {
+      const night = isNightHour(hour);
+      document.body.classList.toggle("night-mode", night);
+      document.body.classList.toggle("day-mode", !night);
+      document.body.dataset.mode = night ? "night" : "day";
+      if (msgEl) msgEl.textContent = night ? "Night mode." : greetingForHour(hour);
+    }
+    function renderClock() {
+      if (!clockEl || !dateEl) return;
+      const now = /* @__PURE__ */ new Date();
+      const shifted = toOffsetDate(now);
+      const rawH = shifted.getUTCHours();
+      const hh = use12Hour ? String(rawH % 12 || 12).padStart(2, "0") : String(rawH).padStart(2, "0");
+      const mm = String(shifted.getUTCMinutes()).padStart(2, "0");
+      const ss = String(shifted.getUTCSeconds()).padStart(2, "0");
+      const suffix = use12Hour ? rawH >= 12 ? " PM" : " AM" : "";
+      clockEl.textContent = hh + ":" + mm + ":" + ss + suffix;
+      dateEl.textContent = formatOffsetDate(now, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric"
+      });
+      applyVisualMode(rawH);
+      clockEl.classList.remove("ms-pulse");
+      requestAnimationFrame(() => clockEl == null ? void 0 : clockEl.classList.add("ms-pulse"));
+    }
+    function renderSchedulesList(schedules) {
+      if (!quickJobsList) return;
+      const items = Array.isArray(schedules) ? schedules : [];
+      lastRenderedSchedules = items;
+      if (!items.length) {
+        quickJobsList.innerHTML = '<div class="quick-jobs-empty">No scheduled tasks yet.</div>';
+        if (quickJobsNext) quickJobsNext.textContent = "No schedules";
+        return;
+      }
+      if (quickJobsNext) quickJobsNext.textContent = items.length + " schedule" + (items.length === 1 ? "" : "s");
+      quickJobsList.innerHTML = items.map((t) => {
+        const rec = t.recurrence || {};
+        const recInterval = rec.interval;
+        const cadence = rec.cron ? "cron: " + rec.cron : recInterval ? "every " + recInterval.every_hours + "h @ " + recInterval.start : "--";
+        const enabled = rec.enabled !== false;
+        const agent = String(t.agent || "--");
+        const headline = String(t.headline || t.title || t.id || "--");
+        const count = rec.count != null ? " (" + rec.count + " fired)" : "";
+        return '<div class="quick-job-item"><div class="quick-job-item-main"><div class="quick-job-line"><span class="quick-job-item-name">' + escHtml(headline) + '</span><span class="quick-job-item-time">' + escHtml(agent) + '</span><span class="quick-job-item-cooldown">' + escHtml(String(cadence)) + escHtml(count) + '</span></div><div style="font-size:11px;opacity:0.6;padding:2px 0 4px;">' + (enabled ? '<span style="color:#a8f1ca">● active</span>' : '<span style="color:#ffd39f">⏸ paused</span>') + '</div></div><div style="display:flex;gap:6px;">' + (enabled ? '<button class="quick-job-delete" type="button" data-pause-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Pause</button>' : '<button class="quick-job-delete" type="button" data-resume-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Resume</button>') + '<button class="quick-job-delete" type="button" data-delete-schedule="' + escHtml(String(t.agent || "")) + '" data-schedule-id="' + escHtml(String(t.id || "")) + '">Delete</button></div></div>';
+      }).join("");
+    }
+    async function loadAndRenderSchedules() {
+      try {
+        const res = await fetch("/api/tasks/scheduled", { cache: "no-store" });
+        if (!res.ok) throw new Error("status " + res.status);
+        const out = await res.json();
+        renderSchedulesList(Array.isArray(out.templates) ? out.templates : []);
+      } catch {
+        renderSchedulesList([]);
+      }
+    }
+    function smoothScrollTo(top) {
+      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
+      const start = window.scrollY;
+      const target = Math.max(0, top);
+      const distance = target - start;
+      if (Math.abs(distance) < 1) return;
+      const duration = 560;
+      const t0 = performance.now();
+      const step = (now) => {
+        const p2 = Math.min(1, (now - t0) / duration);
+        const eased = p2 < 0.5 ? 4 * p2 * p2 * p2 : 1 - Math.pow(-2 * p2 + 2, 3) / 2;
+        window.scrollTo(0, start + distance * eased);
+        if (p2 < 1) {
+          scrollAnimFrame = requestAnimationFrame(step);
+        } else {
+          scrollAnimFrame = 0;
+        }
+      };
+      scrollAnimFrame = requestAnimationFrame(step);
+    }
+    function focusQuickView(view) {
+      const target = view === "jobs" ? quickJobsView : quickJobForm;
+      if (!target) return;
+      const y2 = Math.max(0, window.scrollY + target.getBoundingClientRect().top - 44);
+      smoothScrollTo(y2);
+    }
+    function setQuickView(view, options) {
+      if (!quickJobsView || !quickJobForm) return;
+      const showJobs = view === "jobs";
+      quickJobsView.classList.toggle("quick-view-hidden", !showJobs);
+      quickJobForm.classList.toggle("quick-view-hidden", showJobs);
+      quickView = showJobs ? "jobs" : "create";
+      if (options == null ? void 0 : options.user) quickViewChosenByUser = true;
+      if (options == null ? void 0 : options.scroll) focusQuickView(quickView);
+    }
+    function syncQuickViewForSchedules() {
+      const count = lastRenderedSchedules.length;
+      if (count === 0) {
+        if (quickViewInitialized && quickView === "jobs" && quickViewChosenByUser) return;
+        setQuickView("create");
+        quickViewInitialized = true;
+        return;
+      }
+      if (!quickViewInitialized) {
+        setQuickView("jobs");
+        quickViewInitialized = true;
+      }
+    }
+    async function populateQuickTaskDropdowns() {
+      try {
+        const res = await fetch("/api/agents", { cache: "no-store" });
+        if (res.ok && quickTaskAgent) {
+          const data = await res.json();
+          const agents = Array.isArray(data.agents) ? data.agents : [];
+          quickTaskAgent.innerHTML = agents.map(
+            (a) => '<option value="' + escHtml(a.name) + '"' + (a.name === "alice" ? " selected" : "") + ">" + escHtml((a.emoji ? a.emoji + " " : "") + (a.displayName || a.name)) + "</option>"
+          ).join("");
+        }
+      } catch {
+      }
+    }
+    function updateBriefCount() {
+      if (quickTaskBrief && quickJobCount) {
+        quickJobCount.textContent = String((quickTaskBrief.value || "").trim().length) + " chars";
+      }
+    }
+    function syncScheduleSection() {
+      if (!quickTaskRecurring || !quickTaskScheduleSection) return;
+      quickTaskScheduleSection.classList.toggle("quick-view-hidden", !quickTaskRecurring.checked);
+    }
+    function syncCronIntervalSections() {
+      const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
+      if (quickCronSection) quickCronSection.classList.toggle("quick-view-hidden", isInterval);
+      if (quickIntervalSection) quickIntervalSection.classList.toggle("quick-view-hidden", !isInterval);
     }
     async function loadSettings() {
-      var _a2, _b;
-      hbInfo.value = "syncing...";
       try {
         const res = await fetch("/api/settings");
         const data = await res.json();
-        hbEnabled.value = Boolean((_a2 = data == null ? void 0 : data.heartbeat) == null ? void 0 : _a2.enabled);
-        hbInterval.value = Number((_b = data == null ? void 0 : data.heartbeat) == null ? void 0 : _b.interval) || 15;
-        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+        heartbeatTimezoneOffsetMinutes = clampTimezoneOffsetMinutes(data == null ? void 0 : data.timezoneOffsetMinutes);
+        renderClock();
+        loadAndRenderSchedules();
       } catch {
-        hbInfo.value = "unavailable";
       }
     }
-    async function loadVoiceSettings() {
+    function escSummary(s) {
+      return String(s).replace(
+        /[&<>"']/g,
+        (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
+      );
+    }
+    function renderCell(name, counts) {
+      const open = counts.open || 0;
+      const waiting = counts.waiting || 0;
+      const done = counts.done || 0;
+      const failed = counts.failed || 0;
+      const archived = counts.archived || 0;
+      function countSpan(value, status, icon, label) {
+        const clsBase = value > 0 ? "multi-agent-count-" + status : "multi-agent-count-zero";
+        const clsLink = value > 0 ? " multi-agent-count-link" : "";
+        const dataAttrs = value > 0 ? ' data-agent="' + escSummary(name) + '" data-status="' + status + '" role="button" tabindex="0"' : "";
+        return '<span class="' + clsBase + clsLink + '" title="' + label + '"' + dataAttrs + ">" + icon + " " + value + "</span>";
+      }
+      return '<div class="multi-agent-cell"><div class="multi-agent-cell-name">' + escSummary(name) + '</div><div class="multi-agent-cell-counts">' + countSpan(open, "open", "○", "open") + countSpan(waiting, "waiting", "⏳", "waiting") + countSpan(done, "done", "✓", "done") + countSpan(failed, "failed", "✗", "failed") + countSpan(archived, "archived", "📦", "archived") + "</div></div>";
+    }
+    function navigateToTasksDir(agent, status) {
+      if (!agent || !status) return;
+      const dir = "agents/" + agent + "/tasks/" + status;
+      ui.filesNav = { path: dir, kind: "dir" };
+      router2.push("/files");
+    }
+    async function fetchSummary() {
+      if (!multiAgentPanel || !multiAgentGrid || !multiAgentSub) return;
       try {
-        const res = await fetch("/api/settings/voice");
+        const res = await fetch("/api/multi-agent/summary", { cache: "no-store" });
         const data = await res.json();
-        if (!data.ok) return;
-        const v2 = data.voice ?? {};
-        const hasApiKey = Boolean(v2.hasApiKey);
-        sttEnabled.value = Boolean(v2.sttEnabled && hasApiKey);
-      } catch (_2) {
-      }
-    }
-    watch(() => ui.settingsOpen, (open) => {
-      if (open) {
-        loadSettings();
-        loadVoiceSettings();
-      }
-    });
-    function toggleClock() {
-      use12Hour.value = !use12Hour.value;
-      localStorage.setItem("clock.format", use12Hour.value ? "12" : "24");
-    }
-    function toggleHeader() {
-      headerHidden.value = !headerHidden.value;
-      localStorage.setItem("header.hidden", headerHidden.value ? "1" : "0");
-      document.body.classList.toggle("hide-header", headerHidden.value);
-    }
-    function toggleDebug() {
-      debugEnabled.value = !debugEnabled.value;
-      localStorage.setItem("debug.enabled", debugEnabled.value ? "1" : "0");
-    }
-    async function toggleHb() {
-      if (hbBusy.value) return;
-      hbBusy.value = true;
-      const next = !hbEnabled.value;
-      hbEnabled.value = next;
-      hbInfo.value = next ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
-      try {
-        const res = await fetch("/api/settings/heartbeat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enabled: next })
-        });
-        const out = await res.json();
-        if (!out.ok) throw new Error(out.error || "save failed");
-        if (out.heartbeat) {
-          hbEnabled.value = Boolean(out.heartbeat.enabled);
-          hbInterval.value = Number(out.heartbeat.interval) || hbInterval.value;
-          hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
+        if (!data.ok || !data.summary) {
+          multiAgentSub.textContent = "Unavailable";
+          multiAgentGrid.innerHTML = "";
+          if (multiAgentExtras) multiAgentExtras.innerHTML = "";
+          multiAgentPanel.removeAttribute("hidden");
+          return;
         }
-      } catch {
-        hbEnabled.value = !next;
-        hbInfo.value = hbEnabled.value ? `every ${hbInterval.value} minutes` : `paused (interval ${hbInterval.value}m)`;
-      } finally {
-        hbBusy.value = false;
-      }
-    }
-    function openHbConfig() {
-      ui.hbModalOpen = true;
-    }
-    async function toggleStt() {
-      sttEnabled.value = !sttEnabled.value;
-      try {
-        await fetch("/api/settings/voice", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sttEnabled: sttEnabled.value })
-        });
-      } catch (_2) {
-      }
-    }
-    async function openInfo() {
-      ui.infoOpen = true;
-      infoHtml.value = '<div class="info-section"><div class="info-title">Loading</div><pre class="info-json">Loading technical data...</pre></div>';
-      try {
-        const res = await fetch("/api/technical-info");
-        const data = await res.json();
-        infoHtml.value = renderTechInfo(data);
+        const s = data.summary;
+        if (!s.enabled) {
+          multiAgentPanel.setAttribute("hidden", "");
+          return;
+        }
+        multiAgentPanel.removeAttribute("hidden");
+        const totals = s.totals || {};
+        multiAgentSub.textContent = (totals.open || 0) + " open · " + (totals.waiting || 0) + " waiting · " + (totals.done || 0) + " done · " + (totals.failed || 0) + " failed · " + (totals.archived || 0) + " archived";
+        const byAgent = s.byAgent || {};
+        const names = Object.keys(byAgent).sort();
+        multiAgentGrid.innerHTML = names.map((n) => renderCell(n, byAgent[n])).join("");
+        if (multiAgentExtras) {
+          const extraLines = [];
+          for (const item of s.waitingUser || []) {
+            extraLines.push('<div class="multi-agent-extras-line">⏳ ' + escSummary(item.agent) + ": " + escSummary(item.summary || item.file) + "</div>");
+          }
+          for (const pi of s.paused || []) {
+            extraLines.push('<div class="multi-agent-extras-line paused">⏸ ' + escSummary(pi.agent) + ": " + escSummary(pi.summary || pi.file) + "</div>");
+          }
+          for (const e of s.escalated || []) {
+            extraLines.push('<div class="multi-agent-extras-line escalated">↑ ' + escSummary(e.agent) + ": " + escSummary(e.file) + "</div>");
+          }
+          const unreadable = s.unreadable || [];
+          if (unreadable.length > 0) {
+            const label = unreadable.length + " envelope" + (unreadable.length === 1 ? "" : "s") + " unreadable";
+            const listItems = unreadable.map((u) => escSummary(u.agent) + "/" + escSummary(u.file)).join(", ");
+            extraLines.push('<div class="multi-agent-extras-line unreadable" title="' + escSummary(listItems) + '">⚠ ' + escSummary(label) + "</div>");
+          }
+          multiAgentExtras.innerHTML = extraLines.join("");
+        }
       } catch (err) {
-        infoHtml.value = `<div class="info-section"><div class="info-title">Error</div><pre class="info-json">${escHtml2(String(err))}</pre></div>`;
+        if (multiAgentSub) multiAgentSub.textContent = "Error: " + (err instanceof Error ? err.message : String(err));
       }
     }
+    async function onScheduleClick(event) {
+      const target = event.target;
+      if (!target) return;
+      const pauseBtn = target.closest("[data-pause-schedule]");
+      if (pauseBtn) {
+        const agent = pauseBtn.getAttribute("data-pause-schedule") || "";
+        const id = pauseBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        pauseBtn.disabled = true;
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/pause", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent })
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "pause failed");
+          await loadAndRenderSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
+        } finally {
+          pauseBtn.disabled = false;
+        }
+        return;
+      }
+      const resumeBtn = target.closest("[data-resume-schedule]");
+      if (resumeBtn) {
+        const agent = resumeBtn.getAttribute("data-resume-schedule") || "";
+        const id = resumeBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        resumeBtn.disabled = true;
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "/resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ agent })
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "resume failed");
+          await loadAndRenderSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
+        } finally {
+          resumeBtn.disabled = false;
+        }
+        return;
+      }
+      const deleteBtn = target.closest("[data-delete-schedule]");
+      if (deleteBtn) {
+        const agent = deleteBtn.getAttribute("data-delete-schedule") || "";
+        const id = deleteBtn.getAttribute("data-schedule-id") || "";
+        if (!agent || !id) return;
+        deleteBtn.disabled = true;
+        if (quickJobsStatus) quickJobsStatus.textContent = "Deleting…";
+        try {
+          const res = await fetch("/api/tasks/schedule/" + encodeURIComponent(id) + "?agent=" + encodeURIComponent(agent), { method: "DELETE" });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "delete failed");
+          if (quickJobsStatus) quickJobsStatus.textContent = "Deleted.";
+          await loadAndRenderSchedules();
+          syncQuickViewForSchedules();
+        } catch (err) {
+          if (quickJobsStatus) quickJobsStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
+        } finally {
+          deleteBtn.disabled = false;
+        }
+      }
+    }
+    async function onFormSubmit(event) {
+      event.preventDefault();
+      const agent = quickTaskAgent ? (quickTaskAgent.value || "").trim() : "alice";
+      const headline = quickTaskHeadline ? (quickTaskHeadline.value || "").trim() : "";
+      const brief = quickTaskBrief ? (quickTaskBrief.value || "").trim() : "";
+      if (!agent || !headline || !brief) {
+        if (quickJobStatus) quickJobStatus.textContent = "Agent, title, and description are required.";
+        return;
+      }
+      const isRecurring = quickTaskRecurring ? quickTaskRecurring.checked : false;
+      if (quickJobSubmit) quickJobSubmit.disabled = true;
+      if (quickJobStatus) quickJobStatus.textContent = isRecurring ? "Saving schedule…" : "Creating task…";
+      try {
+        if (isRecurring) {
+          const isInterval = quickTaskModeInterval ? quickTaskModeInterval.checked : true;
+          const cron = quickTaskCron ? (quickTaskCron.value || "").trim() : "";
+          const intervalHours = quickTaskIntervalHours ? Number(quickTaskIntervalHours.value || "24") : 24;
+          const intervalStart = quickTaskIntervalStart ? (quickTaskIntervalStart.value || "").trim() : "";
+          if (!isInterval && !cron) {
+            if (quickJobStatus) quickJobStatus.textContent = "Enter a cron expression.";
+            return;
+          }
+          const recurrence = isInterval ? { interval: { start: intervalStart || "08:00", every_hours: intervalHours }, enabled: true, skip_if_active: true } : { cron, enabled: true, skip_if_active: true };
+          const res = await fetch("/api/tasks/schedule", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief, recurrence })
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "failed");
+          if (quickJobStatus) quickJobStatus.textContent = "Schedule created.";
+          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "schedule");
+          if (quickTaskHeadline) quickTaskHeadline.value = "";
+          if (quickTaskBrief) quickTaskBrief.value = "";
+          setQuickView("jobs", { scroll: true });
+          await loadAndRenderSchedules();
+          syncQuickViewForSchedules();
+        } else {
+          const res = await fetch("/api/tasks/new", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ to: agent, headline, kind: "other", priority: "P2", brief })
+          });
+          const out = await res.json();
+          if (!out.ok) throw new Error(out.error || "failed");
+          if (quickJobStatus) quickJobStatus.textContent = "Task created.";
+          if (quickJobsStatus) quickJobsStatus.textContent = "Created " + (out.id || "task");
+          if (quickTaskHeadline) quickTaskHeadline.value = "";
+          if (quickTaskBrief) quickTaskBrief.value = "";
+          setQuickView("jobs", { scroll: true });
+        }
+      } catch (err) {
+        if (quickJobStatus) quickJobStatus.textContent = "Failed: " + (err instanceof Error ? err.message : String(err));
+      } finally {
+        if (quickJobSubmit) quickJobSubmit.disabled = false;
+      }
+    }
+    onMounted(() => {
+      clockEl = document.getElementById("clock");
+      dateEl = document.getElementById("date");
+      msgEl = document.getElementById("message");
+      quickJobsView = document.getElementById("quick-jobs-view");
+      quickJobForm = document.getElementById("quick-job-form");
+      quickOpenCreate = document.getElementById("quick-open-create");
+      quickBackJobs = document.getElementById("quick-back-jobs");
+      quickJobSubmit = document.getElementById("quick-job-submit");
+      quickJobStatus = document.getElementById("quick-job-status");
+      quickJobsStatus = document.getElementById("quick-jobs-status");
+      quickJobsNext = document.getElementById("quick-jobs-next");
+      quickJobCount = document.getElementById("quick-job-count");
+      quickJobsList = document.getElementById("quick-jobs-list");
+      quickTaskAgent = document.getElementById("quick-task-agent");
+      quickTaskHeadline = document.getElementById("quick-task-headline");
+      quickTaskBrief = document.getElementById("quick-task-brief");
+      quickTaskRecurring = document.getElementById("quick-task-recurring");
+      quickTaskScheduleSection = document.getElementById("quick-task-schedule-section");
+      quickTaskModeCron = document.getElementById("quick-task-mode-cron");
+      quickTaskModeInterval = document.getElementById("quick-task-mode-interval");
+      quickCronSection = document.getElementById("quick-cron-section");
+      quickIntervalSection = document.getElementById("quick-interval-section");
+      quickTaskCron = document.getElementById("quick-task-cron");
+      quickTaskIntervalStart = document.getElementById("quick-task-interval-start");
+      quickTaskIntervalHours = document.getElementById("quick-task-interval-hours");
+      multiAgentPanel = document.getElementById("multi-agent-panel");
+      multiAgentGrid = document.getElementById("multi-agent-grid");
+      multiAgentSub = document.getElementById("multi-agent-sub");
+      multiAgentExtras = document.getElementById("multi-agent-extras");
+      multiAgentRefresh = document.getElementById("multi-agent-refresh");
+      renderClock();
+      clockInterval = setInterval(renderClock, 1e3);
+      setQuickView(quickView);
+      loadSettings();
+      quickOpenCreate == null ? void 0 : quickOpenCreate.addEventListener("click", () => setQuickView("create", { scroll: true, user: true }));
+      quickBackJobs == null ? void 0 : quickBackJobs.addEventListener("click", () => setQuickView("jobs", { scroll: true, user: true }));
+      quickTaskBrief == null ? void 0 : quickTaskBrief.addEventListener("input", updateBriefCount);
+      quickTaskRecurring == null ? void 0 : quickTaskRecurring.addEventListener("change", syncScheduleSection);
+      quickTaskModeCron == null ? void 0 : quickTaskModeCron.addEventListener("change", syncCronIntervalSections);
+      quickTaskModeInterval == null ? void 0 : quickTaskModeInterval.addEventListener("change", syncCronIntervalSections);
+      syncScheduleSection();
+      syncCronIntervalSections();
+      populateQuickTaskDropdowns();
+      quickJobForm == null ? void 0 : quickJobForm.addEventListener("submit", onFormSubmit);
+      document.addEventListener("click", onScheduleClick);
+      multiAgentRefresh == null ? void 0 : multiAgentRefresh.addEventListener("click", fetchSummary);
+      fetchSummary();
+      summaryInterval = setInterval(fetchSummary, 3e4);
+      const openTasksBtn = document.getElementById("multi-agent-open-tasks-btn");
+      openTasksBtn == null ? void 0 : openTasksBtn.addEventListener("click", () => router2.push("/tasks"));
+      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("click", (ev) => {
+        const link = ev.target.closest(".multi-agent-count-link");
+        if (!link) return;
+        ev.preventDefault();
+        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
+      });
+      multiAgentGrid == null ? void 0 : multiAgentGrid.addEventListener("keydown", (ev) => {
+        if (ev.key !== "Enter" && ev.key !== " ") return;
+        const link = ev.target.closest(".multi-agent-count-link");
+        if (!link) return;
+        ev.preventDefault();
+        navigateToTasksDir(link.getAttribute("data-agent") || "", link.getAttribute("data-status") || "");
+      });
+    });
+    onBeforeUnmount(() => {
+      if (clockInterval) clearInterval(clockInterval);
+      if (summaryInterval) clearInterval(summaryInterval);
+      if (scrollAnimFrame) cancelAnimationFrame(scrollAnimFrame);
+      document.removeEventListener("click", onScheduleClick);
+    });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$d, {
-          id: "settings-modal",
-          open: unref(ui).settingsOpen,
-          onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
-          size: "md",
-          title: "Settings"
-        }, {
-          default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$8, [
-              createVNode(_sfc_main$c, {
-                label: "💓 Heartbeat",
-                meta: hbInfo.value
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$7, [
-                    createBaseVNode("button", {
-                      class: "hb-config",
-                      id: "hb-config",
-                      type: "button",
-                      onClick: openHbConfig
-                    }, "Configure"),
-                    createBaseVNode("button", {
-                      class: normalizeClass(hbToggleClass.value),
-                      id: "hb-toggle",
-                      type: "button",
-                      disabled: hbBusy.value,
-                      onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$6)
-                  ])
-                ]),
-                _: 1
-              }, 8, ["meta"]),
-              createVNode(_sfc_main$c, {
-                label: "🕒 Clock",
-                meta: clockInfo.value
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass("hb-toggle " + (use12Hour.value ? "on" : "off")),
-                    id: "clock-toggle",
-                    type: "button",
-                    onClick: toggleClock
-                  }, toDisplayString(clockText.value), 3)
-                ]),
-                _: 1
-              }, 8, ["meta"]),
-              createVNode(_sfc_main$c, {
-                label: "🔗 GitHub Banner",
-                meta: "Star on GitHub header bar"
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass("hb-toggle " + (headerHidden.value ? "off" : "on")),
-                    id: "header-toggle",
-                    type: "button",
-                    onClick: toggleHeader
-                  }, toDisplayString(headerHidden.value ? "Off" : "On"), 3)
-                ]),
-                _: 1
+      return openBlock(), createElementBlock("div", _hoisted_1$3, [..._cache[0] || (_cache[0] = [
+        createBaseVNode("section", { class: "hero" }, [
+          createBaseVNode("div", {
+            class: "logo-art",
+            role: "img",
+            "aria-label": "Caravel ship logo"
+          }, [
+            createBaseVNode("svg", {
+              class: "logo-ship",
+              viewBox: "0 0 120 96",
+              width: "120",
+              height: "96",
+              fill: "none",
+              "aria-hidden": "true"
+            }, [
+              createBaseVNode("path", {
+                d: "M34 70 V30 M58 70 V14 M84 60 V28",
+                stroke: "currentColor",
+                "stroke-width": "1.6",
+                "stroke-linecap": "round",
+                opacity: "0.55"
               }),
-              createVNode(_sfc_main$c, {
-                label: "🐞 Debug",
-                meta: "Show chat thread/session ids"
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass("hb-toggle " + (debugEnabled.value ? "on" : "off")),
-                    id: "debug-toggle",
-                    type: "button",
-                    onClick: toggleDebug
-                  }, toDisplayString(debugEnabled.value ? "On" : "Off"), 3)
-                ]),
-                _: 1
+              createBaseVNode("path", {
+                d: "M12 59 L52 24 M28 45 L80 6 M64 53 L102 22",
+                stroke: "currentColor",
+                "stroke-width": "1.4",
+                "stroke-linecap": "round",
+                opacity: "0.5"
               }),
-              createVNode(_sfc_main$c, {
-                label: "🎙️ Voice — STT",
-                meta: sttMeta.value
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass("hb-toggle " + (sttEnabled.value ? "on" : "off")),
-                    id: "voice-stt-toggle",
-                    type: "button",
-                    onClick: toggleStt
-                  }, toDisplayString(sttText.value), 3)
-                ]),
-                _: 1
-              }, 8, ["meta"]),
-              createVNode(_sfc_main$c, {
-                label: "🎙️ Mic (STT)",
-                meta: "Dictate and voice chat"
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
-                    id: "voice-mic-toggle",
-                    type: "button",
-                    onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
-                  }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
-                ]),
-                _: 1
+              createBaseVNode("path", {
+                d: "M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z",
+                fill: "currentColor",
+                opacity: "0.6"
               }),
-              createVNode(_sfc_main$c, {
-                label: "🔊 Speaker (TTS)",
-                meta: "Read aloud and voice replies"
-              }, {
-                extra: withCtx(() => [..._cache[4] || (_cache[4] = [
-                  createBaseVNode("div", {
-                    class: "settings-error-note",
-                    id: "tts-error-note",
-                    hidden: ""
-                  }, "DeepGram not configured", -1)
-                ])]),
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
-                    id: "voice-tts-toggle",
-                    type: "button",
-                    onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
-                  }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
-                ]),
-                _: 1
+              createBaseVNode("path", {
+                d: "M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z",
+                fill: "currentColor",
+                opacity: "0.92"
               }),
-              createVNode(_sfc_main$c, {
-                label: "🧾 Advanced",
-                meta: "Technical runtime and JSON files"
-              }, {
-                default: withCtx(() => [
-                  createBaseVNode("button", {
-                    class: "hb-toggle on",
-                    id: "info-open",
-                    type: "button",
-                    onClick: openInfo
-                  }, "Info")
-                ]),
-                _: 1
+              createBaseVNode("path", {
+                d: "M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z",
+                fill: "currentColor",
+                opacity: "0.74"
+              }),
+              createBaseVNode("path", {
+                d: "M58 14 h12 l-3.5 3 l3.5 3 h-12 Z",
+                fill: "currentColor",
+                opacity: "0.9"
+              }),
+              createBaseVNode("path", {
+                d: "M82 70 V60 H102 L100 70 Z",
+                fill: "currentColor",
+                opacity: "0.85"
+              }),
+              createBaseVNode("path", {
+                d: "M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z",
+                fill: "currentColor"
               })
             ])
           ]),
-          _: 1
-        }, 8, ["open"]),
-        (openBlock(), createBlock(Teleport, { to: "body" }, [
-          createVNode(_sfc_main$d, {
-            id: "info-modal",
-            open: unref(ui).infoOpen,
-            onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
-            size: "lg",
-            title: "Technical Info"
-          }, {
-            default: withCtx(() => [
-              createBaseVNode("div", {
-                id: "info-body",
-                class: "info-body",
-                innerHTML: infoHtml.value
-              }, null, 8, _hoisted_4$5)
-            ]),
-            _: 1
-          }, 8, ["open"])
-        ]))
-      ], 64);
-    };
-  }
-});
-const _hoisted_1$7 = {
-  class: "hb-field",
-  for: "hb-interval-input"
-};
-const _hoisted_2$6 = ["disabled"];
-const _hoisted_3$5 = {
-  class: "hb-field",
-  for: "hb-prompt-input"
-};
-const _hoisted_4$4 = ["disabled"];
-const _hoisted_5$3 = { class: "hb-actions" };
-const _hoisted_6$3 = {
-  class: "hb-status",
-  id: "hb-modal-status"
-};
-const _hoisted_7$3 = { class: "hb-buttons" };
-const _hoisted_8$3 = ["disabled"];
-const _hoisted_9$3 = ["disabled"];
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
-  __name: "HeartbeatBar",
-  setup(__props) {
-    const ui = useUiStore();
-    const interval = /* @__PURE__ */ ref(15);
-    const prompt = /* @__PURE__ */ ref("");
-    const status = /* @__PURE__ */ ref("");
-    const busy = /* @__PURE__ */ ref(false);
-    watch(() => ui.hbModalOpen, async (open) => {
-      if (!open) return;
-      status.value = "Loading...";
-      busy.value = false;
-      try {
-        const res = await fetch("/api/settings/heartbeat");
-        const out = await res.json();
-        if (!out.ok) throw new Error(out.error || "failed to load heartbeat");
-        const hb = out.heartbeat || {};
-        interval.value = Number(hb.interval) || 15;
-        prompt.value = typeof hb.prompt === "string" ? hb.prompt : "";
-        status.value = "";
-      } catch (err) {
-        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
-      }
-    });
-    function close() {
-      ui.hbModalOpen = false;
-      status.value = "";
-      busy.value = false;
-    }
-    async function save2(e) {
-      e.preventDefault();
-      if (busy.value) return;
-      const iv = Number(String(interval.value).trim());
-      const pr = String(prompt.value).trim();
-      if (!Number.isFinite(iv) || iv < 1 || iv > 1440) {
-        status.value = "Interval must be 1-1440 minutes.";
-        return;
-      }
-      if (!pr) {
-        status.value = "Prompt is required.";
-        return;
-      }
-      busy.value = true;
-      status.value = "Saving...";
-      try {
-        const res = await fetch("/api/settings/heartbeat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ interval: iv, prompt: pr })
-        });
-        const out = await res.json();
-        if (!out.ok) throw new Error(out.error || "save failed");
-        if (out.heartbeat) {
-          interval.value = Number(out.heartbeat.interval) || iv;
-          prompt.value = typeof out.heartbeat.prompt === "string" ? out.heartbeat.prompt : pr;
-        }
-        status.value = "Saved.";
-        setTimeout(() => close(), 120);
-      } catch (err) {
-        status.value = "Failed: " + String(err instanceof Error ? err.message : err);
-        busy.value = false;
-      }
-    }
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$d, {
-        id: "hb-modal",
-        open: unref(ui).hbModalOpen,
-        onClose: close,
-        size: "lg",
-        title: "Heartbeat Configuration"
-      }, {
-        default: withCtx(() => [
-          createBaseVNode("form", {
-            class: "hb-form",
-            id: "hb-form",
-            onSubmit: save2
-          }, [
-            createBaseVNode("label", _hoisted_1$7, [
-              _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
-              withDirectives(createBaseVNode("input", {
-                class: "hb-input",
-                id: "hb-interval-input",
-                type: "number",
-                min: "1",
-                max: "1440",
-                step: "1",
-                required: "",
-                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
-                disabled: busy.value
-              }, null, 8, _hoisted_2$6), [
-                [
-                  vModelText,
-                  interval.value,
-                  void 0,
-                  { number: true }
-                ]
-              ])
-            ]),
-            createBaseVNode("label", _hoisted_3$5, [
-              _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
-              withDirectives(createBaseVNode("textarea", {
-                class: "hb-textarea",
-                id: "hb-prompt-input",
-                placeholder: "What should heartbeat run?",
-                required: "",
-                "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
-                disabled: busy.value
-              }, null, 8, _hoisted_4$4), [
-                [vModelText, prompt.value]
-              ])
-            ]),
-            createBaseVNode("div", _hoisted_5$3, [
-              createBaseVNode("div", _hoisted_6$3, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$3, [
-                createBaseVNode("button", {
-                  class: "hb-btn ghost",
-                  id: "hb-cancel-btn",
-                  type: "button",
-                  disabled: busy.value,
-                  onClick: close
-                }, "Cancel", 8, _hoisted_8$3),
-                createBaseVNode("button", {
-                  class: "hb-btn solid",
-                  id: "hb-save-btn",
-                  type: "submit",
-                  disabled: busy.value
-                }, "Save", 8, _hoisted_9$3)
-              ])
-            ])
-          ], 32)
-        ]),
-        _: 1
-      }, 8, ["open"]);
-    };
-  }
-});
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
-  __name: "AudioModal",
-  setup(__props) {
-    const ui = useUiStore();
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$d, {
-        id: "audio-action-modal",
-        open: unref(ui).audioModalOpen,
-        onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
-        size: "sm",
-        dismissible: false
-      }, {
-        default: withCtx(() => [..._cache[1] || (_cache[1] = [
           createBaseVNode("div", {
-            class: "audio-action-card",
-            id: "audio-action-card"
+            class: "brand-name",
+            "aria-label": "Caravel"
+          }, "Caravel"),
+          createBaseVNode("div", {
+            class: "time",
+            id: "clock"
+          }, "--:--:--"),
+          createBaseVNode("div", {
+            class: "date",
+            id: "date"
+          }, "Loading date..."),
+          createBaseVNode("div", {
+            class: "message",
+            id: "message"
+          }, "Welcome back."),
+          createBaseVNode("a", {
+            class: "repo-cta",
+            href: "https://github.com/caravelhq/caravel",
+            target: "_blank",
+            rel: "noopener noreferrer",
+            "aria-label": "Star Caravel on GitHub"
           }, [
-            createBaseVNode("div", {
-              class: "audio-action-icon",
-              id: "audio-action-icon"
-            }),
-            createBaseVNode("div", {
-              class: "audio-action-label",
-              id: "audio-action-label"
-            }, "Recording..."),
-            createBaseVNode("div", {
-              class: "audio-player-resume",
-              id: "audio-player-resume",
-              hidden: ""
-            }, [
-              createBaseVNode("div", {
-                class: "audio-player-resume-msg",
-                id: "audio-player-resume-msg"
-              }),
-              createBaseVNode("div", { class: "audio-player-resume-btns" }, [
-                createBaseVNode("button", {
-                  class: "audio-player-resume-btn is-restart",
-                  id: "audio-resume-restart",
-                  type: "button"
-                }, "Start over"),
-                createBaseVNode("button", {
-                  class: "audio-player-resume-btn is-resume",
-                  id: "audio-resume-continue",
-                  type: "button"
-                }, "Resume")
-              ])
-            ]),
-            createBaseVNode("div", {
-              class: "audio-player-progress",
-              id: "audio-player-progress",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "audio-player-bar-wrap" }, [
+            createBaseVNode("span", { class: "repo-text" }, "Like Caravel? Star it on GitHub"),
+            createBaseVNode("span", { class: "repo-star" }, "★")
+          ]),
+          createBaseVNode("section", {
+            class: "multi-agent-panel",
+            id: "multi-agent-panel",
+            hidden: ""
+          }, [
+            createBaseVNode("div", { class: "multi-agent-head" }, [
+              createBaseVNode("div", null, [
+                createBaseVNode("div", { class: "multi-agent-title" }, "Multi-Agent Tasks"),
                 createBaseVNode("div", {
-                  class: "audio-player-bar",
-                  id: "audio-player-bar"
-                })
+                  class: "multi-agent-sub",
+                  id: "multi-agent-sub"
+                }, "Loading...")
               ]),
-              createBaseVNode("div", {
-                class: "audio-player-counter",
-                id: "audio-player-counter"
-              }, "0 / 0")
+              createBaseVNode("div", { class: "multi-agent-head-actions" }, [
+                createBaseVNode("button", {
+                  class: "multi-agent-action",
+                  id: "multi-agent-open-tasks-btn",
+                  type: "button",
+                  title: "Open the Tasks panel"
+                }, "Open Tasks"),
+                createBaseVNode("button", {
+                  class: "multi-agent-refresh",
+                  id: "multi-agent-refresh",
+                  type: "button",
+                  title: "Refresh"
+                }, "↻")
+              ])
             ]),
             createBaseVNode("div", {
-              class: "audio-player-transcript",
-              id: "audio-player-transcript",
-              hidden: ""
+              class: "multi-agent-grid",
+              id: "multi-agent-grid"
             }),
-            createBaseVNode("div", { class: "audio-player-controls" }, [
-              createBaseVNode("button", {
-                class: "audio-player-skip",
-                id: "audio-skip-back",
-                type: "button",
-                "aria-label": "Previous",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-backward-step" })
-              ]),
-              createBaseVNode("button", {
-                class: "audio-action-stop",
-                id: "audio-action-stop",
-                type: "button",
-                "aria-label": "Stop"
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-stop" }),
-                createBaseVNode("span", null, "Stop")
-              ]),
-              createBaseVNode("button", {
-                class: "audio-player-skip",
-                id: "audio-skip-forward",
-                type: "button",
-                "aria-label": "Next",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-forward-step" })
-              ])
-            ])
-          ], -1)
-        ])]),
-        _: 1
-      }, 8, ["open"]);
-    };
-  }
-});
-const _hoisted_1$6 = ["disabled"];
-const _sfc_main$8 = /* @__PURE__ */ defineComponent({
-  __name: "GlobalMic",
-  setup(__props) {
-    const ui = useUiStore();
-    function triggerMic() {
-      document.dispatchEvent(new CustomEvent("voice:dictate"));
-    }
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("button", {
-        id: "global-mic",
-        class: "global-mic",
-        type: "button",
-        title: "Dictate into focused field",
-        "aria-label": "Dictate",
-        disabled: !unref(ui).micEnabled,
-        onClick: triggerMic
-      }, [..._cache[0] || (_cache[0] = [
-        createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$6);
-    };
-  }
-});
-const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
-  const mode = /* @__PURE__ */ ref("idle");
-  const recording = /* @__PURE__ */ ref(false);
-  const transcribing = /* @__PURE__ */ ref(false);
-  const playing = /* @__PURE__ */ ref(false);
-  const transcript = /* @__PURE__ */ ref([]);
-  const statusText = /* @__PURE__ */ ref("Press and hold to talk");
-  const genToken = /* @__PURE__ */ ref(0);
-  const isOpen = computed(() => mode.value !== "idle");
-  function openChatMode() {
-    mode.value = "chat";
-    transcript.value = [];
-    statusText.value = "Press and hold to talk";
-  }
-  function openTaskCreatorMode() {
-    mode.value = "task-creator";
-    transcript.value = [];
-    statusText.value = "Describe the task you want to create";
-  }
-  function close() {
-    cancelAudio();
-    mode.value = "idle";
-    recording.value = false;
-    transcribing.value = false;
-    playing.value = false;
-    transcript.value = [];
-  }
-  function cancelAudio() {
-    genToken.value++;
-    playing.value = false;
-  }
-  function addTranscript(entry) {
-    transcript.value.push(entry);
-  }
-  function updateLastAssistant(text, state) {
-    const last = transcript.value[transcript.value.length - 1];
-    if (last && last.role === "assistant") {
-      last.text = text;
-      last.state = state;
-    } else {
-      transcript.value.push({ role: "assistant", text, state });
-    }
-  }
-  return {
-    mode,
-    recording,
-    transcribing,
-    playing,
-    transcript,
-    statusText,
-    genToken,
-    isOpen,
-    openChatMode,
-    openTaskCreatorMode,
-    close,
-    cancelAudio,
-    addTranscript,
-    updateLastAssistant
-  };
-});
-const _hoisted_1$5 = ["hidden"];
-const _hoisted_2$5 = ["hidden"];
-const _sfc_main$7 = /* @__PURE__ */ defineComponent({
-  __name: "GlobalSpeaker",
-  setup(__props) {
-    const ui = useUiStore();
-    useVoiceStore();
-    const route = useRoute();
-    const onChat = computed(() => route.path === "/chat");
-    function openVoiceMode() {
-      document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
-    }
-    function openTaskCreator() {
-      document.dispatchEvent(new CustomEvent("voice:open-task-creator"));
-    }
-    function toggleReadAloud() {
-      document.dispatchEvent(new CustomEvent("voice:read-aloud-toggle"));
-    }
-    function toggleSpeaker() {
-      ui.ttsEnabled = !ui.ttsEnabled;
-    }
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock(Fragment, null, [
-        createBaseVNode("button", {
-          id: "global-voice-mode",
-          class: "global-voice-mode",
-          type: "button",
-          title: "Voice chat mode",
-          "aria-label": "Voice chat mode",
-          hidden: !onChat.value || !unref(ui).micEnabled,
-          onClick: openVoiceMode
-        }, [..._cache[0] || (_cache[0] = [
-          createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$5),
-        createBaseVNode("button", {
-          id: "global-voice-task",
-          class: "global-voice-task",
-          type: "button",
-          title: "Voice task creator",
-          "aria-label": "Voice task creator",
-          hidden: "",
-          onClick: openTaskCreator
-        }, [..._cache[1] || (_cache[1] = [
-          createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
-        ])]),
-        createBaseVNode("button", {
-          id: "global-read-aloud",
-          class: "global-read-aloud",
-          type: "button",
-          title: "Read to me",
-          "aria-label": "Read to me",
-          hidden: "",
-          disabled: "",
-          onClick: toggleReadAloud
-        }, [..._cache[2] || (_cache[2] = [
-          createBaseVNode("i", { class: "fa-solid fa-headphones" }, null, -1)
-        ])]),
-        createBaseVNode("button", {
-          id: "global-speaker",
-          class: "global-speaker",
-          type: "button",
-          title: "Enable auto-read",
-          "aria-label": "Enable auto-read",
-          hidden: !unref(ui).ttsEnabled,
-          onClick: toggleSpeaker
-        }, [..._cache[3] || (_cache[3] = [
-          createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_2$5)
-      ], 64);
-    };
-  }
-});
-const _hoisted_1$4 = { class: "dock-shell" };
-const _hoisted_2$4 = {
-  class: "side-bubble",
-  id: "jobs-bubble",
-  "aria-live": "polite"
-};
-const _hoisted_3$4 = { class: "side-value" };
-const _hoisted_4$3 = {
-  class: "side-bubble",
-  id: "tasks-bubble",
-  "aria-live": "polite"
-};
-const _hoisted_5$2 = { class: "side-value" };
-const _hoisted_6$2 = {
-  class: "dock",
-  id: "dock",
-  "aria-live": "polite"
-};
-const _hoisted_7$2 = { id: "dock-pills" };
-const _hoisted_8$2 = { class: "pill-label" };
-const _hoisted_9$2 = { class: "pill-icon" };
-const _hoisted_10$2 = { class: "pill-value" };
-const _hoisted_11 = {
-  class: "side-bubble",
-  id: "uptime-bubble",
-  "aria-live": "polite"
-};
-const _hoisted_12 = { class: "side-value" };
-const _sfc_main$6 = /* @__PURE__ */ defineComponent({
-  __name: "StatusDock",
-  setup(__props) {
-    const live = useLiveStore();
-    const STATE_SPEC = {
-      topics: ["state"],
-      fetch: () => fetch("/api/state", { cache: "no-store" }).then((r) => r.json())
-    };
-    onMounted(() => live.bind("state", STATE_SPEC));
-    onBeforeUnmount(() => live.unbind("state"));
-    const stateEntry = computed(() => live.entry("state"));
-    const stateData = computed(() => {
-      var _a2;
-      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.data) ?? null;
-    });
-    const isOffline = computed(() => {
-      var _a2;
-      return ((_a2 = stateEntry.value) == null ? void 0 : _a2.status) === "error";
-    });
-    let uptimeTick = null;
-    const now = /* @__PURE__ */ ref(Date.now());
-    onMounted(() => {
-      uptimeTick = setInterval(() => {
-        now.value = Date.now();
-      }, 1e3);
-    });
-    onBeforeUnmount(() => {
-      if (uptimeTick) clearInterval(uptimeTick);
-    });
-    function fmtDur(ms) {
-      if (ms == null || ms < 0) return "n/a";
-      const s = Math.floor(ms / 1e3);
-      const d2 = Math.floor(s / 86400);
-      if (d2 > 0) {
-        const h22 = Math.floor(s % 86400 / 3600);
-        return `${d2}d ${h22}h`;
-      }
-      const h2 = Math.floor(s / 3600);
-      const m2 = Math.floor(s % 3600 / 60);
-      const ss = s % 60;
-      if (h2 > 0) return `${h2}h ${m2}m`;
-      if (m2 > 0) return `${m2}m ${ss}s`;
-      return `${ss}s`;
-    }
-    const jobsCount = computed(() => {
-      var _a2;
-      if (isOffline.value) return "-";
-      const d2 = stateData.value;
-      return String(((_a2 = d2 == null ? void 0 : d2.jobs) == null ? void 0 : _a2.length) ?? 0);
-    });
-    const tasksCount = computed(() => {
-      if (isOffline.value) return "-";
-      const d2 = stateData.value;
-      return String((d2 == null ? void 0 : d2.tasksActive) ?? 0);
-    });
-    const uptime = computed(() => {
-      var _a2;
-      if (isOffline.value) return "-";
-      const d2 = stateData.value;
-      const startedAt = (_a2 = d2 == null ? void 0 : d2.daemon) == null ? void 0 : _a2.startedAt;
-      if (!startedAt) return "-";
-      return fmtDur(now.value - startedAt);
-    });
-    const pills = computed(() => {
-      var _a2, _b;
-      if (isOffline.value) {
-        return [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
-      }
-      const d2 = stateData.value;
-      if (!d2) return [];
-      const out = [];
-      if ((_a2 = d2.telegram) == null ? void 0 : _a2.configured) {
-        const n = d2.telegram.allowedUserCount;
-        out.push({ cls: "ok", icon: "✈️", label: "Telegram", value: `${n} user${n !== 1 ? "s" : ""}` });
-      }
-      if ((_b = d2.discord) == null ? void 0 : _b.configured) {
-        const n = d2.discord.allowedUserCount;
-        out.push({ cls: "ok", icon: "🎮", label: "Discord", value: `${n} user${n !== 1 ? "s" : ""}` });
-      }
-      return out;
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$4, [
-        createBaseVNode("aside", _hoisted_2$4, [
-          _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$4, toDisplayString(jobsCount.value), 1),
-          _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
-        ]),
-        createBaseVNode("aside", _hoisted_4$3, [
-          _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
-          createBaseVNode("div", _hoisted_5$2, toDisplayString(tasksCount.value), 1),
-          _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
-        ]),
-        createBaseVNode("footer", _hoisted_6$2, [
-          createVNode(_sfc_main$7),
-          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
-          createVNode(_sfc_main$8),
-          createBaseVNode("div", _hoisted_7$2, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
-              return openBlock(), createElementBlock("div", {
-                key: pill.label,
-                class: normalizeClass(["pill", pill.cls])
-              }, [
-                createBaseVNode("div", _hoisted_8$2, [
-                  createBaseVNode("span", _hoisted_9$2, toDisplayString(pill.icon), 1),
-                  createTextVNode(toDisplayString(pill.label), 1)
-                ]),
-                createBaseVNode("div", _hoisted_10$2, toDisplayString(pill.value), 1)
-              ], 2);
-            }), 128))
+            createBaseVNode("div", {
+              class: "multi-agent-extras",
+              id: "multi-agent-extras"
+            })
           ])
-        ]),
-        createBaseVNode("aside", _hoisted_11, [
-          _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
-          createBaseVNode("div", _hoisted_12, toDisplayString(uptime.value), 1),
-          _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
-        ])
-      ]);
+        ], -1),
+        createStaticVNode('<section class="quick-jobs-view" id="quick-jobs-view"><div class="quick-jobs-header"><div class="quick-jobs-next" id="quick-jobs-next">No schedules</div><button class="quick-open-create" id="quick-open-create" type="button">+ New Task</button></div><div class="quick-jobs-list" id="quick-jobs-list"><div class="quick-jobs-empty">Loading...</div></div><div class="quick-jobs-status" id="quick-jobs-status"></div></section><form class="quick-job-form quick-view-hidden" id="quick-job-form"><div class="quick-job-form-head"><button class="quick-back-jobs" id="quick-back-jobs" type="button">← Schedules</button><h2 class="quick-job-form-title">New Task</h2></div><div class="quick-field"><label class="quick-label" for="quick-task-agent">Agent</label><select class="quick-select" id="quick-task-agent"><option value="alice">alice</option></select></div><div class="quick-field"><label class="quick-label" for="quick-task-headline">Title</label><input class="quick-input" id="quick-task-headline" type="text" placeholder="Short task title" autocomplete="off"></div><div class="quick-field"><label class="quick-label" for="quick-task-brief">Description <span class="quick-count" id="quick-job-count">0 chars</span></label><textarea class="quick-textarea" id="quick-task-brief" rows="4" placeholder="What should the agent do?"></textarea></div><div class="quick-field quick-field-check"><label class="quick-check-label"><input type="checkbox" id="quick-task-recurring"> Recurring </label></div><section class="quick-view-hidden quick-schedule-section" id="quick-task-schedule-section"><div class="quick-field quick-field-radios"><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-interval" checked> Interval </label><label class="quick-radio-label"><input type="radio" name="quick-task-mode" id="quick-task-mode-cron"> Cron </label></div><section id="quick-interval-section"><div class="quick-field"><label class="quick-label" for="quick-task-interval-start">Start time (HH:MM)</label><input class="quick-input" id="quick-task-interval-start" type="text" placeholder="08:00"></div><div class="quick-field"><label class="quick-label" for="quick-task-interval-hours">Every (hours)</label><input class="quick-input" id="quick-task-interval-hours" type="number" value="24" min="1" max="168"></div></section><section class="quick-view-hidden" id="quick-cron-section"><div class="quick-field"><label class="quick-label" for="quick-task-cron">Cron expression</label><input class="quick-input" id="quick-task-cron" type="text" placeholder="0 8 * * *" autocomplete="off"></div></section></section><div class="quick-field quick-field-submit"><button class="quick-submit" id="quick-job-submit" type="submit">Create</button><div class="quick-job-status" id="quick-job-status"></div></div></form>', 2)
+      ])]);
     };
   }
 });
-function stripMarkdown(text) {
-  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/^[-*+]\s+/gm, "").replace(/^\d+\.\s+/gm, "").replace(/^>\s+/gm, "").replace(/~~([^~]+)~~/g, "$1").replace(/__([^_]+)__/g, "$1").replace(/_([^_]+)_/g, "$1").replace(/\|/g, "  ").replace(/^[-:|]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
-}
-function esc(t) {
-  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-function extractChunks(pending, isDone) {
-  const chunks = [];
-  let consumed = 0;
-  const blocks = pending.split(/(\n\n+)/);
-  let pos = 0;
-  for (let b2 = 0; b2 < blocks.length; b2++) {
-    const part = blocks[b2];
-    if (/^\n\n+$/.test(part)) {
-      pos += part.length;
-      continue;
-    }
-    const hasTrailingSep = b2 + 1 < blocks.length && /^\n\n+$/.test(blocks[b2 + 1]);
-    const isComplete = hasTrailingSep || isDone;
-    if (isComplete) {
-      const trimmed = part.trim();
-      if (trimmed.length > 250) {
-        const re2 = /[.!?]\s+/g;
-        let m2;
-        let sentStart = 0;
-        while ((m2 = re2.exec(trimmed)) !== null) {
-          const end = m2.index + m2[0].length;
-          const sent = trimmed.slice(sentStart, end).trim();
-          if (sent) chunks.push(sent);
-          sentStart = end;
-        }
-        const tail = trimmed.slice(sentStart).trim();
-        if (tail) chunks.push(tail);
-      } else if (trimmed) {
-        chunks.push(trimmed);
-      }
-      pos += part.length;
-      consumed = pos;
-    } else {
-      const re2 = /[.!?]\s+/g;
-      let m2;
-      let sentStart2 = 0;
-      let lastSentEnd = 0;
-      while ((m2 = re2.exec(part)) !== null) {
-        const end2 = m2.index + m2[0].length;
-        const sent2 = part.slice(sentStart2, end2).trim();
-        if (sent2) chunks.push(sent2);
-        sentStart2 = end2;
-        lastSentEnd = end2;
-      }
-      consumed = pos + lastSentEnd;
-      break;
-    }
-  }
-  return { chunks, consumed };
-}
-const MIME_CANDIDATES = [
-  "audio/ogg;codecs=opus",
-  "audio/ogg",
-  "audio/webm;codecs=opus",
-  "audio/webm"
-];
-function detectMimeType() {
-  if (typeof MediaRecorder === "undefined") return null;
-  for (const c of MIME_CANDIDATES) {
-    if (MediaRecorder.isTypeSupported(c)) return c;
-  }
-  return null;
-}
-const SPEAK_MAX_CONCURRENT = 2;
-let speakInFlight = 0;
-const speakWaiters = [];
-function speakFetch(text) {
-  return new Promise((resolve2) => {
-    if (speakInFlight < SPEAK_MAX_CONCURRENT) {
-      speakInFlight++;
-      resolve2();
-    } else speakWaiters.push(() => {
-      speakInFlight++;
-      resolve2();
-    });
-  }).then(
-    () => fetch("/api/voice/speak", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    }).finally(() => {
-      speakInFlight--;
-      const next = speakWaiters.shift();
-      if (next) next();
-    })
-  );
-}
-const _hoisted_1$3 = {
-  class: "voice-mode-overlay",
-  role: "dialog",
-  "aria-modal": "true",
-  "aria-live": "polite"
+const registry = {
+  dashboard: _sfc_main$3,
+  file: _sfc_main$9,
+  report: _sfc_main$8,
+  legacy: _sfc_main$4
 };
-const _hoisted_2$3 = ["innerHTML"];
-const _hoisted_3$3 = { class: "vm-controls" };
-const _hoisted_4$2 = { class: "voice-mode-status" };
-const HOLD_MS$1 = 250;
-const _sfc_main$5 = /* @__PURE__ */ defineComponent({
-  __name: "VoiceModeOverlay",
-  setup(__props) {
-    const voice = useVoiceStore();
-    const mimeType = detectMimeType();
-    let recorder = null;
-    let chunks = [];
-    let stream = null;
-    let busy = false;
-    let audioQueue = [];
-    let queueRunning = false;
-    let queueGen = 0;
-    let currentAudio = null;
-    let spokenChunks = [];
-    let turnCursor = 0;
-    let holdTimer = null;
-    let holdMode = false;
-    let pressStart = 0;
-    let prevVmChunk;
-    let fastPollController = null;
-    const statusText = /* @__PURE__ */ ref("Press and hold to talk");
-    const btnClass = /* @__PURE__ */ ref("");
-    const transcriptHtml = /* @__PURE__ */ ref("");
-    const isListening = /* @__PURE__ */ ref(false);
-    function setStatus(text, cls) {
-      statusText.value = text;
-      btnClass.value = cls;
-    }
-    function renderTranscript() {
-      if (!spokenChunks.length) {
-        transcriptHtml.value = "";
-        return;
-      }
-      transcriptHtml.value = spokenChunks.map((chunk, i) => {
-        const active = i === spokenChunks.length - 1;
-        return `<div class="vm-reply${active ? " vm-active" : ""}">${esc(chunk)}</div>`;
-      }).join("");
-    }
-    function stopAudio() {
-      queueGen++;
-      if (fastPollController) {
-        fastPollController.abort();
-        fastPollController = null;
-      }
-      spokenChunks = [];
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.src = "";
-        currentAudio = null;
-      }
-      audioQueue = [];
-      queueRunning = false;
-      voice.playing = false;
-      renderTranscript();
-    }
-    function enqueueChunk(chunkText) {
-      const stripped = stripMarkdown(chunkText).trim();
-      if (!stripped) return;
-      const displayText = chunkText.trim();
-      const gen = queueGen;
-      const p2 = speakFetch(stripped).then((res) => {
-        if (gen !== queueGen) return null;
-        if (!res.ok) {
-          return res.json().catch(() => ({})).then(() => ({ audio: null, url: null, text: displayText }));
-        }
-        return res.blob().then((blob) => {
-          if (gen !== queueGen) return null;
-          const url = URL.createObjectURL(blob);
-          return { audio: new Audio(url), url, text: displayText };
-        });
-      }).catch(() => ({ audio: null, url: null, text: displayText }));
-      audioQueue.push(p2);
-      if (!queueRunning) runQueue(gen);
-    }
-    async function runQueue(gen) {
-      if (queueRunning) return;
-      queueRunning = true;
-      while (audioQueue.length > 0 && gen === queueGen) {
-        const item = await audioQueue.shift();
-        if (gen !== queueGen) {
-          if (item == null ? void 0 : item.url) URL.revokeObjectURL(item.url);
-          continue;
-        }
-        if (!item) continue;
-        spokenChunks.push(item.text);
-        renderTranscript();
-        if (!item.audio) continue;
-        setStatus("Speaking…", "speaking");
-        voice.playing = true;
-        currentAudio = item.audio;
-        await new Promise((resolve2) => {
-          item.audio.onended = () => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          };
-          item.audio.onerror = () => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          };
-          item.audio.play().catch(() => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          });
-        });
-      }
-      if (gen === queueGen) {
-        queueRunning = false;
-        busy = false;
-        voice.playing = false;
-        if (voice.mode === "chat") setStatus("Press and hold to talk", "");
-      }
-    }
-    function onAssistantChunk(fullText, isDone) {
-      if (voice.mode !== "chat") return;
-      if (fullText.length < turnCursor) {
-        turnCursor = 0;
-        stopAudio();
-      }
-      const pending = fullText.slice(turnCursor);
-      if (!pending) return;
-      const result = extractChunks(pending, isDone);
-      if (result.consumed > 0) turnCursor += result.consumed;
-      for (const chunk of result.chunks) {
-        if (chunk.trim()) enqueueChunk(chunk);
-      }
-      if (result.chunks.length) busy = true;
-    }
-    async function streamChatReply(chatId) {
-      var _a2;
-      if (!chatId) return;
-      if (fastPollController) {
-        fastPollController.abort();
-      }
-      const controller = new AbortController();
-      fastPollController = controller;
-      const gen = queueGen;
-      while (!controller.signal.aborted && gen === queueGen) {
-        await new Promise((r) => setTimeout(r, 200));
-        if (controller.signal.aborted || gen !== queueGen) break;
-        try {
-          const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`, {
-            signal: controller.signal
-          });
-          if (!res.ok) break;
-          const data = await res.json();
-          if (!(data == null ? void 0 : data.ok) || !((_a2 = data == null ? void 0 : data.chat) == null ? void 0 : _a2.messages)) continue;
-          const msgs = data.chat.messages;
-          const lastAssistant = [...msgs].reverse().find((m2) => m2.role === "assistant");
-          if (!(lastAssistant == null ? void 0 : lastAssistant.text)) continue;
-          const st = lastAssistant.state;
-          const isDone = !st || st === "done";
-          if (isDone || st === "streaming" || st === "background") {
-            onAssistantChunk(lastAssistant.text, isDone);
-            if (isDone && voice.mode === "chat") setStatus("Press and hold to talk", "");
-          }
-          if (isDone) break;
-        } catch (e) {
-          if ((e == null ? void 0 : e.name) === "AbortError") break;
-          await new Promise((r) => setTimeout(r, 500));
-        }
-      }
-      if (fastPollController === controller) fastPollController = null;
-    }
-    function stopStream() {
-      stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
-      stream = null;
-    }
-    async function startRecording() {
-      if (busy || !mimeType) return;
-      busy = true;
-      stopAudio();
-      setStatus("Requesting microphone…", "");
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch {
-        setStatus("Microphone unavailable", "");
-        busy = false;
-        return;
-      }
-      chunks = [];
-      try {
-        recorder = new MediaRecorder(stream, { mimeType });
-      } catch {
-        stopStream();
-        setStatus("Press and hold to talk", "");
-        busy = false;
-        return;
-      }
-      recorder.ondataavailable = (e) => {
-        var _a2;
-        if (((_a2 = e.data) == null ? void 0 : _a2.size) > 0) chunks.push(e.data);
-      };
-      setStatus("Listening… (release to send)", "listening");
-      transcriptHtml.value = "";
-      isListening.value = true;
-      voice.recording = true;
-      recorder.start(200);
-    }
-    async function stopAndSubmit() {
-      if (!recorder || recorder.state === "inactive") return;
-      recorder.onstop = async () => {
-        isListening.value = false;
-        voice.recording = false;
-        setStatus("Transcribing…", "processing");
-        const blob = new Blob(chunks, { type: mimeType });
-        chunks = [];
-        recorder = null;
-        stopStream();
-        voice.transcribing = true;
-        let text = "";
-        try {
-          const ext = mimeType.includes("webm") ? ".webm" : ".ogg";
-          const fd = new FormData();
-          fd.append("audio", blob, `vm-island${ext}`);
-          const res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
-          const data = await res.json();
-          if (data.ok && data.text) {
-            text = data.text.trim();
-          } else {
-            setStatus("Transcription failed — try again", "");
-            busy = false;
-            voice.transcribing = false;
-            return;
-          }
-        } catch {
-          setStatus("Request failed — try again", "");
-          busy = false;
-          voice.transcribing = false;
-          return;
-        }
-        voice.transcribing = false;
-        if (!text) {
-          setStatus("Nothing heard — try again", "");
-          busy = false;
-          return;
-        }
-        transcriptHtml.value = `<div class="vm-heard">"${esc(text)}"</div>`;
-        setStatus("Sending…", "processing");
-        const chatId = window.__chatSessionId;
-        try {
-          await fetch("/api/chat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: text, chatId })
-          });
-          spokenChunks = [];
-          turnCursor = 0;
-          streamChatReply(chatId);
-        } catch {
-          console.error("[voice-island] chat send failed");
-        }
-        setStatus("Waiting for reply…", "processing");
-      };
-      recorder.stop();
-    }
-    function pressDown(e) {
-      e.preventDefault();
-      pressStart = Date.now();
-      holdTimer = setTimeout(() => {
-        holdMode = true;
-        if (!busy && (!recorder || recorder.state === "inactive")) startRecording();
-      }, HOLD_MS$1);
-    }
-    function pressUp(e) {
-      e.preventDefault();
-      if (holdTimer) clearTimeout(holdTimer);
-      const dur = Date.now() - pressStart;
-      if (holdMode) {
-        holdMode = false;
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
-      } else if (dur < HOLD_MS$1) {
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
-        else if (!busy) startRecording();
-      }
-    }
-    function pressLeave() {
-      if (holdMode) {
-        holdMode = false;
-        if (holdTimer) clearTimeout(holdTimer);
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndSubmit();
-      }
-    }
-    function restoreVmHook() {
-      window.__vmOnAssistantChunk = prevVmChunk;
-      prevVmChunk = void 0;
-    }
-    function openMode() {
-      busy = false;
-      spokenChunks = [];
-      turnCursor = 0;
-      setStatus("Press and hold to talk", "");
-      isListening.value = false;
-      transcriptHtml.value = "";
-      const hist = window.__chatHistory;
-      if (Array.isArray(hist) && hist.length) {
-        const last = hist[hist.length - 1];
-        if ((last == null ? void 0 : last.role) === "assistant" && last.text) turnCursor = last.text.length;
-      }
-      prevVmChunk = window.__vmOnAssistantChunk;
-      window.__vmOnAssistantChunk = onAssistantChunk;
-    }
-    function closeMode() {
-      stopStream();
-      stopAudio();
-      busy = false;
-      if ((recorder == null ? void 0 : recorder.state) !== "inactive") {
-        recorder == null ? void 0 : recorder.stop();
-        recorder = null;
-      }
-      restoreVmHook();
-    }
-    watch(
-      () => voice.mode,
-      (mode, prev) => {
-        if (mode === "chat" && prev !== "chat") openMode();
-        if (prev === "chat" && mode !== "chat") closeMode();
-      }
-    );
-    onMounted(() => {
-      if (voice.mode === "chat") openMode();
-    });
-    onBeforeUnmount(() => {
-      stopStream();
-      stopAudio();
-      if (voice.mode === "chat") restoreVmHook();
-    });
-    function close() {
-      closeMode();
-      voice.close();
-    }
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$3, [
-        createBaseVNode("div", {
-          class: "voice-mode-transcript",
-          innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$3),
-        createBaseVNode("div", _hoisted_3$3, [
-          createBaseVNode("div", _hoisted_4$2, toDisplayString(statusText.value), 1),
-          createBaseVNode("button", {
-            class: normalizeClass(["voice-mode-btn", btnClass.value]),
-            type: "button",
-            "aria-label": "Push to talk",
-            onMousedown: pressDown,
-            onTouchstart: withModifiers(pressDown, ["prevent"]),
-            onMouseup: pressUp,
-            onTouchend: withModifiers(pressUp, ["prevent"]),
-            onMouseleave: pressLeave
-          }, [
-            createBaseVNode("i", {
-              class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
-            }, null, 2)
-          ], 34),
-          createBaseVNode("button", {
-            class: "voice-mode-close",
-            type: "button",
-            "aria-label": "Exit voice mode",
-            onClick: close
-          }, [..._cache[0] || (_cache[0] = [
-            createBaseVNode("i", { class: "fa-solid fa-xmark" }, null, -1)
-          ])])
-        ])
-      ]);
-    };
-  }
-});
-const useTaskCreatorStore = /* @__PURE__ */ defineStore("task-creator", () => {
-  const conversation = /* @__PURE__ */ ref([]);
-  const draft = /* @__PURE__ */ ref(null);
-  const submitting = /* @__PURE__ */ ref(false);
-  const lastError = /* @__PURE__ */ ref(null);
-  const createdTaskId = /* @__PURE__ */ ref(null);
-  const SYSTEM_PROMPT = `You are a task-extraction assistant for a multi-agent system called Caravel. The user will describe a task they want to delegate to one of their AI agents. Your job is to extract the key fields and confirm back.
-
-Known agents: alice (ops/admin), bob (code/dev), sam (strategy), ray (research), mark (marketing), cliff (code review).
-
-Listen to the user's description and respond with:
-1. A SHORT spoken acknowledgement (1-2 sentences, natural and direct)
-2. Your extraction as a JSON block wrapped in <task> ... </task> tags
-
-JSON fields:
-- to: agent name (default "alice")
-- headline: short task title (max 80 chars)
-- brief: full task description as the agent will read it
-- project: project slug if mentioned (e.g. "caravel"), or null
-- priority: "P0"|"P1"|"P2"|"P3" (default "P2")
-- kind: "research"|"code"|"review"|"summarise"|"decide"|"other" (default "research")
-
-Do not ask clarifying questions unless a critical field is truly ambiguous. Make a sensible default call for anything unclear.
-
-Example response:
-"Got it — I'll set that up for Alice at P2.
-
-<task>
-{
-  "to": "alice",
-  "headline": "Summarise last week's completed tasks",
-  "brief": "Review all tasks completed in the past 7 days across all agents and draft a short summary for Kelly, highlighting any patterns or blockers.",
-  "project": "caravel",
-  "priority": "P2",
-  "kind": "summarise"
+function getViewComponent(kind) {
+  return registry[kind] ?? null;
 }
-</task>"`;
-  function reset() {
-    conversation.value = [{ role: "system", text: SYSTEM_PROMPT }];
-    draft.value = null;
-    submitting.value = false;
-    lastError.value = null;
-    createdTaskId.value = null;
-  }
-  function addUserMessage(text) {
-    conversation.value.push({ role: "user", text });
-  }
-  function addAssistantMessage(text) {
-    conversation.value.push({ role: "assistant", text });
-  }
-  function parseTaskFromReply(reply) {
-    const match = reply.match(/<task>\s*([\s\S]*?)\s*<\/task>/i);
-    if (!match) return null;
-    try {
-      const obj = JSON.parse(match[1]);
-      return {
-        to: typeof obj.to === "string" ? obj.to : "alice",
-        headline: typeof obj.headline === "string" ? obj.headline.slice(0, 80) : "New task",
-        brief: typeof obj.brief === "string" ? obj.brief : "",
-        project: typeof obj.project === "string" ? obj.project : null,
-        priority: /^P[0-3]$/.test(obj.priority) ? obj.priority : "P2",
-        kind: ["research", "code", "review", "summarise", "decide", "other"].includes(obj.kind) ? obj.kind : "research"
-      };
-    } catch {
-      return null;
-    }
-  }
-  function setDraft(d2) {
-    draft.value = { ...d2 };
-  }
-  function updateDraftField(field, value) {
-    if (draft.value) {
-      draft.value[field] = value;
-    }
-  }
-  async function submitDraft() {
-    if (!draft.value) return { ok: false, error: "No draft" };
-    submitting.value = true;
-    lastError.value = null;
-    try {
-      const payload = {
-        to: draft.value.to,
-        from: "user",
-        kind: draft.value.kind,
-        priority: draft.value.priority,
-        headline: draft.value.headline,
-        brief: draft.value.brief,
-        project: draft.value.project || null
-      };
-      const res = await fetch("/api/tasks/new", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (!data.ok) {
-        lastError.value = data.error || "Unknown error";
-        return { ok: false, error: lastError.value ?? "Unknown error" };
-      }
-      createdTaskId.value = data.id;
-      return { ok: true, id: data.id };
-    } catch (err) {
-      lastError.value = String(err);
-      return { ok: false, error: lastError.value ?? "Unknown error" };
-    } finally {
-      submitting.value = false;
-    }
-  }
-  return {
-    conversation,
-    draft,
-    submitting,
-    lastError,
-    createdTaskId,
-    SYSTEM_PROMPT,
-    reset,
-    addUserMessage,
-    addAssistantMessage,
-    parseTaskFromReply,
-    setDraft,
-    updateDraftField,
-    submitDraft
-  };
-});
-const _hoisted_1$2 = {
-  key: 0,
-  class: "vtc-success text-center py-4"
-};
+const _hoisted_1$2 = { class: "view-host" };
 const _hoisted_2$2 = {
-  key: 0,
-  class: "vtc-claude-reply mb-3 p-3 rounded"
-};
-const _hoisted_3$2 = { class: "row g-2 mb-2" };
-const _hoisted_4$1 = { class: "col-6" };
-const _hoisted_5$1 = { class: "col-6" };
-const _hoisted_6$1 = { class: "d-flex gap-2 justify-content-end" };
-const _hoisted_7$1 = {
-  key: 2,
-  class: "vtc-capture text-center py-3"
-};
-const _hoisted_8$1 = { class: "voice-mode-status mb-4" };
-const _hoisted_9$1 = {
-  key: 0,
-  class: "vm-heard mt-2"
-};
-const _hoisted_10$1 = {
   key: 1,
-  class: "vm-reply vm-active mt-2"
-};
-const HOLD_MS = 250;
-const _sfc_main$4 = /* @__PURE__ */ defineComponent({
-  __name: "VoiceTaskCreator",
-  setup(__props) {
-    const voice = useVoiceStore();
-    const taskCreator = useTaskCreatorStore();
-    const mimeType = detectMimeType();
-    let recorder = null;
-    let chunks = [];
-    let stream = null;
-    let busy = false;
-    let audioQueue = [];
-    let queueRunning = false;
-    let queueGen = 0;
-    let currentAudio = null;
-    let pollTimer = null;
-    const showModal = /* @__PURE__ */ ref(false);
-    const statusText = /* @__PURE__ */ ref("Describe the task you want to create");
-    const isListening = /* @__PURE__ */ ref(false);
-    const isProcessing = /* @__PURE__ */ ref(false);
-    const heardText = /* @__PURE__ */ ref("");
-    const replyText = /* @__PURE__ */ ref("");
-    const submitError = /* @__PURE__ */ ref("");
-    const submitted = /* @__PURE__ */ ref(false);
-    const draftTo = /* @__PURE__ */ ref("");
-    const draftHeadline = /* @__PURE__ */ ref("");
-    const draftBrief = /* @__PURE__ */ ref("");
-    const draftProject = /* @__PURE__ */ ref("");
-    const draftPriority = /* @__PURE__ */ ref("P2");
-    const draftKind = /* @__PURE__ */ ref("research");
-    const hasDraft = computed(() => taskCreator.draft !== null);
-    const isSubmitting = computed(() => taskCreator.submitting);
-    const priorityOptions = ["P0", "P1", "P2", "P3"];
-    const kindOptions = ["research", "code", "review", "summarise", "decide", "other"];
-    function stopAudio() {
-      queueGen++;
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.src = "";
-        currentAudio = null;
-      }
-      audioQueue = [];
-      queueRunning = false;
-    }
-    function enqueueChunk(chunkText) {
-      const stripped = stripMarkdown(chunkText).trim();
-      if (!stripped) return;
-      const gen = queueGen;
-      const p2 = speakFetch(stripped).then((res) => {
-        if (gen !== queueGen) return null;
-        if (!res.ok) return { audio: null, url: null, text: chunkText };
-        return res.blob().then((blob) => {
-          if (gen !== queueGen) return null;
-          const url = URL.createObjectURL(blob);
-          return { audio: new Audio(url), url, text: chunkText };
-        });
-      }).catch(() => ({ audio: null, url: null, text: chunkText }));
-      audioQueue.push(p2);
-      if (!queueRunning) runQueue(gen);
-    }
-    async function runQueue(gen) {
-      if (queueRunning) return;
-      queueRunning = true;
-      while (audioQueue.length > 0 && gen === queueGen) {
-        const item = await audioQueue.shift();
-        if (gen !== queueGen) {
-          if (item == null ? void 0 : item.url) URL.revokeObjectURL(item.url);
-          continue;
-        }
-        if (!(item == null ? void 0 : item.audio)) continue;
-        currentAudio = item.audio;
-        await new Promise((resolve2) => {
-          item.audio.onended = () => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          };
-          item.audio.onerror = () => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          };
-          item.audio.play().catch(() => {
-            URL.revokeObjectURL(item.url);
-            currentAudio = null;
-            resolve2();
-          });
-        });
-      }
-      if (gen === queueGen) queueRunning = false;
-    }
-    function speakReply(fullReply) {
-      const spoken = fullReply.replace(/<task>[\s\S]*?<\/task>/gi, "").trim();
-      if (!spoken) return;
-      const sentences = spoken.match(/[^.!?]+[.!?]+/g) ?? [spoken];
-      for (const s of sentences) {
-        if (s.trim()) enqueueChunk(s.trim());
-      }
-    }
-    function stopStream() {
-      stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
-      stream = null;
-    }
-    async function startRecording() {
-      if (busy || !mimeType) return;
-      busy = true;
-      stopAudio();
-      statusText.value = "Requesting microphone…";
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      } catch {
-        statusText.value = "Microphone unavailable";
-        busy = false;
-        return;
-      }
-      chunks = [];
-      try {
-        recorder = new MediaRecorder(stream, { mimeType });
-      } catch {
-        stopStream();
-        statusText.value = "Describe the task you want to create";
-        busy = false;
-        return;
-      }
-      recorder.ondataavailable = (e) => {
-        var _a2;
-        if (((_a2 = e.data) == null ? void 0 : _a2.size) > 0) chunks.push(e.data);
-      };
-      statusText.value = "Listening… (release to send)";
-      heardText.value = "";
-      replyText.value = "";
-      isListening.value = true;
-      recorder.start(200);
-    }
-    async function stopAndExtract() {
-      if (!recorder || recorder.state === "inactive") return;
-      recorder.onstop = async () => {
-        isListening.value = false;
-        statusText.value = "Transcribing…";
-        isProcessing.value = true;
-        const blob = new Blob(chunks, { type: mimeType });
-        chunks = [];
-        recorder = null;
-        stopStream();
-        let text = "";
-        try {
-          const ext = mimeType.includes("webm") ? ".webm" : ".ogg";
-          const fd = new FormData();
-          fd.append("audio", blob, `task-creator${ext}`);
-          const res = await fetch("/api/voice/transcribe", { method: "POST", body: fd });
-          const data = await res.json();
-          if (data.ok && data.text) {
-            text = data.text.trim();
-          } else {
-            statusText.value = "Transcription failed — try again";
-            busy = false;
-            isProcessing.value = false;
-            return;
-          }
-        } catch {
-          statusText.value = "Request failed — try again";
-          busy = false;
-          isProcessing.value = false;
-          return;
-        }
-        if (!text) {
-          statusText.value = "Nothing heard — try again";
-          busy = false;
-          isProcessing.value = false;
-          return;
-        }
-        heardText.value = text;
-        statusText.value = "Extracting task…";
-        taskCreator.addUserMessage(text);
-        await extractTask(text);
-        busy = false;
-        isProcessing.value = false;
-      };
-      recorder.stop();
-    }
-    async function extractTask(userText) {
-      const ephemeralChatId = `voice-task-${Date.now()}`;
-      const embeddedMessage = buildEmbeddedMessage(userText);
-      try {
-        const postRes = await fetch("/api/chat", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: embeddedMessage, chatId: ephemeralChatId })
-        });
-        const postData = await postRes.json();
-        if (!postData.ok) {
-          statusText.value = "Extraction failed — try again";
-          return;
-        }
-      } catch {
-        statusText.value = "Request failed — try again";
-        return;
-      }
-      statusText.value = "Thinking…";
-      const reply = await pollForReply(ephemeralChatId);
-      if (!reply) {
-        statusText.value = "No reply — try again";
-        return;
-      }
-      taskCreator.addAssistantMessage(reply);
-      replyText.value = reply;
-      speakReply(reply);
-      const draft = taskCreator.parseTaskFromReply(reply);
-      if (draft) {
-        taskCreator.setDraft(draft);
-        draftTo.value = draft.to;
-        draftHeadline.value = draft.headline;
-        draftBrief.value = draft.brief;
-        draftProject.value = draft.project ?? "";
-        draftPriority.value = draft.priority;
-        draftKind.value = draft.kind;
-        statusText.value = "Review and confirm";
-      } else {
-        statusText.value = "Couldn't extract task — try again";
-      }
-    }
-    function buildEmbeddedMessage(userText) {
-      return `[VOICE TASK CREATOR — extract a task from the user's spoken request]
-
-${taskCreator.SYSTEM_PROMPT}
-
----
-
-User's voice request: "${userText}"`;
-    }
-    async function pollForReply(chatId, maxMs = 3e4) {
-      const deadline = Date.now() + maxMs;
-      while (Date.now() < deadline) {
-        await delay3(600);
-        try {
-          const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
-          const data = await res.json();
-          if (!data.ok || !data.chat) continue;
-          const messages = data.chat.messages ?? [];
-          const last = messages[messages.length - 1];
-          if (!last) continue;
-          if (last.role === "assistant" && last.state === "done") return last.text ?? null;
-          if (last.role === "assistant") {
-            statusText.value = "Thinking…";
-          }
-        } catch {
-        }
-      }
-      return null;
-    }
-    function delay3(ms) {
-      return new Promise((resolve2) => {
-        pollTimer = setTimeout(resolve2, ms);
-      });
-    }
-    async function submitTask() {
-      if (!taskCreator.draft) return;
-      taskCreator.updateDraftField("to", draftTo.value);
-      taskCreator.updateDraftField("headline", draftHeadline.value);
-      taskCreator.updateDraftField("brief", draftBrief.value);
-      taskCreator.updateDraftField("project", draftProject.value || null);
-      taskCreator.updateDraftField("priority", draftPriority.value);
-      taskCreator.updateDraftField("kind", draftKind.value);
-      submitError.value = "";
-      const result = await taskCreator.submitDraft();
-      if (result.ok) {
-        submitted.value = true;
-        document.dispatchEvent(new CustomEvent("voice:task-created", { detail: { id: result.id } }));
-        speakReply("Task created — I've queued it for you.");
-        setTimeout(() => {
-          if (voice.mode === "task-creator") voice.close();
-        }, 3e3);
-      } else {
-        submitError.value = result.error ?? "Unknown error";
-      }
-    }
-    let holdTimer2 = null;
-    let holdMode = false;
-    let pressStart = 0;
-    function pressDown(e) {
-      e.preventDefault();
-      pressStart = Date.now();
-      holdTimer2 = setTimeout(() => {
-        holdMode = true;
-        if (!busy && (!recorder || recorder.state === "inactive")) startRecording();
-      }, HOLD_MS);
-    }
-    function pressUp(e) {
-      e.preventDefault();
-      if (holdTimer2) clearTimeout(holdTimer2);
-      const dur = Date.now() - pressStart;
-      if (holdMode) {
-        holdMode = false;
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
-      } else if (dur < HOLD_MS) {
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
-        else if (!busy) startRecording();
-      }
-    }
-    function pressLeave() {
-      if (holdMode) {
-        holdMode = false;
-        if (holdTimer2) clearTimeout(holdTimer2);
-        if ((recorder == null ? void 0 : recorder.state) !== "inactive") stopAndExtract();
-      }
-    }
-    function openMode() {
-      taskCreator.reset();
-      busy = false;
-      statusText.value = "Describe the task you want to create";
-      isListening.value = false;
-      isProcessing.value = false;
-      heardText.value = "";
-      replyText.value = "";
-      submitError.value = "";
-      submitted.value = false;
-    }
-    function closeMode() {
-      stopStream();
-      stopAudio();
-      busy = false;
-      if ((recorder == null ? void 0 : recorder.state) !== "inactive") {
-        recorder == null ? void 0 : recorder.stop();
-        recorder = null;
-      }
-      if (pollTimer) clearTimeout(pollTimer);
-    }
-    function cancel() {
-      closeMode();
-      voice.close();
-    }
-    function resetDraft() {
-      taskCreator.reset();
-      heardText.value = "";
-      replyText.value = "";
-      submitted.value = false;
-      statusText.value = "Describe the task you want to create";
-    }
-    function onModalHide() {
-      if (voice.mode === "task-creator") cancel();
-    }
-    watch(
-      () => voice.mode,
-      (mode, prev) => {
-        if (mode === "task-creator" && prev !== "task-creator") {
-          openMode();
-          showModal.value = true;
-        }
-        if (prev === "task-creator" && mode !== "task-creator") {
-          showModal.value = false;
-          closeMode();
-        }
-      }
-    );
-    onMounted(() => {
-      if (voice.mode === "task-creator") {
-        openMode();
-        showModal.value = true;
-      }
-    });
-    onBeforeUnmount(() => {
-      closeMode();
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(unref(BModal_default), {
-        modelValue: showModal.value,
-        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => showModal.value = $event),
-        size: "lg",
-        "no-close-on-backdrop": "",
-        "hide-footer": "",
-        scrollable: "",
-        centered: "",
-        onHide: onModalHide
-      }, {
-        title: withCtx(() => [..._cache[7] || (_cache[7] = [
-          createBaseVNode("span", { class: "vtc-modal-title" }, [
-            createBaseVNode("i", {
-              class: "fa-solid fa-list-check me-2",
-              style: { "color": "#6ee7b7" }
-            }),
-            createTextVNode(" Create a task from voice ")
-          ], -1)
-        ])]),
-        default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$2, [..._cache[8] || (_cache[8] = [
-            createBaseVNode("i", { class: "fa-solid fa-circle-check vtc-success-icon mb-3" }, null, -1),
-            createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
-            createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
-          ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$2, [
-              _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
-              createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
-            ])) : createCommentVNode("", true),
-            createVNode(unref(BFormGroup_default), {
-              label: "Agent",
-              "label-for": "vtc-to",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-to",
-                  modelValue: draftTo.value,
-                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draftTo.value = $event),
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            createBaseVNode("div", _hoisted_3$2, [
-              createBaseVNode("div", _hoisted_4$1, [
-                createVNode(unref(BFormGroup_default), {
-                  label: "Priority",
-                  "label-for": "vtc-priority"
-                }, {
-                  default: withCtx(() => [
-                    createVNode(unref(BFormSelect_default), {
-                      id: "vtc-priority",
-                      modelValue: draftPriority.value,
-                      "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draftPriority.value = $event),
-                      size: "sm"
-                    }, {
-                      default: withCtx(() => [
-                        (openBlock(), createElementBlock(Fragment, null, renderList(priorityOptions, (p2) => {
-                          return createVNode(unref(BFormSelectOption_default), {
-                            key: p2,
-                            value: p2
-                          }, {
-                            default: withCtx(() => [
-                              createTextVNode(toDisplayString(p2), 1)
-                            ]),
-                            _: 2
-                          }, 1032, ["value"]);
-                        }), 64))
-                      ]),
-                      _: 1
-                    }, 8, ["modelValue"])
-                  ]),
-                  _: 1
-                })
-              ]),
-              createBaseVNode("div", _hoisted_5$1, [
-                createVNode(unref(BFormGroup_default), {
-                  label: "Kind",
-                  "label-for": "vtc-kind"
-                }, {
-                  default: withCtx(() => [
-                    createVNode(unref(BFormSelect_default), {
-                      id: "vtc-kind",
-                      modelValue: draftKind.value,
-                      "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draftKind.value = $event),
-                      size: "sm"
-                    }, {
-                      default: withCtx(() => [
-                        (openBlock(), createElementBlock(Fragment, null, renderList(kindOptions, (k) => {
-                          return createVNode(unref(BFormSelectOption_default), {
-                            key: k,
-                            value: k
-                          }, {
-                            default: withCtx(() => [
-                              createTextVNode(toDisplayString(k), 1)
-                            ]),
-                            _: 2
-                          }, 1032, ["value"]);
-                        }), 64))
-                      ]),
-                      _: 1
-                    }, 8, ["modelValue"])
-                  ]),
-                  _: 1
-                })
-              ])
-            ]),
-            createVNode(unref(BFormGroup_default), {
-              label: "Project",
-              "label-for": "vtc-project",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-project",
-                  modelValue: draftProject.value,
-                  "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draftProject.value = $event),
-                  size: "sm",
-                  placeholder: "(none)"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            createVNode(unref(BFormGroup_default), {
-              label: "Headline",
-              "label-for": "vtc-headline",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-headline",
-                  modelValue: draftHeadline.value,
-                  "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draftHeadline.value = $event),
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            createVNode(unref(BFormGroup_default), {
-              label: "Brief",
-              "label-for": "vtc-brief",
-              class: "mb-3"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormTextarea_default), {
-                  id: "vtc-brief",
-                  modelValue: draftBrief.value,
-                  "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draftBrief.value = $event),
-                  rows: "4",
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            submitError.value ? (openBlock(), createBlock(unref(BAlert_default), {
-              key: 1,
-              variant: "danger",
-              "model-value": true,
-              class: "mb-3"
-            }, {
-              default: withCtx(() => [
-                createTextVNode(toDisplayString(submitError.value), 1)
-              ]),
-              _: 1
-            })) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_6$1, [
-              createVNode(unref(BButton_default), {
-                variant: "secondary",
-                size: "sm",
-                onClick: resetDraft
-              }, {
-                default: withCtx(() => [..._cache[10] || (_cache[10] = [
-                  createBaseVNode("i", { class: "fa-solid fa-rotate-left me-1" }, null, -1),
-                  createTextVNode(" Redo ", -1)
-                ])]),
-                _: 1
-              }),
-              createVNode(unref(BButton_default), {
-                variant: "success",
-                size: "sm",
-                disabled: isSubmitting.value,
-                onClick: submitTask
-              }, {
-                default: withCtx(() => [
-                  _cache[11] || (_cache[11] = createBaseVNode("i", { class: "fa-solid fa-paper-plane me-1" }, null, -1)),
-                  createTextVNode(" " + toDisplayString(isSubmitting.value ? "Creating…" : "Create Task"), 1)
-                ]),
-                _: 1
-              }, 8, ["disabled"])
-            ])
-          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7$1, [
-            createBaseVNode("div", _hoisted_8$1, toDisplayString(statusText.value), 1),
-            createBaseVNode("button", {
-              class: normalizeClass(["voice-mode-btn mx-auto mb-4", { listening: isListening.value, processing: isProcessing.value }]),
-              type: "button",
-              "aria-label": "Hold to describe task",
-              onMousedown: pressDown,
-              onTouchstart: withModifiers(pressDown, ["prevent"]),
-              onMouseup: pressUp,
-              onTouchend: withModifiers(pressUp, ["prevent"]),
-              onMouseleave: pressLeave
-            }, [
-              createBaseVNode("i", {
-                class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
-              }, null, 2)
-            ], 34),
-            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9$1, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10$1, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
-          ]))
-        ]),
-        _: 1
-      }, 8, ["modelValue"]);
-    };
-  }
-});
-const _export_sfc = (sfc, props) => {
-  const target = sfc.__vccOpts || sfc;
-  for (const [key, val] of props) {
-    target[key] = val;
-  }
-  return target;
-};
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-9d3f47dd"]]);
-const _sfc_main$3 = /* @__PURE__ */ defineComponent({
-  __name: "VoiceIsland",
-  setup(__props) {
-    const voice = useVoiceStore();
-    function onOpenChatMode() {
-      voice.openChatMode();
-    }
-    function onOpenTaskCreator() {
-      voice.openTaskCreatorMode();
-    }
-    function onClose() {
-      voice.close();
-    }
-    onMounted(() => {
-      document.addEventListener("voice:open-chat-mode", onOpenChatMode);
-      document.addEventListener("voice:open-task-creator", onOpenTaskCreator);
-      document.addEventListener("voice:close", onClose);
-      document.dispatchEvent(new CustomEvent("voice:island-ready"));
-    });
-    onBeforeUnmount(() => {
-      document.removeEventListener("voice:open-chat-mode", onOpenChatMode);
-      document.removeEventListener("voice:open-task-creator", onOpenTaskCreator);
-      document.removeEventListener("voice:close", onClose);
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$5, { key: 0 })) : createCommentVNode("", true),
-        createVNode(VoiceTaskCreator)
-      ]);
-    };
-  }
-});
-const _hoisted_1$1 = { class: "reading-header" };
-const _hoisted_2$1 = { class: "reading-stack" };
-const _hoisted_3$1 = ["title", "onClick"];
-const _hoisted_4 = { class: "reading-pill-name" };
-const _hoisted_5 = ["onClick"];
-const _hoisted_6 = {
-  key: 0,
-  class: "reading-empty-hint"
-};
-const _hoisted_7 = { class: "reading-controls" };
-const _hoisted_8 = ["title"];
-const _hoisted_9 = {
-  key: 0,
-  class: "reading-doc"
-};
-const _hoisted_10 = {
-  key: 1,
-  class: "reading-doc reading-doc-empty"
+  class: "view-host-empty"
 };
 const _sfc_main$2 = /* @__PURE__ */ defineComponent({
-  __name: "ReadingPane",
+  __name: "ViewHost",
+  props: {
+    activeRef: {}
+  },
   setup(__props) {
-    const reading = useReadingStore();
-    const activeRef = computed(() => {
-      return reading.stack[reading.activeIndex] ?? null;
+    const props = __props;
+    const viewComponent = computed(() => {
+      if (!props.activeRef) return null;
+      return getViewComponent(props.activeRef.kind);
     });
-    function onSplitterDown(ev) {
-      ev.preventDefault();
-      const startX = ev.clientX;
-      const startW = reading.width;
-      const side = reading.side;
-      function onMove(me2) {
-        const dx = me2.clientX - startX;
-        const newW = side === "right" ? startW - dx : startW + dx;
-        reading.setWidth(Math.max(200, Math.min(900, newW)));
-      }
-      function onUp() {
-        window.removeEventListener("pointermove", onMove);
-        window.removeEventListener("pointerup", onUp);
-      }
-      window.addEventListener("pointermove", onMove);
-      window.addEventListener("pointerup", onUp);
-    }
-    function onDragOver(ev) {
+    const isLegacy = computed(() => {
       var _a2;
-      if (!((_a2 = ev.dataTransfer) == null ? void 0 : _a2.types.includes("application/x-caravel-ref"))) return;
-      ev.preventDefault();
-      ev.dataTransfer.dropEffect = "copy";
-    }
-    function onDrop(ev) {
-      var _a2;
-      ev.preventDefault();
-      reading.setDragActive(false);
-      const data = (_a2 = ev.dataTransfer) == null ? void 0 : _a2.getData("application/x-caravel-ref");
-      if (!data) return;
-      try {
-        const ref2 = JSON.parse(data);
-        reading.throwRef(ref2);
-      } catch {
-      }
-    }
-    function pillLabel(ref2) {
-      return ref2.path.split("/").pop() || ref2.path;
-    }
+      return ((_a2 = props.activeRef) == null ? void 0 : _a2.kind) === "legacy";
+    });
+    const cacheKey = computed(() => props.activeRef ? refKey(props.activeRef) : "");
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: normalizeClass(["reading-pane", { "reading-drag-over": unref(reading).dragActive }]),
-        style: normalizeStyle({ width: unref(reading).width + "px" }),
-        onDragover: onDragOver,
-        onDrop
-      }, [
-        createBaseVNode("div", {
-          class: "reading-splitter",
-          onPointerdown: withModifiers(onSplitterDown, ["stop"])
-        }, null, 32),
-        createBaseVNode("div", _hoisted_1$1, [
-          createBaseVNode("div", _hoisted_2$1, [
-            (openBlock(true), createElementBlock(Fragment, null, renderList(unref(reading).stack, (item, i) => {
-              return openBlock(), createElementBlock("button", {
-                key: item.path,
-                class: normalizeClass(["reading-pill", { "is-active": i === unref(reading).activeIndex }]),
-                type: "button",
-                title: item.path,
-                onClick: ($event) => unref(reading).activate(i)
-              }, [
-                createBaseVNode("span", _hoisted_4, toDisplayString(pillLabel(item)), 1),
-                createBaseVNode("span", {
-                  class: "reading-pill-close",
-                  role: "button",
-                  tabindex: "-1",
-                  "aria-label": "Remove",
-                  onClick: withModifiers(($event) => unref(reading).closeItem(i), ["stop"])
-                }, "×", 8, _hoisted_5)
-              ], 10, _hoisted_3$1);
-            }), 128)),
-            unref(reading).stack.length === 0 ? (openBlock(), createElementBlock("span", _hoisted_6, " Drop a file or press ⇥ ")) : createCommentVNode("", true)
-          ]),
-          createBaseVNode("div", _hoisted_7, [
-            createBaseVNode("button", {
-              class: "reading-side-btn",
-              type: "button",
-              title: unref(reading).side === "right" ? "Dock left" : "Dock right",
-              onClick: _cache[0] || (_cache[0] = ($event) => unref(reading).setSide(unref(reading).side === "right" ? "left" : "right"))
-            }, toDisplayString(unref(reading).side === "right" ? "⇦" : "⇨"), 9, _hoisted_8),
-            createBaseVNode("button", {
-              class: "reading-close-btn",
-              type: "button",
-              title: "Close reading pane",
-              onClick: _cache[1] || (_cache[1] = ($event) => unref(reading).setOpen(false))
-            }, "×")
-          ])
-        ]),
-        activeRef.value ? (openBlock(), createElementBlock("div", _hoisted_9, [
-          createVNode(_sfc_main$f, {
-            path: activeRef.value.path,
-            kind: activeRef.value.kind
-          }, null, 8, ["path", "kind"])
-        ])) : (openBlock(), createElementBlock("div", _hoisted_10, [..._cache[2] || (_cache[2] = [
-          createBaseVNode("p", { class: "reading-drop-msg" }, "Drop a file or press ⇥ on a file row to open it here.", -1)
-        ])]))
-      ], 38);
+      return openBlock(), createElementBlock("div", _hoisted_1$2, [
+        __props.activeRef && viewComponent.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+          isLegacy.value ? (openBlock(), createBlock(resolveDynamicComponent(viewComponent.value), {
+            key: 0,
+            resource: __props.activeRef
+          }, null, 8, ["resource"])) : (openBlock(), createBlock(KeepAlive, {
+            key: 1,
+            max: 8
+          }, [
+            (openBlock(), createBlock(resolveDynamicComponent(viewComponent.value), {
+              key: cacheKey.value,
+              resource: __props.activeRef
+            }, null, 8, ["resource"]))
+          ], 1024))
+        ], 64)) : (openBlock(), createElementBlock("div", _hoisted_2$2))
+      ]);
     };
   }
 });
+const ViewHost = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["__scopeId", "data-v-e41f6907"]]);
+const _hoisted_1$1 = { class: "workspace" };
+const _hoisted_2$1 = {
+  class: "workspace-tabs",
+  role: "tablist"
+};
+const _hoisted_3$1 = ["aria-selected", "onClick"];
+const _hoisted_4 = { class: "workspace-tab-label" };
+const _hoisted_5 = ["onClick"];
 const _sfc_main$1 = /* @__PURE__ */ defineComponent({
-  __name: "ReadingDropZone",
+  __name: "Workspace",
   setup(__props) {
-    const reading = useReadingStore();
-    function onDragOver(ev) {
-      if (!ev.dataTransfer) return;
-      const types = ev.dataTransfer.types;
-      if (types.includes("application/x-caravel-ref") || types.includes("text/plain")) {
-        ev.preventDefault();
-        ev.dataTransfer.dropEffect = "copy";
-      }
-    }
-    function onDrop(ev) {
-      ev.preventDefault();
-      reading.setDragActive(false);
-      if (!ev.dataTransfer) return;
-      const raw = ev.dataTransfer.getData("application/x-caravel-ref") || ev.dataTransfer.getData("text/plain");
-      if (!raw) return;
-      try {
-        const ref2 = JSON.parse(raw);
-        if (ref2 && ref2.path) reading.throwRef(ref2);
-      } catch {
-        const path = raw.trim();
-        if (path) reading.throwRef({ kind: "file", path });
-      }
-    }
-    function onDragLeave(ev) {
-      const zone = ev.currentTarget;
-      if (!zone.contains(ev.relatedTarget)) {
-        reading.setDragActive(false);
+    const ws = useWorkspaceStore();
+    const group0Tabs = computed(() => ws.groupTabs(0));
+    const activeRef = computed(() => {
+      const key = ws.active[0];
+      if (!key) return null;
+      return ws.tabs.find((t) => refKey(t) === key) ?? null;
+    });
+    function tabLabel(ref2) {
+      switch (ref2.kind) {
+        case "dashboard":
+          return "Dashboard";
+        case "file":
+          return ref2.path.split("/").pop() || ref2.path;
+        case "report":
+          return ref2.taskId;
+        case "legacy":
+          return ref2.page.charAt(0).toUpperCase() + ref2.page.slice(1);
+        case "envelope":
+          return ref2.taskId;
+        case "project":
+          return ref2.slug;
+        case "chat":
+          return ref2.chatId;
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: "reading-drop-zone",
-        "aria-label": "Drop here to open in reading pane",
-        role: "region",
-        onDragover: onDragOver,
-        onDrop,
-        onDragleave: onDragLeave
-      }, [..._cache[0] || (_cache[0] = [
-        createBaseVNode("span", { class: "reading-drop-zone-label" }, "⇥ Open in reading pane", -1)
-      ])], 32);
+      return openBlock(), createElementBlock("div", _hoisted_1$1, [
+        createBaseVNode("div", _hoisted_2$1, [
+          (openBlock(true), createElementBlock(Fragment, null, renderList(group0Tabs.value, (tab) => {
+            return openBlock(), createElementBlock("button", {
+              key: unref(refKey)(tab),
+              class: normalizeClass(["workspace-tab", { "workspace-tab--active": unref(ws).active[0] === unref(refKey)(tab) }]),
+              role: "tab",
+              "aria-selected": unref(ws).active[0] === unref(refKey)(tab),
+              type: "button",
+              onClick: ($event) => unref(ws).activate(unref(refKey)(tab))
+            }, [
+              createBaseVNode("span", _hoisted_4, toDisplayString(tabLabel(tab)), 1),
+              tab.kind !== "dashboard" ? (openBlock(), createElementBlock("span", {
+                key: 0,
+                class: "workspace-tab-close",
+                role: "button",
+                tabindex: "-1",
+                "aria-label": "Close tab",
+                onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
+              }, "×", 8, _hoisted_5)) : createCommentVNode("", true)
+            ], 10, _hoisted_3$1);
+          }), 128))
+        ]),
+        createVNode(ViewHost, { "active-ref": activeRef.value }, null, 8, ["active-ref"])
+      ]);
     };
   }
 });
-const _hoisted_1 = {
+const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["__scopeId", "data-v-91f6ee9c"]]);
+const _hoisted_1 = { class: "stage" };
+const _hoisted_2 = {
   class: "tab-nav",
   role: "tablist",
   "aria-label": "Main navigation"
 };
-const _hoisted_2 = ["aria-pressed"];
-const _hoisted_3 = { class: "stage-main" };
+const _hoisted_3 = { class: "stage-body" };
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "App",
   setup(__props) {
     const ui = useUiStore();
-    const reading = useReadingStore();
-    onMounted(() => {
-      window.__throwToReadingPane = (ref2) => reading.throwRef(ref2);
-    });
-    function onStageDragEnter(ev) {
-      var _a2;
-      if ((_a2 = ev.dataTransfer) == null ? void 0 : _a2.types.includes("application/x-caravel-ref")) {
-        reading.setDragActive(true);
-      }
-    }
-    function onStageDragLeave(ev) {
-      const stage = ev.currentTarget;
-      if (!stage.contains(ev.relatedTarget)) {
-        reading.setDragActive(false);
-      }
-    }
-    function onStageDragEnd() {
-      reading.setDragActive(false);
-    }
     return (_ctx, _cache) => {
+      const _component_RouterLink = resolveComponent("RouterLink");
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$b),
-        createVNode(_sfc_main$a),
-        createBaseVNode("main", {
-          class: "stage",
-          onDragenterCapture: onStageDragEnter,
-          onDragleaveCapture: onStageDragLeave,
-          onDragendCapture: onStageDragEnd,
-          onDropCapture: onStageDragEnd
-        }, [
-          createBaseVNode("nav", _hoisted_1, [
-            createVNode(unref(RouterLink), {
+        createVNode(_sfc_main$j),
+        createVNode(_sfc_main$i),
+        createBaseVNode("main", _hoisted_1, [
+          createBaseVNode("nav", _hoisted_2, [
+            createVNode(_component_RouterLink, {
               id: "tab-dashboard",
               class: "tab-btn",
               to: "/dashboard",
               role: "tab",
               "aria-controls": "dashboard-panel"
             }, {
-              default: withCtx(() => [..._cache[2] || (_cache[2] = [
+              default: withCtx(() => [..._cache[1] || (_cache[1] = [
                 createBaseVNode("span", { class: "tab-btn-label-full" }, "Dashboard", -1),
                 createBaseVNode("span", { class: "tab-btn-label-short" }, "Dash", -1)
               ])]),
               _: 1
             }),
-            createVNode(unref(RouterLink), {
+            createVNode(_component_RouterLink, {
               id: "tab-chat",
               class: "tab-btn",
               to: "/chat",
               role: "tab",
               "aria-controls": "chat-panel"
             }, {
-              default: withCtx(() => [..._cache[3] || (_cache[3] = [
+              default: withCtx(() => [..._cache[2] || (_cache[2] = [
                 createTextVNode("Chat", -1)
               ])]),
               _: 1
             }),
-            createVNode(unref(RouterLink), {
+            createVNode(_component_RouterLink, {
               id: "tab-tasks",
               class: "tab-btn",
               to: "/tasks",
               role: "tab",
               "aria-controls": "tasks-panel"
             }, {
-              default: withCtx(() => [..._cache[4] || (_cache[4] = [
+              default: withCtx(() => [..._cache[3] || (_cache[3] = [
                 createTextVNode("Tasks", -1)
               ])]),
               _: 1
             }),
-            createVNode(unref(RouterLink), {
+            createVNode(_component_RouterLink, {
               id: "tab-files",
               class: "tab-btn",
               to: "/files",
               role: "tab",
               "aria-controls": "files-panel"
             }, {
-              default: withCtx(() => [..._cache[5] || (_cache[5] = [
+              default: withCtx(() => [..._cache[4] || (_cache[4] = [
                 createTextVNode("Files", -1)
               ])]),
               _: 1
             }),
             createBaseVNode("button", {
-              class: "tab-btn tab-btn-split",
-              id: "reading-nav-toggle",
-              type: "button",
-              title: "Toggle reading pane",
-              "aria-label": "Toggle reading pane",
-              "aria-pressed": unref(reading).open ? "true" : "false",
-              onClick: _cache[0] || (_cache[0] = ($event) => unref(reading).toggle())
-            }, "⫽", 8, _hoisted_2),
-            createBaseVNode("button", {
               class: "tab-btn tab-btn-settings",
               id: "settings-btn",
               type: "button",
               title: "Settings",
-              onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).settingsOpen = true)
+              onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = true)
             }, "⚙")
           ]),
-          createBaseVNode("div", {
-            class: normalizeClass(["stage-body", {
-              "reading-open": unref(reading).open,
-              "reading-left": unref(reading).open && unref(reading).side === "left",
-              "reading-right": unref(reading).open && unref(reading).side === "right"
-            }])
-          }, [
-            createBaseVNode("div", _hoisted_3, [
-              createVNode(unref(RouterView))
-            ]),
-            unref(reading).dragActive && !unref(reading).open ? (openBlock(), createBlock(_sfc_main$1, { key: 0 })) : createCommentVNode("", true),
-            unref(reading).open ? (openBlock(), createBlock(_sfc_main$2, { key: 1 })) : createCommentVNode("", true)
-          ], 2)
-        ], 32),
-        createVNode(_sfc_main$9),
-        createVNode(_sfc_main$6),
-        createVNode(_sfc_main$3)
+          createBaseVNode("div", _hoisted_3, [
+            createVNode(Workspace)
+          ])
+        ]),
+        createVNode(_sfc_main$h),
+        createVNode(_sfc_main$e),
+        createVNode(_sfc_main$b)
       ], 64);
     };
   }

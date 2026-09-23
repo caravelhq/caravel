@@ -145,11 +145,13 @@ import {
 import { statusClass, isPanelNarrow } from "./tasks/helpers";
 import { useRouter } from "vue-router";
 import { useUiStore } from "../stores/ui";
+import { useWorkspaceStore } from "../stores/workspace";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
 const live = useLiveStore();
 const ui = useUiStore();
+const ws = useWorkspaceStore();
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
 let tasksTreeEl: HTMLElement | null = null;
@@ -598,8 +600,14 @@ function onPanelBodyClick(ev: MouseEvent): void {
     ev.preventDefault();
     const path = throwBtn.getAttribute("data-throw-path") || "";
     const kind = (throwBtn.getAttribute("data-throw-kind") || "report") as "file" | "report";
-    const fn = (window as any).__throwToReadingPane;
-    if (path && typeof fn === "function") fn({ kind, path });
+    if (path) {
+      if (kind === "report") {
+        const taskId = path.split("/").pop()?.replace(/\.md$/, "") ?? path;
+        ws.open({ kind: "report", taskId, path }, { side: true });
+      } else {
+        ws.open({ kind: "file", path }, { side: true });
+      }
+    }
     return;
   }
 
@@ -665,10 +673,10 @@ function onPanelBodyClick(ev: MouseEvent): void {
     ev.preventDefault();
     const filePath = openFileBtn.getAttribute("data-open-file");
     if (!filePath) return;
-    // Alt-click → throw to reading pane (spec R3). Plain click → Files panel.
+    // Alt-click → open as side tab. Plain click → Files panel.
     if ((ev as MouseEvent).altKey) {
-      const fn = (window as any).__throwToReadingPane;
-      if (typeof fn === "function") fn({ kind: "report", path: filePath });
+      const taskId = filePath.split("/").pop()?.replace(/\.md$/, "") ?? filePath;
+      ws.open({ kind: "report", taskId, path: filePath }, { side: true });
     } else {
       ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || undefined };
       router.push("/files");

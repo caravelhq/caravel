@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import DocViewer from "../components/doc/DocViewer.vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
 import { useUiStore } from "../stores/ui";
+import { useWorkspaceStore } from "../stores/workspace";
 
 // Reactive state passed to DocViewer
 const activeFilePath = ref("");
@@ -31,6 +32,7 @@ let filesSkipHistoryPush = false;
 let filesLoaded = false;
 
 const ui = useUiStore();
+const ws = useWorkspaceStore();
 const router = useRouter();
 const filesBackTaskId = ref<string>("");
 
@@ -241,8 +243,7 @@ async function loadDirectory(dirPath: string): Promise<void> {
         throwBtn.title = "Open in reading pane";
         throwBtn.addEventListener("click", (ev) => {
           ev.stopPropagation();
-          const fn = (window as any).__throwToReadingPane;
-          if (typeof fn === "function") fn({ kind: "file", path: entry.path });
+          ws.open({ kind: "file", path: entry.path }, { side: true });
         });
         item.appendChild(throwBtn);
 
