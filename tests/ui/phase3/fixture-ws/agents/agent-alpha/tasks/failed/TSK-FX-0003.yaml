@@ -1,0 +1,27 @@
+id: TSK-FX-0003
+headline: "Fixture: blocked research task"
+created: 2026-09-21T14:00:00.000Z
+updated: 2026-09-21T14:45:00.000Z
+from: user
+to: agent-alpha
+kind: research
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 5
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Research the missing fixture data — this task intentionally fails.
+status: failed
+history:
+  - ts: 2026-09-21T14:45:00.000Z
+    from: claimed
+    to: failed
+    by: agent-alpha
+    note: budget exhausted
+summary:
+  brief: "Could not find the data."
+  response: ""
+report: ""

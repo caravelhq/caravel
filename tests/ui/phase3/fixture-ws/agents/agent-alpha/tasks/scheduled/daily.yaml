@@ -1,0 +1,29 @@
+id: TSK-SCHED-FX-DAILY
+headline: "Fixture: daily reconciliation run"
+to: agent-alpha
+from: user
+kind: other
+priority: P2
+project: Fixture
+
+brief: |
+  Run the daily fixture reconciliation. Gather anything that needs a review,
+  file it, and close out items that are done.
+
+output_format: |
+  A short summary of what was reconciled, written to the task report.
+
+context:
+  - agents/_shared/rules/task-output.md
+
+budget:
+  max_turns: 20
+  max_subagents: 0
+  max_usd: null
+
+recurrence:
+  cron: "0 7 * * 1-5"
+  enabled: true
+  count: 0
+  last_fired: null
+  skip_if_active: true

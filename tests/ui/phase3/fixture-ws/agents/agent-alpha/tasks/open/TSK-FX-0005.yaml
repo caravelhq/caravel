@@ -1,0 +1,23 @@
+id: TSK-FX-0005
+headline: "Fixture: open task ready to claim"
+created: 2026-09-23T08:00:00.000Z
+updated: 2026-09-23T08:00:00.000Z
+from: user
+to: agent-alpha
+kind: other
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 10
+  max_subagents: 0
+  max_usd: null
+brief: |
+  An open task sitting in the queue — runner must NOT claim this because
+  CARAVEL_MULTI_AGENT_RUNNER is unset in the test harness.
+status: open
+history: []
+summary:
+  brief: ""
+  response: ""
+report: ""

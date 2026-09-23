@@ -1,0 +1,9 @@
+{
+  "name": "agent-alpha",
+  "displayName": "Agent Alpha",
+  "emoji": "🅰️",
+  "description": "Fixture agent for Phase 3 UI tests.",
+  "mode": "resident",
+  "allowedPaths": ["./"],
+  "compactThreshold": 40
+}

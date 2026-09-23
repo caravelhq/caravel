@@ -1,0 +1,27 @@
+id: TSK-FX-0006
+headline: "Fixture: beta agent completed review"
+created: 2026-09-20T12:00:00.000Z
+updated: 2026-09-20T13:00:00.000Z
+from: user
+to: agent-beta
+kind: research
+priority: P1
+project: Fixture
+deadline: null
+budget:
+  max_turns: 8
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Review the fixture configuration and sign it off.
+status: done
+history:
+  - ts: 2026-09-20T13:00:00.000Z
+    from: claimed
+    to: done
+    by: agent-beta
+    note: completed
+summary:
+  brief: "Configuration looks good."
+  response: "No issues found."
+report: ""

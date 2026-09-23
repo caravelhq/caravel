@@ -1,0 +1,23 @@
+id: TSK-FX-0008
+headline: "Fixture: beta waiting on user response"
+created: 2026-09-22T14:00:00.000Z
+updated: 2026-09-22T14:00:00.000Z
+from: user
+to: agent-beta
+kind: other
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 10
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Need Kelly to confirm the test fixture approach before continuing.
+status: waiting
+waiting_on: user:kelly
+history: []
+summary:
+  brief: "Waiting for approval."
+  response: ""
+report: ""

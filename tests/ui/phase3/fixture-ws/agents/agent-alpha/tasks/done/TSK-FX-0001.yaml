@@ -1,0 +1,27 @@
+id: TSK-FX-0001
+headline: "Fixture: analyse project structure"
+created: 2026-09-20T08:00:00.000Z
+updated: 2026-09-20T09:15:00.000Z
+from: user
+to: agent-alpha
+kind: research
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 10
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Analyse the fixture project structure and summarise what you find.
+status: done
+history:
+  - ts: 2026-09-20T09:15:00.000Z
+    from: claimed
+    to: done
+    by: agent-alpha
+    note: completed
+summary:
+  brief: "Analysed structure."
+  response: "Found 3 modules."
+report: ""

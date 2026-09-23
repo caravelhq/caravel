@@ -1,0 +1,27 @@
+id: TSK-FX-0007
+headline: "Fixture: beta agent hit context limit"
+created: 2026-09-21T16:00:00.000Z
+updated: 2026-09-21T16:30:00.000Z
+from: user
+to: agent-beta
+kind: code
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 3
+  max_subagents: 0
+  max_usd: null
+brief: |
+  An ambitious task given a tiny budget — guaranteed to fail on budget.
+status: failed
+history:
+  - ts: 2026-09-21T16:30:00.000Z
+    from: claimed
+    to: failed
+    by: agent-beta
+    note: context
+summary:
+  brief: ""
+  response: ""
+report: ""
