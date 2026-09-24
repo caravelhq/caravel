@@ -290,7 +290,9 @@ try {
   const countAfterMount = attentionFetchCount;
 
   // Navigate away — TasksPage unmounts, live.unbind('attention') called (refs: 1→0)
-  await page.goto(BASE + "/#/dashboard");
+  // Use /#/files: Dashboard is also an attention consumer (B3 asserts refs=1 there),
+  // so navigating to Dashboard keeps refs≥1 and the unbind never fires.
+  await page.goto(BASE + "/#/files");
   await page.waitForTimeout(500);
 
   // Reset counter (we only care about fetches AFTER unbind)
