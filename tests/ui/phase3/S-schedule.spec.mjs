@@ -18,7 +18,7 @@ import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DAEMON = "http://127.0.0.1:4636";
+const DAEMON = (process.env.CARAVEL_BASE || "http://127.0.0.1:4636").replace(/\/$/, "");
 const FIXTURE_DIR = join(__dirname, "fixture-ws");
 const TEMPLATE_PATH = join(FIXTURE_DIR, "agents/agent-alpha/tasks/scheduled/TSK-SCHED-FX-REVIEW.yaml");
 
