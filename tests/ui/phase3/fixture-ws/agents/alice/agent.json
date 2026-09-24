@@ -1,0 +1,9 @@
+{
+  "name": "alice",
+  "displayName": "Alice",
+  "emoji": "🧭",
+  "description": "Coordinator fixture agent — default NewTaskModal target.",
+  "mode": "resident",
+  "allowedPaths": ["./"],
+  "compactThreshold": 40
+}
