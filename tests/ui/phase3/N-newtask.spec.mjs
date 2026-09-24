@@ -55,13 +55,14 @@ try {
   // ─────────────────────────────────────────────────────────────────────────────
   // N1 — Modal opens (button + n-key), has geometry, closes cleanly
   // ─────────────────────────────────────────────────────────────────────────────
+  try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
     await resetWorkspace(page);
 
-    // Open via "+ New Task" button on Dashboard
-    await page.click(".quick-open-create");
+    // Open via "+ New Task" button in ScheduleList header (always present on Dashboard)
+    await page.click(".db-sched-act-btn");
     await page.waitForTimeout(400);
 
     const dialogBox = await page.locator("dialog#new-task-modal").boundingBox();
@@ -103,11 +104,13 @@ try {
 
     await page.close();
   }
+  } catch (err) { fail("N1 - spec crashed", String(err)); }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // N2 — Dispatched task envelope has NO priority field
   //      Mutation proof: inject priority:"P2" → this spec must go red
   // ─────────────────────────────────────────────────────────────────────────────
+  try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
@@ -129,8 +132,8 @@ try {
       });
     });
 
-    // Open modal, fill minimum fields, submit
-    await page.click(".quick-open-create");
+    // Open modal via 'n' key, fill minimum fields, submit
+    await page.keyboard.press("n");
     await page.waitForTimeout(400);
 
     await page.fill("#ntm-headline", "N2 test no priority");
@@ -160,10 +163,12 @@ try {
 
     await page.close();
   }
+  } catch (err) { fail("N2 - spec crashed", String(err)); }
 
   // ─────────────────────────────────────────────────────────────────────────────
   // N3 — Schedule template dispatch has NO priority field
   // ─────────────────────────────────────────────────────────────────────────────
+  try {
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
@@ -183,8 +188,8 @@ try {
       });
     });
 
-    // Open modal, enable Repeat, fill fields, submit
-    await page.click(".quick-open-create");
+    // Open modal via 'n' key, enable Repeat, fill fields, submit
+    await page.keyboard.press("n");
     await page.waitForTimeout(400);
 
     await page.fill("#ntm-headline", "N3 schedule no priority");
@@ -226,6 +231,7 @@ try {
 
     await page.close();
   }
+  } catch (err) { fail("N3 - spec crashed", String(err)); }
 
 } finally {
   await browser.close();
