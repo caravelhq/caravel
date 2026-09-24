@@ -560,6 +560,54 @@ try {
     await page.close();
   }
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // W10 — Nav button click → location.hash reflects the opened ref
+  // Store→URL sync: ws.open() must push the ref's path to the URL.
+  // Mutation proof: disable syncWorkspaceUrl (MUTATION=1 env var) → test goes red.
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
+    await resetWorkspace(page);
+
+    // Click Chat nav button
+    await page.click("#tab-chat");
+    await page.waitForTimeout(400);
+    const hashAfterChat = await page.evaluate(() => window.location.hash);
+    await page.screenshot({ path: join(SHOTS_DIR, "13-w10-after-chat-click.png") });
+
+    if (hashAfterChat === "#/chat") {
+      pass(`W10 - clicking Chat sets hash to #/chat (got: ${hashAfterChat})`);
+    } else {
+      fail("W10 - clicking Chat sets hash to #/chat", `got: ${hashAfterChat}`);
+    }
+
+    // Click Tasks nav button
+    await page.click("#tab-tasks");
+    await page.waitForTimeout(400);
+    const hashAfterTasks = await page.evaluate(() => window.location.hash);
+    await page.screenshot({ path: join(SHOTS_DIR, "14-w10-after-tasks-click.png") });
+
+    if (hashAfterTasks === "#/tasks") {
+      pass(`W10 - clicking Tasks sets hash to #/tasks (got: ${hashAfterTasks})`);
+    } else {
+      fail("W10 - clicking Tasks sets hash to #/tasks", `got: ${hashAfterTasks}`);
+    }
+
+    // Click Dashboard nav button (activate existing tab → replace)
+    await page.click("#tab-dashboard");
+    await page.waitForTimeout(400);
+    const hashAfterDash = await page.evaluate(() => window.location.hash);
+
+    if (hashAfterDash === "#/dashboard" || hashAfterDash === "#/") {
+      pass(`W10 - clicking Dashboard sets hash to #/dashboard (got: ${hashAfterDash})`);
+    } else {
+      fail("W10 - clicking Dashboard sets hash to #/dashboard", `got: ${hashAfterDash}`);
+    }
+
+    await page.close();
+  }
+
 } catch (e) {
   fail("spec runtime error", String(e));
 } finally {

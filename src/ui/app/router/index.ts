@@ -3,6 +3,10 @@ import { useWorkspaceStore } from "../stores/workspace";
 import type { ResourceRef } from "../workspace/refs";
 import { refKey } from "../workspace/refs";
 
+// Suppresses store→URL writes while afterEach is propagating navigation to the store,
+// preventing the feedback loop: nav → ws.open → syncWorkspaceUrl → nav → …
+let _navigating = false;
+
 // Stub component — the workspace renders the active ref; routes are used only for URL tracking.
 import { defineComponent } from "vue";
 const Stub = defineComponent({ render: () => null });
@@ -50,25 +54,53 @@ router.afterEach((to) => {
   // Run after the next tick so the store is ready (Pinia is set up before the router).
   const ws = useWorkspaceStore();
 
-  // Open the main ref (no URL write — we came from navigation).
-  const key = refKey(ref);
-  const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
-  if (existingIdx !== -1) {
-    ws.activate(key);
-  } else {
-    ws.open(ref);
-  }
-
-  // Handle ?side= for the other group when split.
-  const sideKey = to.query["side"] as string | undefined;
-  if (sideKey) {
-    const sideIdx = ws.tabs.findIndex((t) => refKey(t) === sideKey);
-    if (sideIdx !== -1) {
-      const g = ws.tabGroup(sideIdx);
-      ws.active[g] = sideKey;
+  // Guard: store→URL writes triggered by ws.open/activate below must not produce another navigation.
+  _navigating = true;
+  try {
+    // Open the main ref (no URL write — we came from navigation).
+    const key = refKey(ref);
+    const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
+    if (existingIdx !== -1) {
+      ws.activate(key);
+    } else {
+      ws.open(ref);
     }
+
+    // Handle ?side= for the other group when split.
+    const sideKey = to.query["side"] as string | undefined;
+    if (sideKey) {
+      const sideIdx = ws.tabs.findIndex((t) => refKey(t) === sideKey);
+      if (sideIdx !== -1) {
+        const g = ws.tabGroup(sideIdx);
+        ws.active[g] = sideKey;
+      }
+    }
+  } finally {
+    _navigating = false;
   }
 });
+
+// Sync the current workspace state to the URL.
+// push=true when opening a brand-new tab; push=false (replace) for activation, focus changes, ?side= changes.
+export function syncWorkspaceUrl(push: boolean): void {
+  if (_navigating) return;
+  const ws = useWorkspaceStore();
+  const focusedRef = ws.focusedActiveRef;
+  if (!focusedRef) return;
+
+  const path = refToPath(focusedRef);
+
+  // Build ?side= from the non-focused group's active key when split.
+  const otherGroup: 0 | 1 = ws.focused === 0 ? 1 : 0;
+  const otherKey = ws.active[otherGroup];
+  const query: Record<string, string> = ws.splitOn && otherKey ? { side: otherKey } : {};
+
+  if (push) {
+    router.push({ path, query });
+  } else {
+    router.replace({ path, query });
+  }
+}
 
 // Build a URL path from a ResourceRef.
 export function refToPath(ref: ResourceRef): string {

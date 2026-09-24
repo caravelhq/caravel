@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { type ResourceRef, refKey } from "../workspace/refs";
+import { syncWorkspaceUrl } from "../router";
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -161,6 +162,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
         active.value[g] = key;
         focused.value = g;
         persist();
+        syncWorkspaceUrl(false);
       }
       return;
     }
@@ -202,6 +204,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       }
     }
     persist();
+    if (!opts.background) syncWorkspaceUrl(true);
   }
 
   function close(key: string): void {
@@ -235,6 +238,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 
     fixupActive();
     persist();
+    syncWorkspaceUrl(false);
   }
 
   function move(key: string, toIndex: number): void {
@@ -288,6 +292,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 
     fixupActive();
     persist();
+    syncWorkspaceUrl(false);
   }
 
   function toggleSplit(): void {
@@ -302,6 +307,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       }
     }
     persist();
+    syncWorkspaceUrl(false);
   }
 
   function focus(group: 0 | 1): void {
@@ -315,6 +321,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     active.value[g] = key;
     focused.value = g;
     persist();
+    syncWorkspaceUrl(false);
   }
 
   // Computed: the active ref for the focused group (for URL sync).

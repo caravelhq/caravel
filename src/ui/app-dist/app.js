@@ -18923,6 +18923,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
         active.value[g2] = key;
         focused.value = g2;
         persist();
+        syncWorkspaceUrl(false);
       }
       return;
     }
@@ -18957,6 +18958,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     persist();
+    if (!opts.background) syncWorkspaceUrl(true);
   }
   function close(key) {
     const idx = keyIndex(key);
@@ -18982,6 +18984,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     }
     fixupActive();
     persist();
+    syncWorkspaceUrl(false);
   }
   function move(key, toIndex) {
     const fromIdx = keyIndex(key);
@@ -19021,6 +19024,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     }
     fixupActive();
     persist();
+    syncWorkspaceUrl(false);
   }
   function toggleSplit() {
     if (splitOn.value) {
@@ -19034,6 +19038,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     persist();
+    syncWorkspaceUrl(false);
   }
   function focus(group) {
     focused.value = group;
@@ -19045,6 +19050,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     active.value[g2] = key;
     focused.value = g2;
     persist();
+    syncWorkspaceUrl(false);
   }
   const focusedActiveRef = computed(() => {
     const key = active.value[focused.value];
@@ -19071,6 +19077,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     focusedActiveRef
   };
 });
+let _navigating = false;
 const Stub = /* @__PURE__ */ defineComponent({ render: () => null });
 const router = createRouter({
   history: createWebHashHistory(),
@@ -19108,22 +19115,56 @@ router.afterEach((to) => {
   const ref2 = routeToRef(to);
   if (!ref2) return;
   const ws = useWorkspaceStore();
-  const key = refKey(ref2);
-  const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
-  if (existingIdx !== -1) {
-    ws.activate(key);
-  } else {
-    ws.open(ref2);
-  }
-  const sideKey = to.query["side"];
-  if (sideKey) {
-    const sideIdx = ws.tabs.findIndex((t) => refKey(t) === sideKey);
-    if (sideIdx !== -1) {
-      const g2 = ws.tabGroup(sideIdx);
-      ws.active[g2] = sideKey;
+  _navigating = true;
+  try {
+    const key = refKey(ref2);
+    const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
+    if (existingIdx !== -1) {
+      ws.activate(key);
+    } else {
+      ws.open(ref2);
     }
+    const sideKey = to.query["side"];
+    if (sideKey) {
+      const sideIdx = ws.tabs.findIndex((t) => refKey(t) === sideKey);
+      if (sideIdx !== -1) {
+        const g2 = ws.tabGroup(sideIdx);
+        ws.active[g2] = sideKey;
+      }
+    }
+  } finally {
+    _navigating = false;
   }
 });
+function syncWorkspaceUrl(push) {
+  if (_navigating) return;
+  const ws = useWorkspaceStore();
+  const focusedRef = ws.focusedActiveRef;
+  if (!focusedRef) return;
+  const path = refToPath(focusedRef);
+  const otherGroup = ws.focused === 0 ? 1 : 0;
+  const otherKey = ws.active[otherGroup];
+  const query = ws.splitOn && otherKey ? { side: otherKey } : {};
+  if (push) {
+    router.push({ path, query });
+  } else {
+    router.replace({ path, query });
+  }
+}
+function refToPath(ref2) {
+  switch (ref2.kind) {
+    case "dashboard":
+      return "/dashboard";
+    case "file":
+      return `/file/${encodeURIComponent(ref2.path)}${ref2.branch ? `?branch=${encodeURIComponent(ref2.branch)}` : ""}`;
+    case "report":
+      return `/report/${encodeURIComponent(ref2.taskId)}`;
+    case "legacy":
+      return `/${ref2.page}`;
+    default:
+      return "/dashboard";
+  }
+}
 const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const settingsOpen = /* @__PURE__ */ ref(false);
   const ttsEnabled = /* @__PURE__ */ ref(true);
