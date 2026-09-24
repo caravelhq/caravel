@@ -17,9 +17,11 @@
 
 import { join, resolve } from "path";
 import { fileURLToPath } from "url";
-import { mkdirSync, existsSync } from "fs";
+import { mkdirSync, existsSync, readFileSync } from "fs";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const FIXTURE_DIR = join(__dirname, "fixture-ws");
+const RATINGS_PATH = join(FIXTURE_DIR, ".caravel", "knowledge-ratings.ndjson");
 const SKILL_ROOT = resolve(
   process.env.UI_TEST_SKILL ||
     join(__dirname, "..", "..", "..", "..", "..", ".claude", "skills", "ui-test")
@@ -108,10 +110,13 @@ async function setupSearchRoutes(page) {
     status: 200, contentType: "application/json",
     body: JSON.stringify({ ok: true, docs: FAKE_DOCS, reports: FAKE_REPORTS, tookMs: 350 }),
   }));
-  await page.route("**/api/knowledge/mark", route => route.fulfill({
-    status: 200, contentType: "application/json",
-    body: JSON.stringify({ ok: true }),
-  }));
+  // K4 does NOT stub mark — it drives the real server route to assert the
+  // NDJSON artefact. K1–K3 and K5 don't click 👍, so no stub needed there either.
+}
+
+function ratingsLineCount() {
+  try { return readFileSync(RATINGS_PATH, "utf-8").trim().split("\n").filter(Boolean).length; }
+  catch { return 0; }
 }
 
 const browser = await chromium.launch({ headless: true });
@@ -362,104 +367,51 @@ try {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // K4 🔬 MUTATION PROOF — 👍 posts mark; break route → test goes red
+  // K4 🔬 MUTATION PROOF — 👍 drives the real mark route; assert NDJSON artefact
+  //
+  // Design: search/query are still stubbed with FAKE_DOCS, but mark is NOT
+  // stubbed. The 👍 click POSTs to the scratch daemon, which runs the fixture
+  // stub CLI at fixture-ws/.claude/skills/knowledge/script/knowledge.mjs and
+  // appends an entry to fixture-ws/.caravel/knowledge-ratings.ndjson.
+  //
+  // Mutation proof: make server.ts return early before calling knowledge.mark()
+  // → CLI never runs → NDJSON not written → test goes RED.
   // ───────────────────────────────────────────────────────────────────────────
   {
-    // ── Round 1: mark route works → should be GREEN ──────────────────────────
-    {
-      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-      await setupBaseRoutes(page);
-      await setupSearchRoutes(page);
+    const linesBefore = ratingsLineCount();
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    await setupBaseRoutes(page);
+    await setupSearchRoutes(page);
 
-      let markCalls = 0;
-      let markBody = null;
+    await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
+    await page.waitForTimeout(600);
 
-      await page.route("**/api/knowledge/mark", async route => {
-        markCalls++;
-        const req = route.request();
-        try { markBody = await req.postDataJSON(); } catch {}
-        await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
-      });
+    await page.keyboard.press("Meta+k");
+    await page.waitForTimeout(400);
+    await page.type('input[aria-label="Search query"]', "test");
+    await page.waitForSelector(".srch-row", { timeout: 2000 }).catch(() => {});
+    await page.waitForTimeout(200);
 
-      await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
-      await page.waitForTimeout(600);
+    await page.click('.srch-rate-btn[aria-label="Mark helpful"]');
+    // Give the daemon time to call the CLI and write the NDJSON
+    await page.waitForTimeout(1200);
 
-      await page.keyboard.press("Meta+k");
-      await page.waitForTimeout(400);
-      await page.type('input[aria-label="Search query"]', "test");
-      await page.waitForSelector(".srch-row", { timeout: 2000 }).catch(() => {});
-      await page.waitForTimeout(100);
+    await page.screenshot({ path: join(SHOTS_DIR, "05-k4-mark-posted.png") });
 
-      await page.click('.srch-rate-btn[aria-label="Mark helpful"]');
-      await page.waitForTimeout(400);
-
-      await page.screenshot({ path: join(SHOTS_DIR, "05-k4-mark-posted.png") });
-
-      if (markCalls === 1) {
-        pass(`K4 (GREEN) - 👍 posted mark (calls=${markCalls}, node=${markBody?.node})`);
-      } else {
-        fail("K4 (GREEN) - 👍 should post exactly one mark", `calls=${markCalls}`);
-      }
-
-      await page.close();
+    const linesAfter = ratingsLineCount();
+    if (linesAfter > linesBefore) {
+      let lastNode = "(unknown)";
+      try {
+        const lines = readFileSync(RATINGS_PATH, "utf-8").trim().split("\n").filter(Boolean);
+        const last = JSON.parse(lines[lines.length - 1]);
+        lastNode = last.node ?? "(unknown)";
+      } catch {}
+      pass(`K4 🔬 GREEN - 👍 wrote NDJSON entry (lines ${linesBefore}→${linesAfter}, node=${lastNode})`);
+    } else {
+      fail("K4 🔬 GREEN - 👍 should write NDJSON entry via real mark route", `line count unchanged at ${linesBefore}`);
     }
 
-    // ── Round 2: mark route is no-op → should confirm the test detects the break ──
-    {
-      const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-      await setupBaseRoutes(page);
-      await setupSearchRoutes(page);
-
-      let markCalls = 0;
-
-      // Make mark a no-op: return 404 so the POST silently fails
-      await page.route("**/api/knowledge/mark", async route => {
-        markCalls++;
-        await route.fulfill({ status: 404, contentType: "application/json", body: JSON.stringify({ ok: false, reason: "broken" }) });
-      });
-
-      await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
-      await page.waitForTimeout(600);
-
-      await page.keyboard.press("Meta+k");
-      await page.waitForTimeout(400);
-      await page.type('input[aria-label="Search query"]', "test");
-      await page.waitForSelector(".srch-row", { timeout: 2000 }).catch(() => {});
-      await page.waitForTimeout(100);
-
-      await page.click('.srch-rate-btn[aria-label="Mark helpful"]');
-      await page.waitForTimeout(400);
-
-      // The button still got clicked, but the server responded 404.
-      // The UI doesn't throw — it catches silently. But the route WAS called.
-      // Mutation proof: if markCalls === 0, the 👍 button never hit the server.
-      // With our broken route, markCalls === 1 (request was made) but server returned 404.
-      // This shows the request IS made — break the route to see it fail.
-
-      // To create a definitive RED test: verify that when the route is broken,
-      // the rated Set is NOT populated (no UI feedback). Check the rated state:
-      const ratedAfterBreak = await page.evaluate(() => {
-        // If the mark request got a 404, catch swallows it. We can detect
-        // by checking if the rate button got the "rated" class or not.
-        const btn = document.querySelector('.srch-rate-btn[aria-label="Mark helpful"]');
-        return btn?.classList.contains("rated") ?? false;
-      });
-
-      // With working mark: button gets "rated" class
-      // With broken mark (404): fetch throws/rejects, catch swallows, "rated" class NOT added
-      // This is the RED case: ratedAfterBreak should be false when broken
-      if (!ratedAfterBreak) {
-        // Expected for broken route — proving the mutation
-        console.log(`  K4 (MUTATION PROOF) — broken route: rated=${ratedAfterBreak}, calls=${markCalls}`);
-        console.log(`  → With broken route, "rated" class not applied. K4 goes RED: rating does not persist.`);
-        pass("K4 (mutation proof confirmed) — broken POST → no rated class; K4 correctly went red in isolation");
-      } else {
-        fail("K4 mutation proof", "rated class applied despite broken route — proof is invalid");
-      }
-
-      await page.screenshot({ path: join(SHOTS_DIR, "06-k4-broken-mark.png") });
-      await page.close();
-    }
+    await page.close();
   }
 
   // ───────────────────────────────────────────────────────────────────────────

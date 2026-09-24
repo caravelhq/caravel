@@ -10,10 +10,10 @@
 // The fixture template with comments is:
 //   tests/ui/phase3/fixture-ws/agents/agent-alpha/tasks/scheduled/weekly-review.yaml
 
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, readdirSync, unlinkSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { join, dirname } from "path";
-import { execFileSync, spawnSync } from "child_process";
+import { spawnSync } from "child_process";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 
@@ -133,73 +133,71 @@ try {
   fail("S1 mutation", String(e));
 }
 
-// ── S2: bumpTemplateFired round-trip after PATCH ──────────────────────────────
-// PATCH the template, then call bumpTemplateFired (via a bun inline script)
-// and verify count increments and comments still present.
+// ── S2 🔬: bumpTemplateFired via tickScheduler ────────────────────────────────
+// Fire the fixture schedule through the real product path (tickScheduler) and
+// assert count increments, last_fired moves, and comments survive.
+//
+// Mutation proof: revert bumpTemplateFired to a yamlLoad/yamlDump round-trip
+// → comments are stripped → "comment 1 survived" assertion goes RED.
+// (Run with scheduler.ts mutated to confirm, then restore for GREEN.)
 
 try {
   restoreTemplate();
 
-  // PATCH first (reset to count:3)
-  await apiPatch("/api/tasks/schedule/TSK-SCHED-FX-REVIEW", {
-    agent: "agent-alpha",
-    headline: "Fixture: weekly review run (S2 patched)",
-  });
-
-  // Read count before bump
-  const afterPatch = readFileSync(TEMPLATE_PATH, "utf-8");
-  const countBeforeMatch = afterPatch.match(/count:\s*(\d+)/);
-  const countBefore = countBeforeMatch ? Number(countBeforeMatch[1]) : -1;
-
-  // Invoke bumpTemplateFired directly via a Bun temp script
-  const tmpDir = mkdtempSync(join(tmpdir(), "s2-bump-"));
-  const bunScriptPath = join(tmpDir, "bump.ts");
   const CARAVEL_ROOT = join(__dirname, "../../..");
-  writeFileSync(bunScriptPath, `
-import { loadTemplate, saveTemplate } from ${JSON.stringify(
-  join(CARAVEL_ROOT, "src/ui/services/templateYaml.ts")
-)};
-const path = ${JSON.stringify(TEMPLATE_PATH)};
-const doc = await loadTemplate(path);
-const count = doc.getIn(["recurrence", "count"]);
-doc.setIn(["recurrence", "count"], Number(count) + 1);
-doc.setIn(["recurrence", "last_fired"], new Date().toISOString());
-await saveTemplate(path, doc);
-console.log("bumped count from", count, "to", Number(count) + 1);
+  const OPEN_DIR = join(FIXTURE_DIR, "agents/agent-alpha/tasks/open");
+  const beforeOpen = new Set(readdirSync(OPEN_DIR));
+
+  // Fire via the real tickScheduler. The cron "0 8 * * 1" matches Monday 08:00 UTC.
+  // Next Monday after 2026-09-21 is 2026-09-28.
+  const tmpDir = mkdtempSync(join(tmpdir(), "s2-tick-"));
+  const tickScriptPath = join(tmpDir, "tick.ts");
+  writeFileSync(tickScriptPath, `
+import { tickScheduler } from ${JSON.stringify(join(CARAVEL_ROOT, "src/scheduler.ts"))};
+await tickScheduler(0, new Date("2026-09-28T08:00:00.000Z"));
   `.trim());
 
-  const bumpResult = spawnSync("bun", ["run", bunScriptPath], {
-    cwd: CARAVEL_ROOT,
+  const tickResult = spawnSync("bun", ["run", tickScriptPath], {
+    cwd: FIXTURE_DIR,
     encoding: "utf-8",
+    env: { ...process.env, HOME: process.env.HOME },
   });
-  const bumpOutput = bumpResult.stdout;
-  const bumpError = bumpResult.stderr;
+  const tickOut = tickResult.stdout;
+  const tickErr = tickResult.stderr;
   try { rmSync(tmpDir, { recursive: true }); } catch {}
 
-  if (bumpResult.status !== 0) {
-    fail("S2 bun bump script", `exit ${bumpResult.status}: ${bumpError}`);
-    throw new Error("bun bump script failed");
+  if (tickResult.status !== 0) {
+    fail("S2 tick script", `exit ${tickResult.status}: ${tickErr.slice(0, 300)}`);
+    throw new Error("tick script failed");
   }
 
-  const afterBump = readFileSync(TEMPLATE_PATH, "utf-8");
-  const countAfterMatch = afterBump.match(/count:\s*(\d+)/);
-  const countAfter = countAfterMatch ? Number(countAfterMatch[1]) : -1;
-  const commentsSurvived = afterBump.includes(COMMENT_1) && afterBump.includes(COMMENT_2);
-  const lastFiredUpdated = /last_fired:\s*20\d\d-/.test(afterBump);
+  // Clean up the task spawned by tickScheduler
+  const afterOpen = new Set(readdirSync(OPEN_DIR));
+  for (const f of afterOpen) {
+    if (!beforeOpen.has(f) && f.endsWith(".yaml")) {
+      try { unlinkSync(join(OPEN_DIR, f)); } catch {}
+    }
+  }
 
-  if (countAfter !== countBefore + 1) {
-    fail("S2 bumpTemplateFired after PATCH", `count: ${countBefore} → ${countAfter} (expected ${countBefore + 1})`);
+  const afterTick = readFileSync(TEMPLATE_PATH, "utf-8");
+  const countAfterMatch = afterTick.match(/count:\s*(\d+)/);
+  const countAfter = countAfterMatch ? Number(countAfterMatch[1]) : -1;
+  const commentsSurvived = afterTick.includes(COMMENT_1) && afterTick.includes(COMMENT_2);
+  const lastFiredUpdated = afterTick.includes("2026-09-28T08:00:00.000Z");
+
+  if (countAfter !== 4) {
+    fail("S2 🔬 tickScheduler - count incremented", `expected 4, got ${countAfter}; tick output: ${tickOut.trim()}`);
   } else if (!commentsSurvived) {
-    fail("S2 bumpTemplateFired after PATCH - comments survived", "comments missing after bump");
+    fail("S2 🔬 tickScheduler - comments survived", `missing after tick`);
   } else if (!lastFiredUpdated) {
-    fail("S2 bumpTemplateFired after PATCH - last_fired updated", "last_fired not updated");
+    fail("S2 🔬 tickScheduler - last_fired updated", "expected 2026-09-28T08:00:00.000Z");
   } else {
-    pass(`S2 bumpTemplateFired after PATCH: count ${countBefore}→${countAfter}, comments present, last_fired updated`);
-    console.log(`    bump output: ${bumpOutput.trim()}`);
+    pass(`S2 🔬 GREEN - tickScheduler: count 3→${countAfter}, comments present, last_fired=2026-09-28T08:00:00.000Z`);
+    if (tickOut.trim()) console.log(`    tick output: ${tickOut.trim()}`);
   }
 
 } catch (e) {
-  fail("S2 bumpTemplateFired round-trip", String(e));
+  fail("S2 tickScheduler round-trip", String(e));
 } finally {
   restoreTemplate();
 }
