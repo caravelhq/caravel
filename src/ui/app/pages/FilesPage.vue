@@ -5,10 +5,14 @@ import DocViewer from "../components/doc/DocViewer.vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
 import { useUiStore } from "../stores/ui";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useFilesStore } from "../stores/files";
+import { syncWorkspaceUrl } from "../router";
+
+const filesStore = useFilesStore();
 
 // Reactive state passed to DocViewer
-const activeFilePath = ref("");
-const activeBranch = ref("");
+const activeFilePath = ref(filesStore.currentPath);
+const activeBranch = ref(filesStore.selectedBranch);
 
 // DOM refs (via getElementById — thin port keeps imperative style)
 let filesList: HTMLElement | null = null;
@@ -21,15 +25,14 @@ let filesPickerToggle: HTMLButtonElement | null = null;
 let filesPickerToggleLabel: HTMLElement | null = null;
 let filesSidebar: HTMLElement | null = null;
 
-let filesCurrentDir = ".";
+let filesCurrentDir = filesStore.currentDir;
 let filesActiveRepoRoot = ".";
 let filesHeadBranch = "";
-let filesSelectedBranch = "";
+let filesSelectedBranch = filesStore.selectedBranch;
 let filesHasRepo = false;
 let filesHistory: Array<{ dir: string; file: string }> = [];
 let filesHistoryIdx = -1;
 let filesSkipHistoryPush = false;
-let filesLoaded = false;
 
 const ui = useUiStore();
 const ws = useWorkspaceStore();
@@ -176,7 +179,9 @@ async function refreshBranchSelector(): Promise<void> {
 
 async function loadDirectory(dirPath: string): Promise<void> {
   filesCurrentDir = dirPath || ".";
+  filesStore.currentDir = filesCurrentDir;
   activeFilePath.value = "";
+  filesStore.currentPath = "";
   pushHistory(filesCurrentDir, "");
   renderBreadcrumb(filesCurrentDir);
   updatePickerToggleLabel();
@@ -281,7 +286,10 @@ async function loadDirectory(dirPath: string): Promise<void> {
 function openFile(filePath: string): void {
   activeFilePath.value = filePath;
   activeBranch.value = filesSelectedBranch;
+  filesStore.currentPath = filePath;
+  filesStore.selectedBranch = filesSelectedBranch;
   pushHistory(filesCurrentDir, filePath);
+  syncWorkspaceUrl(false);
   updatePickerToggleLabel();
   if (isMobileFiles()) setPickerCollapsed(true);
 
@@ -322,9 +330,8 @@ onMounted(() => {
     });
   }
 
-  // Load on first mount (equivalent to tab click triggering load in vanilla).
-  if (!filesLoaded) {
-    filesLoaded = true;
+  if (!filesStore.loaded) {
+    filesStore.loaded = true;
     // Consume a cross-page navigation request set by TasksPage (router push to /files).
     const nav = ui.filesNav;
     if (nav?.backTaskId) filesBackTaskId.value = nav.backTaskId;
@@ -339,9 +346,36 @@ onMounted(() => {
           loadDirectory(dir).then(() => openFile(nav.path));
         }
       });
+    } else if (filesStore.currentPath) {
+      // Restore persisted file from previous session.
+      const dir = filesStore.currentPath.includes("/")
+        ? filesStore.currentPath.split("/").slice(0, -1).join("/") || "."
+        : ".";
+      const restorePath = filesStore.currentPath;
+      refreshBranchSelector().then(() => loadDirectory(dir).then(() => openFile(restorePath)));
+    } else if (filesStore.currentDir !== ".") {
+      refreshBranchSelector().then(() => loadDirectory(filesStore.currentDir));
     } else {
       refreshBranchSelector().then(() => loadDirectory("."));
     }
+  } else {
+    // Remount after tab switch — DOM is fresh, re-render from persisted store state.
+    const restoreDir = filesStore.currentDir;
+    const restorePath = filesStore.currentPath;
+    filesCurrentDir = restoreDir;
+    filesSkipHistoryPush = true;
+    refreshBranchSelector().then(async () => {
+      try {
+        await loadDirectory(restoreDir);
+        if (restorePath) openFile(restorePath);
+      } finally {
+        filesSkipHistoryPush = false;
+      }
+      // Seed history at the restored position so back/forward works from here.
+      filesHistory = [{ dir: restoreDir, file: restorePath }];
+      filesHistoryIdx = 0;
+      updateNavButtons();
+    });
   }
 });
 

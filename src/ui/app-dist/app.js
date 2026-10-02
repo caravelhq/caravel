@@ -18787,7 +18787,7 @@ function refKey(ref2) {
       return `legacy:${ref2.page}`;
   }
 }
-function load$2(key, fallback) {
+function load$4(key, fallback) {
   try {
     const v2 = localStorage.getItem("workspace." + key);
     if (v2 === null) return fallback;
@@ -18796,7 +18796,7 @@ function load$2(key, fallback) {
     return fallback;
   }
 }
-function save(key, value) {
+function save$2(key, value) {
   try {
     localStorage.setItem("workspace." + key, JSON.stringify(value));
   } catch {
@@ -18857,14 +18857,14 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       initialActive1 = null;
     }
   } else {
-    initialTabs = load$2("tabs", [DASHBOARD_REF]);
-    initialSplitIndex = load$2("splitIndex", null);
-    initialSplitOn = load$2("splitOn", false);
+    initialTabs = load$4("tabs", [DASHBOARD_REF]);
+    initialSplitIndex = load$4("splitIndex", null);
+    initialSplitOn = load$4("splitOn", false);
     if (initialSplitOn && initialSplitIndex === null) {
       initialSplitOn = false;
     }
-    initialActive0 = load$2("active0", refKey(initialTabs[0]));
-    initialActive1 = load$2("active1", null);
+    initialActive0 = load$4("active0", refKey(initialTabs[0]));
+    initialActive1 = load$4("active1", null);
   }
   const tabs = /* @__PURE__ */ ref(initialTabs);
   const splitIndex = /* @__PURE__ */ ref(initialSplitIndex);
@@ -18886,15 +18886,15 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     return tabs.value.findIndex((t) => refKey(t) === key);
   }
   const splitRatio = /* @__PURE__ */ ref(
-    Math.min(0.75, Math.max(0.25, load$2("splitRatio", 0.5)))
+    Math.min(0.75, Math.max(0.25, load$4("splitRatio", 0.5)))
   );
   function persist() {
-    save("tabs", tabs.value);
-    save("splitIndex", splitIndex.value);
-    save("splitOn", splitOn.value);
-    save("active0", active.value[0]);
-    save("active1", active.value[1]);
-    save("splitRatio", splitRatio.value);
+    save$2("tabs", tabs.value);
+    save$2("splitIndex", splitIndex.value);
+    save$2("splitOn", splitOn.value);
+    save$2("active0", active.value[0]);
+    save$2("active1", active.value[1]);
+    save$2("splitRatio", splitRatio.value);
   }
   function fixupActive() {
     const g0 = groupTabs(0);
@@ -19073,6 +19073,85 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     focusedActiveRef
   };
 });
+function load$3(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("tasks." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
+}
+function save$1(key, value) {
+  try {
+    localStorage.setItem("tasks." + key, JSON.stringify(value));
+  } catch {
+  }
+}
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref(load$3("view", "projects"));
+  const filter = /* @__PURE__ */ ref(load$3("filter", "all"));
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const pane = /* @__PURE__ */ ref(load$3("pane", "empty"));
+  const pickerCollapsed = /* @__PURE__ */ ref(false);
+  const currentTaskId = /* @__PURE__ */ ref(load$3("currentTaskId", null));
+  const currentTaskProject = /* @__PURE__ */ ref(null);
+  const currentViewMode = /* @__PURE__ */ ref("task");
+  const currentProjectSlug = /* @__PURE__ */ ref(load$3("currentProjectSlug", null));
+  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
+  const loaded = /* @__PURE__ */ ref(false);
+  watch(currentTaskId, (v2) => save$1("currentTaskId", v2));
+  watch(pane, (v2) => save$1("pane", v2));
+  watch(currentProjectSlug, (v2) => save$1("currentProjectSlug", v2));
+  watch(view, (v2) => save$1("view", v2));
+  watch(filter, (v2) => save$1("filter", v2));
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    pane,
+    pickerCollapsed,
+    currentTaskId,
+    currentTaskProject,
+    currentViewMode,
+    currentProjectSlug,
+    taskFromProjectSlug,
+    loaded
+  };
+});
+function load$2(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("files." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
+}
+function save(key, value) {
+  try {
+    localStorage.setItem("files." + key, JSON.stringify(value));
+  } catch {
+  }
+}
+const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
+  const currentPath = /* @__PURE__ */ ref(load$2("currentPath", ""));
+  const currentDir = /* @__PURE__ */ ref(load$2("currentDir", "."));
+  const selectedBranch = /* @__PURE__ */ ref(load$2("selectedBranch", ""));
+  const loaded = /* @__PURE__ */ ref(false);
+  watch(currentPath, (v2) => save("currentPath", v2));
+  watch(currentDir, (v2) => save("currentDir", v2));
+  watch(selectedBranch, (v2) => save("selectedBranch", v2));
+  return { currentPath, currentDir, selectedBranch, loaded };
+});
 let _navigating = false;
 const Stub = /* @__PURE__ */ defineComponent({ render: () => null });
 const router = createRouter({
@@ -19083,7 +19162,9 @@ const router = createRouter({
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
     { path: "/tasks", component: Stub },
+    { path: "/tasks/:taskId", component: Stub },
     { path: "/files", component: Stub },
+    { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
     { path: "/", redirect: "/dashboard" },
@@ -19093,9 +19174,9 @@ const router = createRouter({
 function routeToRef(route) {
   const p2 = route.path;
   if (p2 === "/dashboard" || p2 === "/") return { kind: "dashboard" };
-  if (p2 === "/tasks") return { kind: "legacy", page: "tasks" };
+  if (p2 === "/tasks" || p2.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p2 === "/chat") return { kind: "legacy", page: "chat" };
-  if (p2 === "/files") return { kind: "legacy", page: "files" };
+  if (p2 === "/files" || p2.startsWith("/files/")) return { kind: "legacy", page: "files" };
   if (p2.startsWith("/file/")) {
     const path = decodeURIComponent(p2.slice("/file/".length));
     const branch = route.query["branch"];
@@ -19128,6 +19209,21 @@ router.afterEach((to) => {
         ws.active[g2] = sideKey;
       }
     }
+    const p2 = to.path;
+    if (p2.startsWith("/tasks/")) {
+      const taskId = decodeURIComponent(p2.slice("/tasks/".length));
+      if (taskId) {
+        const tasks = useTasksStore();
+        tasks.currentTaskId = taskId;
+        tasks.pane = "view";
+      }
+    } else if (p2.startsWith("/files/")) {
+      const filePath = decodeURIComponent(p2.slice("/files/".length));
+      if (filePath) {
+        const files = useFilesStore();
+        files.currentPath = filePath;
+      }
+    }
   } finally {
     _navigating = false;
   }
@@ -19137,7 +19233,16 @@ function syncWorkspaceUrl(push) {
   const ws = useWorkspaceStore();
   const focusedRef = ws.focusedActiveRef;
   if (!focusedRef) return;
-  const path = refToPath(focusedRef);
+  let path;
+  if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
+    const tasks = useTasksStore();
+    path = tasks.pane === "view" && tasks.currentTaskId ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}` : "/tasks";
+  } else if (focusedRef.kind === "legacy" && focusedRef.page === "files") {
+    const files = useFilesStore();
+    path = files.currentPath ? `/files/${encodeURIComponent(files.currentPath)}` : "/files";
+  } else {
+    path = refToPath(focusedRef);
+  }
   const otherGroup = ws.focused === 0 ? 1 : 0;
   const otherKey = ws.active[otherGroup];
   const query = ws.splitOn && otherKey ? { side: otherKey } : {};
@@ -22453,40 +22558,6 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       ]);
     };
   }
-});
-const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
-  const view = /* @__PURE__ */ ref("projects");
-  const filter = /* @__PURE__ */ ref("all");
-  const cache = /* @__PURE__ */ ref([]);
-  const expanded = /* @__PURE__ */ ref({});
-  const collapsed = /* @__PURE__ */ ref({});
-  const bulkSelected = /* @__PURE__ */ ref({});
-  const multiSelectActive = /* @__PURE__ */ ref(false);
-  const pane = /* @__PURE__ */ ref("empty");
-  const pickerCollapsed = /* @__PURE__ */ ref(false);
-  const currentTaskId = /* @__PURE__ */ ref(null);
-  const currentTaskProject = /* @__PURE__ */ ref(null);
-  const currentViewMode = /* @__PURE__ */ ref("task");
-  const currentProjectSlug = /* @__PURE__ */ ref(null);
-  const taskFromProjectSlug = /* @__PURE__ */ ref(null);
-  const loaded = /* @__PURE__ */ ref(false);
-  return {
-    view,
-    filter,
-    cache,
-    expanded,
-    collapsed,
-    bulkSelected,
-    multiSelectActive,
-    pane,
-    pickerCollapsed,
-    currentTaskId,
-    currentTaskProject,
-    currentViewMode,
-    currentProjectSlug,
-    taskFromProjectSlug,
-    loaded
-  };
 });
 const _hoisted_1$f = ["data-task-id"];
 const _hoisted_2$9 = { class: "db-tier-row-headline" };
@@ -27979,6 +28050,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         tasksStore.cache = data.tasks;
         tasksStore.loaded = true;
         renderTaskPicker();
+        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+          openTaskPanel(tasksStore.currentTaskId);
+        } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
+          openProjectPanel(tasksStore.currentProjectSlug);
+        }
       } catch (err) {
         tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Error: ' + String(err.message || err) + "</div>";
       }
@@ -27992,6 +28068,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       tasksStore.currentTaskId = taskId;
       tasksStore.currentTaskProject = null;
       setRightPaneMode("view");
+      syncWorkspaceUrl(false);
       if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
       if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";
       if (taskPanelStatusEl) {
@@ -29847,8 +29924,9 @@ const _hoisted_6$2 = { class: "files-split" };
 const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
-    const activeFilePath = /* @__PURE__ */ ref("");
-    const activeBranch = /* @__PURE__ */ ref("");
+    const filesStore = useFilesStore();
+    const activeFilePath = /* @__PURE__ */ ref(filesStore.currentPath);
+    const activeBranch = /* @__PURE__ */ ref(filesStore.selectedBranch);
     let filesList = null;
     let filesBreadcrumb = null;
     let filesBranchSelect = null;
@@ -29857,15 +29935,14 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     let filesPickerToggle = null;
     let filesPickerToggleLabel = null;
     let filesSidebar = null;
-    let filesCurrentDir = ".";
+    let filesCurrentDir = filesStore.currentDir;
     let filesActiveRepoRoot = ".";
     let filesHeadBranch = "";
-    let filesSelectedBranch = "";
+    let filesSelectedBranch = filesStore.selectedBranch;
     let filesHasRepo = false;
     let filesHistory = [];
     let filesHistoryIdx = -1;
     let filesSkipHistoryPush = false;
-    let filesLoaded = false;
     const ui = useUiStore();
     const ws = useWorkspaceStore();
     const router2 = useRouter();
@@ -29994,7 +30071,9 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     }
     async function loadDirectory(dirPath) {
       filesCurrentDir = dirPath || ".";
+      filesStore.currentDir = filesCurrentDir;
       activeFilePath.value = "";
+      filesStore.currentPath = "";
       pushHistory(filesCurrentDir, "");
       renderBreadcrumb(filesCurrentDir);
       updatePickerToggleLabel();
@@ -30081,7 +30160,10 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     function openFile(filePath) {
       activeFilePath.value = filePath;
       activeBranch.value = filesSelectedBranch;
+      filesStore.currentPath = filePath;
+      filesStore.selectedBranch = filesSelectedBranch;
       pushHistory(filesCurrentDir, filePath);
+      syncWorkspaceUrl(false);
       updatePickerToggleLabel();
       if (isMobileFiles()) setPickerCollapsed(true);
       if (filesList) {
@@ -30115,8 +30197,8 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
           setPickerCollapsed(!collapsed);
         });
       }
-      if (!filesLoaded) {
-        filesLoaded = true;
+      if (!filesStore.loaded) {
+        filesStore.loaded = true;
         const nav = ui.filesNav;
         if (nav == null ? void 0 : nav.backTaskId) filesBackTaskId.value = nav.backTaskId;
         ui.filesNav = null;
@@ -30129,9 +30211,31 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
               loadDirectory(dir).then(() => openFile(nav.path));
             }
           });
+        } else if (filesStore.currentPath) {
+          const dir = filesStore.currentPath.includes("/") ? filesStore.currentPath.split("/").slice(0, -1).join("/") || "." : ".";
+          const restorePath = filesStore.currentPath;
+          refreshBranchSelector().then(() => loadDirectory(dir).then(() => openFile(restorePath)));
+        } else if (filesStore.currentDir !== ".") {
+          refreshBranchSelector().then(() => loadDirectory(filesStore.currentDir));
         } else {
           refreshBranchSelector().then(() => loadDirectory("."));
         }
+      } else {
+        const restoreDir = filesStore.currentDir;
+        const restorePath = filesStore.currentPath;
+        filesCurrentDir = restoreDir;
+        filesSkipHistoryPush = true;
+        refreshBranchSelector().then(async () => {
+          try {
+            await loadDirectory(restoreDir);
+            if (restorePath) openFile(restorePath);
+          } finally {
+            filesSkipHistoryPush = false;
+          }
+          filesHistory = [{ dir: restoreDir, file: restorePath }];
+          filesHistoryIdx = 0;
+          updateNavButtons();
+        });
       }
     });
     function goBackToTask() {
