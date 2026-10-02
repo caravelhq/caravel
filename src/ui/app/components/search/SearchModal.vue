@@ -67,6 +67,14 @@ watch(draftQuery, (q) => {
   debounceTimer = setTimeout(() => triggerSearch(q), 250);
 });
 
+function onInputKeyDown(ev: KeyboardEvent): void {
+  if (ev.key === "Enter") {
+    ev.preventDefault();
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    triggerSearch(draftQuery.value);
+  }
+}
+
 async function triggerSearch(q: string): Promise<void> {
   const trimmed = q.trim();
   if (!trimmed) return;
@@ -103,9 +111,9 @@ const reports = computed(() => ks.currentResult?.reports ?? []);
 // ── Open result as workspace tab ───────────────────────────────────────────
 function openDoc(doc: KnowledgeDoc, side = false): void {
   const path = doc.path as string | undefined;
-  const taskId = doc.id as string | undefined;
+  const taskId = doc.id;
 
-  if (taskId && taskId.startsWith("TSK-")) {
+  if (typeof taskId === "string" && taskId.startsWith("TSK-")) {
     ws.open({ kind: "report", taskId, path }, { side });
   } else if (path) {
     ws.open({ kind: "file", path }, { side });
@@ -157,9 +165,9 @@ function highlight(snippet: string | undefined, q: string): string {
 // ── Dead-row guard ────────────────────────────────────────────────────────
 function canOpen(doc: KnowledgeDoc): boolean {
   const path = doc.path as string | undefined;
-  const taskId = doc.id as string | undefined;
+  const taskId = doc.id;
   if ((doc as any)._pathless) return false;
-  return !!(path || (taskId && taskId.startsWith("TSK-")));
+  return !!(path || (typeof taskId === "string" && taskId.startsWith("TSK-")));
 }
 
 // ── Stale banner ──────────────────────────────────────────────────────────
@@ -189,6 +197,7 @@ function rerun(): void {
             spellcheck="false"
             aria-label="Search query"
             @keydown.escape="ks.close()"
+            @keydown="onInputKeyDown"
           />
           <div class="srch-mode-toggle" role="group" aria-label="Search mode">
             <button

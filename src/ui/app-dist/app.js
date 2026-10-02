@@ -14312,7 +14312,7 @@ var _hoisted_1$z = [
   "aria-labelledby",
   "aria-describedby"
 ];
-var _hoisted_2$n = ["id"];
+var _hoisted_2$m = ["id"];
 var fallbackClassSelector = "modal-fallback-focus";
 var BModal_default = /* @__PURE__ */ defineComponent({
   inheritAttrs: false,
@@ -14682,7 +14682,7 @@ var BModal_default = /* @__PURE__ */ defineComponent({
             createBaseVNode("div", mergeProps({
               id: `${unref(computedId)}-body`,
               class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$n),
+            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$m),
             !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
               key: 1,
               class: normalizeClass(["modal-footer", footerClasses.value])
@@ -14973,7 +14973,7 @@ var _hoisted_1$x = [
   "aria-live",
   "aria-atomic"
 ];
-var _hoisted_2$m = {
+var _hoisted_2$l = {
   key: 1,
   class: "d-flex gap-2"
 };
@@ -15198,7 +15198,7 @@ var BAlert_default = /* @__PURE__ */ defineComponent({
             }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
             _: 3
           }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$m, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
+          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$l, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
           }) }), {
             default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
             _: 3
@@ -16119,7 +16119,7 @@ var _hoisted_1$u = [
   "aria-invalid",
   "aria-labelledby"
 ];
-var _hoisted_2$l = {
+var _hoisted_2$k = {
   key: 0,
   ref: "_content",
   class: "form-floating"
@@ -16392,7 +16392,7 @@ var BFormGroup_default = /* @__PURE__ */ defineComponent({
           _: 3
         }, 16)]),
         _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$l, [
+      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
         renderSlot(_ctx.$slots, "default", {
           id: unref(computedId),
           ariaDescribedby: null,
@@ -18861,7 +18861,6 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     }
   } else {
     initialTabs = load$2("tabs", [DASHBOARD_REF]);
-    if (initialTabs.length === 0) initialTabs = [DASHBOARD_REF];
     initialSplitIndex = load$2("splitIndex", null);
     initialSplitOn = load$2("splitOn", false);
     if (initialSplitOn && initialSplitIndex === null) {
@@ -18976,10 +18975,10 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     if (tabs.value.length === 0) {
-      tabs.value.push(DASHBOARD_REF);
-      active.value = [refKey(DASHBOARD_REF), null];
+      active.value = [null, null];
       focused.value = 0;
       persist();
+      syncWorkspaceUrl(false);
       return;
     }
     fixupActive();
@@ -19165,16 +19164,6 @@ function refToPath(ref2) {
       return "/dashboard";
   }
 }
-const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
-  const settingsOpen = /* @__PURE__ */ ref(false);
-  const ttsEnabled = /* @__PURE__ */ ref(true);
-  const micEnabled = /* @__PURE__ */ ref(false);
-  const filesNav = /* @__PURE__ */ ref(null);
-  const hbModalOpen = /* @__PURE__ */ ref(false);
-  const infoOpen = /* @__PURE__ */ ref(false);
-  const audioModalOpen = /* @__PURE__ */ ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
-});
 const useNewTaskStore = /* @__PURE__ */ defineStore("newTask", () => {
   const isOpen = /* @__PURE__ */ ref(false);
   const parent = /* @__PURE__ */ ref(null);
@@ -19262,19 +19251,29 @@ const useKnowledgeStore = /* @__PURE__ */ defineStore("knowledge", () => {
   }
   return { recentQueries, currentResult, currentQuery, isOpen, seedQuery, isStale, hasResult, setResult, markStale, markFresh, clear, pushQuery, open, close };
 });
+const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
+  const settingsOpen = /* @__PURE__ */ ref(false);
+  const ttsEnabled = /* @__PURE__ */ ref(true);
+  const micEnabled = /* @__PURE__ */ ref(false);
+  const filesNav = /* @__PURE__ */ ref(null);
+  const hbModalOpen = /* @__PURE__ */ ref(false);
+  const infoOpen = /* @__PURE__ */ ref(false);
+  const audioModalOpen = /* @__PURE__ */ ref(false);
+  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
+});
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
 const _hoisted_1$r = ["data-size"];
-const _hoisted_2$k = {
+const _hoisted_2$j = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$g = { class: "base-modal-title" };
+const _hoisted_3$h = { class: "base-modal-title" };
 const _hoisted_4$d = { class: "base-modal-body" };
 const _hoisted_5$a = {
   key: 0,
-  class: "base-modal-footer"
+  class: "base-modal-footer base-modal-footer--done"
 };
-const _sfc_main$w = /* @__PURE__ */ defineComponent({
+const _sfc_main$x = /* @__PURE__ */ defineComponent({
   __name: "BaseModal",
   props: {
     open: { type: Boolean },
@@ -19288,6 +19287,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     const emit2 = __emit;
     useModalsStore();
     const dialogRef = /* @__PURE__ */ ref(null);
+    const innerRef = /* @__PURE__ */ ref(null);
     let scrollLockCount = 0;
     function lockScroll() {
       scrollLockCount++;
@@ -19323,9 +19323,14 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
       ev.preventDefault();
       if (props.dismissible) emit2("close");
     }
-    function onDialogClick(ev) {
+    function onDialogPointerDown(ev) {
       if (!props.dismissible) return;
-      if (ev.target === dialogRef.value) emit2("close");
+      const inner = innerRef.value;
+      if (!inner) return;
+      const r = inner.getBoundingClientRect();
+      if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+        emit2("close");
+      }
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("dialog", {
@@ -19335,16 +19340,20 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
         class: "base-modal",
         "aria-modal": true,
         onCancel,
-        onClick: onDialogClick
+        onPointerdown: onDialogPointerDown
       }, [
         createBaseVNode("div", {
+          ref_key: "innerRef",
+          ref: innerRef,
           class: "base-modal-inner",
-          onClick: _cache[1] || (_cache[1] = withModifiers(() => {
+          onClick: _cache[2] || (_cache[2] = withModifiers(() => {
+          }, ["stop"])),
+          onPointerdown: _cache[3] || (_cache[3] = withModifiers(() => {
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
-              createBaseVNode("span", _hoisted_3$g, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
+              createBaseVNode("span", _hoisted_3$h, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -19357,22 +19366,28 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
           createBaseVNode("div", _hoisted_4$d, [
             renderSlot(_ctx.$slots, "default")
           ]),
-          _ctx.$slots.footer ? (openBlock(), createElementBlock("div", _hoisted_5$a, [
-            renderSlot(_ctx.$slots, "footer")
-          ])) : createCommentVNode("", true)
-        ])
+          renderSlot(_ctx.$slots, "footer", {}, () => [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$a, [
+              createBaseVNode("button", {
+                class: "base-modal-done-btn",
+                type: "button",
+                onClick: _cache[1] || (_cache[1] = ($event) => emit2("close"))
+              }, "Done")
+            ])) : createCommentVNode("", true)
+          ])
+        ], 544)
       ], 40, _hoisted_1$r);
     };
   }
 });
 const _hoisted_1$q = { class: "setting-item" };
-const _hoisted_2$j = { class: "setting-main" };
-const _hoisted_3$f = { class: "settings-label" };
+const _hoisted_2$i = { class: "setting-main" };
+const _hoisted_3$g = { class: "settings-label" };
 const _hoisted_4$c = {
   key: 0,
   class: "settings-meta"
 };
-const _sfc_main$v = /* @__PURE__ */ defineComponent({
+const _sfc_main$w = /* @__PURE__ */ defineComponent({
   __name: "SettingRow",
   props: {
     label: {},
@@ -19381,8 +19396,8 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
   setup(__props) {
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$q, [
-        createBaseVNode("div", _hoisted_2$j, [
-          createBaseVNode("div", _hoisted_3$f, toDisplayString(__props.label), 1),
+        createBaseVNode("div", _hoisted_2$i, [
+          createBaseVNode("div", _hoisted_3$g, toDisplayString(__props.label), 1),
           __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$c, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
@@ -19392,10 +19407,10 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$p = { class: "settings-stack" };
-const _hoisted_2$i = { class: "setting-actions" };
-const _hoisted_3$e = ["disabled"];
+const _hoisted_2$h = { class: "setting-actions" };
+const _hoisted_3$f = ["disabled"];
 const _hoisted_4$b = ["innerHTML"];
-const _sfc_main$u = /* @__PURE__ */ defineComponent({
+const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
@@ -19525,7 +19540,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$w, {
+        createVNode(_sfc_main$x, {
           id: "settings-modal",
           open: unref(ui).settingsOpen,
           onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
@@ -19534,12 +19549,12 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
         }, {
           default: withCtx(() => [
             createBaseVNode("div", _hoisted_1$p, [
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$i, [
+                  createBaseVNode("div", _hoisted_2$h, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -19552,12 +19567,12 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$e)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$f)
                   ])
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🕒 Clock",
                 meta: clockInfo.value
               }, {
@@ -19571,7 +19586,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🔗 GitHub Banner",
                 meta: "Star on GitHub header bar"
               }, {
@@ -19585,7 +19600,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🐞 Debug",
                 meta: "Show chat thread/session ids"
               }, {
@@ -19599,7 +19614,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🎙️ Voice — STT",
                 meta: sttMeta.value
               }, {
@@ -19613,7 +19628,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🎙️ Mic (STT)",
                 meta: "Dictate and voice chat"
               }, {
@@ -19627,7 +19642,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🔊 Speaker (TTS)",
                 meta: "Read aloud and voice replies"
               }, {
@@ -19648,7 +19663,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$v, {
+              createVNode(_sfc_main$w, {
                 label: "🧾 Advanced",
                 meta: "Technical runtime and JSON files"
               }, {
@@ -19667,7 +19682,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
           _: 1
         }, 8, ["open"]),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
-          createVNode(_sfc_main$w, {
+          createVNode(_sfc_main$x, {
             id: "info-modal",
             open: unref(ui).infoOpen,
             onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
@@ -19692,8 +19707,8 @@ const _hoisted_1$o = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$h = ["disabled"];
-const _hoisted_3$d = {
+const _hoisted_2$g = ["disabled"];
+const _hoisted_3$e = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
@@ -19706,7 +19721,7 @@ const _hoisted_6$9 = {
 const _hoisted_7$7 = { class: "hb-buttons" };
 const _hoisted_8$7 = ["disabled"];
 const _hoisted_9$6 = ["disabled"];
-const _sfc_main$t = /* @__PURE__ */ defineComponent({
+const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
     const ui = useUiStore();
@@ -19770,7 +19785,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$w, {
+      return openBlock(), createBlock(_sfc_main$x, {
         id: "hb-modal",
         open: unref(ui).hbModalOpen,
         onClose: close,
@@ -19795,7 +19810,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$h), [
+              }, null, 8, _hoisted_2$g), [
                 [
                   vModelText,
                   interval.value,
@@ -19804,7 +19819,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$d, [
+            createBaseVNode("label", _hoisted_3$e, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -19842,12 +19857,12 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_main$s = /* @__PURE__ */ defineComponent({
+const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
   setup(__props) {
     const ui = useUiStore();
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$w, {
+      return openBlock(), createBlock(_sfc_main$x, {
         id: "audio-action-modal",
         open: unref(ui).audioModalOpen,
         onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
@@ -19947,7 +19962,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$n = ["disabled"];
-const _sfc_main$r = /* @__PURE__ */ defineComponent({
+const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
@@ -20030,8 +20045,8 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
   };
 });
 const _hoisted_1$m = ["hidden"];
-const _hoisted_2$g = ["hidden"];
-const _sfc_main$q = /* @__PURE__ */ defineComponent({
+const _hoisted_2$f = ["hidden"];
+const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
@@ -20096,7 +20111,7 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_2$g)
+        ])], 8, _hoisted_2$f)
       ], 64);
     };
   }
@@ -20324,12 +20339,12 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
 const _hoisted_1$l = { class: "dock-shell" };
-const _hoisted_2$f = {
+const _hoisted_2$e = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$c = { class: "side-value" };
+const _hoisted_3$d = { class: "side-value" };
 const _hoisted_4$9 = {
   class: "side-bubble",
   id: "tasks-bubble",
@@ -20351,7 +20366,7 @@ const _hoisted_11$3 = {
   "aria-live": "polite"
 };
 const _hoisted_12$3 = { class: "side-value" };
-const _sfc_main$p = /* @__PURE__ */ defineComponent({
+const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
     const live = useLiveStore();
@@ -20434,9 +20449,9 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$l, [
-        createBaseVNode("aside", _hoisted_2$f, [
+        createBaseVNode("aside", _hoisted_2$e, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$c, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$d, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
         createBaseVNode("aside", _hoisted_4$9, [
@@ -20445,9 +20460,9 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
         createBaseVNode("footer", _hoisted_6$8, [
-          createVNode(_sfc_main$q),
-          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
           createVNode(_sfc_main$r),
+          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+          createVNode(_sfc_main$s),
           createBaseVNode("div", _hoisted_7$6, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
@@ -20571,11 +20586,11 @@ const _hoisted_1$k = {
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$e = ["innerHTML"];
-const _hoisted_3$b = { class: "vm-controls" };
+const _hoisted_2$d = ["innerHTML"];
+const _hoisted_3$c = { class: "vm-controls" };
 const _hoisted_4$8 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
-const _sfc_main$o = /* @__PURE__ */ defineComponent({
+const _sfc_main$p = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
   setup(__props) {
     const voice = useVoiceStore();
@@ -20913,8 +20928,8 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$e),
-        createBaseVNode("div", _hoisted_3$b, [
+        }, null, 8, _hoisted_2$d),
+        createBaseVNode("div", _hoisted_3$c, [
           createBaseVNode("div", _hoisted_4$8, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
@@ -21071,11 +21086,11 @@ const _hoisted_1$j = {
   key: 0,
   class: "vtc-success text-center py-4"
 };
-const _hoisted_2$d = {
+const _hoisted_2$c = {
   key: 0,
   class: "vtc-claude-reply mb-3 p-3 rounded"
 };
-const _hoisted_3$a = { class: "row g-2 mb-2" };
+const _hoisted_3$b = { class: "row g-2 mb-2" };
 const _hoisted_4$7 = { class: "col-6" };
 const _hoisted_5$7 = { class: "col-6" };
 const _hoisted_6$7 = { class: "d-flex gap-2 justify-content-end" };
@@ -21093,7 +21108,7 @@ const _hoisted_10$3 = {
   class: "vm-reply vm-active mt-2"
 };
 const HOLD_MS = 250;
-const _sfc_main$n = /* @__PURE__ */ defineComponent({
+const _sfc_main$o = /* @__PURE__ */ defineComponent({
   __name: "VoiceTaskCreator",
   setup(__props) {
     const voice = useVoiceStore();
@@ -21481,7 +21496,7 @@ User's voice request: "${userText}"`;
             createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
             createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
           ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$d, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
               _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
@@ -21500,7 +21515,7 @@ User's voice request: "${userText}"`;
               ]),
               _: 1
             }),
-            createBaseVNode("div", _hoisted_3$a, [
+            createBaseVNode("div", _hoisted_3$b, [
               createBaseVNode("div", _hoisted_4$7, [
                 createVNode(unref(BFormGroup_default), {
                   label: "Priority",
@@ -21679,8 +21694,8 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$n, [["__scopeId", "data-v-9d3f47dd"]]);
-const _sfc_main$m = /* @__PURE__ */ defineComponent({
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$o, [["__scopeId", "data-v-9d3f47dd"]]);
+const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
     const voice = useVoiceStore();
@@ -21706,15 +21721,135 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$o, { key: 0 })) : createCommentVNode("", true),
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$p, { key: 0 })) : createCommentVNode("", true),
         createVNode(VoiceTaskCreator)
       ]);
     };
   }
 });
+const _sfc_main$m = /* @__PURE__ */ defineComponent({
+  __name: "OpenMenu",
+  setup(__props) {
+    const ws = useWorkspaceStore();
+    const kn = useKnowledgeStore();
+    const nt2 = useNewTaskStore();
+    const detailsRef = /* @__PURE__ */ ref(null);
+    function close() {
+      if (detailsRef.value) detailsRef.value.open = false;
+    }
+    function openDashboard() {
+      ws.open({ kind: "dashboard" });
+      close();
+    }
+    function openTasks() {
+      ws.open({ kind: "legacy", page: "tasks" });
+      close();
+    }
+    function openChat() {
+      ws.open({ kind: "legacy", page: "chat" });
+      close();
+    }
+    function openFiles() {
+      ws.open({ kind: "legacy", page: "files" });
+      close();
+    }
+    function openSearch() {
+      kn.open();
+      close();
+    }
+    function openNewTask() {
+      nt2.open();
+      close();
+    }
+    function onDocPointerDown(ev) {
+      var _a2;
+      if (!((_a2 = detailsRef.value) == null ? void 0 : _a2.open)) return;
+      if (!detailsRef.value.contains(ev.target)) close();
+    }
+    function onDocKeyDown(ev) {
+      var _a2;
+      if (ev.key === "Escape" && ((_a2 = detailsRef.value) == null ? void 0 : _a2.open)) {
+        close();
+        ev.stopPropagation();
+      }
+    }
+    onMounted(() => {
+      document.addEventListener("pointerdown", onDocPointerDown, true);
+      document.addEventListener("keydown", onDocKeyDown, true);
+    });
+    onBeforeUnmount(() => {
+      document.removeEventListener("pointerdown", onDocPointerDown, true);
+      document.removeEventListener("keydown", onDocKeyDown, true);
+    });
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("details", {
+        ref_key: "detailsRef",
+        ref: detailsRef,
+        class: "open-menu"
+      }, [
+        _cache[3] || (_cache[3] = createBaseVNode("summary", {
+          class: "open-menu-btn",
+          "aria-haspopup": "true"
+        }, "Open ▾", -1)),
+        createBaseVNode("div", {
+          class: "open-menu-list",
+          role: "menu"
+        }, [
+          createBaseVNode("button", {
+            id: "tab-dashboard",
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openDashboard
+          }, "Dashboard"),
+          createBaseVNode("button", {
+            id: "tab-tasks",
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openTasks
+          }, "Tasks"),
+          createBaseVNode("button", {
+            id: "tab-chat",
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openChat
+          }, "Chat"),
+          createBaseVNode("button", {
+            id: "tab-files",
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openFiles
+          }, "Files"),
+          _cache[2] || (_cache[2] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+          createBaseVNode("button", {
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openSearch
+          }, [..._cache[0] || (_cache[0] = [
+            createTextVNode("Search ", -1),
+            createBaseVNode("kbd", null, "⌘K", -1)
+          ])]),
+          createBaseVNode("button", {
+            class: "open-menu-item",
+            type: "button",
+            role: "menuitem",
+            onClick: openNewTask
+          }, [..._cache[1] || (_cache[1] = [
+            createTextVNode("New task ", -1),
+            createBaseVNode("kbd", null, "N", -1)
+          ])])
+        ])
+      ], 512);
+    };
+  }
+});
 const _hoisted_1$i = { class: "tab-strip" };
-const _hoisted_2$c = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$9 = { class: "ts-tab-label" };
+const _hoisted_2$b = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_3$a = { class: "ts-tab-label" };
 const _hoisted_4$6 = ["onClick"];
 const _hoisted_5$6 = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_6$6 = { class: "ts-tab-label" };
@@ -21725,6 +21860,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
   __name: "TabStrip",
   setup(__props) {
     const ws = useWorkspaceStore();
+    const ui = useUiStore();
     const group0 = computed(() => ws.groupTabs(0));
     const group1 = computed(() => ws.groupTabs(1));
     const draggedKey = /* @__PURE__ */ ref(null);
@@ -21799,6 +21935,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$i, [
+        createVNode(_sfc_main$m),
         (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
           return openBlock(), createElementBlock("button", {
             key: unref(refKey)(tab),
@@ -21823,16 +21960,15 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
             onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
             onDrop: ($event) => onTabDrop($event, i)
           }, [
-            createBaseVNode("span", _hoisted_3$9, toDisplayString(tabLabel(tab)), 1),
-            tab.kind !== "dashboard" ? (openBlock(), createElementBlock("span", {
-              key: 0,
+            createBaseVNode("span", _hoisted_3$a, toDisplayString(tabLabel(tab)), 1),
+            createBaseVNode("span", {
               class: "ts-tab-close",
               role: "button",
               tabindex: "-1",
               "aria-label": "Close tab",
               onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_4$6)) : createCommentVNode("", true)
-          ], 42, _hoisted_2$c);
+            }, "×", 8, _hoisted_4$6)
+          ], 42, _hoisted_2$b);
         }), 128)),
         unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
           key: 0,
@@ -21870,14 +22006,13 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
             onDrop: ($event) => onTabDrop($event, group0.value.length + i)
           }, [
             createBaseVNode("span", _hoisted_6$6, toDisplayString(tabLabel(tab)), 1),
-            tab.kind !== "dashboard" ? (openBlock(), createElementBlock("span", {
-              key: 0,
+            createBaseVNode("span", {
               class: "ts-tab-close",
               role: "button",
               tabindex: "-1",
               "aria-label": "Close tab",
               onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_7$4)) : createCommentVNode("", true)
+            }, "×", 8, _hoisted_7$4)
           ], 42, _hoisted_5$6);
         }), 128)),
         createBaseVNode("div", _hoisted_8$4, [
@@ -21886,13 +22021,20 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
             type: "button",
             title: unref(ws).splitOn ? "Close split" : "Open split",
             onClick: _cache[3] || (_cache[3] = ($event) => unref(ws).toggleSplit())
-          }, "⫽", 10, _hoisted_9$3)
+          }, "⫽", 10, _hoisted_9$3),
+          createBaseVNode("button", {
+            id: "settings-btn",
+            class: "ts-settings-btn",
+            type: "button",
+            title: "Settings",
+            onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).settingsOpen = true)
+          }, "⚙")
         ])
       ]);
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-ac98f00b"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-54748e19"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -21997,8 +22139,8 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$g = { class: "hero" };
-const _hoisted_2$b = { class: "date" };
-const _hoisted_3$8 = { class: "message" };
+const _hoisted_2$a = { class: "date" };
+const _hoisted_3$9 = { class: "message" };
 const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "DashboardHero",
   setup(__props) {
@@ -22152,8 +22294,8 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
           ref: clockEl,
           class: "time"
         }, toDisplayString(clockTime.value), 513),
-        createBaseVNode("div", _hoisted_2$b, toDisplayString(clockDate.value), 1),
-        createBaseVNode("div", _hoisted_3$8, toDisplayString(greeting.value), 1),
+        createBaseVNode("div", _hoisted_2$a, toDisplayString(clockDate.value), 1),
+        createBaseVNode("div", _hoisted_3$9, toDisplayString(greeting.value), 1),
         createVNode(_sfc_main$k, { "corpus-label": corpusLabel.value }, null, 8, ["corpus-label"]),
         _cache[2] || (_cache[2] = createBaseVNode("a", {
           class: "repo-cta",
@@ -22204,8 +22346,8 @@ const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
   };
 });
 const _hoisted_1$f = ["data-task-id"];
-const _hoisted_2$a = { class: "db-tier-row-headline" };
-const _hoisted_3$7 = {
+const _hoisted_2$9 = { class: "db-tier-row-headline" };
+const _hoisted_3$8 = {
   key: 0,
   class: "db-tier-row-agent"
 };
@@ -22229,15 +22371,15 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
           _cache[2] || (_cache[2] = withKeys(withModifiers(($event) => emit2("open-task", __props.row.id), ["prevent"]), ["space"]))
         ]
       }, [
-        createBaseVNode("span", _hoisted_2$a, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
-        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$7, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
+        createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
+        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$8, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
       ], 40, _hoisted_1$f);
     };
   }
 });
 const _hoisted_1$e = ["data-tier"];
-const _hoisted_2$9 = { class: "db-tier-title" };
-const _hoisted_3$6 = { class: "db-tier-count" };
+const _hoisted_2$8 = { class: "db-tier-title" };
+const _hoisted_3$7 = { class: "db-tier-count" };
 const _hoisted_4$5 = {
   key: 0,
   style: { "opacity": "0.5" }
@@ -22290,8 +22432,8 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
           class: "db-tier-header",
           onClick: _cache[0] || (_cache[0] = ($event) => unref(dash).toggleSection(__props.sectionKey))
         }, [
-          createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.title), 1),
-          createBaseVNode("span", _hoisted_3$6, [
+          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.title), 1),
+          createBaseVNode("span", _hoisted_3$7, [
             createTextVNode(toDisplayString(__props.tier.count) + " ", 1),
             __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$5, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
             collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$5, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$5, " ▾"))
@@ -22385,8 +22527,8 @@ const _hoisted_1$c = {
   key: 0,
   class: "db-totals"
 };
-const _hoisted_2$8 = { class: "db-totals-done" };
-const _hoisted_3$5 = { class: "db-totals-failed" };
+const _hoisted_2$7 = { class: "db-totals-done" };
+const _hoisted_3$6 = { class: "db-totals-failed" };
 const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "TotalsLine",
   props: {
@@ -22405,17 +22547,17 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
           createBaseVNode("span", null, toDisplayString(__props.totals.waiting ?? 0) + " waiting", 1),
           _cache[2] || (_cache[2] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.totals.done ?? 0) + " done", 1),
+          createBaseVNode("span", _hoisted_2$7, toDisplayString(__props.totals.done ?? 0) + " done", 1),
           _cache[3] || (_cache[3] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_3$5, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
+          createBaseVNode("span", _hoisted_3$6, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
         ])
       ])) : createCommentVNode("", true);
     };
   }
 });
 const _hoisted_1$b = ["data-sched-id"];
-const _hoisted_2$7 = { class: "db-sched-row-main" };
-const _hoisted_3$4 = { class: "db-sched-row-head" };
+const _hoisted_2$6 = { class: "db-sched-row-main" };
+const _hoisted_3$5 = { class: "db-sched-row-head" };
 const _hoisted_4$4 = { class: "db-sched-headline" };
 const _hoisted_5$4 = { class: "db-sched-meta" };
 const _hoisted_6$4 = { class: "db-sched-agent" };
@@ -22468,8 +22610,8 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         class: "db-sched-row",
         "data-sched-id": __props.template.id
       }, [
-        createBaseVNode("div", _hoisted_2$7, [
-          createBaseVNode("div", _hoisted_3$4, [
+        createBaseVNode("div", _hoisted_2$6, [
+          createBaseVNode("div", _hoisted_3$5, [
             createBaseVNode("span", _hoisted_4$4, toDisplayString(headline.value), 1),
             _cache[3] || (_cache[3] = createBaseVNode("span", {
               class: "db-sched-recur",
@@ -22503,7 +22645,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => confirmOpen.value = true)
           }, "Delete")
         ]),
-        createVNode(_sfc_main$w, {
+        createVNode(_sfc_main$x, {
           open: confirmOpen.value,
           size: "sm",
           title: "Delete schedule?",
@@ -22537,8 +22679,8 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$a = { class: "db-sched" };
-const _hoisted_2$6 = { class: "db-sched-header" };
-const _hoisted_3$3 = {
+const _hoisted_2$5 = { class: "db-sched-header" };
+const _hoisted_3$4 = {
   key: 0,
   class: "db-sched-empty"
 };
@@ -22618,7 +22760,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("section", _hoisted_1$a, [
-        createBaseVNode("div", _hoisted_2$6, [
+        createBaseVNode("div", _hoisted_2$5, [
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-sched-title" }, "Scheduled tasks", -1)),
           createBaseVNode("button", {
             class: "db-sched-act-btn",
@@ -22626,7 +22768,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => unref(nt2).open())
           }, "+ New Task")
         ]),
-        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$3, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$3, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$3, [
+        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$4, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$3, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$3, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(__props.templates, (t) => {
             return openBlock(), createBlock(_sfc_main$e, {
               key: t.id,
@@ -29456,8 +29598,8 @@ const _hoisted_1$5 = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$5 = { class: "files-toolbar" };
-const _hoisted_3$2 = { class: "files-toolbar-row files-toolbar-row-branch" };
+const _hoisted_2$4 = { class: "files-toolbar" };
+const _hoisted_3$3 = { class: "files-toolbar-row files-toolbar-row-branch" };
 const _hoisted_4$2 = { class: "files-nav-group" };
 const _hoisted_5$2 = ["title"];
 const _hoisted_6$2 = { class: "files-split" };
@@ -29757,8 +29899,8 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$5, [
-        createBaseVNode("div", _hoisted_2$5, [
-          createBaseVNode("div", _hoisted_3$2, [
+        createBaseVNode("div", _hoisted_2$4, [
+          createBaseVNode("div", _hoisted_3$3, [
             _cache[2] || (_cache[2] = createBaseVNode("select", {
               id: "files-branch-select",
               class: "files-branch-select",
@@ -29858,7 +30000,7 @@ function getViewComponent(kind) {
   return registry[kind] ?? null;
 }
 const _hoisted_1$4 = { class: "view-host" };
-const _hoisted_2$4 = {
+const _hoisted_2$3 = {
   key: 1,
   class: "view-host-empty"
 };
@@ -29893,14 +30035,18 @@ const _sfc_main$4 = /* @__PURE__ */ defineComponent({
               resource: __props.activeRef
             }, null, 8, ["resource"]))
           ], 1024))
-        ], 64)) : (openBlock(), createElementBlock("div", _hoisted_2$4))
+        ], 64)) : (openBlock(), createElementBlock("div", _hoisted_2$3))
       ]);
     };
   }
 });
 const ViewHost = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["__scopeId", "data-v-e41f6907"]]);
 const _hoisted_1$3 = { class: "workspace" };
-const _hoisted_2$3 = { class: "workspace-body" };
+const _hoisted_2$2 = { class: "workspace-body" };
+const _hoisted_3$2 = {
+  key: 0,
+  class: "ws-empty"
+};
 const _sfc_main$3 = /* @__PURE__ */ defineComponent({
   __name: "Workspace",
   setup(__props) {
@@ -29945,11 +30091,17 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$3, [
         createVNode(TabStrip),
-        createBaseVNode("div", _hoisted_2$3, [
-          !showSplit.value ? (openBlock(), createBlock(ViewHost, {
-            key: 0,
+        createBaseVNode("div", _hoisted_2$2, [
+          unref(ws).tabs.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_3$2, [..._cache[2] || (_cache[2] = [
+            createBaseVNode("p", { class: "ws-empty-hint" }, [
+              createTextVNode("Use the "),
+              createBaseVNode("strong", null, "Open ▾"),
+              createTextVNode(" menu to open a tab.")
+            ], -1)
+          ])])) : !showSplit.value ? (openBlock(), createBlock(ViewHost, {
+            key: 1,
             "active-ref": activeRefForGroup(unref(ws).focused)
-          }, null, 8, ["active-ref"])) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+          }, null, 8, ["active-ref"])) : (openBlock(), createElementBlock(Fragment, { key: 2 }, [
             createBaseVNode("div", {
               class: "ws-pane",
               style: normalizeStyle({ width: (unref(ws).splitRatio * 100).toFixed(2) + "%" }),
@@ -29978,12 +30130,12 @@ const _sfc_main$3 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-283cef38"]]);
+const Workspace = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__scopeId", "data-v-b15e3e55"]]);
 const _hoisted_1$2 = {
   key: 0,
   class: "multi-agent-new-parent"
 };
-const _hoisted_2$2 = { class: "multi-agent-new-grid" };
+const _hoisted_2$1 = { class: "multi-agent-new-grid" };
 const _hoisted_3$1 = { class: "multi-agent-new-field" };
 const _hoisted_4$1 = {
   key: 0,
@@ -30264,7 +30416,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$w, {
+      return openBlock(), createBlock(_sfc_main$x, {
         id: "new-task-modal",
         open: unref(nt2).isOpen,
         title: modalTitle.value,
@@ -30282,7 +30434,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 createBaseVNode("strong", null, toDisplayString(unref(nt2).parent), 1)
               ])
             ])) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_2$2, [
+            createBaseVNode("div", _hoisted_2$1, [
               createBaseVNode("label", _hoisted_3$1, [
                 _cache[18] || (_cache[18] = createBaseVNode("span", null, "Target", -1)),
                 withDirectives(createBaseVNode("select", {
@@ -30529,7 +30681,7 @@ const _hoisted_1$1 = {
   class: "srch-modal-body",
   id: "search-modal-body"
 };
-const _hoisted_2$1 = { class: "srch-modal-top" };
+const _hoisted_2 = { class: "srch-modal-top" };
 const _hoisted_3 = { class: "srch-input-row" };
 const _hoisted_4 = ["placeholder"];
 const _hoisted_5 = {
@@ -30561,7 +30713,7 @@ const _hoisted_12 = {
   class: "srch-lane",
   id: "srch-lane-docs"
 };
-const _hoisted_13 = ["data-doc-path", "data-doc-id", "onClick", "onMousedown", "onKeydown"];
+const _hoisted_13 = ["tabindex", "aria-disabled", "data-doc-path", "data-doc-id", "onClick", "onMousedown", "onKeydown"];
 const _hoisted_14 = { class: "srch-row-title" };
 const _hoisted_15 = { class: "srch-row-meta" };
 const _hoisted_16 = {
@@ -30593,7 +30745,7 @@ const _hoisted_25 = {
   class: "srch-lane",
   id: "srch-lane-reports"
 };
-const _hoisted_26 = ["data-doc-path", "data-doc-id", "onClick", "onMousedown", "onKeydown"];
+const _hoisted_26 = ["tabindex", "aria-disabled", "data-doc-path", "data-doc-id", "onClick", "onMousedown", "onKeydown"];
 const _hoisted_27 = { class: "srch-row-title" };
 const _hoisted_28 = { class: "srch-row-meta" };
 const _hoisted_29 = {
@@ -30684,6 +30836,16 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => triggerSearch(q2), 250);
     });
+    function onInputKeyDown(ev) {
+      if (ev.key === "Enter") {
+        ev.preventDefault();
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+          debounceTimer = null;
+        }
+        triggerSearch(draftQuery.value);
+      }
+    }
     async function triggerSearch(q2) {
       const trimmed = q2.trim();
       if (!trimmed) return;
@@ -30720,7 +30882,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
     function openDoc(doc2, side = false) {
       const path = doc2.path;
       const taskId = doc2.id;
-      if (taskId && taskId.startsWith("TSK-")) {
+      if (typeof taskId === "string" && taskId.startsWith("TSK-")) {
         ws.open({ kind: "report", taskId, path }, { side });
       } else if (path) {
         ws.open({ kind: "file", path }, { side });
@@ -30764,12 +30926,18 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       const escaped = q2.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       return snippet2.replace(new RegExp(`(${escaped})`, "gi"), "<mark>$1</mark>");
     }
+    function canOpen(doc2) {
+      const path = doc2.path;
+      const taskId = doc2.id;
+      if (doc2._pathless) return false;
+      return !!(path || typeof taskId === "string" && taskId.startsWith("TSK-"));
+    }
     function rerun() {
       ks.markFresh();
       triggerSearch(draftQuery.value || ks.currentQuery);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$w, {
+      return openBlock(), createBlock(_sfc_main$x, {
         open: unref(ks).isOpen,
         size: "lg",
         title: "Search Knowledge",
@@ -30778,7 +30946,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       }, {
         default: withCtx(() => [
           createBaseVNode("div", _hoisted_1$1, [
-            createBaseVNode("div", _hoisted_2$1, [
+            createBaseVNode("div", _hoisted_2, [
               createBaseVNode("div", _hoisted_3, [
                 withDirectives(createBaseVNode("input", {
                   ref_key: "inputRef",
@@ -30789,7 +30957,10 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
                   autocomplete: "off",
                   spellcheck: "false",
                   "aria-label": "Search query",
-                  onKeydown: _cache[1] || (_cache[1] = withKeys(($event) => unref(ks).close(), ["escape"]))
+                  onKeydown: [
+                    _cache[1] || (_cache[1] = withKeys(($event) => unref(ks).close(), ["escape"])),
+                    onInputKeyDown
+                  ]
                 }, null, 40, _hoisted_4), [
                   [vModelText, draftQuery.value]
                 ]),
@@ -30861,14 +31032,15 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
                   (openBlock(true), createElementBlock(Fragment, null, renderList(docs.value, (doc2, i) => {
                     return openBlock(), createElementBlock("div", {
                       key: doc2.path ?? doc2.id ?? i,
-                      class: "srch-row",
+                      class: normalizeClass(["srch-row", { "srch-row--dead": !canOpen(doc2) }]),
                       role: "option",
-                      tabindex: "0",
+                      tabindex: canOpen(doc2) ? 0 : -1,
+                      "aria-disabled": !canOpen(doc2) || void 0,
                       "data-doc-path": doc2.path,
                       "data-doc-id": doc2.id,
-                      onClick: ($event) => onRowClick(doc2, $event),
-                      onMousedown: ($event) => onRowMiddleClick(doc2, $event),
-                      onKeydown: ($event) => onRowKeyDown(doc2, $event)
+                      onClick: ($event) => canOpen(doc2) && onRowClick(doc2, $event),
+                      onMousedown: ($event) => canOpen(doc2) && onRowMiddleClick(doc2, $event),
+                      onKeydown: ($event) => canOpen(doc2) && onRowKeyDown(doc2, $event)
                     }, [
                       createBaseVNode("div", _hoisted_14, toDisplayString(doc2.title ?? doc2.path), 1),
                       createBaseVNode("div", _hoisted_15, [
@@ -30899,7 +31071,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
                           "aria-label": "Mark not helpful"
                         }, "👎", 8, _hoisted_24)
                       ])
-                    ], 40, _hoisted_13);
+                    ], 42, _hoisted_13);
                   }), 128))
                 ])) : createCommentVNode("", true),
                 reports.value.length ? (openBlock(), createElementBlock("div", _hoisted_25, [
@@ -30907,14 +31079,15 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
                   (openBlock(true), createElementBlock(Fragment, null, renderList(reports.value, (doc2, i) => {
                     return openBlock(), createElementBlock("div", {
                       key: doc2.id ?? doc2.path ?? i,
-                      class: "srch-row",
+                      class: normalizeClass(["srch-row", { "srch-row--dead": !canOpen(doc2) }]),
                       role: "option",
-                      tabindex: "0",
+                      tabindex: canOpen(doc2) ? 0 : -1,
+                      "aria-disabled": !canOpen(doc2) || void 0,
                       "data-doc-path": doc2.path,
                       "data-doc-id": doc2.id,
-                      onClick: ($event) => onRowClick(doc2, $event),
-                      onMousedown: ($event) => onRowMiddleClick(doc2, $event),
-                      onKeydown: ($event) => onRowKeyDown(doc2, $event)
+                      onClick: ($event) => canOpen(doc2) && onRowClick(doc2, $event),
+                      onMousedown: ($event) => canOpen(doc2) && onRowMiddleClick(doc2, $event),
+                      onKeydown: ($event) => canOpen(doc2) && onRowKeyDown(doc2, $event)
                     }, [
                       createBaseVNode("div", _hoisted_27, toDisplayString(doc2.title ?? doc2.id), 1),
                       createBaseVNode("div", _hoisted_28, [
@@ -30945,7 +31118,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
                           "aria-label": "Mark not helpful"
                         }, "👎", 8, _hoisted_37)
                       ])
-                    ], 40, _hoisted_26);
+                    ], 42, _hoisted_26);
                   }), 128))
                 ])) : createCommentVNode("", true),
                 !docs.value.length && !reports.value.length ? (openBlock(), createElementBlock("div", _hoisted_38, ' No results found for "' + toDisplayString(draftQuery.value) + '" ', 1)) : createCommentVNode("", true)
@@ -30959,16 +31132,9 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1 = { class: "stage" };
-const _hoisted_2 = {
-  class: "tab-nav",
-  role: "tablist",
-  "aria-label": "Main navigation"
-};
 const _sfc_main = /* @__PURE__ */ defineComponent({
   __name: "App",
   setup(__props) {
-    const ui = useUiStore();
-    const ws = useWorkspaceStore();
     const nt2 = useNewTaskStore();
     const kn = useKnowledgeStore();
     function onGlobalKeyDown(ev) {
@@ -30997,52 +31163,16 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$u),
+        createVNode(_sfc_main$v),
         createVNode(_sfc_main$2),
         createVNode(_sfc_main$1),
-        createVNode(_sfc_main$t),
+        createVNode(_sfc_main$u),
         createBaseVNode("main", _hoisted_1, [
-          createBaseVNode("nav", _hoisted_2, [
-            createBaseVNode("button", {
-              id: "tab-dashboard",
-              class: "tab-btn",
-              type: "button",
-              onClick: _cache[0] || (_cache[0] = ($event) => unref(ws).open({ kind: "dashboard" }))
-            }, [..._cache[5] || (_cache[5] = [
-              createBaseVNode("span", { class: "tab-btn-label-full" }, "Dashboard", -1),
-              createBaseVNode("span", { class: "tab-btn-label-short" }, "Dash", -1)
-            ])]),
-            createBaseVNode("button", {
-              id: "tab-chat",
-              class: "tab-btn",
-              type: "button",
-              onClick: _cache[1] || (_cache[1] = ($event) => unref(ws).open({ kind: "legacy", page: "chat" }))
-            }, "Chat"),
-            createBaseVNode("button", {
-              id: "tab-tasks",
-              class: "tab-btn",
-              type: "button",
-              onClick: _cache[2] || (_cache[2] = ($event) => unref(ws).open({ kind: "legacy", page: "tasks" }))
-            }, "Tasks"),
-            createBaseVNode("button", {
-              id: "tab-files",
-              class: "tab-btn",
-              type: "button",
-              onClick: _cache[3] || (_cache[3] = ($event) => unref(ws).open({ kind: "legacy", page: "files" }))
-            }, "Files"),
-            createBaseVNode("button", {
-              class: "tab-btn tab-btn-settings",
-              id: "settings-btn",
-              type: "button",
-              title: "Settings",
-              onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).settingsOpen = true)
-            }, "⚙")
-          ]),
           createVNode(Workspace)
         ]),
-        createVNode(_sfc_main$s),
-        createVNode(_sfc_main$p),
-        createVNode(_sfc_main$m)
+        createVNode(_sfc_main$t),
+        createVNode(_sfc_main$q),
+        createVNode(_sfc_main$n)
       ], 64);
     };
   }
@@ -32076,7 +32206,6 @@ const pageStyles = String.raw`    :root {
       font-variant-ligatures: none;
     }
     .settings-btn {
-      /* now rendered inside .tab-nav as gear icon — keep for ID reference */
       display: none;
     }
     #dashboard-panel {
@@ -32427,7 +32556,10 @@ const pageStyles = String.raw`    :root {
       font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      padding: 0 2px;
+      /* ≥44×44px hit target per WCAG / mobile tap guidelines */
+      padding: 13px 12px;
+      margin: -13px -12px -13px 0;
+      min-width: 44px;
       flex-shrink: 0;
     }
     .base-modal-body {
@@ -32438,6 +32570,43 @@ const pageStyles = String.raw`    :root {
       padding: var(--space-3) var(--space-4);
       border-top: 1px solid var(--border-subtle);
       flex-shrink: 0;
+    }
+    /* Done button default footer — shown on narrow screens only */
+    .base-modal-footer--done {
+      display: none;
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .base-modal-done-btn {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--border-strong, #d8e4ff3d);
+      border-radius: var(--radius-md);
+      background: var(--surface-2, #111b2e);
+      color: var(--text);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .base-modal-done-btn:hover { background: var(--surface-3, #1a2640); }
+    @media (max-width: 640px) {
+      /* Show drag-handle affordance on sheet modals at phone width */
+      .base-modal[data-size="md"] .base-modal-head::before,
+      .base-modal[data-size="lg"] .base-modal-head::before,
+      .base-modal[data-size="sheet"] .base-modal-head::before {
+        content: "";
+        display: block;
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d8e4ff33;
+        margin: 0 auto var(--space-2);
+      }
+      .base-modal-footer--done { display: flex; }
     }
     .info-card {
       width: min(980px, 100%);
@@ -32627,98 +32796,70 @@ const pageStyles = String.raw`    :root {
     .pill.bad { border-color: #ff7f7f47; }
     .pill.bad .pill-value { color: #ffacac; }
 
-    /* ── Tab navigation ── */
-    .tab-nav {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 12px;
+    /* ── Open menu (replaces tab-nav) ── */
+    .open-menu {
+      position: relative;
       flex-shrink: 0;
-      background: #ffffff08;
-      backdrop-filter: blur(8px);
-      border: 1px solid #ffffff14;
-      border-radius: 999px;
-      padding: 4px;
-      width: fit-content;
+      align-self: center;
+      margin-right: 4px;
     }
-    .tab-btn {
-      /* RouterLinks render as <a>, which is inline by default — height and
-         vertical centring silently do nothing, and the UA underlines it.
-         inline-flex + no underline makes anchors and buttons render alike. */
+    .open-menu-btn {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      height: 32px;
-      padding: 0 18px;
-      border: 1px solid transparent;
-      border-radius: 999px;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--border-subtle, #d8e4ff14);
+      border-radius: 4px;
+      background: var(--surface-2, #111b2e);
+      color: #a8b8d0;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
       letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #a8b8d0;
-      background: transparent;
       cursor: pointer;
-      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+      user-select: none;
+      list-style: none;
+      white-space: nowrap;
     }
-    .tab-btn:hover {
-      color: #d6e6f8;
-      background: #ffffff10;
+    .open-menu-btn:hover { color: #d6e6f8; background: var(--surface-3, #1a2640); }
+    .open-menu-btn::-webkit-details-marker { display: none; }
+    .open-menu-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 160px;
+      background: var(--surface-2, #111b2e);
+      border: 1px solid var(--border-strong, #d8e4ff3d);
+      border-radius: var(--radius-md, 8px);
+      box-shadow: var(--shadow-overlay, 0 8px 32px rgba(0,0,0,.6));
+      padding: 4px 0;
+      z-index: 200;
     }
-    .tab-btn-active {
-      background: #0e2040cc;
-      border-color: #ffffff22;
-      color: #eef4ff;
+    .open-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: #c8d8ee;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: left;
+      gap: 10px;
     }
-    /* Must come AFTER .tab-btn / .tab-btn-active so the settings cog
-       overrides the shared sizing rather than being clobbered by it. */
-    .tab-btn-settings {
-      font-size: 22px;
-      padding: 0 12px;
-      line-height: 32px;
-      border-left: 1px solid #ffffff12;
-      margin-left: 2px;
-      border-radius: 0 999px 999px 0;
+    .open-menu-item:hover { background: var(--surface-3, #1a2640); color: #eef4ff; }
+    .open-menu-item kbd {
+      font-family: inherit;
+      font-size: 10px;
+      opacity: 0.55;
     }
-    .tab-btn-split {
-      font-size: 18px;
-      padding: 0 12px;
-      line-height: 32px;
-      border-left: 1px solid #ffffff12;
-    }
-    .tab-btn-split[aria-pressed="true"] {
-      color: #7dc5ff;
-      background: #0e2040cc;
-      border-color: #ffffff22;
-    }
-    /* Default: show full label, hide short. Mobile media query swaps these. */
-    .tab-btn-label-short { display: none; }
-    @media (max-width: 640px) {
-      .tab-nav {
-        gap: 3px;
-        padding: 4px;
-        margin-bottom: 8px;
-      }
-      .tab-btn {
-        height: 36px;
-        padding: 0 14px;
-        font-size: 12px;
-        letter-spacing: 0.04em;
-      }
-      .tab-btn-settings {
-        font-size: 22px;
-        padding: 0 12px;
-        line-height: 36px;
-      }
-      .tab-btn-split {
-        font-size: 18px;
-        padding: 0 11px;
-        line-height: 36px;
-      }
-      .tab-btn-label-full { display: none; }
-      .tab-btn-label-short { display: inline; }
+    .open-menu-sep {
+      border: none;
+      border-top: 1px solid var(--border-subtle, #d8e4ff14);
+      margin: 3px 0;
     }
 
     /* ── Chat panel ── */
@@ -36042,9 +36183,6 @@ const pageStyles = String.raw`    :root {
       .stage {
         padding: 38px 8px 80px;
       }
-      .tab-nav {
-        margin-bottom: 8px;
-      }
       .repo-cta {
         font-size: 10px;
         height: 30px;
@@ -36640,6 +36778,8 @@ const pageStyles = String.raw`    :root {
       transition: background 0.1s;
     }
     .srch-row:hover, .srch-row.focused { background: #1a2a3a60; border-color: #2a3a5040; }
+    .srch-row--dead { cursor: default; opacity: 0.45; }
+    .srch-row--dead:hover { background: transparent; border-color: transparent; }
     .srch-row-title { font-size: 13px; color: var(--fg, #e2e8f0); font-weight: 500; }
     .srch-row-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .srch-chip {

@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ close: [] }>();
 const modals = useModalsStore();
 const dialogRef = ref<HTMLDialogElement | null>(null);
+const innerRef = ref<HTMLDivElement | null>(null);
 
 // Module-level scroll lock counter — handles multiple stacked modals.
 let scrollLockCount = 0;
@@ -55,9 +56,16 @@ function onCancel(ev: Event): void {
   if (props.dismissible) emit("close");
 }
 
-function onDialogClick(ev: MouseEvent): void {
+// Geometric backdrop test: dismiss only if the pointer landed outside the inner card.
+// Avoids relying on ev.target === dialog (::backdrop targeting varies by engine/touch).
+function onDialogPointerDown(ev: PointerEvent): void {
   if (!props.dismissible) return;
-  if ((ev.target as Element) === dialogRef.value) emit("close");
+  const inner = innerRef.value;
+  if (!inner) return;
+  const r = inner.getBoundingClientRect();
+  if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+    emit("close");
+  }
 }
 </script>
 
@@ -68,9 +76,9 @@ function onDialogClick(ev: MouseEvent): void {
     class="base-modal"
     :aria-modal="true"
     @cancel="onCancel"
-    @click="onDialogClick"
+    @pointerdown="onDialogPointerDown"
   >
-    <div class="base-modal-inner" @click.stop>
+    <div ref="innerRef" class="base-modal-inner" @click.stop @pointerdown.stop>
       <slot name="header">
         <div v-if="title" class="base-modal-head">
           <span class="base-modal-title">{{ title }}</span>
@@ -86,9 +94,11 @@ function onDialogClick(ev: MouseEvent): void {
       <div class="base-modal-body">
         <slot />
       </div>
-      <div v-if="$slots.footer" class="base-modal-footer">
-        <slot name="footer" />
-      </div>
+      <slot name="footer">
+        <div v-if="dismissible" class="base-modal-footer base-modal-footer--done">
+          <button class="base-modal-done-btn" type="button" @click="emit('close')">Done</button>
+        </div>
+      </slot>
     </div>
   </dialog>
 </template>

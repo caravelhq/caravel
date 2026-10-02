@@ -9,7 +9,7 @@
 // W6: Opening legacy:tasks twice produces one tab and one mounted #tasks-panel
 // W7: Deep link /#/report/<id>?side=file:<path> reproduces split; prior persisted tabs present
 // W8: Old reading.stack migrates to workspace tabs on first load; reading.* keys gone
-// W9: Closing the last tab opens Dashboard
+// W9: Closing the last tab leaves an empty workspace (not Dashboard) — Open menu still reachable
 //
 // Run against the dev server (proxies API to live daemon):
 //   UI_TEST_SKILL=/home/walter/workspace/.claude/skills/ui-test \
@@ -70,23 +70,36 @@ async function resetWorkspace(page) {
   await page.waitForTimeout(400);
 }
 
+// Helper: open the Open menu and click a menu item by id.
+// Items are inside a <details> dropdown — they must be revealed before clicking.
+async function openMenuItem(page, itemId) {
+  await page.click(".open-menu-btn");
+  await page.waitForTimeout(150);
+  await page.click(itemId);
+  await page.waitForTimeout(200);
+}
+
 const browser = await chromium.launch({ headless: true });
 
 try {
   // ─────────────────────────────────────────────────────────────────────────────
-  // W1 — Nav buttons open or focus tabs; second click doesn't duplicate
+  // W1 — Open-menu items open or focus tabs; second click doesn't duplicate
   // ─────────────────────────────────────────────────────────────────────────────
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
     await resetWorkspace(page);
 
-    // Click Tasks button in nav
+    // Open the menu and click Tasks
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-tasks");
     await page.waitForTimeout(400);
     const count1 = await tabCount(page);
 
-    // Click Tasks again — should focus, not add a second tab
+    // Open the menu again and click Tasks — should focus, not add a second tab
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-tasks");
     await page.waitForTimeout(200);
     const count2 = await tabCount(page);
@@ -111,6 +124,8 @@ try {
     await resetWorkspace(page);
 
     // Open a second tab so split has something to show
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-tasks");
     await page.waitForTimeout(300);
 
@@ -165,8 +180,7 @@ try {
     await resetWorkspace(page);
 
     // Open two tabs and enable split
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(200);
+    await openMenuItem(page, "#tab-tasks");
     await page.click(".ts-split-btn");
     await page.waitForTimeout(300);
 
@@ -226,10 +240,8 @@ try {
     await resetWorkspace(page);
 
     // Open chat and tasks; enable split
-    await page.click("#tab-chat");
-    await page.waitForTimeout(200);
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(200);
+    await openMenuItem(page, "#tab-chat");
+    await openMenuItem(page, "#tab-tasks");
     await page.click(".ts-split-btn");
     await page.waitForTimeout(300);
 
@@ -273,8 +285,7 @@ try {
 
     // Test: drag LAST group-1 tab to group-0 → split should turn off
     await resetWorkspace(page);
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(200);
+    await openMenuItem(page, "#tab-tasks");
     await page.click(".ts-split-btn");
     await page.waitForTimeout(300);
 
@@ -355,10 +366,8 @@ try {
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
     await resetWorkspace(page);
 
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(300);
-    await page.click("#tab-tasks"); // second click — should focus, not open new tab
-    await page.waitForTimeout(200);
+    await openMenuItem(page, "#tab-tasks");
+    await openMenuItem(page, "#tab-tasks"); // second click — should focus, not open new tab
 
     await page.screenshot({ path: join(SHOTS_DIR, "09-w6-tasks-twice.png") });
 
@@ -397,10 +406,8 @@ try {
     await resetWorkspace(page);
 
     // First visit to establish some persisted tabs
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(200);
-    await page.click("#tab-chat");
-    await page.waitForTimeout(200);
+    await openMenuItem(page, "#tab-tasks");
+    await openMenuItem(page, "#tab-chat");
     const tabsBeforeDeepLink = await tabCount(page);
 
     // Navigate to a deep link with ?side= param
@@ -497,22 +504,33 @@ try {
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // W9 — Closing the last tab opens Dashboard
+  // W9 — Closing the last tab leaves an empty workspace; Open menu still reachable
+  // (Rewrites Phase 3 W9: the Dashboard is now an ordinary closable tab. DEC-0014 D9 retired.)
   // ─────────────────────────────────────────────────────────────────────────────
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
     await resetWorkspace(page);
 
-    // Navigate to Tasks (so it's the only non-dashboard tab)
-    await page.click("#tab-tasks");
-    await page.waitForTimeout(300);
+    // Open the menu and navigate to Dashboard + Tasks to have two tabs, then close both
+    const openMenu = await page.$(".open-menu-btn");
+    if (!openMenu) {
+      fail("W9 - .open-menu-btn present", "not found");
+    } else {
+      await openMenu.click();
+      await page.waitForTimeout(200);
+      await page.click("#tab-tasks");
+      await page.waitForTimeout(300);
+      await openMenu.click();
+      await page.waitForTimeout(200);
+      await page.click("#tab-dashboard");
+      await page.waitForTimeout(300);
+    }
 
-    // Close all non-dashboard tabs
+    // Close all tabs via the × button
     let safetyLimit = 20;
     while (safetyLimit-- > 0) {
       const allTabs = await page.$$(".ts-tab");
-      // Find a closeable (non-dashboard) tab
       let closed = false;
       for (const t of allTabs) {
         const closeBtn = await t.$(".ts-tab-close");
@@ -526,35 +544,45 @@ try {
       if (!closed) break;
     }
 
-    await page.screenshot({ path: join(SHOTS_DIR, "12-w9-last-tab.png") });
+    await page.screenshot({ path: join(SHOTS_DIR, "12-w9-empty-workspace.png") });
 
-    // After closing all non-dashboard tabs, the dashboard should be open
-    // Dashboard tab has no close button (kind:dashboard)
+    // No tabs should remain
     const remainingTabs = await page.$$(".ts-tab");
-    const tabLabels = [];
-    for (const t of remainingTabs) {
-      const label = await t.$(".ts-tab-label");
-      tabLabels.push((await label?.textContent())?.trim() ?? "");
-    }
-
-    const hasDashboard = tabLabels.some((l) => l.toLowerCase().includes("dashboard"));
-    if (hasDashboard) {
-      pass(`W9 - closing last tab shows Dashboard (tabs: ${tabLabels.join(", ")})`);
+    if (remainingTabs.length === 0) {
+      pass("W9 - all tabs closed, none remain");
     } else {
-      fail("W9 - Dashboard opens after closing last tab", `tabs: ${tabLabels.join(", ")}`);
+      const labels = [];
+      for (const t of remainingTabs) {
+        const label = await t.$(".ts-tab-label");
+        labels.push((await label?.textContent())?.trim() ?? "");
+      }
+      fail("W9 - all tabs closed", `still have: ${labels.join(", ")}`);
     }
 
-    // Verify dashboard content is visible
-    const viewHost = await page.$(".view-host");
-    if (viewHost) {
-      const vBox = await viewHost.boundingBox();
-      if (vBox && vBox.height > 100) {
-        pass(`W9 - dashboard view host visible (${Math.round(vBox.width)}×${Math.round(vBox.height)})`);
+    // The empty workspace hint is visible
+    const emptyHint = await page.$(".ws-empty");
+    if (emptyHint) {
+      const box = await emptyHint.boundingBox();
+      if (box && box.height > 20) {
+        pass(`W9 - empty workspace hint visible (${Math.round(box.width)}×${Math.round(box.height)})`);
       } else {
-        fail("W9 - dashboard view host has geometry", `h=${vBox?.height}`);
+        fail("W9 - empty workspace hint has geometry", `box=${JSON.stringify(box)}`);
       }
     } else {
-      fail("W9 - .view-host present after closing all tabs", "not found");
+      fail("W9 - .ws-empty present after closing all tabs", "not found");
+    }
+
+    // The Open menu button is still in the tab strip
+    const openMenuBtn = await page.$(".open-menu-btn");
+    if (openMenuBtn) {
+      const box = await openMenuBtn.boundingBox();
+      if (box && box.height > 10) {
+        pass(`W9 - Open menu button still reachable (${Math.round(box.width)}×${Math.round(box.height)})`);
+      } else {
+        fail("W9 - Open menu button has geometry", `box=${JSON.stringify(box)}`);
+      }
+    } else {
+      fail("W9 - .open-menu-btn still present after all tabs closed", "not found");
     }
 
     await page.close();
@@ -570,7 +598,9 @@ try {
     await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
     await resetWorkspace(page);
 
-    // Click Chat nav button
+    // Click Chat via Open menu
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-chat");
     await page.waitForTimeout(400);
     const hashAfterChat = await page.evaluate(() => window.location.hash);
@@ -582,7 +612,9 @@ try {
       fail("W10 - clicking Chat sets hash to #/chat", `got: ${hashAfterChat}`);
     }
 
-    // Click Tasks nav button
+    // Click Tasks via Open menu
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-tasks");
     await page.waitForTimeout(400);
     const hashAfterTasks = await page.evaluate(() => window.location.hash);
@@ -594,7 +626,9 @@ try {
       fail("W10 - clicking Tasks sets hash to #/tasks", `got: ${hashAfterTasks}`);
     }
 
-    // Click Dashboard nav button (activate existing tab → replace)
+    // Click Dashboard via Open menu (activate existing tab → replace)
+    await page.click(".open-menu-btn");
+    await page.waitForTimeout(150);
     await page.click("#tab-dashboard");
     await page.waitForTimeout(400);
     const hashAfterDash = await page.evaluate(() => window.location.hash);

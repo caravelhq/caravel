@@ -1027,7 +1027,6 @@ export const pageStyles = String.raw`    :root {
       font-variant-ligatures: none;
     }
     .settings-btn {
-      /* now rendered inside .tab-nav as gear icon — keep for ID reference */
       display: none;
     }
     #dashboard-panel {
@@ -1378,7 +1377,10 @@ export const pageStyles = String.raw`    :root {
       font-size: 18px;
       line-height: 1;
       cursor: pointer;
-      padding: 0 2px;
+      /* ≥44×44px hit target per WCAG / mobile tap guidelines */
+      padding: 13px 12px;
+      margin: -13px -12px -13px 0;
+      min-width: 44px;
       flex-shrink: 0;
     }
     .base-modal-body {
@@ -1389,6 +1391,43 @@ export const pageStyles = String.raw`    :root {
       padding: var(--space-3) var(--space-4);
       border-top: 1px solid var(--border-subtle);
       flex-shrink: 0;
+    }
+    /* Done button default footer — shown on narrow screens only */
+    .base-modal-footer--done {
+      display: none;
+      padding: var(--space-3) var(--space-4);
+      border-top: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+    .base-modal-done-btn {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid var(--border-strong, #d8e4ff3d);
+      border-radius: var(--radius-md);
+      background: var(--surface-2, #111b2e);
+      color: var(--text);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .base-modal-done-btn:hover { background: var(--surface-3, #1a2640); }
+    @media (max-width: 640px) {
+      /* Show drag-handle affordance on sheet modals at phone width */
+      .base-modal[data-size="md"] .base-modal-head::before,
+      .base-modal[data-size="lg"] .base-modal-head::before,
+      .base-modal[data-size="sheet"] .base-modal-head::before {
+        content: "";
+        display: block;
+        width: 36px;
+        height: 4px;
+        border-radius: 2px;
+        background: #d8e4ff33;
+        margin: 0 auto var(--space-2);
+      }
+      .base-modal-footer--done { display: flex; }
     }
     .info-card {
       width: min(980px, 100%);
@@ -1578,98 +1617,70 @@ export const pageStyles = String.raw`    :root {
     .pill.bad { border-color: #ff7f7f47; }
     .pill.bad .pill-value { color: #ffacac; }
 
-    /* ── Tab navigation ── */
-    .tab-nav {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 12px;
+    /* ── Open menu (replaces tab-nav) ── */
+    .open-menu {
+      position: relative;
       flex-shrink: 0;
-      background: #ffffff08;
-      backdrop-filter: blur(8px);
-      border: 1px solid #ffffff14;
-      border-radius: 999px;
-      padding: 4px;
-      width: fit-content;
+      align-self: center;
+      margin-right: 4px;
     }
-    .tab-btn {
-      /* RouterLinks render as <a>, which is inline by default — height and
-         vertical centring silently do nothing, and the UA underlines it.
-         inline-flex + no underline makes anchors and buttons render alike. */
+    .open-menu-btn {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      text-decoration: none;
-      height: 32px;
-      padding: 0 18px;
-      border: 1px solid transparent;
-      border-radius: 999px;
+      height: 28px;
+      padding: 0 10px;
+      border: 1px solid var(--border-subtle, #d8e4ff14);
+      border-radius: 4px;
+      background: var(--surface-2, #111b2e);
+      color: #a8b8d0;
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
       letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: #a8b8d0;
-      background: transparent;
       cursor: pointer;
-      transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+      user-select: none;
+      list-style: none;
+      white-space: nowrap;
     }
-    .tab-btn:hover {
-      color: #d6e6f8;
-      background: #ffffff10;
+    .open-menu-btn:hover { color: #d6e6f8; background: var(--surface-3, #1a2640); }
+    .open-menu-btn::-webkit-details-marker { display: none; }
+    .open-menu-list {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 160px;
+      background: var(--surface-2, #111b2e);
+      border: 1px solid var(--border-strong, #d8e4ff3d);
+      border-radius: var(--radius-md, 8px);
+      box-shadow: var(--shadow-overlay, 0 8px 32px rgba(0,0,0,.6));
+      padding: 4px 0;
+      z-index: 200;
     }
-    .tab-btn-active {
-      background: #0e2040cc;
-      border-color: #ffffff22;
-      color: #eef4ff;
+    .open-menu-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: #c8d8ee;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      text-align: left;
+      gap: 10px;
     }
-    /* Must come AFTER .tab-btn / .tab-btn-active so the settings cog
-       overrides the shared sizing rather than being clobbered by it. */
-    .tab-btn-settings {
-      font-size: 22px;
-      padding: 0 12px;
-      line-height: 32px;
-      border-left: 1px solid #ffffff12;
-      margin-left: 2px;
-      border-radius: 0 999px 999px 0;
+    .open-menu-item:hover { background: var(--surface-3, #1a2640); color: #eef4ff; }
+    .open-menu-item kbd {
+      font-family: inherit;
+      font-size: 10px;
+      opacity: 0.55;
     }
-    .tab-btn-split {
-      font-size: 18px;
-      padding: 0 12px;
-      line-height: 32px;
-      border-left: 1px solid #ffffff12;
-    }
-    .tab-btn-split[aria-pressed="true"] {
-      color: #7dc5ff;
-      background: #0e2040cc;
-      border-color: #ffffff22;
-    }
-    /* Default: show full label, hide short. Mobile media query swaps these. */
-    .tab-btn-label-short { display: none; }
-    @media (max-width: 640px) {
-      .tab-nav {
-        gap: 3px;
-        padding: 4px;
-        margin-bottom: 8px;
-      }
-      .tab-btn {
-        height: 36px;
-        padding: 0 14px;
-        font-size: 12px;
-        letter-spacing: 0.04em;
-      }
-      .tab-btn-settings {
-        font-size: 22px;
-        padding: 0 12px;
-        line-height: 36px;
-      }
-      .tab-btn-split {
-        font-size: 18px;
-        padding: 0 11px;
-        line-height: 36px;
-      }
-      .tab-btn-label-full { display: none; }
-      .tab-btn-label-short { display: inline; }
+    .open-menu-sep {
+      border: none;
+      border-top: 1px solid var(--border-subtle, #d8e4ff14);
+      margin: 3px 0;
     }
 
     /* ── Chat panel ── */
@@ -4992,9 +5003,6 @@ export const pageStyles = String.raw`    :root {
     @media (max-width: 640px) {
       .stage {
         padding: 38px 8px 80px;
-      }
-      .tab-nav {
-        margin-bottom: 8px;
       }
       .repo-cta {
         font-size: 10px;

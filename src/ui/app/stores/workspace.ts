@@ -85,7 +85,6 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     }
   } else {
     initialTabs = load<ResourceRef[]>("tabs", [DASHBOARD_REF]);
-    if (initialTabs.length === 0) initialTabs = [DASHBOARD_REF];
     initialSplitIndex = load<number | null>("splitIndex", null);
     initialSplitOn = load<boolean>("splitOn", false);
     // Invariant: splitOn requires a valid splitIndex. Clean up inconsistent state.
@@ -227,12 +226,12 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       }
     }
 
-    // If no tabs remain, open the dashboard.
+    // If no tabs remain, leave the workspace empty (Open menu is always reachable).
     if (tabs.value.length === 0) {
-      tabs.value.push(DASHBOARD_REF);
-      active.value = [refKey(DASHBOARD_REF), null];
+      active.value = [null, null];
       focused.value = 0;
       persist();
+      syncWorkspaceUrl(false);
       return;
     }
 

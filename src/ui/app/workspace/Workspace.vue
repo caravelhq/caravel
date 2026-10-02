@@ -58,8 +58,15 @@ function startSplitterDrag(e: MouseEvent) {
     <TabStrip />
 
     <div class="workspace-body">
+      <!-- Empty workspace: all tabs closed -->
+      <template v-if="ws.tabs.length === 0">
+        <div class="ws-empty">
+          <p class="ws-empty-hint">Use the <strong>Open ▾</strong> menu to open a tab.</p>
+        </div>
+      </template>
+
       <!-- Narrow or split off: single host -->
-      <template v-if="!showSplit">
+      <template v-else-if="!showSplit">
         <ViewHost :active-ref="activeRefForGroup(ws.focused)" />
       </template>
 
@@ -129,5 +136,19 @@ function startSplitterDrag(e: MouseEvent) {
 .ws-splitter:hover,
 .ws-splitter--dragging {
   background: var(--accent, #7dc5ff66);
+}
+
+.ws-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ws-empty-hint {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  color: #6a85a8;
+  text-align: center;
 }
 </style>
