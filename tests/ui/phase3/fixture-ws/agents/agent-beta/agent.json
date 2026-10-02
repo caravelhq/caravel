@@ -1,0 +1,9 @@
+{
+  "name": "agent-beta",
+  "displayName": "Agent Beta",
+  "emoji": "🅱️",
+  "description": "Second fixture agent for Phase 3 UI tests.",
+  "mode": "resident",
+  "allowedPaths": ["./"],
+  "compactThreshold": 40
+}

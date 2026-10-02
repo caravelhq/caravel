@@ -1,0 +1,37 @@
+id: TSK-SCHED-FX-REVIEW
+headline: "Fixture: weekly review run"
+to: agent-alpha
+from: user
+kind: other
+priority: P2
+project: Fixture
+
+brief: |
+  Run the weekly fixture review. Summarise what moved, what is blocked,
+  and what needs attention before the next week.
+
+  This is the thinking half of the weekly cycle. The daily run has already
+  gathered and filed everything — do not repeat it. Work from recent
+  task reports instead.
+
+output_format: |
+  A `Notes/Weekly/YYYY-WNN_Review.md` file with the standard sections.
+
+context:
+  - agents/_shared/rules/task-output.md
+
+budget:
+  max_turns: 30
+  max_subagents: 0
+  max_usd: null
+
+recurrence:
+  # Fires every Monday morning at 08:00, an hour after the daily run,
+  # so the workspace is already reconciled when this begins.
+  # skip_if_active prevents a second instance piling up if Monday
+  # is unusually busy and the prior run is still in flight.
+  cron: "0 8 * * 1"
+  enabled: true
+  count: 3
+  last_fired: 2026-09-21T08:00:00.000Z
+  skip_if_active: true

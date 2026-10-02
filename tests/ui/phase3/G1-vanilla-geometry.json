@@ -1,0 +1,202 @@
+{
+  "fixture": "G1-vanilla",
+  "captured_at": "2026-09-23T10:43:44.845Z",
+  "base_url": "http://127.0.0.1:4637",
+  "viewports": [
+    {
+      "viewport": "1440x900",
+      "width": 1440,
+      "height": 900,
+      "globals": {
+        "stage": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 900
+        },
+        "tab-nav": {
+          "x": 494.671875,
+          "y": 42,
+          "width": 450.640625,
+          "height": 42
+        },
+        "dock": {
+          "x": 342,
+          "y": 814,
+          "width": 852,
+          "height": 50
+        }
+      },
+      "pages": {
+        "dashboard": {
+          "panel": {
+            "x": 16,
+            "y": 96,
+            "width": 1408,
+            "height": 714
+          }
+        },
+        "tasks": {
+          "panel": {
+            "x": 70,
+            "y": 96,
+            "width": 1300,
+            "height": 714
+          }
+        },
+        "chat": {
+          "panel": {
+            "x": 260,
+            "y": 96,
+            "width": 920,
+            "height": 714
+          }
+        },
+        "files": {
+          "panel": {
+            "x": 70,
+            "y": 96,
+            "width": 1300,
+            "height": 714
+          }
+        }
+      },
+      "settings_overlay": {
+        "x": 1102,
+        "y": 94,
+        "width": 320,
+        "height": 741
+      }
+    },
+    {
+      "viewport": "1024x768",
+      "width": 1024,
+      "height": 768,
+      "globals": {
+        "stage": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 768
+        },
+        "tab-nav": {
+          "x": 307.21875,
+          "y": 42,
+          "width": 409.546875,
+          "height": 42
+        },
+        "dock": {
+          "x": 204,
+          "y": 682,
+          "width": 712,
+          "height": 50
+        }
+      },
+      "pages": {
+        "dashboard": {
+          "panel": {
+            "x": 16,
+            "y": 96,
+            "width": 992,
+            "height": 582
+          }
+        },
+        "tasks": {
+          "panel": {
+            "x": 16,
+            "y": 96,
+            "width": 992,
+            "height": 582
+          }
+        },
+        "chat": {
+          "panel": {
+            "x": 52,
+            "y": 96,
+            "width": 920,
+            "height": 582
+          }
+        },
+        "files": {
+          "panel": {
+            "x": 16,
+            "y": 96,
+            "width": 992,
+            "height": 582
+          }
+        }
+      },
+      "settings_overlay": {
+        "x": 686,
+        "y": 94,
+        "width": 320,
+        "height": 661
+      }
+    },
+    {
+      "viewport": "390x844",
+      "width": 390,
+      "height": 844,
+      "globals": {
+        "stage": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 844
+        },
+        "tab-nav": {
+          "x": 33.21875,
+          "y": 38,
+          "width": 323.546875,
+          "height": 46
+        },
+        "dock": {
+          "x": 6,
+          "y": 790,
+          "width": 378,
+          "height": 46
+        }
+      },
+      "pages": {
+        "dashboard": {
+          "panel": {
+            "x": 8,
+            "y": 92,
+            "width": 374,
+            "height": 672
+          }
+        },
+        "tasks": {
+          "panel": {
+            "x": 8,
+            "y": 92,
+            "width": 374,
+            "height": 672
+          }
+        },
+        "chat": {
+          "panel": {
+            "x": 8,
+            "y": 92,
+            "width": 374,
+            "height": 672
+          }
+        },
+        "files": {
+          "panel": {
+            "x": 8,
+            "y": 92,
+            "width": 374,
+            "height": 672
+          }
+        }
+      },
+      "settings_overlay": {
+        "x": 52,
+        "y": 94,
+        "width": 320,
+        "height": 661
+      }
+    }
+  ]
+}

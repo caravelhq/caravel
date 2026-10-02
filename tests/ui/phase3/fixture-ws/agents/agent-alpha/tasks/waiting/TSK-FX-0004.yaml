@@ -1,0 +1,25 @@
+id: TSK-FX-0004
+headline: "Fixture: waiting on upstream dependency"
+created: 2026-09-22T09:00:00.000Z
+updated: 2026-09-22T09:00:00.000Z
+from: user
+to: agent-alpha
+kind: code
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 20
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Continue work after TSK-FX-0001 is reviewed.
+needs:
+  - TSK-FX-0001
+status: waiting
+waiting_on: task:TSK-FX-0001
+history: []
+summary:
+  brief: ""
+  response: ""
+report: ""

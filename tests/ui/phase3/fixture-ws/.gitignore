@@ -1,0 +1,13 @@
+# Runtime state created by the scratch daemon — not committed
+.caravel/logs/
+.caravel/session.json
+.caravel/state.json
+.caravel/whisper/
+.caravel/chats/
+.caravel/hook-dedup.json
+.caravel/daily-cursor.json
+.caravel/knowledge-query-stash.json
+.caravel/knowledge-ratings.ndjson
+.caravel/pocket/
+.caravel/runner-health.json
+.claude/

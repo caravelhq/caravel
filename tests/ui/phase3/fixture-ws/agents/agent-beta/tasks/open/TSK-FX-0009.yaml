@@ -1,0 +1,22 @@
+id: TSK-FX-0009
+headline: "Fixture: open task for agent-beta"
+created: 2026-09-23T09:00:00.000Z
+updated: 2026-09-23T09:00:00.000Z
+from: user
+to: agent-beta
+kind: other
+priority: P3
+project: Fixture
+deadline: null
+budget:
+  max_turns: 5
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Another open task — runner must NOT claim this.
+status: open
+history: []
+summary:
+  brief: ""
+  response: ""
+report: ""

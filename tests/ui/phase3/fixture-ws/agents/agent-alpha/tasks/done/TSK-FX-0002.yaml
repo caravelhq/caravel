@@ -1,0 +1,27 @@
+id: TSK-FX-0002
+headline: "Fixture: write documentation draft"
+created: 2026-09-21T10:00:00.000Z
+updated: 2026-09-21T11:30:00.000Z
+from: user
+to: agent-alpha
+kind: code
+priority: P2
+project: Fixture
+deadline: null
+budget:
+  max_turns: 15
+  max_subagents: 0
+  max_usd: null
+brief: |
+  Write a documentation draft for the fixture module.
+status: done
+history:
+  - ts: 2026-09-21T11:30:00.000Z
+    from: claimed
+    to: done
+    by: agent-alpha
+    note: completed
+summary:
+  brief: "Wrote docs."
+  response: "Delivered 800 word draft."
+report: ""

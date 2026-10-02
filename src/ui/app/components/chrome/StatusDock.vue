@@ -1,33 +1,39 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import GlobalMic from "./GlobalMic.vue";
 import GlobalSpeaker from "./GlobalSpeaker.vue";
+import { useLiveStore } from "../../stores/live";
 
 interface Pill { cls: string; icon: string; label: string; value: string }
-interface StateResponse {
-  telegram?: { configured: boolean; allowedUserCount: number };
-  discord?: { configured: boolean; allowedUserCount: number };
-  jobs?: unknown[];
-  tasksActive?: number;
-  daemon?: { uptimeMs: number };
-}
 
-const pills = ref<Pill[]>([]);
-const jobsCount = ref("-");
-const tasksCount = ref("-");
-const uptime = ref("-");
+const live = useLiveStore();
 
-// Self-scheduling status poll — not a fixed setInterval so we can poll faster
-// while offline and recover instantly when the tab becomes visible again.
-// Mobile freezes timers while the screen is off; the visibility/online/pageshow
-// kick below fixes the stuck-on-"Offline" problem after unlock.
-const STATE_POLL_OK_MS = 1000;
-const STATE_POLL_OFFLINE_MS = 400;
-let stateOnline = true;
-let statePollTimer: ReturnType<typeof setTimeout> | null = null;
+const STATE_SPEC = {
+  topics: ["state"],
+  fetch: () => fetch("/api/state", { cache: "no-store" }).then((r) => r.json()),
+};
+
+// Bind/unbind alongside mount lifecycle
+onMounted(() => live.bind("state", STATE_SPEC));
+onBeforeUnmount(() => live.unbind("state"));
+
+const stateEntry = computed(() => live.entry("state"));
+const stateData = computed(() => stateEntry.value?.data as Record<string, unknown> | null ?? null);
+const isOffline = computed(() => stateEntry.value?.status === "error");
+
+// Uptime computed client-side from startedAt (no polling needed)
+let uptimeTick: ReturnType<typeof setInterval> | null = null;
+const now = ref(Date.now());
+
+onMounted(() => {
+  uptimeTick = setInterval(() => { now.value = Date.now(); }, 1000);
+});
+onBeforeUnmount(() => {
+  if (uptimeTick) clearInterval(uptimeTick);
+});
 
 function fmtDur(ms: number | null | undefined): string {
-  if (ms == null) return "n/a";
+  if (ms == null || ms < 0) return "n/a";
   const s = Math.floor(ms / 1000);
   const d = Math.floor(s / 86400);
   if (d > 0) {
@@ -42,69 +48,42 @@ function fmtDur(ms: number | null | undefined): string {
   return `${ss}s`;
 }
 
-function buildPills(state: StateResponse): Pill[] {
+const jobsCount = computed(() => {
+  if (isOffline.value) return "-";
+  const d = stateData.value;
+  return String((d?.jobs as unknown[])?.length ?? 0);
+});
+
+const tasksCount = computed(() => {
+  if (isOffline.value) return "-";
+  const d = stateData.value;
+  return String((d as any)?.tasksActive ?? 0);
+});
+
+const uptime = computed(() => {
+  if (isOffline.value) return "-";
+  const d = stateData.value;
+  const startedAt = (d as any)?.daemon?.startedAt as number | undefined;
+  if (!startedAt) return "-";
+  return fmtDur(now.value - startedAt);
+});
+
+const pills = computed((): Pill[] => {
+  if (isOffline.value) {
+    return [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
+  }
+  const d = stateData.value as any;
+  if (!d) return [];
   const out: Pill[] = [];
-  if (state.telegram?.configured) {
-    const n = state.telegram.allowedUserCount;
+  if (d.telegram?.configured) {
+    const n = d.telegram.allowedUserCount;
     out.push({ cls: "ok", icon: "✈️", label: "Telegram", value: `${n} user${n !== 1 ? "s" : ""}` });
   }
-  if (state.discord?.configured) {
-    const n = state.discord.allowedUserCount;
+  if (d.discord?.configured) {
+    const n = d.discord.allowedUserCount;
     out.push({ cls: "ok", icon: "🎮", label: "Discord", value: `${n} user${n !== 1 ? "s" : ""}` });
   }
   return out;
-}
-
-async function refreshState(): Promise<void> {
-  try {
-    const res = await fetch("/api/state", { cache: "no-store" });
-    if (!res.ok) throw new Error(`status ${res.status}`);
-    const state: StateResponse = await res.json();
-    stateOnline = true;
-    pills.value = buildPills(state);
-    jobsCount.value = String(state.jobs?.length ?? 0);
-    tasksCount.value = String(state.tasksActive ?? 0);
-    uptime.value = fmtDur(state.daemon?.uptimeMs);
-  } catch {
-    stateOnline = false;
-    pills.value = [{ cls: "bad", icon: "⚠️", label: "Status", value: "Offline" }];
-    jobsCount.value = "-";
-    tasksCount.value = "-";
-  }
-}
-
-function scheduleStatePoll(delay: number): void {
-  if (statePollTimer) clearTimeout(statePollTimer);
-  statePollTimer = setTimeout(runStatePoll, delay);
-}
-
-async function runStatePoll(): Promise<void> {
-  await refreshState();
-  scheduleStatePoll(stateOnline ? STATE_POLL_OK_MS : STATE_POLL_OFFLINE_MS);
-}
-
-function kickStatePoll(): void {
-  scheduleStatePoll(0);
-}
-
-function onVisibilityChange(): void {
-  if (document.visibilityState === "visible") kickStatePoll();
-}
-
-onMounted(() => {
-  runStatePoll();
-  document.addEventListener("visibilitychange", onVisibilityChange);
-  window.addEventListener("online", kickStatePoll);
-  window.addEventListener("focus", kickStatePoll);
-  window.addEventListener("pageshow", kickStatePoll);
-});
-
-onBeforeUnmount(() => {
-  if (statePollTimer) clearTimeout(statePollTimer);
-  document.removeEventListener("visibilitychange", onVisibilityChange);
-  window.removeEventListener("online", kickStatePoll);
-  window.removeEventListener("focus", kickStatePoll);
-  window.removeEventListener("pageshow", kickStatePoll);
 });
 </script>
 

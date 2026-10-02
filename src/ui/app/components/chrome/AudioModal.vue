@@ -1,5 +1,18 @@
+<script setup lang="ts">
+import { useUiStore } from "../../stores/ui";
+import BaseModal from "../modal/BaseModal.vue";
+
+const ui = useUiStore();
+</script>
+
 <template>
-  <div id="audio-action-modal" class="audio-action-modal" hidden role="dialog" aria-modal="true">
+  <BaseModal
+    id="audio-action-modal"
+    :open="ui.audioModalOpen"
+    @close="ui.audioModalOpen = false"
+    size="sm"
+    :dismissible="false"
+  >
     <div class="audio-action-card" id="audio-action-card">
       <div class="audio-action-icon" id="audio-action-icon"></div>
       <div class="audio-action-label" id="audio-action-label">Recording...</div>
@@ -27,5 +40,5 @@
         </button>
       </div>
     </div>
-  </div>
+  </BaseModal>
 </template>

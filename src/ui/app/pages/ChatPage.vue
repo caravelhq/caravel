@@ -13,6 +13,7 @@ let chatSessionId = "";
 let chatListCache: Array<{ id: string; name?: string; preview?: string; agentId?: string; messageCount?: number; updatedAt?: string }> = [];
 let chatServerUpdatedAt: string | null = null;
 let chatPollTimer: ReturnType<typeof setTimeout> | null = null;
+let historyClickHandler: ((e: Event) => void) | null = null;
 let agentsCache: Array<{ name: string; emoji?: string; displayName?: string; description?: string }> = [];
 let chatAgentLocked: string | null = null;
 let pendingAgentId: string | null = null;
@@ -683,11 +684,12 @@ onMounted(() => {
       historyDropdown.hidden = showing;
       if (!showing) loadChatList();
     });
-    document.addEventListener("click", (e) => {
+    historyClickHandler = (e: Event) => {
       if (!historyDropdown.hidden && !historyBtn.contains(e.target as Node) && !historyDropdown.contains(e.target as Node)) {
         historyDropdown.hidden = true;
       }
-    });
+    };
+    document.addEventListener("click", historyClickHandler);
   }
 
   // New chat button
@@ -741,6 +743,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
   document.removeEventListener("visibilitychange", onVisibilityChange);
+  if (historyClickHandler) {
+    document.removeEventListener("click", historyClickHandler);
+    historyClickHandler = null;
+  }
 });
 </script>
 
