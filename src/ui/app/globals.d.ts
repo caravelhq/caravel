@@ -9,7 +9,6 @@ declare interface Window {
   __fetchSummary?: () => void;
   // Voice integration (VoiceIsland ↔ ChatPage)
   __vmOnAssistantChunk?: (text: string, done: boolean) => void;
-  __ttsResetAutoRead?: () => void;
   __updateSpeakerDisabled?: () => void;
   __applyTtsButtonVisibility?: () => void;
   __micEnabled?: boolean;

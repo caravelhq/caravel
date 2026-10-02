@@ -18769,9 +18769,6 @@ function createRouter(options) {
 function useRouter() {
   return inject(routerKey);
 }
-function useRoute(_name) {
-  return inject(routeLocationKey);
-}
 function refKey(ref2) {
   switch (ref2.kind) {
     case "dashboard":
@@ -19251,15 +19248,72 @@ const useKnowledgeStore = /* @__PURE__ */ defineStore("knowledge", () => {
   }
   return { recentQueries, currentResult, currentQuery, isOpen, seedQuery, isStale, hasResult, setResult, markStale, markFresh, clear, pushQuery, open, close };
 });
+const LS_MIC = "voice.micEnabled";
+const LS_TTS = "voice.ttsEnabled";
+function lsBool(key, fallback) {
+  const v2 = localStorage.getItem(key);
+  if (v2 === null) return fallback;
+  return v2 === "1";
+}
 const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const settingsOpen = /* @__PURE__ */ ref(false);
-  const ttsEnabled = /* @__PURE__ */ ref(true);
-  const micEnabled = /* @__PURE__ */ ref(false);
+  const ttsEnabled = /* @__PURE__ */ ref(lsBool(LS_TTS, true));
+  const micEnabled = /* @__PURE__ */ ref(lsBool(LS_MIC, false));
   const filesNav = /* @__PURE__ */ ref(null);
   const hbModalOpen = /* @__PURE__ */ ref(false);
   const infoOpen = /* @__PURE__ */ ref(false);
   const audioModalOpen = /* @__PURE__ */ ref(false);
-  return { settingsOpen, ttsEnabled, micEnabled, filesNav, hbModalOpen, infoOpen, audioModalOpen };
+  watch(micEnabled, (v2) => {
+    localStorage.setItem(LS_MIC, v2 ? "1" : "0");
+  });
+  watch(ttsEnabled, (v2) => {
+    localStorage.setItem(LS_TTS, v2 ? "1" : "0");
+  });
+  async function initVoice() {
+    try {
+      const res = await fetch("/api/settings/voice");
+      const data = await res.json();
+      if (!data.ok) return;
+      const v2 = data.voice ?? {};
+      if (typeof v2.micEnabled === "boolean") micEnabled.value = v2.micEnabled;
+      if (typeof v2.ttsEnabled === "boolean") ttsEnabled.value = v2.ttsEnabled;
+    } catch (_2) {
+    }
+  }
+  async function setMicEnabled(val) {
+    micEnabled.value = val;
+    try {
+      await fetch("/api/settings/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ micEnabled: val })
+      });
+    } catch (_2) {
+    }
+  }
+  async function setTtsEnabled(val) {
+    ttsEnabled.value = val;
+    try {
+      await fetch("/api/settings/voice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ttsEnabled: val })
+      });
+    } catch (_2) {
+    }
+  }
+  return {
+    settingsOpen,
+    ttsEnabled,
+    micEnabled,
+    filesNav,
+    hbModalOpen,
+    infoOpen,
+    audioModalOpen,
+    initVoice,
+    setMicEnabled,
+    setTtsEnabled
+  };
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
 const _hoisted_1$r = ["data-size"];
@@ -19267,8 +19321,8 @@ const _hoisted_2$j = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$h = { class: "base-modal-title" };
-const _hoisted_4$d = { class: "base-modal-body" };
+const _hoisted_3$i = { class: "base-modal-title" };
+const _hoisted_4$e = { class: "base-modal-body" };
 const _hoisted_5$a = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
@@ -19353,7 +19407,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
             __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
-              createBaseVNode("span", _hoisted_3$h, toDisplayString(__props.title), 1),
+              createBaseVNode("span", _hoisted_3$i, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -19363,7 +19417,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$d, [
+          createBaseVNode("div", _hoisted_4$e, [
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
@@ -19382,8 +19436,8 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
 });
 const _hoisted_1$q = { class: "setting-item" };
 const _hoisted_2$i = { class: "setting-main" };
-const _hoisted_3$g = { class: "settings-label" };
-const _hoisted_4$c = {
+const _hoisted_3$h = { class: "settings-label" };
+const _hoisted_4$d = {
   key: 0,
   class: "settings-meta"
 };
@@ -19397,8 +19451,8 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$q, [
         createBaseVNode("div", _hoisted_2$i, [
-          createBaseVNode("div", _hoisted_3$g, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$c, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_3$h, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$d, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -19408,8 +19462,8 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
 });
 const _hoisted_1$p = { class: "settings-stack" };
 const _hoisted_2$h = { class: "setting-actions" };
-const _hoisted_3$f = ["disabled"];
-const _hoisted_4$b = ["innerHTML"];
+const _hoisted_3$g = ["disabled"];
+const _hoisted_4$c = ["innerHTML"];
 const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -19567,7 +19621,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$f)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$g)
                   ])
                 ]),
                 _: 1
@@ -19637,7 +19691,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                     class: normalizeClass(["hb-toggle", unref(ui).micEnabled ? "on" : "off"]),
                     id: "voice-mic-toggle",
                     type: "button",
-                    onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).micEnabled = !unref(ui).micEnabled)
+                    onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).setMicEnabled(!unref(ui).micEnabled))
                   }, toDisplayString(unref(ui).micEnabled ? "On" : "Off"), 3)
                 ]),
                 _: 1
@@ -19658,7 +19712,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                     class: normalizeClass(["hb-toggle", unref(ui).ttsEnabled ? "on" : "off"]),
                     id: "voice-tts-toggle",
                     type: "button",
-                    onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).ttsEnabled = !unref(ui).ttsEnabled)
+                    onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).setTtsEnabled(!unref(ui).ttsEnabled))
                   }, toDisplayString(unref(ui).ttsEnabled ? "On" : "Off"), 3)
                 ]),
                 _: 1
@@ -19694,7 +19748,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_4$b)
+              }, null, 8, _hoisted_4$c)
             ]),
             _: 1
           }, 8, ["open"])
@@ -19708,11 +19762,11 @@ const _hoisted_1$o = {
   for: "hb-interval-input"
 };
 const _hoisted_2$g = ["disabled"];
-const _hoisted_3$e = {
+const _hoisted_3$f = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$a = ["disabled"];
+const _hoisted_4$b = ["disabled"];
 const _hoisted_5$9 = { class: "hb-actions" };
 const _hoisted_6$9 = {
   class: "hb-status",
@@ -19819,7 +19873,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$e, [
+            createBaseVNode("label", _hoisted_3$f, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -19828,7 +19882,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$a), [
+              }, null, 8, _hoisted_4$b), [
                 [vModelText, prompt.value]
               ])
             ]),
@@ -19961,11 +20015,189 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
+function stripMarkdown(text) {
+  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/^[-*+]\s+/gm, "").replace(/^\d+\.\s+/gm, "").replace(/^>\s+/gm, "").replace(/~~([^~]+)~~/g, "$1").replace(/__([^_]+)__/g, "$1").replace(/_([^_]+)_/g, "$1").replace(/\|/g, "  ").replace(/^[-:|]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
+}
+function esc(t) {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+function extractChunks(pending, isDone) {
+  const chunks = [];
+  let consumed = 0;
+  const blocks = pending.split(/(\n\n+)/);
+  let pos = 0;
+  for (let b2 = 0; b2 < blocks.length; b2++) {
+    const part = blocks[b2];
+    if (/^\n\n+$/.test(part)) {
+      pos += part.length;
+      continue;
+    }
+    const hasTrailingSep = b2 + 1 < blocks.length && /^\n\n+$/.test(blocks[b2 + 1]);
+    const isComplete = hasTrailingSep || isDone;
+    if (isComplete) {
+      const trimmed = part.trim();
+      if (trimmed.length > 250) {
+        const re2 = /[.!?]\s+/g;
+        let m2;
+        let sentStart = 0;
+        while ((m2 = re2.exec(trimmed)) !== null) {
+          const end = m2.index + m2[0].length;
+          const sent = trimmed.slice(sentStart, end).trim();
+          if (sent) chunks.push(sent);
+          sentStart = end;
+        }
+        const tail = trimmed.slice(sentStart).trim();
+        if (tail) chunks.push(tail);
+      } else if (trimmed) {
+        chunks.push(trimmed);
+      }
+      pos += part.length;
+      consumed = pos;
+    } else {
+      const re2 = /[.!?]\s+/g;
+      let m2;
+      let sentStart2 = 0;
+      let lastSentEnd = 0;
+      while ((m2 = re2.exec(part)) !== null) {
+        const end2 = m2.index + m2[0].length;
+        const sent2 = part.slice(sentStart2, end2).trim();
+        if (sent2) chunks.push(sent2);
+        sentStart2 = end2;
+        lastSentEnd = end2;
+      }
+      consumed = pos + lastSentEnd;
+      break;
+    }
+  }
+  return { chunks, consumed };
+}
+const MIME_CANDIDATES = [
+  "audio/ogg;codecs=opus",
+  "audio/ogg",
+  "audio/webm;codecs=opus",
+  "audio/webm"
+];
+function detectMimeType() {
+  if (typeof MediaRecorder === "undefined") return null;
+  for (const c of MIME_CANDIDATES) {
+    if (MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return null;
+}
+function isRecordingSupported() {
+  var _a2;
+  return !!(typeof MediaRecorder !== "undefined" && typeof ((_a2 = navigator.mediaDevices) == null ? void 0 : _a2.getUserMedia) === "function" && detectMimeType());
+}
+const SPEAK_MAX_CONCURRENT = 2;
+let speakInFlight = 0;
+const speakWaiters = [];
+function speakFetch(text) {
+  return new Promise((resolve2) => {
+    if (speakInFlight < SPEAK_MAX_CONCURRENT) {
+      speakInFlight++;
+      resolve2();
+    } else speakWaiters.push(() => {
+      speakInFlight++;
+      resolve2();
+    });
+  }).then(
+    () => fetch("/api/voice/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    }).finally(() => {
+      speakInFlight--;
+      const next = speakWaiters.shift();
+      if (next) next();
+    })
+  );
+}
+function useDictation() {
+  let recording = false;
+  let recorder = null;
+  let stream = null;
+  let targetEl = null;
+  let selStart = 0;
+  let selEnd = 0;
+  async function handleDictate() {
+    if (recording) {
+      recorder == null ? void 0 : recorder.stop();
+      return;
+    }
+    const focused = document.activeElement;
+    if (!focused || focused.tagName !== "INPUT" && focused.tagName !== "TEXTAREA")
+      return;
+    if (!isRecordingSupported()) return;
+    const mimeType = detectMimeType();
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      return;
+    }
+    targetEl = focused;
+    selStart = targetEl.selectionStart ?? targetEl.value.length;
+    selEnd = targetEl.selectionEnd ?? selStart;
+    const chunks = [];
+    try {
+      recorder = new MediaRecorder(stream, mimeType ? { mimeType } : void 0);
+    } catch {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+      return;
+    }
+    recorder.ondataavailable = (e) => {
+      var _a2;
+      if (((_a2 = e.data) == null ? void 0 : _a2.size) > 0) chunks.push(e.data);
+    };
+    recorder.onstop = async () => {
+      stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
+      stream = null;
+      recording = false;
+      const blob = new Blob(chunks, { type: mimeType || "audio/webm" });
+      const ext = (mimeType == null ? void 0 : mimeType.includes("webm")) ? ".webm" : ".ogg";
+      const fd = new FormData();
+      fd.append("audio", blob, `dictation${ext}`);
+      let text = "";
+      try {
+        const res = await fetch("/api/voice/transcribe", {
+          method: "POST",
+          body: fd
+        });
+        const data = await res.json();
+        if (data.ok && data.text) text = data.text.trim();
+      } catch {
+        return;
+      }
+      if (!text || !targetEl) return;
+      const before = targetEl.value.slice(0, selStart);
+      const after = targetEl.value.slice(selEnd);
+      targetEl.value = before + text + after;
+      targetEl.setSelectionRange(selStart + text.length, selStart + text.length);
+      targetEl.dispatchEvent(new Event("input", { bubbles: true }));
+      targetEl.focus();
+      targetEl = null;
+    };
+    recording = true;
+    recorder.start();
+  }
+  onMounted(() => {
+    document.addEventListener("voice:dictate", handleDictate);
+  });
+  onBeforeUnmount(() => {
+    document.removeEventListener(
+      "voice:dictate",
+      handleDictate
+    );
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
+  });
+}
 const _hoisted_1$n = ["disabled"];
 const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
+    useDictation();
     function triggerMic() {
       document.dispatchEvent(new CustomEvent("voice:dictate"));
     }
@@ -20046,13 +20278,18 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
 });
 const _hoisted_1$m = ["hidden"];
 const _hoisted_2$f = ["hidden"];
+const _hoisted_3$e = ["hidden"];
+const _hoisted_4$a = ["hidden"];
 const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
     useVoiceStore();
-    const route = useRoute();
-    const onChat = computed(() => route.path === "/chat");
+    const ws = useWorkspaceStore();
+    const onChat = computed(() => {
+      const ref2 = ws.focusedActiveRef;
+      return (ref2 == null ? void 0 : ref2.kind) === "legacy" && ref2.page === "chat";
+    });
     function openVoiceMode() {
       document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
     }
@@ -20084,23 +20321,22 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           type: "button",
           title: "Voice task creator",
           "aria-label": "Voice task creator",
-          hidden: "",
+          hidden: !unref(ui).micEnabled,
           onClick: openTaskCreator
         }, [..._cache[1] || (_cache[1] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
-        ])]),
+        ])], 8, _hoisted_2$f),
         createBaseVNode("button", {
           id: "global-read-aloud",
           class: "global-read-aloud",
           type: "button",
           title: "Read to me",
           "aria-label": "Read to me",
-          hidden: "",
-          disabled: "",
+          hidden: !unref(ui).ttsEnabled || !onChat.value,
           onClick: toggleReadAloud
         }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-headphones" }, null, -1)
-        ])]),
+        ])], 8, _hoisted_3$e),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -20111,7 +20347,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_2$f)
+        ])], 8, _hoisted_4$a)
       ], 64);
     };
   }
@@ -20487,99 +20723,6 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
     };
   }
 });
-function stripMarkdown(text) {
-  return text.replace(/```[\s\S]*?```/g, "").replace(/`[^`]+`/g, "").replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/^#{1,6}\s+/gm, "").replace(/\*\*([^*]+)\*\*/g, "$1").replace(/\*([^*]+)\*/g, "$1").replace(/^[-*+]\s+/gm, "").replace(/^\d+\.\s+/gm, "").replace(/^>\s+/gm, "").replace(/~~([^~]+)~~/g, "$1").replace(/__([^_]+)__/g, "$1").replace(/_([^_]+)_/g, "$1").replace(/\|/g, "  ").replace(/^[-:|]+$/gm, "").replace(/\n{3,}/g, "\n\n").trim();
-}
-function esc(t) {
-  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-function extractChunks(pending, isDone) {
-  const chunks = [];
-  let consumed = 0;
-  const blocks = pending.split(/(\n\n+)/);
-  let pos = 0;
-  for (let b2 = 0; b2 < blocks.length; b2++) {
-    const part = blocks[b2];
-    if (/^\n\n+$/.test(part)) {
-      pos += part.length;
-      continue;
-    }
-    const hasTrailingSep = b2 + 1 < blocks.length && /^\n\n+$/.test(blocks[b2 + 1]);
-    const isComplete = hasTrailingSep || isDone;
-    if (isComplete) {
-      const trimmed = part.trim();
-      if (trimmed.length > 250) {
-        const re2 = /[.!?]\s+/g;
-        let m2;
-        let sentStart = 0;
-        while ((m2 = re2.exec(trimmed)) !== null) {
-          const end = m2.index + m2[0].length;
-          const sent = trimmed.slice(sentStart, end).trim();
-          if (sent) chunks.push(sent);
-          sentStart = end;
-        }
-        const tail = trimmed.slice(sentStart).trim();
-        if (tail) chunks.push(tail);
-      } else if (trimmed) {
-        chunks.push(trimmed);
-      }
-      pos += part.length;
-      consumed = pos;
-    } else {
-      const re2 = /[.!?]\s+/g;
-      let m2;
-      let sentStart2 = 0;
-      let lastSentEnd = 0;
-      while ((m2 = re2.exec(part)) !== null) {
-        const end2 = m2.index + m2[0].length;
-        const sent2 = part.slice(sentStart2, end2).trim();
-        if (sent2) chunks.push(sent2);
-        sentStart2 = end2;
-        lastSentEnd = end2;
-      }
-      consumed = pos + lastSentEnd;
-      break;
-    }
-  }
-  return { chunks, consumed };
-}
-const MIME_CANDIDATES = [
-  "audio/ogg;codecs=opus",
-  "audio/ogg",
-  "audio/webm;codecs=opus",
-  "audio/webm"
-];
-function detectMimeType() {
-  if (typeof MediaRecorder === "undefined") return null;
-  for (const c of MIME_CANDIDATES) {
-    if (MediaRecorder.isTypeSupported(c)) return c;
-  }
-  return null;
-}
-const SPEAK_MAX_CONCURRENT = 2;
-let speakInFlight = 0;
-const speakWaiters = [];
-function speakFetch(text) {
-  return new Promise((resolve2) => {
-    if (speakInFlight < SPEAK_MAX_CONCURRENT) {
-      speakInFlight++;
-      resolve2();
-    } else speakWaiters.push(() => {
-      speakInFlight++;
-      resolve2();
-    });
-  }).then(
-    () => fetch("/api/voice/speak", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    }).finally(() => {
-      speakInFlight--;
-      const next = speakWaiters.shift();
-      if (next) next();
-    })
-  );
-}
 const _hoisted_1$k = {
   class: "voice-mode-overlay",
   role: "dialog",
@@ -28861,6 +29004,77 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     };
   }
 });
+function useReadAloud() {
+  const queue2 = [];
+  let queueRunning = false;
+  let gen = 0;
+  let currentAudio = null;
+  let playing = false;
+  function stop2() {
+    gen++;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = "";
+      currentAudio = null;
+    }
+    queue2.length = 0;
+    queueRunning = false;
+    playing = false;
+  }
+  async function runQueue(g2) {
+    if (queueRunning) return;
+    queueRunning = true;
+    playing = true;
+    while (queue2.length > 0 && g2 === gen) {
+      const item = await queue2.shift();
+      if (g2 !== gen) {
+        if (item == null ? void 0 : item.url) URL.revokeObjectURL(item.url);
+        continue;
+      }
+      if (!item || !item.audio) continue;
+      currentAudio = item.audio;
+      await new Promise((resolve2) => {
+        item.audio.onended = () => {
+          if (item.url) URL.revokeObjectURL(item.url);
+          currentAudio = null;
+          resolve2();
+        };
+        item.audio.onerror = () => {
+          if (item.url) URL.revokeObjectURL(item.url);
+          currentAudio = null;
+          resolve2();
+        };
+        item.audio.play().catch(() => {
+          if (item.url) URL.revokeObjectURL(item.url);
+          currentAudio = null;
+          resolve2();
+        });
+      });
+    }
+    if (g2 === gen) {
+      queueRunning = false;
+      playing = false;
+    }
+  }
+  function speak(text) {
+    const stripped = stripMarkdown(text).trim();
+    if (!stripped) return;
+    stop2();
+    const g2 = gen;
+    const p2 = speakFetch(stripped).then((res) => {
+      if (g2 !== gen) return null;
+      if (!res.ok) return { audio: null, url: null };
+      return res.blob().then((blob) => {
+        if (g2 !== gen) return null;
+        const url = URL.createObjectURL(blob);
+        return { audio: new Audio(url), url };
+      });
+    }).catch(() => ({ audio: null, url: null }));
+    queue2.push(p2);
+    if (!queueRunning) runQueue(g2);
+  }
+  return { speak, stop: stop2, isPlaying: () => playing };
+}
 const _hoisted_1$6 = {
   id: "chat-panel",
   class: "chat-panel"
@@ -28871,6 +29085,7 @@ const CHAT_POLL_IDLE_MS = 1e4;
 const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "ChatPage",
   setup(__props) {
+    const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
     let chatHistory = [];
     let chatSessionId = "";
     let chatListCache = [];
@@ -29298,6 +29513,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       return msgEl;
     }
     function syncChatMessageEl(msgEl, msg) {
+      var _a2;
       let roleEl = msgEl.querySelector(".chat-msg-role");
       let textEl = msgEl.querySelector(".chat-msg-text");
       if (!roleEl || !textEl) {
@@ -29361,7 +29577,31 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
         }
         const isActive = state === "thinking" || state === "streaming" || state === "background";
         msgEl.dataset.active = isActive ? "1" : "0";
+        (_a2 = msgEl.querySelector(".chat-msg-speak")) == null ? void 0 : _a2.remove();
+        if (!isActive && msg.text) {
+          const speakBtn = document.createElement("button");
+          speakBtn.type = "button";
+          speakBtn.className = "chat-msg-speak";
+          speakBtn.title = "Read aloud";
+          speakBtn.setAttribute("aria-label", "Read aloud");
+          speakBtn.textContent = "🔊";
+          const capturedText = msg.text;
+          speakBtn.addEventListener("click", () => {
+            readAloud(capturedText);
+          });
+          msgEl.appendChild(speakBtn);
+        }
       }
+    }
+    function onReadAloudToggle() {
+      if (isPlaying()) {
+        stopReadAloud();
+        return;
+      }
+      const last = [...chatHistory].reverse().find(
+        (m2) => m2.role === "assistant" && m2.text && m2.state !== "error"
+      );
+      if (last == null ? void 0 : last.text) readAloud(last.text);
     }
     function updateInterruptBtn() {
       const btn = $2("chat-interrupt");
@@ -29419,8 +29659,6 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       if (!agentPicked()) return;
       chatInput.value = "";
       autoResizeChatInput();
-      const w2 = window;
-      if (typeof w2.__ttsResetAutoRead === "function") w2.__ttsResetAutoRead();
       chatHistory.push({ role: "user", text: message, state: "pending" });
       if (!chatAgentLocked && pendingAgentId) {
         chatAgentLocked = pendingAgentId;
@@ -29572,6 +29810,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       }
       if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
       document.addEventListener("visibilitychange", onVisibilityChange);
+      document.addEventListener("voice:read-aloud-toggle", onReadAloudToggle);
       if (chatInput) chatInput.focus();
       if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
       loadAgents().then(() => loadChatFromServer()).finally(schedulePoll);
@@ -29582,6 +29821,8 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
         chatPollTimer = null;
       }
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
+      stopReadAloud();
       if (historyClickHandler) {
         document.removeEventListener("click", historyClickHandler);
         historyClickHandler = null;
@@ -31137,6 +31378,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const nt2 = useNewTaskStore();
     const kn = useKnowledgeStore();
+    const ui = useUiStore();
     function onGlobalKeyDown(ev) {
       const t = ev.target;
       const inInput = t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
@@ -31157,6 +31399,7 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     }
     onMounted(() => {
       document.addEventListener("keydown", onGlobalKeyDown);
+      ui.initVoice();
     });
     onBeforeUnmount(() => {
       document.removeEventListener("keydown", onGlobalKeyDown);

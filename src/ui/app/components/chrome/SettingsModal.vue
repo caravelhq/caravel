@@ -193,7 +193,7 @@ async function openInfo(): Promise<void> {
           :class="ui.micEnabled ? 'on' : 'off'"
           id="voice-mic-toggle"
           type="button"
-          @click="ui.micEnabled = !ui.micEnabled"
+          @click="ui.setMicEnabled(!ui.micEnabled)"
         >{{ ui.micEnabled ? 'On' : 'Off' }}</button>
       </SettingRow>
       <SettingRow label="🔊 Speaker (TTS)" meta="Read aloud and voice replies">
@@ -205,7 +205,7 @@ async function openInfo(): Promise<void> {
           :class="ui.ttsEnabled ? 'on' : 'off'"
           id="voice-tts-toggle"
           type="button"
-          @click="ui.ttsEnabled = !ui.ttsEnabled"
+          @click="ui.setTtsEnabled(!ui.ttsEnabled)"
         >{{ ui.ttsEnabled ? 'On' : 'Off' }}</button>
       </SettingRow>
       <SettingRow label="🧾 Advanced" meta="Technical runtime and JSON files">

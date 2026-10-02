@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { useUiStore } from "../../stores/ui";
+import { useDictation } from "../voice/useDictation";
 
 const ui = useUiStore();
+useDictation();
 
 function triggerMic() {
   document.dispatchEvent(new CustomEvent("voice:dictate"));

@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { useNewTaskStore } from "./stores/newTask";
 import { useKnowledgeStore } from "./stores/knowledge";
+import { useUiStore } from "./stores/ui";
 import SettingsModal from "./components/chrome/SettingsModal.vue";
 import HeartbeatBar from "./components/chrome/HeartbeatBar.vue";
 import AudioModal from "./components/chrome/AudioModal.vue";
@@ -13,6 +14,7 @@ import SearchModal from "./components/search/SearchModal.vue";
 
 const nt = useNewTaskStore();
 const kn = useKnowledgeStore();
+const ui = useUiStore();
 
 function onGlobalKeyDown(ev: KeyboardEvent): void {
   const t = ev.target as HTMLElement;
@@ -39,7 +41,10 @@ function onGlobalKeyDown(ev: KeyboardEvent): void {
   }
 }
 
-onMounted(() => { document.addEventListener("keydown", onGlobalKeyDown); });
+onMounted(() => {
+  document.addEventListener("keydown", onGlobalKeyDown);
+  ui.initVoice();
+});
 onBeforeUnmount(() => { document.removeEventListener("keydown", onGlobalKeyDown); });
 </script>
 

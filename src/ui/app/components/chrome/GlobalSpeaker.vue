@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { useUiStore } from "../../stores/ui";
 import { useVoiceStore } from "../voice/store/voice";
-import { useRoute } from "vue-router";
+import { useWorkspaceStore } from "../../stores/workspace";
 import { computed } from "vue";
 
 const ui = useUiStore();
 const voice = useVoiceStore();
-const route = useRoute();
+const ws = useWorkspaceStore();
 
-const onChat = computed(() => route.path === "/chat");
+// Gate voice-mode on the focused tab being chat, not on the route path.
+const onChat = computed(() => {
+  const ref = ws.focusedActiveRef;
+  return ref?.kind === "legacy" && ref.page === "chat";
+});
 
 function openVoiceMode() {
   document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
@@ -45,7 +49,7 @@ function toggleSpeaker() {
     type="button"
     title="Voice task creator"
     aria-label="Voice task creator"
-    hidden
+    :hidden="!ui.micEnabled"
     @click="openTaskCreator"
   >
     <i class="fa-solid fa-list-check"></i>
@@ -56,8 +60,7 @@ function toggleSpeaker() {
     type="button"
     title="Read to me"
     aria-label="Read to me"
-    hidden
-    disabled
+    :hidden="!ui.ttsEnabled || !onChat"
     @click="toggleReadAloud"
   >
     <i class="fa-solid fa-headphones"></i>
