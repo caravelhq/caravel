@@ -19428,7 +19428,7 @@ const _hoisted_2$j = {
 };
 const _hoisted_3$i = { class: "base-modal-title" };
 const _hoisted_4$e = { class: "base-modal-body" };
-const _hoisted_5$a = {
+const _hoisted_5$b = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
 };
@@ -19526,7 +19526,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
-            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$a, [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$b, [
               createBaseVNode("button", {
                 class: "base-modal-done-btn",
                 type: "button",
@@ -19568,7 +19568,11 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
 const _hoisted_1$p = { class: "settings-stack" };
 const _hoisted_2$h = { class: "setting-actions" };
 const _hoisted_3$g = ["disabled"];
-const _hoisted_4$c = ["innerHTML"];
+const _hoisted_4$c = {
+  id: "build-id",
+  class: "build-id-mono"
+};
+const _hoisted_5$a = ["innerHTML"];
 const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -19587,6 +19591,16 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     const sttEnabled = /* @__PURE__ */ ref(false);
     const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
     const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
+    const buildId = /* @__PURE__ */ ref("");
+    async function loadBuildId() {
+      try {
+        const res = await fetch("/api/state");
+        const data = await res.json();
+        buildId.value = String((data == null ? void 0 : data.buildId) ?? "");
+      } catch {
+        buildId.value = "";
+      }
+    }
     const infoHtml = /* @__PURE__ */ ref("");
     function escHtml2(s) {
       return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -19631,6 +19645,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
       if (open) {
         loadSettings();
         loadVoiceSettings();
+        loadBuildId();
       }
     });
     function toggleClock() {
@@ -19823,6 +19838,15 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 _: 1
               }),
               createVNode(_sfc_main$w, {
+                label: "🔖 Build",
+                meta: "Stamp for bug reports"
+              }, {
+                default: withCtx(() => [
+                  createBaseVNode("span", _hoisted_4$c, toDisplayString(buildId.value || "—"), 1)
+                ]),
+                _: 1
+              }),
+              createVNode(_sfc_main$w, {
                 label: "🧾 Advanced",
                 meta: "Technical runtime and JSON files"
               }, {
@@ -19853,7 +19877,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_4$c)
+              }, null, 8, _hoisted_5$a)
             ]),
             _: 1
           }, 8, ["open"])
@@ -32726,6 +32750,13 @@ const pageStyles = String.raw`    :root {
       cursor: pointer;
       transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
     }
+    .build-id-mono {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #a0b4d8;
+      letter-spacing: 0.05em;
+      padding: 2px 0;
+    }
     .hb-config:hover {
       transform: translateY(-1px);
       background: #ffffff1d;
@@ -37155,7 +37186,7 @@ const _gs = document.createElement("style");
 _gs.textContent = pageStyles;
 document.head.insertBefore(_gs, document.head.firstChild);
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {
+  navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((r) => r.unregister()))).catch(() => {
   });
 }
 createApp(_sfc_main).use(createPinia()).use(router).use(createBootstrap()).mount("#app");

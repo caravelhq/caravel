@@ -11,7 +11,7 @@ function decodeUnicodeEscapes(text: string): string {
   });
 }
 
-export function htmlPage(): string {
+export function htmlPage(js = "app.js", css = "app.css"): string {
   const html = String.raw`
 <!doctype html>
 <html lang="en">
@@ -37,8 +37,8 @@ ${pageStyles}
 <body>
   <div class="grain" aria-hidden="true"></div>
   <div id="app"></div>
-  <link rel="stylesheet" href="/app.css" />
-  <script type="module" src="/app.js"></script>
+  <link rel="stylesheet" href="/${css}" />
+  <script type="module" src="/${js}"></script>
 </body>
 </html>`;
   return decodeUnicodeEscapes(html);

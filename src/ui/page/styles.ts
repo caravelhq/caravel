@@ -1200,6 +1200,13 @@ export const pageStyles = String.raw`    :root {
       cursor: pointer;
       transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
     }
+    .build-id-mono {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #a0b4d8;
+      letter-spacing: 0.05em;
+      padding: 2px 0;
+    }
     .hb-config:hover {
       transform: translateY(-1px);
       background: #ffffff1d;

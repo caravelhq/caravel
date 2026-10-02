@@ -30,6 +30,17 @@ const sttEnabled = ref(false);
 const sttText = computed(() => sttEnabled.value ? "DeepGram" : "Whisper");
 const sttMeta = computed(() => sttEnabled.value ? "DeepGram STT" : "Whisper (local)");
 
+// — Build identity —
+const buildId = ref("");
+
+async function loadBuildId(): Promise<void> {
+  try {
+    const res = await fetch("/api/state");
+    const data = await res.json();
+    buildId.value = String(data?.buildId ?? "");
+  } catch { buildId.value = ""; }
+}
+
 // — Technical Info —
 const infoHtml = ref("");
 
@@ -80,6 +91,7 @@ watch(() => ui.settingsOpen, (open) => {
   if (open) {
     loadSettings();
     loadVoiceSettings();
+    loadBuildId();
   }
 });
 
@@ -207,6 +219,9 @@ async function openInfo(): Promise<void> {
           type="button"
           @click="ui.setTtsEnabled(!ui.ttsEnabled)"
         >{{ ui.ttsEnabled ? 'On' : 'Off' }}</button>
+      </SettingRow>
+      <SettingRow label="🔖 Build" meta="Stamp for bug reports">
+        <span id="build-id" class="build-id-mono">{{ buildId || '—' }}</span>
       </SettingRow>
       <SettingRow label="🧾 Advanced" meta="Technical runtime and JSON files">
         <button class="hb-toggle on" id="info-open" type="button" @click="openInfo">Info</button>

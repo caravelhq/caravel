@@ -22,11 +22,12 @@ export function sanitizeSettings(snapshot: WebSnapshot["settings"]) {
   };
 }
 
-export async function buildState(snapshot: WebSnapshot) {
+export async function buildState(snapshot: WebSnapshot, buildId = "dev") {
   const now = Date.now();
   const session = await peekSession();
   const tasksActive = await countActiveTasks();
   return {
+    buildId,
     daemon: {
       running: true,
       pid: snapshot.pid,
