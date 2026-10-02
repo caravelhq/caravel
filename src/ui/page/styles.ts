@@ -5591,6 +5591,8 @@ export const pageStyles = String.raw`    :root {
       transition: background 0.1s;
     }
     .srch-row:hover, .srch-row.focused { background: #1a2a3a60; border-color: #2a3a5040; }
+    .srch-row--dead { cursor: default; opacity: 0.45; }
+    .srch-row--dead:hover { background: transparent; border-color: transparent; }
     .srch-row-title { font-size: 13px; color: var(--fg, #e2e8f0); font-weight: 500; }
     .srch-row-meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
     .srch-chip {

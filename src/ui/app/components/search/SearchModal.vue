@@ -154,6 +154,14 @@ function highlight(snippet: string | undefined, q: string): string {
   return snippet.replace(new RegExp(`(${escaped})`, "gi"), "<mark>$1</mark>");
 }
 
+// ── Dead-row guard ────────────────────────────────────────────────────────
+function canOpen(doc: KnowledgeDoc): boolean {
+  const path = doc.path as string | undefined;
+  const taskId = doc.id as string | undefined;
+  if ((doc as any)._pathless) return false;
+  return !!(path || (taskId && taskId.startsWith("TSK-")));
+}
+
 // ── Stale banner ──────────────────────────────────────────────────────────
 function rerun(): void {
   ks.markFresh();
@@ -235,14 +243,15 @@ function rerun(): void {
             <div
               v-for="(doc, i) in docs"
               :key="doc.path ?? doc.id ?? i"
-              class="srch-row"
+              :class="['srch-row', { 'srch-row--dead': !canOpen(doc) }]"
               role="option"
-              tabindex="0"
+              :tabindex="canOpen(doc) ? 0 : -1"
+              :aria-disabled="!canOpen(doc) || undefined"
               :data-doc-path="doc.path"
               :data-doc-id="doc.id"
-              @click="onRowClick(doc, $event)"
-              @mousedown="onRowMiddleClick(doc, $event)"
-              @keydown="onRowKeyDown(doc, $event)"
+              @click="canOpen(doc) && onRowClick(doc, $event)"
+              @mousedown="canOpen(doc) && onRowMiddleClick(doc, $event)"
+              @keydown="canOpen(doc) && onRowKeyDown(doc, $event)"
             >
               <div class="srch-row-title">{{ doc.title ?? doc.path }}</div>
               <div class="srch-row-meta">
@@ -279,14 +288,15 @@ function rerun(): void {
             <div
               v-for="(doc, i) in reports"
               :key="doc.id ?? doc.path ?? i"
-              class="srch-row"
+              :class="['srch-row', { 'srch-row--dead': !canOpen(doc) }]"
               role="option"
-              tabindex="0"
+              :tabindex="canOpen(doc) ? 0 : -1"
+              :aria-disabled="!canOpen(doc) || undefined"
               :data-doc-path="doc.path"
               :data-doc-id="doc.id"
-              @click="onRowClick(doc, $event)"
-              @mousedown="onRowMiddleClick(doc, $event)"
-              @keydown="onRowKeyDown(doc, $event)"
+              @click="canOpen(doc) && onRowClick(doc, $event)"
+              @mousedown="canOpen(doc) && onRowMiddleClick(doc, $event)"
+              @keydown="canOpen(doc) && onRowKeyDown(doc, $event)"
             >
               <div class="srch-row-title">{{ doc.title ?? doc.id }}</div>
               <div class="srch-row-meta">
