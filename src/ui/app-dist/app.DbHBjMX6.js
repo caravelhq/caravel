@@ -19482,7 +19482,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
       ev.preventDefault();
       if (props.dismissible) emit2("close");
     }
-    function onDialogPointerDown(ev) {
+    function onDialogClick(ev) {
       if (!props.dismissible) return;
       const inner = innerRef.value;
       if (!inner) return;
@@ -19499,7 +19499,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
         class: "base-modal",
         "aria-modal": true,
         onCancel,
-        onPointerdown: onDialogPointerDown
+        onClick: onDialogClick
       }, [
         createBaseVNode("div", {
           ref_key: "innerRef",

@@ -559,24 +559,21 @@ async function runVC5Red(page, vp) {
   await gotoApp(page, "/#/chat");
   await page.waitForTimeout(1200);
 
-  // MUTATION: manually inject an auto-read call using a MutationObserver.
-  // This simulates what "speak on arrival" would do if incorrectly implemented.
+  // MUTATION: directly fire /api/voice/speak after confirming the message is rendered.
+  // Prior approach used a MutationObserver registered after load and waited 800ms for
+  // chat-poll DOM churn to trigger it — whether that fired was non-deterministic (32/34
+  // twice, 34/34 once on the same build). Firing the fetch directly is always synchronous:
+  // we know the message rendered (waitForSelector), we inject the speak call, done.
+  await page.waitForSelector(".chat-msg-assistant", { timeout: 5000 });
   await page.evaluate(() => {
-    const observer = new MutationObserver(() => {
-      const msgs = document.querySelectorAll(".chat-msg-assistant");
-      if (msgs.length > 0 && !window._vc5MutationFired) {
-        window._vc5MutationFired = true;
-        fetch("/api/voice/speak", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: "auto-read injection" }),
-        });
-      }
+    fetch("/api/voice/speak", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: "auto-read injection" }),
     });
-    observer.observe(document.body, { childList: true, subtree: true });
   });
 
-  await page.waitForTimeout(800);
+  await page.waitForTimeout(400);
   await page.screenshot({ path: shot(`vc5-red-mutation-${vp}`) });
 
   if (speakCallCount > 0)

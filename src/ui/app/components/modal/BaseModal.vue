@@ -56,9 +56,13 @@ function onCancel(ev: Event): void {
   if (props.dismissible) emit("close");
 }
 
-// Geometric backdrop test: dismiss only if the pointer landed outside the inner card.
-// Avoids relying on ev.target === dialog (::backdrop targeting varies by engine/touch).
-function onDialogPointerDown(ev: PointerEvent): void {
+// Geometric backdrop test: dismiss only if the click landed outside the inner card.
+// Uses `click` (not `pointerdown`) so the dialog closes after the full click cycle;
+// the follow-through event that caused the focus-steal under pointerdown no longer exists,
+// letting native <dialog> focus-restore return focus to the opener uncontested.
+// Touch: a tap produces a synthesised `click` after pointerup, so backdrop-tap still works
+// and MD3/MD4 stay green in both pointer and touch-emulated contexts.
+function onDialogClick(ev: MouseEvent): void {
   if (!props.dismissible) return;
   const inner = innerRef.value;
   if (!inner) return;
@@ -76,7 +80,7 @@ function onDialogPointerDown(ev: PointerEvent): void {
     class="base-modal"
     :aria-modal="true"
     @cancel="onCancel"
-    @pointerdown="onDialogPointerDown"
+    @click="onDialogClick"
   >
     <div ref="innerRef" class="base-modal-inner" @click.stop @pointerdown.stop>
       <slot name="header">
