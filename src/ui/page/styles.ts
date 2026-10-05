@@ -101,7 +101,7 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 42px 16px 90px;
+      padding: 10px 16px 90px;
       position: relative;
       z-index: 1;
       overflow: hidden;
@@ -5032,7 +5032,7 @@ export const pageStyles = String.raw`    :root {
 
     @media (max-width: 640px) {
       .stage {
-        padding: 38px 8px 80px;
+        padding: 10px 8px 80px;
       }
       .repo-cta {
         font-size: 10px;
