@@ -13926,6 +13926,42 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
     } catch (_2) {
     }
   }
+  const raText = /* @__PURE__ */ ref(null);
+  const raFilePath = /* @__PURE__ */ ref(null);
+  const raState = /* @__PURE__ */ ref("idle");
+  const raChunks = /* @__PURE__ */ ref([]);
+  const raChunkIndex = /* @__PURE__ */ ref(-1);
+  const raShowResume = /* @__PURE__ */ ref(false);
+  const raResumeIndex = /* @__PURE__ */ ref(0);
+  const raStopSignal = /* @__PURE__ */ ref(0);
+  let _raSkipTo = null;
+  let _raStop = null;
+  let _raResumeFrom = null;
+  function raSkipTo(i) {
+    _raSkipTo == null ? void 0 : _raSkipTo(i);
+  }
+  function raStop() {
+    if (_raStop) {
+      _raStop();
+    } else {
+      raState.value = "idle";
+      raChunkIndex.value = -1;
+      audioModalOpen.value = false;
+    }
+  }
+  function raResumeFrom(i) {
+    _raResumeFrom == null ? void 0 : _raResumeFrom(i);
+  }
+  function raWire(skipTo, stop2, resumeFrom) {
+    _raSkipTo = skipTo;
+    _raStop = stop2;
+    _raResumeFrom = resumeFrom ?? null;
+  }
+  function raUnwire() {
+    _raSkipTo = null;
+    _raStop = null;
+    _raResumeFrom = null;
+  }
   return {
     settingsOpen,
     ttsEnabled,
@@ -13936,18 +13972,31 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
     audioModalOpen,
     initVoice,
     setMicEnabled,
-    setTtsEnabled
+    setTtsEnabled,
+    raText,
+    raFilePath,
+    raState,
+    raChunks,
+    raChunkIndex,
+    raShowResume,
+    raResumeIndex,
+    raStopSignal,
+    raSkipTo,
+    raStop,
+    raResumeFrom,
+    raWire,
+    raUnwire
   };
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$s = ["data-size"];
-const _hoisted_2$j = {
+const _hoisted_1$t = ["data-size"];
+const _hoisted_2$k = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$i = { class: "base-modal-title" };
-const _hoisted_4$e = { class: "base-modal-body" };
-const _hoisted_5$b = {
+const _hoisted_3$j = { class: "base-modal-title" };
+const _hoisted_4$f = { class: "base-modal-body" };
+const _hoisted_5$d = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
 };
@@ -14043,8 +14092,8 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
-              createBaseVNode("span", _hoisted_3$i, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
+              createBaseVNode("span", _hoisted_3$j, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -14058,11 +14107,11 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$e, [
+          createBaseVNode("div", _hoisted_4$f, [
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
-            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$b, [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$d, [
               createBaseVNode("button", {
                 class: "base-modal-done-btn",
                 type: "button",
@@ -14071,14 +14120,14 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ], 544)
-      ], 40, _hoisted_1$s);
+      ], 40, _hoisted_1$t);
     };
   }
 });
-const _hoisted_1$r = { class: "setting-item" };
-const _hoisted_2$i = { class: "setting-main" };
-const _hoisted_3$h = { class: "settings-label" };
-const _hoisted_4$d = {
+const _hoisted_1$s = { class: "setting-item" };
+const _hoisted_2$j = { class: "setting-main" };
+const _hoisted_3$i = { class: "settings-label" };
+const _hoisted_4$e = {
   key: 0,
   class: "settings-meta"
 };
@@ -14090,10 +14139,10 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$r, [
-        createBaseVNode("div", _hoisted_2$i, [
-          createBaseVNode("div", _hoisted_3$h, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$d, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+      return openBlock(), createElementBlock("div", _hoisted_1$s, [
+        createBaseVNode("div", _hoisted_2$j, [
+          createBaseVNode("div", _hoisted_3$i, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$e, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -14101,14 +14150,14 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$q = { class: "settings-stack" };
-const _hoisted_2$h = { class: "setting-actions" };
-const _hoisted_3$g = ["disabled"];
-const _hoisted_4$c = {
+const _hoisted_1$r = { class: "settings-stack" };
+const _hoisted_2$i = { class: "setting-actions" };
+const _hoisted_3$h = ["disabled"];
+const _hoisted_4$d = {
   id: "build-id",
   class: "build-id-mono"
 };
-const _hoisted_5$a = ["innerHTML"];
+const _hoisted_5$c = ["innerHTML"];
 const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -14265,13 +14314,13 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           title: "Settings"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$q, [
+            createBaseVNode("div", _hoisted_1$r, [
               createVNode(_sfc_main$w, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$h, [
+                  createBaseVNode("div", _hoisted_2$i, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -14284,7 +14333,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$g)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$h)
                   ])
                 ]),
                 _: 1
@@ -14385,7 +14434,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 meta: "Stamp for bug reports"
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("span", _hoisted_4$c, toDisplayString(buildId.value || "—"), 1)
+                  createBaseVNode("span", _hoisted_4$d, toDisplayString(buildId.value || "—"), 1)
                 ]),
                 _: 1
               }),
@@ -14420,7 +14469,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_5$a)
+              }, null, 8, _hoisted_5$c)
             ]),
             _: 1
           }, 8, ["open"])
@@ -14429,24 +14478,24 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$p = {
+const _hoisted_1$q = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$g = ["disabled"];
-const _hoisted_3$f = {
+const _hoisted_2$h = ["disabled"];
+const _hoisted_3$g = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$b = ["disabled"];
-const _hoisted_5$9 = { class: "hb-actions" };
-const _hoisted_6$9 = {
+const _hoisted_4$c = ["disabled"];
+const _hoisted_5$b = { class: "hb-actions" };
+const _hoisted_6$b = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_7$7 = { class: "hb-buttons" };
-const _hoisted_8$7 = ["disabled"];
-const _hoisted_9$6 = ["disabled"];
+const _hoisted_7$9 = { class: "hb-buttons" };
+const _hoisted_8$8 = ["disabled"];
+const _hoisted_9$7 = ["disabled"];
 const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
@@ -14524,7 +14573,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_1$p, [
+            createBaseVNode("label", _hoisted_1$q, [
               _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
@@ -14536,7 +14585,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$g), [
+              }, null, 8, _hoisted_2$h), [
                 [
                   vModelText,
                   interval.value,
@@ -14545,7 +14594,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$f, [
+            createBaseVNode("label", _hoisted_3$g, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -14554,26 +14603,26 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$b), [
+              }, null, 8, _hoisted_4$c), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$9, [
-              createBaseVNode("div", _hoisted_6$9, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$7, [
+            createBaseVNode("div", _hoisted_5$b, [
+              createBaseVNode("div", _hoisted_6$b, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$9, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_8$7),
+                }, "Cancel", 8, _hoisted_8$8),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_9$6)
+                }, "Save", 8, _hoisted_9$7)
               ])
             ])
           ], 32)
@@ -14583,105 +14632,116 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _hoisted_1$p = { class: "audio-action-card" };
+const _hoisted_2$g = {
+  key: 0,
+  class: "audio-player-resume"
+};
+const _hoisted_3$f = { class: "audio-player-resume-msg" };
+const _hoisted_4$b = { class: "audio-player-resume-btns" };
+const _hoisted_5$a = { class: "audio-player-progress" };
+const _hoisted_6$a = { class: "audio-player-bar-wrap" };
+const _hoisted_7$8 = { class: "audio-player-counter" };
+const _hoisted_8$7 = { class: "audio-player-transcript" };
+const _hoisted_9$6 = ["data-idx", "onClick"];
+const _hoisted_10$5 = { class: "audio-player-controls" };
+const _hoisted_11$5 = ["disabled"];
+const _hoisted_12$5 = ["disabled"];
 const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
   setup(__props) {
     const ui = useUiStore();
+    const total = computed(() => ui.raChunks.length);
+    const current = computed(() => ui.raChunkIndex);
+    const progressPct = computed(
+      () => total.value > 0 ? (current.value + 1) / total.value * 100 : 0
+    );
+    const skipBackDisabled = computed(() => current.value <= 0);
+    const skipFwdDisabled = computed(() => current.value >= total.value - 1);
+    const hasPlayer = computed(() => !ui.raShowResume && total.value > 0);
     return (_ctx, _cache) => {
       return openBlock(), createBlock(_sfc_main$x, {
-        id: "audio-action-modal",
         open: unref(ui).audioModalOpen,
-        onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
+        onClose: _cache[5] || (_cache[5] = ($event) => unref(ui).raStop()),
         size: "sm",
         dismissible: false
       }, {
-        default: withCtx(() => [..._cache[1] || (_cache[1] = [
-          createBaseVNode("div", {
-            class: "audio-action-card",
-            id: "audio-action-card"
-          }, [
-            createBaseVNode("div", {
-              class: "audio-action-icon",
-              id: "audio-action-icon"
-            }),
-            createBaseVNode("div", {
-              class: "audio-action-label",
-              id: "audio-action-label"
-            }, "Recording..."),
-            createBaseVNode("div", {
-              class: "audio-player-resume",
-              id: "audio-player-resume",
-              hidden: ""
-            }, [
-              createBaseVNode("div", {
-                class: "audio-player-resume-msg",
-                id: "audio-player-resume-msg"
-              }),
-              createBaseVNode("div", { class: "audio-player-resume-btns" }, [
+        header: withCtx(() => [..._cache[6] || (_cache[6] = [
+          createBaseVNode("div", { class: "base-modal-head" }, [
+            createBaseVNode("span", { class: "base-modal-title" }, "Reading aloud")
+          ], -1)
+        ])]),
+        default: withCtx(() => [
+          createBaseVNode("div", _hoisted_1$p, [
+            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$g, [
+              createBaseVNode("div", _hoisted_3$f, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
+              createBaseVNode("div", _hoisted_4$b, [
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-restart",
-                  id: "audio-resume-restart",
-                  type: "button"
+                  type: "button",
+                  onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).raResumeFrom(0))
                 }, "Start over"),
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-resume",
-                  id: "audio-resume-continue",
-                  type: "button"
+                  type: "button",
+                  onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).raResumeFrom(unref(ui).raResumeIndex))
                 }, "Resume")
               ])
-            ]),
-            createBaseVNode("div", {
-              class: "audio-player-progress",
-              id: "audio-player-progress",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "audio-player-bar-wrap" }, [
-                createBaseVNode("div", {
-                  class: "audio-player-bar",
-                  id: "audio-player-bar"
-                })
+            ])) : createCommentVNode("", true),
+            hasPlayer.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+              createBaseVNode("div", _hoisted_5$a, [
+                createBaseVNode("div", _hoisted_6$a, [
+                  createBaseVNode("div", {
+                    class: "audio-player-bar",
+                    style: normalizeStyle({ width: progressPct.value + "%" })
+                  }, null, 4)
+                ]),
+                createBaseVNode("div", _hoisted_7$8, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
               ]),
-              createBaseVNode("div", {
-                class: "audio-player-counter",
-                id: "audio-player-counter"
-              }, "0 / 0")
-            ]),
-            createBaseVNode("div", {
-              class: "audio-player-transcript",
-              id: "audio-player-transcript",
-              hidden: ""
-            }),
-            createBaseVNode("div", { class: "audio-player-controls" }, [
-              createBaseVNode("button", {
+              createBaseVNode("div", _hoisted_8$7, [
+                (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ui).raChunks, (chunk, i) => {
+                  return openBlock(), createElementBlock("p", {
+                    key: i,
+                    class: normalizeClass(["audio-transcript-line", { "audio-transcript-active": i === current.value }]),
+                    "data-idx": i,
+                    onClick: ($event) => unref(ui).raSkipTo(i)
+                  }, toDisplayString(chunk), 11, _hoisted_9$6);
+                }), 128))
+              ])
+            ], 64)) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_10$5, [
+              hasPlayer.value ? (openBlock(), createElementBlock("button", {
+                key: 0,
                 class: "audio-player-skip",
-                id: "audio-skip-back",
                 type: "button",
                 "aria-label": "Previous",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-backward-step" })
-              ]),
+                disabled: skipBackDisabled.value,
+                onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).raSkipTo(current.value - 1))
+              }, [..._cache[7] || (_cache[7] = [
+                createBaseVNode("i", { class: "fa-solid fa-backward-step" }, null, -1)
+              ])], 8, _hoisted_11$5)) : createCommentVNode("", true),
               createBaseVNode("button", {
                 class: "audio-action-stop",
-                id: "audio-action-stop",
                 type: "button",
-                "aria-label": "Stop"
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-stop" }),
-                createBaseVNode("span", null, "Stop")
-              ]),
-              createBaseVNode("button", {
+                "aria-label": "Stop",
+                onClick: _cache[3] || (_cache[3] = ($event) => unref(ui).raStop())
+              }, [..._cache[8] || (_cache[8] = [
+                createBaseVNode("i", { class: "fa-solid fa-stop" }, null, -1),
+                createBaseVNode("span", null, "Stop", -1)
+              ])]),
+              hasPlayer.value ? (openBlock(), createElementBlock("button", {
+                key: 1,
                 class: "audio-player-skip",
-                id: "audio-skip-forward",
                 type: "button",
                 "aria-label": "Next",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-forward-step" })
-              ])
+                disabled: skipFwdDisabled.value,
+                onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).raSkipTo(current.value + 1))
+              }, [..._cache[9] || (_cache[9] = [
+                createBaseVNode("i", { class: "fa-solid fa-forward-step" }, null, -1)
+              ])], 8, _hoisted_12$5)) : createCommentVNode("", true)
             ])
-          ], -1)
-        ])]),
+          ])
+        ]),
         _: 1
       }, 8, ["open"]);
     };
@@ -14948,28 +15008,196 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
     updateLastAssistant
   };
 });
+function useGlobalReadAloud() {
+  const ui = useUiStore();
+  let gen = 0;
+  let currentAudio = null;
+  function stopPlayback() {
+    gen++;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = "";
+      currentAudio = null;
+    }
+    ui.raState = "idle";
+    ui.raChunkIndex = -1;
+    ui.audioModalOpen = false;
+    ui.raShowResume = false;
+    ui.raUnwire();
+  }
+  function playFrom(allChunks, resumeKey, index, g2) {
+    if (g2 !== gen) return;
+    if (index >= allChunks.length) {
+      ui.raState = "idle";
+      ui.raChunkIndex = -1;
+      ui.audioModalOpen = false;
+      ui.raShowResume = false;
+      ui.raUnwire();
+      try {
+        sessionStorage.removeItem("ra_resume");
+      } catch (_2) {
+      }
+      return;
+    }
+    ui.raChunkIndex = index;
+    try {
+      sessionStorage.setItem("ra_resume", JSON.stringify({ key: resumeKey, index }));
+    } catch (_2) {
+    }
+    const stripped = stripMarkdown(allChunks[index]).trim();
+    if (!stripped) {
+      playFrom(allChunks, resumeKey, index + 1, g2);
+      return;
+    }
+    speakFetch(stripped).then(async (res) => {
+      if (g2 !== gen) return;
+      if (!res.ok) {
+        playFrom(allChunks, resumeKey, index + 1, g2);
+        return;
+      }
+      const blob = await res.blob();
+      if (g2 !== gen) return;
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      };
+      audio.play().catch(() => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      });
+    }).catch(() => {
+      if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+    });
+  }
+  async function doReadAloud() {
+    if (ui.raState === "playing") {
+      stopPlayback();
+      return;
+    }
+    const rawText = ui.raText;
+    const rawFilePath = ui.raFilePath;
+    if (!rawText) return;
+    ui.raStopSignal++;
+    ui.raState = "loading";
+    ui.audioModalOpen = true;
+    let text = null;
+    const sidecarBody = rawFilePath && /\.md$/i.test(rawFilePath) ? { path: rawFilePath } : { text: rawText };
+    try {
+      const resp = await fetch("/api/voice/sidecar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sidecarBody)
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data == null ? void 0 : data.text) text = data.text;
+      }
+    } catch (_2) {
+    }
+    if (!text) text = rawText;
+    if (!text.trim()) {
+      ui.raState = "idle";
+      ui.audioModalOpen = false;
+      return;
+    }
+    const { chunks } = extractChunks(text, true);
+    const allChunks = chunks.filter((c) => c.trim());
+    if (allChunks.length === 0) allChunks.push(text.trim());
+    ui.raChunks = allChunks;
+    const resumeKey = text.slice(0, 80).trim() + "|" + text.length;
+    let startIndex = 0;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("ra_resume") || "null");
+      if (saved && saved.key === resumeKey && typeof saved.index === "number" && saved.index > 0 && saved.index < allChunks.length) {
+        ui.raResumeIndex = saved.index;
+        ui.raShowResume = true;
+        ui.raState = "playing";
+        startIndex = await new Promise((resolve2) => {
+          ui.raWire(
+            (i) => {
+              resolve2(i);
+            },
+            () => {
+              stopPlayback();
+              resolve2(-1);
+            },
+            (i) => {
+              resolve2(i);
+            }
+          );
+        });
+        ui.raShowResume = false;
+        if (startIndex < 0) return;
+      }
+    } catch (_2) {
+    }
+    const g2 = ++gen;
+    ui.raChunkIndex = startIndex;
+    ui.raState = "playing";
+    ui.raWire(
+      (i) => {
+        gen++;
+        const ng = gen;
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.src = "";
+          currentAudio = null;
+        }
+        playFrom(allChunks, resumeKey, i, ng);
+      },
+      () => {
+        stopPlayback();
+      }
+    );
+    playFrom(allChunks, resumeKey, startIndex, g2);
+  }
+  return { doReadAloud, stopReadAloud: stopPlayback };
+}
 const _hoisted_1$n = ["hidden"];
 const _hoisted_2$f = ["hidden"];
-const _hoisted_3$e = ["hidden"];
-const _hoisted_4$a = ["hidden"];
+const _hoisted_3$e = ["title", "aria-label", "hidden", "disabled"];
+const _hoisted_4$a = {
+  key: 0,
+  class: "fa-solid fa-spinner fa-spin"
+};
+const _hoisted_5$9 = {
+  key: 1,
+  class: "fa-solid fa-stop"
+};
+const _hoisted_6$9 = {
+  key: 2,
+  class: "fa-solid fa-headphones"
+};
+const _hoisted_7$7 = ["hidden"];
 const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
     useVoiceStore();
     const ws = useWorkspaceStore();
+    const { doReadAloud } = useGlobalReadAloud();
     const onChat = computed(() => {
       const ref2 = ws.focusedActiveRef;
       return (ref2 == null ? void 0 : ref2.kind) === "legacy" && ref2.page === "chat";
     });
+    const raDisabled = computed(() => ui.raText === null || ui.raState === "loading");
+    const raTitle = computed(() => ui.raState === "playing" ? "Stop reading" : "Read to me");
+    const raAriaLabel = computed(() => ui.raState === "playing" ? "Stop reading" : "Read to me");
     function openVoiceMode() {
       document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
     }
     function openTaskCreator() {
       document.dispatchEvent(new CustomEvent("voice:open-task-creator"));
-    }
-    function toggleReadAloud() {
-      document.dispatchEvent(new CustomEvent("voice:read-aloud-toggle"));
     }
     function toggleSpeaker() {
       ui.ttsEnabled = !ui.ttsEnabled;
@@ -14984,7 +15212,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           "aria-label": "Voice chat mode",
           hidden: !onChat.value || !unref(ui).micEnabled,
           onClick: openVoiceMode
-        }, [..._cache[0] || (_cache[0] = [
+        }, [..._cache[1] || (_cache[1] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
         ])], 8, _hoisted_1$n),
         createBaseVNode("button", {
@@ -14995,20 +15223,22 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           "aria-label": "Voice task creator",
           hidden: !unref(ui).micEnabled,
           onClick: openTaskCreator
-        }, [..._cache[1] || (_cache[1] = [
+        }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
         ])], 8, _hoisted_2$f),
         createBaseVNode("button", {
           id: "global-read-aloud",
-          class: "global-read-aloud",
+          class: normalizeClass(["global-read-aloud", { "is-playing": unref(ui).raState === "playing" }]),
           type: "button",
-          title: "Read to me",
-          "aria-label": "Read to me",
-          hidden: !unref(ui).ttsEnabled || !onChat.value,
-          onClick: toggleReadAloud
-        }, [..._cache[2] || (_cache[2] = [
-          createBaseVNode("i", { class: "fa-solid fa-headphones" }, null, -1)
-        ])], 8, _hoisted_3$e),
+          title: raTitle.value,
+          "aria-label": raAriaLabel.value,
+          hidden: !unref(ui).ttsEnabled,
+          disabled: raDisabled.value,
+          onClick: _cache[0] || (_cache[0] = //@ts-ignore
+          (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
+        }, [
+          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$a)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$9)) : (openBlock(), createElementBlock("i", _hoisted_6$9))
+        ], 10, _hoisted_3$e),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -15019,7 +15249,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_4$a)
+        ])], 8, _hoisted_7$7)
       ], 64);
     };
   }
@@ -21301,6 +21531,8 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const props = __props;
     const contentEl = useTemplateRef("content");
+    const ui = useUiStore();
+    const ws = useWorkspaceStore();
     let currentPath = "";
     let pendingPath = "";
     let pendingBranch = "";
@@ -21326,6 +21558,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       }
     });
     onBeforeUnmount(() => {
+      updateRaText(null, null);
     });
     function setEmpty() {
       if (!contentEl.value) return;
@@ -21337,7 +21570,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       if (!el) return;
       if (isImageFile(filePath)) {
         renderImageInto(el, filePath, branch);
-        notifySpeaker();
+        updateRaText(null, null);
         return;
       }
       el.innerHTML = '<div class="files-loading">Loading...</div>';
@@ -21358,11 +21591,13 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
           div.innerHTML = fmHtml + renderMarkdown(body);
           hydrateLinks(div);
           el.appendChild(div);
+          updateRaText(body || data.content || null, /\.md$/i.test(filePath) ? filePath : null);
         } else if (isYaml(filePath)) {
           const ydiv = document.createElement("div");
           ydiv.className = "files-yaml";
           ydiv.innerHTML = yamlRender(data.content);
           el.appendChild(ydiv);
+          updateRaText(data.content || null, null);
         } else {
           const lang = detectLang(filePath);
           if (lang) {
@@ -21378,12 +21613,13 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
             raw.textContent = data.content;
             el.appendChild(raw);
           }
+          updateRaText(data.content || null, null);
         }
       } catch (err) {
         if (currentPath !== filePath) return;
         el.innerHTML = '<div class="files-empty">Error: ' + escHtml(String(err instanceof Error ? err.message : err)) + "</div>";
+        updateRaText(null, null);
       }
-      notifySpeaker();
     }
     function hydrateLinks(container) {
       container.querySelectorAll("a[href]").forEach((a) => {
@@ -21392,7 +21628,17 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
         a.setAttribute("data-open-file", href);
       });
     }
-    function notifySpeaker() {
+    function updateRaText(text, filePath) {
+      const focused = ws.focusedActiveRef;
+      if (!focused) return;
+      const isFocusedFile = focused.kind === "file" && focused.path === props.path;
+      const isFocusedReport = focused.kind === "report" && props.kind === "report";
+      const isFocusedLegacyFiles = focused.kind === "legacy" && focused.page === "files";
+      const isFocusedLegacyTasks = focused.kind === "legacy" && focused.page === "tasks";
+      if (isFocusedFile || isFocusedReport || isFocusedLegacyFiles || isFocusedLegacyTasks) {
+        ui.raText = text;
+        ui.raFilePath = isFocusedFile && filePath ? filePath : null;
+      }
       if (typeof window.__updateSpeakerDisabled === "function") {
         window.__updateSpeakerDisabled();
       }
@@ -22484,27 +22730,38 @@ function setActiveReportDoc(pane, path) {
     p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
   });
 }
-function loadReportNode(node) {
-  if (!node || node.getAttribute("data-loaded") !== "false") return;
+function loadReportNode(node, onLoaded) {
+  if (!node || node.getAttribute("data-loaded") !== "false") {
+    if (onLoaded && node.getAttribute("data-loaded") === "true") {
+      const stored = node.getAttribute("data-raw-text");
+      if (stored) onLoaded(stored);
+    }
+    return;
+  }
   node.setAttribute("data-loaded", "loading");
   node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
   const path = node.getAttribute("data-report-path") || "";
   fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
     if (!data.ok) throw new Error(data.error || "failed");
     node.setAttribute("data-loaded", "true");
+    let rawText = "";
     if (data.markdown) {
       const raw = data.content || "";
       const { body } = stripFrontmatter(raw);
+      rawText = body || raw;
       const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
       const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
       node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
     } else {
+      rawText = data.content || "";
       const pre = document.createElement("pre");
       pre.className = "task-panel-report-raw";
       pre.textContent = data.content;
       node.innerHTML = "";
       node.appendChild(pre);
     }
+    node.setAttribute("data-raw-text", rawText);
+    if (onLoaded && rawText) onLoaded(rawText);
     if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
   }).catch((err) => {
     node.setAttribute("data-loaded", "false");
@@ -22543,6 +22800,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     let taskPanelStatusEl = null;
     let longPressTimer = null;
     let lpStartX = 0, lpStartY = 0;
+    let currentReportRawText = null;
     const router2 = useRouter();
     let currentTaskChain = null;
     watch(() => attentionStore.tiers, (tiers) => {
@@ -22553,6 +22811,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
       if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
       if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
+      if (mode !== "view") {
+        currentReportRawText = null;
+        ui.raText = null;
+        ui.raFilePath = null;
+      }
       const panel = document.getElementById("tasks-panel");
       const collapse = mode !== "empty";
       if (isPanelNarrow("tasks-panel", 1199)) {
@@ -22671,7 +22934,18 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
         const reportHtml = (task == null ? void 0 : task.reportPath) ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
         taskPanelBodyEl.innerHTML = '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + '</div><div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
-        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => loadReportNode(rn));
+        currentReportRawText = null;
+        ui.raText = null;
+        ui.raFilePath = null;
+        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => {
+          loadReportNode(rn, (rawText) => {
+            currentReportRawText = rawText;
+            if (tasksStore.currentViewMode === "report") {
+              ui.raText = rawText;
+              ui.raFilePath = null;
+            }
+          });
+        });
       } catch (err) {
         taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
       }
@@ -22714,6 +22988,8 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         t.classList.toggle("is-active", isActive);
         t.setAttribute("aria-selected", isActive ? "true" : "false");
       });
+      ui.raText = mode === "report" ? currentReportRawText : null;
+      ui.raFilePath = null;
     }
     async function submitNext(wrapper) {
       if (!wrapper) return;
@@ -23457,6 +23733,9 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     onBeforeUnmount(() => {
       live.unbind("attention");
       if (longPressTimer !== null) clearTimeout(longPressTimer);
+      currentReportRawText = null;
+      ui.raText = null;
+      ui.raFilePath = null;
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
@@ -23755,6 +24034,10 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
     const chatStore = useChatStore();
+    const ui = useUiStore();
+    watch(() => ui.raStopSignal, () => {
+      if (isPlaying()) stopReadAloud();
+    });
     let chatHistory = [];
     let chatSessionId = "";
     let chatListCache = [];
@@ -24253,7 +24536,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
           speakBtn.className = "chat-msg-speak";
           speakBtn.title = "Read aloud";
           speakBtn.setAttribute("aria-label", "Read aloud");
-          speakBtn.textContent = "🔊";
+          speakBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
           const capturedText = msg.text;
           speakBtn.addEventListener("click", () => {
             readAloud(capturedText);
@@ -24284,6 +24567,11 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       if (live) btn.disabled = false;
     }
     function renderChatHistory() {
+      const lastDone = [...chatHistory].reverse().find(
+        (m2) => m2.role === "assistant" && m2.text && m2.state !== "thinking" && m2.state !== "streaming" && m2.state !== "background" && m2.state !== "error"
+      );
+      ui.raText = (lastDone == null ? void 0 : lastDone.text) ?? null;
+      ui.raFilePath = null;
       const w2 = window;
       if (typeof w2.__updateSpeakerDisabled === "function") w2.__updateSpeakerDisabled();
       refreshChatTitleVisibility();
@@ -24503,6 +24791,8 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
       stopReadAloud();
+      ui.raText = null;
+      ui.raFilePath = null;
       if (historyClickHandler) {
         document.removeEventListener("click", historyClickHandler);
         historyClickHandler = null;
@@ -28623,6 +28913,32 @@ const pageStyles = String.raw`    :root {
       cursor: not-allowed;
       transform: none;
     }
+
+    /* Per-message read-aloud button — transparent background, bottom-right of message text */
+    .chat-msg-speak {
+      appearance: none;
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: #6aadcc88;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: color 0.14s ease, background 0.14s ease;
+    }
+    .chat-msg-speak:hover {
+      color: var(--accent);
+      background: #ffffff0a;
+    }
+    /* Make the message container relative so the absolute button positions correctly */
+    .chat-msg-assistant { position: relative; }
 
     /* ── Files panel ── */
     /* Width matches the Tasks panel. Both pages share the same
