@@ -13861,7 +13861,7 @@ const useKnowledgeStore = /* @__PURE__ */ defineStore("knowledge", () => {
   }
   let lastCloseTs = 0;
   function open(seed = "") {
-    if (Date.now() - lastCloseTs < 300) return;
+    if (Date.now() - lastCloseTs < 50) return;
     seedQuery.value = seed;
     isOpen.value = true;
   }
