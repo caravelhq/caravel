@@ -91,7 +91,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     if (initialSplitOn && initialSplitIndex === null) {
       initialSplitOn = false;
     }
-    initialActive0 = load<string | null>("active0", refKey(initialTabs[0]));
+    initialActive0 = load<string | null>("active0", initialTabs.length > 0 ? refKey(initialTabs[0]) : null);
     initialActive1 = load<string | null>("active1", null);
   }
 

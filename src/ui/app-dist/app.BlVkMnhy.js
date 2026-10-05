@@ -13289,6 +13289,7 @@ function useRouter() {
   return inject(routerKey);
 }
 function refKey(ref2) {
+  if (!ref2) return "";
   switch (ref2.kind) {
     case "dashboard":
       return "dashboard";
@@ -13382,7 +13383,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     if (initialSplitOn && initialSplitIndex === null) {
       initialSplitOn = false;
     }
-    initialActive0 = load$4("active0", refKey(initialTabs[0]));
+    initialActive0 = load$4("active0", initialTabs.length > 0 ? refKey(initialTabs[0]) : null);
     initialActive1 = load$4("active1", null);
   }
   const tabs = /* @__PURE__ */ ref(initialTabs);
