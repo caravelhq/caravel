@@ -260,8 +260,8 @@ try {
     await page.keyboard.press("Escape");
     await page.waitForTimeout(400);
 
-    // Wait past the 300ms cooldown, then type in the search box to open modal.
-    await page.waitForTimeout(350);
+    // Wait past the 50ms cooldown, then type in the search box to open modal.
+    await page.waitForTimeout(100);
     const searchInput = page.locator("#search-box input");
     await searchInput.click();
     await page.waitForTimeout(300);
@@ -278,7 +278,7 @@ try {
     await page.waitForTimeout(400);
 
     // Click opens modal too (@click on the box div).
-    await page.waitForTimeout(350); // past 300ms cooldown
+    await page.waitForTimeout(100); // past 50ms cooldown
     await searchInput.click();
     await page.waitForTimeout(400);
     const afterClick = await openDialogCount(page);

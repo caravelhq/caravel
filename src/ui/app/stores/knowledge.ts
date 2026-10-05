@@ -75,14 +75,15 @@ export const useKnowledgeStore = defineStore("knowledge", () => {
     isStale.value = false;
   }
 
-  // Guard: ignore open() calls arriving within 300ms of close().
+  // Guard: ignore open() calls arriving within 50ms of close().
   // Prevents the focus-restore loop: close → focus returns to opener →
   // any stray open() call (e.g. a residual @focus handler) immediately reopens.
+  // 50ms is ~10× the actual focus-restore latency; well below deliberate-reopen timing.
   // Belt and braces on top of the SearchBox @focus removal.
   let lastCloseTs = 0;
 
   function open(seed = ""): void {
-    if (Date.now() - lastCloseTs < 300) return;
+    if (Date.now() - lastCloseTs < 50) return;
     seedQuery.value = seed;
     isOpen.value = true;
   }
