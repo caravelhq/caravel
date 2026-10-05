@@ -2,8 +2,10 @@
 import { onMounted, onBeforeUnmount } from "vue";
 import { renderMarkdown } from "../lib/markdown";
 import { useReadAloud } from "../components/voice/useReadAloud";
+import { useChatStore } from "../stores/chat";
 
 const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
+const chatStore = useChatStore();
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CHAT_ID_KEY = "caravel.chat.id";
@@ -600,6 +602,7 @@ async function sendChat() {
   if (!agentPicked()) return;
   chatInput.value = "";
   autoResizeChatInput();
+  chatStore.saveDraft(chatSessionId, "");
   chatHistory.push({ role: "user", text: message, state: "pending" });
   if (!chatAgentLocked && pendingAgentId) {
     chatAgentLocked = pendingAgentId;
@@ -750,8 +753,19 @@ onMounted(() => {
     });
   }
 
-  // Input auto-resize
-  if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
+  // Input auto-resize and draft persistence
+  if (chatInput) {
+    chatInput.addEventListener("input", autoResizeChatInput);
+    chatInput.addEventListener("input", () => {
+      chatStore.saveDraft(chatSessionId, chatInput!.value);
+    });
+    // Restore draft from previous session or tab switch
+    const savedDraft = chatStore.getDraft(chatSessionId);
+    if (savedDraft) {
+      chatInput.value = savedDraft;
+      autoResizeChatInput();
+    }
+  }
 
   // Visibility change — resume polling when tab becomes visible
   document.addEventListener("visibilitychange", onVisibilityChange);
