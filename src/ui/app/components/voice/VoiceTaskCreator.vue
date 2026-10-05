@@ -1,15 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
-import {
-  BModal,
-  BFormGroup,
-  BFormInput,
-  BFormTextarea,
-  BFormSelect,
-  BFormSelectOption,
-  BButton,
-  BAlert,
-} from "bootstrap-vue-next";
+import BaseModal from "../modal/BaseModal.vue";
 import { useVoiceStore } from "./store/voice";
 import { useTaskCreatorStore } from "./store/taskCreator";
 import { stripMarkdown, esc, detectMimeType, speakFetch } from "./utils";
@@ -373,148 +364,235 @@ onBeforeUnmount(() => { closeMode(); });
 </script>
 
 <template>
-  <BModal
-    v-model="showModal"
+  <BaseModal
+    :open="showModal"
     size="lg"
-    no-close-on-backdrop
-    hide-footer
-    scrollable
-    centered
-    @hide="onModalHide"
+    title="Create a task from voice"
+    :dismissible="true"
+    @close="onModalHide"
   >
-    <template #title>
-      <span class="vtc-modal-title">
-        <i class="fa-solid fa-list-check me-2" style="color: #6ee7b7" />
-        Create a task from voice
-      </span>
-    </template>
+    <!-- No default Done footer — the form carries its own action buttons -->
+    <template #footer></template>
 
-    <!-- ── Success state ───────────────────────────────────────────────── -->
-    <template v-if="submitted">
-      <div class="vtc-success text-center py-4">
-        <i class="fa-solid fa-circle-check vtc-success-icon mb-3" />
-        <div class="fw-medium fs-5">Task created!</div>
-        <div class="text-secondary mt-1">Closing in a moment…</div>
-      </div>
-    </template>
+    <!-- ── Success state ──────────────────────────────────────────────── -->
+    <div v-if="submitted" class="vtc-success">
+      <span class="vtc-success-icon">✓</span>
+      <div class="vtc-success-label">Task created!</div>
+      <div class="vtc-success-sub">Closing in a moment…</div>
+    </div>
 
-    <!-- ── Confirmation form ───────────────────────────────────────────── -->
-    <template v-else-if="hasDraft">
-      <div v-if="replyText" class="vtc-claude-reply mb-3 p-3 rounded">
-        <small class="text-secondary d-block mb-1">Claude said</small>
+    <!-- ── Confirmation form ──────────────────────────────────────────── -->
+    <div v-else-if="hasDraft" class="vtc-form">
+      <div v-if="replyText" class="vtc-claude-reply">
+        <span class="vtc-claude-label">Claude said</span>
         {{ replyText.replace(/<task>[\s\S]*?<\/task>/gi, "").trim() }}
       </div>
 
-      <BFormGroup label="Agent" label-for="vtc-to" class="mb-2">
-        <BFormInput id="vtc-to" v-model="draftTo" size="sm" />
-      </BFormGroup>
+      <div class="vtc-field">
+        <label class="vtc-label" for="vtc-to">Agent</label>
+        <input id="vtc-to" v-model="draftTo" class="vtc-input" type="text" />
+      </div>
 
-      <div class="row g-2 mb-2">
-        <div class="col-6">
-          <BFormGroup label="Priority" label-for="vtc-priority">
-            <BFormSelect id="vtc-priority" v-model="draftPriority" size="sm">
-              <BFormSelectOption v-for="p in priorityOptions" :key="p" :value="p">{{ p }}</BFormSelectOption>
-            </BFormSelect>
-          </BFormGroup>
+      <div class="vtc-row">
+        <div class="vtc-field">
+          <label class="vtc-label" for="vtc-priority">Priority</label>
+          <select id="vtc-priority" v-model="draftPriority" class="vtc-select">
+            <option v-for="p in priorityOptions" :key="p" :value="p">{{ p }}</option>
+          </select>
         </div>
-        <div class="col-6">
-          <BFormGroup label="Kind" label-for="vtc-kind">
-            <BFormSelect id="vtc-kind" v-model="draftKind" size="sm">
-              <BFormSelectOption v-for="k in kindOptions" :key="k" :value="k">{{ k }}</BFormSelectOption>
-            </BFormSelect>
-          </BFormGroup>
+        <div class="vtc-field">
+          <label class="vtc-label" for="vtc-kind">Kind</label>
+          <select id="vtc-kind" v-model="draftKind" class="vtc-select">
+            <option v-for="k in kindOptions" :key="k" :value="k">{{ k }}</option>
+          </select>
         </div>
       </div>
 
-      <BFormGroup label="Project" label-for="vtc-project" class="mb-2">
-        <BFormInput id="vtc-project" v-model="draftProject" size="sm" placeholder="(none)" />
-      </BFormGroup>
-
-      <BFormGroup label="Headline" label-for="vtc-headline" class="mb-2">
-        <BFormInput id="vtc-headline" v-model="draftHeadline" size="sm" />
-      </BFormGroup>
-
-      <BFormGroup label="Brief" label-for="vtc-brief" class="mb-3">
-        <BFormTextarea id="vtc-brief" v-model="draftBrief" rows="4" size="sm" />
-      </BFormGroup>
-
-      <BAlert v-if="submitError" variant="danger" :model-value="true" class="mb-3">
-        {{ submitError }}
-      </BAlert>
-
-      <div class="d-flex gap-2 justify-content-end">
-        <BButton variant="secondary" size="sm" @click="resetDraft">
-          <i class="fa-solid fa-rotate-left me-1" /> Redo
-        </BButton>
-        <BButton variant="success" size="sm" :disabled="isSubmitting" @click="submitTask">
-          <i class="fa-solid fa-paper-plane me-1" />
-          {{ isSubmitting ? "Creating…" : "Create Task" }}
-        </BButton>
+      <div class="vtc-field">
+        <label class="vtc-label" for="vtc-project">Project</label>
+        <input id="vtc-project" v-model="draftProject" class="vtc-input" type="text" placeholder="(none)" />
       </div>
-    </template>
 
-    <!-- ── Voice capture phase ─────────────────────────────────────────── -->
-    <template v-else>
-      <div class="vtc-capture text-center py-3">
-        <div class="voice-mode-status mb-4">{{ statusText }}</div>
+      <div class="vtc-field">
+        <label class="vtc-label" for="vtc-headline">Headline</label>
+        <input id="vtc-headline" v-model="draftHeadline" class="vtc-input" type="text" />
+      </div>
 
-        <button
-          class="voice-mode-btn mx-auto mb-4"
-          :class="{ listening: isListening, processing: isProcessing }"
-          type="button"
-          aria-label="Hold to describe task"
-          @mousedown="pressDown"
-          @touchstart.prevent="pressDown"
-          @mouseup="pressUp"
-          @touchend.prevent="pressUp"
-          @mouseleave="pressLeave"
-        >
-          <i :class="isListening ? 'fa-solid fa-stop' : 'fa-solid fa-microphone'" />
+      <div class="vtc-field">
+        <label class="vtc-label" for="vtc-brief">Brief</label>
+        <textarea id="vtc-brief" v-model="draftBrief" class="vtc-textarea" rows="4" />
+      </div>
+
+      <div v-if="submitError" class="vtc-error">{{ submitError }}</div>
+
+      <div class="vtc-actions">
+        <button class="vtc-btn vtc-btn--secondary" type="button" @click="resetDraft">↺ Redo</button>
+        <button class="vtc-btn vtc-btn--primary" type="button" :disabled="isSubmitting" @click="submitTask">
+          {{ isSubmitting ? "Creating…" : "✈ Create Task" }}
         </button>
-
-        <div v-if="heardText" class="vm-heard mt-2">"{{ heardText }}"</div>
-        <div v-if="replyText" class="vm-reply vm-active mt-2">{{ replyText }}</div>
       </div>
-    </template>
-  </BModal>
+    </div>
+
+    <!-- ── Voice capture phase ────────────────────────────────────────── -->
+    <div v-else class="vtc-capture">
+      <div class="vtc-status">{{ statusText }}</div>
+
+      <button
+        class="voice-mode-btn vtc-mic-btn"
+        :class="{ listening: isListening, processing: isProcessing }"
+        type="button"
+        aria-label="Hold to describe task"
+        @mousedown="pressDown"
+        @touchstart.prevent="pressDown"
+        @mouseup="pressUp"
+        @touchend.prevent="pressUp"
+        @mouseleave="pressLeave"
+      >
+        <span v-if="isListening">◼</span>
+        <span v-else>🎙</span>
+      </button>
+
+      <div v-if="heardText" class="vm-heard">"{{ heardText }}"</div>
+      <div v-if="replyText" class="vm-reply vm-active">{{ replyText }}</div>
+    </div>
+  </BaseModal>
 </template>
 
 <style scoped>
-.vtc-modal-title {
-  font-family: "Space Grotesk", sans-serif;
-  font-weight: 600;
+.vtc-success {
+  text-align: center;
+  padding: 2rem 0;
 }
-
 .vtc-success-icon {
+  display: block;
   font-size: 3rem;
   color: #6ee7b7;
-  display: block;
+  margin-bottom: 0.75rem;
+}
+.vtc-success-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.vtc-success-sub {
+  color: var(--text-muted, #8a9bb8);
+  margin-top: 0.25rem;
 }
 
-.vtc-capture .voice-mode-btn {
+.vtc-form {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 0.75rem;
 }
-
+.vtc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.vtc-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.vtc-label {
+  font-size: 0.78rem;
+  color: var(--text-muted, #8a9bb8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.vtc-input,
+.vtc-select,
+.vtc-textarea {
+  background: var(--surface-2, #1a2030);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 4px;
+  color: inherit;
+  font-size: 0.875rem;
+  padding: 6px 8px;
+  width: 100%;
+  font-family: inherit;
+}
+.vtc-textarea { resize: vertical; min-height: 80px; }
+.vtc-input:focus,
+.vtc-select:focus,
+.vtc-textarea:focus {
+  outline: 2px solid var(--accent, #7dc5ff);
+  outline-offset: -1px;
+}
 .vtc-claude-reply {
-  font-size: 14px;
+  font-size: 13px;
   background: rgba(110, 231, 183, 0.06);
   border: 1px solid rgba(110, 231, 183, 0.15);
+  border-radius: 6px;
+  padding: 0.6rem 0.8rem;
   color: inherit;
   font-style: italic;
 }
+.vtc-claude-label {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted, #8a9bb8);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  font-style: normal;
+}
+.vtc-error {
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  color: #f87171;
+}
+.vtc-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}
+.vtc-btn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 5px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.1s;
+}
+.vtc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.vtc-btn--secondary {
+  background: var(--surface-3, #2a3040);
+  color: inherit;
+}
+.vtc-btn--secondary:hover { opacity: 0.8; }
+.vtc-btn--primary {
+  background: #6ee7b7;
+  color: #0a1020;
+  font-weight: 600;
+}
+.vtc-btn--primary:hover { opacity: 0.85; }
 
-/* Keep dark-context voice overlay styles working inside the modal body */
-.voice-mode-status {
-  color: var(--bs-secondary-color, #adb5bd);
+.vtc-capture {
+  text-align: center;
+  padding: 1.5rem 0;
+}
+.vtc-status {
+  color: var(--text-muted, #8a9bb8);
+  margin-bottom: 1.5rem;
+}
+.vtc-mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
 }
 .vm-heard {
   font-style: italic;
-  color: var(--bs-body-color, #dee2e6);
+  color: var(--text-secondary, #c8d8ee);
+  margin-top: 0.5rem;
 }
 .vm-reply.vm-active {
   color: #6ee7b7;
   font-weight: 500;
+  margin-top: 0.5rem;
 }
 </style>
