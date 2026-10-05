@@ -13623,6 +13623,7 @@ const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
   const currentProjectSlug = /* @__PURE__ */ ref(load$3("currentProjectSlug", null));
   const taskFromProjectSlug = /* @__PURE__ */ ref(null);
   const loaded = /* @__PURE__ */ ref(false);
+  const pendingTaskId = /* @__PURE__ */ ref(null);
   watch(currentTaskId, (v2) => save$1("currentTaskId", v2));
   watch(pane, (v2) => save$1("pane", v2));
   watch(currentProjectSlug, (v2) => save$1("currentProjectSlug", v2));
@@ -13643,7 +13644,8 @@ const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
     currentViewMode,
     currentProjectSlug,
     taskFromProjectSlug,
-    loaded
+    loaded,
+    pendingTaskId
   };
 });
 function load$2(key, fallback) {
@@ -13857,13 +13859,16 @@ const useKnowledgeStore = /* @__PURE__ */ defineStore("knowledge", () => {
   function markFresh() {
     isStale.value = false;
   }
+  let lastCloseTs = 0;
   function open(seed = "") {
+    if (Date.now() - lastCloseTs < 300) return;
     seedQuery.value = seed;
     isOpen.value = true;
   }
   function close() {
     isOpen.value = false;
     seedQuery.value = "";
+    lastCloseTs = Date.now();
   }
   function clear() {
     currentResult.value = null;
@@ -17130,6 +17135,11 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     function openModal(seed) {
       ks.open(seed ?? draft.value);
     }
+    function onBoxClick() {
+      var _a2;
+      (_a2 = inputRef.value) == null ? void 0 : _a2.focus();
+      openModal(draft.value);
+    }
     function onKeyDown(ev) {
       if (ev.key === "Enter" || ev.key === "ArrowDown") {
         ev.preventDefault();
@@ -17144,12 +17154,9 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
       return openBlock(), createElementBlock("div", {
         id: "search-box",
         class: "srch-box",
-        onClick: _cache[2] || (_cache[2] = ($event) => {
-          var _a2;
-          return (_a2 = inputRef.value) == null ? void 0 : _a2.focus();
-        })
+        onClick: onBoxClick
       }, [
-        _cache[3] || (_cache[3] = createBaseVNode("span", {
+        _cache[2] || (_cache[2] = createBaseVNode("span", {
           class: "srch-box-icon",
           "aria-hidden": "true"
         }, "🔍", -1)),
@@ -17161,13 +17168,13 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
           placeholder: __props.corpusLabel || "Search knowledge…",
           autocomplete: "off",
           spellcheck: "false",
-          onFocus: _cache[1] || (_cache[1] = ($event) => openModal(draft.value)),
+          onInput: _cache[1] || (_cache[1] = ($event) => openModal(draft.value)),
           onKeydown: onKeyDown,
           "aria-label": "Search knowledge base"
         }, null, 40, _hoisted_1$h), [
           [vModelText, draft.value]
         ]),
-        _cache[4] || (_cache[4] = createBaseVNode("span", { class: "srch-box-hint" }, "⌘K", -1))
+        _cache[3] || (_cache[3] = createBaseVNode("span", { class: "srch-box-hint" }, "⌘K", -1))
       ]);
     };
   }
@@ -17416,8 +17423,7 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
     const visibleRows = computed(() => props.tier.rows.slice(0, limit.value));
     const hasMore = computed(() => props.tier.count > visibleRows.value.length);
     function openTask(id) {
-      tasksStore.currentTaskId = id;
-      tasksStore.pane = "view";
+      tasksStore.pendingTaskId = id;
       workspace.open({ kind: "legacy", page: "tasks" });
     }
     function openAllTasks() {
@@ -22806,6 +22812,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     watch(() => attentionStore.tiers, (tiers) => {
       if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
     });
+    watch(() => tasksStore.pendingTaskId, (id) => {
+      if (!id || !tasksStore.loaded || !taskPanelBodyEl) return;
+      tasksStore.pendingTaskId = null;
+      openTaskPanel(id);
+    });
     function setRightPaneMode(mode) {
       tasksStore.pane = mode;
       if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
@@ -22869,7 +22880,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         tasksStore.cache = data.tasks;
         tasksStore.loaded = true;
         renderTaskPicker();
-        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+        const pendingNav = tasksStore.pendingTaskId;
+        if (pendingNav) {
+          tasksStore.pendingTaskId = null;
+          openTaskPanel(pendingNav);
+        } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
           openTaskPanel(tasksStore.currentTaskId);
         } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
           openProjectPanel(tasksStore.currentProjectSlug);
@@ -23723,7 +23738,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         fetchTasks();
       } else {
         renderTaskPicker();
-        if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+        const pendingNav = tasksStore.pendingTaskId;
+        if (pendingNav) {
+          tasksStore.pendingTaskId = null;
+          openTaskPanel(pendingNav);
+        } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
           openTaskPanel(tasksStore.currentTaskId);
         } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
           openProjectPanel(tasksStore.currentProjectSlug);
