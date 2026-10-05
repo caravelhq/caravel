@@ -1,5 +1,7 @@
 import { createRouter, createWebHashHistory, type RouteLocationNormalized } from "vue-router";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useTasksStore } from "../stores/tasks";
+import { useFilesStore } from "../stores/files";
 import type { ResourceRef } from "../workspace/refs";
 import { refKey } from "../workspace/refs";
 
@@ -19,7 +21,9 @@ export const router = createRouter({
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
     { path: "/tasks", component: Stub },
+    { path: "/tasks/:taskId", component: Stub },
     { path: "/files", component: Stub },
+    { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
     { path: "/", redirect: "/dashboard" },
@@ -31,9 +35,9 @@ export const router = createRouter({
 function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
   const p = route.path;
   if (p === "/dashboard" || p === "/") return { kind: "dashboard" };
-  if (p === "/tasks") return { kind: "legacy", page: "tasks" };
+  if (p === "/tasks" || p.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p === "/chat") return { kind: "legacy", page: "chat" };
-  if (p === "/files") return { kind: "legacy", page: "files" };
+  if (p === "/files" || p.startsWith("/files/")) return { kind: "legacy", page: "files" };
   if (p.startsWith("/file/")) {
     const path = decodeURIComponent(p.slice("/file/".length));
     const branch = route.query["branch"] as string | undefined;
@@ -75,6 +79,24 @@ router.afterEach((to) => {
         ws.active[g] = sideKey;
       }
     }
+
+    // Hydrate legacy-page stores from URL identity segments.
+    // This runs before the page mounts, so onMounted sees the correct values.
+    const p = to.path;
+    if (p.startsWith("/tasks/")) {
+      const taskId = decodeURIComponent(p.slice("/tasks/".length));
+      if (taskId) {
+        const tasks = useTasksStore();
+        tasks.currentTaskId = taskId;
+        tasks.pane = "view";
+      }
+    } else if (p.startsWith("/files/")) {
+      const filePath = decodeURIComponent(p.slice("/files/".length));
+      if (filePath) {
+        const files = useFilesStore();
+        files.currentPath = filePath;
+      }
+    }
   } finally {
     _navigating = false;
   }
@@ -88,7 +110,20 @@ export function syncWorkspaceUrl(push: boolean): void {
   const focusedRef = ws.focusedActiveRef;
   if (!focusedRef) return;
 
-  const path = refToPath(focusedRef);
+  let path: string;
+  if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
+    const tasks = useTasksStore();
+    path = (tasks.pane === "view" && tasks.currentTaskId)
+      ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}`
+      : "/tasks";
+  } else if (focusedRef.kind === "legacy" && focusedRef.page === "files") {
+    const files = useFilesStore();
+    path = files.currentPath
+      ? `/files/${encodeURIComponent(files.currentPath)}`
+      : "/files";
+  } else {
+    path = refToPath(focusedRef);
+  }
 
   // Build ?side= from the non-focused group's active key when split.
   const otherGroup: 0 | 1 = ws.focused === 0 ? 1 : 0;

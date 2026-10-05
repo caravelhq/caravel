@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ close: [] }>();
 const modals = useModalsStore();
 const dialogRef = ref<HTMLDialogElement | null>(null);
+const innerRef = ref<HTMLDivElement | null>(null);
 
 // Module-level scroll lock counter — handles multiple stacked modals.
 let scrollLockCount = 0;
@@ -55,9 +56,20 @@ function onCancel(ev: Event): void {
   if (props.dismissible) emit("close");
 }
 
+// Geometric backdrop test: dismiss only if the click landed outside the inner card.
+// Uses `click` (not `pointerdown`) so the dialog closes after the full click cycle;
+// the follow-through event that caused the focus-steal under pointerdown no longer exists,
+// letting native <dialog> focus-restore return focus to the opener uncontested.
+// Touch: a tap produces a synthesised `click` after pointerup, so backdrop-tap still works
+// and MD3/MD4 stay green in both pointer and touch-emulated contexts.
 function onDialogClick(ev: MouseEvent): void {
   if (!props.dismissible) return;
-  if ((ev.target as Element) === dialogRef.value) emit("close");
+  const inner = innerRef.value;
+  if (!inner) return;
+  const r = inner.getBoundingClientRect();
+  if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+    emit("close");
+  }
 }
 </script>
 
@@ -70,7 +82,7 @@ function onDialogClick(ev: MouseEvent): void {
     @cancel="onCancel"
     @click="onDialogClick"
   >
-    <div class="base-modal-inner" @click.stop>
+    <div ref="innerRef" class="base-modal-inner" @click.stop @pointerdown.stop>
       <slot name="header">
         <div v-if="title" class="base-modal-head">
           <span class="base-modal-title">{{ title }}</span>
@@ -86,9 +98,11 @@ function onDialogClick(ev: MouseEvent): void {
       <div class="base-modal-body">
         <slot />
       </div>
-      <div v-if="$slots.footer" class="base-modal-footer">
-        <slot name="footer" />
-      </div>
+      <slot name="footer">
+        <div v-if="dismissible" class="base-modal-footer base-modal-footer--done">
+          <button class="base-modal-done-btn" type="button" @click="emit('close')">Done</button>
+        </div>
+      </slot>
     </div>
   </dialog>
 </template>

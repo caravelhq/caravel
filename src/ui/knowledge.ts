@@ -221,6 +221,14 @@ export class BridgeKnowledge implements KnowledgeService {
         reports = (parsed as any)?.reports ?? [];
       }
 
+      // Defensive: mark hits with no openable target so the UI can render them as dead rows.
+      // Normally the CLI returns path on every hit; this guard handles a lagging CLI.
+      docs = docs.map((d) => {
+        const doc = d as any;
+        const resolvable = !!(doc?.path || (typeof doc?.id === "string" && doc.id.startsWith("TSK-")));
+        return resolvable ? d : { ...doc, _pathless: true };
+      });
+
       const result: SearchResult = {
         ok: true,
         docs,

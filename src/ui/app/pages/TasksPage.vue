@@ -79,6 +79,7 @@ import { useRouter } from "vue-router";
 import { useUiStore } from "../stores/ui";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useNewTaskStore } from "../stores/newTask";
+import { syncWorkspaceUrl } from "../router";
 
 const tasksStore = useTasksStore();
 const attentionStore = useAttentionStore();
@@ -200,6 +201,12 @@ async function fetchTasks(): Promise<void> {
     tasksStore.cache = data.tasks;
     tasksStore.loaded = true;
     renderTaskPicker();
+    // Restore the task or project panel from persisted (or URL-hydrated) store state.
+    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      openTaskPanel(tasksStore.currentTaskId);
+    } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
+      openProjectPanel(tasksStore.currentProjectSlug);
+    }
   } catch (err) {
     tasksTreeEl.innerHTML = '<div class="tasks-tree-empty">Error: ' + String((err as Error).message || err) + "</div>";
   }
@@ -215,6 +222,7 @@ async function openTaskPanel(taskId: string): Promise<void> {
   tasksStore.currentTaskId = taskId;
   tasksStore.currentTaskProject = null;
   setRightPaneMode("view");
+  syncWorkspaceUrl(false);
 
   if (taskPanelIdEl) taskPanelIdEl.textContent = taskId;
   if (taskPanelHeadlineEl) taskPanelHeadlineEl.textContent = "Loading…";

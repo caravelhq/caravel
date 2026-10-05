@@ -67,6 +67,14 @@ watch(draftQuery, (q) => {
   debounceTimer = setTimeout(() => triggerSearch(q), 250);
 });
 
+function onInputKeyDown(ev: KeyboardEvent): void {
+  if (ev.key === "Enter") {
+    ev.preventDefault();
+    if (debounceTimer) { clearTimeout(debounceTimer); debounceTimer = null; }
+    triggerSearch(draftQuery.value);
+  }
+}
+
 async function triggerSearch(q: string): Promise<void> {
   const trimmed = q.trim();
   if (!trimmed) return;
@@ -103,9 +111,9 @@ const reports = computed(() => ks.currentResult?.reports ?? []);
 // ── Open result as workspace tab ───────────────────────────────────────────
 function openDoc(doc: KnowledgeDoc, side = false): void {
   const path = doc.path as string | undefined;
-  const taskId = doc.id as string | undefined;
+  const taskId = doc.id;
 
-  if (taskId && taskId.startsWith("TSK-")) {
+  if (typeof taskId === "string" && taskId.startsWith("TSK-")) {
     ws.open({ kind: "report", taskId, path }, { side });
   } else if (path) {
     ws.open({ kind: "file", path }, { side });
@@ -154,6 +162,14 @@ function highlight(snippet: string | undefined, q: string): string {
   return snippet.replace(new RegExp(`(${escaped})`, "gi"), "<mark>$1</mark>");
 }
 
+// ── Dead-row guard ────────────────────────────────────────────────────────
+function canOpen(doc: KnowledgeDoc): boolean {
+  const path = doc.path as string | undefined;
+  const taskId = doc.id;
+  if ((doc as any)._pathless) return false;
+  return !!(path || (typeof taskId === "string" && taskId.startsWith("TSK-")));
+}
+
 // ── Stale banner ──────────────────────────────────────────────────────────
 function rerun(): void {
   ks.markFresh();
@@ -181,6 +197,7 @@ function rerun(): void {
             spellcheck="false"
             aria-label="Search query"
             @keydown.escape="ks.close()"
+            @keydown="onInputKeyDown"
           />
           <div class="srch-mode-toggle" role="group" aria-label="Search mode">
             <button
@@ -235,14 +252,15 @@ function rerun(): void {
             <div
               v-for="(doc, i) in docs"
               :key="doc.path ?? doc.id ?? i"
-              class="srch-row"
+              :class="['srch-row', { 'srch-row--dead': !canOpen(doc) }]"
               role="option"
-              tabindex="0"
+              :tabindex="canOpen(doc) ? 0 : -1"
+              :aria-disabled="!canOpen(doc) || undefined"
               :data-doc-path="doc.path"
               :data-doc-id="doc.id"
-              @click="onRowClick(doc, $event)"
-              @mousedown="onRowMiddleClick(doc, $event)"
-              @keydown="onRowKeyDown(doc, $event)"
+              @click="canOpen(doc) && onRowClick(doc, $event)"
+              @mousedown="canOpen(doc) && onRowMiddleClick(doc, $event)"
+              @keydown="canOpen(doc) && onRowKeyDown(doc, $event)"
             >
               <div class="srch-row-title">{{ doc.title ?? doc.path }}</div>
               <div class="srch-row-meta">
@@ -279,14 +297,15 @@ function rerun(): void {
             <div
               v-for="(doc, i) in reports"
               :key="doc.id ?? doc.path ?? i"
-              class="srch-row"
+              :class="['srch-row', { 'srch-row--dead': !canOpen(doc) }]"
               role="option"
-              tabindex="0"
+              :tabindex="canOpen(doc) ? 0 : -1"
+              :aria-disabled="!canOpen(doc) || undefined"
               :data-doc-path="doc.path"
               :data-doc-id="doc.id"
-              @click="onRowClick(doc, $event)"
-              @mousedown="onRowMiddleClick(doc, $event)"
-              @keydown="onRowKeyDown(doc, $event)"
+              @click="canOpen(doc) && onRowClick(doc, $event)"
+              @mousedown="canOpen(doc) && onRowMiddleClick(doc, $event)"
+              @keydown="canOpen(doc) && onRowKeyDown(doc, $event)"
             >
               <div class="srch-row-title">{{ doc.title ?? doc.id }}</div>
               <div class="srch-row-meta">

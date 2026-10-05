@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useUiStore } from "../stores/ui";
 import { refKey, type ResourceRef } from "./refs";
+import OpenMenu from "../components/chrome/OpenMenu.vue";
 
 const ws = useWorkspaceStore();
+const ui = useUiStore();
 
 const group0 = computed(() => ws.groupTabs(0));
 const group1 = computed(() => ws.groupTabs(1));
@@ -75,6 +78,9 @@ function onDividerDrop(e: DragEvent) {
 
 <template>
   <div class="tab-strip">
+    <!-- Open menu — first element in the strip -->
+    <OpenMenu />
+
     <!-- Group 0 tabs -->
     <button
       v-for="(tab, i) in group0"
@@ -100,7 +106,6 @@ function onDividerDrop(e: DragEvent) {
     >
       <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
       <span
-        v-if="tab.kind !== 'dashboard'"
         class="ts-tab-close"
         role="button"
         tabindex="-1"
@@ -148,7 +153,6 @@ function onDividerDrop(e: DragEvent) {
     >
       <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
       <span
-        v-if="tab.kind !== 'dashboard'"
         class="ts-tab-close"
         role="button"
         tabindex="-1"
@@ -165,6 +169,13 @@ function onDividerDrop(e: DragEvent) {
         :title="ws.splitOn ? 'Close split' : 'Open split'"
         @click="ws.toggleSplit()"
       >⫽</button>
+      <button
+        id="settings-btn"
+        class="ts-settings-btn"
+        type="button"
+        title="Settings"
+        @click="ui.settingsOpen = true"
+      >&#x2699;</button>
     </div>
   </div>
 </template>
@@ -273,4 +284,19 @@ function onDividerDrop(e: DragEvent) {
 
 .ts-split-btn:hover { opacity: 0.8; }
 .ts-split-btn--active { opacity: 0.9; color: var(--accent, #7dc5ff); }
+
+.ts-settings-btn {
+  background: transparent;
+  border: none;
+  color: inherit;
+  opacity: 0.45;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transition: opacity 0.1s;
+  border-left: 1px solid var(--border-subtle, #333);
+  margin-left: 2px;
+}
+.ts-settings-btn:hover { opacity: 0.8; }
 </style>

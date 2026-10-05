@@ -12,8 +12,13 @@ const _gs = document.createElement("style");
 _gs.textContent = pageStyles;
 document.head.insertBefore(_gs, document.head.firstChild);
 
+// Unregister any previously installed service worker — Caravel no longer uses one.
+// The /sw.js endpoint now serves a self-unregistering stub for clients that load
+// that URL directly; this call covers clients that skip the stub and load fresh.
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/sw.js").catch(() => {});
+  navigator.serviceWorker.getRegistrations()
+    .then(regs => Promise.all(regs.map(r => r.unregister())))
+    .catch(() => {});
 }
 
 createApp(App)

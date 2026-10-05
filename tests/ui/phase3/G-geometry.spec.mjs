@@ -144,6 +144,13 @@ async function measureViewport(browser, viewport) {
   for (const pg of PAGES) {
     const tab = page.locator(pg.tabId).first();
     if (await tab.count() > 0) {
+      // Phase 3.1: #tab-* ids live inside the Open menu <details>; they are
+      // not clickable while the menu is closed. Open it first (R12 gate repair).
+      const menuBtn = page.locator(".open-menu-btn").first();
+      if (await menuBtn.count() > 0) {
+        const menuOpen = await page.evaluate(() => document.querySelector(".open-menu")?.open ?? false);
+        if (!menuOpen) await menuBtn.click();
+      }
       await tab.click();
     } else {
       // Vanilla app uses hash routing; navigate directly.

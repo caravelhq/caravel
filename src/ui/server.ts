@@ -1,4 +1,5 @@
 import { writeFile, rm, mkdir, stat as statFile } from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve, relative } from "node:path";
 import { createHash } from "node:crypto";
@@ -35,7 +36,25 @@ import { BridgeKnowledge, startKnowledgeReindex } from "./knowledge";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
 
+// ── Build manifest ───────────────────────────────────────────────────────────
+// Written by vite.config.ts after each production build. Falls back to
+// unversioned names so the dev-mode daemon (bun run src/index.ts) still works.
+let BUILD_JS = "app.js";
+let BUILD_CSS = "app.css";
+let BUILD_ID = "dev";
+try {
+  const mf = JSON.parse(
+    readFileSync(new URL("./app-dist/build-manifest.json", import.meta.url), "utf-8")
+  ) as { js?: string; css?: string; buildId?: string };
+  if (mf.js) BUILD_JS = mf.js;
+  if (mf.css) BUILD_CSS = mf.css;
+  if (mf.buildId) BUILD_ID = mf.buildId;
+} catch { /* not yet built or running in dev mode */ }
 
+// ETag for the app shell — derived from content, stable across restarts for
+// the same build, computed once at module init rather than per request.
+const SHELL_HTML = htmlPage(BUILD_JS, BUILD_CSS);
+const SHELL_ETAG = `"${createHash("sha1").update(SHELL_HTML).digest("hex").slice(0, 16)}"`;
 
 // ── TTS audio cache ──────────────────────────────────────────────────────────
 // Server-side LRU cache for synthesised TTS audio. Keyed by SHA-256 of the
@@ -333,8 +352,15 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
       const url = new URL(req.url);
 
       if (url.pathname === "/" || url.pathname === "/index.html") {
-        return new Response(htmlPage(), {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
+        if (req.headers.get("if-none-match") === SHELL_ETAG) {
+          return new Response(null, { status: 304 });
+        }
+        return new Response(SHELL_HTML, {
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+            "Cache-Control": "no-cache",
+            "ETag": SHELL_ETAG,
+          },
         });
       }
 
@@ -353,29 +379,41 @@ export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
         });
       }
 
-      if (url.pathname === "/app.js") {
-        const file = Bun.file(new URL("./app-dist/app.js", import.meta.url));
+      if (url.pathname === `/${BUILD_JS}`) {
+        const file = Bun.file(new URL(`./app-dist/${BUILD_JS}`, import.meta.url));
         return new Response(file, {
-          headers: { "Content-Type": "application/javascript; charset=utf-8" },
+          headers: {
+            "Content-Type": "application/javascript; charset=utf-8",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
         });
       }
 
-      if (url.pathname === "/app.css") {
-        const file = Bun.file(new URL("./app-dist/app.css", import.meta.url));
+      if (url.pathname === `/${BUILD_CSS}`) {
+        const file = Bun.file(new URL(`./app-dist/${BUILD_CSS}`, import.meta.url));
         return new Response(file, {
-          headers: { "Content-Type": "text/css; charset=utf-8" },
+          headers: {
+            "Content-Type": "text/css; charset=utf-8",
+            "Cache-Control": "public, max-age=31536000, immutable",
+          },
         });
       }
 
       if (url.pathname === "/sw.js") {
-        const sw = `self.addEventListener('install', e => self.skipWaiting());
-self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-self.addEventListener('fetch', e => {
-  if (e.request.url.includes('/api/')) return;
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+        // Self-unregistering stub — Caravel no longer uses a service worker.
+        // Served no-cache so every client gets this version and unregisters promptly.
+        const sw = `// Caravel does not use a service worker.
+// This stub unregisters any previously installed registration.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => {
+  e.waitUntil(self.registration.unregister().then(() => self.clients.claim()));
 });`;
         return new Response(sw, {
-          headers: { "Content-Type": "application/javascript", "Service-Worker-Allowed": "/" },
+          headers: {
+            "Content-Type": "application/javascript",
+            "Service-Worker-Allowed": "/",
+            "Cache-Control": "no-cache",
+          },
         });
       }
 
@@ -422,7 +460,7 @@ self.addEventListener('fetch', e => {
       }
 
       if (url.pathname === "/api/state") {
-        return json(await buildState(opts.getSnapshot()));
+        return json(await buildState(opts.getSnapshot(), BUILD_ID));
       }
 
       if (url.pathname === "/api/settings") {

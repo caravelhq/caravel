@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
 import { renderMarkdown } from "../lib/markdown";
+import { useReadAloud } from "../components/voice/useReadAloud";
+
+const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CHAT_ID_KEY = "caravel.chat.id";
@@ -509,7 +512,30 @@ function syncChatMessageEl(msgEl: HTMLElement, msg: { role: string; text: string
     }
     const isActive = state === "thinking" || state === "streaming" || state === "background";
     msgEl.dataset.active = isActive ? "1" : "0";
+
+    // Per-message read-aloud control — only on finished assistant messages.
+    msgEl.querySelector(".chat-msg-speak")?.remove();
+    if (!isActive && msg.text) {
+      const speakBtn = document.createElement("button");
+      speakBtn.type = "button";
+      speakBtn.className = "chat-msg-speak";
+      speakBtn.title = "Read aloud";
+      speakBtn.setAttribute("aria-label", "Read aloud");
+      speakBtn.textContent = "🔊";
+      const capturedText = msg.text;
+      speakBtn.addEventListener("click", () => { readAloud(capturedText); });
+      msgEl.appendChild(speakBtn);
+    }
   }
+}
+
+// voice:read-aloud-toggle — toggle playback of the latest assistant message.
+function onReadAloudToggle() {
+  if (isPlaying()) { stopReadAloud(); return; }
+  const last = [...chatHistory].reverse().find(
+    (m) => m.role === "assistant" && m.text && m.state !== "error"
+  );
+  if (last?.text) readAloud(last.text);
 }
 
 function updateInterruptBtn() {
@@ -574,8 +600,6 @@ async function sendChat() {
   if (!agentPicked()) return;
   chatInput.value = "";
   autoResizeChatInput();
-  const w = window as Window & { __ttsResetAutoRead?: () => void };
-  if (typeof w.__ttsResetAutoRead === "function") w.__ttsResetAutoRead();
   chatHistory.push({ role: "user", text: message, state: "pending" });
   if (!chatAgentLocked && pendingAgentId) {
     chatAgentLocked = pendingAgentId;
@@ -732,6 +756,9 @@ onMounted(() => {
   // Visibility change — resume polling when tab becomes visible
   document.addEventListener("visibilitychange", onVisibilityChange);
 
+  // voice:read-aloud-toggle — read the latest assistant message on demand, or stop.
+  document.addEventListener("voice:read-aloud-toggle", onReadAloudToggle);
+
   // Focus chat input and scroll to bottom when navigating to chat
   if (chatInput) chatInput.focus();
   if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -743,6 +770,8 @@ onMounted(() => {
 onBeforeUnmount(() => {
   if (chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
   document.removeEventListener("visibilitychange", onVisibilityChange);
+  document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
+  stopReadAloud();
   if (historyClickHandler) {
     document.removeEventListener("click", historyClickHandler);
     historyClickHandler = null;
