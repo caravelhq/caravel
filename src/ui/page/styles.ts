@@ -2495,6 +2495,32 @@ export const pageStyles = String.raw`    :root {
       transform: none;
     }
 
+    /* Per-message read-aloud button — transparent background, bottom-right of message text */
+    .chat-msg-speak {
+      appearance: none;
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: #6aadcc88;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: color 0.14s ease, background 0.14s ease;
+    }
+    .chat-msg-speak:hover {
+      color: var(--accent);
+      background: #ffffff0a;
+    }
+    /* Make the message container relative so the absolute button positions correctly */
+    .chat-msg-assistant { position: relative; }
+
     /* ── Files panel ── */
     /* Width matches the Tasks panel. Both pages share the same
        picker-on-left, viewer-on-right shape, so they render at the

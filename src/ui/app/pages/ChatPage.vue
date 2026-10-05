@@ -1,11 +1,16 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from "vue";
+import { onMounted, onBeforeUnmount, watch } from "vue";
 import { renderMarkdown } from "../lib/markdown";
 import { useReadAloud } from "../components/voice/useReadAloud";
 import { useChatStore } from "../stores/chat";
+import { useUiStore } from "../stores/ui";
 
 const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
 const chatStore = useChatStore();
+const ui = useUiStore();
+
+// Stop per-message audio when the global read-aloud starts.
+watch(() => ui.raStopSignal, () => { if (isPlaying()) stopReadAloud(); });
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const CHAT_ID_KEY = "caravel.chat.id";
@@ -523,7 +528,7 @@ function syncChatMessageEl(msgEl: HTMLElement, msg: { role: string; text: string
       speakBtn.className = "chat-msg-speak";
       speakBtn.title = "Read aloud";
       speakBtn.setAttribute("aria-label", "Read aloud");
-      speakBtn.textContent = "🔊";
+      speakBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
       const capturedText = msg.text;
       speakBtn.addEventListener("click", () => { readAloud(capturedText); });
       msgEl.appendChild(speakBtn);
@@ -553,6 +558,14 @@ function updateInterruptBtn() {
 }
 
 function renderChatHistory() {
+  // Update the global read-aloud text with the last finished assistant message.
+  const lastDone = [...chatHistory].reverse().find(
+    (m) => m.role === "assistant" && m.text &&
+      m.state !== "thinking" && m.state !== "streaming" && m.state !== "background" && m.state !== "error"
+  );
+  ui.raText = lastDone?.text ?? null;
+  ui.raFilePath = null;
+
   const w = window as Window & { __updateSpeakerDisabled?: () => void };
   if (typeof w.__updateSpeakerDisabled === "function") w.__updateSpeakerDisabled();
   refreshChatTitleVisibility();
@@ -786,6 +799,9 @@ onBeforeUnmount(() => {
   document.removeEventListener("visibilitychange", onVisibilityChange);
   document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
   stopReadAloud();
+  // Clear the global read-aloud text so the button disables on navigation away.
+  ui.raText = null;
+  ui.raFilePath = null;
   if (historyClickHandler) {
     document.removeEventListener("click", historyClickHandler);
     historyClickHandler = null;
