@@ -14,6 +14,11 @@ function openModal(seed?: string): void {
   ks.open(seed ?? draft.value);
 }
 
+function onBoxClick(): void {
+  inputRef.value?.focus();
+  openModal(draft.value);
+}
+
 function onKeyDown(ev: KeyboardEvent): void {
   if (ev.key === "Enter" || ev.key === "ArrowDown") {
     ev.preventDefault();
@@ -28,7 +33,7 @@ defineExpose({ focus: () => inputRef.value?.focus() });
   <div
     id="search-box"
     class="srch-box"
-    @click="inputRef?.focus()"
+    @click="onBoxClick"
   >
     <span class="srch-box-icon" aria-hidden="true">🔍</span>
     <input
@@ -38,7 +43,7 @@ defineExpose({ focus: () => inputRef.value?.focus() });
       :placeholder="corpusLabel || 'Search knowledge…'"
       autocomplete="off"
       spellcheck="false"
-      @focus="openModal(draft)"
+      @input="openModal(draft)"
       @keydown="onKeyDown"
       aria-label="Search knowledge base"
     />
