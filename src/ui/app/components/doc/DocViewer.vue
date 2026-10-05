@@ -3,6 +3,8 @@ import { watch, onMounted, onBeforeUnmount, useTemplateRef } from "vue";
 import { renderMarkdown, stripFrontmatter } from "../../lib/markdown";
 import { yamlRender } from "../../lib/yaml-render";
 import { escHtml, detectLang, isYaml, isImageFile, highlightCode } from "../../lib/highlight";
+import { useUiStore } from "../../stores/ui";
+import { useWorkspaceStore } from "../../stores/workspace";
 
 // Props: path to render, optional branch, optional kind.
 // kind="report" uses cache:no-store (reports mutate while tasks run).
@@ -13,6 +15,8 @@ const props = defineProps<{
 }>();
 
 const contentEl = useTemplateRef<HTMLDivElement>("content");
+const ui = useUiStore();
+const ws = useWorkspaceStore();
 
 let currentPath = "";
 // Tracks a path that arrived before mount (immediate watch fires during setup(),
@@ -45,7 +49,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
-  // Nothing to clean up for fetch; any in-flight request resolves harmlessly
+  // Clear read-aloud text if this DocViewer owned it.
+  updateRaText(null, null);
 });
 
 function setEmpty() {
@@ -60,7 +65,7 @@ async function renderPath(filePath: string, branch?: string): Promise<void> {
 
   if (isImageFile(filePath)) {
     renderImageInto(el, filePath, branch);
-    notifySpeaker();
+    updateRaText(null, null);
     return;
   }
 
@@ -88,11 +93,14 @@ async function renderPath(filePath: string, branch?: string): Promise<void> {
       div.innerHTML = fmHtml + renderMarkdown(body);
       hydrateLinks(div);
       el.appendChild(div);
+      // .md files: expose raw content for sidecar call; path for {path} mode.
+      updateRaText(body || (data.content as string) || null, /\.md$/i.test(filePath) ? filePath : null);
     } else if (isYaml(filePath)) {
       const ydiv = document.createElement("div");
       ydiv.className = "files-yaml";
       ydiv.innerHTML = yamlRender(data.content);
       el.appendChild(ydiv);
+      updateRaText(data.content as string || null, null);
     } else {
       const lang = detectLang(filePath);
       if (lang) {
@@ -108,6 +116,7 @@ async function renderPath(filePath: string, branch?: string): Promise<void> {
         raw.textContent = data.content;
         el.appendChild(raw);
       }
+      updateRaText(data.content as string || null, null);
     }
   } catch (err) {
     if (currentPath !== filePath) return;
@@ -115,8 +124,8 @@ async function renderPath(filePath: string, branch?: string): Promise<void> {
       '<div class="files-empty">Error: ' +
       escHtml(String(err instanceof Error ? err.message : err)) +
       "</div>";
+    updateRaText(null, null);
   }
-  notifySpeaker();
 }
 
 // Hydrate links in rendered markdown so alt-click throws to reading pane (Phase 2 reading pane).
@@ -129,7 +138,20 @@ function hydrateLinks(container: HTMLElement): void {
   });
 }
 
-function notifySpeaker(): void {
+// Set raText/raFilePath only when this DocViewer is the focused view.
+// In split mode, both panes may be mounted; only the focused one should own the text.
+function updateRaText(text: string | null, filePath: string | null): void {
+  const focused = ws.focusedActiveRef;
+  if (!focused) return;
+  const isFocusedFile = focused.kind === "file" && focused.path === props.path;
+  const isFocusedReport = focused.kind === "report" && props.kind === "report";
+  const isFocusedLegacyFiles = focused.kind === "legacy" && focused.page === "files";
+  const isFocusedLegacyTasks = focused.kind === "legacy" && focused.page === "tasks";
+  if (isFocusedFile || isFocusedReport || isFocusedLegacyFiles || isFocusedLegacyTasks) {
+    ui.raText = text;
+    ui.raFilePath = isFocusedFile && filePath ? filePath : null;
+  }
+  // Legacy compat — keep existing imperative speaker update hook alive.
   if (typeof (window as any).__updateSpeakerDisabled === "function") {
     (window as any).__updateSpeakerDisabled();
   }

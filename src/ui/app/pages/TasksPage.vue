@@ -111,6 +111,9 @@ let taskPanelStatusEl: HTMLElement | null = null;
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let lpStartX = 0, lpStartY = 0;
 
+// Tracks the raw text of the currently loaded report for the global read-aloud button.
+let currentReportRawText: string | null = null;
+
 const router = useRouter();
 let currentTaskChain: { task?: Record<string, unknown>; ancestors?: Record<string, unknown>[]; children?: Record<string, unknown>[] } | null = null;
 
@@ -127,7 +130,10 @@ function setRightPaneMode(mode: "empty" | "view" | "project"): void {
   if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
   if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
   if (mode !== "view") {
-    // Viewer shown via part-2 — nothing to clear here yet.
+    // Leaving the viewer pane — clear read-aloud text.
+    currentReportRawText = null;
+    ui.raText = null;
+    ui.raFilePath = null;
   }
   // Narrow panel: switching the right pane to view/new/project means the user
   // wants to SEE it, so collapse the picker; "empty" goes back to the list.
@@ -275,7 +281,19 @@ async function openTaskPanel(taskId: string): Promise<void> {
       '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + "</div>" +
       '<div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
 
-    taskPanelBodyEl.querySelectorAll<HTMLElement>(".task-panel-report").forEach(rn => loadReportNode(rn));
+    currentReportRawText = null;
+    ui.raText = null;
+    ui.raFilePath = null;
+    taskPanelBodyEl.querySelectorAll<HTMLElement>(".task-panel-report").forEach(rn => {
+      loadReportNode(rn, (rawText) => {
+        currentReportRawText = rawText;
+        // Only expose text if the report pane is currently active.
+        if (tasksStore.currentViewMode === "report") {
+          ui.raText = rawText;
+          ui.raFilePath = null;
+        }
+      });
+    });
   } catch (err) {
     taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String((err as Error).message || err) + "</div>";
   }
@@ -319,6 +337,9 @@ function setViewMode(mode: "task" | "report"): void {
     t.classList.toggle("is-active", isActive);
     t.setAttribute("aria-selected", isActive ? "true" : "false");
   });
+  // Sync read-aloud text: report pane makes text available; task pane does not.
+  ui.raText = mode === "report" ? currentReportRawText : null;
+  ui.raFilePath = null;
 }
 
 async function submitNext(wrapper: HTMLElement | null): Promise<void> {
@@ -976,5 +997,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   live.unbind("attention");
   if (longPressTimer !== null) clearTimeout(longPressTimer);
+  // Clear read-aloud text so the button disables when leaving the tasks page.
+  currentReportRawText = null;
+  ui.raText = null;
+  ui.raFilePath = null;
 });
 </script>
