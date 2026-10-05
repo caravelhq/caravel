@@ -1626,7 +1626,6 @@ export const pageStyles = String.raw`    :root {
 
     /* ── Open menu (replaces tab-nav) ── */
     .open-menu {
-      position: relative;
       flex-shrink: 0;
       align-self: center;
       margin-right: 4px;
@@ -1651,16 +1650,14 @@ export const pageStyles = String.raw`    :root {
     .open-menu-btn:hover { color: #d6e6f8; background: var(--surface-3, #1a2640); }
     .open-menu-btn::-webkit-details-marker { display: none; }
     .open-menu-list {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
+      position: fixed;
       min-width: 160px;
       background: var(--surface-2, #111b2e);
       border: 1px solid var(--border-strong, #d8e4ff3d);
       border-radius: var(--radius-md, 8px);
       box-shadow: var(--shadow-overlay, 0 8px 32px rgba(0,0,0,.6));
       padding: 4px 0;
-      z-index: 200;
+      z-index: 9999;
     }
     .open-menu-item {
       display: flex;
