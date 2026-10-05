@@ -26,8 +26,7 @@ const visibleRows = computed(() => props.tier.rows.slice(0, limit.value));
 const hasMore = computed(() => props.tier.count > visibleRows.value.length);
 
 function openTask(id: string): void {
-  tasksStore.currentTaskId = id;
-  tasksStore.pane = "view";
+  tasksStore.pendingTaskId = id;
   workspace.open({ kind: "legacy", page: "tasks" });
 }
 

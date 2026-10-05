@@ -122,6 +122,15 @@ watch(() => attentionStore.tiers, (tiers) => {
   if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
 });
 
+// Watcher for pending external navigation (e.g. Dashboard tier row click).
+// Handles the already-mounted case (split-pane: Tasks active while Dashboard visible).
+// The cold and warm-remount cases are handled by fetchTasks / onMounted else-branch.
+watch(() => tasksStore.pendingTaskId, (id) => {
+  if (!id || !tasksStore.loaded || !taskPanelBodyEl) return;
+  tasksStore.pendingTaskId = null;
+  openTaskPanel(id);
+});
+
 // ── Picker helpers ────────────────────────────────────────────────────────
 
 function setRightPaneMode(mode: "empty" | "view" | "project"): void {
@@ -207,8 +216,13 @@ async function fetchTasks(): Promise<void> {
     tasksStore.cache = data.tasks;
     tasksStore.loaded = true;
     renderTaskPicker();
-    // Restore the task or project panel from persisted (or URL-hydrated) store state.
-    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+    // Honour a pending external navigation first (cold path from Dashboard tier row click).
+    const pendingNav = tasksStore.pendingTaskId;
+    if (pendingNav) {
+      tasksStore.pendingTaskId = null;
+      openTaskPanel(pendingNav);
+    } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      // Restore the task or project panel from persisted (or URL-hydrated) store state.
       openTaskPanel(tasksStore.currentTaskId);
     } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
       openProjectPanel(tasksStore.currentProjectSlug);
@@ -985,8 +999,13 @@ onMounted(() => {
     fetchTasks();
   } else {
     renderTaskPicker();
-    // Restore task panel if we're returning to this route with a task already open.
-    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+    // Honour a pending external navigation first (warm-remount path from Dashboard tier row click).
+    const pendingNav = tasksStore.pendingTaskId;
+    if (pendingNav) {
+      tasksStore.pendingTaskId = null;
+      openTaskPanel(pendingNav);
+    } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      // Restore task panel if we're returning to this route with a task already open.
       openTaskPanel(tasksStore.currentTaskId);
     } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
       openProjectPanel(tasksStore.currentProjectSlug);

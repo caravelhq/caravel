@@ -70,6 +70,9 @@ export const useTasksStore = defineStore("tasks", () => {
   const taskFromProjectSlug = ref<string | null>(null);
   // Whether tasks have been loaded at least once.
   const loaded = ref(false);
+  // External navigation request (e.g. Dashboard tier row click) — consumed by TasksPage.
+  // Not persisted: it's a live signal, not a restore hint.
+  const pendingTaskId = ref<string | null>(null);
 
   watch(currentTaskId, (v) => save("currentTaskId", v));
   watch(pane, (v) => save("pane", v));
@@ -81,6 +84,6 @@ export const useTasksStore = defineStore("tasks", () => {
     view, filter, cache, expanded, collapsed,
     bulkSelected, multiSelectActive, pane, pickerCollapsed,
     currentTaskId, currentTaskProject, currentViewMode,
-    currentProjectSlug, taskFromProjectSlug, loaded,
+    currentProjectSlug, taskFromProjectSlug, loaded, pendingTaskId,
   };
 });
