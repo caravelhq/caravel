@@ -56,8 +56,17 @@ function renderTechInfo(data: Record<string, unknown>): string {
     { title: "session.json", value: files.sessionJson ?? null },
     { title: "state.json", value: files.stateJson ?? null },
   ];
-  return sections.map(s =>
-    `<div class="info-section"><div class="info-title">${escHtml(s.title)}</div><pre class="info-json">${escHtml(JSON.stringify(s.value, null, 2))}</pre></div>`
+  const log = (window as any).__baseModalCloseLog ?? [];
+  const closeLogSection = {
+    title: "modal close log (D2 diagnostic)",
+    value: log.length
+      ? log.map((e: { ts: number; via: string; before: boolean; after: boolean }) =>
+          `${new Date(e.ts).toISOString().slice(11, 23)} via=${e.via} before=${e.before} after=${e.after}`
+        ).join("\n")
+      : "(no close attempts logged yet)",
+  };
+  return [...sections, closeLogSection].map(s =>
+    `<div class="info-section"><div class="info-title">${escHtml(s.title)}</div><pre class="info-json">${escHtml(typeof s.value === "string" ? s.value : JSON.stringify(s.value, null, 2))}</pre></div>`
   ).join("");
 }
 

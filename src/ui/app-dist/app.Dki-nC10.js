@@ -38,9 +38,9 @@ const isRegExp = (val) => toTypeString(val) === "[object RegExp]";
 const isFunction = (val) => typeof val === "function";
 const isString = (val) => typeof val === "string";
 const isSymbol = (val) => typeof val === "symbol";
-const isObject$3 = (val) => val !== null && typeof val === "object";
+const isObject$1 = (val) => val !== null && typeof val === "object";
 const isPromise = (val) => {
-  return (isObject$3(val) || isFunction(val)) && isFunction(val.then) && isFunction(val.catch);
+  return (isObject$1(val) || isFunction(val)) && isFunction(val.then) && isFunction(val.catch);
 };
 const objectToString = Object.prototype.toString;
 const toTypeString = (value) => objectToString.call(value);
@@ -120,7 +120,7 @@ function normalizeStyle(value) {
       }
     }
     return res;
-  } else if (isString(value) || isObject$3(value)) {
+  } else if (isString(value) || isObject$1(value)) {
     return value;
   }
 }
@@ -148,7 +148,7 @@ function normalizeClass(value) {
         res += normalized + " ";
       }
     }
-  } else if (isObject$3(value)) {
+  } else if (isObject$1(value)) {
     for (const name in value) {
       if (value[name]) {
         res += name + " ";
@@ -198,8 +198,8 @@ function looseEqual(a, b2) {
   if (aValidType || bValidType) {
     return aValidType && bValidType ? looseCompareArrays(a, b2) : false;
   }
-  aValidType = isObject$3(a);
-  bValidType = isObject$3(b2);
+  aValidType = isObject$1(a);
+  bValidType = isObject$1(b2);
   if (aValidType || bValidType) {
     if (!aValidType || !bValidType) {
       return false;
@@ -226,7 +226,7 @@ const isRef$1 = (val) => {
   return !!(val && val["__v_isRef"] === true);
 };
 const toDisplayString = (val) => {
-  return isString(val) ? val : val == null ? "" : isArray$1(val) || isObject$3(val) && (val.toString === objectToString || !isFunction(val.toString)) ? isRef$1(val) ? toDisplayString(val.value) : JSON.stringify(val, replacer, 2) : String(val);
+  return isString(val) ? val : val == null ? "" : isArray$1(val) || isObject$1(val) && (val.toString === objectToString || !isFunction(val.toString)) ? isRef$1(val) ? toDisplayString(val.value) : JSON.stringify(val, replacer, 2) : String(val);
 };
 const replacer = (_key, val) => {
   if (isRef$1(val)) {
@@ -247,7 +247,7 @@ const replacer = (_key, val) => {
     };
   } else if (isSymbol(val)) {
     return stringifySymbol(val);
-  } else if (isObject$3(val) && !isArray$1(val) && !isPlainObject$2(val)) {
+  } else if (isObject$1(val) && !isArray$1(val) && !isPlainObject$2(val)) {
     return String(val);
   }
   return val;
@@ -1174,9 +1174,9 @@ class BaseReactiveHandler {
     }
     if (/* @__PURE__ */ isRef(res)) {
       const value = targetIsArray && isIntegerKey(key) ? res : res.value;
-      return isReadonly2 && isObject$3(value) ? /* @__PURE__ */ readonly(value) : value;
+      return isReadonly2 && isObject$1(value) ? /* @__PURE__ */ readonly(value) : value;
     }
-    if (isObject$3(res)) {
+    if (isObject$1(res)) {
       return isReadonly2 ? /* @__PURE__ */ readonly(res) : /* @__PURE__ */ reactive(res);
     }
     return res;
@@ -1372,13 +1372,13 @@ function createInstrumentations(readonly2, shallow) {
           value = /* @__PURE__ */ toRaw(value);
         }
         const target = /* @__PURE__ */ toRaw(this);
-        const { has, get: get2 } = getProto(target);
+        const { has, get } = getProto(target);
         let hadKey = has.call(target, key);
         if (!hadKey) {
           key = /* @__PURE__ */ toRaw(key);
           hadKey = has.call(target, key);
         }
-        const oldValue = get2.call(target, key);
+        const oldValue = get.call(target, key);
         target.set(key, value);
         if (!hadKey) {
           trigger(target, "add", key, value);
@@ -1389,13 +1389,13 @@ function createInstrumentations(readonly2, shallow) {
       },
       delete(key) {
         const target = /* @__PURE__ */ toRaw(this);
-        const { has, get: get2 } = getProto(target);
+        const { has, get } = getProto(target);
         let hadKey = has.call(target, key);
         if (!hadKey) {
           key = /* @__PURE__ */ toRaw(key);
           hadKey = has.call(target, key);
         }
-        get2 ? get2.call(target, key) : void 0;
+        get ? get.call(target, key) : void 0;
         const result = target.delete(key);
         if (hadKey) {
           trigger(target, "delete", key, void 0);
@@ -1520,7 +1520,7 @@ function shallowReadonly(target) {
   );
 }
 function createReactiveObject(target, isReadonly2, baseHandlers, collectionHandlers, proxyMap) {
-  if (!isObject$3(target)) {
+  if (!isObject$1(target)) {
     return target;
   }
   if (target["__v_raw"] && !(isReadonly2 && target["__v_isReactive"])) {
@@ -1574,8 +1574,8 @@ function markRaw(value) {
   }
   return value;
 }
-const toReactive = (value) => isObject$3(value) ? /* @__PURE__ */ reactive(value) : value;
-const toReadonly = (value) => isObject$3(value) ? /* @__PURE__ */ readonly(value) : value;
+const toReactive = (value) => isObject$1(value) ? /* @__PURE__ */ reactive(value) : value;
+const toReadonly = (value) => isObject$1(value) ? /* @__PURE__ */ readonly(value) : value;
 // @__NO_SIDE_EFFECTS__
 function isRef(r) {
   return r ? r["__v_isRef"] === true : false;
@@ -1655,8 +1655,8 @@ class CustomRefImpl {
     this["__v_isRef"] = true;
     this._value = void 0;
     const dep = this.dep = new Dep();
-    const { get: get2, set: set2 } = factory(dep.track.bind(dep), dep.trigger.bind(dep));
-    this._get = get2;
+    const { get, set: set2 } = factory(dep.track.bind(dep), dep.trigger.bind(dep));
+    this._get = get;
     this._set = set2;
   }
   get value() {
@@ -1732,7 +1732,7 @@ function toRef(source, key, defaultValue) {
     return source;
   } else if (isFunction(source)) {
     return new GetterRefImpl(source);
-  } else if (isObject$3(source) && arguments.length > 1) {
+  } else if (isObject$1(source) && arguments.length > 1) {
     return propertyToRef(source, key, defaultValue);
   } else {
     return /* @__PURE__ */ ref(source);
@@ -1963,7 +1963,7 @@ function watch$1(source, cb, options = EMPTY_OBJ) {
   return watchHandle;
 }
 function traverse(value, depth = Infinity, seen) {
-  if (depth <= 0 || !isObject$3(value) || value["__v_skip"]) {
+  if (depth <= 0 || !isObject$1(value) || value["__v_skip"]) {
     return value;
   }
   seen = seen || /* @__PURE__ */ new Map();
@@ -4129,7 +4129,7 @@ function defineAsyncComponent(source) {
     loader: loader2,
     loadingComponent,
     errorComponent,
-    delay: delay3 = 200,
+    delay = 200,
     hydrate: hydrateStrategy,
     timeout,
     // undefined = never times out
@@ -4227,18 +4227,18 @@ function defineAsyncComponent(source) {
       }
       const loaded = /* @__PURE__ */ ref(false);
       const error = /* @__PURE__ */ ref();
-      const delayed = /* @__PURE__ */ ref(!!delay3);
+      const delayed = /* @__PURE__ */ ref(!!delay);
       let timeoutTimer;
       let delayTimer;
       onUnmounted(() => {
         if (timeoutTimer != null) clearTimeout(timeoutTimer);
         if (delayTimer != null) clearTimeout(delayTimer);
       });
-      if (delay3) {
+      if (delay) {
         delayTimer = setTimeout(() => {
           if (instance.isUnmounted) return;
           delayed.value = false;
-        }, delay3);
+        }, delay);
       }
       if (timeout != null) {
         timeoutTimer = setTimeout(() => {
@@ -4393,8 +4393,8 @@ const KeepAliveImpl = {
     watch(
       () => [props.include, props.exclude],
       ([include, exclude]) => {
-        include && pruneCache((name) => matches$1(include, name));
-        exclude && pruneCache((name) => !matches$1(exclude, name));
+        include && pruneCache((name) => matches(include, name));
+        exclude && pruneCache((name) => !matches(exclude, name));
       },
       // prune post-render after `current` has been updated
       { flush: "post", deep: true }
@@ -4450,7 +4450,7 @@ const KeepAliveImpl = {
         isAsyncWrapper(vnode) ? vnode.type.__asyncResolved || {} : comp
       );
       const { include, exclude, max } = props;
-      if (include && (!name || !matches$1(include, name)) || exclude && name && matches$1(exclude, name)) {
+      if (include && (!name || !matches(include, name)) || exclude && name && matches(exclude, name)) {
         vnode.shapeFlag &= -257;
         current = vnode;
         return rawVNode;
@@ -4486,9 +4486,9 @@ const KeepAliveImpl = {
   }
 };
 const KeepAlive = KeepAliveImpl;
-function matches$1(pattern, name) {
+function matches(pattern, name) {
   if (isArray$1(pattern)) {
-    return pattern.some((p2) => matches$1(p2, name));
+    return pattern.some((p2) => matches(p2, name));
   } else if (isString(pattern)) {
     return pattern.split(",").includes(name);
   } else if (isRegExp(pattern)) {
@@ -4659,7 +4659,7 @@ function renderList(source, renderItem, cache, index) {
         ret[i] = renderItem(i + 1, i, void 0, cached && cached[i]);
       }
     }
-  } else if (isObject$3(source)) {
+  } else if (isObject$1(source)) {
     if (source[Symbol.iterator]) {
       ret = Array.from(
         source,
@@ -5060,7 +5060,7 @@ function applyOptions(instance) {
   }
   if (dataOptions) {
     const data = dataOptions.call(publicThis, publicThis);
-    if (!isObject$3(data)) ;
+    if (!isObject$1(data)) ;
     else {
       instance.data = /* @__PURE__ */ reactive(data);
     }
@@ -5069,10 +5069,10 @@ function applyOptions(instance) {
   if (computedOptions) {
     for (const key in computedOptions) {
       const opt = computedOptions[key];
-      const get2 = isFunction(opt) ? opt.bind(publicThis, publicThis) : isFunction(opt.get) ? opt.get.bind(publicThis, publicThis) : NOOP;
+      const get = isFunction(opt) ? opt.bind(publicThis, publicThis) : isFunction(opt.get) ? opt.get.bind(publicThis, publicThis) : NOOP;
       const set2 = !isFunction(opt) && isFunction(opt.set) ? opt.set.bind(publicThis) : NOOP;
       const c = computed({
-        get: get2,
+        get,
         set: set2
       });
       Object.defineProperty(ctx, key, {
@@ -5149,7 +5149,7 @@ function resolveInjections(injectOptions, ctx, checkDuplicateProperties = NOOP) 
   for (const key in injectOptions) {
     const opt = injectOptions[key];
     let injected;
-    if (isObject$3(opt)) {
+    if (isObject$1(opt)) {
       if ("default" in opt) {
         injected = inject(
           opt.from || key,
@@ -5194,7 +5194,7 @@ function createWatcher(raw, ctx, publicThis, key) {
     {
       watch(getter, raw.bind(publicThis));
     }
-  } else if (isObject$3(raw)) {
+  } else if (isObject$1(raw)) {
     if (isArray$1(raw)) {
       raw.forEach((r) => createWatcher(r, ctx, publicThis, key));
     } else {
@@ -5230,7 +5230,7 @@ function resolveMergedOptions(instance) {
     }
     mergeOptions$1(resolved, base, optionMergeStrategies);
   }
-  if (isObject$3(base)) {
+  if (isObject$1(base)) {
     cache.set(base, resolved);
   }
   return resolved;
@@ -5368,7 +5368,7 @@ function createAppAPI(render2, hydrate2) {
     if (!isFunction(rootComponent)) {
       rootComponent = extend$1({}, rootComponent);
     }
-    if (rootProps != null && !isObject$3(rootProps)) {
+    if (rootProps != null && !isObject$1(rootProps)) {
       rootProps = null;
     }
     const context = createAppContext();
@@ -5611,7 +5611,7 @@ function normalizeEmitsOptions(comp, appContext, asMixin = false) {
     }
   }
   if (!raw && !hasExtends) {
-    if (isObject$3(comp)) {
+    if (isObject$1(comp)) {
       cache.set(comp, null);
     }
     return null;
@@ -5621,7 +5621,7 @@ function normalizeEmitsOptions(comp, appContext, asMixin = false) {
   } else {
     extend$1(normalized, raw);
   }
-  if (isObject$3(comp)) {
+  if (isObject$1(comp)) {
     cache.set(comp, normalized);
   }
   return normalized;
@@ -5833,7 +5833,7 @@ function hasPropsChanged(prevProps, nextProps, emitsOptions) {
 function hasPropValueChanged(nextProps, prevProps, key) {
   const nextProp = nextProps[key];
   const prevProp = prevProps[key];
-  if (key === "style" && isObject$3(nextProp) && isObject$3(prevProp)) {
+  if (key === "style" && isObject$1(nextProp) && isObject$1(prevProp)) {
     return !looseEqual(nextProp, prevProp);
   }
   return nextProp !== prevProp;
@@ -6081,7 +6081,7 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
     }
   }
   if (!raw && !hasExtends) {
-    if (isObject$3(comp)) {
+    if (isObject$1(comp)) {
       cache.set(comp, EMPTY_ARR);
     }
     return EMPTY_ARR;
@@ -6131,7 +6131,7 @@ function normalizePropsOptions(comp, appContext, asMixin = false) {
     }
   }
   const res = [normalized, needCastKeys];
-  if (isObject$3(comp)) {
+  if (isObject$1(comp)) {
     cache.set(comp, res);
   }
   return res;
@@ -8380,14 +8380,14 @@ function _createVNode(type2, props = null, children = null, patchFlag = 0, dynam
     if (klass && !isString(klass)) {
       props.class = normalizeClass(klass);
     }
-    if (isObject$3(style)) {
+    if (isObject$1(style)) {
       if (/* @__PURE__ */ isProxy(style) && !isArray$1(style)) {
         style = extend$1({}, style);
       }
       props.style = normalizeStyle(style);
     }
   }
-  const shapeFlag = isString(type2) ? 1 : isSuspense(type2) ? 128 : isTeleport(type2) ? 64 : isObject$3(type2) ? 4 : isFunction(type2) ? 2 : 0;
+  const shapeFlag = isString(type2) ? 1 : isSuspense(type2) ? 128 : isTeleport(type2) ? 64 : isObject$1(type2) ? 4 : isFunction(type2) ? 2 : 0;
   return createBaseVNode(
     type2,
     props,
@@ -8762,7 +8762,7 @@ function handleSetupResult(instance, setupResult, isSSR) {
     } else {
       instance.render = setupResult;
     }
-  } else if (isObject$3(setupResult)) {
+  } else if (isObject$1(setupResult)) {
     instance.setupState = proxyRefs(setupResult);
   } else ;
   finishComponentSetup(instance, isSSR);
@@ -8891,7 +8891,7 @@ function h(type2, propsOrChildren, children) {
     setBlockTracking(-1);
     const l3 = arguments.length;
     if (l3 === 2) {
-      if (isObject$3(propsOrChildren) && !isArray$1(propsOrChildren)) {
+      if (isObject$1(propsOrChildren) && !isArray$1(propsOrChildren)) {
         if (isVNode(propsOrChildren)) {
           return createVNode(type2, null, [propsOrChildren]);
         }
@@ -9207,7 +9207,7 @@ function resolveTransitionProps(rawProps) {
 function normalizeDuration(duration) {
   if (duration == null) {
     return null;
-  } else if (isObject$3(duration)) {
+  } else if (isObject$1(duration)) {
     return [NumberOf(duration.enter), NumberOf(duration.leave)];
   } else {
     const n = NumberOf(duration);
@@ -9678,13 +9678,13 @@ function createInvoker(initialValue, instance) {
         originalStop.call(e);
         e._stopped = true;
       };
-      const handlers2 = value.slice();
+      const handlers = value.slice();
       const args = [e];
-      for (let i = 0; i < handlers2.length; i++) {
+      for (let i = 0; i < handlers.length; i++) {
         if (e._stopped) {
           break;
         }
-        const handler = handlers2[i];
+        const handler = handlers[i];
         if (handler) {
           callWithAsyncErrorHandling(
             handler,
@@ -11023,9 +11023,9 @@ function createPinia() {
   });
   return pinia;
 }
-const noop$3 = () => {
+const noop$1 = () => {
 };
-function addSubscription(subscriptions, callback, detached, onCleanup = noop$3) {
+function addSubscription(subscriptions, callback, detached, onCleanup = noop$1) {
   subscriptions.add(callback);
   const removeSubscription = () => {
     const isDel = subscriptions.delete(callback);
@@ -11145,7 +11145,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     });
   } : (
     /* istanbul ignore next */
-    noop$3
+    noop$1
   );
   function $dispose() {
     scope.stop();
@@ -11303,3450 +11303,20 @@ var withBvnPrefix = (value, suffix = "") => {
   const suffixWithTrail = `${suffix}___`;
   return `${genericBvnPrefix}ID__${value}__${suffix ? suffixWithTrail : ""}`;
 };
-var createBvnInjectionKey = (name) => withBvnPrefix(name);
 var createBvnRegistryInjectionKey = (name) => withBvnPrefix(`${name}__registry`);
-var progressInjectionKey = createBvnInjectionKey("progress");
-var collapseInjectionKey = createBvnInjectionKey("collapse");
 var showHideRegistryKey = createBvnRegistryInjectionKey("showHide");
-var navbarInjectionKey = createBvnInjectionKey("navbar");
 var rtlRegistryKey = createBvnRegistryInjectionKey("rtl");
 var breadcrumbGlobalIndexKey = `${genericBvnPrefix}global_breadcrumb`;
 var breadcrumbRegistryKey = createBvnRegistryInjectionKey("breadcrumb");
 var modalManagerKey = createBvnRegistryInjectionKey("modalManager");
 var defaultsKey = createBvnRegistryInjectionKey("defaults");
-var inputGroupKey = createBvnInjectionKey("inputGroup");
 var orchestratorRegistryKey = createBvnRegistryInjectionKey("orchestrator");
-var formGroupKey = createBvnInjectionKey("formGroupPlugin");
-var formSelectKey = createBvnInjectionKey("formSelect");
 var _newOrchestratorRegistry = () => ({
   store: /* @__PURE__ */ ref([]),
   _isOrchestratorInstalled: /* @__PURE__ */ ref(false),
   _isToastAppend: /* @__PURE__ */ ref(false)
 });
-function tryOnScopeDispose(fn, failSilently) {
-  if (getCurrentScope()) {
-    onScopeDispose(fn, failSilently);
-    return true;
-  }
-  return false;
-}
-var isClient = typeof window !== "undefined" && typeof document !== "undefined";
 typeof WorkerGlobalScope !== "undefined" && globalThis instanceof WorkerGlobalScope;
-var notNullish = (val) => val != null;
-var toString = Object.prototype.toString;
-var isObject$2 = (val) => toString.call(val) === "[object Object]";
-var timestamp$1 = () => +Date.now();
-var noop$2 = () => {
-};
-var isIOS = /* @__PURE__ */ getIsIOS();
-function getIsIOS() {
-  var _window, _window2, _window3;
-  return isClient && !!((_window = window) === null || _window === void 0 || (_window = _window.navigator) === null || _window === void 0 ? void 0 : _window.userAgent) && (/iP(?:ad|hone|od)/.test(window.navigator.userAgent) || ((_window2 = window) === null || _window2 === void 0 || (_window2 = _window2.navigator) === null || _window2 === void 0 ? void 0 : _window2.maxTouchPoints) > 2 && /iPad|Macintosh/.test((_window3 = window) === null || _window3 === void 0 ? void 0 : _window3.navigator.userAgent));
-}
-function toRef$1(...args) {
-  if (args.length !== 1) return /* @__PURE__ */ toRef(...args);
-  const r = args[0];
-  return typeof r === "function" ? /* @__PURE__ */ readonly(customRef(() => ({
-    get: r,
-    set: noop$2
-  }))) : /* @__PURE__ */ ref(r);
-}
-function createFilterWrapper$1(filter, fn) {
-  function wrapper(...args) {
-    return new Promise((resolve2, reject) => {
-      Promise.resolve(filter(() => fn.apply(this, args), {
-        fn,
-        thisArg: this,
-        args
-      })).then(resolve2).catch(reject);
-    });
-  }
-  return wrapper;
-}
-function throttleFilter(...args) {
-  let lastExec = 0;
-  let timer;
-  let isLeading = true;
-  let lastRejector = noop$2;
-  let lastValue;
-  let ms;
-  let trailing;
-  let leading;
-  let rejectOnCancel;
-  if (!/* @__PURE__ */ isRef(args[0]) && typeof args[0] === "object") ({ delay: ms, trailing = true, leading = true, rejectOnCancel = false } = args[0]);
-  else [ms, trailing = true, leading = true, rejectOnCancel = false] = args;
-  const clear = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = void 0;
-      lastRejector();
-      lastRejector = noop$2;
-    }
-  };
-  const filter = (_invoke) => {
-    const duration = toValue(ms);
-    const elapsed = Date.now() - lastExec;
-    const invoke$1 = () => {
-      return lastValue = _invoke();
-    };
-    clear();
-    if (duration <= 0) {
-      lastExec = Date.now();
-      return invoke$1();
-    }
-    if (elapsed > duration) {
-      lastExec = Date.now();
-      if (leading || !isLeading) invoke$1();
-    } else if (trailing) lastValue = new Promise((resolve2, reject) => {
-      lastRejector = rejectOnCancel ? reject : resolve2;
-      timer = setTimeout(() => {
-        lastExec = Date.now();
-        isLeading = true;
-        resolve2(invoke$1());
-        clear();
-      }, Math.max(0, duration - elapsed));
-    });
-    if (!leading && !timer) timer = setTimeout(() => isLeading = true, duration);
-    isLeading = false;
-    return lastValue;
-  };
-  return filter;
-}
-function toArray$1(value) {
-  return Array.isArray(value) ? value : [value];
-}
-// @__NO_SIDE_EFFECTS__
-function createSharedComposable(composable) {
-  if (!isClient) return composable;
-  let subscribers = 0;
-  let state;
-  let scope;
-  const dispose = () => {
-    subscribers -= 1;
-    if (scope && subscribers <= 0) {
-      scope.stop();
-      state = void 0;
-      scope = void 0;
-    }
-  };
-  return ((...args) => {
-    subscribers += 1;
-    if (!scope) {
-      scope = effectScope(true);
-      state = scope.run(() => composable(...args));
-    }
-    tryOnScopeDispose(dispose);
-    return state;
-  });
-}
-// @__NO_SIDE_EFFECTS__
-function useThrottleFn(fn, ms = 200, trailing = false, leading = true, rejectOnCancel = false) {
-  return createFilterWrapper$1(throttleFilter(ms, trailing, leading, rejectOnCancel), fn);
-}
-function useIntervalFn(cb, interval = 1e3, options = {}) {
-  const { immediate = true, immediateCallback = false } = options;
-  let timer = null;
-  const isActive = /* @__PURE__ */ shallowRef(false);
-  function clean() {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
-    }
-  }
-  function pause() {
-    isActive.value = false;
-    clean();
-  }
-  function resume() {
-    const intervalValue = toValue(interval);
-    if (intervalValue <= 0) return;
-    isActive.value = true;
-    if (immediateCallback) cb();
-    clean();
-    if (isActive.value) timer = setInterval(cb, intervalValue);
-  }
-  if (immediate && isClient) resume();
-  if (/* @__PURE__ */ isRef(interval) || typeof interval === "function") tryOnScopeDispose(watch(interval, () => {
-    if (isActive.value && isClient) resume();
-  }));
-  tryOnScopeDispose(pause);
-  return {
-    isActive: /* @__PURE__ */ shallowReadonly(isActive),
-    pause,
-    resume
-  };
-}
-// @__NO_SIDE_EFFECTS__
-function useToNumber(value, options = {}) {
-  const { method = "parseFloat", radix, nanToZero } = options;
-  return computed(() => {
-    let resolved = toValue(value);
-    if (typeof method === "function") resolved = method(resolved);
-    else if (typeof resolved === "string") resolved = Number[method](resolved, radix);
-    if (nanToZero && Number.isNaN(resolved)) resolved = 0;
-    return resolved;
-  });
-}
-function watchImmediate(source, cb, options) {
-  return watch(source, cb, {
-    ...options,
-    immediate: true
-  });
-}
-var defaultWindow = isClient ? window : void 0;
-var defaultDocument = isClient ? window.document : void 0;
-function unrefElement(elRef) {
-  var _$el;
-  const plain = toValue(elRef);
-  return (_$el = plain === null || plain === void 0 ? void 0 : plain.$el) !== null && _$el !== void 0 ? _$el : plain;
-}
-function useEventListener(...args) {
-  const register = (el, event, listener, options) => {
-    el.addEventListener(event, listener, options);
-    return () => el.removeEventListener(event, listener, options);
-  };
-  const firstParamTargets = computed(() => {
-    const test = toArray$1(toValue(args[0])).filter((e) => e != null);
-    return test.every((e) => typeof e !== "string") ? test : void 0;
-  });
-  return watchImmediate(() => {
-    var _firstParamTargets$va, _firstParamTargets$va2;
-    return [
-      (_firstParamTargets$va = (_firstParamTargets$va2 = firstParamTargets.value) === null || _firstParamTargets$va2 === void 0 ? void 0 : _firstParamTargets$va2.map((e) => unrefElement(e))) !== null && _firstParamTargets$va !== void 0 ? _firstParamTargets$va : [defaultWindow].filter((e) => e != null),
-      toArray$1(toValue(firstParamTargets.value ? args[1] : args[0])),
-      toArray$1(unref(firstParamTargets.value ? args[2] : args[1])),
-      toValue(firstParamTargets.value ? args[3] : args[2])
-    ];
-  }, ([raw_targets, raw_events, raw_listeners, raw_options], _2, onCleanup) => {
-    if (!(raw_targets === null || raw_targets === void 0 ? void 0 : raw_targets.length) || !(raw_events === null || raw_events === void 0 ? void 0 : raw_events.length) || !(raw_listeners === null || raw_listeners === void 0 ? void 0 : raw_listeners.length)) return;
-    const optionsClone = isObject$2(raw_options) ? { ...raw_options } : raw_options;
-    const cleanups = raw_targets.flatMap((el) => raw_events.flatMap((event) => raw_listeners.map((listener) => register(el, event, listener, optionsClone))));
-    onCleanup(() => {
-      cleanups.forEach((fn) => fn());
-    });
-  }, { flush: "post" });
-}
-// @__NO_SIDE_EFFECTS__
-function useMounted() {
-  const isMounted = /* @__PURE__ */ shallowRef(false);
-  const instance = getCurrentInstance();
-  if (instance) onMounted(() => {
-    isMounted.value = true;
-  }, instance);
-  return isMounted;
-}
-// @__NO_SIDE_EFFECTS__
-function useSupported(callback) {
-  const isMounted = /* @__PURE__ */ useMounted();
-  return computed(() => {
-    isMounted.value;
-    return Boolean(callback());
-  });
-}
-function useMutationObserver(target, callback, options = {}) {
-  const { window: window$1 = defaultWindow, ...mutationOptions } = options;
-  let observer;
-  const isSupported = /* @__PURE__ */ useSupported(() => window$1 && "MutationObserver" in window$1);
-  const cleanup = () => {
-    if (observer) {
-      observer.disconnect();
-      observer = void 0;
-    }
-  };
-  const stopWatch = watch(computed(() => {
-    const items = toArray$1(toValue(target)).map(unrefElement).filter(notNullish);
-    return new Set(items);
-  }), (newTargets) => {
-    cleanup();
-    if (isSupported.value && newTargets.size) {
-      observer = new MutationObserver(callback);
-      newTargets.forEach((el) => observer.observe(el, mutationOptions));
-    }
-  }, {
-    immediate: true,
-    flush: "post"
-  });
-  const takeRecords = () => {
-    return observer === null || observer === void 0 ? void 0 : observer.takeRecords();
-  };
-  const stop2 = () => {
-    stopWatch();
-    cleanup();
-  };
-  tryOnScopeDispose(stop2);
-  return {
-    isSupported,
-    stop: stop2,
-    takeRecords
-  };
-}
-function onElementRemoval(target, callback, options = {}) {
-  const { window: window$1 = defaultWindow, document: document$1 = window$1 === null || window$1 === void 0 ? void 0 : window$1.document, flush = "sync" } = options;
-  if (!window$1 || !document$1) return noop$2;
-  let stopFn;
-  const cleanupAndUpdate = (fn) => {
-    stopFn === null || stopFn === void 0 || stopFn();
-    stopFn = fn;
-  };
-  const stopWatch = watchEffect(() => {
-    const el = unrefElement(target);
-    if (el) {
-      const { stop: stop2 } = useMutationObserver(document$1, (mutationsList) => {
-        if (mutationsList.map((mutation) => [...mutation.removedNodes]).flat().some((node) => node === el || node.contains(el))) callback(mutationsList);
-      }, {
-        window: window$1,
-        childList: true,
-        subtree: true
-      });
-      cleanupAndUpdate(stop2);
-    }
-  }, { flush });
-  const stopHandle = () => {
-    stopWatch();
-    cleanupAndUpdate();
-  };
-  tryOnScopeDispose(stopHandle);
-  return stopHandle;
-}
-function createKeyPredicate(keyFilter) {
-  if (typeof keyFilter === "function") return keyFilter;
-  else if (typeof keyFilter === "string") return (event) => event.key === keyFilter;
-  else if (Array.isArray(keyFilter)) return (event) => keyFilter.includes(event.key);
-  return () => true;
-}
-function onKeyStroke(...args) {
-  let key;
-  let handler;
-  let options = {};
-  if (args.length === 3) {
-    key = args[0];
-    handler = args[1];
-    options = args[2];
-  } else if (args.length === 2) if (typeof args[1] === "object") {
-    key = true;
-    handler = args[0];
-    options = args[1];
-  } else {
-    key = args[0];
-    handler = args[1];
-  }
-  else {
-    key = true;
-    handler = args[0];
-  }
-  const { target = defaultWindow, eventName = "keydown", passive = false, dedupe = false } = options;
-  const predicate = createKeyPredicate(key);
-  const listener = (e) => {
-    if (e.repeat && toValue(dedupe)) return;
-    if (predicate(e)) handler(e);
-  };
-  return useEventListener(target, eventName, listener, passive);
-}
-function useRafFn(fn, options = {}) {
-  const { immediate = true, fpsLimit = null, window: window$1 = defaultWindow, once = false } = options;
-  const isActive = /* @__PURE__ */ shallowRef(false);
-  const intervalLimit = computed(() => {
-    const limit = toValue(fpsLimit);
-    return limit ? 1e3 / limit : null;
-  });
-  let previousFrameTimestamp = 0;
-  let rafId = null;
-  function loop(timestamp$12) {
-    if (!isActive.value || !window$1) return;
-    if (!previousFrameTimestamp) previousFrameTimestamp = timestamp$12;
-    const delta = timestamp$12 - previousFrameTimestamp;
-    if (intervalLimit.value && delta < intervalLimit.value) {
-      rafId = window$1.requestAnimationFrame(loop);
-      return;
-    }
-    previousFrameTimestamp = timestamp$12;
-    fn({
-      delta,
-      timestamp: timestamp$12
-    });
-    if (once) {
-      isActive.value = false;
-      rafId = null;
-      return;
-    }
-    rafId = window$1.requestAnimationFrame(loop);
-  }
-  function resume() {
-    if (!isActive.value && window$1) {
-      isActive.value = true;
-      previousFrameTimestamp = 0;
-      rafId = window$1.requestAnimationFrame(loop);
-    }
-  }
-  function pause() {
-    isActive.value = false;
-    if (rafId != null && window$1) {
-      window$1.cancelAnimationFrame(rafId);
-      rafId = null;
-    }
-  }
-  if (immediate) resume();
-  tryOnScopeDispose(pause);
-  return {
-    isActive: /* @__PURE__ */ readonly(isActive),
-    pause,
-    resume
-  };
-}
-var _global = typeof globalThis !== "undefined" ? globalThis : typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
-var globalKey = "__vueuse_ssr_handlers__";
-var handlers = /* @__PURE__ */ getHandlers();
-function getHandlers() {
-  if (!(globalKey in _global)) _global[globalKey] = _global[globalKey] || {};
-  return _global[globalKey];
-}
-function getSSRHandler(key, fallback) {
-  return handlers[key] || fallback;
-}
-// @__NO_SIDE_EFFECTS__
-function useDocumentVisibility(options = {}) {
-  const { document: document$1 = defaultDocument } = options;
-  if (!document$1) return /* @__PURE__ */ shallowRef("visible");
-  const visibility = /* @__PURE__ */ shallowRef(document$1.visibilityState);
-  useEventListener(document$1, "visibilitychange", () => {
-    visibility.value = document$1.visibilityState;
-  }, { passive: true });
-  return visibility;
-}
-function useElementHover(el, options = {}) {
-  const { delayEnter = 0, delayLeave = 0, triggerOnRemoval = false, window: window$1 = defaultWindow } = options;
-  const isHovered = /* @__PURE__ */ shallowRef(false);
-  let timer;
-  const toggle = (entering) => {
-    const delay3 = entering ? delayEnter : delayLeave;
-    if (timer) {
-      clearTimeout(timer);
-      timer = void 0;
-    }
-    if (delay3) timer = setTimeout(() => isHovered.value = entering, delay3);
-    else isHovered.value = entering;
-  };
-  if (!window$1) return isHovered;
-  useEventListener(el, "mouseenter", () => toggle(true), { passive: true });
-  useEventListener(el, "mouseleave", () => toggle(false), { passive: true });
-  if (triggerOnRemoval) onElementRemoval(computed(() => unrefElement(el)), () => toggle(false));
-  return isHovered;
-}
-function useFocus(target, options = {}) {
-  const { initialValue = false, focusVisible = false, preventScroll = false } = options;
-  const innerFocused = /* @__PURE__ */ shallowRef(false);
-  const targetElement = computed(() => unrefElement(target));
-  const listenerOptions = { passive: true };
-  useEventListener(targetElement, "focus", (event) => {
-    var _matches, _ref;
-    if (!focusVisible || ((_matches = (_ref = event.target).matches) === null || _matches === void 0 ? void 0 : _matches.call(_ref, ":focus-visible"))) innerFocused.value = true;
-  }, listenerOptions);
-  useEventListener(targetElement, "blur", () => innerFocused.value = false, listenerOptions);
-  const focused = computed({
-    get: () => innerFocused.value,
-    set(value) {
-      var _targetElement$value, _targetElement$value2;
-      if (!value && innerFocused.value) (_targetElement$value = targetElement.value) === null || _targetElement$value === void 0 || _targetElement$value.blur();
-      else if (value && !innerFocused.value) (_targetElement$value2 = targetElement.value) === null || _targetElement$value2 === void 0 || _targetElement$value2.focus({ preventScroll });
-    }
-  });
-  watch(targetElement, () => {
-    focused.value = initialValue;
-  }, {
-    immediate: true,
-    flush: "post"
-  });
-  return { focused };
-}
-function resolveElement(el) {
-  if (typeof Window !== "undefined" && el instanceof Window) return el.document.documentElement;
-  if (typeof Document !== "undefined" && el instanceof Document) return el.documentElement;
-  return el;
-}
-function checkOverflowScroll(ele) {
-  const style = window.getComputedStyle(ele);
-  if (style.overflowX === "scroll" || style.overflowY === "scroll" || style.overflowX === "auto" && ele.clientWidth < ele.scrollWidth || style.overflowY === "auto" && ele.clientHeight < ele.scrollHeight) return true;
-  else {
-    const parent = ele.parentNode;
-    if (!parent || parent.tagName === "BODY") return false;
-    return checkOverflowScroll(parent);
-  }
-}
-function preventDefault(rawEvent) {
-  const e = rawEvent || window.event;
-  const _target = e.target;
-  if (checkOverflowScroll(_target)) return false;
-  if (e.touches.length > 1) return true;
-  if (e.preventDefault) e.preventDefault();
-  return false;
-}
-var elInitialOverflow = /* @__PURE__ */ new WeakMap();
-function useScrollLock$1(element, initialState = false) {
-  const isLocked = /* @__PURE__ */ shallowRef(initialState);
-  let stopTouchMoveListener = null;
-  let initialOverflow = "";
-  watch(toRef$1(element), (el) => {
-    const target = resolveElement(toValue(el));
-    if (target) {
-      const ele = target;
-      if (!elInitialOverflow.get(ele)) elInitialOverflow.set(ele, ele.style.overflow);
-      if (ele.style.overflow !== "hidden") initialOverflow = ele.style.overflow;
-      if (ele.style.overflow === "hidden") return isLocked.value = true;
-      if (isLocked.value) return ele.style.overflow = "hidden";
-    }
-  }, { immediate: true });
-  const lock = () => {
-    const el = resolveElement(toValue(element));
-    if (!el || isLocked.value) return;
-    if (isIOS) stopTouchMoveListener = useEventListener(el, "touchmove", (e) => {
-      preventDefault(e);
-    }, { passive: false });
-    el.style.overflow = "hidden";
-    isLocked.value = true;
-  };
-  const unlock = () => {
-    const el = resolveElement(toValue(element));
-    if (!el || !isLocked.value) return;
-    if (isIOS) stopTouchMoveListener === null || stopTouchMoveListener === void 0 || stopTouchMoveListener();
-    el.style.overflow = initialOverflow;
-    elInitialOverflow.delete(el);
-    isLocked.value = false;
-  };
-  tryOnScopeDispose(unlock);
-  return computed({
-    get() {
-      return isLocked.value;
-    },
-    set(v2) {
-      if (v2) lock();
-      else unlock();
-    }
-  });
-}
-function getDefaultScheduler$2(options) {
-  if ("interval" in options || "immediate" in options) {
-    const { interval = "requestAnimationFrame", immediate = true } = options;
-    return interval === "requestAnimationFrame" ? (cb) => useRafFn(cb, { immediate }) : (cb) => useIntervalFn(cb, interval, { immediate });
-  }
-  return useRafFn;
-}
-function useTimestamp(options = {}) {
-  const { controls: exposeControls = false, offset = 0, scheduler = getDefaultScheduler$2(options), callback } = options;
-  const ts = /* @__PURE__ */ shallowRef(timestamp$1() + offset);
-  const update = () => ts.value = timestamp$1() + offset;
-  const controls = scheduler(callback ? () => {
-    update();
-    callback(ts.value);
-  } : update);
-  if (exposeControls) return {
-    timestamp: ts,
-    ...controls
-  };
-  else return ts;
-}
-var getSafeDocument = () => typeof document !== "undefined" ? document : null;
-var getSafeWindow = () => typeof window !== "undefined" ? window : null;
-var getActiveElement = (excludes = []) => {
-  const doc2 = getSafeDocument();
-  if (doc2 === null) return null;
-  const { activeElement } = doc2;
-  return activeElement && !(excludes == null ? void 0 : excludes.some((el) => el === activeElement)) ? activeElement : null;
-};
-var attemptFocus = (el, options = {}) => {
-  const isActiveElement = (el2) => el2 === getActiveElement();
-  try {
-    el.focus(options);
-  } catch (e) {
-    console.error(e);
-  }
-  return isActiveElement(el);
-};
-var isEmptySlot = (el) => ((el == null ? void 0 : el()) ?? []).length === 0;
-var isVisible = (el) => {
-  if (el.getAttribute("display") === "none") return false;
-  const bcr = el.getBoundingClientRect();
-  return bcr && bcr.height > 0 && bcr.width > 0;
-};
-var defaultZModelIndex = 1055;
-var getModalZIndex = (element) => {
-  const win = getSafeWindow();
-  const doc2 = getSafeDocument();
-  if (win === null || doc2 === null) return defaultZModelIndex;
-  const target = element ?? doc2.body;
-  const raw = win.getComputedStyle(target).getPropertyValue("--bs-modal-zindex").trim();
-  const parsed = Number.parseInt(raw, 10);
-  return Number.isFinite(parsed) ? parsed : defaultZModelIndex;
-};
-function injectSelf(key, vm = getCurrentInstance$1("injectSelf")) {
-  const { provides } = vm;
-  if (provides && key in provides) return provides[key];
-}
-function getCurrentInstance$1(name, message) {
-  const vm = getCurrentInstance();
-  if (!vm) throw new Error(`[Bvn] ${name} ${"must be called from inside a setup function"}`);
-  return vm;
-}
-var toKebabCase = (str2 = "") => str2.replace(/[^a-z]/gi, "-").replace(/\B([A-Z])/g, "-$1").toLowerCase();
-var isObject$1 = (obj) => obj !== null && typeof obj === "object" && !Array.isArray(obj);
-function mergeDeep(source = {}, target = {}, arrayFn) {
-  const out = {};
-  for (const key in source) out[key] = source[key];
-  for (const key in target) {
-    const sourceProperty = source[key];
-    const targetProperty = target[key];
-    if (isObject$1(sourceProperty) && isObject$1(targetProperty)) {
-      out[key] = mergeDeep(sourceProperty, targetProperty);
-      continue;
-    }
-    out[key] = targetProperty;
-  }
-  return out;
-}
-var propIsDefined = (vnode, prop) => {
-  var _a2, _b;
-  return typeof ((_a2 = vnode.props) == null ? void 0 : _a2[prop]) !== "undefined" || typeof ((_b = vnode.props) == null ? void 0 : _b[toKebabCase(prop)]) !== "undefined";
-};
-function internalUseDefaults(props = {}, name) {
-  const defaults = inject(defaultsKey, /* @__PURE__ */ ref({}));
-  const vm = getCurrentInstance$1("useDefaults");
-  name = name ?? vm.type.name ?? vm.type.__name;
-  if (!name) throw new Error("[Bvn] Could not determine component name");
-  const componentDefaults = computed(() => {
-    var _a2;
-    return (_a2 = defaults.value) == null ? void 0 : _a2[props._as ?? name];
-  });
-  const _props = new Proxy(props, { get(target, prop) {
-    var _a2, _b, _c, _d;
-    const propValue = Reflect.get(target, prop);
-    if (prop === "class" || prop === "style") return [(_a2 = componentDefaults.value) == null ? void 0 : _a2[prop], propValue].filter((v2) => v2 != null);
-    else if (typeof prop === "string" && !propIsDefined(vm.vnode, prop)) return ((_b = componentDefaults.value) == null ? void 0 : _b[prop]) ?? ((_d = (_c = defaults.value) == null ? void 0 : _c.global) == null ? void 0 : _d[prop]) ?? propValue;
-    return propValue;
-  } });
-  const _subcomponentDefaults = /* @__PURE__ */ shallowRef();
-  watchEffect(() => {
-    if (componentDefaults.value) {
-      const subComponents = Object.entries(componentDefaults.value).filter(([key]) => key[0] !== void 0 && key.startsWith(key[0].toUpperCase()));
-      _subcomponentDefaults.value = subComponents.length ? Object.fromEntries(subComponents) : void 0;
-    } else _subcomponentDefaults.value = void 0;
-  });
-  function provideSubDefaults() {
-    const injected = injectSelf(defaultsKey, vm);
-    provide(defaultsKey, computed(() => _subcomponentDefaults.value ? mergeDeep((injected == null ? void 0 : injected.value) ?? {}, _subcomponentDefaults.value) : injected == null ? void 0 : injected.value));
-  }
-  return {
-    props: _props,
-    provideSubDefaults
-  };
-}
-function useDefaults(props, name) {
-  const { props: _props, provideSubDefaults } = internalUseDefaults(props, name);
-  provideSubDefaults();
-  return _props;
-}
-var useId$1 = (id, suffix) => {
-  const genId = useId();
-  return computed(() => toValue(id) || withBvnPrefix(genId || "", suffix));
-};
-var BvEvent = class BvEvent2 {
-  constructor(eventType, eventInit = {}) {
-    __publicField(this, "cancelable", true);
-    __publicField(this, "componentId", null);
-    __publicField(this, "_defaultPrevented", false);
-    __publicField(this, "eventType", "");
-    __publicField(this, "nativeEvent", null);
-    __publicField(this, "_preventDefault");
-    __publicField(this, "relatedTarget", null);
-    __publicField(this, "target", null);
-    if (!eventType) throw new TypeError(`Failed to construct '${this.constructor.name}'. 1 argument required, ${arguments.length} given.`);
-    Object.assign(this, BvEvent2.Defaults, eventInit, { eventType });
-    this._preventDefault = function _preventDefault() {
-      if (this.cancelable) this.defaultPrevented = true;
-    };
-  }
-  get defaultPrevented() {
-    return this._defaultPrevented;
-  }
-  set defaultPrevented(prop) {
-    this._defaultPrevented = prop;
-  }
-  get preventDefault() {
-    return this._preventDefault;
-  }
-  set preventDefault(setter) {
-    this._preventDefault = setter;
-  }
-  static get Defaults() {
-    return {
-      cancelable: true,
-      componentId: null,
-      eventType: "",
-      nativeEvent: null,
-      relatedTarget: null,
-      target: null
-    };
-  }
-};
-var BvTriggerableEvent = class extends BvEvent {
-  constructor(eventType, eventInit = {}) {
-    super(eventType, eventInit);
-    __publicField(this, "trigger", null);
-    __publicField(this, "ok");
-    Object.assign(this, BvEvent.Defaults, eventInit, { eventType });
-  }
-  static get Defaults() {
-    return {
-      ...super.Defaults,
-      trigger: null,
-      ok: void 0
-    };
-  }
-};
-var noop$1 = () => {
-};
-var fadeBaseTransitionProps = {
-  name: "fade",
-  enterActiveClass: "",
-  enterFromClass: "showing",
-  enterToClass: "",
-  leaveActiveClass: "",
-  leaveFromClass: "",
-  leaveToClass: "showing",
-  css: true
-};
-var useShowHide = (modelValue, props, emit2, element, computedId, options = {
-  transitionProps: {},
-  showFn: () => {
-  },
-  hideFn: () => {
-  }
-}) => {
-  var _a2, _b, _c, _d, _e2, _f, _g, _h, _i, _j, _k, _l, _m;
-  let noAction = false;
-  const initialShow = !!modelValue.value && !props.initialAnimation || props.visible || false;
-  const showRef = /* @__PURE__ */ ref(initialShow);
-  const renderRef = /* @__PURE__ */ ref(initialShow);
-  const renderBackdropRef = /* @__PURE__ */ ref(initialShow);
-  let isCountdown = typeof modelValue.value !== "boolean";
-  watch(modelValue, () => {
-    isCountdown = typeof modelValue.value !== "boolean";
-    if (noAction) {
-      noAction = false;
-      return;
-    }
-    if (modelValue.value) show();
-    else hide("modelValue", true);
-  });
-  const localNoAnimation = /* @__PURE__ */ ref(initialShow);
-  const localTemporaryHide = /* @__PURE__ */ ref(false);
-  const computedNoAnimation = computed(() => props.noAnimation || props.noFade || localNoAnimation.value || false);
-  let isMounted = false;
-  onMounted(() => {
-    var _a3;
-    isMounted = true;
-    if (!props.show && initialShow) {
-      const event = buildTriggerableEvent("show", { cancelable: true });
-      emit2("show", event);
-      if (event.defaultPrevented) {
-        emit2("show-prevented", buildTriggerableEvent("show-prevented"));
-        return;
-      }
-      localNoAnimation.value = true;
-      if (!modelValue.value) {
-        noAction = true;
-        modelValue.value = true;
-      }
-      renderRef.value = true;
-      renderBackdropRef.value = true;
-      isVisible2.value = true;
-      backdropVisible.value = true;
-      backdropReady.value = true;
-      showRef.value = true;
-      (_a3 = options.showFn) == null ? void 0 : _a3.call(options);
-    } else if (props.show || !!modelValue.value && props.initialAnimation) show();
-  });
-  watch(() => props.visible, (newval) => {
-    localNoAnimation.value = true;
-    nextTick(() => {
-      if (newval) isVisible2.value = true;
-      if (newval) show();
-      else hide("visible-prop", true);
-    });
-  });
-  watch(() => props.show, (newval) => {
-    if (newval) show();
-    else hide("show-prop", true);
-  });
-  useEventListener(element, "bv-toggle", () => {
-    modelValue.value = !modelValue.value;
-  }, { passive: true });
-  const buildTriggerableEvent = (type2, opts = {}) => new BvTriggerableEvent(type2, {
-    cancelable: false,
-    target: (element == null ? void 0 : element.value) || null,
-    relatedTarget: null,
-    trigger: null,
-    ...opts,
-    componentId: computedId == null ? void 0 : computedId.value
-  });
-  let showTimeout;
-  let hideTimeout;
-  let _Resolve;
-  let _Promise;
-  let _resolveOnHide;
-  const show = (resolveOnHide = false) => {
-    if (showRef.value && !hideTimeout && !_Promise) return Promise.resolve(true);
-    _resolveOnHide = resolveOnHide;
-    if (showRef.value && !hideTimeout && _Promise) return _Promise;
-    _Promise = new Promise((resolve2) => {
-      _Resolve = resolve2;
-    });
-    const event = buildTriggerableEvent("show", { cancelable: true });
-    emit2("show", event);
-    if (event.defaultPrevented) {
-      emit2("show-prevented", buildTriggerableEvent("show-prevented"));
-      if (isVisible2.value) isVisible2.value = false;
-      if (modelValue.value && !isCountdown) {
-        noAction = true;
-        nextTick(() => {
-          modelValue.value = false;
-        });
-      }
-      _Resolve == null ? void 0 : _Resolve("show-prevented");
-      return _Promise;
-    }
-    if (hideTimeout) {
-      clearTimeout(hideTimeout);
-      hideTimeout = void 0;
-    }
-    renderRef.value = true;
-    renderBackdropRef.value = true;
-    requestAnimationFrame(() => {
-      var _a3, _b2;
-      if (localNoAnimation.value || props.delay === void 0) {
-        if (!isMounted) return;
-        showTimeout = void 0;
-        showRef.value = true;
-        (_a3 = options.showFn) == null ? void 0 : _a3.call(options);
-        if (!modelValue.value) {
-          noAction = true;
-          nextTick(() => {
-            modelValue.value = true;
-          });
-        }
-        return;
-      }
-      showTimeout = setTimeout(() => {
-        var _a4;
-        if (!isMounted) return;
-        showTimeout = void 0;
-        showRef.value = true;
-        (_a4 = options.showFn) == null ? void 0 : _a4.call(options);
-        if (!modelValue.value) {
-          noAction = true;
-          nextTick(() => {
-            modelValue.value = true;
-          });
-        }
-      }, typeof props.delay === "number" ? props.delay : ((_b2 = props.delay) == null ? void 0 : _b2.show) || 0);
-    });
-    return _Promise;
-  };
-  let leaveTrigger;
-  const hide = (trigger2, noTriggerEmit) => {
-    var _a3;
-    if (!showRef.value && !showTimeout && !renderRef.value) return Promise.resolve("");
-    if (!_Promise) _Promise = new Promise((resolve2) => {
-      _Resolve = resolve2;
-    });
-    if (typeof trigger2 !== "string") trigger2 = void 0;
-    leaveTrigger = trigger2;
-    const event = buildTriggerableEvent("hide", {
-      cancelable: true,
-      trigger: trigger2
-    });
-    const event2 = buildTriggerableEvent(trigger2 || "ignore", {
-      cancelable: true,
-      trigger: trigger2
-    });
-    if (trigger2 === "backdrop" && props.noCloseOnBackdrop || trigger2 === "esc" && props.noCloseOnEsc) {
-      emit2("hide-prevented", buildTriggerableEvent("hide-prevented", { trigger: trigger2 }));
-      _Resolve == null ? void 0 : _Resolve("hide-prevented");
-      return _Promise;
-    }
-    if (showTimeout) {
-      clearTimeout(showTimeout);
-      showTimeout = void 0;
-    }
-    if (trigger2 && !noTriggerEmit) emit2(trigger2, event2);
-    emit2("hide", event);
-    if (event.defaultPrevented || event2.defaultPrevented) {
-      emit2("hide-prevented", buildTriggerableEvent("hide-prevented", { trigger: trigger2 }));
-      if (!modelValue.value) nextTick(() => {
-        noAction = true;
-        modelValue.value = true;
-      });
-      _Resolve == null ? void 0 : _Resolve("hide-prevented");
-      return _Promise;
-    }
-    trapActive.value = false;
-    if (showTimeout) {
-      clearTimeout(showTimeout);
-      showTimeout = void 0;
-      if (!localTemporaryHide.value) renderRef.value = false;
-      renderBackdropRef.value = false;
-    }
-    hideTimeout = setTimeout(() => {
-      var _a4;
-      if (!isMounted) return;
-      hideTimeout = void 0;
-      isLeaving.value = true;
-      showRef.value = false;
-      (_a4 = options.hideFn) == null ? void 0 : _a4.call(options);
-      if (modelValue.value) {
-        noAction = true;
-        modelValue.value = isCountdown ? 0 : false;
-      }
-    }, localNoAnimation.value ? 0 : typeof props.delay === "number" ? props.delay : ((_a3 = props.delay) == null ? void 0 : _a3.hide) || 0);
-    return _Promise;
-  };
-  const throttleHide = /* @__PURE__ */ useThrottleFn((a) => hide(a), 500);
-  const throttleShow = /* @__PURE__ */ useThrottleFn(() => show(), 500);
-  const toggle = (resolveOnHide = false) => {
-    const e = buildTriggerableEvent("toggle", { cancelable: true });
-    emit2("toggle", e);
-    if (e.defaultPrevented) {
-      emit2("toggle-prevented", buildTriggerableEvent("toggle-prevented"));
-      return Promise.resolve("toggle-prevented");
-    }
-    if (showRef.value) return hide("toggle-function", true);
-    return show(resolveOnHide);
-  };
-  const triggerToggle = () => {
-    const e = buildTriggerableEvent("toggle", { cancelable: true });
-    emit2("toggle", e);
-    if (e.defaultPrevented) {
-      emit2("toggle-prevented", buildTriggerableEvent("toggle-prevented"));
-      return;
-    }
-    if (showRef.value) hide("toggle-trigger", true);
-    else show();
-  };
-  const triggerRegistry = [];
-  const registerTrigger = (trigger2, el) => {
-    triggerRegistry.push({
-      trigger: trigger2,
-      el
-    });
-    el.addEventListener(trigger2, triggerToggle);
-    checkVisibility(el);
-  };
-  const unregisterTrigger = (trigger2, el, clean = true) => {
-    const idx = triggerRegistry.findIndex((t) => (t == null ? void 0 : t.trigger) === trigger2 && t.el === el);
-    if (idx > -1) {
-      triggerRegistry.splice(idx, 1);
-      el.removeEventListener(trigger2, triggerToggle);
-      if (clean) {
-        el.removeAttribute("aria-expanded");
-        el.classList.remove("collapsed");
-        el.classList.remove("not-collapsed");
-      }
-    }
-  };
-  const appRegistry = (_a2 = inject(showHideRegistryKey, null)) == null ? void 0 : _a2.register({
-    id: computedId.value,
-    toggle,
-    show,
-    hide,
-    value: /* @__PURE__ */ readonly(showRef),
-    registerTrigger,
-    unregisterTrigger,
-    component: getCurrentInstance()
-  });
-  const checkVisibility = (el) => {
-    el.setAttribute("aria-expanded", modelValue.value ? "true" : "false");
-    el.classList.toggle("collapsed", !modelValue.value);
-    el.classList.toggle("not-collapsed", !!modelValue.value);
-  };
-  watch(modelValue, () => {
-    triggerRegistry.forEach((t) => {
-      checkVisibility(t.el);
-    });
-  });
-  watch(computedId, (newId, oldId) => {
-    appRegistry == null ? void 0 : appRegistry.updateId(newId, oldId);
-  });
-  onBeforeUnmount(() => {
-    appRegistry == null ? void 0 : appRegistry.unregister();
-    triggerRegistry.forEach((t) => {
-      t.el.removeEventListener(t.trigger, triggerToggle);
-    });
-  });
-  onUnmounted(() => {
-    isMounted = false;
-    clearTimeout(showTimeout);
-    clearTimeout(hideTimeout);
-    showTimeout = void 0;
-    hideTimeout = void 0;
-  });
-  const lazyLoadCompleted = /* @__PURE__ */ ref(false);
-  const markLazyLoadCompleted = () => {
-    if (props.lazy === true) lazyLoadCompleted.value = true;
-  };
-  const isLeaving = /* @__PURE__ */ ref(false);
-  const isActive = /* @__PURE__ */ ref(initialShow);
-  const isVisible2 = /* @__PURE__ */ ref(initialShow);
-  const onBeforeEnter = [...[((_b = options.transitionProps) == null ? void 0 : _b.onBeforeEnter) ?? noop$1, ((_c = props.transitionProps) == null ? void 0 : _c.onBeforeEnter) ?? noop$1].flat(), () => {
-    isActive.value = true;
-  }];
-  const onEnter = [() => {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        isVisible2.value = true;
-      });
-    });
-  }, ...[((_d = options.transitionProps) == null ? void 0 : _d.onEnter) ?? noop$1, ((_e2 = props.transitionProps) == null ? void 0 : _e2.onEnter) ?? noop$1].flat()];
-  const onAfterEnter = [
-    markLazyLoadCompleted,
-    ...[((_f = options.transitionProps) == null ? void 0 : _f.onAfterEnter) ?? noop$1, ((_g = props.transitionProps) == null ? void 0 : _g.onAfterEnter) ?? noop$1].flat(),
-    () => {
-      if (localNoAnimation.value) requestAnimationFrame(() => {
-        localNoAnimation.value = false;
-      });
-      if (localTemporaryHide.value) localTemporaryHide.value = false;
-      requestAnimationFrame(() => {
-        trapActive.value = true;
-        nextTick(() => {
-          emit2("shown", buildTriggerableEvent("shown", { cancelable: false }));
-        });
-      });
-      if (!_resolveOnHide) {
-        _Resolve == null ? void 0 : _Resolve(true);
-        _Promise = void 0;
-        _Resolve = void 0;
-      }
-    }
-  ];
-  const onBeforeLeave = [
-    () => {
-      if (!isLeaving.value) isLeaving.value = true;
-    },
-    ...[((_h = options.transitionProps) == null ? void 0 : _h.onBeforeLeave) ?? noop$1, ((_i = props.transitionProps) == null ? void 0 : _i.onBeforeLeave) ?? noop$1].flat(),
-    () => {
-      trapActive.value = false;
-    }
-  ];
-  const onLeave = [() => {
-    isVisible2.value = false;
-  }, ...[((_j = options.transitionProps) == null ? void 0 : _j.onLeave) ?? noop$1, ((_k = props.transitionProps) == null ? void 0 : _k.onLeave) ?? noop$1].flat()];
-  const onAfterLeave = [
-    () => {
-      emit2("hidden", buildTriggerableEvent("hidden", {
-        trigger: leaveTrigger,
-        cancelable: false
-      }));
-    },
-    ...[((_l = options.transitionProps) == null ? void 0 : _l.onAfterLeave) ?? noop$1, ((_m = props.transitionProps) == null ? void 0 : _m.onAfterLeave) ?? noop$1].flat(),
-    () => {
-      isLeaving.value = false;
-      isActive.value = false;
-      if (localNoAnimation.value) requestAnimationFrame(() => {
-        localNoAnimation.value = false;
-      });
-      requestAnimationFrame(() => {
-        if (!localTemporaryHide.value) renderRef.value = false;
-      });
-      _Resolve == null ? void 0 : _Resolve(leaveTrigger || "");
-      _Promise = void 0;
-      _Resolve = void 0;
-      leaveTrigger = void 0;
-    }
-  ];
-  const contentShowing = computed(() => localTemporaryHide.value === true || isActive.value === true || props.lazy === false || props.lazy === true && lazyLoadCompleted.value === true && props.unmountLazy === false);
-  const trapActive = /* @__PURE__ */ ref(false);
-  const backdropVisible = /* @__PURE__ */ ref(false);
-  const backdropReady = /* @__PURE__ */ ref(false);
-  const transitionFunctions = {
-    ...options.transitionProps,
-    onBeforeEnter,
-    onEnter,
-    onAfterEnter,
-    onBeforeLeave,
-    onLeave,
-    onAfterLeave
-  };
-  return {
-    showRef: /* @__PURE__ */ readonly(showRef),
-    renderRef: /* @__PURE__ */ readonly(renderRef),
-    renderBackdropRef: /* @__PURE__ */ readonly(renderBackdropRef),
-    isVisible: /* @__PURE__ */ readonly(isVisible2),
-    isActive: /* @__PURE__ */ readonly(isActive),
-    trapActive: /* @__PURE__ */ readonly(trapActive),
-    show,
-    hide,
-    toggle,
-    throttleHide,
-    throttleShow,
-    buildTriggerableEvent,
-    computedNoAnimation,
-    localNoAnimation: /* @__PURE__ */ readonly(localNoAnimation),
-    setLocalNoAnimation: (value) => {
-      localNoAnimation.value = value;
-    },
-    localTemporaryHide: /* @__PURE__ */ readonly(localTemporaryHide),
-    setLocalTemporaryHide: (value) => {
-      localTemporaryHide.value = value;
-    },
-    isLeaving: /* @__PURE__ */ readonly(isLeaving),
-    transitionProps: {
-      ...fadeBaseTransitionProps,
-      ...props.transitionProps,
-      ...transitionFunctions
-    },
-    lazyLoadCompleted: /* @__PURE__ */ readonly(lazyLoadCompleted),
-    markLazyLoadCompleted,
-    contentShowing,
-    backdropReady: /* @__PURE__ */ readonly(backdropReady),
-    backdropVisible: /* @__PURE__ */ readonly(backdropVisible),
-    backdropTransitionProps: {
-      ...fadeBaseTransitionProps,
-      onBeforeEnter: () => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            backdropVisible.value = true;
-          });
-        });
-        backdropReady.value = false;
-      },
-      onAfterEnter: () => {
-        backdropReady.value = true;
-      },
-      onBeforeLeave: () => {
-        backdropVisible.value = false;
-      },
-      onAfterLeave: () => {
-        backdropReady.value = false;
-        requestAnimationFrame(() => {
-          renderBackdropRef.value = false;
-        });
-      }
-    }
-  };
-};
-var _hoisted_1$B = [
-  "type",
-  "disabled",
-  "aria-label"
-];
-var BCloseButton_default = /* @__PURE__ */ defineComponent({
-  __name: "BCloseButton",
-  props: {
-    ariaLabel: { default: "Close" },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    type: { default: "button" }
-  },
-  emits: ["click"],
-  setup(__props, { emit: __emit }) {
-    const props = useDefaults(__props, "BCloseButton");
-    const emit2 = __emit;
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("button", {
-        type: unref(props).type,
-        class: "btn-close",
-        disabled: unref(props).disabled,
-        "aria-label": unref(props).ariaLabel,
-        onClick: _cache[0] || (_cache[0] = ($event) => emit2("click", $event))
-      }, null, 8, _hoisted_1$B);
-    };
-  }
-});
-var useColorVariantClasses = (obj) => computed(() => {
-  let props = toValue(obj);
-  props = {
-    variant: props.variant ?? null,
-    bgVariant: props.bgVariant ?? null,
-    textVariant: props.textVariant ?? null,
-    borderVariant: props.borderVariant ?? null
-  };
-  return {
-    [`text-bg-${props.variant}`]: props.variant !== null,
-    [`text-${props.textVariant}`]: props.textVariant !== null,
-    [`bg-${props.bgVariant}`]: props.bgVariant !== null,
-    [`border-${props.borderVariant}`]: props.borderVariant !== null
-  };
-});
-var pick = (objToPluck, keysToPluck) => [...keysToPluck].reduce((memo, prop) => {
-  memo[prop] = objToPluck[prop];
-  return memo;
-}, {});
-var get = (value, path, defaultValue) => {
-  const segments = path.split(/[.[\]]/g);
-  let current = value;
-  for (const key of segments) {
-    if (current === null) return defaultValue;
-    if (current === void 0) return defaultValue;
-    if (key.trim() === "") continue;
-    current = current[key];
-  }
-  if (current === void 0) return defaultValue;
-  return current;
-};
-var upperFirst = (str2) => {
-  const trim = str2.trim();
-  return trim.charAt(0).toUpperCase() + trim.slice(1);
-};
-var toPascalCase = (str2) => str2.replace(/-./g, (match) => match.charAt(1).toUpperCase()).replace(/\b\w/g, (match) => match.toUpperCase()).replace(/\s+/g, "");
-var isLink = (props) => !!(props.href || props.to);
-var useBLinkHelper = (props, pickProps) => {
-  const pickPropsResolved = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(pickProps));
-  const resolvedProps = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(props));
-  const computedLink = computed(() => isLink(resolvedProps.value));
-  return {
-    computedLink,
-    computedLinkProps: computed(() => computedLink.value ? pick(resolvedProps.value, pickPropsResolved.value ?? [
-      "active",
-      "activeClass",
-      "disabled",
-      "exactActiveClass",
-      "href",
-      "icon",
-      "noRel",
-      "opacity",
-      "opacityHover",
-      "noPrefetch",
-      "prefetch",
-      "prefetchOn",
-      "prefetchedClass",
-      "rel",
-      "replace",
-      "routerComponentName",
-      "routerTag",
-      "stretched",
-      "target",
-      "to",
-      "underlineOffset",
-      "underlineOffsetHover",
-      "underlineOpacity",
-      "underlineOpacityHover",
-      "underlineVariant",
-      "variant"
-    ]) : {})
-  };
-};
-var useBLinkTagResolver = ({ to, disabled, href, replace, routerComponentName }) => {
-  var _a2, _b, _c, _d, _e2, _f, _g, _h;
-  const instance = getCurrentInstance();
-  const router2 = (_d = (_c = (_b = (_a2 = instance == null ? void 0 : instance.appContext) == null ? void 0 : _a2.app) == null ? void 0 : _b.config) == null ? void 0 : _c.globalProperties) == null ? void 0 : _d.$router;
-  const route = (_h = (_g = (_f = (_e2 = instance == null ? void 0 : instance.appContext) == null ? void 0 : _e2.app) == null ? void 0 : _f.config) == null ? void 0 : _g.globalProperties) == null ? void 0 : _h.$route;
-  const RouterLinkComponent = resolveDynamicComponent("RouterLink");
-  const resolvedTo = computed(() => toValue(to) || "");
-  const resolvedReplace = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(replace));
-  const routerName = computed(() => {
-    const routerComponent = toValue(routerComponentName);
-    if (typeof routerComponent === "string") return toPascalCase(routerComponent);
-    return routerComponent;
-  });
-  const useLink2 = typeof routerName.value !== "string" && "useLink" in routerName.value ? routerName.value.useLink : typeof RouterLinkComponent !== "string" && "useLink" in RouterLinkComponent ? RouterLinkComponent.useLink : null;
-  const isNuxtLink = computed(() => {
-    var _a3, _b2;
-    return typeof ((_b2 = (_a3 = instance == null ? void 0 : instance.appContext) == null ? void 0 : _a3.app) == null ? void 0 : _b2.$nuxt) !== "undefined";
-  });
-  const isRouterLink = computed(() => routerName.value === "RouterLink");
-  const tag = computed(() => {
-    var _a3, _b2;
-    if (toValue(disabled) || !resolvedTo.value) return "a";
-    if (typeof routerName.value !== "string") return routerName.value;
-    if (isRouterLink.value && typeof RouterLinkComponent !== "string") return RouterLinkComponent;
-    return ((_b2 = (_a3 = instance == null ? void 0 : instance.appContext) == null ? void 0 : _a3.app) == null ? void 0 : _b2.component(routerName.value)) || "a";
-  });
-  const isNonStandardTag = computed(() => tag.value !== "a" && !isRouterLink.value && !isNuxtLink.value);
-  const isOfRouterType = computed(() => isRouterLink.value || isNuxtLink.value);
-  const linkProps = computed(() => ({
-    to: resolvedTo.value,
-    replace: resolvedReplace.value
-  }));
-  const _link = useLink2 == null ? void 0 : useLink2({
-    to: resolvedTo,
-    replace: resolvedReplace
-  });
-  const link = computed(() => isOfRouterType.value && toValue(to) ? _link : null);
-  return {
-    isNonStandardTag,
-    tag,
-    isRouterLink,
-    isNuxtLink,
-    computedHref: computed(() => {
-      var _a3;
-      if (((_a3 = link.value) == null ? void 0 : _a3.href.value) && resolvedTo.value) return link.value.href.value;
-      const toFallback = "#";
-      const resolvedHref = toValue(href);
-      if (resolvedHref) return resolvedHref;
-      if (typeof resolvedTo.value === "string") return resolvedTo.value || toFallback;
-      const stableTo = resolvedTo.value;
-      if (stableTo !== void 0 && "path" in stableTo) return `${stableTo.path || ""}${stableTo.query ? `?${Object.keys(stableTo.query).map((e) => {
-        var _a4;
-        return `${e}=${(_a4 = stableTo.query) == null ? void 0 : _a4[e]}`;
-      }).join("=")}` : ""}${!stableTo.hash || stableTo.hash.charAt(0) === "#" ? stableTo.hash || "" : `#${stableTo.hash}`}` || toFallback;
-      return toFallback;
-    }),
-    routerName,
-    router: router2,
-    route,
-    link,
-    linkProps
-  };
-};
-var useLinkClasses = (linkProps) => computed(() => {
-  const props = toValue(linkProps);
-  return {
-    [`link-${props.variant}`]: props.variant !== null,
-    [`link-opacity-${props.opacity}`]: props.opacity !== void 0,
-    [`link-opacity-${props.opacityHover}-hover`]: props.opacityHover !== void 0,
-    [`link-underline-${props.underlineVariant}`]: props.underlineVariant !== null,
-    [`link-offset-${props.underlineOffset}`]: props.underlineOffset !== void 0,
-    [`link-offset-${props.underlineOffsetHover}-hover`]: props.underlineOffsetHover !== void 0,
-    ["link-underline"]: props.underlineVariant === null && (props.underlineOpacity !== void 0 || props.underlineOpacityHover !== void 0),
-    [`link-underline-opacity-${props.underlineOpacity}`]: props.underlineOpacity !== void 0,
-    [`link-underline-opacity-${props.underlineOpacityHover}-hover`]: props.underlineOpacityHover !== void 0,
-    "icon-link": props.icon === true
-  };
-});
-var defaultActiveClass = "active";
-var BLink_default = /* @__PURE__ */ defineComponent({
-  __name: "BLink",
-  props: {
-    active: {
-      type: Boolean,
-      default: void 0
-    },
-    activeClass: { default: "router-link-active" },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    exactActiveClass: { default: "router-link-exact-active" },
-    href: { default: void 0 },
-    icon: {
-      type: Boolean,
-      default: false
-    },
-    noRel: {
-      type: Boolean,
-      default: false
-    },
-    opacity: { default: void 0 },
-    opacityHover: { default: void 0 },
-    prefetch: {
-      type: Boolean,
-      default: void 0
-    },
-    prefetchOn: { default: void 0 },
-    noPrefetch: {
-      type: Boolean,
-      default: void 0
-    },
-    prefetchedClass: { default: void 0 },
-    rel: { default: void 0 },
-    replace: {
-      type: Boolean,
-      default: false
-    },
-    routerComponentName: { default: "router-link" },
-    routerTag: { default: "a" },
-    stretched: {
-      type: Boolean,
-      default: false
-    },
-    target: { default: void 0 },
-    to: { default: void 0 },
-    underlineOffset: { default: void 0 },
-    underlineOffsetHover: { default: void 0 },
-    underlineOpacity: { default: void 0 },
-    underlineOpacityHover: { default: void 0 },
-    underlineVariant: { default: null },
-    variant: { default: null }
-  },
-  emits: ["click"],
-  setup(__props, { emit: __emit }) {
-    const props = useDefaults(__props, "BLink");
-    const emit2 = __emit;
-    const attrs = useAttrs();
-    const { computedHref, tag, link, isNuxtLink, isRouterLink, linkProps, isNonStandardTag } = useBLinkTagResolver({
-      routerComponentName: () => props.routerComponentName,
-      disabled: () => props.disabled,
-      to: () => props.to,
-      replace: () => props.replace,
-      href: () => props.href
-    });
-    const collapseData = inject(collapseInjectionKey, null);
-    const navbarData = inject(navbarInjectionKey, null);
-    const linkValueClasses = useLinkClasses(props);
-    const computedClasses = computed(() => {
-      var _a2, _b;
-      return [
-        linkValueClasses.value,
-        attrs.class,
-        computedLinkClasses.value,
-        {
-          [defaultActiveClass]: props.active,
-          [props.activeClass]: ((_a2 = link.value) == null ? void 0 : _a2.isActive.value) || false,
-          [props.exactActiveClass]: ((_b = link.value) == null ? void 0 : _b.isExactActive.value) || false,
-          "stretched-link": props.stretched
-        }
-      ];
-    });
-    const computedLinkClasses = computed(() => ({
-      [defaultActiveClass]: props.active,
-      disabled: props.disabled
-    }));
-    const clicked = (e) => {
-      var _a2, _b, _c;
-      if (props.disabled) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        return;
-      }
-      if (((_a2 = collapseData == null ? void 0 : collapseData.isNav) == null ? void 0 : _a2.value) === true && navbarData === null || navbarData !== null && ((_b = navbarData.noAutoClose) == null ? void 0 : _b.value) !== true) (_c = collapseData == null ? void 0 : collapseData.hide) == null ? void 0 : _c.call(collapseData);
-      emit2("click", e);
-    };
-    const computedRel = computed(() => props.target === "_blank" ? !props.rel && props.noRel ? "noopener" : props.rel : void 0);
-    const computedTabIndex = computed(() => props.disabled ? "-1" : typeof attrs.tabindex === "undefined" ? null : attrs.tabindex);
-    const nuxtSpecificProps = computed(() => ({
-      ...props.noPrefetch ? { noPrefetch: props.noPrefetch } : { prefetch: props.prefetch },
-      prefetchOn: props.prefetchOn,
-      prefetchedClass: props.prefetchedClass,
-      ...linkProps.value
-    }));
-    const computedSpecificProps = computed(() => ({
-      ...isRouterLink.value ? linkProps.value : void 0,
-      ...isNuxtLink.value || isNonStandardTag.value ? nuxtSpecificProps.value : void 0
-    }));
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(tag)), mergeProps({
-        class: computedClasses.value,
-        target: unref(props).target,
-        href: unref(computedHref),
-        rel: computedRel.value,
-        tabindex: computedTabIndex.value,
-        "aria-disabled": unref(props).disabled ? true : null
-      }, computedSpecificProps.value, { onClick: _cache[0] || (_cache[0] = (e) => {
-        var _a2;
-        clicked(e);
-        (_a2 = unref(link)) == null ? void 0 : _a2.navigate(e);
-      }) }), {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default")]),
-        _: 3
-      }, 16, [
-        "class",
-        "target",
-        "href",
-        "rel",
-        "tabindex",
-        "aria-disabled"
-      ]);
-    };
-  }
-});
-var _hoisted_1$A = {
-  key: 0,
-  class: "visually-hidden"
-};
-var BSpinner_default = /* @__PURE__ */ defineComponent({
-  __name: "BSpinner",
-  props: {
-    label: { default: void 0 },
-    role: { default: "status" },
-    small: {
-      type: Boolean,
-      default: false
-    },
-    tag: { default: "span" },
-    type: { default: "border" },
-    variant: { default: null }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BSpinner");
-    const slots = useSlots();
-    const colorClasses = useColorVariantClasses(computed(() => ({ textVariant: props.variant })));
-    const computedClasses = computed(() => [
-      `spinner-${props.type}`,
-      colorClasses.value,
-      { [`spinner-${props.type}-sm`]: props.small }
-    ]);
-    const hasLabelSlot = computed(() => !isEmptySlot(slots.label));
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), {
-        class: normalizeClass(computedClasses.value),
-        role: unref(props).label || hasLabelSlot.value ? unref(props).role : null,
-        "aria-hidden": unref(props).label || hasLabelSlot.value ? null : true
-      }, {
-        default: withCtx(() => [unref(props).label || hasLabelSlot.value ? (openBlock(), createElementBlock("span", _hoisted_1$A, [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(unref(props).label), 1)])])) : createCommentVNode("", true)]),
-        _: 3
-      }, 8, [
-        "class",
-        "role",
-        "aria-hidden"
-      ]);
-    };
-  }
-});
-var BButton_default = /* @__PURE__ */ defineComponent({
-  __name: "BButton",
-  props: /* @__PURE__ */ mergeModels({
-    loading: {
-      type: Boolean,
-      default: false
-    },
-    loadingFill: {
-      type: Boolean,
-      default: false
-    },
-    loadingText: { default: "Loading..." },
-    pill: {
-      type: Boolean,
-      default: false
-    },
-    size: { default: void 0 },
-    squared: {
-      type: Boolean,
-      default: false
-    },
-    tag: { default: "button" },
-    type: { default: "button" },
-    variant: { default: "secondary" },
-    active: {
-      type: Boolean,
-      default: false
-    },
-    activeClass: { default: void 0 },
-    disabled: {
-      type: Boolean,
-      default: void 0
-    },
-    exactActiveClass: { default: void 0 },
-    href: { default: void 0 },
-    icon: {
-      type: Boolean,
-      default: false
-    },
-    noRel: { type: Boolean },
-    opacity: { default: void 0 },
-    opacityHover: { default: void 0 },
-    prefetch: { type: Boolean },
-    prefetchOn: {},
-    noPrefetch: { type: Boolean },
-    prefetchedClass: {},
-    rel: { default: void 0 },
-    replace: {
-      type: Boolean,
-      default: void 0
-    },
-    routerComponentName: { default: void 0 },
-    routerTag: { default: void 0 },
-    stretched: {
-      type: Boolean,
-      default: false
-    },
-    target: { default: void 0 },
-    to: { default: void 0 },
-    underlineOffset: { default: void 0 },
-    underlineOffsetHover: { default: void 0 },
-    underlineOpacity: { default: void 0 },
-    underlineOpacityHover: { default: void 0 },
-    underlineVariant: { default: null }
-  }, {
-    "pressed": {
-      type: Boolean,
-      default: void 0
-    },
-    "pressedModifiers": {}
-  }),
-  emits: /* @__PURE__ */ mergeModels(["click"], ["update:pressed"]),
-  setup(__props, { emit: __emit }) {
-    const props = useDefaults(__props, "BButton");
-    const emit2 = __emit;
-    const element = useTemplateRef("_element");
-    const pressedValue = useModel(__props, "pressed");
-    const { computedLink, computedLinkProps } = useBLinkHelper(props, [
-      "activeClass",
-      "exactActiveClass",
-      "replace",
-      "routerComponentName",
-      "routerTag",
-      "noPrefetch",
-      "prefetch",
-      "prefetchOn",
-      "prefetchedClass"
-    ]);
-    const isToggle = computed(() => typeof pressedValue.value === "boolean");
-    const isButton = computed(() => props.tag === "button" && props.href === void 0 && props.to === void 0);
-    const isBLink = computed(() => props.to !== void 0);
-    const nonStandardTag = computed(() => props.href !== void 0 ? false : !isButton.value);
-    const linkProps = computed(() => isBLink.value ? computedLinkProps.value : []);
-    const computedAriaDisabled = computed(() => {
-      if (props.href === "#" && props.disabled) return true;
-      return nonStandardTag.value ? props.disabled : null;
-    });
-    const variantIsLinkType = computed(() => {
-      var _a2;
-      return ((_a2 = props.variant) == null ? void 0 : _a2.startsWith("link")) || false;
-    });
-    const variantIsLinkTypeSubset = computed(() => {
-      var _a2;
-      return ((_a2 = props.variant) == null ? void 0 : _a2.startsWith("link-")) || false;
-    });
-    const linkValueClasses = useLinkClasses(computed(() => {
-      var _a2;
-      return { ...variantIsLinkType.value ? {
-        icon: props.icon,
-        opacity: props.opacity,
-        opacityHover: props.opacityHover,
-        underlineOffset: props.underlineOffset,
-        underlineOffsetHover: props.underlineOffsetHover,
-        underlineOpacity: props.underlineOpacity,
-        underlineOpacityHover: props.underlineOpacityHover,
-        underlineVariant: props.underlineVariant,
-        variant: variantIsLinkTypeSubset.value === true ? (_a2 = props.variant) == null ? void 0 : _a2.slice(5) : null
-      } : void 0 };
-    }));
-    const computedClasses = computed(() => [variantIsLinkType.value === true && computedLink.value === false ? linkValueClasses.value : void 0, {
-      [`btn-${props.size}`]: props.size !== void 0,
-      [`btn-${props.variant}`]: props.variant !== null && variantIsLinkTypeSubset.value === false,
-      "active": props.active || pressedValue.value,
-      "rounded-pill": props.pill,
-      "rounded-0": props.squared,
-      "disabled": props.disabled
-    }]);
-    const computedTag = computed(() => isBLink.value ? BLink_default : props.href ? "a" : props.tag);
-    const clicked = (e) => {
-      if (props.disabled) {
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
-      emit2("click", e);
-      if (isToggle.value) pressedValue.value = !pressedValue.value;
-    };
-    onKeyStroke([" ", "enter"], (e) => {
-      var _a2;
-      if (props.href === "#") {
-        e.preventDefault();
-        (_a2 = element.value) == null ? void 0 : _a2.click();
-      }
-    }, { target: element });
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({
-        ref: "_element",
-        class: "btn"
-      }, linkProps.value, {
-        class: computedClasses.value,
-        "aria-disabled": computedAriaDisabled.value,
-        "aria-pressed": isToggle.value ? pressedValue.value : null,
-        autocomplete: isToggle.value ? "off" : null,
-        disabled: isButton.value ? unref(props).disabled : null,
-        href: unref(props).href,
-        rel: unref(computedLink) ? unref(props).rel : null,
-        role: nonStandardTag.value || unref(computedLink) ? "button" : null,
-        target: unref(computedLink) ? unref(props).target : null,
-        type: isButton.value ? unref(props).type : null,
-        to: !isButton.value ? unref(props).to : null,
-        onClick: clicked
-      }), {
-        default: withCtx(() => [unref(props).loading ? renderSlot(_ctx.$slots, "loading", { key: 0 }, () => [!unref(props).loadingFill ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [createTextVNode(toDisplayString(unref(props).loadingText), 1)], 64)) : createCommentVNode("", true), renderSlot(_ctx.$slots, "loading-spinner", {}, () => [createVNode(BSpinner_default, {
-          small: unref(props).size !== "lg",
-          label: unref(props).loadingFill ? unref(props).loadingText : void 0
-        }, null, 8, ["small", "label"])])]) : renderSlot(_ctx.$slots, "default", { key: 1 })]),
-        _: 3
-      }, 16, [
-        "class",
-        "aria-disabled",
-        "aria-pressed",
-        "autocomplete",
-        "disabled",
-        "href",
-        "rel",
-        "role",
-        "target",
-        "type",
-        "to"
-      ]);
-    };
-  }
-});
-var ConditionalTeleport_default = /* @__PURE__ */ defineComponent({
-  name: "ConditionalTeleport",
-  inheritAttrs: false,
-  props: {
-    to: {
-      type: [String, Object],
-      default: null
-    },
-    disabled: {
-      type: Boolean,
-      required: true
-    }
-  },
-  slots: Object,
-  setup(props, { slots }) {
-    return () => {
-      var _a2, _b;
-      return !props.to ? (_a2 = slots.default) == null ? void 0 : _a2.call(slots, {}) : h(Teleport, {
-        to: props.to,
-        disabled: props.disabled || !props.to
-      }, [(_b = slots.default) == null ? void 0 : _b.call(slots, {})]);
-    };
-  }
-});
-var getElement = (element, root = getSafeDocument()) => {
-  var _a2;
-  if (!element) return void 0;
-  if (typeof element === "string") {
-    if (root === null) return void 0;
-    return ((_a2 = getSafeDocument()) == null ? void 0 : _a2.getElementById(element)) ?? root.querySelector(element) ?? void 0;
-  }
-  return element.$el ?? element;
-};
-var useScrollLock = /* @__PURE__ */ createSharedComposable(useScrollLock$1);
-/*!
-* tabbable 6.4.0
-* @license MIT, https://github.com/focus-trap/tabbable/blob/master/LICENSE
-*/
-var candidateSelectors = [
-  "input:not([inert]):not([inert] *)",
-  "select:not([inert]):not([inert] *)",
-  "textarea:not([inert]):not([inert] *)",
-  "a[href]:not([inert]):not([inert] *)",
-  "button:not([inert]):not([inert] *)",
-  "[tabindex]:not(slot):not([inert]):not([inert] *)",
-  "audio[controls]:not([inert]):not([inert] *)",
-  "video[controls]:not([inert]):not([inert] *)",
-  '[contenteditable]:not([contenteditable="false"]):not([inert]):not([inert] *)',
-  "details>summary:first-of-type:not([inert]):not([inert] *)",
-  "details:not([inert]):not([inert] *)"
-];
-var candidateSelector = /* @__PURE__ */ candidateSelectors.join(",");
-var NoElement = typeof Element === "undefined";
-var matches = NoElement ? function() {
-} : Element.prototype.matches || Element.prototype.msMatchesSelector || Element.prototype.webkitMatchesSelector;
-var getRootNode = !NoElement && Element.prototype.getRootNode ? function(element) {
-  var _element$getRootNode;
-  return element === null || element === void 0 ? void 0 : (_element$getRootNode = element.getRootNode) === null || _element$getRootNode === void 0 ? void 0 : _element$getRootNode.call(element);
-} : function(element) {
-  return element === null || element === void 0 ? void 0 : element.ownerDocument;
-};
-var _isInert = function isInert(node, lookUp) {
-  var _node$getAttribute;
-  if (lookUp === void 0) lookUp = true;
-  var inertAtt = node === null || node === void 0 ? void 0 : (_node$getAttribute = node.getAttribute) === null || _node$getAttribute === void 0 ? void 0 : _node$getAttribute.call(node, "inert");
-  return inertAtt === "" || inertAtt === "true" || lookUp && node && (typeof node.closest === "function" ? node.closest("[inert]") : _isInert(node.parentNode));
-};
-var isContentEditable = function isContentEditable2(node) {
-  var _node$getAttribute2;
-  var attValue = node === null || node === void 0 ? void 0 : (_node$getAttribute2 = node.getAttribute) === null || _node$getAttribute2 === void 0 ? void 0 : _node$getAttribute2.call(node, "contenteditable");
-  return attValue === "" || attValue === "true";
-};
-var getCandidates = function getCandidates2(el, includeContainer, filter) {
-  if (_isInert(el)) return [];
-  var candidates = Array.prototype.slice.apply(el.querySelectorAll(candidateSelector));
-  if (includeContainer && matches.call(el, candidateSelector)) candidates.unshift(el);
-  candidates = candidates.filter(filter);
-  return candidates;
-};
-var _getCandidatesIteratively = function getCandidatesIteratively(elements, includeContainer, options) {
-  var candidates = [];
-  var elementsToCheck = Array.from(elements);
-  while (elementsToCheck.length) {
-    var element = elementsToCheck.shift();
-    if (_isInert(element, false)) continue;
-    if (element.tagName === "SLOT") {
-      var assigned = element.assignedElements();
-      var nestedCandidates = _getCandidatesIteratively(assigned.length ? assigned : element.children, true, options);
-      if (options.flatten) candidates.push.apply(candidates, nestedCandidates);
-      else candidates.push({
-        scopeParent: element,
-        candidates: nestedCandidates
-      });
-    } else {
-      if (matches.call(element, candidateSelector) && options.filter(element) && (includeContainer || !elements.includes(element))) candidates.push(element);
-      var shadowRoot = element.shadowRoot || typeof options.getShadowRoot === "function" && options.getShadowRoot(element);
-      var validShadowRoot = !_isInert(shadowRoot, false) && (!options.shadowRootFilter || options.shadowRootFilter(element));
-      if (shadowRoot && validShadowRoot) {
-        var _nestedCandidates = _getCandidatesIteratively(shadowRoot === true ? element.children : shadowRoot.children, true, options);
-        if (options.flatten) candidates.push.apply(candidates, _nestedCandidates);
-        else candidates.push({
-          scopeParent: element,
-          candidates: _nestedCandidates
-        });
-      } else elementsToCheck.unshift.apply(elementsToCheck, element.children);
-    }
-  }
-  return candidates;
-};
-var hasTabIndex = function hasTabIndex2(node) {
-  return !isNaN(parseInt(node.getAttribute("tabindex"), 10));
-};
-var getTabIndex = function getTabIndex2(node) {
-  if (!node) throw new Error("No node provided");
-  if (node.tabIndex < 0) {
-    if ((/^(AUDIO|VIDEO|DETAILS)$/.test(node.tagName) || isContentEditable(node)) && !hasTabIndex(node)) return 0;
-  }
-  return node.tabIndex;
-};
-var getSortOrderTabIndex = function getSortOrderTabIndex2(node, isScope) {
-  var tabIndex = getTabIndex(node);
-  if (tabIndex < 0 && isScope && !hasTabIndex(node)) return 0;
-  return tabIndex;
-};
-var sortOrderedTabbables = function sortOrderedTabbables2(a, b2) {
-  return a.tabIndex === b2.tabIndex ? a.documentOrder - b2.documentOrder : a.tabIndex - b2.tabIndex;
-};
-var isInput = function isInput2(node) {
-  return node.tagName === "INPUT";
-};
-var isHiddenInput = function isHiddenInput2(node) {
-  return isInput(node) && node.type === "hidden";
-};
-var isDetailsWithSummary = function isDetailsWithSummary2(node) {
-  return node.tagName === "DETAILS" && Array.prototype.slice.apply(node.children).some(function(child) {
-    return child.tagName === "SUMMARY";
-  });
-};
-var getCheckedRadio = function getCheckedRadio2(nodes, form) {
-  for (var i = 0; i < nodes.length; i++) if (nodes[i].checked && nodes[i].form === form) return nodes[i];
-};
-var isTabbableRadio = function isTabbableRadio2(node) {
-  if (!node.name) return true;
-  var radioScope = node.form || getRootNode(node);
-  var queryRadios = function queryRadios2(name) {
-    return radioScope.querySelectorAll('input[type="radio"][name="' + name + '"]');
-  };
-  var radioSet;
-  if (typeof window !== "undefined" && typeof window.CSS !== "undefined" && typeof window.CSS.escape === "function") radioSet = queryRadios(window.CSS.escape(node.name));
-  else try {
-    radioSet = queryRadios(node.name);
-  } catch (err) {
-    console.error("Looks like you have a radio button with a name attribute containing invalid CSS selector characters and need the CSS.escape polyfill: %s", err.message);
-    return false;
-  }
-  var checked = getCheckedRadio(radioSet, node.form);
-  return !checked || checked === node;
-};
-var isRadio = function isRadio2(node) {
-  return isInput(node) && node.type === "radio";
-};
-var isNonTabbableRadio = function isNonTabbableRadio2(node) {
-  return isRadio(node) && !isTabbableRadio(node);
-};
-var isNodeAttached = function isNodeAttached2(node) {
-  var _nodeRoot;
-  var nodeRoot = node && getRootNode(node);
-  var nodeRootHost = (_nodeRoot = nodeRoot) === null || _nodeRoot === void 0 ? void 0 : _nodeRoot.host;
-  var attached = false;
-  if (nodeRoot && nodeRoot !== node) {
-    var _nodeRootHost, _nodeRootHost$ownerDo, _node$ownerDocument;
-    attached = !!((_nodeRootHost = nodeRootHost) !== null && _nodeRootHost !== void 0 && (_nodeRootHost$ownerDo = _nodeRootHost.ownerDocument) !== null && _nodeRootHost$ownerDo !== void 0 && _nodeRootHost$ownerDo.contains(nodeRootHost) || node !== null && node !== void 0 && (_node$ownerDocument = node.ownerDocument) !== null && _node$ownerDocument !== void 0 && _node$ownerDocument.contains(node));
-    while (!attached && nodeRootHost) {
-      var _nodeRoot2, _nodeRootHost2, _nodeRootHost2$ownerD;
-      nodeRoot = getRootNode(nodeRootHost);
-      nodeRootHost = (_nodeRoot2 = nodeRoot) === null || _nodeRoot2 === void 0 ? void 0 : _nodeRoot2.host;
-      attached = !!((_nodeRootHost2 = nodeRootHost) !== null && _nodeRootHost2 !== void 0 && (_nodeRootHost2$ownerD = _nodeRootHost2.ownerDocument) !== null && _nodeRootHost2$ownerD !== void 0 && _nodeRootHost2$ownerD.contains(nodeRootHost));
-    }
-  }
-  return attached;
-};
-var isZeroArea = function isZeroArea2(node) {
-  var _node$getBoundingClie = node.getBoundingClientRect(), width = _node$getBoundingClie.width, height = _node$getBoundingClie.height;
-  return width === 0 && height === 0;
-};
-var isHidden = function isHidden2(node, _ref) {
-  var displayCheck = _ref.displayCheck, getShadowRoot = _ref.getShadowRoot;
-  if (displayCheck === "full-native") {
-    if ("checkVisibility" in node) return !node.checkVisibility({
-      checkOpacity: false,
-      opacityProperty: false,
-      contentVisibilityAuto: true,
-      visibilityProperty: true,
-      checkVisibilityCSS: true
-    });
-  }
-  if (getComputedStyle(node).visibility === "hidden") return true;
-  var nodeUnderDetails = matches.call(node, "details>summary:first-of-type") ? node.parentElement : node;
-  if (matches.call(nodeUnderDetails, "details:not([open]) *")) return true;
-  if (!displayCheck || displayCheck === "full" || displayCheck === "full-native" || displayCheck === "legacy-full") {
-    if (typeof getShadowRoot === "function") {
-      var originalNode = node;
-      while (node) {
-        var parentElement = node.parentElement;
-        var rootNode = getRootNode(node);
-        if (parentElement && !parentElement.shadowRoot && getShadowRoot(parentElement) === true) return isZeroArea(node);
-        else if (node.assignedSlot) node = node.assignedSlot;
-        else if (!parentElement && rootNode !== node.ownerDocument) node = rootNode.host;
-        else node = parentElement;
-      }
-      node = originalNode;
-    }
-    if (isNodeAttached(node)) return !node.getClientRects().length;
-    if (displayCheck !== "legacy-full") return true;
-  } else if (displayCheck === "non-zero-area") return isZeroArea(node);
-  return false;
-};
-var isDisabledFromFieldset = function isDisabledFromFieldset2(node) {
-  if (/^(INPUT|BUTTON|SELECT|TEXTAREA)$/.test(node.tagName)) {
-    var parentNode = node.parentElement;
-    while (parentNode) {
-      if (parentNode.tagName === "FIELDSET" && parentNode.disabled) {
-        for (var i = 0; i < parentNode.children.length; i++) {
-          var child = parentNode.children.item(i);
-          if (child.tagName === "LEGEND") return matches.call(parentNode, "fieldset[disabled] *") ? true : !child.contains(node);
-        }
-        return true;
-      }
-      parentNode = parentNode.parentElement;
-    }
-  }
-  return false;
-};
-var isNodeMatchingSelectorFocusable = function isNodeMatchingSelectorFocusable2(options, node) {
-  if (node.disabled || isHiddenInput(node) || isHidden(node, options) || isDetailsWithSummary(node) || isDisabledFromFieldset(node)) return false;
-  return true;
-};
-var isNodeMatchingSelectorTabbable = function isNodeMatchingSelectorTabbable2(options, node) {
-  if (isNonTabbableRadio(node) || getTabIndex(node) < 0 || !isNodeMatchingSelectorFocusable(options, node)) return false;
-  return true;
-};
-var isShadowRootTabbable = function isShadowRootTabbable2(shadowHostNode) {
-  var tabIndex = parseInt(shadowHostNode.getAttribute("tabindex"), 10);
-  if (isNaN(tabIndex) || tabIndex >= 0) return true;
-  return false;
-};
-var _sortByOrder = function sortByOrder(candidates) {
-  var regularTabbables = [];
-  var orderedTabbables = [];
-  candidates.forEach(function(item, i) {
-    var isScope = !!item.scopeParent;
-    var element = isScope ? item.scopeParent : item;
-    var candidateTabindex = getSortOrderTabIndex(element, isScope);
-    var elements = isScope ? _sortByOrder(item.candidates) : element;
-    if (candidateTabindex === 0) isScope ? regularTabbables.push.apply(regularTabbables, elements) : regularTabbables.push(element);
-    else orderedTabbables.push({
-      documentOrder: i,
-      tabIndex: candidateTabindex,
-      item,
-      isScope,
-      content: elements
-    });
-  });
-  return orderedTabbables.sort(sortOrderedTabbables).reduce(function(acc, sortable) {
-    sortable.isScope ? acc.push.apply(acc, sortable.content) : acc.push(sortable.content);
-    return acc;
-  }, []).concat(regularTabbables);
-};
-var tabbable = function tabbable2(container, options) {
-  options = options || {};
-  var candidates;
-  if (options.getShadowRoot) candidates = _getCandidatesIteratively([container], options.includeContainer, {
-    filter: isNodeMatchingSelectorTabbable.bind(null, options),
-    flatten: false,
-    getShadowRoot: options.getShadowRoot,
-    shadowRootFilter: isShadowRootTabbable
-  });
-  else candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorTabbable.bind(null, options));
-  return _sortByOrder(candidates);
-};
-var focusable = function focusable2(container, options) {
-  options = options || {};
-  var candidates;
-  if (options.getShadowRoot) candidates = _getCandidatesIteratively([container], options.includeContainer, {
-    filter: isNodeMatchingSelectorFocusable.bind(null, options),
-    flatten: true,
-    getShadowRoot: options.getShadowRoot
-  });
-  else candidates = getCandidates(container, options.includeContainer, isNodeMatchingSelectorFocusable.bind(null, options));
-  return candidates;
-};
-var isTabbable = function isTabbable2(node, options) {
-  options = options || {};
-  if (!node) throw new Error("No node provided");
-  if (matches.call(node, candidateSelector) === false) return false;
-  return isNodeMatchingSelectorTabbable(options, node);
-};
-var focusableCandidateSelector = /* @__PURE__ */ candidateSelectors.concat("iframe:not([inert]):not([inert] *)").join(",");
-var isFocusable = function isFocusable2(node, options) {
-  options = options || {};
-  if (!node) throw new Error("No node provided");
-  if (matches.call(node, focusableCandidateSelector) === false) return false;
-  return isNodeMatchingSelectorFocusable(options, node);
-};
-/*!
-* focus-trap 8.0.1
-* @license MIT, https://github.com/focus-trap/focus-trap/blob/master/LICENSE
-*/
-function _arrayLikeToArray(r, a) {
-  (null == a || a > r.length) && (a = r.length);
-  for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e];
-  return n;
-}
-function _arrayWithoutHoles(r) {
-  if (Array.isArray(r)) return _arrayLikeToArray(r);
-}
-function asyncGeneratorStep(n, t, e, r, o, a, c) {
-  try {
-    var i = n[a](c), u = i.value;
-  } catch (n2) {
-    e(n2);
-    return;
-  }
-  i.done ? t(u) : Promise.resolve(u).then(r, o);
-}
-function _asyncToGenerator(n) {
-  return function() {
-    var t = this, e = arguments;
-    return new Promise(function(r, o) {
-      var a = n.apply(t, e);
-      function _next(n2) {
-        asyncGeneratorStep(a, r, o, _next, _throw, "next", n2);
-      }
-      function _throw(n2) {
-        asyncGeneratorStep(a, r, o, _next, _throw, "throw", n2);
-      }
-      _next(void 0);
-    });
-  };
-}
-function _createForOfIteratorHelper(r, e) {
-  var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"];
-  if (!t) {
-    if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e) {
-      t && (r = t);
-      var n = 0, F2 = function() {
-      };
-      return {
-        s: F2,
-        n: function() {
-          return n >= r.length ? { done: true } : {
-            done: false,
-            value: r[n++]
-          };
-        },
-        e: function(r2) {
-          throw r2;
-        },
-        f: F2
-      };
-    }
-    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-  }
-  var o, a = true, u = false;
-  return {
-    s: function() {
-      t = t.call(r);
-    },
-    n: function() {
-      var r2 = t.next();
-      return a = r2.done, r2;
-    },
-    e: function(r2) {
-      u = true, o = r2;
-    },
-    f: function() {
-      try {
-        a || null == t.return || t.return();
-      } finally {
-        if (u) throw o;
-      }
-    }
-  };
-}
-function _defineProperty(e, r, t) {
-  return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, {
-    value: t,
-    enumerable: true,
-    configurable: true,
-    writable: true
-  }) : e[r] = t, e;
-}
-function _iterableToArray(r) {
-  if ("undefined" != typeof Symbol && null != r[Symbol.iterator] || null != r["@@iterator"]) return Array.from(r);
-}
-function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
-}
-function ownKeys(e, r) {
-  var t = Object.keys(e);
-  if (Object.getOwnPropertySymbols) {
-    var o = Object.getOwnPropertySymbols(e);
-    r && (o = o.filter(function(r2) {
-      return Object.getOwnPropertyDescriptor(e, r2).enumerable;
-    })), t.push.apply(t, o);
-  }
-  return t;
-}
-function _objectSpread2(e) {
-  for (var r = 1; r < arguments.length; r++) {
-    var t = null != arguments[r] ? arguments[r] : {};
-    r % 2 ? ownKeys(Object(t), true).forEach(function(r2) {
-      _defineProperty(e, r2, t[r2]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function(r2) {
-      Object.defineProperty(e, r2, Object.getOwnPropertyDescriptor(t, r2));
-    });
-  }
-  return e;
-}
-function _regenerator() {
-  /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */
-  var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag";
-  function i(r2, n2, o2, i2) {
-    var c2 = n2 && n2.prototype instanceof Generator ? n2 : Generator, u2 = Object.create(c2.prototype);
-    return _regeneratorDefine(u2, "_invoke", (function(r3, n3, o3) {
-      var i3, c3, u3, f2 = 0, p2 = o3 || [], y2 = false, G2 = {
-        p: 0,
-        n: 0,
-        v: e,
-        a: d2,
-        f: d2.bind(e, 4),
-        d: function(t2, r4) {
-          return i3 = t2, c3 = 0, u3 = e, G2.n = r4, a;
-        }
-      };
-      function d2(r4, n4) {
-        for (c3 = r4, u3 = n4, t = 0; !y2 && f2 && !o4 && t < p2.length; t++) {
-          var o4, i4 = p2[t], d3 = G2.p, l3 = i4[2];
-          r4 > 3 ? (o4 = l3 === n4) && (u3 = i4[(c3 = i4[4]) ? 5 : (c3 = 3, 3)], i4[4] = i4[5] = e) : i4[0] <= d3 && ((o4 = r4 < 2 && d3 < i4[1]) ? (c3 = 0, G2.v = n4, G2.n = i4[1]) : d3 < l3 && (o4 = r4 < 3 || i4[0] > n4 || n4 > l3) && (i4[4] = r4, i4[5] = n4, G2.n = l3, c3 = 0));
-        }
-        if (o4 || r4 > 1) return a;
-        throw y2 = true, n4;
-      }
-      return function(o4, p3, l3) {
-        if (f2 > 1) throw TypeError("Generator is already running");
-        for (y2 && 1 === p3 && d2(p3, l3), c3 = p3, u3 = l3; (t = c3 < 2 ? e : u3) || !y2; ) {
-          i3 || (c3 ? c3 < 3 ? (c3 > 1 && (G2.n = -1), d2(c3, u3)) : G2.n = u3 : G2.v = u3);
-          try {
-            if (f2 = 2, i3) {
-              if (c3 || (o4 = "next"), t = i3[o4]) {
-                if (!(t = t.call(i3, u3))) throw TypeError("iterator result is not an object");
-                if (!t.done) return t;
-                u3 = t.value, c3 < 2 && (c3 = 0);
-              } else 1 === c3 && (t = i3.return) && t.call(i3), c3 < 2 && (u3 = TypeError("The iterator does not provide a '" + o4 + "' method"), c3 = 1);
-              i3 = e;
-            } else if ((t = (y2 = G2.n < 0) ? u3 : r3.call(n3, G2)) !== a) break;
-          } catch (t2) {
-            i3 = e, c3 = 1, u3 = t2;
-          } finally {
-            f2 = 1;
-          }
-        }
-        return {
-          value: t,
-          done: y2
-        };
-      };
-    })(r2, o2, i2), true), u2;
-  }
-  var a = {};
-  function Generator() {
-  }
-  function GeneratorFunction() {
-  }
-  function GeneratorFunctionPrototype() {
-  }
-  t = Object.getPrototypeOf;
-  var c = [][n] ? t(t([][n]())) : (_regeneratorDefine(t = {}, n, function() {
-    return this;
-  }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c);
-  function f(e2) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(e2, GeneratorFunctionPrototype) : (e2.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine(e2, o, "GeneratorFunction")), e2.prototype = Object.create(u), e2;
-  }
-  return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine(u), _regeneratorDefine(u, o, "Generator"), _regeneratorDefine(u, n, function() {
-    return this;
-  }), _regeneratorDefine(u, "toString", function() {
-    return "[object Generator]";
-  }), (_regenerator = function() {
-    return {
-      w: i,
-      m: f
-    };
-  })();
-}
-function _regeneratorDefine(e, r, n, t) {
-  var i = Object.defineProperty;
-  try {
-    i({}, "", {});
-  } catch (e2) {
-    i = 0;
-  }
-  _regeneratorDefine = function(e2, r2, n2, t2) {
-    function o(r3, n3) {
-      _regeneratorDefine(e2, r3, function(e3) {
-        return this._invoke(r3, n3, e3);
-      });
-    }
-    r2 ? i ? i(e2, r2, {
-      value: n2,
-      enumerable: !t2,
-      configurable: !t2,
-      writable: !t2
-    }) : e2[r2] = n2 : (o("next", 0), o("throw", 1), o("return", 2));
-  }, _regeneratorDefine(e, r, n, t);
-}
-function _toConsumableArray(r) {
-  return _arrayWithoutHoles(r) || _iterableToArray(r) || _unsupportedIterableToArray(r) || _nonIterableSpread();
-}
-function _toPrimitive(t, r) {
-  if ("object" != typeof t || !t) return t;
-  var e = t[Symbol.toPrimitive];
-  if (void 0 !== e) {
-    var i = e.call(t, r);
-    if ("object" != typeof i) return i;
-    throw new TypeError("@@toPrimitive must return a primitive value.");
-  }
-  return ("string" === r ? String : Number)(t);
-}
-function _toPropertyKey(t) {
-  var i = _toPrimitive(t, "string");
-  return "symbol" == typeof i ? i : i + "";
-}
-function _unsupportedIterableToArray(r, a) {
-  if (r) {
-    if ("string" == typeof r) return _arrayLikeToArray(r, a);
-    var t = {}.toString.call(r).slice(8, -1);
-    return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0;
-  }
-}
-var activeFocusTraps = {
-  getActiveTrap: function getActiveTrap(trapStack) {
-    if ((trapStack === null || trapStack === void 0 ? void 0 : trapStack.length) > 0) return trapStack[trapStack.length - 1];
-    return null;
-  },
-  activateTrap: function activateTrap(trapStack, trap) {
-    if (trap !== activeFocusTraps.getActiveTrap(trapStack)) activeFocusTraps.pauseTrap(trapStack);
-    var trapIndex = trapStack.indexOf(trap);
-    if (trapIndex === -1) trapStack.push(trap);
-    else {
-      trapStack.splice(trapIndex, 1);
-      trapStack.push(trap);
-    }
-  },
-  deactivateTrap: function deactivateTrap(trapStack, trap) {
-    var trapIndex = trapStack.indexOf(trap);
-    if (trapIndex !== -1) trapStack.splice(trapIndex, 1);
-    activeFocusTraps.unpauseTrap(trapStack);
-  },
-  pauseTrap: function pauseTrap(trapStack) {
-    var activeTrap = activeFocusTraps.getActiveTrap(trapStack);
-    activeTrap === null || activeTrap === void 0 || activeTrap._setPausedState(true);
-  },
-  unpauseTrap: function unpauseTrap(trapStack) {
-    var activeTrap = activeFocusTraps.getActiveTrap(trapStack);
-    if (activeTrap && !activeTrap._isManuallyPaused()) activeTrap._setPausedState(false);
-  }
-};
-var isSelectableInput = function isSelectableInput2(node) {
-  return node.tagName && node.tagName.toLowerCase() === "input" && typeof node.select === "function";
-};
-var isEscapeEvent = function isEscapeEvent2(e) {
-  return (e === null || e === void 0 ? void 0 : e.key) === "Escape" || (e === null || e === void 0 ? void 0 : e.key) === "Esc" || (e === null || e === void 0 ? void 0 : e.keyCode) === 27;
-};
-var isTabEvent = function isTabEvent2(e) {
-  return (e === null || e === void 0 ? void 0 : e.key) === "Tab" || (e === null || e === void 0 ? void 0 : e.keyCode) === 9;
-};
-var isKeyForward = function isKeyForward2(e) {
-  return isTabEvent(e) && !e.shiftKey;
-};
-var isKeyBackward = function isKeyBackward2(e) {
-  return isTabEvent(e) && e.shiftKey;
-};
-var delay = function delay2(fn) {
-  return setTimeout(fn, 0);
-};
-var valueOrHandler = function valueOrHandler2(value) {
-  for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) params[_key - 1] = arguments[_key];
-  return typeof value === "function" ? value.apply(void 0, params) : value;
-};
-var getActualTarget = function getActualTarget2(event) {
-  return event.target.shadowRoot && typeof event.composedPath === "function" ? event.composedPath()[0] : event.target;
-};
-var internalTrapStack = [];
-var createFocusTrap = function createFocusTrap2(elements, userOptions) {
-  var doc2 = (userOptions === null || userOptions === void 0 ? void 0 : userOptions.document) || document;
-  var trapStack = (userOptions === null || userOptions === void 0 ? void 0 : userOptions.trapStack) || internalTrapStack;
-  var config = _objectSpread2({
-    returnFocusOnDeactivate: true,
-    escapeDeactivates: true,
-    delayInitialFocus: true,
-    isolateSubtrees: false,
-    isKeyForward,
-    isKeyBackward
-  }, userOptions);
-  var state = {
-    containers: [],
-    containerGroups: [],
-    tabbableGroups: [],
-    adjacentElements: /* @__PURE__ */ new Set(),
-    alreadySilent: /* @__PURE__ */ new Set(),
-    nodeFocusedBeforeActivation: null,
-    mostRecentlyFocusedNode: null,
-    active: false,
-    paused: false,
-    manuallyPaused: false,
-    delayInitialFocusTimer: void 0,
-    recentNavEvent: void 0
-  };
-  var trap;
-  var getOption = function getOption2(configOverrideOptions, optionName, configOptionName) {
-    return configOverrideOptions && configOverrideOptions[optionName] !== void 0 ? configOverrideOptions[optionName] : config[configOptionName || optionName];
-  };
-  var findContainerIndex = function findContainerIndex2(element, event) {
-    var composedPath = typeof (event === null || event === void 0 ? void 0 : event.composedPath) === "function" ? event.composedPath() : void 0;
-    return state.containerGroups.findIndex(function(_ref) {
-      var container = _ref.container, tabbableNodes = _ref.tabbableNodes;
-      return container.contains(element) || (composedPath === null || composedPath === void 0 ? void 0 : composedPath.includes(container)) || tabbableNodes.find(function(node) {
-        return node === element;
-      });
-    });
-  };
-  var getNodeForOption = function getNodeForOption2(optionName) {
-    var _ref2 = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, _ref2$hasFallback = _ref2.hasFallback, hasFallback = _ref2$hasFallback === void 0 ? false : _ref2$hasFallback, _ref2$params = _ref2.params, params = _ref2$params === void 0 ? [] : _ref2$params;
-    var optionValue = config[optionName];
-    if (typeof optionValue === "function") optionValue = optionValue.apply(void 0, _toConsumableArray(params));
-    if (optionValue === true) optionValue = void 0;
-    if (!optionValue) {
-      if (optionValue === void 0 || optionValue === false) return optionValue;
-      throw new Error("`".concat(optionName, "` was specified but was not a node, or did not return a node"));
-    }
-    var node = optionValue;
-    if (typeof optionValue === "string") {
-      try {
-        node = doc2.querySelector(optionValue);
-      } catch (err) {
-        throw new Error("`".concat(optionName, '` appears to be an invalid selector; error="').concat(err.message, '"'));
-      }
-      if (!node) {
-        if (!hasFallback) throw new Error("`".concat(optionName, "` as selector refers to no known node"));
-      }
-    }
-    return node;
-  };
-  var getInitialFocusNode = function getInitialFocusNode2() {
-    var node = getNodeForOption("initialFocus", { hasFallback: true });
-    if (node === false) return false;
-    if (node === void 0 || node && !isFocusable(node, config.tabbableOptions)) if (findContainerIndex(doc2.activeElement) >= 0) node = doc2.activeElement;
-    else {
-      var firstTabbableGroup = state.tabbableGroups[0];
-      node = firstTabbableGroup && firstTabbableGroup.firstTabbableNode || getNodeForOption("fallbackFocus");
-    }
-    else if (node === null) node = getNodeForOption("fallbackFocus");
-    if (!node) throw new Error("Your focus-trap needs to have at least one focusable element");
-    return node;
-  };
-  var updateTabbableNodes = function updateTabbableNodes2() {
-    state.containerGroups = state.containers.map(function(container) {
-      var tabbableNodes = tabbable(container, config.tabbableOptions);
-      var focusableNodes = focusable(container, config.tabbableOptions);
-      var firstTabbableNode = tabbableNodes.length > 0 ? tabbableNodes[0] : void 0;
-      var lastTabbableNode = tabbableNodes.length > 0 ? tabbableNodes[tabbableNodes.length - 1] : void 0;
-      var firstDomTabbableNode = focusableNodes.find(function(node) {
-        return isTabbable(node);
-      });
-      var lastDomTabbableNode = focusableNodes.slice().reverse().find(function(node) {
-        return isTabbable(node);
-      });
-      return {
-        container,
-        tabbableNodes,
-        focusableNodes,
-        posTabIndexesFound: !!tabbableNodes.find(function(node) {
-          return getTabIndex(node) > 0;
-        }),
-        firstTabbableNode,
-        lastTabbableNode,
-        firstDomTabbableNode,
-        lastDomTabbableNode,
-        nextTabbableNode: function nextTabbableNode(node) {
-          var forward = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : true;
-          var nodeIdx = tabbableNodes.indexOf(node);
-          if (nodeIdx < 0) {
-            if (forward) return focusableNodes.slice(focusableNodes.indexOf(node) + 1).find(function(el) {
-              return isTabbable(el);
-            });
-            return focusableNodes.slice(0, focusableNodes.indexOf(node)).reverse().find(function(el) {
-              return isTabbable(el);
-            });
-          }
-          return tabbableNodes[nodeIdx + (forward ? 1 : -1)];
-        }
-      };
-    });
-    state.tabbableGroups = state.containerGroups.filter(function(group) {
-      return group.tabbableNodes.length > 0;
-    });
-    if (state.tabbableGroups.length <= 0 && !getNodeForOption("fallbackFocus")) throw new Error("Your focus-trap must have at least one container with at least one tabbable node in it at all times");
-    if (state.containerGroups.find(function(g2) {
-      return g2.posTabIndexesFound;
-    }) && state.containerGroups.length > 1) throw new Error("At least one node with a positive tabindex was found in one of your focus-trap's multiple containers. Positive tabindexes are only supported in single-container focus-traps.");
-  };
-  var _getActiveElement = function getActiveElement2(el) {
-    var activeElement = el.activeElement;
-    if (!activeElement) return;
-    if (activeElement.shadowRoot && activeElement.shadowRoot.activeElement !== null) return _getActiveElement(activeElement.shadowRoot);
-    return activeElement;
-  };
-  var _tryFocus = function tryFocus(node) {
-    if (node === false) return;
-    if (node === _getActiveElement(document)) return;
-    if (!node || !node.focus) {
-      _tryFocus(getInitialFocusNode());
-      return;
-    }
-    node.focus({ preventScroll: !!config.preventScroll });
-    state.mostRecentlyFocusedNode = node;
-    if (isSelectableInput(node)) node.select();
-  };
-  var getReturnFocusNode = function getReturnFocusNode2(previousActiveElement) {
-    var node = getNodeForOption("setReturnFocus", { params: [previousActiveElement] });
-    return node ? node : node === false ? false : previousActiveElement;
-  };
-  var findNextNavNode = function findNextNavNode2(_ref3) {
-    var target = _ref3.target, event = _ref3.event, _ref3$isBackward = _ref3.isBackward, isBackward = _ref3$isBackward === void 0 ? false : _ref3$isBackward;
-    target = target || getActualTarget(event);
-    updateTabbableNodes();
-    var destinationNode = null;
-    if (state.tabbableGroups.length > 0) {
-      var containerIndex = findContainerIndex(target, event);
-      var containerGroup = containerIndex >= 0 ? state.containerGroups[containerIndex] : void 0;
-      if (containerIndex < 0) if (isBackward) destinationNode = state.tabbableGroups[state.tabbableGroups.length - 1].lastTabbableNode;
-      else destinationNode = state.tabbableGroups[0].firstTabbableNode;
-      else if (isBackward) {
-        var startOfGroupIndex = state.tabbableGroups.findIndex(function(_ref4) {
-          var firstTabbableNode = _ref4.firstTabbableNode;
-          return target === firstTabbableNode;
-        });
-        if (startOfGroupIndex < 0 && (containerGroup.container === target || isFocusable(target, config.tabbableOptions) && !isTabbable(target, config.tabbableOptions) && !containerGroup.nextTabbableNode(target, false))) startOfGroupIndex = containerIndex;
-        if (startOfGroupIndex >= 0) {
-          var destinationGroupIndex = startOfGroupIndex === 0 ? state.tabbableGroups.length - 1 : startOfGroupIndex - 1;
-          var destinationGroup = state.tabbableGroups[destinationGroupIndex];
-          destinationNode = getTabIndex(target) >= 0 ? destinationGroup.lastTabbableNode : destinationGroup.lastDomTabbableNode;
-        } else if (!isTabEvent(event)) destinationNode = containerGroup.nextTabbableNode(target, false);
-      } else {
-        var lastOfGroupIndex = state.tabbableGroups.findIndex(function(_ref5) {
-          var lastTabbableNode = _ref5.lastTabbableNode;
-          return target === lastTabbableNode;
-        });
-        if (lastOfGroupIndex < 0 && (containerGroup.container === target || isFocusable(target, config.tabbableOptions) && !isTabbable(target, config.tabbableOptions) && !containerGroup.nextTabbableNode(target))) lastOfGroupIndex = containerIndex;
-        if (lastOfGroupIndex >= 0) {
-          var _destinationGroupIndex = lastOfGroupIndex === state.tabbableGroups.length - 1 ? 0 : lastOfGroupIndex + 1;
-          var _destinationGroup = state.tabbableGroups[_destinationGroupIndex];
-          destinationNode = getTabIndex(target) >= 0 ? _destinationGroup.firstTabbableNode : _destinationGroup.firstDomTabbableNode;
-        } else if (!isTabEvent(event)) destinationNode = containerGroup.nextTabbableNode(target);
-      }
-    } else destinationNode = getNodeForOption("fallbackFocus");
-    return destinationNode;
-  };
-  var checkPointerDown = function checkPointerDown2(e) {
-    if (findContainerIndex(getActualTarget(e), e) >= 0) return;
-    if (valueOrHandler(config.clickOutsideDeactivates, e)) {
-      trap.deactivate({ returnFocus: config.returnFocusOnDeactivate });
-      return;
-    }
-    if (valueOrHandler(config.allowOutsideClick, e)) return;
-    e.preventDefault();
-  };
-  var checkFocusIn = function checkFocusIn2(event) {
-    var target = getActualTarget(event);
-    var targetContained = findContainerIndex(target, event) >= 0;
-    if (targetContained || target instanceof Document) {
-      if (targetContained) state.mostRecentlyFocusedNode = target;
-    } else {
-      event.stopImmediatePropagation();
-      var nextNode;
-      var navAcrossContainers = true;
-      if (state.mostRecentlyFocusedNode) {
-        if (getTabIndex(state.mostRecentlyFocusedNode) > 0) {
-          var mruContainerIdx = findContainerIndex(state.mostRecentlyFocusedNode);
-          var tabbableNodes = state.containerGroups[mruContainerIdx].tabbableNodes;
-          if (tabbableNodes.length > 0) {
-            var mruTabIdx = tabbableNodes.findIndex(function(node) {
-              return node === state.mostRecentlyFocusedNode;
-            });
-            if (mruTabIdx >= 0) {
-              if (config.isKeyForward(state.recentNavEvent)) {
-                if (mruTabIdx + 1 < tabbableNodes.length) {
-                  nextNode = tabbableNodes[mruTabIdx + 1];
-                  navAcrossContainers = false;
-                }
-              } else if (mruTabIdx - 1 >= 0) {
-                nextNode = tabbableNodes[mruTabIdx - 1];
-                navAcrossContainers = false;
-              }
-            }
-          }
-        } else if (!state.containerGroups.some(function(g2) {
-          return g2.tabbableNodes.some(function(n) {
-            return getTabIndex(n) > 0;
-          });
-        })) navAcrossContainers = false;
-      } else navAcrossContainers = false;
-      if (navAcrossContainers) nextNode = findNextNavNode({
-        target: state.mostRecentlyFocusedNode,
-        isBackward: config.isKeyBackward(state.recentNavEvent)
-      });
-      if (nextNode) _tryFocus(nextNode);
-      else _tryFocus(state.mostRecentlyFocusedNode || getInitialFocusNode());
-    }
-    state.recentNavEvent = void 0;
-  };
-  var checkKeyNav = function checkKeyNav2(event) {
-    var isBackward = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : false;
-    state.recentNavEvent = event;
-    var destinationNode = findNextNavNode({
-      event,
-      isBackward
-    });
-    if (destinationNode) {
-      if (isTabEvent(event)) event.preventDefault();
-      _tryFocus(destinationNode);
-    }
-  };
-  var checkTabKey = function checkTabKey2(event) {
-    if (config.isKeyForward(event) || config.isKeyBackward(event)) checkKeyNav(event, config.isKeyBackward(event));
-  };
-  var checkEscapeKey = function checkEscapeKey2(event) {
-    if (isEscapeEvent(event) && valueOrHandler(config.escapeDeactivates, event) !== false) {
-      event.preventDefault();
-      trap.deactivate();
-    }
-  };
-  var checkClick = function checkClick2(e) {
-    if (findContainerIndex(getActualTarget(e), e) >= 0) return;
-    if (valueOrHandler(config.clickOutsideDeactivates, e)) return;
-    if (valueOrHandler(config.allowOutsideClick, e)) return;
-    e.preventDefault();
-    e.stopImmediatePropagation();
-  };
-  var addListeners = function addListeners2() {
-    if (!state.active) return Promise.resolve();
-    activeFocusTraps.activateTrap(trapStack, trap);
-    var promise;
-    if (config.delayInitialFocus) promise = new Promise(function(resolve2) {
-      state.delayInitialFocusTimer = delay(function() {
-        _tryFocus(getInitialFocusNode());
-        resolve2();
-      });
-    });
-    else {
-      promise = Promise.resolve();
-      _tryFocus(getInitialFocusNode());
-    }
-    doc2.addEventListener("focusin", checkFocusIn, true);
-    doc2.addEventListener("mousedown", checkPointerDown, {
-      capture: true,
-      passive: false
-    });
-    doc2.addEventListener("touchstart", checkPointerDown, {
-      capture: true,
-      passive: false
-    });
-    doc2.addEventListener("click", checkClick, {
-      capture: true,
-      passive: false
-    });
-    doc2.addEventListener("keydown", checkTabKey, {
-      capture: true,
-      passive: false
-    });
-    doc2.addEventListener("keydown", checkEscapeKey);
-    return promise;
-  };
-  var collectAdjacentElements = function collectAdjacentElements2(containers) {
-    if (state.active && !state.paused) trap._setSubtreeIsolation(false);
-    state.adjacentElements.clear();
-    state.alreadySilent.clear();
-    var containerAncestors = /* @__PURE__ */ new Set();
-    var adjacentElements = /* @__PURE__ */ new Set();
-    var _iterator = _createForOfIteratorHelper(containers), _step;
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done; ) {
-        var container = _step.value;
-        containerAncestors.add(container);
-        var insideShadowRoot = typeof ShadowRoot !== "undefined" && container.getRootNode() instanceof ShadowRoot;
-        var current = container;
-        while (current) {
-          containerAncestors.add(current);
-          var parent = current.parentElement;
-          var siblings = [];
-          if (parent) siblings = parent.children;
-          else if (!parent && insideShadowRoot) {
-            siblings = current.getRootNode().children;
-            parent = current.getRootNode().host;
-            insideShadowRoot = typeof ShadowRoot !== "undefined" && parent.getRootNode() instanceof ShadowRoot;
-          }
-          var _iterator2 = _createForOfIteratorHelper(siblings), _step2;
-          try {
-            for (_iterator2.s(); !(_step2 = _iterator2.n()).done; ) {
-              var child = _step2.value;
-              adjacentElements.add(child);
-            }
-          } catch (err) {
-            _iterator2.e(err);
-          } finally {
-            _iterator2.f();
-          }
-          current = parent;
-        }
-      }
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
-    }
-    containerAncestors.forEach(function(el) {
-      adjacentElements["delete"](el);
-    });
-    state.adjacentElements = adjacentElements;
-  };
-  var removeListeners = function removeListeners2() {
-    if (!state.active) return;
-    doc2.removeEventListener("focusin", checkFocusIn, true);
-    doc2.removeEventListener("mousedown", checkPointerDown, true);
-    doc2.removeEventListener("touchstart", checkPointerDown, true);
-    doc2.removeEventListener("click", checkClick, true);
-    doc2.removeEventListener("keydown", checkTabKey, true);
-    doc2.removeEventListener("keydown", checkEscapeKey);
-    return trap;
-  };
-  var mutationObserver = typeof window !== "undefined" && "MutationObserver" in window ? new MutationObserver(function checkDomRemoval(mutations) {
-    if (mutations.some(function(mutation) {
-      return Array.from(mutation.removedNodes).some(function(node) {
-        return node === state.mostRecentlyFocusedNode;
-      });
-    })) _tryFocus(getInitialFocusNode());
-  }) : void 0;
-  var updateObservedNodes = function updateObservedNodes2() {
-    if (!mutationObserver) return;
-    mutationObserver.disconnect();
-    if (state.active && !state.paused) state.containers.map(function(container) {
-      mutationObserver.observe(container, {
-        subtree: true,
-        childList: true
-      });
-    });
-  };
-  trap = {
-    get active() {
-      return state.active;
-    },
-    get paused() {
-      return state.paused;
-    },
-    activate: function activate(activateOptions) {
-      if (state.active) return this;
-      var onActivate = getOption(activateOptions, "onActivate");
-      var onPostActivate = getOption(activateOptions, "onPostActivate");
-      var checkCanFocusTrap = getOption(activateOptions, "checkCanFocusTrap");
-      var preexistingTrap = activeFocusTraps.getActiveTrap(trapStack);
-      var revertState = false;
-      if (preexistingTrap && !preexistingTrap.paused) {
-        var _preexistingTrap$_set;
-        (_preexistingTrap$_set = preexistingTrap._setSubtreeIsolation) === null || _preexistingTrap$_set === void 0 || _preexistingTrap$_set.call(preexistingTrap, false);
-        revertState = true;
-      }
-      try {
-        if (!checkCanFocusTrap) updateTabbableNodes();
-        state.active = true;
-        state.paused = false;
-        state.nodeFocusedBeforeActivation = _getActiveElement(doc2);
-        onActivate === null || onActivate === void 0 || onActivate();
-        var finishActivation = /* @__PURE__ */ (function() {
-          var _ref6 = _asyncToGenerator(/* @__PURE__ */ _regenerator().m(function _callee() {
-            return _regenerator().w(function(_context) {
-              while (1) switch (_context.n) {
-                case 0:
-                  if (checkCanFocusTrap) updateTabbableNodes();
-                  _context.n = 1;
-                  return addListeners();
-                case 1:
-                  trap._setSubtreeIsolation(true);
-                  updateObservedNodes();
-                  onPostActivate === null || onPostActivate === void 0 || onPostActivate();
-                case 2:
-                  return _context.a(2);
-              }
-            }, _callee);
-          }));
-          return function finishActivation2() {
-            return _ref6.apply(this, arguments);
-          };
-        })();
-        if (checkCanFocusTrap) {
-          checkCanFocusTrap(state.containers.concat()).then(finishActivation, finishActivation);
-          return this;
-        }
-        finishActivation();
-      } catch (error) {
-        if (preexistingTrap === activeFocusTraps.getActiveTrap(trapStack) && revertState) {
-          var _preexistingTrap$_set2;
-          (_preexistingTrap$_set2 = preexistingTrap._setSubtreeIsolation) === null || _preexistingTrap$_set2 === void 0 || _preexistingTrap$_set2.call(preexistingTrap, true);
-        }
-        throw error;
-      }
-      return this;
-    },
-    deactivate: function deactivate(deactivateOptions) {
-      if (!state.active) return this;
-      var options = _objectSpread2({
-        onDeactivate: config.onDeactivate,
-        onPostDeactivate: config.onPostDeactivate,
-        checkCanReturnFocus: config.checkCanReturnFocus
-      }, deactivateOptions);
-      clearTimeout(state.delayInitialFocusTimer);
-      state.delayInitialFocusTimer = void 0;
-      if (!state.paused) trap._setSubtreeIsolation(false);
-      state.alreadySilent.clear();
-      removeListeners();
-      state.active = false;
-      state.paused = false;
-      updateObservedNodes();
-      activeFocusTraps.deactivateTrap(trapStack, trap);
-      var onDeactivate = getOption(options, "onDeactivate");
-      var onPostDeactivate = getOption(options, "onPostDeactivate");
-      var checkCanReturnFocus = getOption(options, "checkCanReturnFocus");
-      var returnFocus = getOption(options, "returnFocus", "returnFocusOnDeactivate");
-      onDeactivate === null || onDeactivate === void 0 || onDeactivate();
-      var finishDeactivation = function finishDeactivation2() {
-        delay(function() {
-          if (returnFocus) _tryFocus(getReturnFocusNode(state.nodeFocusedBeforeActivation));
-          onPostDeactivate === null || onPostDeactivate === void 0 || onPostDeactivate();
-        });
-      };
-      if (returnFocus && checkCanReturnFocus) {
-        checkCanReturnFocus(getReturnFocusNode(state.nodeFocusedBeforeActivation)).then(finishDeactivation, finishDeactivation);
-        return this;
-      }
-      finishDeactivation();
-      return this;
-    },
-    pause: function pause(pauseOptions) {
-      if (!state.active) return this;
-      state.manuallyPaused = true;
-      return this._setPausedState(true, pauseOptions);
-    },
-    unpause: function unpause(unpauseOptions) {
-      if (!state.active) return this;
-      state.manuallyPaused = false;
-      if (trapStack[trapStack.length - 1] !== this) return this;
-      return this._setPausedState(false, unpauseOptions);
-    },
-    updateContainerElements: function updateContainerElements(containerElements) {
-      state.containers = [].concat(containerElements).filter(Boolean).map(function(element) {
-        return typeof element === "string" ? doc2.querySelector(element) : element;
-      });
-      if (config.isolateSubtrees) collectAdjacentElements(state.containers);
-      if (state.active) {
-        updateTabbableNodes();
-        if (!state.paused) trap._setSubtreeIsolation(true);
-      }
-      updateObservedNodes();
-      return this;
-    }
-  };
-  Object.defineProperties(trap, {
-    _isManuallyPaused: { value: function value() {
-      return state.manuallyPaused;
-    } },
-    _setPausedState: { value: function value(paused, options) {
-      if (state.paused === paused) return this;
-      state.paused = paused;
-      if (paused) {
-        var onPause = getOption(options, "onPause");
-        var onPostPause = getOption(options, "onPostPause");
-        onPause === null || onPause === void 0 || onPause();
-        removeListeners();
-        trap._setSubtreeIsolation(false);
-        updateObservedNodes();
-        onPostPause === null || onPostPause === void 0 || onPostPause();
-      } else {
-        var onUnpause = getOption(options, "onUnpause");
-        var onPostUnpause = getOption(options, "onPostUnpause");
-        onUnpause === null || onUnpause === void 0 || onUnpause();
-        (/* @__PURE__ */ (function() {
-          var _ref7 = _asyncToGenerator(/* @__PURE__ */ _regenerator().m(function _callee2() {
-            return _regenerator().w(function(_context2) {
-              while (1) switch (_context2.n) {
-                case 0:
-                  updateTabbableNodes();
-                  _context2.n = 1;
-                  return addListeners();
-                case 1:
-                  trap._setSubtreeIsolation(true);
-                  updateObservedNodes();
-                  onPostUnpause === null || onPostUnpause === void 0 || onPostUnpause();
-                case 2:
-                  return _context2.a(2);
-              }
-            }, _callee2);
-          }));
-          return function finishUnpause() {
-            return _ref7.apply(this, arguments);
-          };
-        })())();
-      }
-      return this;
-    } },
-    _setSubtreeIsolation: { value: function value(isEnabled) {
-      if (config.isolateSubtrees) state.adjacentElements.forEach(function(el) {
-        var _el$getAttribute;
-        if (isEnabled) switch (config.isolateSubtrees) {
-          case "aria-hidden":
-            if (el.ariaHidden === "true" || ((_el$getAttribute = el.getAttribute("aria-hidden")) === null || _el$getAttribute === void 0 ? void 0 : _el$getAttribute.toLowerCase()) === "true") state.alreadySilent.add(el);
-            el.setAttribute("aria-hidden", "true");
-            break;
-          default:
-            if (el.inert || el.hasAttribute("inert")) state.alreadySilent.add(el);
-            el.setAttribute("inert", true);
-            break;
-        }
-        else if (state.alreadySilent.has(el)) ;
-        else switch (config.isolateSubtrees) {
-          case "aria-hidden":
-            el.removeAttribute("aria-hidden");
-            break;
-          default:
-            el.removeAttribute("inert");
-            break;
-        }
-      });
-    } }
-  });
-  trap.updateContainerElements(elements);
-  return trap;
-};
-function useFocusTrap(target, options = {}) {
-  let trap;
-  const { immediate, ...focusTrapOptions } = options;
-  const hasFocus = /* @__PURE__ */ shallowRef(false);
-  const isPaused = /* @__PURE__ */ shallowRef(false);
-  const activate = (opts) => trap && trap.activate(opts);
-  const deactivate = (opts) => trap && trap.deactivate(opts);
-  const pause = () => {
-    if (trap) {
-      trap.pause();
-      isPaused.value = true;
-    }
-  };
-  const unpause = () => {
-    if (trap) {
-      trap.unpause();
-      isPaused.value = false;
-    }
-  };
-  watch(computed(() => {
-    return toArray$1(toValue(target)).map((el) => {
-      const _el = toValue(el);
-      return typeof _el === "string" ? _el : unrefElement(_el);
-    }).filter(notNullish);
-  }), (els) => {
-    if (!els.length) return;
-    if (!trap) {
-      trap = createFocusTrap(els, {
-        ...focusTrapOptions,
-        onActivate() {
-          hasFocus.value = true;
-          if (options.onActivate) options.onActivate();
-        },
-        onDeactivate() {
-          hasFocus.value = false;
-          if (options.onDeactivate) options.onDeactivate();
-        }
-      });
-      if (immediate) activate();
-    } else {
-      const isActive = trap === null || trap === void 0 ? void 0 : trap.active;
-      trap === null || trap === void 0 || trap.updateContainerElements(els);
-      if (!isActive && immediate) activate();
-    }
-  }, { flush: "post" });
-  tryOnScopeDispose(() => deactivate());
-  return {
-    hasFocus,
-    isPaused,
-    activate,
-    deactivate,
-    pause,
-    unpause
-  };
-}
-var useActivatedFocusTrap = ({ element, isActive, noTrap, fallbackFocus, focus }, focusTrapOpts = {
-  allowOutsideClick: true,
-  fallbackFocus: () => {
-    var _a2;
-    return fallbackFocus.ref.value || ((_a2 = getSafeDocument()) == null ? void 0 : _a2.body) || "body";
-  },
-  escapeDeactivates: false,
-  clickOutsideDeactivates: false,
-  initialFocus: focus,
-  delayInitialFocus: false
-}) => {
-  const resolvedIsActive = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(isActive));
-  const resolvedNoTrap = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(noTrap));
-  const checkNeedsFallback = () => {
-    var _a2, _b;
-    return !((_b = (_a2 = element.value) == null ? void 0 : _a2.querySelectorAll(`a, button, input, select, textarea, [tabindex]:not([tabindex="-1"]):not(.${fallbackFocus.classSelector})`)) == null ? void 0 : _b.length);
-  };
-  const needsFallback = /* @__PURE__ */ ref(false);
-  onMounted(() => {
-    needsFallback.value = checkNeedsFallback();
-    useMutationObserver(element, () => {
-      needsFallback.value = checkNeedsFallback();
-    }, {
-      childList: true,
-      subtree: true
-    });
-  });
-  const trap = useFocusTrap(element, focusTrapOpts);
-  watch(resolvedIsActive, async (newValue) => {
-    if (newValue && resolvedNoTrap.value === false) trap.activate();
-    else trap.deactivate();
-  });
-  watch(resolvedNoTrap, (newValue) => {
-    if (newValue === true) trap.deactivate();
-  });
-  return { needsFallback: /* @__PURE__ */ readonly(needsFallback) };
-};
-var prevousRightPadding = "";
-var lockRegistry = /* @__PURE__ */ new Map();
-var useSafeScrollLock = (isOpen, bodyScroll) => {
-  var _a2;
-  const resolvedIsOpen = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(isOpen));
-  const id = useId();
-  const inverseBodyScrollingValue = computed(() => !toValue(bodyScroll));
-  const isLocked = useScrollLock(((_a2 = getSafeDocument()) == null ? void 0 : _a2.body) ?? null, resolvedIsOpen.value && inverseBodyScrollingValue.value);
-  onMounted(() => {
-    if (getSafeDocument() === null) return;
-    lockRegistry.set(id, false);
-    watch([resolvedIsOpen, inverseBodyScrollingValue], ([modelVal, bodyVal]) => {
-      var _a3;
-      const doc2 = getSafeDocument();
-      const scrollBarGap = (((_a3 = getSafeWindow()) == null ? void 0 : _a3.innerWidth) ?? 0) - ((doc2 == null ? void 0 : doc2.documentElement.clientWidth) ?? 0);
-      const hasLocked = Array.from(lockRegistry.values()).some((val) => val === true);
-      const myLocked = modelVal && bodyVal;
-      lockRegistry.set(id, myLocked);
-      if (myLocked && !hasLocked && !isLocked.value) {
-        isLocked.value = true;
-        if (scrollBarGap > 0 && doc2) {
-          prevousRightPadding = doc2.body.style.paddingRight;
-          doc2.body.style.paddingRight = `${scrollBarGap + prevousRightPadding}px`;
-        }
-      }
-      const hasLockedAfter = Array.from(lockRegistry.values()).some((val) => val === true);
-      if (hasLocked && !hasLockedAfter && doc2) {
-        lockRegistry.set(id, false);
-        isLocked.value = false;
-        doc2.body.style.paddingRight = prevousRightPadding;
-      }
-    }, { immediate: true });
-  });
-  onUnmounted(() => {
-    lockRegistry.delete(id);
-    const hasLockedAfter = Array.from(lockRegistry.values()).some((val) => val === true);
-    const doc2 = getSafeDocument();
-    if (!hasLockedAfter && doc2) {
-      doc2.body.style.paddingRight = prevousRightPadding;
-      isLocked.value = false;
-    }
-  });
-};
-var modalOpenClassName = "modal-open";
-var useSharedModalStack = () => {
-  const modalManagerPlugin = inject(modalManagerKey, null);
-  const dispose = (modal) => {
-    modalManagerPlugin == null ? void 0 : modalManagerPlugin.removeStack(modal);
-    modalManagerPlugin == null ? void 0 : modalManagerPlugin.removeRegistry(modal);
-  };
-  const updateHTMLAttrs = getSSRHandler("updateHTMLAttrs", (selector, attribute, value) => {
-    var _a2;
-    const el = typeof selector !== "string" ? unrefElement(selector) : selector ? (_a2 = getSafeDocument()) == null ? void 0 : _a2.querySelector(selector) : void 0;
-    if (!el) return;
-    if (attribute === "class") el.classList.toggle(modalOpenClassName, value === modalOpenClassName);
-    else el.setAttribute(attribute, value);
-  });
-  tryOnScopeDispose(() => {
-    if ((modalManagerPlugin == null ? void 0 : modalManagerPlugin.countStack.value) === 0) updateHTMLAttrs("body", "class", "");
-  });
-  watch(() => modalManagerPlugin == null ? void 0 : modalManagerPlugin.countStack.value, (newValue) => {
-    if (newValue === void 0) return;
-    updateHTMLAttrs("body", "class", newValue > 0 ? modalOpenClassName : "");
-  });
-  return {
-    ...modalManagerPlugin,
-    dispose
-  };
-};
-var useModalManager = (modalOpen, initialValue) => {
-  const { pushRegistry, pushStack, removeStack, stack: stack2, dispose, countStack } = useSharedModalStack();
-  const currentModal = getCurrentInstance();
-  if (!currentModal || currentModal.type.__name !== "BModal") throw new Error("useModalManager must only use in BModal component");
-  pushRegistry == null ? void 0 : pushRegistry(currentModal);
-  tryOnScopeDispose(() => {
-    dispose(currentModal);
-  });
-  const setInStack = (newValue, oldValue) => {
-    if (newValue) pushStack == null ? void 0 : pushStack(currentModal);
-    else if (oldValue && !newValue) removeStack == null ? void 0 : removeStack(currentModal);
-  };
-  setInStack(initialValue, initialValue);
-  watch(modalOpen, setInStack);
-  return {
-    activePosition: computed(() => stack2 == null ? void 0 : stack2.value.findIndex((el) => {
-      var _a2, _b;
-      return toValue((_a2 = el.exposed) == null ? void 0 : _a2.id) === toValue((_b = currentModal.exposed) == null ? void 0 : _b.id);
-    })),
-    activeModalCount: countStack,
-    stackWithoutSelf: computed(() => (stack2 == null ? void 0 : stack2.value.filter((el) => {
-      var _a2, _b;
-      return toValue((_a2 = el.exposed) == null ? void 0 : _a2.id) !== toValue((_b = currentModal.exposed) == null ? void 0 : _b.id);
-    })) ?? [])
-  };
-};
-var _hoisted_1$z = [
-  "id",
-  "aria-labelledby",
-  "aria-describedby"
-];
-var _hoisted_2$m = ["id"];
-var fallbackClassSelector = "modal-fallback-focus";
-var BModal_default = /* @__PURE__ */ defineComponent({
-  inheritAttrs: false,
-  __name: "BModal",
-  props: /* @__PURE__ */ mergeModels({
-    focus: {
-      type: [
-        String,
-        Boolean,
-        Object,
-        null
-      ],
-      default: void 0
-    },
-    backdropFirst: {
-      type: Boolean,
-      default: false
-    },
-    body: { default: void 0 },
-    bodyAttrs: { default: void 0 },
-    bodyBgVariant: { default: null },
-    bodyClass: { default: null },
-    bodyScrolling: {
-      type: Boolean,
-      default: false
-    },
-    bodyTextVariant: { default: null },
-    bodyVariant: { default: null },
-    busy: {
-      type: Boolean,
-      default: false
-    },
-    buttonSize: { default: void 0 },
-    cancelClass: { default: void 0 },
-    cancelDisabled: {
-      type: Boolean,
-      default: false
-    },
-    cancelTitle: { default: "Cancel" },
-    cancelVariant: { default: "secondary" },
-    centered: {
-      type: Boolean,
-      default: false
-    },
-    contentClass: { default: void 0 },
-    dialogClass: { default: void 0 },
-    footerBgVariant: { default: null },
-    footerBorderVariant: { default: null },
-    footerClass: { default: void 0 },
-    footerTextVariant: { default: null },
-    footerVariant: { default: null },
-    fullscreen: {
-      type: [Boolean, String],
-      default: false
-    },
-    headerAttrs: { default: void 0 },
-    headerBgVariant: { default: null },
-    headerBorderVariant: { default: null },
-    headerClass: { default: void 0 },
-    headerCloseClass: { default: void 0 },
-    headerCloseLabel: { default: "Close" },
-    headerCloseVariant: { default: "secondary" },
-    headerTextVariant: { default: null },
-    headerVariant: { default: null },
-    noBackdrop: {
-      type: Boolean,
-      default: false
-    },
-    noFooter: {
-      type: Boolean,
-      default: false
-    },
-    noHeader: {
-      type: Boolean,
-      default: false
-    },
-    noHeaderClose: {
-      type: Boolean,
-      default: false
-    },
-    id: { default: void 0 },
-    modalClass: { default: void 0 },
-    noCloseOnBackdrop: {
-      type: Boolean,
-      default: false
-    },
-    noCloseOnEsc: {
-      type: Boolean,
-      default: false
-    },
-    noTrap: {
-      type: Boolean,
-      default: false
-    },
-    noStacking: { type: Boolean },
-    okClass: { default: void 0 },
-    okDisabled: {
-      type: Boolean,
-      default: false
-    },
-    okOnly: {
-      type: Boolean,
-      default: false
-    },
-    okTitle: { default: "OK" },
-    okVariant: { default: "primary" },
-    scrollable: {
-      type: Boolean,
-      default: false
-    },
-    size: { default: void 0 },
-    title: { default: void 0 },
-    titleClass: { default: void 0 },
-    titleVisuallyHidden: {
-      type: Boolean,
-      default: false
-    },
-    titleTag: { default: "h5" },
-    teleportDisabled: {
-      type: Boolean,
-      default: false
-    },
-    teleportTo: { default: "body" },
-    initialAnimation: {
-      type: Boolean,
-      default: false
-    },
-    noAnimation: { type: Boolean },
-    noFade: {
-      type: Boolean,
-      default: false
-    },
-    lazy: {
-      type: Boolean,
-      default: false
-    },
-    unmountLazy: {
-      type: Boolean,
-      default: false
-    },
-    show: {
-      type: Boolean,
-      default: false
-    },
-    transProps: { default: void 0 },
-    visible: {
-      type: Boolean,
-      default: false
-    }
-  }, {
-    "modelValue": {
-      type: Boolean,
-      default: false
-    },
-    "modelModifiers": {}
-  }),
-  emits: /* @__PURE__ */ mergeModels([
-    "backdrop",
-    "cancel",
-    "close",
-    "esc",
-    "ok",
-    "hide",
-    "hide-prevented",
-    "hidden",
-    "show",
-    "show-prevented",
-    "shown",
-    "toggle",
-    "toggle-prevented"
-  ], ["update:modelValue"]),
-  setup(__props, { expose: __expose, emit: __emit }) {
-    var _a2;
-    const props = useDefaults(__props, "BModal");
-    const emit2 = __emit;
-    const slots = useSlots();
-    const computedId = useId$1(() => props.id, "modal");
-    const modelValue = useModel(__props, "modelValue");
-    const element = useTemplateRef("_element");
-    const fallbackFocusElement = useTemplateRef("_fallbackFocusElement");
-    const okButton = useTemplateRef("_okButton");
-    const cancelButton = useTemplateRef("_cancelButton");
-    const closeButton = useTemplateRef("_closeButton");
-    const pickFocusItem = () => {
-      if (props.focus && typeof props.focus !== "boolean") {
-        if (props.focus === "ok") return okButton;
-        else if (props.focus === "close") return closeButton;
-        else if (props.focus === "cancel") return cancelButton;
-        return getElement(props.focus, element.value ?? void 0) ?? element.value;
-      }
-      return element;
-    };
-    let activeElement = null;
-    const onAfterEnter = () => {
-      const doc2 = getSafeDocument();
-      if (props.noTrap && props.focus !== false && doc2) {
-        activeElement = doc2.activeElement;
-        if (activeElement === element.value) activeElement = null;
-        const el = unrefElement(pickFocusItem());
-        if (!el) return;
-        el == null ? void 0 : el.focus();
-        if (el.tagName && el.tagName.toLowerCase() === "input" && typeof el.select === "function") el.select();
-      }
-    };
-    const onAfterLeave = () => {
-      if (props.noTrap && props.focus !== false && activeElement) {
-        activeElement == null ? void 0 : activeElement.focus();
-        activeElement = null;
-      }
-    };
-    const { showRef, renderRef, renderBackdropRef, hide, show, toggle, computedNoAnimation, transitionProps, backdropTransitionProps, isLeaving, isVisible: isVisible2, trapActive, contentShowing, backdropReady, backdropVisible } = useShowHide(modelValue, props, emit2, element, computedId, { transitionProps: {
-      onAfterEnter,
-      onAfterLeave
-    } });
-    const { needsFallback } = useActivatedFocusTrap({
-      element,
-      isActive: trapActive,
-      noTrap: () => props.noTrap,
-      fallbackFocus: {
-        ref: fallbackFocusElement,
-        classSelector: fallbackClassSelector
-      },
-      focus: () => props.focus === false ? false : unrefElement(pickFocusItem()) ?? void 0
-    });
-    onKeyStroke("Escape", () => {
-      hide("esc");
-    }, {
-      target: element,
-      passive: true
-    });
-    useSafeScrollLock(showRef, () => props.bodyScrolling);
-    const hasHeaderCloseSlot = computed(() => !isEmptySlot(slots["header-close"]));
-    const modalDialogClasses = computed(() => [props.dialogClass, {
-      "modal-fullscreen": props.fullscreen === true,
-      [`modal-fullscreen-${props.fullscreen}-down`]: typeof props.fullscreen === "string",
-      [`modal-${props.size}`]: props.size !== void 0,
-      "modal-dialog-centered": props.centered,
-      "modal-dialog-scrollable": props.scrollable
-    }]);
-    const bodyColorClasses = useColorVariantClasses(() => ({
-      bgVariant: props.bodyBgVariant,
-      textVariant: props.bodyTextVariant,
-      variant: props.bodyVariant
-    }));
-    const bodyClasses = computed(() => [props.bodyClass, bodyColorClasses.value]);
-    const headerColorClasses = useColorVariantClasses(() => ({
-      bgVariant: props.headerBgVariant,
-      textVariant: props.headerTextVariant,
-      variant: props.headerVariant,
-      borderVariant: props.headerBorderVariant
-    }));
-    const headerClasses = computed(() => [props.headerClass, headerColorClasses.value]);
-    const headerCloseAttrs = computed(() => ({
-      variant: hasHeaderCloseSlot.value ? props.headerCloseVariant : void 0,
-      class: props.headerCloseClass
-    }));
-    const footerColorClasses = useColorVariantClasses(() => ({
-      bgVariant: props.footerBgVariant,
-      textVariant: props.footerTextVariant,
-      variant: props.footerVariant,
-      borderVariant: props.footerBorderVariant
-    }));
-    const footerClasses = computed(() => [props.footerClass, footerColorClasses.value]);
-    const titleClasses = computed(() => [props.titleClass, { ["visually-hidden"]: props.titleVisuallyHidden }]);
-    const disableCancel = computed(() => props.cancelDisabled || props.busy);
-    const disableOk = computed(() => props.okDisabled || props.busy);
-    const { activePosition, activeModalCount, stackWithoutSelf } = useModalManager(showRef, modelValue.value);
-    const sharedClasses = computed(() => ({
-      [`stack-position-${(activePosition == null ? void 0 : activePosition.value) ?? 0}`]: true,
-      [`stack-inverse-position-${((activeModalCount == null ? void 0 : activeModalCount.value) ?? 1) - 1 - ((activePosition == null ? void 0 : activePosition.value) ?? 0)}`]: true
-    }));
-    watch(stackWithoutSelf, (newValue, oldValue) => {
-      if (newValue.length > oldValue.length && showRef.value === true && props.noStacking) hide();
-    });
-    const defaultModalDialogZIndex = /* @__PURE__ */ ref(getModalZIndex(element.value ?? ((_a2 = getSafeDocument()) == null ? void 0 : _a2.body)));
-    onMounted(() => {
-      watch(renderRef, (v2) => {
-        if (!v2) return;
-        nextTick(() => {
-          if (!element.value) return;
-          defaultModalDialogZIndex.value = getModalZIndex(element.value);
-        });
-      }, { immediate: true });
-    });
-    const computedZIndexNumber = computed(() => showRef.value || isLeaving.value ? defaultModalDialogZIndex.value - (((activeModalCount == null ? void 0 : activeModalCount.value) ?? 0) * 2 - ((activePosition == null ? void 0 : activePosition.value) ?? 0) * 2) : defaultModalDialogZIndex.value);
-    const computedZIndex = computed(() => ({
-      "z-index": computedZIndexNumber.value,
-      "--b-position": (activePosition == null ? void 0 : activePosition.value) ?? 0,
-      "--b-inverse-position": ((activeModalCount == null ? void 0 : activeModalCount.value) ?? 1) - 1 - ((activePosition == null ? void 0 : activePosition.value) ?? 0),
-      "--b-count": (activeModalCount == null ? void 0 : activeModalCount.value) ?? 0
-    }));
-    const computedZIndexBackdrop = computed(() => ({
-      "z-index": computedZIndexNumber.value - 1,
-      "--b-position": (activePosition == null ? void 0 : activePosition.value) ?? 0,
-      "--b-inverse-position": ((activeModalCount == null ? void 0 : activeModalCount.value) ?? 1) - 1 - ((activePosition == null ? void 0 : activePosition.value) ?? 0),
-      "--b-count": (activeModalCount == null ? void 0 : activeModalCount.value) ?? 0
-    }));
-    const sharedSlots = computed(() => ({
-      id: computedId.value,
-      cancel: () => {
-        hide("cancel");
-      },
-      close: () => {
-        hide("close");
-      },
-      hide,
-      show,
-      toggle,
-      ok: () => {
-        hide("ok");
-      },
-      active: showRef.value,
-      visible: showRef.value
-    }));
-    __expose({
-      hide,
-      id: computedId,
-      show,
-      toggle,
-      visible: showRef
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(ConditionalTeleport_default, {
-        to: unref(props).teleportTo,
-        disabled: unref(props).teleportDisabled
-      }, {
-        default: withCtx(() => [unref(renderRef) || unref(contentShowing) ? (openBlock(), createBlock(Transition, mergeProps({ key: 0 }, unref(transitionProps), { appear: modelValue.value || unref(props).visible }), {
-          default: withCtx(() => [withDirectives(createBaseVNode("div", mergeProps({
-            id: unref(computedId),
-            ref: "_element",
-            class: ["modal", [unref(props).modalClass, {
-              fade: !unref(computedNoAnimation),
-              show: unref(isVisible2),
-              ...sharedClasses.value
-            }]],
-            role: "dialog",
-            "aria-labelledby": !unref(props).noHeader ? `${unref(computedId)}-label` : void 0,
-            "aria-describedby": `${unref(computedId)}-body`,
-            tabindex: "-1"
-          }, _ctx.$attrs, {
-            style: [computedZIndex.value, { "display": "block" }],
-            onMousedown: _cache[4] || (_cache[4] = withModifiers(($event) => unref(hide)("backdrop"), ["left", "self"]))
-          }), [createBaseVNode("div", { class: normalizeClass(["modal-dialog", modalDialogClasses.value]) }, [unref(contentShowing) ? (openBlock(), createElementBlock("div", {
-            key: 0,
-            class: normalizeClass(["modal-content", unref(props).contentClass])
-          }, [
-            !unref(props).noHeader ? (openBlock(), createElementBlock("div", mergeProps({
-              key: 0,
-              class: ["modal-header", headerClasses.value]
-            }, unref(props).headerAttrs), [renderSlot(_ctx.$slots, "header", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [(openBlock(), createBlock(resolveDynamicComponent(unref(props).titleTag), {
-              id: `${unref(computedId)}-label`,
-              class: normalizeClass(["modal-title", titleClasses.value])
-            }, {
-              default: withCtx(() => [renderSlot(_ctx.$slots, "title", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).title), 1)])]),
-              _: 3
-            }, 8, ["id", "class"])), !unref(props).noHeaderClose ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [hasHeaderCloseSlot.value ? (openBlock(), createBlock(BButton_default, mergeProps({
-              key: 0,
-              ref: "_closeButton"
-            }, headerCloseAttrs.value, { onClick: _cache[0] || (_cache[0] = ($event) => unref(hide)("close")) }), {
-              default: withCtx(() => [renderSlot(_ctx.$slots, "header-close", normalizeProps(guardReactiveProps(sharedSlots.value)))]),
-              _: 3
-            }, 16)) : (openBlock(), createBlock(BCloseButton_default, mergeProps({
-              key: 1,
-              ref: "_closeButton",
-              "aria-label": unref(props).headerCloseLabel
-            }, headerCloseAttrs.value, { onClick: _cache[1] || (_cache[1] = ($event) => unref(hide)("close")) }), null, 16, ["aria-label"]))], 64)) : createCommentVNode("", true)])], 16)) : createCommentVNode("", true),
-            createBaseVNode("div", mergeProps({
-              id: `${unref(computedId)}-body`,
-              class: ["modal-body", bodyClasses.value]
-            }, unref(props).bodyAttrs), [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])], 16, _hoisted_2$m),
-            !unref(props).noFooter ? (openBlock(), createElementBlock("div", {
-              key: 1,
-              class: normalizeClass(["modal-footer", footerClasses.value])
-            }, [renderSlot(_ctx.$slots, "footer", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [renderSlot(_ctx.$slots, "cancel", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [!unref(props).okOnly ? (openBlock(), createBlock(BButton_default, {
-              key: 0,
-              ref: "_cancelButton",
-              disabled: disableCancel.value,
-              size: unref(props).buttonSize,
-              variant: unref(props).cancelVariant,
-              class: normalizeClass(unref(props).cancelClass),
-              onClick: _cache[2] || (_cache[2] = ($event) => unref(hide)("cancel"))
-            }, {
-              default: withCtx(() => [createTextVNode(toDisplayString(unref(props).cancelTitle), 1)]),
-              _: 1
-            }, 8, [
-              "disabled",
-              "size",
-              "variant",
-              "class"
-            ])) : createCommentVNode("", true)]), renderSlot(_ctx.$slots, "ok", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createVNode(BButton_default, {
-              ref: "_okButton",
-              disabled: disableOk.value,
-              size: unref(props).buttonSize,
-              variant: unref(props).okVariant,
-              class: normalizeClass(unref(props).okClass),
-              onClick: _cache[3] || (_cache[3] = ($event) => unref(hide)("ok"))
-            }, {
-              default: withCtx(() => [createTextVNode(toDisplayString(unref(props).okTitle), 1)]),
-              _: 1
-            }, 8, [
-              "disabled",
-              "size",
-              "variant",
-              "class"
-            ])])])], 2)) : createCommentVNode("", true)
-          ], 2)) : createCommentVNode("", true)], 2), unref(needsFallback) ? (openBlock(), createElementBlock("div", {
-            key: 0,
-            ref: "_fallbackFocusElement",
-            class: normalizeClass(fallbackClassSelector),
-            tabindex: "0",
-            style: {
-              "width": "0",
-              "height": "0",
-              "overflow": "hidden"
-            }
-          }, null, 512)) : createCommentVNode("", true)], 16, _hoisted_1$z), [[vShow, unref(showRef) && (unref(backdropReady) && unref(props).backdropFirst || !unref(props).backdropFirst)]])]),
-          _: 3
-        }, 16, ["appear"])) : createCommentVNode("", true), !unref(props).noBackdrop ? renderSlot(_ctx.$slots, "backdrop", normalizeProps(mergeProps({ key: 1 }, sharedSlots.value)), () => [unref(renderBackdropRef) ? (openBlock(), createBlock(Transition, normalizeProps(mergeProps({ key: 0 }, unref(backdropTransitionProps))), {
-          default: withCtx(() => [withDirectives(createBaseVNode("div", {
-            class: normalizeClass(["modal-backdrop", {
-              fade: !unref(computedNoAnimation),
-              show: unref(backdropVisible) || unref(computedNoAnimation),
-              ...sharedClasses.value
-            }]),
-            style: normalizeStyle(computedZIndexBackdrop.value),
-            onClick: _cache[5] || (_cache[5] = ($event) => unref(hide)("backdrop"))
-          }, null, 6), [[vShow, unref(showRef) || unref(isLeaving) && unref(props).backdropFirst && !unref(computedNoAnimation)]])]),
-          _: 1
-        }, 16)) : createCommentVNode("", true)]) : createCommentVNode("", true)]),
-        _: 3
-      }, 8, ["to", "disabled"]);
-    };
-  }
-});
 var __defProp2 = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -14771,478 +11341,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget);
-var BProgressBar_default = /* @__PURE__ */ defineComponent({
-  __name: "BProgressBar",
-  props: {
-    animated: {
-      type: Boolean,
-      default: false
-    },
-    label: { default: void 0 },
-    max: { default: void 0 },
-    precision: { default: 0 },
-    showProgress: {
-      type: Boolean,
-      default: false
-    },
-    showValue: {
-      type: Boolean,
-      default: false
-    },
-    striped: {
-      type: Boolean,
-      default: false
-    },
-    value: { default: 0 },
-    variant: { default: null },
-    bgVariant: { default: null },
-    textVariant: { default: null }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BProgressBar");
-    const parentData = inject(progressInjectionKey, null);
-    const colorClasses = useColorVariantClasses(props);
-    const computedClasses = computed(() => [colorClasses.value, {
-      "progress-bar-animated": props.animated || (parentData == null ? void 0 : parentData.animated.value),
-      "progress-bar-striped": props.striped || (parentData == null ? void 0 : parentData.striped.value) || props.animated || (parentData == null ? void 0 : parentData.animated.value)
-    }]);
-    const numberPrecision = /* @__PURE__ */ useToNumber(() => props.precision);
-    const numberValue = /* @__PURE__ */ useToNumber(() => props.value);
-    const numberMax = /* @__PURE__ */ useToNumber(() => props.max ?? NaN);
-    const parentMaxNumber = /* @__PURE__ */ useToNumber(() => (parentData == null ? void 0 : parentData.max.value) ?? NaN);
-    const computedLabel = computed(() => props.showValue || (parentData == null ? void 0 : parentData.showValue.value) ? numberValue.value.toFixed(numberPrecision.value) : props.showProgress || (parentData == null ? void 0 : parentData.showProgress.value) ? (numberValue.value * 100 / (numberMax.value || 100)).toFixed(numberPrecision.value) : props.label !== void 0 ? props.label : "");
-    const computedWidth = computed(() => parentMaxNumber.value ? `${numberValue.value * 100 / parentMaxNumber.value}%` : numberMax.value ? `${numberValue.value * 100 / numberMax.value}%` : typeof props.value === "string" ? props.value : `${props.value}%`);
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: normalizeClass(["progress-bar", computedClasses.value]),
-        style: normalizeStyle({ width: computedWidth.value })
-      }, [renderSlot(_ctx.$slots, "default", {}, () => [createTextVNode(toDisplayString(computedLabel.value), 1)])], 6);
-    };
-  }
-});
-var _hoisted_1$y = ["aria-valuenow", "aria-valuemax"];
-var BProgress_default = /* @__PURE__ */ defineComponent({
-  __name: "BProgress",
-  props: {
-    height: { default: void 0 },
-    animated: {
-      type: Boolean,
-      default: void 0
-    },
-    max: { default: 100 },
-    precision: { default: void 0 },
-    showProgress: {
-      type: Boolean,
-      default: void 0
-    },
-    showValue: {
-      type: Boolean,
-      default: void 0
-    },
-    striped: {
-      type: Boolean,
-      default: void 0
-    },
-    value: { default: void 0 },
-    variant: { default: void 0 },
-    bgVariant: { default: void 0 },
-    textVariant: { default: void 0 }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BProgress");
-    provide(progressInjectionKey, {
-      animated: /* @__PURE__ */ toRef(() => props.animated),
-      max: /* @__PURE__ */ toRef(() => props.max),
-      showProgress: /* @__PURE__ */ toRef(() => props.showProgress),
-      showValue: /* @__PURE__ */ toRef(() => props.showValue),
-      striped: /* @__PURE__ */ toRef(() => props.striped)
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", {
-        class: "progress",
-        role: "progressbar",
-        style: normalizeStyle({ height: unref(props).height }),
-        "aria-valuenow": unref(props).value,
-        "aria-valuemin": "0",
-        "aria-valuemax": unref(props).max
-      }, [renderSlot(_ctx.$slots, "default", {}, () => [createVNode(BProgressBar_default, {
-        animated: unref(props).animated,
-        max: unref(props).max,
-        precision: unref(props).precision,
-        "show-progress": unref(props).showProgress,
-        "show-value": unref(props).showValue,
-        striped: unref(props).striped,
-        value: unref(props).value,
-        variant: unref(props).variant,
-        "text-variant": unref(props).textVariant,
-        "bg-variant": unref(props).bgVariant
-      }, null, 8, [
-        "animated",
-        "max",
-        "precision",
-        "show-progress",
-        "show-value",
-        "striped",
-        "value",
-        "variant",
-        "text-variant",
-        "bg-variant"
-      ])])], 12, _hoisted_1$y);
-    };
-  }
-});
-var useCountdown = (length, interval, timestampOpts = {}) => {
-  const resolvedLength = /* @__PURE__ */ readonly(/* @__PURE__ */ toRef(length));
-  const isPaused = /* @__PURE__ */ ref(false);
-  const target = /* @__PURE__ */ ref(Date.now() + resolvedLength.value);
-  const { isActive, pause, resume, timestamp: timestamp2 } = useTimestamp({
-    interval,
-    controls: true,
-    callback: (v2) => {
-      if (v2 >= target.value) {
-        isPaused.value = false;
-        pause();
-      }
-    },
-    ...timestampOpts
-  });
-  watch(/* @__PURE__ */ useDocumentVisibility(), (newVisibility) => {
-    if (newVisibility === "visible" && isActive.value && !isPaused.value) {
-      if (Date.now() >= target.value) {
-        isPaused.value = false;
-        pause();
-      }
-    }
-  });
-  const value = computed(() => target.value - timestamp2.value);
-  const restart = () => {
-    target.value = Date.now() + resolvedLength.value;
-    resume();
-  };
-  watch(resolvedLength, () => {
-    if (resolvedLength.value > 0) restart();
-  });
-  const myPause = () => {
-    isPaused.value = true;
-    pause();
-  };
-  const myResume = () => {
-    isPaused.value = false;
-    const remainingTime = target.value - timestamp2.value;
-    target.value = Date.now() + remainingTime;
-    resume();
-  };
-  const stop2 = () => {
-    pause();
-    timestamp2.value = target.value;
-    isPaused.value = false;
-  };
-  return {
-    isActive: /* @__PURE__ */ readonly(isActive),
-    isPaused: /* @__PURE__ */ readonly(isPaused),
-    stop: stop2,
-    pause: myPause,
-    resume: myResume,
-    restart,
-    value
-  };
-};
-var useCountdownHover = (element, { modelValueIgnoresHover, noHoverPause, noResumeOnHoverLeave }, actions) => {
-  const isHovering = useElementHover(element);
-  const onMouseEnter = () => {
-    if (toValue(noHoverPause)) return;
-    actions.pause();
-  };
-  const onMouseLeave = () => {
-    if (toValue(noResumeOnHoverLeave)) return;
-    actions.resume();
-  };
-  watch(isHovering, (newValue) => {
-    if (toValue(modelValueIgnoresHover)) return;
-    if (newValue) {
-      onMouseEnter();
-      return;
-    }
-    onMouseLeave();
-  });
-  return { isHovering };
-};
-var _hoisted_1$x = [
-  "id",
-  "role",
-  "aria-live",
-  "aria-atomic"
-];
-var _hoisted_2$l = {
-  key: 1,
-  class: "d-flex gap-2"
-};
-var BAlert_default = /* @__PURE__ */ defineComponent({
-  __name: "BAlert",
-  props: /* @__PURE__ */ mergeModels({
-    alertClass: { default: void 0 },
-    body: { default: void 0 },
-    bodyClass: { default: void 0 },
-    closeClass: { default: void 0 },
-    closeContent: { default: void 0 },
-    closeLabel: { default: "Close" },
-    closeVariant: { default: "secondary" },
-    dismissible: {
-      type: Boolean,
-      default: false
-    },
-    headerClass: { default: void 0 },
-    headerTag: { default: "div" },
-    id: { default: void 0 },
-    interval: { default: "requestAnimationFrame" },
-    isStatus: {
-      type: Boolean,
-      default: false
-    },
-    noHoverPause: {
-      type: Boolean,
-      default: false
-    },
-    noResumeOnHoverLeave: {
-      type: Boolean,
-      default: false
-    },
-    progressProps: { default: void 0 },
-    showOnPause: {
-      type: Boolean,
-      default: true
-    },
-    title: { default: void 0 },
-    variant: { default: "info" },
-    bgVariant: { default: null },
-    textVariant: { default: null },
-    active: {
-      type: Boolean,
-      default: void 0
-    },
-    activeClass: { default: void 0 },
-    disabled: {
-      type: Boolean,
-      default: void 0
-    },
-    exactActiveClass: { default: void 0 },
-    href: { default: void 0 },
-    icon: {
-      type: Boolean,
-      default: void 0
-    },
-    noRel: {
-      type: Boolean,
-      default: void 0
-    },
-    opacity: { default: void 0 },
-    opacityHover: { default: void 0 },
-    prefetch: { type: Boolean },
-    prefetchOn: {},
-    noPrefetch: { type: Boolean },
-    prefetchedClass: {},
-    rel: { default: void 0 },
-    replace: {
-      type: Boolean,
-      default: void 0
-    },
-    routerComponentName: { default: void 0 },
-    stretched: {
-      type: Boolean,
-      default: false
-    },
-    target: { default: void 0 },
-    to: { default: void 0 },
-    underlineOffset: { default: void 0 },
-    underlineOffsetHover: { default: void 0 },
-    underlineOpacity: { default: void 0 },
-    underlineOpacityHover: { default: void 0 },
-    underlineVariant: { default: void 0 },
-    initialAnimation: {
-      type: Boolean,
-      default: false
-    },
-    noAnimation: { type: Boolean },
-    noFade: {
-      type: Boolean,
-      default: false
-    },
-    lazy: {
-      type: Boolean,
-      default: false
-    },
-    unmountLazy: {
-      type: Boolean,
-      default: false
-    },
-    show: {
-      type: Boolean,
-      default: false
-    },
-    transProps: { default: void 0 },
-    visible: {
-      type: Boolean,
-      default: false
-    }
-  }, {
-    "modelValue": {
-      type: [Boolean, Number],
-      default: false
-    },
-    "modelModifiers": {}
-  }),
-  emits: /* @__PURE__ */ mergeModels([
-    "close",
-    "close-countdown",
-    "hide",
-    "hide-prevented",
-    "hidden",
-    "show",
-    "show-prevented",
-    "shown",
-    "toggle",
-    "toggle-prevented"
-  ], ["update:modelValue"]),
-  setup(__props, { expose: __expose, emit: __emit }) {
-    const props = useDefaults(__props, "BAlert");
-    const emit2 = __emit;
-    const slots = useSlots();
-    const element = useTemplateRef("_element");
-    const modelValue = useModel(__props, "modelValue");
-    const { computedLink, computedLinkProps } = useBLinkHelper(props);
-    const computedId = useId$1(() => props.id, "alert");
-    const { showRef, renderRef, hide, toggle, show, buildTriggerableEvent, computedNoAnimation, isVisible: isVisible2, transitionProps, contentShowing } = useShowHide(modelValue, props, emit2, element, computedId);
-    const { isActive, pause, restart, resume, stop: stop2, isPaused, value: remainingMs } = useCountdown(computed(() => typeof modelValue.value === "boolean" ? 0 : modelValue.value), props.interval, { immediate: typeof modelValue.value === "number" && !!modelValue.value });
-    useCountdownHover(element, {
-      noHoverPause: () => props.noHoverPause || typeof modelValue.value !== "number",
-      noResumeOnHoverLeave: () => props.noResumeOnHoverLeave || typeof modelValue.value !== "number",
-      modelValueIgnoresHover: () => typeof modelValue.value === "boolean"
-    }, {
-      pause,
-      resume
-    });
-    watchEffect(() => {
-      emit2("close-countdown", remainingMs.value);
-    });
-    const computedTag = computed(() => computedLink.value ? BLink_default : "div");
-    const isAlertVisible = computed(() => showRef.value || isActive.value || props.showOnPause && isPaused.value);
-    const computedClasses = computed(() => [{
-      [`alert-${props.variant}`]: props.variant !== null,
-      "alert-dismissible": props.dismissible && !(slots.close || props.closeContent),
-      "show": isVisible2.value,
-      "fade": !computedNoAnimation.value
-    }]);
-    watch(modelValue, (newValue) => {
-      if (typeof newValue === "number") {
-        const event = buildTriggerableEvent("show", {
-          cancelable: true,
-          trigger: "model"
-        });
-        emit2("show", event);
-        if (event.defaultPrevented) emit2("show-prevented", buildTriggerableEvent("show-prevented"));
-        else restart();
-      }
-    });
-    watch(isActive, (newValue) => {
-      if (newValue === false && isPaused.value === false) {
-        hide();
-        modelValue.value = 0;
-        stop2();
-      }
-    });
-    const sharedSlots = computed(() => ({
-      toggle,
-      show,
-      hide,
-      id: computedId.value,
-      visible: showRef.value,
-      active: isActive.value
-    }));
-    __expose({
-      show,
-      hide,
-      toggle,
-      pause,
-      restart,
-      resume,
-      stop: stop2
-    });
-    return (_ctx, _cache) => {
-      return unref(renderRef) || unref(contentShowing) ? (openBlock(), createBlock(Transition, mergeProps({ key: 0 }, unref(transitionProps), { appear: !!modelValue.value || unref(props).visible }), {
-        default: withCtx(() => [withDirectives(createBaseVNode("div", {
-          id: unref(props).id,
-          ref: "_element",
-          class: normalizeClass(["alert", [unref(props).alertClass, computedClasses.value]]),
-          tabindex: "0",
-          role: !isAlertVisible.value ? void 0 : unref(props).isStatus ? "status" : "alert",
-          "aria-live": !isAlertVisible.value ? void 0 : unref(props).isStatus ? "polite" : "assertive",
-          "aria-atomic": !isAlertVisible.value ? void 0 : true
-        }, [
-          unref(contentShowing) && (slots.title || unref(props).title) ? (openBlock(), createBlock(resolveDynamicComponent(unref(props).headerTag), {
-            key: 0,
-            class: normalizeClass(["alert-heading d-flex gap-2", unref(props).headerClass])
-          }, {
-            default: withCtx(() => [renderSlot(_ctx.$slots, "title", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createBaseVNode("span", null, toDisplayString(unref(props).title), 1)]), unref(props).dismissible ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [slots.close || unref(props).closeContent ? (openBlock(), createBlock(BButton_default, {
-              key: 0,
-              class: normalizeClass([[unref(props).closeClass], "ms-auto ps-1 btn-close-custom"]),
-              variant: unref(props).closeVariant,
-              onClick: _cache[0] || (_cache[0] = withModifiers(($event) => unref(hide)("close"), ["stop", "prevent"]))
-            }, {
-              default: withCtx(() => [renderSlot(_ctx.$slots, "close", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).closeContent), 1)])]),
-              _: 3
-            }, 8, ["class", "variant"])) : (openBlock(), createBlock(BCloseButton_default, {
-              key: 1,
-              "aria-label": unref(props).closeLabel,
-              class: normalizeClass([unref(props).closeClass]),
-              onClick: _cache[1] || (_cache[1] = withModifiers(($event) => unref(hide)("close"), ["stop", "prevent"]))
-            }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)]),
-            _: 3
-          }, 8, ["class"])) : createCommentVNode("", true),
-          unref(contentShowing) && (slots.default || unref(props).body) ? (openBlock(), createElementBlock("div", _hoisted_2$l, [(openBlock(), createBlock(resolveDynamicComponent(computedTag.value), mergeProps({ class: ["alert-body", unref(props).bodyClass] }, unref(computedLinkProps), { onClick: _cache[2] || (_cache[2] = ($event) => unref(computedLink) && unref(props).dismissible ? unref(hide)() : () => {
-          }) }), {
-            default: withCtx(() => [renderSlot(_ctx.$slots, "default", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).body), 1)])]),
-            _: 3
-          }, 16, ["class"])), unref(props).dismissible && !(slots.title || unref(props).title) ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [slots.close || unref(props).closeContent ? (openBlock(), createBlock(BButton_default, {
-            key: 0,
-            class: normalizeClass([[unref(props).closeClass], "ms-auto btn-close-custom"]),
-            variant: unref(props).closeVariant,
-            onClick: _cache[3] || (_cache[3] = withModifiers(($event) => unref(hide)("close"), ["stop", "prevent"]))
-          }, {
-            default: withCtx(() => [renderSlot(_ctx.$slots, "close", normalizeProps(guardReactiveProps(sharedSlots.value)), () => [createTextVNode(toDisplayString(unref(props).closeContent), 1)])]),
-            _: 3
-          }, 8, ["class", "variant"])) : (openBlock(), createBlock(BCloseButton_default, {
-            key: 1,
-            "aria-label": unref(props).closeLabel,
-            class: normalizeClass([unref(props).closeClass]),
-            onClick: _cache[4] || (_cache[4] = withModifiers(($event) => unref(hide)("close"), ["stop", "prevent"]))
-          }, null, 8, ["aria-label", "class"]))], 64)) : createCommentVNode("", true)])) : createCommentVNode("", true),
-          typeof modelValue.value === "number" && unref(props).progressProps !== void 0 ? (openBlock(), createBlock(BProgress_default, {
-            key: 2,
-            animated: unref(props).progressProps.animated,
-            precision: unref(props).progressProps.precision,
-            "show-progress": unref(props).progressProps.showProgress,
-            "show-value": unref(props).progressProps.showValue,
-            striped: unref(props).progressProps.striped,
-            variant: unref(props).progressProps.variant,
-            max: modelValue.value,
-            value: unref(remainingMs),
-            height: "4px"
-          }, null, 8, [
-            "animated",
-            "precision",
-            "show-progress",
-            "show-value",
-            "striped",
-            "variant",
-            "max",
-            "value"
-          ])) : createCommentVNode("", true)
-        ], 10, _hoisted_1$x), [[vShow, isAlertVisible.value]])]),
-        _: 3
-      }, 16, ["appear"])) : createCommentVNode("", true);
-    };
-  }
-});
 var createGetActive = (instances) => () => instances.length > 0 ? instances[instances.length - 1] : void 0;
 var _newShowHideRegistry = () => {
   const values = /* @__PURE__ */ ref(/* @__PURE__ */ new Map());
@@ -15335,1585 +11433,6 @@ function del(target, key) {
   }
   delete target[key];
 }
-var useAriaInvalid = (ariaInvalid, state) => computed(() => {
-  const resolvedAriaInvalid = toValue(ariaInvalid);
-  const resolvedState = toValue(state);
-  return resolvedAriaInvalid === true ? "true" : typeof resolvedAriaInvalid === "string" ? resolvedAriaInvalid : resolvedState === false ? "true" : resolvedAriaInvalid === false ? "false" : void 0;
-});
-function createFilterWrapper(filter, fn) {
-  function wrapper(...args) {
-    return new Promise((resolve2, reject) => {
-      Promise.resolve(filter(() => fn.apply(this, args), {
-        fn,
-        thisArg: this,
-        args
-      })).then(resolve2).catch(reject);
-    });
-  }
-  wrapper.cancel = filter.cancel;
-  return wrapper;
-}
-function debounceFilter(ms, options = {}) {
-  let timer;
-  let maxTimer;
-  let lastRejector = noop$1;
-  const _clearTimeout = (timer2) => {
-    clearTimeout(timer2);
-    lastRejector();
-    lastRejector = noop$1;
-  };
-  let lastInvoker;
-  const filter = (invoke) => {
-    const duration = toValue(ms);
-    const maxDuration = toValue(options.maxWait);
-    if (timer) _clearTimeout(timer);
-    if (duration <= 0 || maxDuration !== void 0 && maxDuration <= 0) {
-      if (maxTimer) {
-        _clearTimeout(maxTimer);
-        maxTimer = null;
-      }
-      return Promise.resolve(invoke());
-    }
-    return new Promise((resolve2, reject) => {
-      lastRejector = options.rejectOnCancel ? reject : resolve2;
-      lastInvoker = invoke;
-      if (maxDuration && !maxTimer) maxTimer = setTimeout(() => {
-        if (timer) _clearTimeout(timer);
-        maxTimer = null;
-        resolve2(lastInvoker());
-      }, maxDuration);
-      timer = setTimeout(() => {
-        if (maxTimer) _clearTimeout(maxTimer);
-        maxTimer = null;
-        resolve2(invoke());
-      }, duration);
-    });
-  };
-  filter.cancel = () => {
-    if (timer) _clearTimeout(timer);
-    if (maxTimer) _clearTimeout(maxTimer);
-    maxTimer = null;
-  };
-  return filter;
-}
-function useDebounceFn(fn, ms = 200, options = {}) {
-  return createFilterWrapper(debounceFilter(ms, options), fn);
-}
-var useStateClass = (value) => computed(() => {
-  const resolvedValue = toValue(value);
-  return resolvedValue === true ? "is-valid" : resolvedValue === false ? "is-invalid" : null;
-});
-var normalizeInput = (v2, modelModifiers) => {
-  if (v2 === null) return;
-  let update = v2;
-  if (modelModifiers.number && typeof update === "string" && update !== "") {
-    const parsed = Number.parseFloat(update);
-    update = Number.isNaN(parsed) ? update : parsed;
-  }
-  return update;
-};
-var useFormInput = (props, input, modelValue, modelModifiers) => {
-  var _a2;
-  const computedId = useId$1(() => props.id, "input");
-  const debounceNumber = /* @__PURE__ */ useToNumber(() => props.debounce ?? 0, { nanToZero: true });
-  const debounceMaxWaitNumber = /* @__PURE__ */ useToNumber(() => props.debounceMaxWait ?? NaN);
-  const formGroupData = (_a2 = inject(formGroupKey, null)) == null ? void 0 : _a2();
-  formGroupData == null ? void 0 : formGroupData.track(computedId);
-  const computedState = computed(() => props.state !== void 0 ? props.state : (formGroupData == null ? void 0 : formGroupData.state.value) ?? null);
-  const isDisabled = computed(() => props.disabled || ((formGroupData == null ? void 0 : formGroupData.disabled.value) ?? false));
-  const computedAriaInvalid = useAriaInvalid(() => props.ariaInvalid, computedState);
-  const stateClass = useStateClass(computedState);
-  const internalUpdateModelValue = useDebounceFn((value) => {
-    modelValue.value = value;
-  }, () => modelModifiers.lazy === true ? 0 : debounceNumber.value, { maxWait: () => modelModifiers.lazy === true ? NaN : debounceMaxWaitNumber.value });
-  const updateModelValue = (value, force = false, immediate = false) => {
-    if (modelModifiers.lazy === true && force === false) return;
-    if (immediate) modelValue.value = value;
-    else internalUpdateModelValue(value);
-  };
-  const { focused } = useFocus(input, { initialValue: props.autofocus });
-  const _formatValue = (value, evt, force = false) => {
-    if (props.formatter !== void 0 && (!props.lazyFormatter || force)) return props.formatter(value, evt);
-    return value;
-  };
-  onMounted(() => {
-    var _a3;
-    if (input.value) input.value.value = ((_a3 = modelValue.value) == null ? void 0 : _a3.toString()) ?? "";
-  });
-  onActivated(() => {
-    nextTick(() => {
-      if (props.autofocus) focused.value = true;
-    });
-  });
-  const syncDisplayedValue = (nextValue) => {
-    if (input.value && input.value.value !== nextValue) input.value.value = nextValue;
-  };
-  const onInput = (evt) => {
-    const { value } = evt.target;
-    const formattedValue = _formatValue(value, evt);
-    if (evt.defaultPrevented) {
-      evt.preventDefault();
-      return;
-    }
-    updateModelValue(formattedValue);
-    if (formattedValue !== value) syncDisplayedValue(formattedValue);
-  };
-  const onChange = (evt) => {
-    const { value } = evt.target;
-    const formattedValue = _formatValue(value, evt);
-    if (evt.defaultPrevented) {
-      evt.preventDefault();
-      return;
-    }
-    const nextModel = formattedValue;
-    if (modelValue.value !== nextModel) updateModelValue(formattedValue, true);
-  };
-  const onBlur = (evt) => {
-    if (!modelModifiers.lazy && !props.lazyFormatter && !modelModifiers.trim && debounceNumber.value <= 0) return;
-    const { value } = evt.target;
-    const formattedValue = _formatValue(value, evt, true);
-    const nextModel = modelModifiers.trim ? formattedValue.trim() : formattedValue;
-    internalUpdateModelValue.cancel();
-    if (modelValue.value !== nextModel) updateModelValue(nextModel, true, true);
-    if (nextModel !== value) syncDisplayedValue(nextModel);
-  };
-  const focus = () => {
-    if (!isDisabled.value) focused.value = true;
-  };
-  const blur = () => {
-    if (!isDisabled.value) focused.value = false;
-  };
-  return {
-    input,
-    computedId,
-    computedAriaInvalid,
-    onInput,
-    onChange,
-    onBlur,
-    focus,
-    blur,
-    stateClass,
-    isDisabled
-  };
-};
-var _hoisted_1$w = [
-  "id",
-  "value",
-  "name",
-  "form",
-  "type",
-  "disabled",
-  "placeholder",
-  "required",
-  "autocomplete",
-  "readonly",
-  "min",
-  "max",
-  "step",
-  "list",
-  "aria-required",
-  "aria-invalid"
-];
-var BFormInput_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormInput",
-  props: /* @__PURE__ */ mergeModels({
-    max: { default: void 0 },
-    min: { default: void 0 },
-    step: { default: void 0 },
-    type: { default: "text" },
-    ariaInvalid: {
-      type: [Boolean, String],
-      default: void 0
-    },
-    autocomplete: { default: void 0 },
-    autofocus: {
-      type: Boolean,
-      default: false
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    form: { default: void 0 },
-    formatter: {
-      type: Function,
-      default: void 0
-    },
-    id: { default: void 0 },
-    lazyFormatter: {
-      type: Boolean,
-      default: false
-    },
-    list: { default: void 0 },
-    name: { default: void 0 },
-    placeholder: { default: void 0 },
-    plaintext: {
-      type: Boolean,
-      default: false
-    },
-    readonly: {
-      type: Boolean,
-      default: false
-    },
-    required: {
-      type: Boolean,
-      default: false
-    },
-    size: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: void 0
-    },
-    debounce: { default: 0 },
-    debounceMaxWait: { default: NaN }
-  }, {
-    "modelValue": { default: "" },
-    "modelModifiers": {}
-  }),
-  emits: ["update:modelValue"],
-  setup(__props, { expose: __expose }) {
-    const props = useDefaults(__props, "BFormInput");
-    const [modelValue, modelModifiers] = useModel(__props, "modelValue", { set: (v2) => normalizeInput(v2, modelModifiers) });
-    const input = useTemplateRef("_input");
-    const inInputGroup = inject(inputGroupKey, false);
-    const { computedId, computedAriaInvalid, onInput, onChange, onBlur, stateClass, focus, blur, isDisabled } = useFormInput(props, input, modelValue, modelModifiers);
-    const computedClasses = computed(() => {
-      const isRange = props.type === "range";
-      const isColor = props.type === "color";
-      return [stateClass.value, {
-        "form-range": isRange,
-        "form-control": isColor || !props.plaintext && !isRange || isRange && inInputGroup,
-        "form-control-color": isColor,
-        "form-control-plaintext": props.plaintext && !isRange && !isColor,
-        [`form-control-${props.size}`]: !!props.size
-      }];
-    });
-    __expose({
-      blur,
-      element: input,
-      flushDebounce: onBlur,
-      focus
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("input", {
-        id: unref(computedId),
-        ref: "_input",
-        value: unref(modelValue),
-        class: normalizeClass(computedClasses.value),
-        name: unref(props).name || void 0,
-        form: unref(props).form || void 0,
-        type: unref(props).type,
-        disabled: unref(isDisabled),
-        placeholder: unref(props).placeholder,
-        required: unref(props).required || void 0,
-        autocomplete: unref(props).autocomplete || void 0,
-        readonly: unref(props).readonly || unref(props).plaintext,
-        min: unref(props).min,
-        max: unref(props).max,
-        step: unref(props).step,
-        list: unref(props).type !== "password" ? unref(props).list : void 0,
-        "aria-required": unref(props).required || void 0,
-        "aria-invalid": unref(computedAriaInvalid),
-        onInput: _cache[0] || (_cache[0] = (...args) => unref(onInput) && unref(onInput)(...args)),
-        onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
-        onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 42, _hoisted_1$w);
-    };
-  }
-});
-var useFormSelect = (options, props) => {
-  const isComplex = (option) => typeof option === "object" && option !== null && "options" in option && Array.isArray(option.options);
-  const normalizeOption = (option) => {
-    const propsValue = toValue(props);
-    if (typeof option === "string") return {
-      value: option,
-      text: option
-    };
-    if (typeof option === "number" || typeof option === "boolean") return {
-      value: option,
-      text: `${option}`
-    };
-    if (option instanceof Date) return {
-      value: option,
-      text: option.toLocaleString()
-    };
-    const value = get(option, propsValue.valueField);
-    const text = get(option, propsValue.textField);
-    const disabled = get(option, propsValue.disabledField);
-    const opts = propsValue.optionsField ? get(option, propsValue.optionsField) : void 0;
-    const label = (propsValue.labelField ? get(option, propsValue.labelField) : void 0) || text;
-    if (opts !== void 0 && Array.isArray(opts)) return {
-      label,
-      options: opts
-    };
-    const simpleOption = typeof option === "object" ? { ...option } : {};
-    const fieldsToOmit = /* @__PURE__ */ new Set(["label", "options"]);
-    if (propsValue.labelField) fieldsToOmit.add(propsValue.labelField);
-    if (propsValue.optionsField) fieldsToOmit.add(propsValue.optionsField);
-    fieldsToOmit.forEach((field) => {
-      delete simpleOption[field];
-    });
-    return {
-      ...simpleOption,
-      value,
-      text,
-      disabled
-    };
-  };
-  const normalizeOptions = (opts) => opts.map((option) => normalizeOption(option));
-  return {
-    normalizedOptions: computed(() => normalizeOptions(toValue(options))),
-    isComplex
-  };
-};
-var getClasses = (props, els, propPrefix, classPrefix = propPrefix) => els.reduce((arr, prop) => {
-  if (!props[prop]) return arr;
-  arr.push([
-    classPrefix,
-    prop.replace(propPrefix, ""),
-    props[prop]
-  ].filter((e) => e && typeof e !== "boolean").join("-").toLowerCase());
-  return arr;
-}, []);
-var BCol_default = /* @__PURE__ */ defineComponent({
-  __name: "BCol",
-  props: {
-    alignSelf: { default: void 0 },
-    tag: { default: "div" },
-    order: { default: void 0 },
-    offset: { default: void 0 },
-    cols: { default: void 0 },
-    col: {
-      type: Boolean,
-      default: false
-    },
-    offsetSm: { default: void 0 },
-    offsetMd: { default: void 0 },
-    offsetLg: { default: void 0 },
-    offsetXl: { default: void 0 },
-    offsetXxl: { default: void 0 },
-    orderSm: { default: void 0 },
-    orderMd: { default: void 0 },
-    orderLg: { default: void 0 },
-    orderXl: { default: void 0 },
-    orderXxl: { default: void 0 },
-    sm: {
-      type: [
-        Boolean,
-        Number,
-        String
-      ],
-      default: false
-    },
-    md: {
-      type: [
-        Boolean,
-        Number,
-        String
-      ],
-      default: false
-    },
-    lg: {
-      type: [
-        Boolean,
-        Number,
-        String
-      ],
-      default: false
-    },
-    xl: {
-      type: [
-        Boolean,
-        Number,
-        String
-      ],
-      default: false
-    },
-    xxl: {
-      type: [
-        Boolean,
-        Number,
-        String
-      ],
-      default: false
-    }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BCol");
-    const classList = computed(() => [
-      ...getClasses({
-        sm: props.sm,
-        md: props.md,
-        lg: props.lg,
-        xl: props.xl,
-        xxl: props.xxl
-      }, [
-        "sm",
-        "md",
-        "lg",
-        "xl",
-        "xxl"
-      ], "col"),
-      ...getClasses({
-        order: props.order,
-        orderLg: props.orderLg,
-        orderMd: props.orderMd,
-        orderSm: props.orderSm,
-        orderXl: props.orderXl,
-        orderXxl: props.orderXxl
-      }, [
-        "order",
-        "orderLg",
-        "orderMd",
-        "orderSm",
-        "orderXl",
-        "orderXxl"
-      ], "order"),
-      ...getClasses({
-        offset: props.offset,
-        offsetLg: props.offsetLg,
-        offsetMd: props.offsetMd,
-        offsetSm: props.offsetSm,
-        offsetXl: props.offsetXl,
-        offsetXxl: props.offsetXxl
-      }, [
-        "offset",
-        "offsetLg",
-        "offsetMd",
-        "offsetSm",
-        "offsetXl",
-        "offsetXxl"
-      ], "offset")
-    ]);
-    const computedClasses = computed(() => [classList.value, {
-      col: props.col || !classList.value.some((v2) => v2.startsWith("col-")) && !props.cols,
-      [`col-${props.cols}`]: props.cols !== void 0,
-      [`offset-${props.offset}`]: props.offset !== void 0,
-      [`order-${props.order}`]: props.order !== void 0,
-      [`align-self-${props.alignSelf}`]: props.alignSelf !== void 0
-    }]);
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), { class: normalizeClass(computedClasses.value) }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default")]),
-        _: 3
-      }, 8, ["class"]);
-    };
-  }
-});
-var _hoisted_1$v = [
-  "value",
-  "disabled",
-  "selected"
-];
-var BFormSelectOption_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormSelectOption",
-  props: {
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    value: { default: void 0 }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormSelectOption");
-    const formSelectContext = inject(formSelectKey, null);
-    const isSelected = computed(() => {
-      if (!formSelectContext) return false;
-      return formSelectContext.modelValue.value === props.value;
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("option", mergeProps({
-        value: unref(props).value,
-        disabled: unref(props).disabled,
-        selected: isSelected.value
-      }, _ctx.$attrs), [renderSlot(_ctx.$slots, "default")], 16, _hoisted_1$v);
-    };
-  }
-});
-var useLabelTargetRegistry = () => {
-  const labelTargetIds = /* @__PURE__ */ shallowRef([]);
-  const track2 = (idRef) => {
-    labelTargetIds.value = [...labelTargetIds.value, idRef];
-    onUnmounted(() => {
-      labelTargetIds.value = labelTargetIds.value.filter((r) => r !== idRef);
-    });
-  };
-  return {
-    labelTargetIds,
-    track: track2
-  };
-};
-var useProvideFormGroupData = ({ state, disabled }) => {
-  const { labelTargetIds, track: track2 } = useLabelTargetRegistry();
-  provide(formGroupKey, () => ({
-    state,
-    disabled,
-    track: track2
-  }));
-  return { singleLabelTargetId: computed(() => {
-    let single = null;
-    for (const r of labelTargetIds.value) {
-      const v2 = r.value;
-      if (!v2) continue;
-      if (single !== null && single !== v2) return null;
-      single = v2;
-    }
-    return single;
-  }) };
-};
-var BFormInvalidFeedback_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormInvalidFeedback",
-  props: {
-    ariaLive: { default: void 0 },
-    forceShow: {
-      type: Boolean,
-      default: false
-    },
-    id: { default: void 0 },
-    role: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: null
-    },
-    tag: { default: "div" },
-    text: { default: void 0 },
-    tooltip: {
-      type: Boolean,
-      default: false
-    }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormInvalidFeedback");
-    const computedShow = computed(() => props.forceShow || props.state === false);
-    const computedClasses = computed(() => ({
-      "d-block": computedShow.value,
-      "invalid-feedback": !props.tooltip,
-      "invalid-tooltip": props.tooltip
-    }));
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), {
-        id: unref(props).id,
-        role: unref(props).role,
-        "aria-live": unref(props).ariaLive,
-        "aria-atomic": unref(props).ariaLive ? true : void 0,
-        class: normalizeClass(computedClasses.value)
-      }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default", {}, () => [createTextVNode(toDisplayString(unref(props).text), 1)])]),
-        _: 3
-      }, 8, [
-        "id",
-        "role",
-        "aria-live",
-        "aria-atomic",
-        "class"
-      ]);
-    };
-  }
-});
-var BFormRow_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormRow",
-  props: { tag: { default: "div" } },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormRow");
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), { class: "row d-flex flex-wrap" }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default")]),
-        _: 3
-      });
-    };
-  }
-});
-var BFormText_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormText",
-  props: {
-    id: { default: void 0 },
-    inline: {
-      type: Boolean,
-      default: false
-    },
-    tag: { default: "small" },
-    text: { default: void 0 },
-    textVariant: { default: "body-secondary" }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormText");
-    const colorClasses = useColorVariantClasses(props);
-    const computedClasses = computed(() => [colorClasses.value, { "form-text": !props.inline }]);
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), {
-        id: unref(props).id,
-        class: normalizeClass(computedClasses.value)
-      }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default", {}, () => [createTextVNode(toDisplayString(unref(props).text), 1)])]),
-        _: 3
-      }, 8, ["id", "class"]);
-    };
-  }
-});
-var BFormValidFeedback_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormValidFeedback",
-  props: {
-    ariaLive: { default: void 0 },
-    forceShow: {
-      type: Boolean,
-      default: false
-    },
-    id: { default: void 0 },
-    role: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: null
-    },
-    tag: { default: "div" },
-    text: { default: void 0 },
-    tooltip: {
-      type: Boolean,
-      default: false
-    }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormInvalidFeedback");
-    const computedShow = computed(() => props.forceShow === true || props.state === true);
-    const computedClasses = computed(() => ({
-      "d-block": computedShow.value,
-      "valid-feedback": !props.tooltip,
-      "valid-tooltip": props.tooltip
-    }));
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(resolveDynamicComponent(unref(props).tag), {
-        id: unref(props).id,
-        role: unref(props).role,
-        "aria-live": unref(props).ariaLive,
-        "aria-atomic": unref(props).ariaLive ? true : void 0,
-        class: normalizeClass(computedClasses.value)
-      }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default", {}, () => [createTextVNode(toDisplayString(unref(props).text), 1)])]),
-        _: 3
-      }, 8, [
-        "id",
-        "role",
-        "aria-live",
-        "aria-atomic",
-        "class"
-      ]);
-    };
-  }
-});
-var suffixPropName = (suffix, value) => value + (suffix ? upperFirst(suffix) : "");
-var BFormGroupContent_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormGroupContent",
-  props: {
-    invalidFeedback: {},
-    validFeedback: {},
-    description: {},
-    feedbackAriaLive: {},
-    state: { type: [Boolean, null] },
-    tooltip: { type: Boolean },
-    invalidFeedbackId: {},
-    validFeedbackId: {},
-    descriptionId: {}
-  },
-  setup(__props) {
-    const slots = useSlots();
-    const hasInvalidFeedbackSlot = computed(() => !!slots["invalid-feedback"]);
-    const hasValidFeedbackSlot = computed(() => !!slots["valid-feedback"]);
-    const hasDescriptionSlot = computed(() => !!slots["description"]);
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock(Fragment, null, [
-        hasInvalidFeedbackSlot.value || __props.invalidFeedback ? (openBlock(), createBlock(BFormInvalidFeedback_default, {
-          key: 0,
-          id: __props.invalidFeedbackId,
-          "aria-live": __props.feedbackAriaLive,
-          state: __props.state,
-          tooltip: __props.tooltip
-        }, {
-          default: withCtx(() => [renderSlot(_ctx.$slots, "invalid-feedback", {}, () => [createTextVNode(toDisplayString(__props.invalidFeedback), 1)])]),
-          _: 3
-        }, 8, [
-          "id",
-          "aria-live",
-          "state",
-          "tooltip"
-        ])) : createCommentVNode("", true),
-        hasValidFeedbackSlot.value || __props.validFeedback ? (openBlock(), createBlock(BFormValidFeedback_default, {
-          key: 1,
-          id: __props.validFeedbackId,
-          "aria-live": __props.feedbackAriaLive,
-          state: __props.state,
-          tooltip: __props.tooltip
-        }, {
-          default: withCtx(() => [renderSlot(_ctx.$slots, "valid-feedback", {}, () => [createTextVNode(toDisplayString(__props.validFeedback), 1)])]),
-          _: 3
-        }, 8, [
-          "id",
-          "aria-live",
-          "state",
-          "tooltip"
-        ])) : createCommentVNode("", true),
-        hasDescriptionSlot.value || __props.description ? (openBlock(), createBlock(BFormText_default, {
-          key: 2,
-          id: __props.descriptionId
-        }, {
-          default: withCtx(() => [renderSlot(_ctx.$slots, "description", {}, () => [createTextVNode(toDisplayString(__props.description), 1)])]),
-          _: 3
-        }, 8, ["id"])) : createCommentVNode("", true)
-      ], 64);
-    };
-  }
-});
-var BFormGroupLabel_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormGroupLabel",
-  props: {
-    label: {},
-    labelTag: {},
-    labelId: {},
-    computedLabelFor: {},
-    isFieldset: { type: Boolean },
-    isHorizontal: { type: Boolean },
-    labelColProps: {},
-    labelAlignClasses: {},
-    labelClasses: {}
-  },
-  emits: ["legendClick"],
-  setup(__props, { emit: __emit }) {
-    const emit2 = __emit;
-    return (_ctx, _cache) => {
-      return __props.isHorizontal ? (openBlock(), createBlock(BCol_default, mergeProps({ key: 0 }, __props.labelColProps, {
-        id: __props.labelId,
-        tag: __props.labelTag,
-        for: __props.computedLabelFor || null,
-        tabindex: __props.isFieldset ? "-1" : null,
-        class: [__props.labelAlignClasses, __props.labelClasses],
-        onClick: _cache[0] || (_cache[0] = ($event) => __props.isFieldset ? (e) => emit2("legendClick", e) : void 0)
-      }), {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(__props.label), 1)])]),
-        _: 3
-      }, 16, [
-        "id",
-        "tag",
-        "for",
-        "tabindex",
-        "class"
-      ])) : (openBlock(), createBlock(resolveDynamicComponent(__props.labelTag), {
-        key: 1,
-        id: __props.labelId,
-        for: __props.computedLabelFor || null,
-        tabindex: __props.isFieldset ? "-1" : null,
-        class: normalizeClass(__props.labelClasses),
-        onClick: _cache[1] || (_cache[1] = ($event) => __props.isFieldset ? (e) => emit2("legendClick", e) : void 0)
-      }, {
-        default: withCtx(() => [renderSlot(_ctx.$slots, "label", {}, () => [createTextVNode(toDisplayString(__props.label), 1)])]),
-        _: 3
-      }, 8, [
-        "id",
-        "for",
-        "tabindex",
-        "class"
-      ]));
-    };
-  }
-});
-var _hoisted_1$u = [
-  "id",
-  "disabled",
-  "aria-invalid",
-  "aria-labelledby"
-];
-var _hoisted_2$k = {
-  key: 0,
-  ref: "_content",
-  class: "form-floating"
-};
-var BFormGroup_default = /* @__PURE__ */ defineComponent({
-  inheritAttrs: false,
-  __name: "BFormGroup",
-  props: {
-    contentCols: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelCols: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelAlign: { default: void 0 },
-    ariaInvalid: {
-      type: [Boolean, String],
-      default: void 0
-    },
-    description: { default: void 0 },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    feedbackAriaLive: { default: "assertive" },
-    floating: {
-      type: Boolean,
-      default: false
-    },
-    id: { default: void 0 },
-    invalidFeedback: { default: void 0 },
-    label: { default: void 0 },
-    labelClass: { default: void 0 },
-    labelFor: { default: void 0 },
-    labelSize: { default: void 0 },
-    labelVisuallyHidden: {
-      type: Boolean,
-      default: false
-    },
-    state: {
-      type: [Boolean, null],
-      default: null
-    },
-    tooltip: {
-      type: Boolean,
-      default: false
-    },
-    validFeedback: { default: void 0 },
-    validated: {
-      type: Boolean,
-      default: false
-    },
-    contentColsSm: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    contentColsMd: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    contentColsLg: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    contentColsXl: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelColsSm: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelColsMd: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelColsLg: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelColsXl: {
-      type: [
-        Boolean,
-        String,
-        Number
-      ],
-      default: void 0
-    },
-    labelAlignSm: { default: void 0 },
-    labelAlignMd: { default: void 0 },
-    labelAlignLg: { default: void 0 },
-    labelAlignXl: { default: void 0 }
-  },
-  setup(__props) {
-    const INPUTS = [
-      "input",
-      "select",
-      "textarea"
-    ];
-    const props = useDefaults(__props, "BFormGroup");
-    const slots = useSlots();
-    const computedState = /* @__PURE__ */ toRef(() => props.state);
-    const { singleLabelTargetId } = useProvideFormGroupData({
-      state: computedState,
-      disabled: /* @__PURE__ */ toRef(() => props.disabled)
-    });
-    const computedLabelFor = computed(() => props.labelFor ?? singleLabelTargetId.value);
-    const breakPoints = [
-      "xs",
-      "sm",
-      "md",
-      "lg",
-      "xl"
-    ];
-    const getColProps = (props2, prefix) => breakPoints.reduce((result, breakpoint) => {
-      let propValue = props2[suffixPropName(breakpoint === "xs" ? "" : breakpoint, `${prefix}Cols`)];
-      propValue = propValue === "" ? true : propValue || false;
-      if (!(typeof propValue === "boolean") && propValue !== "auto") {
-        const val = Number.parseInt(propValue);
-        propValue = Number.isNaN(val) ? 0 : val;
-        propValue = propValue > 0 ? propValue : false;
-      }
-      if (propValue) if (breakpoint === "xs") result[typeof propValue === "boolean" ? "col" : "cols"] = propValue;
-      else result[breakpoint || (typeof propValue === "boolean" ? "col" : "cols")] = propValue;
-      return result;
-    }, {});
-    const content = useTemplateRef("_content");
-    const contentColProps = computed(() => getColProps(props, "content"));
-    const labelAlignClasses = computed(() => ((props2, prefix) => breakPoints.reduce((result, breakpoint) => {
-      const propValue = props2[suffixPropName(breakpoint === "xs" ? "" : breakpoint, `${prefix}Align`)] || null;
-      if (propValue) if (breakpoint === "xs") result.push(`text-${propValue}`);
-      else result.push(`text-${breakpoint}-${propValue}`);
-      return result;
-    }, []))(props, "label"));
-    const labelColProps = computed(() => getColProps(props, "label"));
-    const isHorizontal = computed(() => Object.keys(contentColProps.value).length > 0 || Object.keys(labelColProps.value).length > 0);
-    const stateClass = useStateClass(computedState);
-    const computedAriaInvalid = useAriaInvalid(() => props.ariaInvalid, computedState);
-    const onLegendClick = (event) => {
-      if (computedLabelFor.value || content.value === null) return;
-      const { target } = event;
-      const tagName = target ? target.tagName : "";
-      if ([
-        ...INPUTS,
-        "a",
-        "button",
-        "label"
-      ].indexOf(tagName) !== -1) return;
-      const contentElement = isHorizontal.value && content.value && "$el" in content.value ? content.value.$el : content.value;
-      if (!contentElement) return;
-      const inputs = [...contentElement.querySelectorAll(INPUTS.map((v2) => `${v2}:not([disabled])`).join())].filter(isVisible);
-      const [inp] = inputs;
-      if (inputs.length === 1 && inp instanceof HTMLElement) attemptFocus(inp);
-    };
-    const computedId = useId$1(() => props.id);
-    const labelId = useId$1(void 0, "_BV_label_");
-    const labelTag = computed(() => !computedLabelFor.value ? "legend" : "label");
-    const labelClasses = computed(() => [
-      isHorizontal.value ? "col-form-label" : "form-label",
-      {
-        "bv-no-focus-ring": !computedLabelFor.value,
-        "col-form-label": isHorizontal.value || !computedLabelFor.value,
-        "pt-0": !isHorizontal.value && !computedLabelFor.value,
-        "d-block": !isHorizontal.value && computedLabelFor.value,
-        [`col-form-label-${props.labelSize}`]: !!props.labelSize,
-        "visually-hidden": props.labelVisuallyHidden
-      },
-      isHorizontal.value ? null : labelAlignClasses.value,
-      props.labelClass
-    ]);
-    const invalidFeedbackId = useId$1(void 0, "_BV_feedback_invalid_");
-    const validFeedbackId = useId$1(void 0, "_BV_feedback_valid_");
-    const descriptionId = useId$1(void 0, "_BV_description_");
-    const isFieldset = computed(() => !computedLabelFor.value);
-    const labelShowing = computed(() => !!slots.label || !!props.label || isHorizontal.value);
-    const labelComponentProps = computed(() => ({
-      label: props.label,
-      labelTag: labelTag.value,
-      labelId: labelId.value,
-      computedLabelFor: computedLabelFor.value,
-      isFieldset: isFieldset.value,
-      isHorizontal: isHorizontal.value,
-      labelColProps: labelColProps.value,
-      labelAlignClasses: labelAlignClasses.value,
-      labelClasses: labelClasses.value
-    }));
-    const contentComponentProps = computed(() => ({
-      invalidFeedback: props.invalidFeedback,
-      validFeedback: props.validFeedback,
-      description: props.description,
-      feedbackAriaLive: props.feedbackAriaLive,
-      state: computedState.value,
-      tooltip: props.tooltip,
-      invalidFeedbackId: invalidFeedbackId.value,
-      validFeedbackId: validFeedbackId.value,
-      descriptionId: descriptionId.value
-    }));
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("fieldset", mergeProps({
-        id: unref(computedId),
-        disabled: unref(props).disabled,
-        "aria-invalid": unref(computedAriaInvalid),
-        "aria-labelledby": isFieldset.value && isHorizontal.value ? unref(labelId) : void 0
-      }, _ctx.$attrs, { class: [[unref(stateClass), { "was-validated": unref(props).validated }], "b-form-group"] }), [isHorizontal.value ? (openBlock(), createBlock(BFormRow_default, { key: 0 }, {
-        default: withCtx(() => [labelShowing.value ? (openBlock(), createBlock(BFormGroupLabel_default, mergeProps({ key: 0 }, labelComponentProps.value, { onLegendClick }), createSlots({ _: 2 }, [slots.label ? {
-          name: "label",
-          fn: withCtx(() => [renderSlot(_ctx.$slots, "label")]),
-          key: "0"
-        } : void 0]), 1040)) : createCommentVNode("", true), createVNode(BCol_default, mergeProps(contentColProps.value, { ref: "_content" }), {
-          default: withCtx(() => [renderSlot(_ctx.$slots, "default", {
-            id: unref(computedId),
-            ariaDescribedby: null,
-            descriptionId: unref(descriptionId),
-            labelId: unref(labelId)
-          }), createVNode(BFormGroupContent_default, normalizeProps(guardReactiveProps(contentComponentProps.value)), createSlots({ _: 2 }, [
-            slots["invalid-feedback"] ? {
-              name: "invalid-feedback",
-              fn: withCtx(() => [renderSlot(_ctx.$slots, "invalid-feedback")]),
-              key: "0"
-            } : void 0,
-            slots["valid-feedback"] ? {
-              name: "valid-feedback",
-              fn: withCtx(() => [renderSlot(_ctx.$slots, "valid-feedback")]),
-              key: "1"
-            } : void 0,
-            slots.description ? {
-              name: "description",
-              fn: withCtx(() => [renderSlot(_ctx.$slots, "description")]),
-              key: "2"
-            } : void 0
-          ]), 1040)]),
-          _: 3
-        }, 16)]),
-        _: 3
-      })) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [unref(props).floating && !isHorizontal.value ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
-        renderSlot(_ctx.$slots, "default", {
-          id: unref(computedId),
-          ariaDescribedby: null,
-          descriptionId: unref(descriptionId),
-          labelId: unref(labelId)
-        }),
-        labelShowing.value ? (openBlock(), createBlock(BFormGroupLabel_default, mergeProps({ key: 0 }, labelComponentProps.value, { onLegendClick }), createSlots({ _: 2 }, [slots.label ? {
-          name: "label",
-          fn: withCtx(() => [renderSlot(_ctx.$slots, "label")]),
-          key: "0"
-        } : void 0]), 1040)) : createCommentVNode("", true),
-        createVNode(BFormGroupContent_default, normalizeProps(guardReactiveProps(contentComponentProps.value)), createSlots({ _: 2 }, [
-          slots["invalid-feedback"] ? {
-            name: "invalid-feedback",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "invalid-feedback")]),
-            key: "0"
-          } : void 0,
-          slots["valid-feedback"] ? {
-            name: "valid-feedback",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "valid-feedback")]),
-            key: "1"
-          } : void 0,
-          slots.description ? {
-            name: "description",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "description")]),
-            key: "2"
-          } : void 0
-        ]), 1040)
-      ], 512)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-        labelShowing.value ? (openBlock(), createBlock(BFormGroupLabel_default, mergeProps({ key: 0 }, labelComponentProps.value, { onLegendClick }), createSlots({ _: 2 }, [slots.label ? {
-          name: "label",
-          fn: withCtx(() => [renderSlot(_ctx.$slots, "label")]),
-          key: "0"
-        } : void 0]), 1040)) : createCommentVNode("", true),
-        renderSlot(_ctx.$slots, "default", {
-          id: unref(computedId),
-          ariaDescribedby: null,
-          descriptionId: unref(descriptionId),
-          labelId: unref(labelId)
-        }),
-        createVNode(BFormGroupContent_default, normalizeProps(guardReactiveProps(contentComponentProps.value)), createSlots({ _: 2 }, [
-          slots["invalid-feedback"] ? {
-            name: "invalid-feedback",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "invalid-feedback")]),
-            key: "0"
-          } : void 0,
-          slots["valid-feedback"] ? {
-            name: "valid-feedback",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "valid-feedback")]),
-            key: "1"
-          } : void 0,
-          slots.description ? {
-            name: "description",
-            fn: withCtx(() => [renderSlot(_ctx.$slots, "description")]),
-            key: "2"
-          } : void 0
-        ]), 1040)
-      ], 64))], 64))], 16, _hoisted_1$u);
-    };
-  }
-});
-var _hoisted_1$1$1 = ["label"];
-var BFormSelectOptionGroup_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormSelectOptionGroup",
-  props: {
-    disabledField: { default: "disabled" },
-    label: { default: void 0 },
-    options: { default: () => [] },
-    textField: { default: "text" },
-    valueField: { default: "value" }
-  },
-  setup(__props) {
-    const props = useDefaults(__props, "BFormSelectOptionGroup");
-    const { normalizedOptions } = useFormSelect(() => props.options, props);
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("optgroup", { label: unref(props).label }, [
-        renderSlot(_ctx.$slots, "first"),
-        (openBlock(true), createElementBlock(Fragment, null, renderList(unref(normalizedOptions), (option, index) => {
-          return openBlock(), createBlock(BFormSelectOption_default, mergeProps({ key: index }, { ref_for: true }, {
-            ..._ctx.$attrs,
-            ...option
-          }), {
-            default: withCtx(() => [renderSlot(_ctx.$slots, "option", mergeProps({ ref_for: true }, option), () => [createTextVNode(toDisplayString(option.text), 1)])]),
-            _: 2
-          }, 1040);
-        }), 128)),
-        renderSlot(_ctx.$slots, "default")
-      ], 8, _hoisted_1$1$1);
-    };
-  }
-});
-var _hoisted_1$t = [
-  "id",
-  "name",
-  "form",
-  "multiple",
-  "size",
-  "disabled",
-  "required",
-  "aria-required",
-  "aria-invalid"
-];
-var BFormSelectBase_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormSelectBase",
-  props: /* @__PURE__ */ mergeModels({
-    ariaInvalid: {
-      type: [Boolean, String],
-      default: void 0
-    },
-    autofocus: {
-      type: Boolean,
-      default: false
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    disabledField: { default: "disabled" },
-    form: { default: void 0 },
-    id: { default: void 0 },
-    labelField: { default: "label" },
-    multiple: {
-      type: Boolean,
-      default: false
-    },
-    name: { default: void 0 },
-    options: { default: () => [] },
-    optionsField: { default: "options" },
-    plain: {
-      type: Boolean,
-      default: false
-    },
-    required: {
-      type: Boolean,
-      default: false
-    },
-    selectSize: { default: 0 },
-    size: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: null
-    },
-    textField: { default: "text" },
-    valueField: { default: "value" }
-  }, {
-    "modelValue": { default: "" },
-    "modelModifiers": {}
-  }),
-  emits: ["update:modelValue"],
-  setup(__props, { expose: __expose }) {
-    var _a2;
-    const props = useDefaults(__props, "BFormSelect");
-    const modelValue = useModel(__props, "modelValue");
-    const computedId = useId$1(() => props.id, "input");
-    const formGroupData = (_a2 = inject(formGroupKey, null)) == null ? void 0 : _a2();
-    formGroupData == null ? void 0 : formGroupData.track(computedId);
-    const isDisabled = computed(() => props.disabled || ((formGroupData == null ? void 0 : formGroupData.disabled.value) ?? false));
-    const selectSizeNumber = /* @__PURE__ */ useToNumber(() => props.selectSize);
-    const stateClass = useStateClass(() => props.state);
-    const input = useTemplateRef("_input");
-    const { focused } = useFocus(input, { initialValue: props.autofocus });
-    const computedClasses = computed(() => [stateClass.value, {
-      "form-control": props.plain,
-      [`form-control-${props.size}`]: props.size !== void 0 && props.plain,
-      "form-select": !props.plain,
-      [`form-select-${props.size}`]: props.size !== void 0 && !props.plain
-    }]);
-    const computedSelectSize = computed(() => !props.plain && selectSizeNumber.value > 0 ? selectSizeNumber.value : void 0);
-    const computedAriaInvalid = useAriaInvalid(() => props.ariaInvalid, () => props.state);
-    const { normalizedOptions, isComplex } = useFormSelect(() => props.options, props);
-    const normalizedOptsWrapper = computed(() => normalizedOptions.value);
-    const localValue = computed({
-      get: () => modelValue.value,
-      set: (newValue) => {
-        modelValue.value = newValue;
-      }
-    });
-    provide(formSelectKey, { modelValue: /* @__PURE__ */ readonly(localValue) });
-    __expose({
-      blur: () => {
-        focused.value = false;
-      },
-      element: input,
-      focus: () => {
-        focused.value = true;
-      }
-    });
-    return (_ctx, _cache) => {
-      return withDirectives((openBlock(), createElementBlock("select", {
-        id: unref(computedId),
-        ref: "_input",
-        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => localValue.value = $event),
-        class: normalizeClass(computedClasses.value),
-        name: unref(props).name,
-        form: unref(props).form || void 0,
-        multiple: unref(props).multiple || void 0,
-        size: computedSelectSize.value,
-        disabled: isDisabled.value,
-        required: unref(props).required || void 0,
-        "aria-required": unref(props).required || void 0,
-        "aria-invalid": unref(computedAriaInvalid)
-      }, [
-        renderSlot(_ctx.$slots, "first"),
-        (openBlock(true), createElementBlock(Fragment, null, renderList(normalizedOptsWrapper.value, (option, index) => {
-          return openBlock(), createElementBlock(Fragment, { key: index }, [unref(isComplex)(option) ? (openBlock(), createBlock(BFormSelectOptionGroup_default, {
-            key: 0,
-            label: option.label,
-            options: option.options,
-            "value-field": unref(props).valueField,
-            "text-field": unref(props).textField,
-            "disabled-field": unref(props).disabledField
-          }, null, 8, [
-            "label",
-            "options",
-            "value-field",
-            "text-field",
-            "disabled-field"
-          ])) : (openBlock(), createBlock(BFormSelectOption_default, mergeProps({
-            key: 1,
-            ref_for: true
-          }, option), {
-            default: withCtx(() => [renderSlot(_ctx.$slots, "option", mergeProps({ ref_for: true }, option), () => [createTextVNode(toDisplayString(option.text), 1)])]),
-            _: 2
-          }, 1040))], 64);
-        }), 128)),
-        renderSlot(_ctx.$slots, "default")
-      ], 10, _hoisted_1$t)), [[vModelSelect, localValue.value]]);
-    };
-  }
-});
-var BFormSelect_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormSelect",
-  props: /* @__PURE__ */ mergeModels({
-    ariaInvalid: {
-      type: [Boolean, String],
-      default: void 0
-    },
-    autofocus: {
-      type: Boolean,
-      default: false
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    disabledField: { default: "disabled" },
-    form: { default: void 0 },
-    id: { default: void 0 },
-    labelField: { default: "label" },
-    multiple: {
-      type: Boolean,
-      default: false
-    },
-    name: { default: void 0 },
-    options: { default: () => [] },
-    optionsField: { default: "options" },
-    plain: {
-      type: Boolean,
-      default: false
-    },
-    required: {
-      type: Boolean,
-      default: false
-    },
-    selectSize: { default: 0 },
-    size: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: null
-    },
-    textField: { default: "text" },
-    valueField: { default: "value" }
-  }, {
-    "modelValue": { default: "" },
-    "modelModifiers": {}
-  }),
-  emits: ["update:modelValue"],
-  setup(__props) {
-    const props = __props;
-    const modelValue = useModel(__props, "modelValue");
-    const normalizeSimpleOption = (el) => ({
-      ...el,
-      value: el[props.valueField],
-      text: el[props.textField] ?? "",
-      disabled: el[props.disabledField] ?? false
-    });
-    const normalizePrimitive = (el) => ({
-      value: el,
-      text: String(el),
-      disabled: false
-    });
-    const normalizedOptions = computed(() => {
-      const optionsArray = props.options ?? [];
-      if (optionsArray.some((el) => typeof el !== "string" && typeof el !== "number" && typeof el !== "boolean" && el[props.optionsField] !== void 0)) return optionsArray.map((el) => {
-        if (typeof el === "string" || typeof el === "number" || typeof el === "boolean") return normalizePrimitive(el);
-        const optionsField = el[props.optionsField];
-        if (optionsField !== void 0 && Array.isArray(optionsField)) return {
-          label: el[props.labelField] ?? el[props.textField] ?? "",
-          options: optionsField.map((subOpt) => {
-            if (typeof subOpt === "string" || typeof subOpt === "number" || typeof subOpt === "boolean") return normalizePrimitive(subOpt);
-            return normalizeSimpleOption(subOpt);
-          })
-        };
-        return normalizeSimpleOption(el);
-      });
-      return optionsArray.map((el) => {
-        if (typeof el === "string" || typeof el === "number" || typeof el === "boolean") return normalizePrimitive(el);
-        return normalizeSimpleOption(el);
-      });
-    });
-    const forwardedProps = computed(() => ({
-      ariaInvalid: props.ariaInvalid,
-      autofocus: props.autofocus,
-      disabled: props.disabled,
-      form: props.form,
-      id: props.id,
-      multiple: props.multiple,
-      name: props.name,
-      plain: props.plain,
-      required: props.required,
-      selectSize: props.selectSize,
-      size: props.size,
-      state: props.state
-    }));
-    return (_ctx, _cache) => {
-      return openBlock(), createBlock(BFormSelectBase_default, mergeProps(forwardedProps.value, {
-        modelValue: modelValue.value,
-        "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => modelValue.value = $event),
-        options: normalizedOptions.value
-      }), {
-        first: withCtx(() => [renderSlot(_ctx.$slots, "first")]),
-        option: withCtx((slotProps) => [renderSlot(_ctx.$slots, "option", normalizeProps(guardReactiveProps(slotProps)))]),
-        default: withCtx(() => [renderSlot(_ctx.$slots, "default")]),
-        _: 3
-      }, 16, ["modelValue", "options"]);
-    };
-  }
-});
-var useTextareaResize = (input, { maxRows, noAutoShrink, rows }) => {
-  const height = /* @__PURE__ */ ref(0);
-  const maxRowsNumber = /* @__PURE__ */ useToNumber(computed(() => toValue(maxRows) || NaN), {
-    method: "parseInt",
-    nanToZero: true
-  });
-  const rowsNumber = /* @__PURE__ */ useToNumber(rows, {
-    method: "parseInt",
-    nanToZero: true
-  });
-  const computedMinRows = computed(() => Math.max(rowsNumber.value || 2, 2));
-  const computedMaxRows = computed(() => Math.max(computedMinRows.value, maxRowsNumber.value || 0));
-  const computedRows = computed(() => computedMinRows.value === computedMaxRows.value ? computedMinRows.value : null);
-  const handleHeightChange = async () => {
-    if (!input.value || !isVisible(input.value)) {
-      height.value = null;
-      return;
-    }
-    const computedStyle = getComputedStyle(input.value);
-    const lineHeight = Number.parseFloat(computedStyle.lineHeight) || 1;
-    const border = (Number.parseFloat(computedStyle.borderTopWidth) || 0) + (Number.parseFloat(computedStyle.borderBottomWidth) || 0);
-    const padding = (Number.parseFloat(computedStyle.paddingTop) || 0) + (Number.parseFloat(computedStyle.paddingBottom) || 0);
-    const offset = border + padding;
-    const minHeight = lineHeight * computedMinRows.value + offset;
-    const oldHeight = input.value.style.height || computedStyle.height;
-    height.value = "auto";
-    await nextTick();
-    if (!input.value) return;
-    const { scrollHeight } = input.value;
-    height.value = oldHeight;
-    await nextTick();
-    if (!input.value) return;
-    const contentRows = Math.max((scrollHeight - padding) / lineHeight, 2);
-    const rows2 = Math.min(Math.max(contentRows, computedMinRows.value), computedMaxRows.value);
-    const newHeight = Math.max(Math.ceil(rows2 * lineHeight + offset), minHeight);
-    if (toValue(noAutoShrink) && (Number.parseFloat(oldHeight.toString()) || 0) > newHeight) {
-      height.value = oldHeight;
-      return;
-    }
-    height.value = `${newHeight}px`;
-  };
-  onMounted(handleHeightChange);
-  return {
-    onInput: handleHeightChange,
-    computedStyles: computed(() => ({
-      resize: "none",
-      height: typeof height.value === "string" ? height.value : height.value ? `${height.value}px` : void 0
-    })),
-    computedRows
-  };
-};
-var _hoisted_1$s = [
-  "id",
-  "name",
-  "form",
-  "value",
-  "disabled",
-  "placeholder",
-  "required",
-  "autocomplete",
-  "readonly",
-  "aria-required",
-  "aria-invalid",
-  "rows",
-  "wrap"
-];
-var BFormTextarea_default = /* @__PURE__ */ defineComponent({
-  __name: "BFormTextarea",
-  props: /* @__PURE__ */ mergeModels({
-    noResize: {
-      type: Boolean,
-      default: false
-    },
-    rows: { default: 2 },
-    wrap: { default: "soft" },
-    noAutoShrink: {
-      type: Boolean,
-      default: false
-    },
-    maxRows: { default: void 0 },
-    ariaInvalid: {
-      type: [Boolean, String],
-      default: void 0
-    },
-    autocomplete: { default: void 0 },
-    autofocus: {
-      type: Boolean,
-      default: false
-    },
-    disabled: {
-      type: Boolean,
-      default: false
-    },
-    form: { default: void 0 },
-    formatter: {
-      type: Function,
-      default: void 0
-    },
-    id: { default: void 0 },
-    lazyFormatter: {
-      type: Boolean,
-      default: false
-    },
-    list: { default: void 0 },
-    name: { default: void 0 },
-    placeholder: { default: void 0 },
-    plaintext: {
-      type: Boolean,
-      default: false
-    },
-    readonly: {
-      type: Boolean,
-      default: false
-    },
-    required: {
-      type: Boolean,
-      default: false
-    },
-    size: { default: void 0 },
-    state: {
-      type: [Boolean, null],
-      default: void 0
-    },
-    debounce: { default: 0 },
-    debounceMaxWait: { default: NaN }
-  }, {
-    "modelValue": { default: "" },
-    "modelModifiers": {}
-  }),
-  emits: ["update:modelValue"],
-  setup(__props, { expose: __expose }) {
-    const props = useDefaults(__props, "BFormTextarea");
-    const [modelValue, modelModifiers] = useModel(__props, "modelValue", { set: (v2) => normalizeInput(v2, modelModifiers) });
-    const input = useTemplateRef("_input");
-    const { computedId, computedAriaInvalid, onInput, stateClass, onChange, onBlur, focus, blur, isDisabled } = useFormInput(props, input, modelValue, modelModifiers);
-    const computedClasses = computed(() => [
-      stateClass.value,
-      props.plaintext ? "form-control-plaintext" : "form-control",
-      { [`form-control-${props.size}`]: !!props.size }
-    ]);
-    const { computedStyles: resizeStyles, onInput: handleHeightChange, computedRows } = useTextareaResize(input, {
-      maxRows: () => props.maxRows,
-      rows: () => props.rows,
-      noAutoShrink: () => props.noAutoShrink
-    });
-    const computedStyles = computed(() => ({
-      resize: props.noResize ? "none" : void 0,
-      ...props.maxRows || props.noAutoShrink ? resizeStyles.value : void 0
-    }));
-    __expose({
-      blur,
-      element: input,
-      flushDebounce: onBlur,
-      focus
-    });
-    return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("textarea", {
-        id: unref(computedId),
-        ref: "_input",
-        class: normalizeClass(computedClasses.value),
-        name: unref(props).name || void 0,
-        form: unref(props).form || void 0,
-        value: unref(modelValue) ?? void 0,
-        disabled: unref(isDisabled),
-        placeholder: unref(props).placeholder,
-        required: unref(props).required || void 0,
-        autocomplete: unref(props).autocomplete || void 0,
-        readonly: unref(props).readonly || unref(props).plaintext,
-        "aria-required": unref(props).required || void 0,
-        "aria-invalid": unref(computedAriaInvalid),
-        rows: unref(computedRows) || 2,
-        style: normalizeStyle(computedStyles.value),
-        wrap: unref(props).wrap || void 0,
-        onInput: _cache[0] || (_cache[0] = (e) => {
-          unref(onInput)(e);
-          unref(handleHeightChange)();
-        }),
-        onChange: _cache[1] || (_cache[1] = (...args) => unref(onChange) && unref(onChange)(...args)),
-        onBlur: _cache[2] || (_cache[2] = (...args) => unref(onBlur) && unref(onBlur)(...args))
-      }, null, 46, _hoisted_1$s);
-    };
-  }
-});
 var componentsWithExternalPath = {
   BAspect: "/components/BAspect",
   BAccordion: "/components/BAccordion",
@@ -17544,20 +12063,20 @@ const routerKey = Symbol("");
 const routeLocationKey = Symbol("");
 const routerViewLocationKey = Symbol("");
 function useCallbacks() {
-  let handlers2 = [];
+  let handlers = [];
   function add(handler) {
-    handlers2.push(handler);
+    handlers.push(handler);
     return () => {
-      const i = handlers2.indexOf(handler);
-      if (i > -1) handlers2.splice(i, 1);
+      const i = handlers.indexOf(handler);
+      if (i > -1) handlers.splice(i, 1);
     };
   }
   function reset() {
-    handlers2 = [];
+    handlers = [];
   }
   return {
     add,
-    list: () => handlers2.slice(),
+    list: () => handlers.slice(),
     reset
   };
 }
@@ -19407,6 +13926,42 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
     } catch (_2) {
     }
   }
+  const raText = /* @__PURE__ */ ref(null);
+  const raFilePath = /* @__PURE__ */ ref(null);
+  const raState = /* @__PURE__ */ ref("idle");
+  const raChunks = /* @__PURE__ */ ref([]);
+  const raChunkIndex = /* @__PURE__ */ ref(-1);
+  const raShowResume = /* @__PURE__ */ ref(false);
+  const raResumeIndex = /* @__PURE__ */ ref(0);
+  const raStopSignal = /* @__PURE__ */ ref(0);
+  let _raSkipTo = null;
+  let _raStop = null;
+  let _raResumeFrom = null;
+  function raSkipTo(i) {
+    _raSkipTo == null ? void 0 : _raSkipTo(i);
+  }
+  function raStop() {
+    if (_raStop) {
+      _raStop();
+    } else {
+      raState.value = "idle";
+      raChunkIndex.value = -1;
+      audioModalOpen.value = false;
+    }
+  }
+  function raResumeFrom(i) {
+    _raResumeFrom == null ? void 0 : _raResumeFrom(i);
+  }
+  function raWire(skipTo, stop2, resumeFrom) {
+    _raSkipTo = skipTo;
+    _raStop = stop2;
+    _raResumeFrom = resumeFrom ?? null;
+  }
+  function raUnwire() {
+    _raSkipTo = null;
+    _raStop = null;
+    _raResumeFrom = null;
+  }
   return {
     settingsOpen,
     ttsEnabled,
@@ -19417,18 +13972,31 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
     audioModalOpen,
     initVoice,
     setMicEnabled,
-    setTtsEnabled
+    setTtsEnabled,
+    raText,
+    raFilePath,
+    raState,
+    raChunks,
+    raChunkIndex,
+    raShowResume,
+    raResumeIndex,
+    raStopSignal,
+    raSkipTo,
+    raStop,
+    raResumeFrom,
+    raWire,
+    raUnwire
   };
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$r = ["data-size"];
-const _hoisted_2$j = {
+const _hoisted_1$t = ["data-size"];
+const _hoisted_2$k = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$i = { class: "base-modal-title" };
-const _hoisted_4$e = { class: "base-modal-body" };
-const _hoisted_5$b = {
+const _hoisted_3$j = { class: "base-modal-title" };
+const _hoisted_4$f = { class: "base-modal-body" };
+const _hoisted_5$d = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
 };
@@ -19465,8 +14033,10 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
     function closeDialog() {
       const el = dialogRef.value;
       if (!el || !el.open) return;
+      const before = el.open;
       el.close();
       unlockScroll();
+      logClose("closeDialog(watch)", before, el.open);
     }
     onMounted(() => {
       if (props.open) openDialog();
@@ -19478,16 +14048,27 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
     onBeforeUnmount(() => {
       if (props.open) unlockScroll();
     });
+    function logClose(via, dialogOpenBefore, dialogOpenAfter) {
+      const log = window.__baseModalCloseLog ?? (window.__baseModalCloseLog = []);
+      log.push({ ts: Date.now(), via, before: dialogOpenBefore, after: dialogOpenAfter });
+      if (log.length > 30) log.shift();
+    }
     function onCancel(ev) {
+      var _a2;
       ev.preventDefault();
-      if (props.dismissible) emit2("close");
+      if (props.dismissible) {
+        logClose("emit:cancel(escape)", ((_a2 = dialogRef.value) == null ? void 0 : _a2.open) ?? false, false);
+        emit2("close");
+      }
     }
     function onDialogClick(ev) {
+      var _a2;
       if (!props.dismissible) return;
       const inner = innerRef.value;
       if (!inner) return;
       const r = inner.getBoundingClientRect();
       if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+        logClose("emit:backdrop-click", ((_a2 = dialogRef.value) == null ? void 0 : _a2.open) ?? false, false);
         emit2("close");
       }
     }
@@ -19511,22 +14092,26 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
-              createBaseVNode("span", _hoisted_3$i, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
+              createBaseVNode("span", _hoisted_3$j, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
                 type: "button",
                 "aria-label": "Close",
-                onClick: _cache[0] || (_cache[0] = ($event) => emit2("close"))
+                onClick: _cache[0] || (_cache[0] = ($event) => {
+                  var _a2;
+                  logClose("close-btn", ((_a2 = dialogRef.value) == null ? void 0 : _a2.open) ?? false, false);
+                  emit2("close");
+                })
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$e, [
+          createBaseVNode("div", _hoisted_4$f, [
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
-            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$b, [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$d, [
               createBaseVNode("button", {
                 class: "base-modal-done-btn",
                 type: "button",
@@ -19535,14 +14120,14 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ], 544)
-      ], 40, _hoisted_1$r);
+      ], 40, _hoisted_1$t);
     };
   }
 });
-const _hoisted_1$q = { class: "setting-item" };
-const _hoisted_2$i = { class: "setting-main" };
-const _hoisted_3$h = { class: "settings-label" };
-const _hoisted_4$d = {
+const _hoisted_1$s = { class: "setting-item" };
+const _hoisted_2$j = { class: "setting-main" };
+const _hoisted_3$i = { class: "settings-label" };
+const _hoisted_4$e = {
   key: 0,
   class: "settings-meta"
 };
@@ -19554,10 +14139,10 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$q, [
-        createBaseVNode("div", _hoisted_2$i, [
-          createBaseVNode("div", _hoisted_3$h, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$d, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+      return openBlock(), createElementBlock("div", _hoisted_1$s, [
+        createBaseVNode("div", _hoisted_2$j, [
+          createBaseVNode("div", _hoisted_3$i, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$e, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -19565,14 +14150,14 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$p = { class: "settings-stack" };
-const _hoisted_2$h = { class: "setting-actions" };
-const _hoisted_3$g = ["disabled"];
-const _hoisted_4$c = {
+const _hoisted_1$r = { class: "settings-stack" };
+const _hoisted_2$i = { class: "setting-actions" };
+const _hoisted_3$h = ["disabled"];
+const _hoisted_4$d = {
   id: "build-id",
   class: "build-id-mono"
 };
-const _hoisted_5$a = ["innerHTML"];
+const _hoisted_5$c = ["innerHTML"];
 const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -19613,8 +14198,15 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
         { title: "session.json", value: files.sessionJson ?? null },
         { title: "state.json", value: files.stateJson ?? null }
       ];
-      return sections.map(
-        (s) => `<div class="info-section"><div class="info-title">${escHtml2(s.title)}</div><pre class="info-json">${escHtml2(JSON.stringify(s.value, null, 2))}</pre></div>`
+      const log = window.__baseModalCloseLog ?? [];
+      const closeLogSection = {
+        title: "modal close log (D2 diagnostic)",
+        value: log.length ? log.map(
+          (e) => `${new Date(e.ts).toISOString().slice(11, 23)} via=${e.via} before=${e.before} after=${e.after}`
+        ).join("\n") : "(no close attempts logged yet)"
+      };
+      return [...sections, closeLogSection].map(
+        (s) => `<div class="info-section"><div class="info-title">${escHtml2(s.title)}</div><pre class="info-json">${escHtml2(typeof s.value === "string" ? s.value : JSON.stringify(s.value, null, 2))}</pre></div>`
       ).join("");
     }
     async function loadSettings() {
@@ -19722,13 +14314,13 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           title: "Settings"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$p, [
+            createBaseVNode("div", _hoisted_1$r, [
               createVNode(_sfc_main$w, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$h, [
+                  createBaseVNode("div", _hoisted_2$i, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -19741,7 +14333,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$g)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$h)
                   ])
                 ]),
                 _: 1
@@ -19842,7 +14434,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 meta: "Stamp for bug reports"
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("span", _hoisted_4$c, toDisplayString(buildId.value || "—"), 1)
+                  createBaseVNode("span", _hoisted_4$d, toDisplayString(buildId.value || "—"), 1)
                 ]),
                 _: 1
               }),
@@ -19877,7 +14469,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_5$a)
+              }, null, 8, _hoisted_5$c)
             ]),
             _: 1
           }, 8, ["open"])
@@ -19886,24 +14478,24 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$o = {
+const _hoisted_1$q = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$g = ["disabled"];
-const _hoisted_3$f = {
+const _hoisted_2$h = ["disabled"];
+const _hoisted_3$g = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$b = ["disabled"];
-const _hoisted_5$9 = { class: "hb-actions" };
-const _hoisted_6$9 = {
+const _hoisted_4$c = ["disabled"];
+const _hoisted_5$b = { class: "hb-actions" };
+const _hoisted_6$b = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_7$7 = { class: "hb-buttons" };
-const _hoisted_8$7 = ["disabled"];
-const _hoisted_9$6 = ["disabled"];
+const _hoisted_7$9 = { class: "hb-buttons" };
+const _hoisted_8$8 = ["disabled"];
+const _hoisted_9$7 = ["disabled"];
 const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
@@ -19981,7 +14573,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_1$o, [
+            createBaseVNode("label", _hoisted_1$q, [
               _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
@@ -19993,7 +14585,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$g), [
+              }, null, 8, _hoisted_2$h), [
                 [
                   vModelText,
                   interval.value,
@@ -20002,7 +14594,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$f, [
+            createBaseVNode("label", _hoisted_3$g, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -20011,26 +14603,26 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$b), [
+              }, null, 8, _hoisted_4$c), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$9, [
-              createBaseVNode("div", _hoisted_6$9, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$7, [
+            createBaseVNode("div", _hoisted_5$b, [
+              createBaseVNode("div", _hoisted_6$b, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$9, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_8$7),
+                }, "Cancel", 8, _hoisted_8$8),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_9$6)
+                }, "Save", 8, _hoisted_9$7)
               ])
             ])
           ], 32)
@@ -20040,105 +14632,116 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _hoisted_1$p = { class: "audio-action-card" };
+const _hoisted_2$g = {
+  key: 0,
+  class: "audio-player-resume"
+};
+const _hoisted_3$f = { class: "audio-player-resume-msg" };
+const _hoisted_4$b = { class: "audio-player-resume-btns" };
+const _hoisted_5$a = { class: "audio-player-progress" };
+const _hoisted_6$a = { class: "audio-player-bar-wrap" };
+const _hoisted_7$8 = { class: "audio-player-counter" };
+const _hoisted_8$7 = { class: "audio-player-transcript" };
+const _hoisted_9$6 = ["data-idx", "onClick"];
+const _hoisted_10$5 = { class: "audio-player-controls" };
+const _hoisted_11$5 = ["disabled"];
+const _hoisted_12$5 = ["disabled"];
 const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
   setup(__props) {
     const ui = useUiStore();
+    const total = computed(() => ui.raChunks.length);
+    const current = computed(() => ui.raChunkIndex);
+    const progressPct = computed(
+      () => total.value > 0 ? (current.value + 1) / total.value * 100 : 0
+    );
+    const skipBackDisabled = computed(() => current.value <= 0);
+    const skipFwdDisabled = computed(() => current.value >= total.value - 1);
+    const hasPlayer = computed(() => !ui.raShowResume && total.value > 0);
     return (_ctx, _cache) => {
       return openBlock(), createBlock(_sfc_main$x, {
-        id: "audio-action-modal",
         open: unref(ui).audioModalOpen,
-        onClose: _cache[0] || (_cache[0] = ($event) => unref(ui).audioModalOpen = false),
+        onClose: _cache[5] || (_cache[5] = ($event) => unref(ui).raStop()),
         size: "sm",
         dismissible: false
       }, {
-        default: withCtx(() => [..._cache[1] || (_cache[1] = [
-          createBaseVNode("div", {
-            class: "audio-action-card",
-            id: "audio-action-card"
-          }, [
-            createBaseVNode("div", {
-              class: "audio-action-icon",
-              id: "audio-action-icon"
-            }),
-            createBaseVNode("div", {
-              class: "audio-action-label",
-              id: "audio-action-label"
-            }, "Recording..."),
-            createBaseVNode("div", {
-              class: "audio-player-resume",
-              id: "audio-player-resume",
-              hidden: ""
-            }, [
-              createBaseVNode("div", {
-                class: "audio-player-resume-msg",
-                id: "audio-player-resume-msg"
-              }),
-              createBaseVNode("div", { class: "audio-player-resume-btns" }, [
+        header: withCtx(() => [..._cache[6] || (_cache[6] = [
+          createBaseVNode("div", { class: "base-modal-head" }, [
+            createBaseVNode("span", { class: "base-modal-title" }, "Reading aloud")
+          ], -1)
+        ])]),
+        default: withCtx(() => [
+          createBaseVNode("div", _hoisted_1$p, [
+            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$g, [
+              createBaseVNode("div", _hoisted_3$f, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
+              createBaseVNode("div", _hoisted_4$b, [
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-restart",
-                  id: "audio-resume-restart",
-                  type: "button"
+                  type: "button",
+                  onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).raResumeFrom(0))
                 }, "Start over"),
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-resume",
-                  id: "audio-resume-continue",
-                  type: "button"
+                  type: "button",
+                  onClick: _cache[1] || (_cache[1] = ($event) => unref(ui).raResumeFrom(unref(ui).raResumeIndex))
                 }, "Resume")
               ])
-            ]),
-            createBaseVNode("div", {
-              class: "audio-player-progress",
-              id: "audio-player-progress",
-              hidden: ""
-            }, [
-              createBaseVNode("div", { class: "audio-player-bar-wrap" }, [
-                createBaseVNode("div", {
-                  class: "audio-player-bar",
-                  id: "audio-player-bar"
-                })
+            ])) : createCommentVNode("", true),
+            hasPlayer.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+              createBaseVNode("div", _hoisted_5$a, [
+                createBaseVNode("div", _hoisted_6$a, [
+                  createBaseVNode("div", {
+                    class: "audio-player-bar",
+                    style: normalizeStyle({ width: progressPct.value + "%" })
+                  }, null, 4)
+                ]),
+                createBaseVNode("div", _hoisted_7$8, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
               ]),
-              createBaseVNode("div", {
-                class: "audio-player-counter",
-                id: "audio-player-counter"
-              }, "0 / 0")
-            ]),
-            createBaseVNode("div", {
-              class: "audio-player-transcript",
-              id: "audio-player-transcript",
-              hidden: ""
-            }),
-            createBaseVNode("div", { class: "audio-player-controls" }, [
-              createBaseVNode("button", {
+              createBaseVNode("div", _hoisted_8$7, [
+                (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ui).raChunks, (chunk, i) => {
+                  return openBlock(), createElementBlock("p", {
+                    key: i,
+                    class: normalizeClass(["audio-transcript-line", { "audio-transcript-active": i === current.value }]),
+                    "data-idx": i,
+                    onClick: ($event) => unref(ui).raSkipTo(i)
+                  }, toDisplayString(chunk), 11, _hoisted_9$6);
+                }), 128))
+              ])
+            ], 64)) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_10$5, [
+              hasPlayer.value ? (openBlock(), createElementBlock("button", {
+                key: 0,
                 class: "audio-player-skip",
-                id: "audio-skip-back",
                 type: "button",
                 "aria-label": "Previous",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-backward-step" })
-              ]),
+                disabled: skipBackDisabled.value,
+                onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).raSkipTo(current.value - 1))
+              }, [..._cache[7] || (_cache[7] = [
+                createBaseVNode("i", { class: "fa-solid fa-backward-step" }, null, -1)
+              ])], 8, _hoisted_11$5)) : createCommentVNode("", true),
               createBaseVNode("button", {
                 class: "audio-action-stop",
-                id: "audio-action-stop",
                 type: "button",
-                "aria-label": "Stop"
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-stop" }),
-                createBaseVNode("span", null, "Stop")
-              ]),
-              createBaseVNode("button", {
+                "aria-label": "Stop",
+                onClick: _cache[3] || (_cache[3] = ($event) => unref(ui).raStop())
+              }, [..._cache[8] || (_cache[8] = [
+                createBaseVNode("i", { class: "fa-solid fa-stop" }, null, -1),
+                createBaseVNode("span", null, "Stop", -1)
+              ])]),
+              hasPlayer.value ? (openBlock(), createElementBlock("button", {
+                key: 1,
                 class: "audio-player-skip",
-                id: "audio-skip-forward",
                 type: "button",
                 "aria-label": "Next",
-                hidden: ""
-              }, [
-                createBaseVNode("i", { class: "fa-solid fa-forward-step" })
-              ])
+                disabled: skipFwdDisabled.value,
+                onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).raSkipTo(current.value + 1))
+              }, [..._cache[9] || (_cache[9] = [
+                createBaseVNode("i", { class: "fa-solid fa-forward-step" }, null, -1)
+              ])], 8, _hoisted_12$5)) : createCommentVNode("", true)
             ])
-          ], -1)
-        ])]),
+          ])
+        ]),
         _: 1
       }, 8, ["open"]);
     };
@@ -20321,7 +14924,7 @@ function useDictation() {
     stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
   });
 }
-const _hoisted_1$n = ["disabled"];
+const _hoisted_1$o = ["disabled"];
 const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
@@ -20341,7 +14944,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
         onClick: triggerMic
       }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$n);
+      ])], 8, _hoisted_1$o);
     };
   }
 });
@@ -20405,28 +15008,196 @@ const useVoiceStore = /* @__PURE__ */ defineStore("voice", () => {
     updateLastAssistant
   };
 });
-const _hoisted_1$m = ["hidden"];
+function useGlobalReadAloud() {
+  const ui = useUiStore();
+  let gen = 0;
+  let currentAudio = null;
+  function stopPlayback() {
+    gen++;
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.src = "";
+      currentAudio = null;
+    }
+    ui.raState = "idle";
+    ui.raChunkIndex = -1;
+    ui.audioModalOpen = false;
+    ui.raShowResume = false;
+    ui.raUnwire();
+  }
+  function playFrom(allChunks, resumeKey, index, g2) {
+    if (g2 !== gen) return;
+    if (index >= allChunks.length) {
+      ui.raState = "idle";
+      ui.raChunkIndex = -1;
+      ui.audioModalOpen = false;
+      ui.raShowResume = false;
+      ui.raUnwire();
+      try {
+        sessionStorage.removeItem("ra_resume");
+      } catch (_2) {
+      }
+      return;
+    }
+    ui.raChunkIndex = index;
+    try {
+      sessionStorage.setItem("ra_resume", JSON.stringify({ key: resumeKey, index }));
+    } catch (_2) {
+    }
+    const stripped = stripMarkdown(allChunks[index]).trim();
+    if (!stripped) {
+      playFrom(allChunks, resumeKey, index + 1, g2);
+      return;
+    }
+    speakFetch(stripped).then(async (res) => {
+      if (g2 !== gen) return;
+      if (!res.ok) {
+        playFrom(allChunks, resumeKey, index + 1, g2);
+        return;
+      }
+      const blob = await res.blob();
+      if (g2 !== gen) return;
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      currentAudio = audio;
+      audio.onended = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      };
+      audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      };
+      audio.play().catch(() => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+      });
+    }).catch(() => {
+      if (g2 === gen) playFrom(allChunks, resumeKey, index + 1, g2);
+    });
+  }
+  async function doReadAloud() {
+    if (ui.raState === "playing") {
+      stopPlayback();
+      return;
+    }
+    const rawText = ui.raText;
+    const rawFilePath = ui.raFilePath;
+    if (!rawText) return;
+    ui.raStopSignal++;
+    ui.raState = "loading";
+    ui.audioModalOpen = true;
+    let text = null;
+    const sidecarBody = rawFilePath && /\.md$/i.test(rawFilePath) ? { path: rawFilePath } : { text: rawText };
+    try {
+      const resp = await fetch("/api/voice/sidecar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sidecarBody)
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data == null ? void 0 : data.text) text = data.text;
+      }
+    } catch (_2) {
+    }
+    if (!text) text = rawText;
+    if (!text.trim()) {
+      ui.raState = "idle";
+      ui.audioModalOpen = false;
+      return;
+    }
+    const { chunks } = extractChunks(text, true);
+    const allChunks = chunks.filter((c) => c.trim());
+    if (allChunks.length === 0) allChunks.push(text.trim());
+    ui.raChunks = allChunks;
+    const resumeKey = text.slice(0, 80).trim() + "|" + text.length;
+    let startIndex = 0;
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("ra_resume") || "null");
+      if (saved && saved.key === resumeKey && typeof saved.index === "number" && saved.index > 0 && saved.index < allChunks.length) {
+        ui.raResumeIndex = saved.index;
+        ui.raShowResume = true;
+        ui.raState = "playing";
+        startIndex = await new Promise((resolve2) => {
+          ui.raWire(
+            (i) => {
+              resolve2(i);
+            },
+            () => {
+              stopPlayback();
+              resolve2(-1);
+            },
+            (i) => {
+              resolve2(i);
+            }
+          );
+        });
+        ui.raShowResume = false;
+        if (startIndex < 0) return;
+      }
+    } catch (_2) {
+    }
+    const g2 = ++gen;
+    ui.raChunkIndex = startIndex;
+    ui.raState = "playing";
+    ui.raWire(
+      (i) => {
+        gen++;
+        const ng = gen;
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio.src = "";
+          currentAudio = null;
+        }
+        playFrom(allChunks, resumeKey, i, ng);
+      },
+      () => {
+        stopPlayback();
+      }
+    );
+    playFrom(allChunks, resumeKey, startIndex, g2);
+  }
+  return { doReadAloud, stopReadAloud: stopPlayback };
+}
+const _hoisted_1$n = ["hidden"];
 const _hoisted_2$f = ["hidden"];
-const _hoisted_3$e = ["hidden"];
-const _hoisted_4$a = ["hidden"];
+const _hoisted_3$e = ["title", "aria-label", "hidden", "disabled"];
+const _hoisted_4$a = {
+  key: 0,
+  class: "fa-solid fa-spinner fa-spin"
+};
+const _hoisted_5$9 = {
+  key: 1,
+  class: "fa-solid fa-stop"
+};
+const _hoisted_6$9 = {
+  key: 2,
+  class: "fa-solid fa-headphones"
+};
+const _hoisted_7$7 = ["hidden"];
 const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
     useVoiceStore();
     const ws = useWorkspaceStore();
+    const { doReadAloud } = useGlobalReadAloud();
     const onChat = computed(() => {
       const ref2 = ws.focusedActiveRef;
       return (ref2 == null ? void 0 : ref2.kind) === "legacy" && ref2.page === "chat";
     });
+    const raDisabled = computed(() => ui.raText === null || ui.raState === "loading");
+    const raTitle = computed(() => ui.raState === "playing" ? "Stop reading" : "Read to me");
+    const raAriaLabel = computed(() => ui.raState === "playing" ? "Stop reading" : "Read to me");
     function openVoiceMode() {
       document.dispatchEvent(new CustomEvent("voice:open-chat-mode"));
     }
     function openTaskCreator() {
       document.dispatchEvent(new CustomEvent("voice:open-task-creator"));
-    }
-    function toggleReadAloud() {
-      document.dispatchEvent(new CustomEvent("voice:read-aloud-toggle"));
     }
     function toggleSpeaker() {
       ui.ttsEnabled = !ui.ttsEnabled;
@@ -20441,9 +15212,9 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           "aria-label": "Voice chat mode",
           hidden: !onChat.value || !unref(ui).micEnabled,
           onClick: openVoiceMode
-        }, [..._cache[0] || (_cache[0] = [
+        }, [..._cache[1] || (_cache[1] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$m),
+        ])], 8, _hoisted_1$n),
         createBaseVNode("button", {
           id: "global-voice-task",
           class: "global-voice-task",
@@ -20452,20 +15223,22 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           "aria-label": "Voice task creator",
           hidden: !unref(ui).micEnabled,
           onClick: openTaskCreator
-        }, [..._cache[1] || (_cache[1] = [
+        }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
         ])], 8, _hoisted_2$f),
         createBaseVNode("button", {
           id: "global-read-aloud",
-          class: "global-read-aloud",
+          class: normalizeClass(["global-read-aloud", { "is-playing": unref(ui).raState === "playing" }]),
           type: "button",
-          title: "Read to me",
-          "aria-label": "Read to me",
-          hidden: !unref(ui).ttsEnabled || !onChat.value,
-          onClick: toggleReadAloud
-        }, [..._cache[2] || (_cache[2] = [
-          createBaseVNode("i", { class: "fa-solid fa-headphones" }, null, -1)
-        ])], 8, _hoisted_3$e),
+          title: raTitle.value,
+          "aria-label": raAriaLabel.value,
+          hidden: !unref(ui).ttsEnabled,
+          disabled: raDisabled.value,
+          onClick: _cache[0] || (_cache[0] = //@ts-ignore
+          (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
+        }, [
+          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$a)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$9)) : (openBlock(), createElementBlock("i", _hoisted_6$9))
+        ], 10, _hoisted_3$e),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -20476,7 +15249,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_4$a)
+        ])], 8, _hoisted_7$7)
       ], 64);
     };
   }
@@ -20703,7 +15476,7 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   connect();
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
-const _hoisted_1$l = { class: "dock-shell" };
+const _hoisted_1$m = { class: "dock-shell" };
 const _hoisted_2$e = {
   class: "side-bubble",
   id: "jobs-bubble",
@@ -20725,12 +15498,12 @@ const _hoisted_7$6 = { id: "dock-pills" };
 const _hoisted_8$6 = { class: "pill-label" };
 const _hoisted_9$5 = { class: "pill-icon" };
 const _hoisted_10$4 = { class: "pill-value" };
-const _hoisted_11$3 = {
+const _hoisted_11$4 = {
   class: "side-bubble",
   id: "uptime-bubble",
   "aria-live": "polite"
 };
-const _hoisted_12$3 = { class: "side-value" };
+const _hoisted_12$4 = { class: "side-value" };
 const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
@@ -20813,7 +15586,7 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
       return out;
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$l, [
+      return openBlock(), createElementBlock("div", _hoisted_1$m, [
         createBaseVNode("aside", _hoisted_2$e, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
           createBaseVNode("div", _hoisted_3$d, toDisplayString(jobsCount.value), 1),
@@ -20843,16 +15616,16 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
             }), 128))
           ])
         ]),
-        createBaseVNode("aside", _hoisted_11$3, [
+        createBaseVNode("aside", _hoisted_11$4, [
           _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
-          createBaseVNode("div", _hoisted_12$3, toDisplayString(uptime.value), 1),
+          createBaseVNode("div", _hoisted_12$4, toDisplayString(uptime.value), 1),
           _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
         ])
       ]);
     };
   }
 });
-const _hoisted_1$k = {
+const _hoisted_1$l = {
   class: "voice-mode-overlay",
   role: "dialog",
   "aria-modal": "true",
@@ -21196,7 +15969,7 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
       voice.close();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$k, [
+      return openBlock(), createElementBlock("div", _hoisted_1$l, [
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
@@ -21354,30 +16127,47 @@ Example response:
     submitDraft
   };
 });
-const _hoisted_1$j = {
+const _hoisted_1$k = {
   key: 0,
-  class: "vtc-success text-center py-4"
+  class: "vtc-success"
 };
 const _hoisted_2$c = {
-  key: 0,
-  class: "vtc-claude-reply mb-3 p-3 rounded"
-};
-const _hoisted_3$b = { class: "row g-2 mb-2" };
-const _hoisted_4$7 = { class: "col-6" };
-const _hoisted_5$7 = { class: "col-6" };
-const _hoisted_6$7 = { class: "d-flex gap-2 justify-content-end" };
-const _hoisted_7$5 = {
-  key: 2,
-  class: "vtc-capture text-center py-3"
-};
-const _hoisted_8$5 = { class: "voice-mode-status mb-4" };
-const _hoisted_9$4 = {
-  key: 0,
-  class: "vm-heard mt-2"
-};
-const _hoisted_10$3 = {
   key: 1,
-  class: "vm-reply vm-active mt-2"
+  class: "vtc-form"
+};
+const _hoisted_3$b = {
+  key: 0,
+  class: "vtc-claude-reply"
+};
+const _hoisted_4$7 = { class: "vtc-field" };
+const _hoisted_5$7 = { class: "vtc-row" };
+const _hoisted_6$7 = { class: "vtc-field" };
+const _hoisted_7$5 = ["value"];
+const _hoisted_8$5 = { class: "vtc-field" };
+const _hoisted_9$4 = ["value"];
+const _hoisted_10$3 = { class: "vtc-field" };
+const _hoisted_11$3 = { class: "vtc-field" };
+const _hoisted_12$3 = { class: "vtc-field" };
+const _hoisted_13$2 = {
+  key: 1,
+  class: "vtc-error"
+};
+const _hoisted_14$2 = { class: "vtc-actions" };
+const _hoisted_15$2 = ["disabled"];
+const _hoisted_16$2 = {
+  key: 2,
+  class: "vtc-capture"
+};
+const _hoisted_17$2 = { class: "vtc-status" };
+const _hoisted_18$2 = { key: 0 };
+const _hoisted_19$2 = { key: 1 };
+const _hoisted_20$2 = {
+  key: 0,
+  class: "vm-heard"
+};
+const _hoisted_21$2 = {
+  key: 1,
+  class: "vm-reply vm-active"
 };
 const HOLD_MS = 250;
 const _sfc_main$o = /* @__PURE__ */ defineComponent({
@@ -21612,7 +16402,7 @@ User's voice request: "${userText}"`;
     async function pollForReply(chatId, maxMs = 3e4) {
       const deadline = Date.now() + maxMs;
       while (Date.now() < deadline) {
-        await delay3(600);
+        await delay(600);
         try {
           const res = await fetch(`/api/chats/${encodeURIComponent(chatId)}`);
           const data = await res.json();
@@ -21629,7 +16419,7 @@ User's voice request: "${userText}"`;
       }
       return null;
     }
-    function delay3(ms) {
+    function delay(ms) {
       return new Promise((resolve2) => {
         pollTimer = setTimeout(resolve2, ms);
       });
@@ -21743,201 +16533,141 @@ User's voice request: "${userText}"`;
       closeMode();
     });
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(unref(BModal_default), {
-        modelValue: showModal.value,
-        "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => showModal.value = $event),
+      return openBlock(), createBlock(_sfc_main$x, {
+        open: showModal.value,
         size: "lg",
-        "no-close-on-backdrop": "",
-        "hide-footer": "",
-        scrollable: "",
-        centered: "",
-        onHide: onModalHide
+        title: "Create a task from voice",
+        dismissible: true,
+        onClose: onModalHide
       }, {
-        title: withCtx(() => [..._cache[7] || (_cache[7] = [
-          createBaseVNode("span", { class: "vtc-modal-title" }, [
-            createBaseVNode("i", {
-              class: "fa-solid fa-list-check me-2",
-              style: { "color": "#6ee7b7" }
-            }),
-            createTextVNode(" Create a task from voice ")
-          ], -1)
-        ])]),
+        footer: withCtx(() => [..._cache[6] || (_cache[6] = [])]),
         default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$j, [..._cache[8] || (_cache[8] = [
-            createBaseVNode("i", { class: "fa-solid fa-circle-check vtc-success-icon mb-3" }, null, -1),
-            createBaseVNode("div", { class: "fw-medium fs-5" }, "Task created!", -1),
-            createBaseVNode("div", { class: "text-secondary mt-1" }, "Closing in a moment…", -1)
-          ])])) : hasDraft.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
-              _cache[9] || (_cache[9] = createBaseVNode("small", { class: "text-secondary d-block mb-1" }, "Claude said", -1)),
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$k, [..._cache[7] || (_cache[7] = [
+            createBaseVNode("span", { class: "vtc-success-icon" }, "✓", -1),
+            createBaseVNode("div", { class: "vtc-success-label" }, "Task created!", -1),
+            createBaseVNode("div", { class: "vtc-success-sub" }, "Closing in a moment…", -1)
+          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$b, [
+              _cache[8] || (_cache[8] = createBaseVNode("span", { class: "vtc-claude-label" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
-            createVNode(unref(BFormGroup_default), {
-              label: "Agent",
-              "label-for": "vtc-to",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-to",
-                  modelValue: draftTo.value,
-                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draftTo.value = $event),
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            createBaseVNode("div", _hoisted_3$b, [
-              createBaseVNode("div", _hoisted_4$7, [
-                createVNode(unref(BFormGroup_default), {
-                  label: "Priority",
-                  "label-for": "vtc-priority"
-                }, {
-                  default: withCtx(() => [
-                    createVNode(unref(BFormSelect_default), {
-                      id: "vtc-priority",
-                      modelValue: draftPriority.value,
-                      "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draftPriority.value = $event),
-                      size: "sm"
-                    }, {
-                      default: withCtx(() => [
-                        (openBlock(), createElementBlock(Fragment, null, renderList(priorityOptions, (p2) => {
-                          return createVNode(unref(BFormSelectOption_default), {
-                            key: p2,
-                            value: p2
-                          }, {
-                            default: withCtx(() => [
-                              createTextVNode(toDisplayString(p2), 1)
-                            ]),
-                            _: 2
-                          }, 1032, ["value"]);
-                        }), 64))
-                      ]),
-                      _: 1
-                    }, 8, ["modelValue"])
-                  ]),
-                  _: 1
-                })
-              ]),
-              createBaseVNode("div", _hoisted_5$7, [
-                createVNode(unref(BFormGroup_default), {
-                  label: "Kind",
-                  "label-for": "vtc-kind"
-                }, {
-                  default: withCtx(() => [
-                    createVNode(unref(BFormSelect_default), {
-                      id: "vtc-kind",
-                      modelValue: draftKind.value,
-                      "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draftKind.value = $event),
-                      size: "sm"
-                    }, {
-                      default: withCtx(() => [
-                        (openBlock(), createElementBlock(Fragment, null, renderList(kindOptions, (k) => {
-                          return createVNode(unref(BFormSelectOption_default), {
-                            key: k,
-                            value: k
-                          }, {
-                            default: withCtx(() => [
-                              createTextVNode(toDisplayString(k), 1)
-                            ]),
-                            _: 2
-                          }, 1032, ["value"]);
-                        }), 64))
-                      ]),
-                      _: 1
-                    }, 8, ["modelValue"])
-                  ]),
-                  _: 1
-                })
+            createBaseVNode("div", _hoisted_4$7, [
+              _cache[9] || (_cache[9] = createBaseVNode("label", {
+                class: "vtc-label",
+                for: "vtc-to"
+              }, "Agent", -1)),
+              withDirectives(createBaseVNode("input", {
+                id: "vtc-to",
+                "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draftTo.value = $event),
+                class: "vtc-input",
+                type: "text"
+              }, null, 512), [
+                [vModelText, draftTo.value]
               ])
             ]),
-            createVNode(unref(BFormGroup_default), {
-              label: "Project",
-              "label-for": "vtc-project",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-project",
-                  modelValue: draftProject.value,
-                  "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draftProject.value = $event),
-                  size: "sm",
-                  placeholder: "(none)"
-                }, null, 8, ["modelValue"])
+            createBaseVNode("div", _hoisted_5$7, [
+              createBaseVNode("div", _hoisted_6$7, [
+                _cache[10] || (_cache[10] = createBaseVNode("label", {
+                  class: "vtc-label",
+                  for: "vtc-priority"
+                }, "Priority", -1)),
+                withDirectives(createBaseVNode("select", {
+                  id: "vtc-priority",
+                  "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draftPriority.value = $event),
+                  class: "vtc-select"
+                }, [
+                  (openBlock(), createElementBlock(Fragment, null, renderList(priorityOptions, (p2) => {
+                    return createBaseVNode("option", {
+                      key: p2,
+                      value: p2
+                    }, toDisplayString(p2), 9, _hoisted_7$5);
+                  }), 64))
+                ], 512), [
+                  [vModelSelect, draftPriority.value]
+                ])
               ]),
-              _: 1
-            }),
-            createVNode(unref(BFormGroup_default), {
-              label: "Headline",
-              "label-for": "vtc-headline",
-              class: "mb-2"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormInput_default), {
-                  id: "vtc-headline",
-                  modelValue: draftHeadline.value,
-                  "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draftHeadline.value = $event),
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            createVNode(unref(BFormGroup_default), {
-              label: "Brief",
-              "label-for": "vtc-brief",
-              class: "mb-3"
-            }, {
-              default: withCtx(() => [
-                createVNode(unref(BFormTextarea_default), {
-                  id: "vtc-brief",
-                  modelValue: draftBrief.value,
-                  "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draftBrief.value = $event),
-                  rows: "4",
-                  size: "sm"
-                }, null, 8, ["modelValue"])
-              ]),
-              _: 1
-            }),
-            submitError.value ? (openBlock(), createBlock(unref(BAlert_default), {
-              key: 1,
-              variant: "danger",
-              "model-value": true,
-              class: "mb-3"
-            }, {
-              default: withCtx(() => [
-                createTextVNode(toDisplayString(submitError.value), 1)
-              ]),
-              _: 1
-            })) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_6$7, [
-              createVNode(unref(BButton_default), {
-                variant: "secondary",
-                size: "sm",
+              createBaseVNode("div", _hoisted_8$5, [
+                _cache[11] || (_cache[11] = createBaseVNode("label", {
+                  class: "vtc-label",
+                  for: "vtc-kind"
+                }, "Kind", -1)),
+                withDirectives(createBaseVNode("select", {
+                  id: "vtc-kind",
+                  "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => draftKind.value = $event),
+                  class: "vtc-select"
+                }, [
+                  (openBlock(), createElementBlock(Fragment, null, renderList(kindOptions, (k) => {
+                    return createBaseVNode("option", {
+                      key: k,
+                      value: k
+                    }, toDisplayString(k), 9, _hoisted_9$4);
+                  }), 64))
+                ], 512), [
+                  [vModelSelect, draftKind.value]
+                ])
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_10$3, [
+              _cache[12] || (_cache[12] = createBaseVNode("label", {
+                class: "vtc-label",
+                for: "vtc-project"
+              }, "Project", -1)),
+              withDirectives(createBaseVNode("input", {
+                id: "vtc-project",
+                "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => draftProject.value = $event),
+                class: "vtc-input",
+                type: "text",
+                placeholder: "(none)"
+              }, null, 512), [
+                [vModelText, draftProject.value]
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_11$3, [
+              _cache[13] || (_cache[13] = createBaseVNode("label", {
+                class: "vtc-label",
+                for: "vtc-headline"
+              }, "Headline", -1)),
+              withDirectives(createBaseVNode("input", {
+                id: "vtc-headline",
+                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => draftHeadline.value = $event),
+                class: "vtc-input",
+                type: "text"
+              }, null, 512), [
+                [vModelText, draftHeadline.value]
+              ])
+            ]),
+            createBaseVNode("div", _hoisted_12$3, [
+              _cache[14] || (_cache[14] = createBaseVNode("label", {
+                class: "vtc-label",
+                for: "vtc-brief"
+              }, "Brief", -1)),
+              withDirectives(createBaseVNode("textarea", {
+                id: "vtc-brief",
+                "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => draftBrief.value = $event),
+                class: "vtc-textarea",
+                rows: "4"
+              }, null, 512), [
+                [vModelText, draftBrief.value]
+              ])
+            ]),
+            submitError.value ? (openBlock(), createElementBlock("div", _hoisted_13$2, toDisplayString(submitError.value), 1)) : createCommentVNode("", true),
+            createBaseVNode("div", _hoisted_14$2, [
+              createBaseVNode("button", {
+                class: "vtc-btn vtc-btn--secondary",
+                type: "button",
                 onClick: resetDraft
-              }, {
-                default: withCtx(() => [..._cache[10] || (_cache[10] = [
-                  createBaseVNode("i", { class: "fa-solid fa-rotate-left me-1" }, null, -1),
-                  createTextVNode(" Redo ", -1)
-                ])]),
-                _: 1
-              }),
-              createVNode(unref(BButton_default), {
-                variant: "success",
-                size: "sm",
+              }, "↺ Redo"),
+              createBaseVNode("button", {
+                class: "vtc-btn vtc-btn--primary",
+                type: "button",
                 disabled: isSubmitting.value,
                 onClick: submitTask
-              }, {
-                default: withCtx(() => [
-                  _cache[11] || (_cache[11] = createBaseVNode("i", { class: "fa-solid fa-paper-plane me-1" }, null, -1)),
-                  createTextVNode(" " + toDisplayString(isSubmitting.value ? "Creating…" : "Create Task"), 1)
-                ]),
-                _: 1
-              }, 8, ["disabled"])
+              }, toDisplayString(isSubmitting.value ? "Creating…" : "✈ Create Task"), 9, _hoisted_15$2)
             ])
-          ], 64)) : (openBlock(), createElementBlock("div", _hoisted_7$5, [
-            createBaseVNode("div", _hoisted_8$5, toDisplayString(statusText.value), 1),
+          ])) : (openBlock(), createElementBlock("div", _hoisted_16$2, [
+            createBaseVNode("div", _hoisted_17$2, toDisplayString(statusText.value), 1),
             createBaseVNode("button", {
-              class: normalizeClass(["voice-mode-btn mx-auto mb-4", { listening: isListening.value, processing: isProcessing.value }]),
+              class: normalizeClass(["voice-mode-btn vtc-mic-btn", { listening: isListening.value, processing: isProcessing.value }]),
               type: "button",
               "aria-label": "Hold to describe task",
               onMousedown: pressDown,
@@ -21946,16 +16676,14 @@ User's voice request: "${userText}"`;
               onTouchend: withModifiers(pressUp, ["prevent"]),
               onMouseleave: pressLeave
             }, [
-              createBaseVNode("i", {
-                class: normalizeClass(isListening.value ? "fa-solid fa-stop" : "fa-solid fa-microphone")
-              }, null, 2)
+              isListening.value ? (openBlock(), createElementBlock("span", _hoisted_18$2, "◼")) : (openBlock(), createElementBlock("span", _hoisted_19$2, "🎙"))
             ], 34),
-            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_9$4, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_10$3, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
+            heardText.value ? (openBlock(), createElementBlock("div", _hoisted_20$2, '"' + toDisplayString(heardText.value) + '"', 1)) : createCommentVNode("", true),
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_21$2, toDisplayString(replyText.value), 1)) : createCommentVNode("", true)
           ]))
         ]),
         _: 1
-      }, 8, ["modelValue"]);
+      }, 8, ["open"]);
     };
   }
 });
@@ -21966,7 +16694,7 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$o, [["__scopeId", "data-v-9d3f47dd"]]);
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$o, [["__scopeId", "data-v-8998f977"]]);
 const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
@@ -21999,15 +16727,36 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const _hoisted_1$j = ["aria-expanded"];
 const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "OpenMenu",
   setup(__props) {
     const ws = useWorkspaceStore();
     const kn = useKnowledgeStore();
     const nt2 = useNewTaskStore();
-    const detailsRef = /* @__PURE__ */ ref(null);
+    const isOpen = /* @__PURE__ */ ref(false);
+    const anchorRef = /* @__PURE__ */ ref(null);
+    const panelRef = /* @__PURE__ */ ref(null);
+    const panelTop = /* @__PURE__ */ ref("0px");
+    const panelLeft = /* @__PURE__ */ ref("0px");
+    function updatePosition() {
+      var _a2;
+      const r = (_a2 = anchorRef.value) == null ? void 0 : _a2.getBoundingClientRect();
+      if (r) {
+        panelTop.value = `${r.bottom + 4}px`;
+        panelLeft.value = `${r.left}px`;
+      }
+    }
+    function toggle() {
+      if (isOpen.value) {
+        isOpen.value = false;
+      } else {
+        updatePosition();
+        isOpen.value = true;
+      }
+    }
     function close() {
-      if (detailsRef.value) detailsRef.value.open = false;
+      isOpen.value = false;
     }
     function openDashboard() {
       ws.open({ kind: "dashboard" });
@@ -22034,13 +16783,15 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
       close();
     }
     function onDocPointerDown(ev) {
-      var _a2;
-      if (!((_a2 = detailsRef.value) == null ? void 0 : _a2.open)) return;
-      if (!detailsRef.value.contains(ev.target)) close();
+      if (!isOpen.value) return;
+      const anchor = anchorRef.value;
+      const panel = panelRef.value;
+      if (!(anchor == null ? void 0 : anchor.contains(ev.target)) && !(panel == null ? void 0 : panel.contains(ev.target))) {
+        close();
+      }
     }
     function onDocKeyDown(ev) {
-      var _a2;
-      if (ev.key === "Escape" && ((_a2 = detailsRef.value) == null ? void 0 : _a2.open)) {
+      if (ev.key === "Escape" && isOpen.value) {
         close();
         ev.stopPropagation();
       }
@@ -22054,67 +16805,78 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
       document.removeEventListener("keydown", onDocKeyDown, true);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("details", {
-        ref_key: "detailsRef",
-        ref: detailsRef,
+      return openBlock(), createElementBlock("div", {
+        ref_key: "anchorRef",
+        ref: anchorRef,
         class: "open-menu"
       }, [
-        _cache[3] || (_cache[3] = createBaseVNode("summary", {
+        createBaseVNode("button", {
           class: "open-menu-btn",
-          "aria-haspopup": "true"
-        }, "Open ▾", -1)),
-        createBaseVNode("div", {
-          class: "open-menu-list",
-          role: "menu"
-        }, [
-          createBaseVNode("button", {
-            id: "tab-dashboard",
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openDashboard
-          }, "Dashboard"),
-          createBaseVNode("button", {
-            id: "tab-tasks",
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openTasks
-          }, "Tasks"),
-          createBaseVNode("button", {
-            id: "tab-chat",
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openChat
-          }, "Chat"),
-          createBaseVNode("button", {
-            id: "tab-files",
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openFiles
-          }, "Files"),
-          _cache[2] || (_cache[2] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
-          createBaseVNode("button", {
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openSearch
-          }, [..._cache[0] || (_cache[0] = [
-            createTextVNode("Search ", -1),
-            createBaseVNode("kbd", null, "⌘K", -1)
-          ])]),
-          createBaseVNode("button", {
-            class: "open-menu-item",
-            type: "button",
-            role: "menuitem",
-            onClick: openNewTask
-          }, [..._cache[1] || (_cache[1] = [
-            createTextVNode("New task ", -1),
-            createBaseVNode("kbd", null, "N", -1)
-          ])])
-        ])
+          type: "button",
+          "aria-haspopup": "true",
+          "aria-expanded": isOpen.value,
+          onClick: toggle
+        }, "Open ▾", 8, _hoisted_1$j),
+        (openBlock(), createBlock(Teleport, { to: "body" }, [
+          isOpen.value ? (openBlock(), createElementBlock("div", {
+            key: 0,
+            ref_key: "panelRef",
+            ref: panelRef,
+            class: "open-menu-list",
+            style: normalizeStyle({ top: panelTop.value, left: panelLeft.value }),
+            role: "menu",
+            onClick: _cache[0] || (_cache[0] = withModifiers(() => {
+            }, ["stop"]))
+          }, [
+            createBaseVNode("button", {
+              id: "tab-dashboard",
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openDashboard
+            }, "Dashboard"),
+            createBaseVNode("button", {
+              id: "tab-tasks",
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openTasks
+            }, "Tasks"),
+            createBaseVNode("button", {
+              id: "tab-chat",
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openChat
+            }, "Chat"),
+            createBaseVNode("button", {
+              id: "tab-files",
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openFiles
+            }, "Files"),
+            _cache[3] || (_cache[3] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            createBaseVNode("button", {
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openSearch
+            }, [..._cache[1] || (_cache[1] = [
+              createTextVNode("Search ", -1),
+              createBaseVNode("kbd", null, "⌘K", -1)
+            ])]),
+            createBaseVNode("button", {
+              class: "open-menu-item",
+              type: "button",
+              role: "menuitem",
+              onClick: openNewTask
+            }, [..._cache[2] || (_cache[2] = [
+              createTextVNode("New task ", -1),
+              createBaseVNode("kbd", null, "N", -1)
+            ])])
+          ], 4)) : createCommentVNode("", true)
+        ]))
       ], 512);
     };
   }
@@ -24359,7 +19121,7 @@ function YAMLException$1(reason, mark) {
 }
 YAMLException$1.prototype = Object.create(Error.prototype);
 YAMLException$1.prototype.constructor = YAMLException$1;
-YAMLException$1.prototype.toString = function toString2(compact) {
+YAMLException$1.prototype.toString = function toString(compact) {
   return this.name + ": " + formatError(this, compact);
 };
 var exception = YAMLException$1;
@@ -26769,6 +21531,8 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const props = __props;
     const contentEl = useTemplateRef("content");
+    const ui = useUiStore();
+    const ws = useWorkspaceStore();
     let currentPath = "";
     let pendingPath = "";
     let pendingBranch = "";
@@ -26794,6 +21558,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       }
     });
     onBeforeUnmount(() => {
+      updateRaText(null, null);
     });
     function setEmpty() {
       if (!contentEl.value) return;
@@ -26805,7 +21570,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       if (!el) return;
       if (isImageFile(filePath)) {
         renderImageInto(el, filePath, branch);
-        notifySpeaker();
+        updateRaText(null, null);
         return;
       }
       el.innerHTML = '<div class="files-loading">Loading...</div>';
@@ -26826,11 +21591,13 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
           div.innerHTML = fmHtml + renderMarkdown(body);
           hydrateLinks(div);
           el.appendChild(div);
+          updateRaText(body || data.content || null, /\.md$/i.test(filePath) ? filePath : null);
         } else if (isYaml(filePath)) {
           const ydiv = document.createElement("div");
           ydiv.className = "files-yaml";
           ydiv.innerHTML = yamlRender(data.content);
           el.appendChild(ydiv);
+          updateRaText(data.content || null, null);
         } else {
           const lang = detectLang(filePath);
           if (lang) {
@@ -26846,12 +21613,13 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
             raw.textContent = data.content;
             el.appendChild(raw);
           }
+          updateRaText(data.content || null, null);
         }
       } catch (err) {
         if (currentPath !== filePath) return;
         el.innerHTML = '<div class="files-empty">Error: ' + escHtml(String(err instanceof Error ? err.message : err)) + "</div>";
+        updateRaText(null, null);
       }
-      notifySpeaker();
     }
     function hydrateLinks(container) {
       container.querySelectorAll("a[href]").forEach((a) => {
@@ -26860,7 +21628,17 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
         a.setAttribute("data-open-file", href);
       });
     }
-    function notifySpeaker() {
+    function updateRaText(text, filePath) {
+      const focused = ws.focusedActiveRef;
+      if (!focused) return;
+      const isFocusedFile = focused.kind === "file" && focused.path === props.path;
+      const isFocusedReport = focused.kind === "report" && props.kind === "report";
+      const isFocusedLegacyFiles = focused.kind === "legacy" && focused.page === "files";
+      const isFocusedLegacyTasks = focused.kind === "legacy" && focused.page === "tasks";
+      if (isFocusedFile || isFocusedReport || isFocusedLegacyFiles || isFocusedLegacyTasks) {
+        ui.raText = text;
+        ui.raFilePath = isFocusedFile && filePath ? filePath : null;
+      }
       if (typeof window.__updateSpeakerDisabled === "function") {
         window.__updateSpeakerDisabled();
       }
@@ -27952,27 +22730,38 @@ function setActiveReportDoc(pane, path) {
     p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
   });
 }
-function loadReportNode(node) {
-  if (!node || node.getAttribute("data-loaded") !== "false") return;
+function loadReportNode(node, onLoaded) {
+  if (!node || node.getAttribute("data-loaded") !== "false") {
+    if (onLoaded && node.getAttribute("data-loaded") === "true") {
+      const stored = node.getAttribute("data-raw-text");
+      if (stored) onLoaded(stored);
+    }
+    return;
+  }
   node.setAttribute("data-loaded", "loading");
   node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
   const path = node.getAttribute("data-report-path") || "";
   fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
     if (!data.ok) throw new Error(data.error || "failed");
     node.setAttribute("data-loaded", "true");
+    let rawText = "";
     if (data.markdown) {
       const raw = data.content || "";
       const { body } = stripFrontmatter(raw);
+      rawText = body || raw;
       const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
       const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
       node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
     } else {
+      rawText = data.content || "";
       const pre = document.createElement("pre");
       pre.className = "task-panel-report-raw";
       pre.textContent = data.content;
       node.innerHTML = "";
       node.appendChild(pre);
     }
+    node.setAttribute("data-raw-text", rawText);
+    if (onLoaded && rawText) onLoaded(rawText);
     if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
   }).catch((err) => {
     node.setAttribute("data-loaded", "false");
@@ -28011,6 +22800,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     let taskPanelStatusEl = null;
     let longPressTimer = null;
     let lpStartX = 0, lpStartY = 0;
+    let currentReportRawText = null;
     const router2 = useRouter();
     let currentTaskChain = null;
     watch(() => attentionStore.tiers, (tiers) => {
@@ -28021,6 +22811,11 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       if (tasksViewerEl) tasksViewerEl.hidden = mode !== "view";
       if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
       if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
+      if (mode !== "view") {
+        currentReportRawText = null;
+        ui.raText = null;
+        ui.raFilePath = null;
+      }
       const panel = document.getElementById("tasks-panel");
       const collapse = mode !== "empty";
       if (isPanelNarrow("tasks-panel", 1199)) {
@@ -28139,7 +22934,18 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         const taskHtml = task ? renderPanelCard(task, true, taskId, tasksStore.cache) : '<div class="task-panel-loading">No chain data.</div>';
         const reportHtml = (task == null ? void 0 : task.reportPath) ? renderReportPane(task) : '<div class="task-panel-loading">No report yet for this task.</div>';
         taskPanelBodyEl.innerHTML = '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + '</div><div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
-        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => loadReportNode(rn));
+        currentReportRawText = null;
+        ui.raText = null;
+        ui.raFilePath = null;
+        taskPanelBodyEl.querySelectorAll(".task-panel-report").forEach((rn) => {
+          loadReportNode(rn, (rawText) => {
+            currentReportRawText = rawText;
+            if (tasksStore.currentViewMode === "report") {
+              ui.raText = rawText;
+              ui.raFilePath = null;
+            }
+          });
+        });
       } catch (err) {
         taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String(err.message || err) + "</div>";
       }
@@ -28182,6 +22988,8 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         t.classList.toggle("is-active", isActive);
         t.setAttribute("aria-selected", isActive ? "true" : "false");
       });
+      ui.raText = mode === "report" ? currentReportRawText : null;
+      ui.raFilePath = null;
     }
     async function submitNext(wrapper) {
       if (!wrapper) return;
@@ -28925,6 +23733,9 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     onBeforeUnmount(() => {
       live.unbind("attention");
       if (longPressTimer !== null) clearTimeout(longPressTimer);
+      currentReportRawText = null;
+      ui.raText = null;
+      ui.raFilePath = null;
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$7, [..._cache[0] || (_cache[0] = [
@@ -29176,6 +23987,41 @@ function useReadAloud() {
   }
   return { speak, stop: stop2, isPlaying: () => playing };
 }
+const DRAFT_KEY = "chat.drafts";
+function loadDrafts() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+function saveDrafts(drafts) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(drafts));
+  } catch {
+  }
+}
+const useChatStore = /* @__PURE__ */ defineStore("chat", () => {
+  const chatId = /* @__PURE__ */ ref(null);
+  const _drafts = /* @__PURE__ */ ref(loadDrafts());
+  function saveDraft(id, text) {
+    const updated = { ..._drafts.value };
+    if (text) {
+      updated[id] = text;
+    } else {
+      delete updated[id];
+    }
+    _drafts.value = updated;
+    saveDrafts(updated);
+  }
+  function getDraft(id) {
+    return _drafts.value[id] ?? "";
+  }
+  return { chatId, saveDraft, getDraft };
+});
 const _hoisted_1$6 = {
   id: "chat-panel",
   class: "chat-panel"
@@ -29187,6 +24033,11 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
   __name: "ChatPage",
   setup(__props) {
     const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
+    const chatStore = useChatStore();
+    const ui = useUiStore();
+    watch(() => ui.raStopSignal, () => {
+      if (isPlaying()) stopReadAloud();
+    });
     let chatHistory = [];
     let chatSessionId = "";
     let chatListCache = [];
@@ -29315,10 +24166,10 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
     }
     function schedulePoll() {
       if (chatPollTimer) clearTimeout(chatPollTimer);
-      const delay3 = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
+      const delay = hasActiveWork() ? CHAT_POLL_FAST_MS : CHAT_POLL_IDLE_MS;
       chatPollTimer = setTimeout(() => {
         pollChat().finally(schedulePoll);
-      }, delay3);
+      }, delay);
     }
     async function pollChat(opts) {
       if (document.visibilityState !== "visible") return;
@@ -29685,7 +24536,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
           speakBtn.className = "chat-msg-speak";
           speakBtn.title = "Read aloud";
           speakBtn.setAttribute("aria-label", "Read aloud");
-          speakBtn.textContent = "🔊";
+          speakBtn.innerHTML = '<i class="fa-solid fa-volume-high"></i>';
           const capturedText = msg.text;
           speakBtn.addEventListener("click", () => {
             readAloud(capturedText);
@@ -29716,6 +24567,11 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       if (live) btn.disabled = false;
     }
     function renderChatHistory() {
+      const lastDone = [...chatHistory].reverse().find(
+        (m2) => m2.role === "assistant" && m2.text && m2.state !== "thinking" && m2.state !== "streaming" && m2.state !== "background" && m2.state !== "error"
+      );
+      ui.raText = (lastDone == null ? void 0 : lastDone.text) ?? null;
+      ui.raFilePath = null;
       const w2 = window;
       if (typeof w2.__updateSpeakerDisabled === "function") w2.__updateSpeakerDisabled();
       refreshChatTitleVisibility();
@@ -29760,6 +24616,7 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       if (!agentPicked()) return;
       chatInput.value = "";
       autoResizeChatInput();
+      chatStore.saveDraft(chatSessionId, "");
       chatHistory.push({ role: "user", text: message, state: "pending" });
       if (!chatAgentLocked && pendingAgentId) {
         chatAgentLocked = pendingAgentId;
@@ -29909,7 +24766,17 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
           interruptCurrent({ sendAfter: true });
         });
       }
-      if (chatInput) chatInput.addEventListener("input", autoResizeChatInput);
+      if (chatInput) {
+        chatInput.addEventListener("input", autoResizeChatInput);
+        chatInput.addEventListener("input", () => {
+          chatStore.saveDraft(chatSessionId, chatInput.value);
+        });
+        const savedDraft = chatStore.getDraft(chatSessionId);
+        if (savedDraft) {
+          chatInput.value = savedDraft;
+          autoResizeChatInput();
+        }
+      }
       document.addEventListener("visibilitychange", onVisibilityChange);
       document.addEventListener("voice:read-aloud-toggle", onReadAloudToggle);
       if (chatInput) chatInput.focus();
@@ -29924,6 +24791,8 @@ const _sfc_main$7 = /* @__PURE__ */ defineComponent({
       document.removeEventListener("visibilitychange", onVisibilityChange);
       document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
       stopReadAloud();
+      ui.raText = null;
+      ui.raFilePath = null;
       if (historyClickHandler) {
         document.removeEventListener("click", historyClickHandler);
         historyClickHandler = null;
@@ -33176,7 +28045,6 @@ const pageStyles = String.raw`    :root {
 
     /* ── Open menu (replaces tab-nav) ── */
     .open-menu {
-      position: relative;
       flex-shrink: 0;
       align-self: center;
       margin-right: 4px;
@@ -33201,16 +28069,14 @@ const pageStyles = String.raw`    :root {
     .open-menu-btn:hover { color: #d6e6f8; background: var(--surface-3, #1a2640); }
     .open-menu-btn::-webkit-details-marker { display: none; }
     .open-menu-list {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
+      position: fixed;
       min-width: 160px;
       background: var(--surface-2, #111b2e);
       border: 1px solid var(--border-strong, #d8e4ff3d);
       border-radius: var(--radius-md, 8px);
       box-shadow: var(--shadow-overlay, 0 8px 32px rgba(0,0,0,.6));
       padding: 4px 0;
-      z-index: 200;
+      z-index: 9999;
     }
     .open-menu-item {
       display: flex;
@@ -34047,6 +28913,32 @@ const pageStyles = String.raw`    :root {
       cursor: not-allowed;
       transform: none;
     }
+
+    /* Per-message read-aloud button — transparent background, bottom-right of message text */
+    .chat-msg-speak {
+      appearance: none;
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: #6aadcc88;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: color 0.14s ease, background 0.14s ease;
+    }
+    .chat-msg-speak:hover {
+      color: var(--accent);
+      background: #ffffff0a;
+    }
+    /* Make the message container relative so the absolute button positions correctly */
+    .chat-msg-assistant { position: relative; }
 
     /* ── Files panel ── */
     /* Width matches the Tasks panel. Both pages share the same

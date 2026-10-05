@@ -35,8 +35,10 @@ function openDialog(): void {
 function closeDialog(): void {
   const el = dialogRef.value;
   if (!el || !el.open) return;
+  const before = el.open;
   el.close();
   unlockScroll();
+  logClose("closeDialog(watch)", before, el.open);
 }
 
 onMounted(() => {
@@ -51,9 +53,20 @@ onBeforeUnmount(() => {
   if (props.open) unlockScroll();
 });
 
+// Diagnostic close log — surfaces on Kelly's device to diagnose environment-specific failures.
+// Read from window.__baseModalCloseLog in Settings → Advanced info panel.
+function logClose(via: string, dialogOpenBefore: boolean, dialogOpenAfter: boolean): void {
+  const log = ((window as any).__baseModalCloseLog ??= []) as Array<{ ts: number; via: string; before: boolean; after: boolean }>;
+  log.push({ ts: Date.now(), via, before: dialogOpenBefore, after: dialogOpenAfter });
+  if (log.length > 30) log.shift();
+}
+
 function onCancel(ev: Event): void {
   ev.preventDefault();
-  if (props.dismissible) emit("close");
+  if (props.dismissible) {
+    logClose("emit:cancel(escape)", dialogRef.value?.open ?? false, false);
+    emit("close");
+  }
 }
 
 // Geometric backdrop test: dismiss only if the click landed outside the inner card.
@@ -68,6 +81,7 @@ function onDialogClick(ev: MouseEvent): void {
   if (!inner) return;
   const r = inner.getBoundingClientRect();
   if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) {
+    logClose("emit:backdrop-click", dialogRef.value?.open ?? false, false);
     emit("close");
   }
 }
@@ -91,7 +105,7 @@ function onDialogClick(ev: MouseEvent): void {
             class="base-modal-close"
             type="button"
             aria-label="Close"
-            @click="emit('close')"
+            @click="logClose('close-btn', dialogRef?.open ?? false, false); emit('close')"
           >×</button>
         </div>
       </slot>

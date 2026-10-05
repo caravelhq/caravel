@@ -1626,7 +1626,6 @@ export const pageStyles = String.raw`    :root {
 
     /* ── Open menu (replaces tab-nav) ── */
     .open-menu {
-      position: relative;
       flex-shrink: 0;
       align-self: center;
       margin-right: 4px;
@@ -1651,16 +1650,14 @@ export const pageStyles = String.raw`    :root {
     .open-menu-btn:hover { color: #d6e6f8; background: var(--surface-3, #1a2640); }
     .open-menu-btn::-webkit-details-marker { display: none; }
     .open-menu-list {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
+      position: fixed;
       min-width: 160px;
       background: var(--surface-2, #111b2e);
       border: 1px solid var(--border-strong, #d8e4ff3d);
       border-radius: var(--radius-md, 8px);
       box-shadow: var(--shadow-overlay, 0 8px 32px rgba(0,0,0,.6));
       padding: 4px 0;
-      z-index: 200;
+      z-index: 9999;
     }
     .open-menu-item {
       display: flex;
@@ -2497,6 +2494,32 @@ export const pageStyles = String.raw`    :root {
       cursor: not-allowed;
       transform: none;
     }
+
+    /* Per-message read-aloud button — transparent background, bottom-right of message text */
+    .chat-msg-speak {
+      appearance: none;
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: #6aadcc88;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: color 0.14s ease, background 0.14s ease;
+    }
+    .chat-msg-speak:hover {
+      color: var(--accent);
+      background: #ffffff0a;
+    }
+    /* Make the message container relative so the absolute button positions correctly */
+    .chat-msg-assistant { position: relative; }
 
     /* ── Files panel ── */
     /* Width matches the Tasks panel. Both pages share the same

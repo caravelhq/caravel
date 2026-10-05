@@ -762,13 +762,27 @@ self.addEventListener('activate', e => {
         }
       }
 
-      if (url.pathname.startsWith("/api/tasks/") && req.method === "GET") {
+      // List scheduled templates — must appear before the generic task-id handler.
+      if (url.pathname === "/api/tasks/scheduled" && req.method === "GET") {
         try {
-          const id = decodeURIComponent(url.pathname.slice("/api/tasks/".length));
-          if (!/^TSK-/.test(id)) return json({ ok: false, error: "invalid task id" });
-          return json({ ok: true, chain: await getTaskChain(id) });
+          return json({ ok: true, templates: await listScheduledTemplates() });
         } catch (err) {
           return json({ ok: false, error: String(err) });
+        }
+      }
+
+      // Generic GET /api/tasks/:id handler.
+      // Guard: skip known literal sub-paths that have their own handlers above/below.
+      if (url.pathname.startsWith("/api/tasks/") && req.method === "GET") {
+        const _LITERAL_GET_SEGMENTS = new Set(["scheduled"]);
+        const _id = decodeURIComponent(url.pathname.slice("/api/tasks/".length));
+        if (!_LITERAL_GET_SEGMENTS.has(_id)) {
+          try {
+            if (!/^TSK-/.test(_id)) return json({ ok: false, error: "invalid task id" });
+            return json({ ok: true, chain: await getTaskChain(_id) });
+          } catch (err) {
+            return json({ ok: false, error: String(err) });
+          }
         }
       }
 
@@ -778,15 +792,6 @@ self.addEventListener('activate', e => {
           const result = await createTask(body);
           if (!result.ok) return json({ ok: false, error: result.error });
           return json({ ok: true, id: result.id });
-        } catch (err) {
-          return json({ ok: false, error: String(err) });
-        }
-      }
-
-      // List scheduled templates (status: scheduled from all agents).
-      if (url.pathname === "/api/tasks/scheduled" && req.method === "GET") {
-        try {
-          return json({ ok: true, templates: await listScheduledTemplates() });
         } catch (err) {
           return json({ ok: false, error: String(err) });
         }

@@ -304,8 +304,18 @@ export function setActiveReportDoc(pane: Element | null, path: string): void {
 
 // ── Lazy report loader ────────────────────────────────────────────────────
 
-export function loadReportNode(node: HTMLElement): void {
-  if (!node || node.getAttribute("data-loaded") !== "false") return;
+export function loadReportNode(
+  node: HTMLElement,
+  onLoaded?: (rawText: string) => void,
+): void {
+  if (!node || node.getAttribute("data-loaded") !== "false") {
+    // Already loaded — fire callback with the stored raw text if available.
+    if (onLoaded && node.getAttribute("data-loaded") === "true") {
+      const stored = node.getAttribute("data-raw-text");
+      if (stored) onLoaded(stored);
+    }
+    return;
+  }
   node.setAttribute("data-loaded", "loading");
   node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
   const path = node.getAttribute("data-report-path") || "";
@@ -314,19 +324,25 @@ export function loadReportNode(node: HTMLElement): void {
     .then(data => {
       if (!data.ok) throw new Error(data.error || "failed");
       node.setAttribute("data-loaded", "true");
+      let rawText = "";
       if (data.markdown) {
         const raw = data.content || "";
         const { body } = stripFrontmatter(raw);
+        rawText = body || raw;
         const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
         const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
         node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
       } else {
+        rawText = data.content as string || "";
         const pre = document.createElement("pre");
         pre.className = "task-panel-report-raw";
         pre.textContent = data.content;
         node.innerHTML = "";
         node.appendChild(pre);
       }
+      // Cache raw text for subsequent calls (e.g. pane switch after load completes).
+      node.setAttribute("data-raw-text", rawText);
+      if (onLoaded && rawText) onLoaded(rawText);
       if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
     })
     .catch(err => {

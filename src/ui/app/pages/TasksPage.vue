@@ -111,12 +111,24 @@ let taskPanelStatusEl: HTMLElement | null = null;
 let longPressTimer: ReturnType<typeof setTimeout> | null = null;
 let lpStartX = 0, lpStartY = 0;
 
+// Tracks the raw text of the currently loaded report for the global read-aloud button.
+let currentReportRawText: string | null = null;
+
 const router = useRouter();
 let currentTaskChain: { task?: Record<string, unknown>; ancestors?: Record<string, unknown>[]; children?: Record<string, unknown>[] } | null = null;
 
 // Re-render the attention-tier sidebar whenever the store updates (covers mount race + 30s re-poll).
 watch(() => attentionStore.tiers, (tiers) => {
   if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
+});
+
+// Watcher for pending external navigation (e.g. Dashboard tier row click).
+// Handles the already-mounted case (split-pane: Tasks active while Dashboard visible).
+// The cold and warm-remount cases are handled by fetchTasks / onMounted else-branch.
+watch(() => tasksStore.pendingTaskId, (id) => {
+  if (!id || !tasksStore.loaded || !taskPanelBodyEl) return;
+  tasksStore.pendingTaskId = null;
+  openTaskPanel(id);
 });
 
 // ── Picker helpers ────────────────────────────────────────────────────────
@@ -127,7 +139,10 @@ function setRightPaneMode(mode: "empty" | "view" | "project"): void {
   if (tasksProjectPaneEl) tasksProjectPaneEl.hidden = mode !== "project";
   if (tasksEmptyEl) tasksEmptyEl.hidden = mode !== "empty";
   if (mode !== "view") {
-    // Viewer shown via part-2 — nothing to clear here yet.
+    // Leaving the viewer pane — clear read-aloud text.
+    currentReportRawText = null;
+    ui.raText = null;
+    ui.raFilePath = null;
   }
   // Narrow panel: switching the right pane to view/new/project means the user
   // wants to SEE it, so collapse the picker; "empty" goes back to the list.
@@ -201,8 +216,13 @@ async function fetchTasks(): Promise<void> {
     tasksStore.cache = data.tasks;
     tasksStore.loaded = true;
     renderTaskPicker();
-    // Restore the task or project panel from persisted (or URL-hydrated) store state.
-    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+    // Honour a pending external navigation first (cold path from Dashboard tier row click).
+    const pendingNav = tasksStore.pendingTaskId;
+    if (pendingNav) {
+      tasksStore.pendingTaskId = null;
+      openTaskPanel(pendingNav);
+    } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      // Restore the task or project panel from persisted (or URL-hydrated) store state.
       openTaskPanel(tasksStore.currentTaskId);
     } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
       openProjectPanel(tasksStore.currentProjectSlug);
@@ -275,7 +295,19 @@ async function openTaskPanel(taskId: string): Promise<void> {
       '<div class="tasks-viewer-pane" data-pane="task"' + (viewMode === "task" ? "" : " hidden") + ">" + taskHtml + "</div>" +
       '<div class="tasks-viewer-pane" data-pane="report"' + (viewMode === "report" ? "" : " hidden") + ">" + reportHtml + "</div>";
 
-    taskPanelBodyEl.querySelectorAll<HTMLElement>(".task-panel-report").forEach(rn => loadReportNode(rn));
+    currentReportRawText = null;
+    ui.raText = null;
+    ui.raFilePath = null;
+    taskPanelBodyEl.querySelectorAll<HTMLElement>(".task-panel-report").forEach(rn => {
+      loadReportNode(rn, (rawText) => {
+        currentReportRawText = rawText;
+        // Only expose text if the report pane is currently active.
+        if (tasksStore.currentViewMode === "report") {
+          ui.raText = rawText;
+          ui.raFilePath = null;
+        }
+      });
+    });
   } catch (err) {
     taskPanelBodyEl.innerHTML = '<div class="task-panel-loading">Error: ' + String((err as Error).message || err) + "</div>";
   }
@@ -319,6 +351,9 @@ function setViewMode(mode: "task" | "report"): void {
     t.classList.toggle("is-active", isActive);
     t.setAttribute("aria-selected", isActive ? "true" : "false");
   });
+  // Sync read-aloud text: report pane makes text available; task pane does not.
+  ui.raText = mode === "report" ? currentReportRawText : null;
+  ui.raFilePath = null;
 }
 
 async function submitNext(wrapper: HTMLElement | null): Promise<void> {
@@ -964,8 +999,13 @@ onMounted(() => {
     fetchTasks();
   } else {
     renderTaskPicker();
-    // Restore task panel if we're returning to this route with a task already open.
-    if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+    // Honour a pending external navigation first (warm-remount path from Dashboard tier row click).
+    const pendingNav = tasksStore.pendingTaskId;
+    if (pendingNav) {
+      tasksStore.pendingTaskId = null;
+      openTaskPanel(pendingNav);
+    } else if (tasksStore.pane === "view" && tasksStore.currentTaskId) {
+      // Restore task panel if we're returning to this route with a task already open.
       openTaskPanel(tasksStore.currentTaskId);
     } else if (tasksStore.pane === "project" && tasksStore.currentProjectSlug) {
       openProjectPanel(tasksStore.currentProjectSlug);
@@ -976,5 +1016,9 @@ onMounted(() => {
 onBeforeUnmount(() => {
   live.unbind("attention");
   if (longPressTimer !== null) clearTimeout(longPressTimer);
+  // Clear read-aloud text so the button disables when leaving the tasks page.
+  currentReportRawText = null;
+  ui.raText = null;
+  ui.raFilePath = null;
 });
 </script>
