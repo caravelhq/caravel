@@ -11,7 +11,8 @@ export type ResourceRef =
   | { kind: "chat"; chatId: string }
   | { kind: "legacy"; page: "tasks" | "chat" | "files" };
 
-export function refKey(ref: ResourceRef): string {
+export function refKey(ref: ResourceRef | undefined | null): string {
+  if (!ref) return "";
   switch (ref.kind) {
     case "dashboard": return "dashboard";
     case "file": return ref.branch ? `file:${ref.path}@${ref.branch}` : `file:${ref.path}`;
