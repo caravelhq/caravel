@@ -705,7 +705,7 @@ try {
         if (!strip) return false;
         const tab = Array.from(strip.querySelectorAll("[data-key]"))
           .find((t) => t.dataset?.key?.startsWith("legacy:"));
-        if (tab) { (tab as HTMLElement).click(); return true; }
+        if (tab) { tab.click(); return true; }
         return false;
       });
       await page.waitForTimeout(300);
@@ -784,7 +784,7 @@ try {
       for (let i = 0; i < clickCount; i++) {
         await page.evaluate((idx) => {
           const items = Array.from(document.querySelectorAll('.files-item[data-type="file"]'));
-          if (items[idx]) (items[idx] as HTMLElement).click();
+          if (items[idx]) items[idx].click();
         }, i);
         await page.waitForTimeout(200);
       }

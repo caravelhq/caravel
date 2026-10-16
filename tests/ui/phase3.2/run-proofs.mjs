@@ -37,7 +37,7 @@ const RECORD = join(WS, "Notes", "Projects", "Caravel-Vue", "reviews", "2026-10-
 const RENDEZVOUS = join(WS, "agents", "jess", "tasks", "done", "TSK-2026-10-16-0001.24.md");
 const TASK_ID = "TSK-2026-10-16-0001.24";
 const SKILL = join(WS, ".claude", "skills", "ui-test");
-const CLEAN_BUNDLE = "app.CCJvgehk.js";
+const CLEAN_BUNDLE = "app.CGqm3fyk.js";
 
 const PORT_SUITES = 4641;      // plain test server (TL/TB/NV)
 const PORT_FIXDAEMON = 4642;   // scratch fixture daemon (FP/EV API)

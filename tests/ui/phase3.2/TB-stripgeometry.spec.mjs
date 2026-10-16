@@ -503,6 +503,14 @@ try {
       const shot1 = join(SHOTS_DIR, `tb7-overflow-${VP.label.replace("×", "x")}.png`);
       await page.screenshot({ path: shot1 });
 
+      // Scroll the strip to its rightmost position so we measure the "at-end" geometry —
+      // F3's fix (padding-right on .tab-strip--overflow) reserves space at the scroll end.
+      await page.evaluate(() => {
+        const strip = document.querySelector(".tab-strip");
+        if (strip) strip.scrollLeft = strip.scrollWidth;
+      });
+      await page.waitForTimeout(150);
+
       // Get bounding boxes of the overflow button and of the last VISIBLE tab in the strip.
       const boxes = await page.evaluate(() => {
         const overflowEl = document.querySelector(".ts-overflow-btn");
@@ -510,14 +518,13 @@ try {
         const strip = document.querySelector(".tab-strip");
         if (!strip) return null;
 
-        // All tab buttons currently visible in the strip (within the scroll viewport).
+        // All tab buttons currently visible in the strip's client area.
         const stripRect = strip.getBoundingClientRect();
         const tabs = Array.from(strip.querySelectorAll(".ts-tab"));
-        // The last tab whose right edge is within the strip's client width.
+        // The last tab whose left edge is within the strip's visible rect.
         let lastVisible = null;
         for (const tab of tabs) {
           const r = tab.getBoundingClientRect();
-          // Consider visible if centre is within the strip's visible rect.
           if (r.left < stripRect.right && r.right > stripRect.left) {
             lastVisible = tab;
           }
@@ -525,30 +532,32 @@ try {
         if (!lastVisible) return null;
         const tabBox = lastVisible.getBoundingClientRect();
         const ovBox = overflowEl.getBoundingClientRect();
+        // Effective visible right of the tab = clipped at the strip's right edge.
+        const effectiveTabRight = Math.min(tabBox.right, stripRect.right);
         return {
-          tab: { left: tabBox.left, right: tabBox.right, top: tabBox.top, bottom: tabBox.bottom },
+          tab: { left: tabBox.left, right: tabBox.right, effectiveRight: effectiveTabRight, top: tabBox.top, bottom: tabBox.bottom },
           overflow: { left: ovBox.left, right: ovBox.right, top: ovBox.top, bottom: ovBox.bottom },
+          stripRight: stripRect.right,
         };
       });
 
       if (!boxes) {
-        fail(`TB7 ${VP.label} geometry boxes`, "could not measure tab and overflow bounding boxes");
+        fail(`TB7 ${VP.label} geometry boxes`, "could not measure tab and overflow bounding boxes after scroll-to-end");
         await page.close();
         continue;
       }
 
-      // The tab's right edge must not reach the overflow button's left edge.
-      const overlap = boxes.tab.right > boxes.overflow.left;
+      // The tab's effective visible right must not reach the overflow button's left edge.
+      const overlap = boxes.tab.effectiveRight > boxes.overflow.left;
       if (VP.width <= 450) {
         if (!overlap) {
-          pass(`TB7 ${VP.label} last tab (right=${boxes.tab.right.toFixed(0)}) does not intersect overflow btn (left=${boxes.overflow.left.toFixed(0)})`);
+          pass(`TB7 ${VP.label} last tab visible right (${boxes.tab.effectiveRight.toFixed(0)}) < overflow.left (${boxes.overflow.left.toFixed(0)}) — no F3 occlusion`);
         } else {
           fail(`TB7 ${VP.label} last tab does not intersect overflow affordance`,
-            `tab.right=${boxes.tab.right.toFixed(0)} > overflow.left=${boxes.overflow.left.toFixed(0)} — F3 occlusion`);
+            `effectiveTabRight=${boxes.tab.effectiveRight.toFixed(0)} > overflow.left=${boxes.overflow.left.toFixed(0)} — F3 occlusion; stripRight=${boxes.stripRight.toFixed(0)}`);
         }
 
         // Centre-tap on the last visible tab should activate it (not close it).
-        // Find the last visible tab's data-key and activate it with a click at its centre.
         const tappedKey = await page.evaluate(() => {
           const strip = document.querySelector(".tab-strip");
           if (!strip) return null;
@@ -561,14 +570,14 @@ try {
               lastVisible = tab;
             }
           }
-          return lastVisible ? (lastVisible as HTMLElement).dataset?.key ?? null : null;
+          return lastVisible ? lastVisible.dataset?.key ?? null : null;
         });
 
         if (!tappedKey) {
           fail(`TB7 ${VP.label} centre-tap: could not find last visible tab key`, "");
         } else {
-          // Get the centre of the last tab and click it.
-          const centreTapX = (boxes.tab.left + boxes.tab.right) / 2;
+          // Click the centre of the tab's visible area (clamped to strip's right edge).
+          const centreTapX = (boxes.tab.left + boxes.tab.effectiveRight) / 2;
           const centreTapY = (boxes.tab.top + boxes.tab.bottom) / 2;
           await page.mouse.click(centreTapX, centreTapY);
           await page.waitForTimeout(200);
@@ -576,7 +585,7 @@ try {
           const stAfterTap = await wsState(page);
           const tabStillOpen = stAfterTap?.tabKeys?.includes(tappedKey) ?? false;
           const activeAfterTap = stAfterTap?.active;
-          const focusedGroup = stAfterTap ? (stAfterTap as any).groups?.[0]?.focused ?? 0 : 0;
+          const focusedGroup = stAfterTap ? stAfterTap?.groups?.[0]?.focused ?? 0 : 0;
 
           const shot2 = join(SHOTS_DIR, `tb7-after-tap-${VP.label.replace("×", "x")}.png`);
           await page.screenshot({ path: shot2 });
