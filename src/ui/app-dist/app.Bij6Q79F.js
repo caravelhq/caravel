@@ -10977,7 +10977,7 @@ const vue = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty(
  * @license MIT
  */
 let activePinia;
-const setActivePinia = (pinia) => activePinia = pinia;
+const setActivePinia = (pinia2) => activePinia = pinia2;
 const piniaSymbol = (
   /* istanbul ignore next */
   Symbol()
@@ -10996,12 +10996,12 @@ function createPinia() {
   const state = scope.run(() => /* @__PURE__ */ ref({}));
   let _p = [];
   let toBeInstalled = [];
-  const pinia = markRaw({
+  const pinia2 = markRaw({
     install(app) {
-      setActivePinia(pinia);
-      pinia._a = app;
-      app.provide(piniaSymbol, pinia);
-      app.config.globalProperties.$pinia = pinia;
+      setActivePinia(pinia2);
+      pinia2._a = app;
+      app.provide(piniaSymbol, pinia2);
+      app.config.globalProperties.$pinia = pinia2;
       toBeInstalled.forEach((plugin) => _p.push(plugin));
       toBeInstalled = [];
     },
@@ -11021,7 +11021,7 @@ function createPinia() {
     _s: /* @__PURE__ */ new Map(),
     state
   });
-  return pinia;
+  return pinia2;
 }
 const noop$1 = () => {
 };
@@ -11074,28 +11074,28 @@ const { assign: assign$1 } = Object;
 function isComputed(o) {
   return !!(/* @__PURE__ */ isRef(o) && o.effect);
 }
-function createOptionsStore(id, options, pinia, hot) {
+function createOptionsStore(id, options, pinia2, hot) {
   const { state, actions, getters } = options;
-  const initialState = pinia.state.value[id];
+  const initialState = pinia2.state.value[id];
   let store;
   function setup() {
     if (!initialState && true) {
-      pinia.state.value[id] = state ? state() : {};
+      pinia2.state.value[id] = state ? state() : {};
     }
-    const localState = /* @__PURE__ */ toRefs(pinia.state.value[id]);
+    const localState = /* @__PURE__ */ toRefs(pinia2.state.value[id]);
     return assign$1(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
       computedGetters[name] = markRaw(computed(() => {
-        setActivePinia(pinia);
-        const store2 = pinia._s.get(id);
+        setActivePinia(pinia2);
+        const store2 = pinia2._s.get(id);
         return getters[name].call(store2, store2);
       }));
       return computedGetters;
     }, {}));
   }
-  store = createSetupStore(id, setup, options, pinia, hot, true);
+  store = createSetupStore(id, setup, options, pinia2, hot, true);
   return store;
 }
-function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) {
+function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
   let scope;
   const optionsForPlugin = assign$1({ actions: {} }, options);
   const $subscribeOptions = { deep: true };
@@ -11104,23 +11104,23 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
   let subscriptions = /* @__PURE__ */ new Set();
   let actionSubscriptions = /* @__PURE__ */ new Set();
   let debuggerEvents;
-  const initialState = pinia.state.value[$id];
+  const initialState = pinia2.state.value[$id];
   if (!isOptionsStore && !initialState && true) {
-    pinia.state.value[$id] = {};
+    pinia2.state.value[$id] = {};
   }
   let activeListener;
   function $patch(partialStateOrMutator) {
     let subscriptionMutation;
     isListening = isSyncListening = false;
     if (typeof partialStateOrMutator === "function") {
-      partialStateOrMutator(pinia.state.value[$id]);
+      partialStateOrMutator(pinia2.state.value[$id]);
       subscriptionMutation = {
         type: MutationType.patchFunction,
         storeId: $id,
         events: debuggerEvents
       };
     } else {
-      mergeReactiveObjects(pinia.state.value[$id], partialStateOrMutator);
+      mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
       subscriptionMutation = {
         type: MutationType.patchObject,
         payload: partialStateOrMutator,
@@ -11135,7 +11135,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
       }
     });
     isSyncListening = true;
-    triggerSubscriptions(subscriptions, subscriptionMutation, pinia.state.value[$id]);
+    triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
   }
   const $reset = isOptionsStore ? function $reset2() {
     const { state } = options;
@@ -11151,7 +11151,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     scope.stop();
     subscriptions.clear();
     actionSubscriptions.clear();
-    pinia._s.delete($id);
+    pinia2._s.delete($id);
   }
   const action = (fn, name = "") => {
     if (ACTION_MARKER in fn) {
@@ -11159,7 +11159,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
       return fn;
     }
     const wrappedAction = function() {
-      setActivePinia(pinia);
+      setActivePinia(pinia2);
       const args = Array.from(arguments);
       const afterCallbackSet = /* @__PURE__ */ new Set();
       const onErrorCallbackSet = /* @__PURE__ */ new Set();
@@ -11200,7 +11200,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     return wrappedAction;
   };
   const partialStore = {
-    _p: pinia,
+    _p: pinia2,
     // _s: scope,
     $id,
     $onAction: addSubscription.bind(null, actionSubscriptions),
@@ -11208,7 +11208,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     $reset,
     $subscribe(callback, options2 = {}) {
       const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
-      const stopWatcher = scope.run(() => watch(() => pinia.state.value[$id], (state) => {
+      const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
         if (options2.flush === "sync" ? isSyncListening : isListening) {
           callback({
             storeId: $id,
@@ -11222,9 +11222,9 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     $dispose
   };
   const store = /* @__PURE__ */ reactive(partialStore);
-  pinia._s.set($id, store);
-  const runWithContext = pinia._a && pinia._a.runWithContext || fallbackRunWithContext;
-  const setupStore = runWithContext(() => pinia._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
+  pinia2._s.set($id, store);
+  const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
+  const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
   for (const key in setupStore) {
     const prop = setupStore[key];
     if (/* @__PURE__ */ isRef(prop) && !isComputed(prop) || /* @__PURE__ */ isReactive(prop)) {
@@ -11236,7 +11236,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
             mergeReactiveObjects(prop, initialState[key]);
           }
         }
-        pinia.state.value[$id][key] = prop;
+        pinia2.state.value[$id][key] = prop;
       }
     } else if (typeof prop === "function") {
       const actionValue = action(prop, key);
@@ -11247,19 +11247,19 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
   assign$1(store, setupStore);
   assign$1(/* @__PURE__ */ toRaw(store), setupStore);
   Object.defineProperty(store, "$state", {
-    get: () => pinia.state.value[$id],
+    get: () => pinia2.state.value[$id],
     set: (state) => {
       $patch(($state) => {
         assign$1($state, state);
       });
     }
   });
-  pinia._p.forEach((extender) => {
+  pinia2._p.forEach((extender) => {
     {
       assign$1(store, scope.run(() => extender({
         store,
-        app: pinia._a,
-        pinia,
+        app: pinia2._a,
+        pinia: pinia2,
         options: optionsForPlugin
       })));
     }
@@ -11277,22 +11277,22 @@ function defineStore(id, setup, setupOptions) {
   let options;
   const isSetupStore = typeof setup === "function";
   options = isSetupStore ? setupOptions : setup;
-  function useStore(pinia, hot) {
+  function useStore(pinia2, hot) {
     const hasContext = hasInjectionContext();
-    pinia = // in test mode, ignore the argument provided as we can always retrieve a
+    pinia2 = // in test mode, ignore the argument provided as we can always retrieve a
     // pinia instance with getActivePinia()
-    pinia || (hasContext ? inject(piniaSymbol, null) : null);
-    if (pinia)
-      setActivePinia(pinia);
-    pinia = activePinia;
-    if (!pinia._s.has(id)) {
+    pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
+    if (pinia2)
+      setActivePinia(pinia2);
+    pinia2 = activePinia;
+    if (!pinia2._s.has(id)) {
       if (isSetupStore) {
-        createSetupStore(id, setup, options, pinia);
+        createSetupStore(id, setup, options, pinia2);
       } else {
-        createOptionsStore(id, options, pinia);
+        createOptionsStore(id, options, pinia2);
       }
     }
-    const store = pinia._s.get(id);
+    const store = pinia2._s.get(id);
     return store;
   }
   useStore.$id = id;
@@ -13346,6 +13346,8 @@ function migrateFromReading() {
   }
 }
 const DASHBOARD_REF = { kind: "dashboard" };
+const TAB_CAP = 12;
+const RECENTS_MAX = 5;
 const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
   const hasWorkspaceData = localStorage.getItem("workspace.tabs") !== null;
   let initialTabs;
@@ -13386,11 +13388,16 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     initialActive0 = load$4("active0", initialTabs.length > 0 ? refKey(initialTabs[0]) : null);
     initialActive1 = load$4("active1", null);
   }
+  let initialFocused = load$4("focused", 0);
+  if (initialFocused === 1) {
+    const g1Initial = initialSplitOn && initialSplitIndex !== null ? initialTabs.slice(initialSplitIndex) : [];
+    if (g1Initial.length === 0) initialFocused = 0;
+  }
   const tabs = /* @__PURE__ */ ref(initialTabs);
   const splitIndex = /* @__PURE__ */ ref(initialSplitIndex);
   const splitOn = /* @__PURE__ */ ref(initialSplitOn);
   const active = /* @__PURE__ */ ref([initialActive0, initialActive1]);
-  const focused = /* @__PURE__ */ ref(0);
+  const focused = /* @__PURE__ */ ref(initialFocused);
   function group0End() {
     return splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
   }
@@ -13408,6 +13415,13 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
   const splitRatio = /* @__PURE__ */ ref(
     Math.min(0.75, Math.max(0.25, load$4("splitRatio", 0.5)))
   );
+  const meta = /* @__PURE__ */ ref(load$4("meta", {}));
+  const recents = /* @__PURE__ */ ref(load$4("recents", []));
+  let touchSeq = Object.values(meta.value).reduce(
+    (max, m2) => Math.max(max, m2.touched ?? 0),
+    0
+  );
+  let _capWarnSent = false;
   function persist() {
     save$2("tabs", tabs.value);
     save$2("splitIndex", splitIndex.value);
@@ -13415,6 +13429,9 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     save$2("active0", active.value[0]);
     save$2("active1", active.value[1]);
     save$2("splitRatio", splitRatio.value);
+    save$2("meta", meta.value);
+    save$2("focused", focused.value);
+    save$2("recents", recents.value);
   }
   function fixupActive() {
     const g0 = groupTabs(0);
@@ -13430,24 +13447,112 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       active.value[1] = null;
     }
   }
+  function touchTab(key) {
+    const existing = meta.value[key] ?? { touched: 0 };
+    meta.value[key] = { ...existing, touched: ++touchSeq };
+  }
+  function pushRecent(ref2) {
+    const key = refKey(ref2);
+    const existing = recents.value.findIndex((r) => refKey(r) === key);
+    if (existing !== -1) recents.value.splice(existing, 1);
+    recents.value.unshift(ref2);
+    if (recents.value.length > RECENTS_MAX) recents.value = recents.value.slice(0, RECENTS_MAX);
+  }
+  function maybeEvict() {
+    if (tabs.value.length <= TAB_CAP) {
+      _capWarnSent = false;
+      return;
+    }
+    const activeKeys = new Set(
+      [active.value[0], active.value[1]].filter((k) => k !== null)
+    );
+    const candidates = tabs.value.filter((t) => {
+      var _a2, _b;
+      const k = refKey(t);
+      return !((_a2 = meta.value[k]) == null ? void 0 : _a2.pinned) && !((_b = meta.value[k]) == null ? void 0 : _b.preview) && !activeKeys.has(k);
+    });
+    if (candidates.length === 0) {
+      if (!_capWarnSent) {
+        console.warn("[workspace] tab cap exceeded: all tabs pinned");
+        _capWarnSent = true;
+      }
+      return;
+    }
+    _capWarnSent = false;
+    const victim = candidates.reduce(
+      (a, b2) => {
+        var _a2, _b;
+        return (((_a2 = meta.value[refKey(a)]) == null ? void 0 : _a2.touched) ?? 0) <= (((_b = meta.value[refKey(b2)]) == null ? void 0 : _b.touched) ?? 0) ? a : b2;
+      }
+    );
+    const victimKey = refKey(victim);
+    pushRecent(victim);
+    const victimIdx = keyIndex(victimKey);
+    if (victimIdx !== -1) {
+      tabs.value.splice(victimIdx, 1);
+      if (splitOn.value && splitIndex.value !== null && victimIdx < splitIndex.value) {
+        splitIndex.value--;
+      }
+      if (splitOn.value && splitIndex.value !== null) {
+        if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+          splitOn.value = false;
+          splitIndex.value = null;
+        }
+      }
+    }
+    delete meta.value[victimKey];
+    fixupActive();
+  }
   function open(ref2, opts = {}) {
+    var _a2;
     const key = refKey(ref2);
     const existingIdx = keyIndex(key);
     if (existingIdx !== -1) {
+      if (!opts.preview && ((_a2 = meta.value[key]) == null ? void 0 : _a2.preview)) {
+        const m2 = meta.value[key];
+        const result = { touched: m2.touched };
+        if (m2.pinned) result.pinned = true;
+        meta.value[key] = result;
+      }
       if (!opts.background) {
         const g2 = tabGroup(existingIdx);
         active.value[g2] = key;
         focused.value = g2;
+        touchTab(key);
         persist();
         syncWorkspaceUrl(false);
       }
       return;
     }
     const targetGroup = opts.side ? 1 : focused.value;
+    if (opts.preview) {
+      const groupT = groupTabs(targetGroup);
+      const previewTab = groupT.find((t) => {
+        var _a3;
+        return (_a3 = meta.value[refKey(t)]) == null ? void 0 : _a3.preview;
+      });
+      if (previewTab) {
+        const oldKey = refKey(previewTab);
+        const absIdx = keyIndex(oldKey);
+        delete meta.value[oldKey];
+        meta.value[key] = { preview: true, touched: ++touchSeq };
+        tabs.value.splice(absIdx, 1, ref2);
+        if (!opts.background) {
+          active.value[targetGroup] = key;
+          focused.value = targetGroup;
+          persist();
+          syncWorkspaceUrl(true);
+        }
+        return;
+      }
+    }
     if (opts.side && !(splitOn.value && splitIndex.value !== null)) {
       tabs.value.push(ref2);
       splitIndex.value = tabs.value.length - 1;
       splitOn.value = true;
+      const m2 = { touched: ++touchSeq };
+      if (opts.preview) m2.preview = true;
+      meta.value[key] = m2;
       if (!opts.background) {
         active.value[1] = key;
         focused.value = 1;
@@ -13468,18 +13573,25 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       if (splitOn.value && splitIndex.value !== null && insertIdx <= splitIndex.value) {
         splitIndex.value++;
       }
+      const m2 = { touched: ++touchSeq };
+      if (opts.preview) m2.preview = true;
+      meta.value[key] = m2;
       if (!opts.background) {
         active.value[targetGroup] = key;
         focused.value = targetGroup;
       }
     }
+    maybeEvict();
     persist();
     if (!opts.background) syncWorkspaceUrl(true);
   }
   function close(key) {
     const idx = keyIndex(key);
     if (idx === -1) return;
+    pushRecent(tabs.value[idx]);
     tabs.value.splice(idx, 1);
+    delete meta.value[key];
+    _capWarnSent = false;
     if (splitOn.value && splitIndex.value !== null) {
       if (idx < splitIndex.value) {
         splitIndex.value--;
@@ -13502,13 +13614,141 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     persist();
     syncWorkspaceUrl(false);
   }
+  function pin(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const tabRef = tabs.value[idx];
+    const m2 = meta.value[key] ?? { touched: 0 };
+    meta.value[key] = { touched: m2.touched, pinned: true };
+    tabs.value.splice(idx, 1);
+    if (splitOn.value && splitIndex.value !== null && idx < splitIndex.value) {
+      splitIndex.value--;
+    }
+    const groupStart = g2 === 0 ? 0 : splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
+    tabs.value.splice(groupStart, 0, tabRef);
+    if (splitOn.value && splitIndex.value !== null && groupStart < splitIndex.value) {
+      splitIndex.value++;
+    }
+    persist();
+  }
+  function unpin(key) {
+    const m2 = meta.value[key];
+    if (!m2) return;
+    const result = { touched: m2.touched };
+    if (m2.preview) result.preview = true;
+    meta.value[key] = result;
+    persist();
+  }
+  function closeOthers(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const toClose = groupTabs(g2).filter((t) => {
+      var _a2;
+      return refKey(t) !== key && !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(false);
+  }
+  function closeToRight(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const groupT = groupTabs(g2);
+    const posInGroup = idx - (g2 === 0 ? 0 : group0End());
+    const toClose = groupT.slice(posInGroup + 1).filter((t) => {
+      var _a2;
+      return !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(false);
+  }
+  function closeAll() {
+    const toClose = tabs.value.filter((t) => {
+      var _a2;
+      return !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (tabs.value.length === 0) {
+      active.value = [null, null];
+      focused.value = 0;
+      splitOn.value = false;
+      splitIndex.value = null;
+      _capWarnSent = false;
+      persist();
+      syncWorkspaceUrl(false);
+      return;
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(false);
+  }
   function move(key, toIndex) {
     const fromIdx = keyIndex(key);
     if (fromIdx === -1) return;
-    const ref2 = tabs.value[fromIdx];
+    const tabRef = tabs.value[fromIdx];
     tabs.value.splice(fromIdx, 1);
     const clampedTo = Math.max(0, Math.min(tabs.value.length, toIndex));
-    tabs.value.splice(clampedTo, 0, ref2);
+    tabs.value.splice(clampedTo, 0, tabRef);
     if (splitOn.value && splitIndex.value !== null) {
       let s = splitIndex.value;
       if (fromIdx < s) s--;
@@ -13521,7 +13761,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     const fromIdx = keyIndex(key);
     if (fromIdx === -1) return;
     if (tabGroup(fromIdx) === targetGroup) return;
-    const ref2 = tabs.value[fromIdx];
+    const tabRef = tabs.value[fromIdx];
     tabs.value.splice(fromIdx, 1);
     if (splitIndex.value !== null && fromIdx < splitIndex.value) {
       splitIndex.value--;
@@ -13534,7 +13774,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     const insertAt = targetGroup === 0 ? 0 : splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
-    tabs.value.splice(insertAt, 0, ref2);
+    tabs.value.splice(insertAt, 0, tabRef);
     if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
       splitIndex.value++;
     }
@@ -13558,6 +13798,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
   }
   function focus(group) {
     focused.value = group;
+    syncWorkspaceUrl(false);
   }
   function activate(key) {
     const idx = keyIndex(key);
@@ -13565,6 +13806,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     const g2 = tabGroup(idx);
     active.value[g2] = key;
     focused.value = g2;
+    touchTab(key);
     persist();
     syncWorkspaceUrl(false);
   }
@@ -13580,11 +13822,18 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     splitRatio,
     active,
     focused,
+    meta,
+    recents,
     groupTabs,
     tabGroup,
     refKey,
     open,
     close,
+    pin,
+    unpin,
+    closeOthers,
+    closeToRight,
+    closeAll,
     move,
     moveToGroup,
     toggleSplit,
@@ -32101,4 +32350,6 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((r) => r.unregister()))).catch(() => {
   });
 }
-createApp(_sfc_main).use(createPinia()).use(router).use(createBootstrap()).mount("#app");
+const pinia = createPinia();
+window.__pinia = pinia;
+createApp(_sfc_main).use(pinia).use(router).use(createBootstrap()).mount("#app");
