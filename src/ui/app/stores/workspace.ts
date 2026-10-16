@@ -64,6 +64,17 @@ function migrateReportRefs(refs: ResourceRef[]): ResourceRef[] {
   });
 }
 
+// Workspace snapshot — the full tab state at a history entry.
+// Exported for the router's popstate handler (snapshot ring).
+export type WsSnapshot = {
+  tabs: ResourceRef[];
+  splitIndex: number | null;
+  splitOn: boolean;
+  active: [string | null, string | null];
+  focused: 0 | 1;
+  meta: Record<string, TabMeta>;
+};
+
 const DASHBOARD_REF: ResourceRef = { kind: "dashboard" };
 const TAB_CAP = 12;
 const RECENTS_MAX = 5;
@@ -381,13 +392,13 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       active.value = [null, null];
       focused.value = 0;
       persist();
-      syncWorkspaceUrl(false);
+      syncWorkspaceUrl(true);
       return;
     }
 
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   // Pinned tabs sort to the front of their group and are never evicted.
@@ -454,7 +465,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   // closeToRight: close non-pinned tabs to the right of key within its group.
@@ -488,7 +499,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   // closeAll: close all non-pinned tabs across both groups.
@@ -515,7 +526,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       splitIndex.value = null;
       _capWarnSent = false;
       persist();
-      syncWorkspaceUrl(false);
+      syncWorkspaceUrl(true);
       return;
     }
     if (splitOn.value && splitIndex.value !== null) {
@@ -527,7 +538,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   function move(key: string, toIndex: number): void {
@@ -596,13 +607,25 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       }
     }
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   // focus() now calls syncWorkspaceUrl — F10 fix (R11 D1-r).
   function focus(group: 0 | 1): void {
     focused.value = group;
     syncWorkspaceUrl(false);
+  }
+
+  // Applied wholesale by the router's popstate handler (snapshot ring).
+  // Does not call syncWorkspaceUrl — the URL is already the target (Back/Forward changed it).
+  function restoreSnapshot(snap: WsSnapshot): void {
+    tabs.value = snap.tabs;
+    splitIndex.value = snap.splitIndex;
+    splitOn.value = snap.splitOn;
+    active.value = [snap.active[0], snap.active[1]];
+    focused.value = snap.focused;
+    meta.value = snap.meta;
+    persist();
   }
 
   // Reopen a recently-closed/evicted ref: remove from recents and open it.
@@ -622,7 +645,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     focused.value = g;
     touchTab(key);
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
 
   // Computed: the active ref for the focused group (for URL sync).
@@ -656,6 +679,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     toggleSplit,
     focus,
     activate,
+    restoreSnapshot,
     focusedActiveRef,
     reopenFromRecents,
   };

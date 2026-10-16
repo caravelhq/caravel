@@ -1,7 +1,6 @@
 import { createRouter, createWebHashHistory, type RouteLocationNormalized } from "vue-router";
-import { useWorkspaceStore } from "../stores/workspace";
+import { useWorkspaceStore, type WsSnapshot } from "../stores/workspace";
 import { useTasksStore } from "../stores/tasks";
-import { useFilesStore } from "../stores/files";
 import type { ResourceRef } from "../workspace/refs";
 import { refKey } from "../workspace/refs";
 
@@ -32,13 +31,62 @@ export const router = createRouter({
   ],
 });
 
+// ── Snapshot ring ────────────────────────────────────────────────────────────
+// A bounded ring of 50 workspace snapshots in sessionStorage, keyed by
+// monotonically increasing wsStateId. Each history.push embeds its id in
+// history.state so popstate can restore the matching snapshot.
+
+const WS_RING_KEY = "ws.ring";
+const WS_RING_MAX = 50;
+type WsRing = Record<number, WsSnapshot>;
+
+function loadRing(): WsRing {
+  try { return JSON.parse(sessionStorage.getItem(WS_RING_KEY) ?? "{}") as WsRing; } catch { return {}; }
+}
+
+function saveRing(ring: WsRing): void {
+  const ids = Object.keys(ring).map(Number).sort((a, b) => a - b);
+  if (ids.length > WS_RING_MAX) {
+    for (const id of ids.slice(0, ids.length - WS_RING_MAX)) delete ring[id];
+  }
+  try { sessionStorage.setItem(WS_RING_KEY, JSON.stringify(ring)); } catch {}
+}
+
+// Init seq from highest stored id so a reload doesn't collide with existing entries.
+let _wsStateIdSeq = (() => {
+  const ring = loadRing();
+  const ids = Object.keys(ring).map(Number);
+  return ids.length ? Math.max(...ids) : 0;
+})();
+
+// Snapshot queued by the popstate listener; consumed once by afterEach.
+let _pendingSnapshot: WsSnapshot | null = null;
+
+// Capture the popstate event before vue-router's async afterEach fires.
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", (ev) => {
+    const stateId = (ev.state as Record<string, unknown> | null)?.wsStateId as number | undefined;
+    if (stateId !== undefined) {
+      const ring = loadRing();
+      _pendingSnapshot = ring[stateId] ?? null;
+    }
+  });
+}
+
+// ── Routing ──────────────────────────────────────────────────────────────────
+
 // Parse a route into a ResourceRef (or null if unrecognised).
 function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
   const p = route.path;
   if (p === "/dashboard" || p === "/") return { kind: "dashboard" };
   if (p === "/tasks" || p.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p === "/chat") return { kind: "legacy", page: "chat" };
-  if (p === "/files" || p.startsWith("/files/")) return { kind: "legacy", page: "files" };
+  if (p === "/files") return { kind: "legacy", page: "files" };
+  if (p.startsWith("/files/")) {
+    // Step 7: /files/<path> opens the file as a file: tab (step 6 converted Files to a pure picker).
+    const filePath = decodeURIComponent(p.slice("/files/".length));
+    return { kind: "file", path: filePath };
+  }
   if (p.startsWith("/file/")) {
     const path = decodeURIComponent(p.slice("/file/".length));
     const branch = route.query["branch"] as string | undefined;
@@ -57,6 +105,20 @@ function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
 
 // Navigation-initiated changes (popstate / direct URL) open or focus without a history push.
 router.afterEach((to) => {
+  // Popstate with a known wsStateId: restore workspace wholesale from the snapshot ring.
+  if (_pendingSnapshot) {
+    const snap = _pendingSnapshot;
+    _pendingSnapshot = null;
+    const ws = useWorkspaceStore();
+    _navigating = true;
+    try {
+      ws.restoreSnapshot(snap);
+    } finally {
+      _navigating = false;
+    }
+    return;
+  }
+
   const ref = routeToRef(to);
   if (!ref) return;
 
@@ -95,20 +157,17 @@ router.afterEach((to) => {
         tasks.currentTaskId = taskId;
         tasks.pane = "view";
       }
-    } else if (p.startsWith("/files/")) {
-      const filePath = decodeURIComponent(p.slice("/files/".length));
-      if (filePath) {
-        const files = useFilesStore();
-        files.currentPath = filePath;
-      }
     }
+    // /files/<path> is handled by routeToRef returning a file: ref — ws.open above opens it.
+    // files.currentPath hydration removed (step 7): the file tab is the canonical representation.
   } finally {
     _navigating = false;
   }
 });
 
 // Sync the current workspace state to the URL.
-// push=true when opening a brand-new tab; push=false (replace) for activation, focus changes, ?side= changes.
+// push=true: open, activate, close, split-toggle — each is a Back stop.
+// push=false (replace): focus changes and ?side= — too fine-grained for Back.
 export function syncWorkspaceUrl(push: boolean): void {
   if (_navigating) return;
   const ws = useWorkspaceStore();
@@ -121,12 +180,8 @@ export function syncWorkspaceUrl(push: boolean): void {
     path = (tasks.pane === "view" && tasks.currentTaskId)
       ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}`
       : "/tasks";
-  } else if (focusedRef.kind === "legacy" && focusedRef.page === "files") {
-    const files = useFilesStore();
-    path = files.currentPath
-      ? `/files/${encodeURIComponent(files.currentPath)}`
-      : "/files";
   } else {
+    // legacy:files always maps to /files (step 7: the path no longer tracks an open file).
     path = refToPath(focusedRef);
   }
 
@@ -136,7 +191,19 @@ export function syncWorkspaceUrl(push: boolean): void {
   const query: Record<string, string> = ws.splitOn && otherKey ? { side: otherKey } : {};
 
   if (push) {
-    router.push({ path, query });
+    // Snapshot current workspace state and embed id in the history entry.
+    const id = ++_wsStateIdSeq;
+    const ring = loadRing();
+    ring[id] = {
+      tabs: JSON.parse(JSON.stringify(ws.tabs)),
+      splitIndex: ws.splitIndex,
+      splitOn: ws.splitOn,
+      active: [ws.active[0], ws.active[1]] as [string | null, string | null],
+      focused: ws.focused,
+      meta: JSON.parse(JSON.stringify(ws.meta)),
+    };
+    saveRing(ring);
+    router.push({ path, query, state: { wsStateId: id } });
   } else {
     router.replace({ path, query });
   }

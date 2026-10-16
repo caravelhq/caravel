@@ -13612,12 +13612,12 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       active.value = [null, null];
       focused.value = 0;
       persist();
-      syncWorkspaceUrl(false);
+      syncWorkspaceUrl(true);
       return;
     }
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function pin(key) {
     const idx = keyIndex(key);
@@ -13674,7 +13674,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function closeToRight(key) {
     const idx = keyIndex(key);
@@ -13707,7 +13707,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function closeAll() {
     const toClose = tabs.value.filter((t) => {
@@ -13733,7 +13733,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       splitIndex.value = null;
       _capWarnSent = false;
       persist();
-      syncWorkspaceUrl(false);
+      syncWorkspaceUrl(true);
       return;
     }
     if (splitOn.value && splitIndex.value !== null) {
@@ -13745,7 +13745,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     _capWarnSent = false;
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function move(key, toIndex) {
     const fromIdx = keyIndex(key);
@@ -13799,11 +13799,20 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function focus(group) {
     focused.value = group;
     syncWorkspaceUrl(false);
+  }
+  function restoreSnapshot(snap) {
+    tabs.value = snap.tabs;
+    splitIndex.value = snap.splitIndex;
+    splitOn.value = snap.splitOn;
+    active.value = [snap.active[0], snap.active[1]];
+    focused.value = snap.focused;
+    meta.value = snap.meta;
+    persist();
   }
   function reopenFromRecents(key) {
     const idx = recents.value.findIndex((r) => refKey(r) === key);
@@ -13820,7 +13829,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     focused.value = g2;
     touchTab(key);
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   const focusedActiveRef = computed(() => {
     const key = active.value[focused.value];
@@ -13851,6 +13860,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     toggleSplit,
     focus,
     activate,
+    restoreSnapshot,
     focusedActiveRef,
     reopenFromRecents
   };
@@ -13911,31 +13921,6 @@ const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
     pendingTaskId
   };
 });
-function load$2(key, fallback) {
-  try {
-    const v2 = localStorage.getItem("files." + key);
-    if (v2 === null) return fallback;
-    return JSON.parse(v2);
-  } catch {
-    return fallback;
-  }
-}
-function save(key, value) {
-  try {
-    localStorage.setItem("files." + key, JSON.stringify(value));
-  } catch {
-  }
-}
-const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
-  const currentPath = /* @__PURE__ */ ref(load$2("currentPath", ""));
-  const currentDir = /* @__PURE__ */ ref(load$2("currentDir", "."));
-  const selectedBranch = /* @__PURE__ */ ref(load$2("selectedBranch", ""));
-  const loaded = /* @__PURE__ */ ref(false);
-  watch(currentPath, (v2) => save("currentPath", v2));
-  watch(currentDir, (v2) => save("currentDir", v2));
-  watch(selectedBranch, (v2) => save("selectedBranch", v2));
-  return { currentPath, currentDir, selectedBranch, loaded };
-});
 let _navigating = false;
 const Stub = /* @__PURE__ */ defineComponent({ render: () => null });
 const router = createRouter({
@@ -13956,12 +13941,51 @@ const router = createRouter({
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
 });
+const WS_RING_KEY = "ws.ring";
+const WS_RING_MAX = 50;
+function loadRing() {
+  try {
+    return JSON.parse(sessionStorage.getItem(WS_RING_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+function saveRing(ring) {
+  const ids = Object.keys(ring).map(Number).sort((a, b2) => a - b2);
+  if (ids.length > WS_RING_MAX) {
+    for (const id of ids.slice(0, ids.length - WS_RING_MAX)) delete ring[id];
+  }
+  try {
+    sessionStorage.setItem(WS_RING_KEY, JSON.stringify(ring));
+  } catch {
+  }
+}
+let _wsStateIdSeq = (() => {
+  const ring = loadRing();
+  const ids = Object.keys(ring).map(Number);
+  return ids.length ? Math.max(...ids) : 0;
+})();
+let _pendingSnapshot = null;
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", (ev) => {
+    var _a2;
+    const stateId = (_a2 = ev.state) == null ? void 0 : _a2.wsStateId;
+    if (stateId !== void 0) {
+      const ring = loadRing();
+      _pendingSnapshot = ring[stateId] ?? null;
+    }
+  });
+}
 function routeToRef(route) {
   const p2 = route.path;
   if (p2 === "/dashboard" || p2 === "/") return { kind: "dashboard" };
   if (p2 === "/tasks" || p2.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p2 === "/chat") return { kind: "legacy", page: "chat" };
-  if (p2 === "/files" || p2.startsWith("/files/")) return { kind: "legacy", page: "files" };
+  if (p2 === "/files") return { kind: "legacy", page: "files" };
+  if (p2.startsWith("/files/")) {
+    const filePath = decodeURIComponent(p2.slice("/files/".length));
+    return { kind: "file", path: filePath };
+  }
   if (p2.startsWith("/file/")) {
     const path = decodeURIComponent(p2.slice("/file/".length));
     const branch = route.query["branch"];
@@ -13978,6 +14002,18 @@ function routeToRef(route) {
   return null;
 }
 router.afterEach((to) => {
+  if (_pendingSnapshot) {
+    const snap = _pendingSnapshot;
+    _pendingSnapshot = null;
+    const ws2 = useWorkspaceStore();
+    _navigating = true;
+    try {
+      ws2.restoreSnapshot(snap);
+    } finally {
+      _navigating = false;
+    }
+    return;
+  }
   const ref2 = routeToRef(to);
   if (!ref2) return;
   const ws = useWorkspaceStore();
@@ -14006,12 +14042,6 @@ router.afterEach((to) => {
         tasks.currentTaskId = taskId;
         tasks.pane = "view";
       }
-    } else if (p2.startsWith("/files/")) {
-      const filePath = decodeURIComponent(p2.slice("/files/".length));
-      if (filePath) {
-        const files = useFilesStore();
-        files.currentPath = filePath;
-      }
     }
   } finally {
     _navigating = false;
@@ -14026,9 +14056,6 @@ function syncWorkspaceUrl(push) {
   if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
     const tasks = useTasksStore();
     path = tasks.pane === "view" && tasks.currentTaskId ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}` : "/tasks";
-  } else if (focusedRef.kind === "legacy" && focusedRef.page === "files") {
-    const files = useFilesStore();
-    path = files.currentPath ? `/files/${encodeURIComponent(files.currentPath)}` : "/files";
   } else {
     path = refToPath(focusedRef);
   }
@@ -14036,7 +14063,18 @@ function syncWorkspaceUrl(push) {
   const otherKey = ws.active[otherGroup];
   const query = ws.splitOn && otherKey ? { side: otherKey } : {};
   if (push) {
-    router.push({ path, query });
+    const id = ++_wsStateIdSeq;
+    const ring = loadRing();
+    ring[id] = {
+      tabs: JSON.parse(JSON.stringify(ws.tabs)),
+      splitIndex: ws.splitIndex,
+      splitOn: ws.splitOn,
+      active: [ws.active[0], ws.active[1]],
+      focused: ws.focused,
+      meta: JSON.parse(JSON.stringify(ws.meta))
+    };
+    saveRing(ring);
+    router.push({ path, query, state: { wsStateId: id } });
   } else {
     router.replace({ path, query });
   }
@@ -22674,7 +22712,7 @@ var load_1 = load$1;
 var loader = {
   load: load_1
 };
-var load = loader.load;
+var load$2 = loader.load;
 const escapeHtml = (s) => String(s).replace(
   /[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
@@ -22729,7 +22767,7 @@ function renderObject(obj, depth) {
 function yamlRender(src) {
   if (!src) return "";
   try {
-    const parsed = load(src);
+    const parsed = load$2(src);
     if (parsed === null || parsed === void 0)
       return '<div class="yaml-empty">empty document</div>';
     return `<div class="yaml-doc">${renderValue(parsed, 0)}</div>`;
@@ -23658,6 +23696,31 @@ function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulk
   }
   projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
 }
+function load(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("files." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
+}
+function save(key, value) {
+  try {
+    localStorage.setItem("files." + key, JSON.stringify(value));
+  } catch {
+  }
+}
+const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
+  const currentPath = /* @__PURE__ */ ref(load("currentPath", ""));
+  const currentDir = /* @__PURE__ */ ref(load("currentDir", "."));
+  const selectedBranch = /* @__PURE__ */ ref(load("selectedBranch", ""));
+  const loaded = /* @__PURE__ */ ref(false);
+  watch(currentPath, (v2) => save("currentPath", v2));
+  watch(currentDir, (v2) => save("currentDir", v2));
+  watch(selectedBranch, (v2) => save("selectedBranch", v2));
+  return { currentPath, currentDir, selectedBranch, loaded };
+});
 const _hoisted_1$7 = {
   id: "tasks-panel",
   class: "tasks-panel"
