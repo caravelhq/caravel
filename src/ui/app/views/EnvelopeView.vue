@@ -42,6 +42,9 @@ const taskPane = ref<HTMLElement | null>(null);
 const reportPane = ref<HTMLElement | null>(null);
 
 let reportRawText: string | null = null;
+// Auto-switch to Report on first data load if reportPath exists (deep-link intent).
+// Subsequent reloads/refetches don't override the user's chosen sub-view.
+let hasAutoSwitched = false;
 
 function stripActionForms(container: HTMLElement): void {
   container.querySelectorAll(".task-panel-next, .task-panel-chat-form, .task-panel-close-form").forEach(el => el.remove());
@@ -99,7 +102,15 @@ function renderAll(): void {
 }
 
 // Re-render whenever chain data arrives or updates
-watch(chain, () => nextTick(renderAll));
+watch(chain, (newChain) => {
+  nextTick(() => {
+    renderAll();
+    if (!hasAutoSwitched) {
+      hasAutoSwitched = true;
+      if (newChain?.task?.reportPath) subView.value = "report";
+    }
+  });
+});
 
 onMounted(() => nextTick(renderAll));
 

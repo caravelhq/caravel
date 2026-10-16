@@ -17433,13 +17433,16 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     });
     const tasksList = computed(() => {
       const e = live.entry(TASKS_LIST_KEY);
-      return (e == null ? void 0 : e.data) ?? null;
+      if (!(e == null ? void 0 : e.data)) return null;
+      const d2 = e.data;
+      return Array.isArray(d2) ? d2 : d2.tasks ?? null;
     });
     function tabLabel(r) {
-      var _a2;
-      if (r.kind === "envelope" || r.kind === "report") {
+      var _a2, _b;
+      if (r.kind === "envelope") {
         const perIdEntry = live.entry("task:" + r.taskId);
-        const headline = (_a2 = perIdEntry == null ? void 0 : perIdEntry.data) == null ? void 0 : _a2.headline;
+        const data = perIdEntry == null ? void 0 : perIdEntry.data;
+        const headline = (_b = (_a2 = data == null ? void 0 : data.chain) == null ? void 0 : _a2.task) == null ? void 0 : _b.headline;
         if (headline) return headline;
       }
       return refLabel(r, tasksList.value);
@@ -17767,7 +17770,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-ea2fb1bd"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-2a6d8a36"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
