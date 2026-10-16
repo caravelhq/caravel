@@ -200,10 +200,10 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 
   // Evict the least-recently-activated non-pinned, non-preview tab when over cap.
   // Never evicts a visibly active tab (DEC-0025 S2).
-  // Logs once per overflow episode when nothing is evictable (M3).
+  // Cap is total tabs. Eviction candidates are non-pinned, non-preview, non-active.
+  // If nothing is evictable (e.g. all pinned), list grows and we log once per episode.
   function maybeEvict(): void {
-    const nonPinnedCount = tabs.value.filter((t) => !meta.value[refKey(t)]?.pinned).length;
-    if (nonPinnedCount <= TAB_CAP) {
+    if (tabs.value.length <= TAB_CAP) {
       _capWarnSent = false;
       return;
     }
