@@ -67,9 +67,11 @@ useResource("summary", {
 // ── Prefetch top report rows (DEC-0021) ────────────────────────────────────
 watch(() => attentionStore.tiers, (tiers) => {
   if (!tiers?.reports?.rows) return;
+  // Warm the key EnvelopeView binds — watcher is {once:true} over the reports tier only,
+  // which is 1-of-3 of DEC-0021's callers; that shape is intentional (see FDP step 5).
   for (const row of tiers.reports.rows.slice(0, 3)) {
     if (!row.id) continue;
-    live.prefetch("report:" + row.id, {
+    live.prefetch("task:" + row.id, {
       topics: ["tasks"],
       fetch: async () => {
         try {
