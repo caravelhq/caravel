@@ -205,8 +205,13 @@ try {
   summary.port4633Before = preBundle;
   log(`preconditions: src dirt=${srcDirt.length}, :4633 serving ${preBundle}`);
 
-  // 1. Protect :4633 — down is better than lying.
+  // 1. Protect :4633 — down is better than lying. Verify it is REALLY down;
+  //    a silently-failed stop would leave it serving mutated builds.
   log("stop :4633:", stopTestServer(4633));
+  await sleep(2000);
+  const stillUp = await fetch("http://127.0.0.1:4633/", { signal: AbortSignal.timeout(3000) }).then(() => true).catch(() => false);
+  if (stillUp) throw new Error(":4633 did not stop — refusing to mutate the shared checkout while it serves");
+  log(":4633 confirmed down");
 
   // Also clear the crashed attempts' leftovers (mine, from TSK-.19/.21).
   stops.push(stopTestServer(4635));
