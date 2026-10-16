@@ -292,6 +292,23 @@ try {
       // Restore fixture so subsequent spec runs (and other EV tests) work cleanly
       writeFileSync(FX_0006_PATH, yamlBefore);
 
+      // Wait for the daemon to reprocess the restore: the file-watcher invalidates
+      // chain caches when TSK-FX-0006.yaml changes. EV6 opens a fresh WS connection;
+      // if that connection arrives while chain recomputation is in flight, the pane
+      // shows "No chain data." for the full waitForFunction window. Polling here
+      // blocks EV4+ until the daemon's chain for TSK-FX-0005 settles.
+      {
+        const t0 = Date.now();
+        while (Date.now() - t0 < 20000) {
+          try {
+            const r = await fetch(`${BASE}/api/tasks/TSK-FX-0005`, { signal: AbortSignal.timeout(2000) });
+            const d = await r.json();
+            if (d?.chain?.task) break;
+          } catch { /* not yet */ }
+          await new Promise((res) => setTimeout(res, 500));
+        }
+      }
+
       await ctx.close();
     }
 
@@ -400,7 +417,7 @@ try {
           const text = (pane.textContent || "").trim();
           return text.length > 0 && !text.includes("No chain data.");
         },
-        { timeout: 8000 }
+        { timeout: 20000 }
       ).catch(() => {});
       await page.waitForTimeout(200);
 

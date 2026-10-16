@@ -43,6 +43,10 @@ const PORT_SUITES = 4641;      // plain test server (TL/TB/NV)
 const PORT_FIXDAEMON = 4642;   // scratch fixture daemon (FP/EV API)
 const PORT_FIXUI = 4643;       // fixture-backed test server (FP/EV, NV fixture base)
 
+// --only TL1,EV1 etc — run a subset of proofs (comma-separated IDs). Full run if omitted.
+const onlyArg = process.argv.find((a) => a.startsWith("--only=")) ?? process.argv.find((a, i, ar) => a === "--only" && ar[i + 1])?.replace(/.*/, process.argv[process.argv.indexOf("--only") + 1]);
+const ONLY_IDS = onlyArg ? new Set(onlyArg.replace(/^--only=/, "").split(",").map((s) => s.trim()).filter(Boolean)) : null;
+
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -240,8 +244,10 @@ try {
     join(GATE, "server-4643.log"), `fixture UI server :${PORT_FIXUI}`);
   await waitUrl(`http://127.0.0.1:${PORT_FIXUI}/api/tasks`, 30000, `fixture UI server :${PORT_FIXUI}`);
 
-  // 3. The five proofs.
-  for (const p of PROOFS) {
+  // 3. The five proofs (or the --only subset).
+  const activeProofs = ONLY_IDS ? PROOFS.filter((p) => ONLY_IDS.has(p.id)) : PROOFS;
+  if (ONLY_IDS) log(`--only filter active: running ${activeProofs.map((p) => p.id).join(", ")}`);
+  for (const p of activeProofs) {
     const entry = { id: p.id, file: p.file, desc: p.desc };
     log(`── PROOF ${p.id}: ${p.desc}`);
     let red, green;
@@ -317,7 +323,8 @@ try {
 
   summary.stops = stops;
   summary.finishedAt = new Date().toISOString();
-  summary.ok = !failure && summary.proofs.length === PROOFS.length;
+  const expectedCount = ONLY_IDS ? ONLY_IDS.size : PROOFS.length;
+  summary.ok = !failure && summary.proofs.length === expectedCount;
 
   try { writeFileSync(join(GATE, "proofs-summary.json"), JSON.stringify(summary, null, 2)); } catch {}
 
