@@ -203,17 +203,10 @@ try {
 
       if (!sibling1 || !sibling2) {
         fail(`TB2 ${VP.label} both sibling tabs rendered`, `found: ${tabKeys.map(t => t.key).join(", ")}`);
-      } else if (MUTATION) {
-        // Mutation: raw IDs returned, text-overflow: ellipsis. Both labels are CSS-clipped
-        // to the same visible text (TSK-2026-10-14-003…), making them indistinguishable.
-        const s1Clipped = clipData?.s1 && clipData.s1.scrollWidth > clipData.s1.clientWidth;
-        const s2Clipped = clipData?.s2 && clipData.s2.scrollWidth > clipData.s2.clientWidth;
-        if (s1Clipped && s2Clipped) {
-          pass(`TB2 ${VP.label} [MUTATION] both labels CSS-clipped — siblings visually identical (scrollWidth>${clipData.s1.clientWidth})`);
-        } else {
-          fail(`TB2 ${VP.label} [MUTATION] expected both labels CSS-clipped`, `s1 clipped:${s1Clipped} s2 clipped:${s2Clipped}`);
-        }
       } else if (sibling1.label === sibling2.label) {
+        // Same assertion in normal and mutation runs.
+        // Under mutation (raw IDs + text-overflow: ellipsis), both labels show the same
+        // CSS-clipped text → this fail() fires.
         fail(`TB2 ${VP.label} sibling labels distinguishable`, `both show "${sibling1.label}"`);
       } else {
         pass(`TB2 ${VP.label} sibling labels distinguishable: "${sibling1.label}" vs "${sibling2.label}"`);
@@ -485,11 +478,12 @@ try {
 
 // ── Mutation proof note ───────────────────────────────────────────────────────
 // To run mutation proof:
-// 1. In labels.ts: change refLabel envelope/report case to `return ref.taskId` (no middleEllipsis)
-// 2. In TabStrip.vue: add `text-overflow: ellipsis` to .ts-tab-label CSS
-// 3. Rebuild bundle
-// 4. MUTATION=1 node tests/ui/phase3.2/TB-stripgeometry.spec.mjs
-// Expected: TB2 fails with "both show 'TSK-2026-10-14-0030.0' (end-truncated identically)"
+// 1. In labels.ts: change refLabel envelope/report case to end-truncation:
+//      const MAX = 20; return ref.taskId.length > MAX ? ref.taskId.slice(0, MAX) + "…" : ref.taskId;
+//    This simulates a naive truncation that drops the discriminating suffix (.01 vs .02).
+// 2. Rebuild bundle
+// 3. MUTATION=1 node tests/ui/phase3.2/TB-stripgeometry.spec.mjs
+// Expected: TB2 fails with both show "TSK-2026-10-14-0030.…"
 // Restore and rebuild → all green.
 
 console.log(`\n── Summary ──`);

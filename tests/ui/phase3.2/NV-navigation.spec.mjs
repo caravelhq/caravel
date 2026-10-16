@@ -364,9 +364,11 @@ try {
         fail(`NV3 Tab cap enforced at 12 [${VP.label}]`, `tabs=${st3d?.tabKeys?.length}`);
       }
 
-      // 3e: Recents survives reload
-      if (!MUTATION) {
-        // Get current recents before reload
+      // 3e: Recents survives reload.
+      // Same assertion in normal and mutation runs.
+      // Under mutation (save("recents",...) removed from persist()), recents will be empty
+      // after reload → fails here.
+      {
         const st3ePre = await wsState(page);
         await page.reload({ waitUntil: "networkidle" });
         await page.waitForTimeout(400);
@@ -376,24 +378,11 @@ try {
         } else {
           fail(`NV3 Recents survives reload [${VP.label}]`, `pre: ${JSON.stringify(st3ePre?.recents)} → post: ${JSON.stringify(st3ePost?.recents)}`);
         }
-      } else {
-        // In MUTATION mode, reload should LOSE recents
-        const st3ePre = await wsState(page);
-        await page.reload({ waitUntil: "networkidle" });
-        await page.waitForTimeout(400);
-        const st3ePost = await wsState(page);
-        const lost = (st3ePost?.recents?.length ?? 0) === 0;
-        if (lost) {
-          pass(`NV3 Mutation confirmed: recents lost on reload [${VP.label}]`);
-        } else {
-          fail(`NV3 Mutation check: recents should be lost [${VP.label}]`, `post: ${JSON.stringify(st3ePost?.recents)}`);
-        }
       }
 
       // 3f: Reopening from recents: removes from list and opens the tab
-      if (!MUTATION) {
+      {
         await resetWorkspace(page);
-        // Close a tab to populate recents
         await wsAction(page, `ws => ws.open({ kind: "file", path: "reopen-me.md" })`);
         await page.waitForTimeout(50);
         await wsAction(page, `ws => ws.close(ws.refKey({ kind: "file", path: "reopen-me.md" }))`);
@@ -404,7 +393,6 @@ try {
         if (!hadRecent) {
           fail(`NV3 Reopen test: reopen-me.md in recents [${VP.label}]`, "not in recents before reopen");
         } else {
-          // Open the menu and click the recent
           await openMenu(page);
           const recentBtn = page.locator("[data-recent-key='file:reopen-me.md']");
           const recentBtnCount = await recentBtn.count();

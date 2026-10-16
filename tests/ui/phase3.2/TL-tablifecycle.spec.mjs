@@ -151,46 +151,37 @@ try {
       const domKeys = await tabDataKeys(page);
       await page.screenshot({ path: join(SHOTS_DIR, `${VP.label}-01-tl1-preview-reuse.png`) });
 
-      if (MUTATION) {
-        // Mutation mode: expect the preview-reuse branch to be disabled → N tabs
-        const expectedCount = PREVIEW_COUNT + 1; // Dashboard + N previews
-        if (state?.tabKeys?.length === expectedCount) {
-          pass(`TL1 [MUTATION] ${VP.label}: disabled preview-reuse → ${PREVIEW_COUNT} separate tabs as expected`);
-        } else {
-          fail(`TL1 [MUTATION] ${VP.label}: expected ${expectedCount} tabs`, `got ${state?.tabKeys?.length}`);
-        }
+      // Same assertions in normal and mutation runs.
+      // Under mutation (preview-reuse branch disabled), tabCount will be 6 → fails here.
+      const tabCount = state?.tabKeys?.length;
+      if (tabCount === 2) {
+        pass(`TL1 ${VP.label}: 5 preview opens → 2 tabs (slot reused)`);
       } else {
-        // Normal mode: only 2 tabs (Dashboard + 1 preview)
-        const tabCount = state?.tabKeys?.length;
-        if (tabCount === 2) {
-          pass(`TL1 ${VP.label}: 5 preview opens → 2 tabs (slot reused)`);
-        } else {
-          fail(`TL1 ${VP.label}: expected 2 tabs after 5 preview opens`, `got ${tabCount} tabs: ${state?.tabKeys?.join(", ")}`);
-        }
+        fail(`TL1 ${VP.label}: expected 2 tabs after 5 preview opens`, `got ${tabCount} tabs: ${state?.tabKeys?.join(", ")}`);
+      }
 
-        // Preview flag should be set on the last opened path
-        const lastPreviewKey = `file:${paths[PREVIEW_COUNT - 1]}`;
-        if (state?.previewKeys?.includes(lastPreviewKey)) {
-          pass(`TL1 ${VP.label}: last preview has preview flag set`);
-        } else {
-          fail(`TL1 ${VP.label}: expected preview flag on ${lastPreviewKey}`, `previewKeys: ${state?.previewKeys?.join(", ")}`);
-        }
+      // Preview flag should be set on the last opened path
+      const lastPreviewKey = `file:${paths[PREVIEW_COUNT - 1]}`;
+      if (state?.previewKeys?.includes(lastPreviewKey)) {
+        pass(`TL1 ${VP.label}: last preview has preview flag set`);
+      } else {
+        fail(`TL1 ${VP.label}: expected preview flag on ${lastPreviewKey}`, `previewKeys: ${state?.previewKeys?.join(", ")}`);
+      }
 
-        // DOM [data-key] should show the last preview key
-        if (domKeys.includes(lastPreviewKey)) {
-          pass(`TL1 ${VP.label}: [data-key="${lastPreviewKey}"] present in DOM`);
-        } else {
-          fail(`TL1 ${VP.label}: expected [data-key="${lastPreviewKey}"] in DOM`, `found: ${domKeys.join(", ")}`);
-        }
+      // DOM [data-key] should show the last preview key
+      if (domKeys.includes(lastPreviewKey)) {
+        pass(`TL1 ${VP.label}: [data-key="${lastPreviewKey}"] present in DOM`);
+      } else {
+        fail(`TL1 ${VP.label}: expected [data-key="${lastPreviewKey}"] in DOM`, `found: ${domKeys.join(", ")}`);
+      }
 
-        // The first 4 keys should NOT be in the DOM
-        const staleKeys = paths.slice(0, PREVIEW_COUNT - 1).map(p => `file:${p}`);
-        const staleInDom = staleKeys.filter(k => domKeys.includes(k));
-        if (staleInDom.length === 0) {
-          pass(`TL1 ${VP.label}: no stale preview keys in DOM`);
-        } else {
-          fail(`TL1 ${VP.label}: stale preview keys still in DOM`, staleInDom.join(", "));
-        }
+      // The first 4 keys should NOT be in the DOM
+      const staleKeys = paths.slice(0, PREVIEW_COUNT - 1).map(p => `file:${p}`);
+      const staleInDom = staleKeys.filter(k => domKeys.includes(k));
+      if (staleInDom.length === 0) {
+        pass(`TL1 ${VP.label}: no stale preview keys in DOM`);
+      } else {
+        fail(`TL1 ${VP.label}: stale preview keys still in DOM`, staleInDom.join(", "));
       }
 
       await page.close();
