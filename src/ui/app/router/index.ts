@@ -26,6 +26,7 @@ export const router = createRouter({
     { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
+    { path: "/envelope/:taskId", component: Stub },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
@@ -45,7 +46,11 @@ function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
   }
   if (p.startsWith("/report/")) {
     const taskId = decodeURIComponent(p.slice("/report/".length));
-    return { kind: "report", taskId };
+    return { kind: "envelope", taskId };
+  }
+  if (p.startsWith("/envelope/")) {
+    const taskId = decodeURIComponent(p.slice("/envelope/".length));
+    return { kind: "envelope", taskId };
   }
   return null;
 }
@@ -142,6 +147,7 @@ export function refToPath(ref: ResourceRef): string {
   switch (ref.kind) {
     case "dashboard": return "/dashboard";
     case "file": return `/file/${encodeURIComponent(ref.path)}${ref.branch ? `?branch=${encodeURIComponent(ref.branch)}` : ""}`;
+    case "envelope": return `/envelope/${encodeURIComponent(ref.taskId)}`;
     case "report": return `/report/${encodeURIComponent(ref.taskId)}`;
     case "legacy": return `/${ref.page}`;
     default: return "/dashboard";

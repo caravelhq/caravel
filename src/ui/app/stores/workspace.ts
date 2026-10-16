@@ -38,9 +38,9 @@ function migrateFromReading(): {
     const wasOpen = openVal === "true";
     const tabs: ResourceRef[] = stack.map((r) => {
       if (r.kind === "file") return { kind: "file", path: r.path, branch: r.branch } as ResourceRef;
-      // report: derive taskId from path (last segment without .md)
-      const base = r.path.split("/").pop()?.replace(/\.md$/, "") ?? r.path;
-      return { kind: "report", taskId: base, path: r.path } as ResourceRef;
+      // report: → file: when path is present (lossless), else envelope: (taskId derived from path).
+      // report: is no longer a registered tab kind (Phase 3.2 step 5).
+      return { kind: "file", path: r.path } as ResourceRef;
     });
     const active1 = wasOpen && tabs.length > 0 ? refKey(tabs[tabs.length - 1]) : null;
     // Clean up old keys
@@ -52,6 +52,16 @@ function migrateFromReading(): {
   } catch {
     return { tabs: [], active1: null, splitOn: false };
   }
+}
+
+// Migrate any persisted report: refs to file: (when path present) or envelope: (taskId only).
+// report: was retired as a tab kind in Phase 3.2 step 5; this runs once at store init.
+function migrateReportRefs(refs: ResourceRef[]): ResourceRef[] {
+  return refs.map((r): ResourceRef => {
+    if (r.kind !== "report") return r;
+    if (r.path) return { kind: "file", path: r.path };
+    return { kind: "envelope", taskId: r.taskId };
+  });
 }
 
 const DASHBOARD_REF: ResourceRef = { kind: "dashboard" };
@@ -92,7 +102,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       initialActive1 = null;
     }
   } else {
-    initialTabs = load<ResourceRef[]>("tabs", [DASHBOARD_REF]);
+    initialTabs = migrateReportRefs(load<ResourceRef[]>("tabs", [DASHBOARD_REF]));
     initialSplitIndex = load<number | null>("splitIndex", null);
     initialSplitOn = load<boolean>("splitOn", false);
     // Invariant: splitOn requires a valid splitIndex. Clean up inconsistent state.
@@ -147,7 +157,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 
   // Recents ring: last RECENTS_MAX closed/evicted refs, newest first.
   // Step 4 adds rendering and ensures persistence; the array is exposed here so step 4 only renders.
-  const recents = ref<ResourceRef[]>(load<ResourceRef[]>("recents", []));
+  const recents = ref<ResourceRef[]>(migrateReportRefs(load<ResourceRef[]>("recents", [])));
 
   // LRU touch counter — initialised above any persisted touched so new activations always win.
   let touchSeq = Object.values(meta.value).reduce(
