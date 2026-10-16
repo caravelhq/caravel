@@ -22,14 +22,16 @@ import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-// realpathSync collapses symlinks (e.g. /home/walter/caravel → the workspace checkout);
-// without it a symlinked cwd makes every derived path wrong.
-const REPO = realpathSync(resolve(__dirname, "..", "..", ".."));        // repos/caravel
-if (!/(^|\/)repos\/caravel$/.test(REPO)) {
-  console.error(`run-proofs: refusing to run — repo path resolved to ${REPO}, expected …/repos/caravel`);
+// NOTE on paths: /home/walter/workspace/repos/caravel is a SYMLINK to /home/walter/caravel,
+// and node resolves module URLs through it — so __dirname is the real path and the
+// workspace root cannot be derived by walking up. Anchor REPO at the real repo
+// (verified by its markers) and WS as the workspace constant.
+const REPO = realpathSync(resolve(__dirname, "..", "..", ".."));
+if (!existsSync(join(REPO, "package.json")) || !existsSync(join(REPO, ".git")) || !existsSync(join(REPO, "src", "ui"))) {
+  console.error(`run-proofs: refusing to run — ${REPO} does not look like the caravel repo (missing package.json/.git/src/ui)`);
   process.exit(2);
 }
-const WS = realpathSync(resolve(REPO, "..", ".."));                     // workspace root
+const WS = "/home/walter/workspace";                                     // workspace root (constant — see NOTE)
 const GATE = join(WS, "repos", "dev", "features", "WAL-115_test-runs", "2026-10-17_gate");
 const RECORD = join(WS, "Notes", "Projects", "Caravel-Vue", "reviews", "2026-10-17_Gate-Run_jess.md");
 const RENDEZVOUS = join(WS, "agents", "jess", "tasks", "done", "TSK-2026-10-16-0001.24.md");
