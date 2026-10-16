@@ -17,13 +17,19 @@
 // and asserts its bundle; the rendezvous is written on success AND failure.
 
 import { spawn, spawnSync } from "node:child_process";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, createWriteStream } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, createWriteStream, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
-const REPO = resolve(__dirname, "..", "..", "..");                     // repos/caravel
-const WS = resolve(REPO, "..", "..");                                   // workspace root
+// realpathSync collapses symlinks (e.g. /home/walter/caravel → the workspace checkout);
+// without it a symlinked cwd makes every derived path wrong.
+const REPO = realpathSync(resolve(__dirname, "..", "..", ".."));        // repos/caravel
+if (!/(^|\/)repos\/caravel$/.test(REPO)) {
+  console.error(`run-proofs: refusing to run — repo path resolved to ${REPO}, expected …/repos/caravel`);
+  process.exit(2);
+}
+const WS = realpathSync(resolve(REPO, "..", ".."));                     // workspace root
 const GATE = join(WS, "repos", "dev", "features", "WAL-115_test-runs", "2026-10-17_gate");
 const RECORD = join(WS, "Notes", "Projects", "Caravel-Vue", "reviews", "2026-10-17_Gate-Run_jess.md");
 const RENDEZVOUS = join(WS, "agents", "jess", "tasks", "done", "TSK-2026-10-16-0001.24.md");
