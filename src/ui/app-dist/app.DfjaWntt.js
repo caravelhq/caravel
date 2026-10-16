@@ -13800,6 +13800,13 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     focused.value = group;
     syncWorkspaceUrl(false);
   }
+  function reopenFromRecents(key) {
+    const idx = recents.value.findIndex((r) => refKey(r) === key);
+    if (idx === -1) return;
+    const ref2 = recents.value[idx];
+    recents.value.splice(idx, 1);
+    open(ref2);
+  }
   function activate(key) {
     const idx = keyIndex(key);
     if (idx === -1) return;
@@ -13839,7 +13846,8 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     toggleSplit,
     focus,
     activate,
-    focusedActiveRef
+    focusedActiveRef,
+    reopenFromRecents
   };
 });
 function load$3(key, fallback) {
@@ -14245,11 +14253,11 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
 const _hoisted_1$u = ["data-size"];
-const _hoisted_2$l = {
+const _hoisted_2$m = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$k = { class: "base-modal-title" };
+const _hoisted_3$l = { class: "base-modal-title" };
 const _hoisted_4$g = { class: "base-modal-body" };
 const _hoisted_5$e = {
   key: 0,
@@ -14347,8 +14355,8 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$l, [
-              createBaseVNode("span", _hoisted_3$k, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$m, [
+              createBaseVNode("span", _hoisted_3$l, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -14380,8 +14388,8 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$t = { class: "setting-item" };
-const _hoisted_2$k = { class: "setting-main" };
-const _hoisted_3$j = { class: "settings-label" };
+const _hoisted_2$l = { class: "setting-main" };
+const _hoisted_3$k = { class: "settings-label" };
 const _hoisted_4$f = {
   key: 0,
   class: "settings-meta"
@@ -14395,8 +14403,8 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
   setup(__props) {
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$t, [
-        createBaseVNode("div", _hoisted_2$k, [
-          createBaseVNode("div", _hoisted_3$j, toDisplayString(__props.label), 1),
+        createBaseVNode("div", _hoisted_2$l, [
+          createBaseVNode("div", _hoisted_3$k, toDisplayString(__props.label), 1),
           __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$f, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
@@ -14406,8 +14414,8 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$s = { class: "settings-stack" };
-const _hoisted_2$j = { class: "setting-actions" };
-const _hoisted_3$i = ["disabled"];
+const _hoisted_2$k = { class: "setting-actions" };
+const _hoisted_3$j = ["disabled"];
 const _hoisted_4$e = {
   id: "build-id",
   class: "build-id-mono"
@@ -14575,7 +14583,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$j, [
+                  createBaseVNode("div", _hoisted_2$k, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -14588,7 +14596,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$i)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$j)
                   ])
                 ]),
                 _: 1
@@ -14737,8 +14745,8 @@ const _hoisted_1$r = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$i = ["disabled"];
-const _hoisted_3$h = {
+const _hoisted_2$j = ["disabled"];
+const _hoisted_3$i = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
@@ -14840,7 +14848,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$i), [
+              }, null, 8, _hoisted_2$j), [
                 [
                   vModelText,
                   interval.value,
@@ -14849,7 +14857,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$h, [
+            createBaseVNode("label", _hoisted_3$i, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -14888,11 +14896,11 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$q = { class: "audio-action-card" };
-const _hoisted_2$h = {
+const _hoisted_2$i = {
   key: 0,
   class: "audio-player-resume"
 };
-const _hoisted_3$g = { class: "audio-player-resume-msg" };
+const _hoisted_3$h = { class: "audio-player-resume-msg" };
 const _hoisted_4$c = { class: "audio-player-resume-btns" };
 const _hoisted_5$b = { class: "audio-player-progress" };
 const _hoisted_6$b = { class: "audio-player-bar-wrap" };
@@ -14928,8 +14936,8 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
         ])]),
         default: withCtx(() => [
           createBaseVNode("div", _hoisted_1$q, [
-            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$h, [
-              createBaseVNode("div", _hoisted_3$g, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
+            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$i, [
+              createBaseVNode("div", _hoisted_3$h, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
               createBaseVNode("div", _hoisted_4$c, [
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-restart",
@@ -15419,8 +15427,8 @@ function useGlobalReadAloud() {
   return { doReadAloud, stopReadAloud: stopPlayback };
 }
 const _hoisted_1$o = ["hidden"];
-const _hoisted_2$g = ["hidden"];
-const _hoisted_3$f = ["title", "aria-label", "hidden", "disabled"];
+const _hoisted_2$h = ["hidden"];
+const _hoisted_3$g = ["title", "aria-label", "hidden", "disabled"];
 const _hoisted_4$b = {
   key: 0,
   class: "fa-solid fa-spinner fa-spin"
@@ -15480,7 +15488,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
           onClick: openTaskCreator
         }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
-        ])], 8, _hoisted_2$g),
+        ])], 8, _hoisted_2$h),
         createBaseVNode("button", {
           id: "global-read-aloud",
           class: normalizeClass(["global-read-aloud", { "is-playing": unref(ui).raState === "playing" }]),
@@ -15493,7 +15501,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
           (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
         }, [
           unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$b)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$a)) : (openBlock(), createElementBlock("i", _hoisted_6$a))
-        ], 10, _hoisted_3$f),
+        ], 10, _hoisted_3$g),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -15732,12 +15740,12 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
 const _hoisted_1$n = { class: "dock-shell" };
-const _hoisted_2$f = {
+const _hoisted_2$g = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$e = { class: "side-value" };
+const _hoisted_3$f = { class: "side-value" };
 const _hoisted_4$a = {
   class: "side-bubble",
   id: "tasks-bubble",
@@ -15842,9 +15850,9 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$n, [
-        createBaseVNode("aside", _hoisted_2$f, [
+        createBaseVNode("aside", _hoisted_2$g, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$e, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$f, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
         createBaseVNode("aside", _hoisted_4$a, [
@@ -15886,8 +15894,8 @@ const _hoisted_1$m = {
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$e = ["innerHTML"];
-const _hoisted_3$d = { class: "vm-controls" };
+const _hoisted_2$f = ["innerHTML"];
+const _hoisted_3$e = { class: "vm-controls" };
 const _hoisted_4$9 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
 const _sfc_main$q = /* @__PURE__ */ defineComponent({
@@ -16228,8 +16236,8 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$e),
-        createBaseVNode("div", _hoisted_3$d, [
+        }, null, 8, _hoisted_2$f),
+        createBaseVNode("div", _hoisted_3$e, [
           createBaseVNode("div", _hoisted_4$9, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
@@ -16386,11 +16394,11 @@ const _hoisted_1$l = {
   key: 0,
   class: "vtc-success"
 };
-const _hoisted_2$d = {
+const _hoisted_2$e = {
   key: 1,
   class: "vtc-form"
 };
-const _hoisted_3$c = {
+const _hoisted_3$d = {
   key: 0,
   class: "vtc-claude-reply"
 };
@@ -16801,8 +16809,8 @@ User's voice request: "${userText}"`;
             createBaseVNode("span", { class: "vtc-success-icon" }, "✓", -1),
             createBaseVNode("div", { class: "vtc-success-label" }, "Task created!", -1),
             createBaseVNode("div", { class: "vtc-success-sub" }, "Closing in a moment…", -1)
-          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$d, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$c, [
+          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$e, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$d, [
               _cache[8] || (_cache[8] = createBaseVNode("span", { class: "vtc-claude-label" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
@@ -17060,6 +17068,8 @@ function refTitle(ref2, tasksList) {
   }
 }
 const _hoisted_1$k = ["aria-expanded"];
+const _hoisted_2$d = ["data-recent-key", "onClick"];
+const _hoisted_3$c = { class: "om-glyph" };
 const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "OpenMenu",
   setup(__props) {
@@ -17094,16 +17104,9 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
       ws.open({ kind: "dashboard" });
       close();
     }
-    function openTasks() {
-      ws.open({ kind: "legacy", page: "tasks" });
-      close();
-    }
-    function openChat() {
-      ws.open({ kind: "legacy", page: "chat" });
-      close();
-    }
-    function openFiles() {
-      ws.open({ kind: "legacy", page: "files" });
+    function openPicker(r) {
+      ws.open(r);
+      ws.pin(ws.refKey(r));
       close();
     }
     function openSearch() {
@@ -17112,6 +17115,10 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
     }
     function openNewTask() {
       nt2.open();
+      close();
+    }
+    function openRecent(key) {
+      ws.reopenFromRecents(key);
       close();
     }
     function onDocPointerDown(ev) {
@@ -17157,9 +17164,13 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
             class: "open-menu-list",
             style: normalizeStyle({ top: panelTop.value, left: panelLeft.value }),
             role: "menu",
-            onClick: _cache[0] || (_cache[0] = withModifiers(() => {
+            onClick: _cache[3] || (_cache[3] = withModifiers(() => {
             }, ["stop"]))
           }, [
+            _cache[8] || (_cache[8] = createBaseVNode("div", {
+              class: "om-section-label",
+              "data-section": "pickers"
+            }, "Pickers", -1)),
             createBaseVNode("button", {
               id: "tab-dashboard",
               class: "open-menu-item",
@@ -17172,29 +17183,62 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openTasks
+              onClick: _cache[0] || (_cache[0] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
             }, "Tasks"),
             createBaseVNode("button", {
               id: "tab-chat",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openChat
+              onClick: _cache[1] || (_cache[1] = ($event) => openPicker({ kind: "legacy", page: "chat" }))
             }, "Chat"),
             createBaseVNode("button", {
               id: "tab-files",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openFiles
+              onClick: _cache[2] || (_cache[2] = ($event) => openPicker({ kind: "legacy", page: "files" }))
             }, "Files"),
-            _cache[3] || (_cache[3] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[9] || (_cache[9] = createBaseVNode("button", {
+              class: "open-menu-item om-item-disabled",
+              type: "button",
+              role: "menuitem",
+              disabled: ""
+            }, [
+              createTextVNode(" Projects "),
+              createBaseVNode("span", { class: "om-phase-tag" }, "Phase 4")
+            ], -1)),
+            unref(ws).recents.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+              _cache[4] || (_cache[4] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+              _cache[5] || (_cache[5] = createBaseVNode("div", {
+                class: "om-section-label",
+                "data-section": "recents"
+              }, "Recents", -1)),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ws).recents, (recent) => {
+                return openBlock(), createElementBlock("button", {
+                  key: unref(ws).refKey(recent),
+                  class: "open-menu-item om-item-recent",
+                  type: "button",
+                  role: "menuitem",
+                  "data-recent-key": unref(ws).refKey(recent),
+                  onClick: ($event) => openRecent(unref(ws).refKey(recent))
+                }, [
+                  createBaseVNode("span", _hoisted_3$c, toDisplayString(unref(refGlyph)(recent)), 1),
+                  createTextVNode(" " + toDisplayString(unref(refLabel)(recent)), 1)
+                ], 8, _hoisted_2$d);
+              }), 128))
+            ], 64)) : createCommentVNode("", true),
+            _cache[10] || (_cache[10] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[11] || (_cache[11] = createBaseVNode("div", {
+              class: "om-section-label",
+              "data-section": "actions"
+            }, "Actions", -1)),
             createBaseVNode("button", {
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
               onClick: openSearch
-            }, [..._cache[1] || (_cache[1] = [
+            }, [..._cache[6] || (_cache[6] = [
               createTextVNode("Search ", -1),
               createBaseVNode("kbd", null, "⌘K", -1)
             ])]),
@@ -17203,7 +17247,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openNewTask
-            }, [..._cache[2] || (_cache[2] = [
+            }, [..._cache[7] || (_cache[7] = [
               createTextVNode("New task ", -1),
               createBaseVNode("kbd", null, "N", -1)
             ])])
@@ -17213,6 +17257,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$n, [["__scopeId", "data-v-ea32296a"]]);
 const _hoisted_1$j = {
   key: 0,
   class: "tos-group-label"
@@ -17520,7 +17565,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
             ref_key: "stripEl",
             ref: stripEl
           }, [
-            createVNode(_sfc_main$n),
+            createVNode(OpenMenu),
             (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
               var _a3, _b, _c;
               return openBlock(), createElementBlock("button", {

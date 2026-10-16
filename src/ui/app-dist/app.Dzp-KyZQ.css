@@ -138,6 +138,37 @@
   margin-top: 0.5rem;
 }
 
+.om-section-label[data-v-ea32296a] {
+  padding: 6px 14px 3px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a7a8a;
+  pointer-events: none;
+  user-select: none;
+}
+.om-item-disabled[data-v-ea32296a] {
+  opacity: 0.35;
+  cursor: default;
+}
+.om-item-recent[data-v-ea32296a] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.om-glyph[data-v-ea32296a] {
+  font-size: 11px;
+  opacity: 0.7;
+  min-width: 14px;
+  text-align: center;
+}
+.om-phase-tag[data-v-ea32296a] {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: auto;
+  padding-left: 8px;
+}
+
 .tos-group-label[data-v-946901fe] {
   font-size: 0.75rem;
   font-weight: 600;
