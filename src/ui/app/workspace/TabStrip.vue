@@ -23,14 +23,18 @@ onBeforeUnmount(() => { live.unbind(TASKS_LIST_KEY); });
 
 const tasksList = computed<TaskRow[] | null>(() => {
   const e = live.entry(TASKS_LIST_KEY);
-  return (e?.data as TaskRow[] | null) ?? null;
+  if (!e?.data) return null;
+  const d = e.data as { ok?: boolean; tasks?: TaskRow[] } | TaskRow[];
+  return Array.isArray(d) ? d : ((d as { tasks?: TaskRow[] }).tasks ?? null);
 });
 
-// Per-tab label: check per-id entry (created by EnvelopeView) first, then the list.
+// Per-tab label: read headline from the per-id chain entry (task:<id>) that
+// EnvelopeView binds, falling back to the shared tasks list and then the id.
 function tabLabel(r: ResourceRef): string {
-  if (r.kind === "envelope" || r.kind === "report") {
+  if (r.kind === "envelope") {
     const perIdEntry = live.entry("task:" + r.taskId);
-    const headline = (perIdEntry?.data as Record<string, unknown> | null)?.headline as string | undefined;
+    const data = perIdEntry?.data as { ok?: boolean; chain?: { task?: { headline?: string } } } | null;
+    const headline = data?.chain?.task?.headline;
     if (headline) return headline;
   }
   return refLabel(r, tasksList.value);
