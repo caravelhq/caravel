@@ -124,11 +124,7 @@ try {
         .getAttribute("data-task-id").catch(() => null);
 
       if (!clickedTaskId) {
-        if (MUTATION) {
-          fail(`EV1 [MUTATION] no reports tier row found [${VP.label}]`, "attention API may not have returned rows");
-        } else {
-          fail(`EV1 reports tier row not found [${VP.label}]`, "attention API didn't return the row in time");
-        }
+        fail(`EV1 reports tier row not found [${VP.label}]`, "attention API didn't return the row in time");
         await ctx.close(); continue;
       }
 
@@ -138,19 +134,11 @@ try {
       const afterState = await wsState(page);
       const envelopeTab = (afterState?.tabs || []).find(t => t.kind === "envelope" && t.taskId === clickedTaskId);
 
-      if (MUTATION) {
-        if (!envelopeTab) {
-          pass(`EV1 [MUTATION] row click opened legacy:tasks, NOT envelope: (${clickedTaskId}) [${VP.label}]`);
-        } else {
-          fail(`EV1 [MUTATION] expected no envelope: tab [${VP.label}]`, "mutation did not take effect");
-        }
+      if (envelopeTab) {
+        pass(`EV1 TierSection row opens envelope:${clickedTaskId} tab [${VP.label}]`);
       } else {
-        if (envelopeTab) {
-          pass(`EV1 TierSection row opens envelope:${clickedTaskId} tab [${VP.label}]`);
-        } else {
-          const kinds = (afterState?.tabs || []).map(t => `${t.kind}:${t.taskId ?? t.page ?? ""}`).join(", ");
-          fail(`EV1 TierSection row opens envelope: tab [${VP.label}]`, `tabs after click: [${kinds}]`);
-        }
+        const kinds = (afterState?.tabs || []).map(t => `${t.kind}:${t.taskId ?? t.page ?? ""}`).join(", ");
+        fail(`EV1 TierSection row opens envelope: tab [${VP.label}]`, `tabs after click: [${kinds}]`);
       }
 
       await page.screenshot({ path: join(SHOTS_DIR, `EV1-after-click-${VP.label}.png`) });
