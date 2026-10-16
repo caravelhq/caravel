@@ -181,7 +181,7 @@ function onDividerDrop(e: DragEvent): void {
 <template>
   <div class="tab-strip-outer">
     <!-- Scrollable tab area -->
-    <div class="tab-strip" ref="stripEl">
+    <div class="tab-strip" ref="stripEl" :class="{ 'tab-strip--overflow': isOverflowing }">
       <!-- Open menu — first element in the strip -->
       <OpenMenu />
 
@@ -203,7 +203,7 @@ function onDividerDrop(e: DragEvent): void {
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
         type="button"
-        @click="ws.activate(refKey(tab)); ws.focus(0)"
+        @click="ws.activate(refKey(tab))"
         @mouseenter="onTabHover(i, group0)"
         @mousedown.middle.prevent="ws.close(refKey(tab))"
         @contextmenu.prevent="openContextMenu($event, tab)"
@@ -260,7 +260,7 @@ function onDividerDrop(e: DragEvent): void {
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
         type="button"
-        @click="ws.activate(refKey(tab)); ws.focus(1)"
+        @click="ws.activate(refKey(tab))"
         @mouseenter="onTabHover(i, group1)"
         @mousedown.middle.prevent="ws.close(refKey(tab))"
         @contextmenu.prevent="openContextMenu($event, tab)"
@@ -369,6 +369,12 @@ function onDividerDrop(e: DragEvent): void {
 }
 
 .tab-strip::-webkit-scrollbar { display: none; }
+
+/* F3: when overflow affordance is visible, reserve its width at the rail's right end
+   so the last tab's hit target cannot slide under the overflow button. */
+.tab-strip--overflow {
+  padding-right: 56px;
+}
 
 /* Right-edge fade indicating hidden tabs */
 .ts-overflow-fade {

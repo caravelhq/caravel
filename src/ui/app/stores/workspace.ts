@@ -311,7 +311,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
           active.value[targetGroup] = key;
           focused.value = targetGroup;
           persist();
-          syncWorkspaceUrl(true);
+          syncWorkspaceUrl(false);  // DEF-2: preview reuse replaces; only slot creation pushes
         }
         return;
       }
@@ -611,7 +611,10 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   }
 
   // focus() now calls syncWorkspaceUrl — F10 fix (R11 D1-r).
+  // Early-return guards against the activate() chaser pattern (DEF-1): activate() already
+  // sets focused, so a redundant focus() must not issue a replace over the activate's push.
   function focus(group: 0 | 1): void {
+    if (focused.value === group) return;
     focused.value = group;
     syncWorkspaceUrl(false);
   }

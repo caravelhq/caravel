@@ -638,6 +638,191 @@ try {
       await page.screenshot({ path: join(SHOTS_DIR, `NV7-files-dom-${VP.label}.png`) });
       await ctx.close();
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // NV8 — click-driven: strip-tab activation + five preview glances
+    //
+    // DEF-1 guard (strip-tab click creates a valid history stop, no chaser
+    //   corruption): click a file row, then click the Files strip tab via real
+    //   DOM click; assert history.length +1 and that hash agrees with picker;
+    //   Back: assert hash restores to the file ref (not picker — that was DEF-1's
+    //   corruption symptom).
+    //
+    // DEF-2 guard (preview reuse replaces; only slot creation pushes): five file
+    //   row clicks (KeepAlive keeps Files DOM alive after first click activates
+    //   the file tab); assert history.length = H+1 throughout; then two Backs
+    //   reach #/dashboard.
+    // ──────────────────────────────────────────────────────────────────────────
+
+    // ── Part A: DEF-1 strip-tab regression guard ──────────────────────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Open Files picker (pushes one history entry).
+      await wsAction(page, `ws => ws.open({ kind: "legacy", page: "files" })`);
+      await page.waitForTimeout(300);
+      // Navigate to Notes/ so file items are visible.
+      await page.evaluate(() => {
+        const btn = Array.from(document.querySelectorAll(".files-item"))
+          .find((b) => b.dataset?.path === "Notes");
+        if (btn) btn.click();
+      });
+      await page.waitForFunction(
+        () => document.querySelectorAll('.files-item[data-type="file"]').length > 0,
+        { timeout: 5000 }
+      ).catch(() => {});
+      await page.waitForTimeout(300);
+
+      const fileItems = page.locator('.files-item[data-type="file"]');
+      if ((await fileItems.count()) === 0) {
+        fail(`NV8 DEF-1 setup: no file items in picker [${VP.label}]`, "0 .files-item[data-type=file]");
+        await ctx.close();
+        continue;
+      }
+
+      const H0 = await page.evaluate(() => history.length);
+
+      // Click file-1 (real Playwright click on the first file row).
+      await fileItems.first().click();
+      await page.waitForTimeout(300);
+
+      const H1 = await page.evaluate(() => history.length);
+      if (H1 === H0 + 1) {
+        pass(`NV8 DEF-1 glance-1 pushes new stop [${VP.label}]`);
+      } else {
+        fail(`NV8 DEF-1 glance-1 push [${VP.label}]`, `expected H0+1=${H0 + 1}, got ${H1}`);
+      }
+
+      const glance1Hash = new URL(page.url()).hash;
+
+      // Click the Files strip tab via real DOM click (the DEF-1 regression input).
+      const stripTabClicked = await page.evaluate(() => {
+        const strip = document.querySelector(".tab-strip");
+        if (!strip) return false;
+        const tab = Array.from(strip.querySelectorAll("[data-key]"))
+          .find((t) => t.dataset?.key?.startsWith("legacy:"));
+        if (tab) { (tab as HTMLElement).click(); return true; }
+        return false;
+      });
+      await page.waitForTimeout(300);
+
+      if (!stripTabClicked) {
+        fail(`NV8 DEF-1 strip-tab click [${VP.label}]`, "no [data-key^=legacy:] tab found in .tab-strip");
+      } else {
+        const H2 = await page.evaluate(() => history.length);
+        const stripHash = new URL(page.url()).hash;
+
+        if (H2 === H1 + 1) {
+          pass(`NV8 DEF-1 strip-tab click pushes new stop [${VP.label}]`);
+        } else {
+          fail(`NV8 DEF-1 strip-tab click push [${VP.label}]`, `expected H1+1=${H1 + 1}, got H2=${H2}`);
+        }
+
+        if (stripHash !== glance1Hash) {
+          pass(`NV8 DEF-1 strip hash ≠ file hash (no chaser clobber) [${VP.label}]`);
+        } else {
+          fail(`NV8 DEF-1 strip hash [${VP.label}]`, `strip hash ${stripHash} equals file hash — chaser corruption detected`);
+        }
+
+        // Back to the file state: hash must be the file's hash, not the picker's.
+        await page.goBack({ waitUntil: "networkidle" });
+        await page.waitForTimeout(300);
+        const backHash = new URL(page.url()).hash;
+        if (backHash === glance1Hash) {
+          pass(`NV8 DEF-1 Back restores file hash (not picker) [${VP.label}]`);
+        } else {
+          fail(`NV8 DEF-1 Back restores file hash [${VP.label}]`,
+            `expected ${glance1Hash}, got ${backHash}`);
+        }
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV8-def1-${VP.label.replace("×", "x")}.png`) });
+      await ctx.close();
+    }
+
+    // ── Part B: DEF-2 — five glances → ≤2 Backs to #/dashboard ──────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Open Files picker (push).
+      await wsAction(page, `ws => ws.open({ kind: "legacy", page: "files" })`);
+      await page.waitForTimeout(300);
+      await page.evaluate(() => {
+        const btn = Array.from(document.querySelectorAll(".files-item"))
+          .find((b) => b.dataset?.path === "Notes");
+        if (btn) btn.click();
+      });
+      await page.waitForFunction(
+        () => document.querySelectorAll('.files-item[data-type="file"]').length > 0,
+        { timeout: 5000 }
+      ).catch(() => {});
+      await page.waitForTimeout(300);
+
+      const itemCount = await page.evaluate(
+        () => document.querySelectorAll('.files-item[data-type="file"]').length
+      );
+      if (itemCount < 2) {
+        fail(`NV8 DEF-2 setup: need ≥2 file items [${VP.label}]`, `got ${itemCount}`);
+        await ctx.close();
+        continue;
+      }
+
+      const H0b = await page.evaluate(() => history.length);
+
+      // Click up to 5 file rows via JS evaluate (Files panel stays in KeepAlive after
+      // the first click activates the file: tab, so Playwright locators would fail for
+      // items 2-5 — the DOM is live but the view is hidden).
+      const clickCount = Math.min(5, itemCount);
+      for (let i = 0; i < clickCount; i++) {
+        await page.evaluate((idx) => {
+          const items = Array.from(document.querySelectorAll('.files-item[data-type="file"]'));
+          if (items[idx]) (items[idx] as HTMLElement).click();
+        }, i);
+        await page.waitForTimeout(200);
+      }
+
+      // Slot created on glance-1 (push); glances 2-5 reuse the slot (replace).
+      // history.length must be H0b + 1 (one extra stop, not five).
+      const Hafter = await page.evaluate(() => history.length);
+      if (Hafter === H0b + 1) {
+        pass(`NV8 DEF-2 ${clickCount} glances → 1 push (history.length H0+1) [${VP.label}]`);
+      } else {
+        fail(`NV8 DEF-2 ${clickCount} glances → 1 push [${VP.label}]`,
+          `expected H0+1=${H0b + 1}, got ${Hafter}`);
+      }
+
+      // Back 1: should land on the Files picker (not dashboard yet).
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(300);
+      const hashBack1 = new URL(page.url()).hash;
+      const notDashboard1 = !hashBack1.includes("dashboard");
+      if (notDashboard1) {
+        pass(`NV8 DEF-2 Back-1 is not yet #/dashboard [${VP.label}]`);
+      } else {
+        fail(`NV8 DEF-2 Back-1 should not be dashboard [${VP.label}]`, `hash: ${hashBack1}`);
+      }
+
+      // Back 2: must reach #/dashboard.
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(300);
+      const hashBack2 = new URL(page.url()).hash;
+      if (hashBack2.includes("dashboard") || page.url().endsWith("/#/dashboard") || page.url() === FIXTURE_BASE + "/") {
+        pass(`NV8 DEF-2 ≤2 Backs from ${clickCount}-glance browse → #/dashboard [${VP.label}]`);
+      } else {
+        fail(`NV8 DEF-2 ≤2 Backs [${VP.label}]`, `at Back-2 hash=${hashBack2}; expected #/dashboard`);
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV8-def2-2backs-${VP.label.replace("×", "x")}.png`) });
+      await ctx.close();
+    }
   }
 } finally {
   await browser.close();

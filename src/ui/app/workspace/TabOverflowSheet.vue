@@ -23,7 +23,6 @@ function close(): void { emit("close"); }
 
 function activateAndClose(tab: ResourceRef, group: 0 | 1): void {
   ws.activate(refKey(tab));
-  ws.focus(group);
   close();
 }
 

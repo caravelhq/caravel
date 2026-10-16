@@ -13546,7 +13546,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
           active.value[targetGroup] = key;
           focused.value = targetGroup;
           persist();
-          syncWorkspaceUrl(true);
+          syncWorkspaceUrl(false);
         }
         return;
       }
@@ -13802,6 +13802,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     syncWorkspaceUrl(true);
   }
   function focus(group) {
+    if (focused.value === group) return;
     focused.value = group;
     syncWorkspaceUrl(false);
   }
@@ -13965,14 +13966,13 @@ let _wsStateIdSeq = (() => {
   const ids = Object.keys(ring).map(Number);
   return ids.length ? Math.max(...ids) : 0;
 })();
-let _pendingSnapshot = null;
+let _pendingSnapshot = false;
 if (typeof window !== "undefined") {
   window.addEventListener("popstate", (ev) => {
     var _a2;
     const stateId = (_a2 = ev.state) == null ? void 0 : _a2.wsStateId;
     if (stateId !== void 0) {
-      const ring = loadRing();
-      _pendingSnapshot = ring[stateId] ?? null;
+      _pendingSnapshot = true;
     }
   });
 }
@@ -14002,17 +14002,23 @@ function routeToRef(route) {
   return null;
 }
 router.afterEach((to) => {
+  var _a2;
   if (_pendingSnapshot) {
-    const snap = _pendingSnapshot;
-    _pendingSnapshot = null;
-    const ws2 = useWorkspaceStore();
-    _navigating = true;
-    try {
-      ws2.restoreSnapshot(snap);
-    } finally {
-      _navigating = false;
+    _pendingSnapshot = false;
+    const currentId = (_a2 = window.history.state) == null ? void 0 : _a2.wsStateId;
+    if (currentId !== void 0) {
+      const snap = loadRing()[currentId] ?? null;
+      if (snap) {
+        const ws2 = useWorkspaceStore();
+        _navigating = true;
+        try {
+          ws2.restoreSnapshot(snap);
+        } finally {
+          _navigating = false;
+        }
+        return;
+      }
     }
-    return;
   }
   const ref2 = routeToRef(to);
   if (!ref2) return;
@@ -17341,7 +17347,6 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     }
     function activateAndClose(tab, group) {
       ws.activate(refKey(tab));
-      ws.focus(group);
       close();
     }
     function togglePin(key) {
@@ -17435,7 +17440,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$m, [["__scopeId", "data-v-946901fe"]]);
+const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$m, [["__scopeId", "data-v-00756674"]]);
 const _hoisted_1$i = { class: "tab-strip-outer" };
 const _hoisted_2$b = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_3$a = { class: "ts-tab-glyph" };
@@ -17612,7 +17617,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
       return openBlock(), createElementBlock(Fragment, null, [
         createBaseVNode("div", _hoisted_1$i, [
           createBaseVNode("div", {
-            class: "tab-strip",
+            class: normalizeClass(["tab-strip", { "tab-strip--overflow": isOverflowing.value }]),
             ref_key: "stripEl",
             ref: stripEl
           }, [
@@ -17634,10 +17639,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
-                onClick: ($event) => {
-                  unref(ws).activate(unref(refKey)(tab));
-                  unref(ws).focus(0);
-                },
+                onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
                 onMouseenter: ($event) => onTabHover(i, group0.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17690,10 +17692,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
-                onClick: ($event) => {
-                  unref(ws).activate(unref(refKey)(tab));
-                  unref(ws).focus(1);
-                },
+                onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
                 onMouseenter: ($event) => onTabHover(i, group1.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17718,7 +17717,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 }, "×", 8, _hoisted_9$3)) : createCommentVNode("", true)
               ], 42, _hoisted_6$5);
             }), 128))
-          ], 512),
+          ], 2),
           isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_10$3)) : createCommentVNode("", true),
           createBaseVNode("div", _hoisted_11$3, [
             isOverflowing.value ? (openBlock(), createElementBlock("button", {
@@ -17806,7 +17805,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-2a6d8a36"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-e9add2d2"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
