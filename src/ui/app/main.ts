@@ -21,8 +21,12 @@ if ("serviceWorker" in navigator) {
     .catch(() => {});
 }
 
+const pinia = createPinia();
+// Expose Pinia on window for E2E test specs (single-user local tool).
+(window as unknown as Record<string, unknown>).__pinia = pinia;
+
 createApp(App)
-  .use(createPinia())
+  .use(pinia)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   .use(router as any)
   .use(createBootstrap())
