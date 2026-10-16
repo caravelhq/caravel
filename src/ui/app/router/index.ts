@@ -59,16 +59,18 @@ let _wsStateIdSeq = (() => {
   return ids.length ? Math.max(...ids) : 0;
 })();
 
-// Snapshot queued by the popstate listener; consumed once by afterEach.
-let _pendingSnapshot: WsSnapshot | null = null;
+// Flag set by the popstate listener; consumed once by afterEach.
+// Stores only a boolean — afterEach reads window.history.state.wsStateId authoritatively
+// so that spurious popstate events (fired by vue-router's history.go(-delta) reverts) cannot
+// overwrite the flag with a stale ring entry before afterEach runs.
+let _pendingSnapshot = false;
 
 // Capture the popstate event before vue-router's async afterEach fires.
 if (typeof window !== "undefined") {
   window.addEventListener("popstate", (ev) => {
     const stateId = (ev.state as Record<string, unknown> | null)?.wsStateId as number | undefined;
     if (stateId !== undefined) {
-      const ring = loadRing();
-      _pendingSnapshot = ring[stateId] ?? null;
+      _pendingSnapshot = true;
     }
   });
 }
@@ -106,17 +108,21 @@ function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
 // Navigation-initiated changes (popstate / direct URL) open or focus without a history push.
 router.afterEach((to) => {
   // Popstate with a known wsStateId: restore workspace wholesale from the snapshot ring.
+  // Read window.history.state.wsStateId here (not from the popstate event) because spurious
+  // popstate events fired by vue-router's duplicate-navigation reverts can arrive after the
+  // legitimate popstate and overwrite any stale value we cached there.
   if (_pendingSnapshot) {
-    const snap = _pendingSnapshot;
-    _pendingSnapshot = null;
-    const ws = useWorkspaceStore();
-    _navigating = true;
-    try {
-      ws.restoreSnapshot(snap);
-    } finally {
-      _navigating = false;
+    _pendingSnapshot = false;
+    const currentId = (window.history.state as Record<string, unknown> | null)?.wsStateId as number | undefined;
+    if (currentId !== undefined) {
+      const snap = loadRing()[currentId] ?? null;
+      if (snap) {
+        const ws = useWorkspaceStore();
+        _navigating = true;
+        try { ws.restoreSnapshot(snap); } finally { _navigating = false; }
+        return;
+      }
     }
-    return;
   }
 
   const ref = routeToRef(to);

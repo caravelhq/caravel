@@ -1,23 +1,28 @@
-// NV-navigation.spec.mjs — Phase 3.2 step 4: Open menu navigation specs NV1–NV3
+// NV-navigation.spec.mjs — Phase 3.2 steps 4 + 7: Open menu navigation (NV1–NV7)
 //
 // NV1: Three labelled sections; Dashboard, Tasks, Chat, Files all open;
 //      Projects is the only greyed/disabled item.
 // NV2: Pickers (Tasks, Chat, Files) open pinned; Dashboard opens unpinned.
 // NV3: Recents populates on close and on eviction; caps at 5, newest first;
 //      survives reload; reopening restores the ref and removes it from recents.
+// NV4: Back after open → activate → close replays workspace states in reverse (un-close).
+// NV5: Forward re-applies them.
+// NV6: A bare focus() call swaps the path and ?side= (F10 / D1-r).
+// NV7: No filesHistory / ←→ navigation elements remain in the Files DOM.
 //
-// Mutation proof: break workspace.recents persistence → NV3 reload assertion fails.
+// Mutation proof (step 7): remove syncWorkspaceUrl from focus() → NV6 goes red.
 //
-// Harness: dev server at :4633 (use loopback, not caravel.lan — Chromium can't
-//          resolve /etc/hosts entries).
+// Harness: dev server at :4633 for NV1–NV3; fixture daemon at :4636 with test
+//          server at :4634 for NV4–NV7.
 //
-// Run:
+// Run (NV1–NV7 full suite):
 //   UI_TEST_SKILL=/home/walter/workspace/.claude/skills/ui-test \
 //   CARAVEL_BASE=http://127.0.0.1:4633 \
+//   CARAVEL_FIXTURE_BASE=http://127.0.0.1:4634 \
 //   node tests/ui/phase3.2/NV-navigation.spec.mjs
 //
-// Mutation proof (NV3 --mut):
-//   Run with MUTATION=1 after removing 'recents' from workspace persist() keys.
+// Mutation proof (NV6 --mut):
+//   Run with MUTATION=1 after removing syncWorkspaceUrl call from focus().
 
 import { join, resolve } from "path";
 import { fileURLToPath } from "url";
@@ -36,6 +41,7 @@ const PLAYWRIGHT_MJS = join(SKILL_ROOT, "node_modules", "playwright", "index.mjs
 const { chromium } = await import(`file://${PLAYWRIGHT_MJS}`);
 
 const BASE = (process.env.CARAVEL_BASE || "http://127.0.0.1:4633").replace(/\/$/, "");
+const FIXTURE_BASE = (process.env.CARAVEL_FIXTURE_BASE || "http://127.0.0.1:4634").replace(/\/$/, "");
 const MUTATION = process.env.MUTATION === "1";
 const SHOTS_DIR = join(__dirname, `.runs/nv-navigation${MUTATION ? "-mut" : ""}`);
 mkdirSync(SHOTS_DIR, { recursive: true });
@@ -415,6 +421,221 @@ try {
       }
 
       await page.screenshot({ path: join(SHOTS_DIR, `NV3-final-${VP.label}.png`) });
+      await ctx.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // NV4 — Back after open → activate → close replays workspace states in reverse
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Build history: open A, open B, activate A, close A
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-01.md" })`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-02.md" })`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.activate(ws.refKey({ kind: "file", path: "Notes/doc-01.md" }))`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.close(ws.refKey({ kind: "file", path: "Notes/doc-01.md" }))`);
+      await page.waitForTimeout(200);
+
+      // Verify current state: doc-01 is gone
+      const stBefore = await wsState(page);
+      const beforeHasA = stBefore?.tabKeys?.includes("file:Notes/doc-01.md") ?? false;
+      if (!beforeHasA) {
+        pass(`NV4 doc-01 closed before Back [${VP.label}]`);
+      } else {
+        fail(`NV4 doc-01 closed before Back [${VP.label}]`, "tab still present before Back");
+      }
+
+      // Back — should restore state where doc-01 was active (before the close)
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const stAfterBack1 = await wsState(page);
+      if (stAfterBack1?.tabKeys?.includes("file:Notes/doc-01.md")) {
+        pass(`NV4 Back restores closed tab (doc-01 back in tabs) [${VP.label}]`);
+      } else {
+        fail(`NV4 Back restores closed tab [${VP.label}]`, `tabs: ${JSON.stringify(stAfterBack1?.tabKeys)}`);
+      }
+
+      // Back again — doc-01 still present, but doc-02 now active
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const stAfterBack2 = await wsState(page);
+      if (stAfterBack2?.tabKeys?.includes("file:Notes/doc-01.md") &&
+          stAfterBack2?.tabKeys?.includes("file:Notes/doc-02.md")) {
+        pass(`NV4 second Back: both tabs present [${VP.label}]`);
+      } else {
+        fail(`NV4 second Back: both tabs present [${VP.label}]`, `tabs: ${JSON.stringify(stAfterBack2?.tabKeys)}`);
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV4-after-back2-${VP.label}.png`) });
+      await ctx.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // NV5 — Forward re-applies workspace states
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Build same history as NV4
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-03.md" })`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-04.md" })`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.activate(ws.refKey({ kind: "file", path: "Notes/doc-03.md" }))`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.close(ws.refKey({ kind: "file", path: "Notes/doc-03.md" }))`);
+      await page.waitForTimeout(200);
+
+      // Two Backs to rewind
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await page.goBack({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const stRewound = await wsState(page);
+      const rewoundHasA = stRewound?.tabKeys?.includes("file:Notes/doc-03.md") ?? false;
+
+      // Forward — should re-apply (doc-03 active)
+      await page.goForward({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const stFwd1 = await wsState(page);
+      if (stFwd1?.tabKeys?.includes("file:Notes/doc-03.md")) {
+        pass(`NV5 Forward restores doc-03 [${VP.label}]`);
+      } else {
+        fail(`NV5 Forward restores doc-03 [${VP.label}]`, `tabs: ${JSON.stringify(stFwd1?.tabKeys)}`);
+      }
+
+      // Forward again — doc-03 closed
+      await page.goForward({ waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const stFwd2 = await wsState(page);
+      if (!stFwd2?.tabKeys?.includes("file:Notes/doc-03.md")) {
+        pass(`NV5 second Forward closes doc-03 [${VP.label}]`);
+      } else {
+        fail(`NV5 second Forward closes doc-03 [${VP.label}]`, `tabs still has doc-03: ${JSON.stringify(stFwd2?.tabKeys)}`);
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV5-after-forward2-${VP.label}.png`) });
+      await ctx.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // NV6 — focus() swaps path and ?side= (F10 / D1-r)
+    // Under mutation (syncWorkspaceUrl removed from focus()), this goes red.
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Create a split: open A in group 0, B with side:true in group 1
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-05.md" })`);
+      await page.waitForTimeout(200);
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "Notes/doc-06.md" }, { side: true })`);
+      await page.waitForTimeout(200);
+
+      // Focus group 1 (it's likely already focused from the side open, so focus group 0 first)
+      await wsAction(page, `ws => ws.focus(0)`);
+      await page.waitForTimeout(200);
+      const urlFocused0 = new URL(page.url());
+      const hashFocused0 = decodeURIComponent(urlFocused0.hash.slice(1)); // strip #
+
+      // The path should be doc-05 (group 0's active), side param should be doc-06 key
+      // After focus(0): path must be doc-05 (group 0's active), side= must reference doc-06 (group 1).
+      // Under mutation (syncWorkspaceUrl removed), URL stays on doc-06?side=doc-05 → both fail.
+      const pathPart0 = hashFocused0.split("?")[0];
+      const queryPart0 = hashFocused0.split("?")[1] ?? "";
+      if (queryPart0.includes("doc-06")) {
+        pass(`NV6 focus(0): URL has ?side= when split is on [${VP.label}]`);
+      } else {
+        fail(`NV6 focus(0): URL has ?side= when split is on [${VP.label}]`, `hash: "${hashFocused0}"`);
+      }
+      if (pathPart0.includes("doc-05")) {
+        pass(`NV6 focus(0): URL path reflects group 0 active ref [${VP.label}]`);
+      } else {
+        fail(`NV6 focus(0): URL path reflects group 0 active ref [${VP.label}]`, `hash: "${hashFocused0}"`);
+      }
+
+      // Now focus group 1 — URL should flip to doc-06 path and side= doc-05 key
+      await wsAction(page, `ws => ws.focus(1)`);
+      await page.waitForTimeout(200);
+      const urlFocused1 = new URL(page.url());
+      const hashFocused1 = decodeURIComponent(urlFocused1.hash.slice(1));
+
+      const hasSideG1 = hashFocused1.includes("side=");
+      if (hasSideG1) {
+        pass(`NV6 focus(1): URL has ?side= when split is on [${VP.label}]`);
+      } else {
+        fail(`NV6 focus(1): URL has ?side= when split is on [${VP.label}]`, `hash: "${hashFocused1}"`);
+      }
+      // The side= value should reference doc-05 (group 0's key)
+      if (hashFocused1.includes("doc-05")) {
+        pass(`NV6 focus(1): side= references group 0 active ref [${VP.label}]`);
+      } else {
+        fail(`NV6 focus(1): side= references group 0 active ref [${VP.label}]`, `hash: "${hashFocused1}"`);
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV6-focus-${VP.label}.png`) });
+      await ctx.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // NV7 — No filesHistory / ←→ navigation elements remain in the Files DOM
+    // (step 6 deleted them; this asserts they stay gone)
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const ctx = await browser.newContext({ viewport: VP });
+      const page = await ctx.newPage();
+      await page.goto(FIXTURE_BASE, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+      await resetWorkspace(page);
+
+      // Open the Files page
+      await wsAction(page, `ws => ws.open({ kind: "legacy", page: "files" })`);
+      await page.waitForTimeout(400);
+
+      // Check that nav back/forward buttons are absent from the Files DOM
+      const navBack = await page.locator(".files-nav-back, #files-nav-back, [data-files-nav-back]").count();
+      const navFwd = await page.locator(".files-nav-forward, #files-nav-forward, [data-files-nav-forward]").count();
+      const arrowButtons = await page.evaluate(() => {
+        const panel = document.getElementById("files-panel");
+        if (!panel) return { found: false, reason: "no #files-panel" };
+        const buttons = Array.from(panel.querySelectorAll("button"));
+        const navBtns = buttons.filter(b => b.textContent === "←" || b.textContent === "→");
+        return { found: navBtns.length > 0, count: navBtns.length };
+      });
+
+      if (navBack === 0 && navFwd === 0) {
+        pass(`NV7 No .files-nav-back / .files-nav-forward elements [${VP.label}]`);
+      } else {
+        fail(`NV7 No nav elements [${VP.label}]`, `found back=${navBack} fwd=${navFwd}`);
+      }
+
+      if (!arrowButtons.found) {
+        pass(`NV7 No ←/→ buttons in #files-panel [${VP.label}]`);
+      } else {
+        fail(`NV7 No ←/→ buttons in #files-panel [${VP.label}]`, `found ${arrowButtons.count} arrow buttons`);
+      }
+
+      await page.screenshot({ path: join(SHOTS_DIR, `NV7-files-dom-${VP.label}.png`) });
       await ctx.close();
     }
   }
