@@ -595,6 +595,15 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     syncWorkspaceUrl(false);
   }
 
+  // Reopen a recently-closed/evicted ref: remove from recents and open it.
+  function reopenFromRecents(key: string): void {
+    const idx = recents.value.findIndex((r) => refKey(r) === key);
+    if (idx === -1) return;
+    const ref = recents.value[idx];
+    recents.value.splice(idx, 1);
+    open(ref);
+  }
+
   function activate(key: string): void {
     const idx = keyIndex(key);
     if (idx === -1) return;
@@ -638,5 +647,6 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     focus,
     activate,
     focusedActiveRef,
+    reopenFromRecents,
   };
 });

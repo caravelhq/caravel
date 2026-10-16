@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, onBeforeUnmount } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { useKnowledgeStore } from "../../stores/knowledge";
 import { useNewTaskStore } from "../../stores/newTask";
+import { refGlyph, refLabel } from "../../workspace/labels";
+import type { ResourceRef } from "../../workspace/refs";
 
 const ws = useWorkspaceStore();
 const kn = useKnowledgeStore();
@@ -37,12 +39,17 @@ function close(): void {
   isOpen.value = false;
 }
 
+// Dashboard is not a picker (DEC-0022) — opens as an ordinary unpinned tab.
 function openDashboard(): void { ws.open({ kind: "dashboard" }); close(); }
-function openTasks(): void { ws.open({ kind: "legacy", page: "tasks" }); close(); }
-function openChat(): void { ws.open({ kind: "legacy", page: "chat" }); close(); }
-function openFiles(): void { ws.open({ kind: "legacy", page: "files" }); close(); }
+
+// Pickers open pinned (DEC-0022).
+function openPicker(r: ResourceRef): void { ws.open(r); ws.pin(ws.refKey(r)); close(); }
+
 function openSearch(): void { kn.open(); close(); }
 function openNewTask(): void { nt.open(); close(); }
+
+// Recents: remove from ring and open.
+function openRecent(key: string): void { ws.reopenFromRecents(key); close(); }
 
 function onDocPointerDown(ev: PointerEvent): void {
   if (!isOpen.value) return;
@@ -90,14 +97,77 @@ onBeforeUnmount(() => {
         role="menu"
         @click.stop
       >
+        <!-- Section: Pickers -->
+        <div class="om-section-label" data-section="pickers">Pickers</div>
         <button id="tab-dashboard" class="open-menu-item" type="button" role="menuitem" @click="openDashboard">Dashboard</button>
-        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openTasks">Tasks</button>
-        <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openChat">Chat</button>
-        <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openFiles">Files</button>
+        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Tasks</button>
+        <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
+        <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
+        <button                    class="open-menu-item om-item-disabled" type="button" role="menuitem" disabled>
+          Projects <span class="om-phase-tag">Phase 4</span>
+        </button>
+
+        <!-- Section: Recents (only when non-empty) -->
+        <template v-if="ws.recents.length > 0">
+          <hr class="open-menu-sep" />
+          <div class="om-section-label" data-section="recents">Recents</div>
+          <button
+            v-for="recent in ws.recents"
+            :key="ws.refKey(recent)"
+            class="open-menu-item om-item-recent"
+            type="button"
+            role="menuitem"
+            :data-recent-key="ws.refKey(recent)"
+            @click="openRecent(ws.refKey(recent))"
+          >
+            <span class="om-glyph">{{ refGlyph(recent) }}</span>
+            {{ refLabel(recent) }}
+          </button>
+        </template>
+
+        <!-- Section: Actions -->
         <hr class="open-menu-sep" />
+        <div class="om-section-label" data-section="actions">Actions</div>
         <button class="open-menu-item" type="button" role="menuitem" @click="openSearch">Search <kbd>⌘K</kbd></button>
         <button class="open-menu-item" type="button" role="menuitem" @click="openNewTask">New task <kbd>N</kbd></button>
       </div>
     </Teleport>
   </div>
 </template>
+
+<style scoped>
+.om-section-label {
+  padding: 6px 14px 3px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a7a8a;
+  pointer-events: none;
+  user-select: none;
+}
+
+.om-item-disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.om-item-recent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.om-glyph {
+  font-size: 11px;
+  opacity: 0.7;
+  min-width: 14px;
+  text-align: center;
+}
+
+.om-phase-tag {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-left: auto;
+  padding-left: 8px;
+}
+</style>
