@@ -2,7 +2,6 @@
 import { computed } from "vue";
 import { useDashboardStore } from "../../stores/dashboard";
 import { useWorkspaceStore } from "../../stores/workspace";
-import { useTasksStore } from "../../stores/tasks";
 import type { AttentionTier } from "../../stores/attention";
 import TierRow from "./TierRow.vue";
 
@@ -18,7 +17,6 @@ const props = defineProps<{
 
 const dash = useDashboardStore();
 const workspace = useWorkspaceStore();
-const tasksStore = useTasksStore();
 
 const collapsed = computed(() => dash.isCollapsed(props.sectionKey));
 const limit = computed(() => props.rowLimit ?? 8);
@@ -26,8 +24,7 @@ const visibleRows = computed(() => props.tier.rows.slice(0, limit.value));
 const hasMore = computed(() => props.tier.count > visibleRows.value.length);
 
 function openTask(id: string): void {
-  tasksStore.pendingTaskId = id;
-  workspace.open({ kind: "legacy", page: "tasks" });
+  workspace.open({ kind: "envelope", taskId: id });
 }
 
 function openAllTasks(): void {
