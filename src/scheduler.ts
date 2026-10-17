@@ -202,7 +202,9 @@ async function writeSkipJournal(agent: string, templateId: string, reason: strin
   try {
     await mkdir(join(AGENTS_DIR, agent, "tasks"), { recursive: true });
     await writeFile(journalPath, entry + "\n", { flag: "a" });
-  } catch {}
+  } catch (err) {
+    console.warn("[scheduler] skip-journal write failed:", err);
+  }
 }
 
 // Main scheduler tick — called from the daemon's 60s setInterval.

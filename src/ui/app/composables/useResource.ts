@@ -1,4 +1,4 @@
-import { onMounted, onBeforeUnmount, onActivated, onDeactivated, computed, watch, type Ref } from "vue";
+import { onMounted, onBeforeUnmount, onActivated, onDeactivated, computed, watch, type Ref, type ComputedRef } from "vue";
 import { useLiveStore, type ResourceSpec, type ResourceEntry } from "../stores/live";
 
 /**
@@ -15,7 +15,7 @@ export function useResource(
   key: string | Ref<string>,
   spec: ResourceSpec,
   opts?: { keepAliveAware?: boolean }
-): { entry: ReturnType<typeof computed<ResourceEntry | undefined>> } {
+): { entry: ComputedRef<ResourceEntry | undefined> } {
   const live = useLiveStore();
 
   const resolvedKey = (): string =>

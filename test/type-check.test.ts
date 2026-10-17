@@ -42,8 +42,6 @@ const KNOWN_PREEXISTING: string[] = [
   "test/scheduler/graph-errors.test.ts(244,",
   // TS2345/TS2352: type drift in voice island (unrelated to runner work)
   "src/ui/app/components/voice/useReadAloud.ts(",
-  // TS2741: WritableComputedRef symbol drift in composables
-  "src/ui/app/composables/useResource.ts(",
   // TS18048/TS2345: live store entry possibly undefined
   "src/ui/app/stores/live.ts(",
 ];

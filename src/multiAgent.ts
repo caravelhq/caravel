@@ -1377,7 +1377,15 @@ async function transitionToWaiting(
   } else {
     // script (and future families): store the worker-declared deadline and
     // watch descriptor so sweepWaiting can check completion without the worker.
-    if (directive.deadline) next = setField(next, "script_deadline", directive.deadline);
+    // M1 (WAL-120): enforce a deadline — a park without one can never time out.
+    // A worker that forgets `deadline:` is exactly the population this node
+    // exists to defend; default to +60min with a loud warn so it's visible.
+    let effectiveDeadline = directive.deadline;
+    if (!effectiveDeadline) {
+      effectiveDeadline = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      console.warn(`[multi-agent] ${agent}/${taskId}: waiting:on:${onSpec} park carried no deadline — defaulting to +60min (${effectiveDeadline})`);
+    }
+    next = setField(next, "script_deadline", effectiveDeadline);
     if (directive.watch) next = setField(next, "script_watch", directive.watch);
   }
   const priorStatus = readField(yaml, "status") ?? "claimed";
@@ -1525,6 +1533,10 @@ export const SWEEP_PREDICATES: Record<string, WaitPredicate> = {
   },
 };
 
+// S5: tracks envelopes for which the late-file warning has already been emitted
+// so the guard doesn't wallpaper logs on every tick after a failed:timeout.
+const _lateFileWarned = new Set<string>();
+
 // Phase 3W + WAL-120: sweepWaiting drives the kind→predicate table above.
 // waiting:on:limits: existing behaviour (unblock when limits gate clears).
 // waiting:on:script: transition to terminal when rendezvous appears or deadline passes.
@@ -1600,22 +1612,9 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
         const d = action.directive;
         const termStatus = d.kind === "done" ? "done" : `failed:${d.reason ?? "other"}`;
         console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} park resolved → ${termStatus} (${spec})`);
+        // S1: transitionToTerminal already calls checkFrontierAndMaybeSpawnContinuation
+        // and sweepBlockedDependants internally — do not duplicate those calls here.
         await transitionToTerminal(agent, taskId, filePath, d);
-        // If done, check whether a continuation should fire.
-        if (d.kind === "done") {
-          await checkFrontierAndMaybeSpawnContinuation(
-            // rebuild yaml with updated status for the frontier check
-            setField(setField(yaml, "status", termStatus), "updated", now),
-            taskId,
-            agent,
-            knownAgents(),
-            AGENTS_DIR
-          );
-        }
-        // If failed, block dependants.
-        if (d.kind !== "done") {
-          await sweepBlockedDependants(taskId, currentGraph, AGENTS_DIR);
-        }
       }
     }
 
@@ -1634,8 +1633,12 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       const scriptDeadline = readField(yaml, "script_deadline");
       if (!scriptDeadline) continue; // only watching:on:script timeouts
       // Check if a terminal rendezvous appeared after the timeout.
+      // S5: warn once per envelope — the runner ticks every 30s and would
+      // otherwise wallpaper logs for every affected task indefinitely.
       const lateFile = await readReportFile(agent, taskId);
-      if (lateFile && lateFile.kind !== "waiting") {
+      const warnKey = `${agent}/${taskId}`;
+      if (lateFile && lateFile.kind !== "waiting" && !_lateFileWarned.has(warnKey)) {
+        _lateFileWarned.add(warnKey);
         console.warn(
           `[multi-agent] sweepWaiting: ${agent}/${taskId} — a ${lateFile.kind} rendezvous arrived AFTER the task was failed:timeout; task stays failed. Inspect agents/${agent}/tasks/done/${taskId}.md if the result is salvageable.`
         );
@@ -2982,6 +2985,57 @@ async function executeClaimPassItem(opts: {
   return opts.doClaimFn();
 }
 
+// M2 (WAL-120): extracted from tickOnce's .then lambda so T7/T8 can drive the
+// completion path directly without going through runWorker.
+async function applyWorkerOutcome(
+  agent: string,
+  taskId: string,
+  filePath: string,
+  claimedYaml: string,
+  directive: TaskDirective | null
+): Promise<void> {
+  const effective: TaskDirective = directive ?? {
+    kind: "failed",
+    reason: "other",
+    summary: "worker completed but emitted no directive — likely forgot the closing <task-done>/<task-failed> tag. The deliverable (if any) may still be on disk; check the worker's output destination before re-dispatching.",
+    body: "",
+    report: null,
+  };
+  if (!directive) {
+    console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — synthesising failed:other`);
+  }
+  if (effective.kind === "waiting") {
+    const onSpec = (effective.reason ?? "user").trim() || "user";
+    if (!VALID_WAITING_SPECS.has(onSpec)) {
+      // Phase 3W straggler conversion: a worker that still emits waiting:on:task
+      // or waiting:on:user predates the cutover. Convert to done so it surfaces
+      // as a report (terminal ∧ closed:null) rather than parking invisibly.
+      const stragglerSpec = `waiting:on:${onSpec}`;
+      console.warn(`[multi-agent] ${agent}/${taskId} emitted ${stragglerSpec} — Phase 3W straggler, converting to done`);
+      await appendJournal(agent, {
+        ts: new Date().toISOString(),
+        id: taskId,
+        status: stragglerSpec,
+        level: "warn",
+        kind: readField(claimedYaml, "kind") ?? "unknown",
+        from: readField(claimedYaml, "from") ?? "unknown",
+        to: agent,
+        parent: readField(claimedYaml, "parent") ?? null,
+        summary: `Phase 3W straggler: converted ${stragglerSpec} to done — ${effective.summary || ""}`,
+      });
+      const converted: TaskDirective = { kind: "done", reason: null, summary: effective.summary, body: effective.body ?? "", report: effective.report };
+      await transitionToTerminal(agent, taskId, filePath, converted);
+      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (straggler from ${stragglerSpec})`);
+    } else {
+      await transitionToWaiting(agent, taskId, filePath, effective);
+      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${onSpec}`);
+    }
+  } else {
+    await transitionToTerminal(agent, taskId, filePath, effective);
+    console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
+  }
+}
+
 async function tickOnce(
   opts: Required<MultiAgentOptions>,
   inFlight: Map<string, number>,
@@ -3092,54 +3146,7 @@ async function tickOnce(
 
       // Fire-and-forget the worker; record completion when it returns.
       runWorker(agent, taskId, claimedYaml)
-        .then(async (directive) => {
-          // No directive emitted is a worker bug: the response either dropped
-          // the closing tag or the worker ended without one entirely. We must
-          // not leave the envelope in `claimed` forever — that strands the
-          // orchestration with no recovery path. Transition to `failed:other`
-          // so Alice's continuation queue (or Kelly via the dashboard) can
-          // notice and re-dispatch with a stronger reminder.
-          const effective: TaskDirective = directive ?? {
-            kind: "failed",
-            reason: "other",
-            summary: "worker completed but emitted no directive — likely forgot the closing <task-done>/<task-failed> tag. The deliverable (if any) may still be on disk; check the worker's output destination before re-dispatching.",
-            body: "",
-            report: null,
-          };
-          if (!directive) {
-            console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — synthesising failed:other`);
-          }
-          if (effective.kind === "waiting") {
-            const onSpec = (effective.reason ?? "user").trim() || "user";
-            if (!VALID_WAITING_SPECS.has(onSpec)) {
-              // Phase 3W straggler conversion: a worker that still emits waiting:on:task
-              // or waiting:on:user predates the cutover. Convert to done so it surfaces
-              // as a report (terminal ∧ closed:null) rather than parking invisibly.
-              const stragglerSpec = `waiting:on:${onSpec}`;
-              console.warn(`[multi-agent] ${agent}/${taskId} emitted ${stragglerSpec} — Phase 3W straggler, converting to done`);
-              await appendJournal(agent, {
-                ts: new Date().toISOString(),
-                id: taskId,
-                status: stragglerSpec,
-                level: "warn",
-                kind: readField(claimedYaml, "kind") ?? "unknown",
-                from: readField(claimedYaml, "from") ?? "unknown",
-                to: agent,
-                parent: readField(claimedYaml, "parent") ?? null,
-                summary: `Phase 3W straggler: converted ${stragglerSpec} to done — ${effective.summary || ""}`,
-              });
-              const converted: TaskDirective = { kind: "done", reason: null, summary: effective.summary, body: effective.body ?? "", report: effective.report };
-              await transitionToTerminal(agent, taskId, filePath, converted);
-              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (straggler from ${stragglerSpec})`);
-            } else {
-              await transitionToWaiting(agent, taskId, filePath, effective);
-              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:limits`);
-            }
-          } else {
-            await transitionToTerminal(agent, taskId, filePath, effective);
-            console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
-          }
-        })
+        .then((directive) => applyWorkerOutcome(agent, taskId, filePath, claimedYaml, directive))
         .catch((err) => {
           console.error(`[multi-agent] ${agent}/${taskId} transition failed:`, err);
         })
@@ -3325,6 +3332,8 @@ export const __testing = {
   // Tick-level claim pass for WAL-72 Phase 1 regression suite (TESTPLAN.md Part 3).
   // Takes an explicit agentsDir so tests can drive it against a fixture directory.
   runClaimPassForTesting,
+  // M2 (WAL-120): completion-path park extracted from tickOnce's .then lambda.
+  applyWorkerOutcome,
   // Frontier check — WAL-72 Phase 2+.  Takes explicit agentsDir for fixture tests.
   // v1.19: graph parameter dropped; uses module-level currentGraph.
   checkFrontierAndMaybeSpawnContinuation,

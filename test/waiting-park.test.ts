@@ -5,7 +5,10 @@
  * T2: terminal .md appears later — sweep transitions to done
  * T3: deadline exceeded — failed:timeout, park reason in history
  * T4: waiting:on:limits behaviour unchanged (regression)
- * T5: second reason (ci) added via one predicate — generality proof
+ * T5: second reason (ci) via one predicate — generality proof
+ * T6: no deadline → auto-default now+60min; past deadline → failed:timeout
+ * T7: completion-path park via applyWorkerOutcome — waiting directive parks envelope
+ * T8: stale-claim recovery via sweepStaleClaims — waiting/<id>.md rendezvous parks — generality proof
  *
  * Run with: bun run test/waiting-park.test.ts
  * Exits 0 on all pass, 1 on any failure.
@@ -99,28 +102,28 @@ const testDir = await mkdtemp(join(tmpdir(), "caravel-wal120-"));
 process.chdir(testDir);
 
 // Import AFTER chdir — AGENTS_DIR and LIMITS_GATE_FILE use process.cwd() at load time.
+type WaitingDirective = {
+  kind: "waiting";
+  reason: string | null;
+  summary: string;
+  body: string;
+  report: string | null;
+  deadline?: string;
+  watch?: string;
+};
+type SweepOpts = {
+  agents: string[];
+  tickMs: number;
+  leaseMs: number;
+  perAgentConcurrency: number;
+};
+
 const ma = (await import("../src/multiAgent.ts") as unknown) as {
   __testing: {
-    transitionToWaiting: (
-      agent: string,
-      taskId: string,
-      openPath: string,
-      directive: {
-        kind: "waiting";
-        reason: string | null;
-        summary: string;
-        body: string;
-        report: string | null;
-        deadline?: string;
-        watch?: string;
-      }
-    ) => Promise<void>;
-    sweepWaiting: (opts: {
-      agents: string[];
-      tickMs: number;
-      leaseMs: number;
-      perAgentConcurrency: number;
-    }) => Promise<void>;
+    transitionToWaiting: (agent: string, taskId: string, openPath: string, directive: WaitingDirective) => Promise<void>;
+    sweepWaiting: (opts: SweepOpts) => Promise<void>;
+    sweepStaleClaims: (opts: SweepOpts, includeUnexpired?: boolean) => Promise<void>;
+    applyWorkerOutcome: (agent: string, taskId: string, filePath: string, claimedYaml: string, directive: WaitingDirective | null) => Promise<void>;
     SWEEP_PREDICATES: Record<string, (agent: string, taskId: string, yaml: string) => Promise<
       | { kind: "unblock" }
       | { kind: "terminal"; directive: { kind: string; reason: string | null; summary: string; body: string; report: string | null } }
@@ -130,7 +133,7 @@ const ma = (await import("../src/multiAgent.ts") as unknown) as {
   };
 };
 
-const { transitionToWaiting, sweepWaiting, SWEEP_PREDICATES, VALID_WAITING_SPECS } = ma.__testing;
+const { transitionToWaiting, sweepWaiting, sweepStaleClaims, applyWorkerOutcome, SWEEP_PREDICATES, VALID_WAITING_SPECS } = ma.__testing;
 
 const agentsDir = join(testDir, "agents");
 const SWEEP_OPTS = { agents: [] as string[], tickMs: 30000, leaseMs: 1800000, perAgentConcurrency: 1 };
@@ -197,6 +200,19 @@ console.log("\nT2 — terminal rendezvous appears: sweep moves envelope to done/
   const futureDeadline = new Date(Date.now() + 3600 * 1000).toISOString();
   const waitPath = join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`);
   await writeFile(waitPath, makeWaitingYaml(taskId, "script", futureDeadline));
+
+  // S6: lingering waiting/<id>.md from the original park phase — must NOT shadow done/
+  await writeFile(join(agentsDir, agent, "tasks", "waiting", `${taskId}.md`), [
+    "---",
+    "status: waiting",
+    "waiting_on: script",
+    `deadline: ${futureDeadline}`,
+    `summary: "prior park phase"`,
+    "---",
+    "",
+    "Background script waiting.",
+    "",
+  ].join("\n"));
 
   // Worker's late done rendezvous appears after the turn ended
   await writeFile(join(agentsDir, agent, "tasks", "done", `${taskId}.md`), [
@@ -356,6 +372,156 @@ console.log("\nT5 — second reason family (ci) via one predicate addition:");
   // Confirm exactly 2 entries in SWEEP_PREDICATES after cleanup (limits + script)
   const predCount = Object.keys(SWEEP_PREDICATES).length;
   assert(predCount === 2, `SWEEP_PREDICATES has 2 entries after cleanup (got ${predCount})`);
+}
+
+// ── T6: no deadline → auto-default now+60min; past deadline → failed:timeout ─
+
+console.log("\nT6 — no deadline → auto-default now+60min; past deadline → failed:timeout:");
+
+{
+  const agent = "t6-agent";
+  const taskId = "TSK-WAL120-T6";
+  await setupAgent(agent);
+
+  const openPath = join(agentsDir, agent, "tasks", "open", `${taskId}.yaml`);
+  await writeFile(openPath, makeClaimedYaml(taskId));
+
+  // No deadline provided — M1 should default to now+60min with a warning
+  await transitionToWaiting(agent, taskId, openPath, {
+    kind: "waiting",
+    reason: "script",
+    summary: "background script launched without deadline",
+    body: "",
+    report: null,
+  });
+
+  const waitPath = join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`);
+  assert(existsSync(waitPath), "T6: envelope moved to waiting/");
+
+  const deadlineStr = await readYamlField(waitPath, "script_deadline");
+  const deadlineMs = deadlineStr ? Date.parse(deadlineStr) : NaN;
+  const diffMin = (deadlineMs - Date.now()) / 60000;
+  assert(
+    Number.isFinite(deadlineMs) && diffMin > 50 && diffMin < 70,
+    `T6: auto-deadline is ~60min from now (got ${diffMin.toFixed(1)}min)`
+  );
+
+  // Overwrite with a past deadline to drive the timeout sweep
+  await writeFile(waitPath, makeWaitingYaml(taskId, "script", new Date(Date.now() - 60 * 1000).toISOString()));
+
+  await sweepWaiting({ ...SWEEP_OPTS, agents: [agent] });
+
+  const failedYaml = join(agentsDir, agent, "tasks", "failed", `${taskId}.yaml`);
+  assert(existsSync(failedYaml), "T6: deadline exceeded → failed/");
+  assert(!existsSync(waitPath), "T6: envelope NOT in waiting/");
+
+  const status = await readYamlField(failedYaml, "status");
+  assert(status === "failed:timeout", `T6: status is failed:timeout (got: ${status})`);
+}
+
+// ── T7: completion-path park via applyWorkerOutcome ──────────────────────────
+
+console.log("\nT7 — applyWorkerOutcome parks claimed envelope on waiting:on:script directive:");
+
+{
+  const agent = "t7-agent";
+  const taskId = "TSK-WAL120-T7";
+  await setupAgent(agent);
+
+  const openPath = join(agentsDir, agent, "tasks", "open", `${taskId}.yaml`);
+  const claimedYaml = makeClaimedYaml(taskId);
+  await writeFile(openPath, claimedYaml);
+
+  const futureDeadline = new Date(Date.now() + 3600 * 1000).toISOString();
+  await applyWorkerOutcome(agent, taskId, openPath, claimedYaml, {
+    kind: "waiting",
+    reason: "script",
+    summary: "long-running proof script launched",
+    body: "",
+    report: null,
+    deadline: futureDeadline,
+    watch: "PID 55555",
+  });
+
+  const waitPath = join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`);
+  assert(existsSync(waitPath), "T7: envelope in waiting/");
+  assert(!existsSync(openPath), "T7: envelope NOT in open/");
+
+  const status = await readYamlField(waitPath, "status");
+  assert(status === "waiting:on:script", `T7: status is waiting:on:script (got: ${status})`);
+
+  const yaml = await readFile(waitPath, "utf-8").catch(() => "");
+  assert(/^\s+holder:\s*null\s*$/m.test(yaml), "T7: lease.holder cleared");
+  assert(/^\s+expires:\s*null\s*$/m.test(yaml), "T7: lease.expires cleared");
+
+  const deadline = await readYamlField(waitPath, "script_deadline");
+  assert(deadline === futureDeadline, `T7: script_deadline preserved (got: ${deadline})`);
+}
+
+// ── T8: stale-claim recovery via sweepStaleClaims — waiting/<id>.md rendezvous
+
+console.log("\nT8 — sweepStaleClaims recovers stale claim with waiting/<id>.md rendezvous:");
+
+{
+  const agent = "t8-agent";
+  const taskId = "TSK-WAL120-T8";
+  await setupAgent(agent);
+
+  // Claimed envelope with expired lease
+  const expiredLease = new Date(Date.now() - 60 * 1000).toISOString();
+  const claimedYaml = [
+    `id: ${taskId}`,
+    `headline: "WAL-120 T8 test"`,
+    `created: 2026-10-01T00:00:00.000Z`,
+    `updated: 2026-10-01T00:00:00.000Z`,
+    `from: alice`,
+    `to: bob`,
+    `kind: code`,
+    `priority: P2`,
+    `project: null`,
+    `brief: |`,
+    `  test task`,
+    `output_format: ""`,
+    `context: []`,
+    `status: claimed`,
+    `lease:`,
+    `  holder: "runner-99999"`,
+    `  expires: ${expiredLease}`,
+    `summary:`,
+    `  response: ""`,
+    `history:`,
+    `  - ts: "2026-10-01T00:00:00.000Z"`,
+    `    from: open`,
+    `    to: claimed`,
+    `    by: runner-99999`,
+    ``,
+  ].join("\n");
+
+  const openPath = join(agentsDir, agent, "tasks", "open", `${taskId}.yaml`);
+  await writeFile(openPath, claimedYaml);
+
+  // Worker wrote a waiting rendezvous before the daemon died
+  const futureDeadline = new Date(Date.now() + 3600 * 1000).toISOString();
+  await writeFile(join(agentsDir, agent, "tasks", "waiting", `${taskId}.md`), [
+    "---",
+    "status: waiting",
+    "waiting_on: script",
+    `deadline: ${futureDeadline}`,
+    `summary: "proof script launched before daemon died"`,
+    "---",
+    "",
+    "Script is running.",
+    "",
+  ].join("\n"));
+
+  await sweepStaleClaims({ ...SWEEP_OPTS, agents: [agent] }, false);
+
+  const waitPath = join(agentsDir, agent, "tasks", "waiting", `${taskId}.yaml`);
+  assert(existsSync(waitPath), "T8: stale claim with waiting rendezvous → waiting/");
+  assert(!existsSync(openPath), "T8: envelope NOT in open/");
+
+  const status = await readYamlField(waitPath, "status");
+  assert(status === "waiting:on:script", `T8: status is waiting:on:script (got: ${status})`);
 }
 
 // ── result ───────────────────────────────────────────────────────────────────
