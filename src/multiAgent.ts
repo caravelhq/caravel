@@ -586,6 +586,11 @@ interface TaskDirective {
   // but additionally stamps a `closed: cancelled` overlay so it reads as a
   // deliberate cancellation, not a genuine failure needing retry.
   cancelled?: { by: string; reason: string };
+  // WAL-120: for waiting:on:script (and future reason families) — the
+  // worker's declared deadline and an optional watch descriptor. Populated by
+  // readReportFile when it reads a waiting/ rendezvous file.
+  deadline?: string;  // ISO timestamp after which the park becomes failed:timeout
+  watch?: string;     // human-readable descriptor of what to watch for completion
 }
 
 function parseAttrs(s: string): Record<string, string> {
@@ -660,12 +665,16 @@ async function readReportFile(
     }
     if (status === "waiting" || bucket === "waiting") {
       const on = (fm.waiting_on ?? fm.on ?? "user").trim();
+      const deadline = (fm.deadline ?? "").trim() || undefined;
+      const watch = (fm.watch ?? "").trim() || undefined;
       return {
         kind: "waiting",
         reason: on,
         summary: summary || `waiting on ${on}`,
         body,
         report: null,
+        deadline,
+        watch,
       };
     }
   }
@@ -1307,18 +1316,25 @@ async function locateEnvelope(
 // marking the parent done. Removed 2026-05-25 (see TSK-2026-05-25-0002.06).
 // The continuation model was later redesigned in v1.15 (WAL-72 Phase 3+4).
 
+// WAL-120: reason families valid for a runner-owned park.
+// Add a new entry here to allow a new family; also add it to:
+//   - SWEEP_PREDICATES (the sweep loop that unblocks / terminates it)
+//   - scheduler.ts allow-list (so the scheduler counts the task as live)
+const VALID_WAITING_SPECS = new Set(["limits", "script"]);
+
 async function transitionToWaiting(
   agent: string,
   taskId: string,
   openPath: string,
   directive: TaskDirective
 ): Promise<void> {
-  // Phase 3W: only waiting:on:limits is a valid runner-owned park. Workers may no
-  // longer emit waiting:on:task or waiting:on:user — those are converted to done
-  // at the call site before this function is reached.
+  // Phase 3W: only VALID_WAITING_SPECS are valid runner-owned parks. Workers
+  // may not emit waiting:on:task or waiting:on:user — those are converted to
+  // done at the call site before this function is reached. WAL-120 adds
+  // waiting:on:script as the second valid family.
   const onSpec = (directive.reason ?? "limits").trim() || "limits";
-  if (onSpec !== "limits") {
-    console.error(`[multi-agent] ${agent}/${taskId}: transitionToWaiting called with non-limits spec "${onSpec}" — BUG; straggler conversion should have fired at the call site`);
+  if (!VALID_WAITING_SPECS.has(onSpec)) {
+    console.error(`[multi-agent] ${agent}/${taskId}: transitionToWaiting called with unrecognised spec "${onSpec}" — BUG; straggler conversion should have fired at the call site`);
     return;
   }
 
@@ -1344,20 +1360,30 @@ async function transitionToWaiting(
   let next = setField(yaml, "status", finalStatus);
   next = setField(next, "updated", now);
   // Release the lease so a stale claim-holder doesn't block re-claim.
+  // For waiting:on:script the background work outlives the turn; clearing the
+  // lease prevents a stale-claim sweep from re-opening it before the script
+  // finishes (which would drop a terminal rendezvous that arrives late).
   next = setNestedField(next, "lease", "holder", "null");
   next = setNestedField(next, "lease", "expires", "null");
   if (directive.summary) {
     next = setNestedField(next, "summary", "response", JSON.stringify(directive.summary));
   }
-  // Stamp the time the limit was hit and bump the retry counter so sweepWaiting
-  // can decide when to auto-retry and when to give up. limits_retry_count caps
-  // the bounce loop. (onSpec === "limits" is the only valid spec after Phase 3W.)
-  next = setField(next, "limits_hit_at", now);
-  const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
-  next = setField(next, "limits_retry_count", String(prevCount + 1));
+  if (onSpec === "limits") {
+    // Stamp the time the limit was hit and bump the retry counter so sweepWaiting
+    // can decide when to auto-retry and when to give up.
+    next = setField(next, "limits_hit_at", now);
+    const prevCount = Number(readField(next, "limits_retry_count") ?? "0") || 0;
+    next = setField(next, "limits_retry_count", String(prevCount + 1));
+  } else {
+    // script (and future families): store the worker-declared deadline and
+    // watch descriptor so sweepWaiting can check completion without the worker.
+    if (directive.deadline) next = setField(next, "script_deadline", directive.deadline);
+    if (directive.watch) next = setField(next, "script_watch", directive.watch);
+  }
+  const priorStatus = readField(yaml, "status") ?? "claimed";
   next = appendHistory(next, {
     ts: now,
-    from: "claimed",
+    from: priorStatus,
     to: finalStatus,
     by: `runner-${process.pid}`,
     note: `worker waiting on ${onSpec}`,
@@ -1447,10 +1473,62 @@ async function cleanStaleRendezvous(
   }
 }
 
-// Phase 3W: sweepWaiting handles ONLY waiting:on:limits — the sole runner-owned
-// infrastructure park. All other waiting:on:* specs were either converted to done
-// at the call site (worker stragglers) or are bugs. Any non-limits spec found in
-// waiting/ is logged as a warning and skipped.
+// WAL-120: kind→predicate table for sweepWaiting.
+//
+// Each entry is a function that inspects the waiting task and returns:
+//   { kind: "unblock" }             — move the envelope back to open/
+//   { kind: "terminal", directive } — move it to done/ or failed/
+//   null                            — not ready yet; try again next tick
+//
+// Add a new reason family by adding one entry here (+ VALID_WAITING_SPECS
+// above + scheduler.ts allow-list). The sweep loop is untouched.
+
+type SweepAction =
+  | { kind: "unblock" }
+  | { kind: "terminal"; directive: TaskDirective }
+  | null;
+
+type WaitPredicate = (agent: string, taskId: string, yaml: string) => Promise<SweepAction>;
+
+// Export for tests — tests can add/remove entries to verify generality.
+export const SWEEP_PREDICATES: Record<string, WaitPredicate> = {
+  limits: async (_agent, _taskId, _yaml) => {
+    const limitsGate = await readLimitsGate();
+    if (limitsGate !== null) return null;
+    return { kind: "unblock" };
+  },
+
+  script: async (agent, taskId, yaml) => {
+    // Primary check: has a terminal rendezvous appeared in done/ or failed/?
+    const terminal = await readReportFile(agent, taskId);
+    if (terminal && terminal.kind !== "waiting") {
+      return { kind: "terminal", directive: terminal };
+    }
+
+    // Secondary: has the worker-declared deadline passed?
+    const deadlineStr = readField(yaml, "script_deadline") ?? "";
+    if (deadlineStr && new Date() > new Date(deadlineStr)) {
+      const watch = readField(yaml, "script_watch") ?? "";
+      return {
+        kind: "terminal",
+        directive: {
+          kind: "failed",
+          reason: "timeout",
+          summary: `waiting:on:script deadline exceeded — no terminal rendezvous appeared${watch ? ` (watching: ${watch})` : ""}`,
+          body: "",
+          report: null,
+        },
+      };
+    }
+
+    return null;
+  },
+};
+
+// Phase 3W + WAL-120: sweepWaiting drives the kind→predicate table above.
+// waiting:on:limits: existing behaviour (unblock when limits gate clears).
+// waiting:on:script: transition to terminal when rendezvous appears or deadline passes.
+// Any spec not in SWEEP_PREDICATES is logged as a warning and skipped.
 async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
   for (const agent of opts.agents) {
     const waitDir = join(AGENTS_DIR, agent, "tasks", "waiting");
@@ -1470,54 +1548,98 @@ async function sweepWaiting(opts: Required<MultiAgentOptions>): Promise<void> {
       if (!status.startsWith("waiting:on:")) continue;
       const spec = status.slice("waiting:on:".length);
 
-      // Any non-limits spec in waiting/ is unexpected after Phase 3W.
-      if (spec !== "limits") {
-        console.warn(`[multi-agent] sweepWaiting: ${agent}/${taskId} has unexpected spec "${spec}" — only limits expected after Phase 3W; skipping`);
-        continue;
-      }
-
       // Skip tasks with a closed.status — leave for sweepArchive.
       const closedStatus = readNestedField(yaml, "closed", "status");
       if (closedStatus) continue;
 
-      // Check the limits gate directly; sweeps now run regardless of gate state.
-      const limitsGate = await readLimitsGate();
-      const unblocked = limitsGate === null;
-      if (!unblocked) continue;
-      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} limits gate clear — unblocking`);
+      const predicate = SWEEP_PREDICATES[spec];
+      if (!predicate) {
+        console.warn(`[multi-agent] sweepWaiting: ${agent}/${taskId} has unknown spec "${spec}" — no predicate registered; skipping`);
+        continue;
+      }
+
+      const action = await predicate(agent, taskId, yaml);
+      if (action === null) continue;
 
       const fields = parseFields(yaml, taskId);
       const now = new Date().toISOString();
-      let next = setField(yaml, "status", "open");
-      next = setField(next, "updated", now);
-      next = appendHistory(next, {
-        ts: now,
-        from: status,
-        to: "open",
-        by: `runner-${process.pid}`,
-        note: `dependency resolved (${spec})`,
-      });
 
-      const openDir = join(AGENTS_DIR, agent, "tasks", "open");
-      await mkdir(openDir, { recursive: true });
-      const targetPath = join(openDir, fname);
+      if (action.kind === "unblock") {
+        // Move back to open/ so the task can be re-claimed.
+        console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} unblocked (${spec})`);
+        let next = setField(yaml, "status", "open");
+        next = setField(next, "updated", now);
+        next = appendHistory(next, {
+          ts: now,
+          from: status,
+          to: "open",
+          by: `runner-${process.pid}`,
+          note: `dependency resolved (${spec})`,
+        });
 
-      await writeFile(filePath, next);
-      await rename(filePath, targetPath);
-      await cleanStaleRendezvous(agent, taskId, "open");
+        const openDir = join(AGENTS_DIR, agent, "tasks", "open");
+        await mkdir(openDir, { recursive: true });
+        const targetPath = join(openDir, fname);
 
-      await appendJournal(agent, {
-        ts: now,
-        id: taskId,
-        status: "open",
-        kind: readField(yaml, "kind") ?? "unknown",
-        from: fields.from,
-        to: agent,
-        parent: fields.parent,
-        summary: `unblocked from ${spec}`,
-      });
+        await writeFile(filePath, next);
+        await rename(filePath, targetPath);
+        await cleanStaleRendezvous(agent, taskId, "open");
 
-      console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} unblocked (${spec})`);
+        await appendJournal(agent, {
+          ts: now,
+          id: taskId,
+          status: "open",
+          kind: readField(yaml, "kind") ?? "unknown",
+          from: fields.from,
+          to: agent,
+          parent: fields.parent,
+          summary: `unblocked from ${spec}`,
+        });
+      } else {
+        // action.kind === "terminal": move to done/ or failed/.
+        const d = action.directive;
+        const termStatus = d.kind === "done" ? "done" : `failed:${d.reason ?? "other"}`;
+        console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} park resolved → ${termStatus} (${spec})`);
+        await transitionToTerminal(agent, taskId, filePath, d);
+        // If done, check whether a continuation should fire.
+        if (d.kind === "done") {
+          await checkFrontierAndMaybeSpawnContinuation(
+            // rebuild yaml with updated status for the frontier check
+            setField(setField(yaml, "status", termStatus), "updated", now),
+            taskId,
+            agent,
+            knownAgents(),
+            AGENTS_DIR
+          );
+        }
+        // If failed, block dependants.
+        if (d.kind !== "done") {
+          await sweepBlockedDependants(taskId, currentGraph, AGENTS_DIR);
+        }
+      }
+    }
+
+    // WAL-120: late-file guard — a done/<id>.md that arrives AFTER the task was
+    // failed:timeout must NOT silently resurrect the task. Log loudly so the
+    // developer can inspect.
+    const failedDir = join(AGENTS_DIR, agent, "tasks", "failed");
+    if (!existsSync(failedDir)) continue;
+    const failedEntries = await readdir(failedDir).catch(() => [] as string[]);
+    for (const fname of failedEntries.filter((e) => e.endsWith(".yaml")).sort()) {
+      const taskId = fname.replace(/\.yaml$/, "");
+      let yaml: string;
+      try { yaml = await readFile(join(failedDir, fname), "utf-8"); } catch { continue; }
+      const status = readField(yaml, "status") ?? "";
+      if (!status.startsWith("failed:timeout")) continue;
+      const scriptDeadline = readField(yaml, "script_deadline");
+      if (!scriptDeadline) continue; // only watching:on:script timeouts
+      // Check if a terminal rendezvous appeared after the timeout.
+      const lateFile = await readReportFile(agent, taskId);
+      if (lateFile && lateFile.kind !== "waiting") {
+        console.warn(
+          `[multi-agent] sweepWaiting: ${agent}/${taskId} — a ${lateFile.kind} rendezvous arrived AFTER the task was failed:timeout; task stays failed. Inspect agents/${agent}/tasks/done/${taskId}.md if the result is salvageable.`
+        );
+      }
     }
   }
 }
@@ -2060,13 +2182,15 @@ async function transitionToTerminal(
     });
   }
 
+  const priorStatus = readField(yaml, "status") ?? "claimed";
   next = appendHistory(next, {
     ts: now,
-    from: "claimed",
+    from: priorStatus,
     to: finalStatus,
     by: `runner-${process.pid}`,
     note: directive.cancelled
       ? `worker aborted mid-flight by ${directive.cancelled.by || "user"}${directive.cancelled.reason ? ` — ${directive.cancelled.reason}` : ""}`
+      : priorStatus.startsWith("waiting:on:") ? `late rendezvous received for ${priorStatus}`
       : directive.kind === "done" ? "worker completed" : `worker reported ${finalStatus}`,
   });
 
@@ -2591,7 +2715,7 @@ async function sweepStaleClaims(
           // valid — honour it by calling transitionToWaiting and moving on.
           if (fromReport.kind === "waiting") {
             const onSpec = (fromReport.reason ?? "user").trim() || "user";
-            if (onSpec !== "limits") {
+            if (!VALID_WAITING_SPECS.has(onSpec)) {
               const stragglerSpec = `waiting:on:${onSpec}`;
               console.warn(`[multi-agent] ${agent}/${taskId} stale-claim: report file has ${stragglerSpec} — Phase 3W straggler, converting to done`);
               await appendJournal(agent, {
@@ -2607,10 +2731,19 @@ async function sweepStaleClaims(
               });
               fromReport.kind = "done";
             } else {
-              // limits: park via transitionToWaiting (uses the open/ path directly).
-              const dummyDirective: TaskDirective = { kind: "waiting", reason: "limits", summary: fromReport.summary || "", body: "", report: null };
-              await transitionToWaiting(agent, taskId, path, dummyDirective);
-              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:limits (stale-claim recovery, limits park)`);
+              // Valid park spec (limits or script): honour it by parking rather than
+              // converting. Pass deadline/watch so transitionToWaiting stores them.
+              const parkDirective: TaskDirective = {
+                kind: "waiting",
+                reason: onSpec,
+                summary: fromReport.summary || "",
+                body: "",
+                report: null,
+                deadline: fromReport.deadline,
+                watch: fromReport.watch,
+              };
+              await transitionToWaiting(agent, taskId, path, parkDirective);
+              console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${onSpec} (stale-claim recovery, park)`);
               continue;
             }
           }
@@ -2978,7 +3111,7 @@ async function tickOnce(
           }
           if (effective.kind === "waiting") {
             const onSpec = (effective.reason ?? "user").trim() || "user";
-            if (onSpec !== "limits") {
+            if (!VALID_WAITING_SPECS.has(onSpec)) {
               // Phase 3W straggler conversion: a worker that still emits waiting:on:task
               // or waiting:on:user predates the cutover. Convert to done so it surfaces
               // as a report (terminal ∧ closed:null) rather than parking invisibly.
@@ -3175,9 +3308,14 @@ export const __testing = {
   buildWorkerPrompt,
   sweepStaleClaims,
   sweepWaiting,
+  transitionToWaiting,
+  transitionToTerminal,
   readReportFile,
   inflightWorkers,
   readMaxWorkerLifetimeMs,
+  // WAL-120: park predicate table — tests can add entries to verify generality.
+  SWEEP_PREDICATES,
+  VALID_WAITING_SPECS,
   // Phase 1 graph engine — also exported top-level for direct use in tests.
   readList,
   loadGraph,

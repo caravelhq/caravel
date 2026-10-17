@@ -11,7 +11,7 @@
 //   DEC-5: no Telegram/Discord notify on instance completion
 //   DEC-6: from field carries template owner so the runner's continuation gate works
 
-import { readdir, readFile, mkdir } from "fs/promises";
+import { readdir, readFile, mkdir, writeFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
@@ -141,8 +141,9 @@ async function hasActiveInstance(templateId: string): Promise<boolean> {
         if (closed && closed !== "null") continue;
         const status = (/^status:\s*(.+)$/m.exec(yaml)?.[1] ?? "").trim();
         if (status === "done" || status.startsWith("failed:") || status === "paused") continue;
-        // waiting:on:limits is still live; every other waiting: spec is retired.
-        if (status.startsWith("waiting:on:") && status !== "waiting:on:limits") continue;
+        // waiting:on:limits and waiting:on:script are live; every other waiting: spec is retired.
+        // Add new families here and in VALID_WAITING_SPECS / SWEEP_PREDICATES in multiAgent.ts.
+        if (status.startsWith("waiting:on:") && status !== "waiting:on:limits" && status !== "waiting:on:script") continue;
         return true;
       }
     }
