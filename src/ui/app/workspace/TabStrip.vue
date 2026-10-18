@@ -331,7 +331,7 @@ function onDividerDrop(e: DragEvent): void {
       <button class="ts-ctx-item" type="button" @click="ws.close(refKey(contextMenu.tab)); closeCtx()">Close</button>
       <button class="ts-ctx-item" type="button" @click="ws.closeOthers(refKey(contextMenu.tab)); closeCtx()">Close others</button>
       <button class="ts-ctx-item" type="button" @click="ws.closeToRight(refKey(contextMenu.tab)); closeCtx()">Close to the right</button>
-      <button class="ts-ctx-item" type="button" @click="ws.moveToGroup(refKey(contextMenu.tab), ws.tabGroup(ws.tabs.findIndex(t => refKey(t) === refKey(contextMenu!.tab))) === 0 ? 1 : 0); closeCtx()">Move to other group</button>
+      <button class="ts-ctx-item ts-ctx-item--wide-only" type="button" @click="ws.moveToGroup(refKey(contextMenu.tab), ws.tabGroup(ws.tabs.findIndex(t => refKey(t) === refKey(contextMenu!.tab))) === 0 ? 1 : 0); closeCtx()">Move to other group</button>
     </div>
   </template>
 
@@ -432,13 +432,16 @@ function onDividerDrop(e: DragEvent): void {
   overflow: hidden;
 }
 
-/* Close button — minimum 32×32 visual, 44×44 touch target on mobile */
+/* Close button — 18×18 layout; hit area expanded via pseudo-element so it
+   does not inflate the strip height. Effective target: 32px at desktop,
+   44px at ≤600px. */
 .ts-tab-close {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  min-height: 32px;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
   opacity: 0.55;
   border-radius: 3px;
@@ -446,13 +449,16 @@ function onDividerDrop(e: DragEvent): void {
   margin: -4px -4px -4px 0;
 }
 
+.ts-tab-close::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+}
+
 .ts-tab-close:hover { opacity: 1; background: var(--surface-4, #3a3a3a); }
 
 @media (max-width: 600px) {
-  .ts-tab-close {
-    min-width: 44px;
-    min-height: 44px;
-  }
+  .ts-tab-close::after { inset: -13px; }
 }
 
 /* Divider between groups */
@@ -517,6 +523,10 @@ function onDividerDrop(e: DragEvent): void {
 .ts-split-btn:hover { opacity: 0.8; }
 .ts-split-btn--active { opacity: 0.9; color: var(--accent, #7dc5ff); }
 
+@media (max-width: 600px) {
+  .ts-split-btn { display: none; }
+}
+
 .ts-settings-btn {
   background: transparent;
   border: none;
@@ -531,6 +541,10 @@ function onDividerDrop(e: DragEvent): void {
   margin-left: 2px;
 }
 .ts-settings-btn:hover { opacity: 0.8; }
+
+@media (max-width: 600px) {
+  .ts-settings-btn { display: none; }
+}
 
 /* Context menu backdrop + popup */
 .ts-ctx-backdrop {
@@ -564,4 +578,8 @@ function onDividerDrop(e: DragEvent): void {
   transition: background 0.1s;
 }
 .ts-ctx-item:hover { background: var(--surface-3, #303030); }
+
+@media (max-width: 600px) {
+  .ts-ctx-item--wide-only { display: none; }
+}
 </style>

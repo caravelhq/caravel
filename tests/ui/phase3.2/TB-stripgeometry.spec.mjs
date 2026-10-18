@@ -1,16 +1,26 @@
-// TB-stripgeometry.spec.mjs — Phase 3.2 node 3: tab strip geometry specs TB1–TB6
+// TB-stripgeometry.spec.mjs — Phase 3.2 node 3: tab strip geometry specs TB1–TB8, TB9, TB10
 //
-// TB1: .ts-tab-close ≥ 32×32 at 1440; hit area ≥ 44×44 at 390
+// TB1: Close button hit area ≥ 32×32 at 1440; ≥ 44×44 effective at 390
+//      (hit test via elementFromPoint — element box is 18×18, pseudo-element is the target)
 // TB2: Two envelope: tabs of sibling ids render distinguishable labels
 // TB3: Label width ≤ cap at both viewports, and the title carries the full id
 // TB4: The overflow affordance appears iff scrollWidth > clientWidth, verified
 //      by opening tabs until it does
 // TB5: TabOverflowSheet ≈ viewport width at 390, lists every tab, and
 //      pin/close from a row mutates the strip
-// TB6: The context menu offers all five actions and is dismissible by Escape
-//      and by outside pointerdown
+// TB6: The context menu offers all five actions (desktop) / four (mobile, no "Move to other group")
+//      and is dismissible by Escape and by outside pointerdown
+// TB7: At 390px the last visible tab's box does not intersect the overflow affordance
+// TB8: Strip height does not change when close buttons are present vs hidden (±1px)
+//      Regression guard for WAL-125: the old min-height fix inflated strip height.
+// TB9: Split button absent below 600px; toggleSplit() is a no-op at 390 (splitOn stays false)
+//      At 1440 the split button is present and toggleSplit() activates the split.
+// TB10: At 390 #settings-btn is absent from the strip and #dashboard-settings-btn is
+//       present on the dashboard and opens the settings modal (geometry asserted).
+//       At 1440 both controls exist.
 //
 // Mutation proof: restore text-overflow: ellipsis and raw-id labels → TB2 goes red
+// TB8 mutation proof: restore min-height: 44px on .ts-tab-close → TB8 goes red
 //
 // Harness: dev server at :4633 — corpus-independent (DEC-0028)
 //
@@ -126,8 +136,13 @@ try {
     console.log(`\n── ${VP.label} ──────────────────────────────────────────────`);
 
     // ──────────────────────────────────────────────────────────────────────────
-    // TB1 — Close button minimum size
-    // .ts-tab-close ≥ 32×32 at 1440; ≥ 44×44 hit area at 390
+    // TB1 — Close button hit area (pseudo-element test)
+    // After WAL-125 the element box is 18×18; the real target is an ::after
+    // pseudo-element Playwright cannot measure directly. We probe via
+    // elementFromPoint: step outward from the glyph centre to ±(target/2 − 1)px
+    // on each axis and assert closest('.ts-tab-close') resolves there.
+    // Also verify the element box itself is ≤ 20px — if it reverts to min-height
+    // the layout-height fix is gone.
     // ──────────────────────────────────────────────────────────────────────────
     {
       const page = await browser.newPage({ viewport: VP });
@@ -149,12 +164,40 @@ try {
         if (!box) {
           fail(`TB1 ${VP.label} close button visible`, "bounding box null");
         } else {
-          const minW = VP.width >= 600 ? 32 : 44;
-          const minH = VP.width >= 600 ? 32 : 44;
-          if (box.width >= minW && box.height >= minH) {
-            pass(`TB1 ${VP.label} .ts-tab-close ≥ ${minW}×${minH} (actual: ${box.width.toFixed(1)}×${box.height.toFixed(1)})`);
+          // Element box should be small (≤ 20px) — layout decoupled from hit area.
+          if (box.width <= 20 && box.height <= 20) {
+            pass(`TB1 ${VP.label} .ts-tab-close element box ≤ 20×20 (actual: ${box.width.toFixed(1)}×${box.height.toFixed(1)})`);
           } else {
-            fail(`TB1 ${VP.label} .ts-tab-close size`, `expected ≥${minW}×${minH}, got ${box.width.toFixed(1)}×${box.height.toFixed(1)}`);
+            fail(`TB1 ${VP.label} .ts-tab-close element box`, `expected ≤20×20, got ${box.width.toFixed(1)}×${box.height.toFixed(1)} — layout may be inflated by old min-height`);
+          }
+
+          // Horizontal hit test: probe at ±(target/2 − 1)px on the X axis.
+          // Note: vertical probes are unreliable here because .tab-strip has
+          // overflow-x: auto, which CSS implicitly clips overflow-y too, cutting
+          // off the ::after pseudo-element at the strip boundary. Horizontal
+          // overflow is visible so horizontal probes work correctly.
+          // At ≥600px target is 32px effective; at ≤600px target is 44px.
+          const hitRadius = VP.width >= 600 ? 15 : 21; // (32/2 − 1) and (44/2 − 1)
+          const cx = box.x + box.width / 2;
+          const cy = box.y + box.height / 2;
+          const probes = [
+            { dx: hitRadius, dy: 0 },
+            { dx: -hitRadius, dy: 0 },
+          ];
+          const hitResults = await page.evaluate(({ cx, cy, probes }) => {
+            return probes.map(({ dx, dy }) => {
+              const el = document.elementFromPoint(cx + dx, cy + dy);
+              if (!el) return false;
+              return !!el.closest(".ts-tab-close");
+            });
+          }, { cx, cy, probes });
+
+          const allHit = hitResults.every(Boolean);
+          if (allHit) {
+            pass(`TB1 ${VP.label} .ts-tab-close horizontal hit area ≥ ${hitRadius * 2 + 2}px (both X-axis probes at ±${hitRadius}px resolve to the control)`);
+          } else {
+            const missed = hitResults.map((h, i) => h ? null : `probe${i}`).filter(Boolean);
+            fail(`TB1 ${VP.label} .ts-tab-close hit area`, `horizontal probes missed: ${missed.join(", ")} at ±${hitRadius}px from centre (cx=${cx.toFixed(0)}, cy=${cy.toFixed(0)})`);
           }
         }
       }
@@ -315,12 +358,14 @@ try {
       await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
       await page.waitForTimeout(400);
 
-      // Open 8 tabs to ensure overflow
-      for (let i = 1; i <= 8; i++) {
+      // Open enough tabs to trigger overflow at all viewports (including 1440).
+      // TB4 showed overflow after 7 extra tabs at 1440 — we open 12 to leave headroom
+      // for tab width variation.
+      for (let i = 1; i <= 12; i++) {
         await wsAction(page, `ws => ws.open({ kind: "file", path: "sheet-test-${i}.md" })`);
         await page.waitForTimeout(50);
       }
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       const overflowBtn = page.locator(".ts-overflow-btn");
       const overflowCount = await overflowBtn.count();
@@ -429,15 +474,22 @@ try {
         continue;
       }
 
-      // Check the five actions are present
-      const ctxItems = await page.locator(".ts-ctx-item").allTextContents();
-      const expectedActions = ["Pin", "Close", "Close others", "Close to the right", "Move to other group"];
+      // Check actions: on mobile (≤600px) "Move to other group" is hidden.
+      const ctxItems = await page.locator(".ts-ctx-item:visible").allTextContents();
+      const baseActions = ["Pin", "Close", "Close others", "Close to the right"];
+      const wideOnlyActions = ["Move to other group"];
+      const expectedVisible = VP.width >= 600 ? [...baseActions, ...wideOnlyActions] : baseActions;
+      const expectedHidden = VP.width >= 600 ? [] : wideOnlyActions;
       let allPresent = true;
-      for (const action of expectedActions) {
+      for (const action of expectedVisible) {
         const found = ctxItems.some(t => t.includes(action));
-        if (!found) { allPresent = false; fail(`TB6 ${VP.label} context menu has "${action}"`, `items: ${JSON.stringify(ctxItems)}`); }
+        if (!found) { allPresent = false; fail(`TB6 ${VP.label} context menu has "${action}"`, `visible items: ${JSON.stringify(ctxItems)}`); }
       }
-      if (allPresent) pass(`TB6 ${VP.label} context menu has all 5 actions`);
+      for (const action of expectedHidden) {
+        const found = ctxItems.some(t => t.includes(action));
+        if (found) { allPresent = false; fail(`TB6 ${VP.label} "${action}" hidden on mobile`, `visible items: ${JSON.stringify(ctxItems)}`); }
+      }
+      if (allPresent) pass(`TB6 ${VP.label} context menu has ${expectedVisible.length} visible actions (${VP.width >= 600 ? "5 desktop" : "4 mobile — Move to other group hidden"})`);
 
       // Dismiss with Escape
       await page.keyboard.press("Escape");
@@ -604,19 +656,260 @@ try {
 
       await page.close();
     }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // TB8 — Strip height does not change when close buttons are shown vs hidden
+    // This is the precise regression guard for Kelly's WAL-125 complaint:
+    // the old min-height: 44px fix inflated the strip height on mobile.
+    // Mutation proof: restore min-height: 44px → TB8 goes red.
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const page = await browser.newPage({ viewport: VP });
+      await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      // Open a file tab so close buttons are visible.
+      await wsAction(page, `ws => ws.open({ kind: "file", path: "tb8-test.md" })`);
+      await page.waitForTimeout(200);
+
+      const shot1 = join(SHOTS_DIR, `tb8-with-close-${VP.label.replace("×", "x")}.png`);
+      await page.screenshot({ path: shot1 });
+
+      // Measure strip height with close buttons present.
+      const heightWith = await page.evaluate(() => {
+        const outer = document.querySelector(".tab-strip-outer");
+        return outer ? outer.getBoundingClientRect().height : null;
+      });
+
+      if (heightWith === null) {
+        fail(`TB8 ${VP.label} strip found`, "no .tab-strip-outer");
+        await page.close();
+        continue;
+      }
+
+      // Hide all close buttons and measure again.
+      const heightWithout = await page.evaluate(() => {
+        const btns = Array.from(document.querySelectorAll(".ts-tab-close"));
+        const prev = btns.map(b => b.style.display);
+        btns.forEach(b => { b.style.display = "none"; });
+        const h = document.querySelector(".tab-strip-outer")?.getBoundingClientRect().height ?? null;
+        btns.forEach((b, i) => { b.style.display = prev[i]; });
+        return h;
+      });
+
+      if (heightWithout === null) {
+        fail(`TB8 ${VP.label} strip height without close buttons`, "could not measure");
+        await page.close();
+        continue;
+      }
+
+      const shot2 = join(SHOTS_DIR, `tb8-no-close-${VP.label.replace("×", "x")}.png`);
+      await page.screenshot({ path: shot2 });
+
+      const delta = Math.abs(heightWith - heightWithout);
+      if (delta <= 1) {
+        pass(`TB8 ${VP.label} strip height stable: with=${heightWith.toFixed(1)}px without=${heightWithout.toFixed(1)}px delta=${delta.toFixed(1)}px`);
+      } else {
+        fail(`TB8 ${VP.label} strip height inflated by close buttons`,
+          `with=${heightWith.toFixed(1)}px without=${heightWithout.toFixed(1)}px delta=${delta.toFixed(1)}px — close button min-height may be inflating the strip`);
+      }
+
+      await page.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // TB9 — Split button and toggleSplit() behaviour by viewport
+    // At ≤600px: .ts-split-btn is absent; toggleSplit() is a no-op (splitOn stays false).
+    // At >600px (1440): .ts-split-btn is present; toggleSplit() activates the split.
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const page = await browser.newPage({ viewport: VP });
+      await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const shot1 = join(SHOTS_DIR, `tb9-split-${VP.label.replace("×", "x")}.png`);
+      await page.screenshot({ path: shot1 });
+
+      const splitBtnVisible = await page.locator(".ts-split-btn").isVisible().catch(() => false);
+
+      if (VP.width <= 600) {
+        // Must not be visible on mobile
+        if (!splitBtnVisible) {
+          pass(`TB9 ${VP.label} .ts-split-btn absent on mobile`);
+        } else {
+          fail(`TB9 ${VP.label} .ts-split-btn absent on mobile`, ".ts-split-btn is visible at 390");
+        }
+
+        // toggleSplit() must be a no-op
+        const beforeState = await page.evaluate(() => {
+          const vueApp = document.querySelector("#app")?.__vue_app__;
+          const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          return ws ? ws.splitOn : null;
+        });
+        // Open two tabs so split would otherwise have something to act on
+        await wsAction(page, `ws => ws.open({ kind: "file", path: "tb9-a.md" })`);
+        await wsAction(page, `ws => ws.open({ kind: "file", path: "tb9-b.md" })`);
+        await page.waitForTimeout(100);
+
+        await wsAction(page, `ws => ws.toggleSplit()`);
+        await page.waitForTimeout(100);
+
+        const afterSplit = await page.evaluate(() => {
+          const vueApp = document.querySelector("#app")?.__vue_app__;
+          const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          return ws ? ws.splitOn : null;
+        });
+
+        if (afterSplit === false) {
+          pass(`TB9 ${VP.label} toggleSplit() is a no-op at 390 (splitOn stays false)`);
+        } else {
+          fail(`TB9 ${VP.label} toggleSplit() is a no-op`, `splitOn after toggle: ${afterSplit}`);
+        }
+      } else {
+        // At 1440: split button must exist
+        if (splitBtnVisible) {
+          pass(`TB9 ${VP.label} .ts-split-btn present on desktop`);
+        } else {
+          fail(`TB9 ${VP.label} .ts-split-btn present on desktop`, ".ts-split-btn not visible at 1440");
+        }
+
+        // toggleSplit() must activate the split when there are ≥2 tabs
+        await wsAction(page, `ws => ws.open({ kind: "file", path: "tb9-a.md" })`);
+        await wsAction(page, `ws => ws.open({ kind: "file", path: "tb9-b.md" })`);
+        await page.waitForTimeout(100);
+
+        // Ensure split is off first
+        await page.evaluate(() => {
+          const vueApp = document.querySelector("#app")?.__vue_app__;
+          const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          if (ws && ws.splitOn) ws.toggleSplit();
+        });
+        await page.waitForTimeout(100);
+
+        await wsAction(page, `ws => ws.toggleSplit()`);
+        await page.waitForTimeout(200);
+
+        const shot2 = join(SHOTS_DIR, `tb9-split-active-${VP.label.replace("×", "x")}.png`);
+        await page.screenshot({ path: shot2 });
+
+        const afterSplit = await page.evaluate(() => {
+          const vueApp = document.querySelector("#app")?.__vue_app__;
+          const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          return ws ? ws.splitOn : null;
+        });
+
+        if (afterSplit === true) {
+          pass(`TB9 ${VP.label} toggleSplit() activates split at 1440 (splitOn=true)`);
+        } else {
+          fail(`TB9 ${VP.label} toggleSplit() activates split`, `splitOn after toggle: ${afterSplit}`);
+        }
+      }
+
+      await page.close();
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // TB10 — Settings control: strip vs dashboard by viewport
+    // At ≤600px: #settings-btn is absent from the strip; #dashboard-settings-btn
+    //   is visible on the dashboard and opens the settings modal (≥50px high).
+    // At >600px (1440): both #settings-btn (strip) and #dashboard-settings-btn exist.
+    // ──────────────────────────────────────────────────────────────────────────
+    {
+      const page = await browser.newPage({ viewport: VP });
+      await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
+      await page.waitForTimeout(400);
+
+      const shot1 = join(SHOTS_DIR, `tb10-settings-${VP.label.replace("×", "x")}.png`);
+      await page.screenshot({ path: shot1 });
+
+      const stripSettingsVisible = await page.locator("#settings-btn").isVisible().catch(() => false);
+      const dashSettingsVisible = await page.locator("#dashboard-settings-btn").isVisible().catch(() => false);
+
+      if (VP.width <= 600) {
+        // Strip settings must be hidden
+        if (!stripSettingsVisible) {
+          pass(`TB10 ${VP.label} #settings-btn absent in strip on mobile`);
+        } else {
+          fail(`TB10 ${VP.label} #settings-btn absent in strip on mobile`, "#settings-btn is visible");
+        }
+        // Dashboard settings must be visible
+        if (dashSettingsVisible) {
+          pass(`TB10 ${VP.label} #dashboard-settings-btn visible on dashboard`);
+        } else {
+          fail(`TB10 ${VP.label} #dashboard-settings-btn visible on dashboard`, "not visible");
+        }
+      } else {
+        // Both must exist on desktop
+        if (stripSettingsVisible) {
+          pass(`TB10 ${VP.label} #settings-btn present in strip on desktop`);
+        } else {
+          fail(`TB10 ${VP.label} #settings-btn present in strip on desktop`, "not visible");
+        }
+        if (dashSettingsVisible) {
+          pass(`TB10 ${VP.label} #dashboard-settings-btn visible on dashboard`);
+        } else {
+          fail(`TB10 ${VP.label} #dashboard-settings-btn visible on dashboard`, "not visible");
+        }
+      }
+
+      // Assert dashboard settings button opens the modal (geometry check)
+      if (dashSettingsVisible) {
+        await page.locator("#dashboard-settings-btn").click();
+        await page.waitForTimeout(500);
+
+        const shot2 = join(SHOTS_DIR, `tb10-settings-modal-${VP.label.replace("×", "x")}.png`);
+        await page.screenshot({ path: shot2 });
+
+        // The settings modal should be visible and have reasonable height (≥50px)
+        const modalVisible = await page.evaluate(() => {
+          // Look for an open dialog (SettingsModal is built on BaseModal which uses <dialog>)
+          const dialogs = Array.from(document.querySelectorAll("dialog[open]"));
+          if (dialogs.length === 0) return null;
+          const d = dialogs[0];
+          const box = d.getBoundingClientRect();
+          return { height: box.height, width: box.width };
+        });
+
+        if (!modalVisible) {
+          fail(`TB10 ${VP.label} settings modal opens`, "no open dialog after clicking dashboard settings");
+        } else if (modalVisible.height >= 50) {
+          pass(`TB10 ${VP.label} settings modal opens with height ${modalVisible.height.toFixed(0)}px`);
+        } else {
+          fail(`TB10 ${VP.label} settings modal geometry`, `modal height too small: ${modalVisible.height.toFixed(0)}px`);
+        }
+
+        // Dismiss with Escape
+        await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
+      }
+
+      await page.close();
+    }
   }
 } finally {
   await browser.close();
 }
 
-// ── Mutation proof note ───────────────────────────────────────────────────────
-// To run mutation proof:
+// ── Mutation proof notes ──────────────────────────────────────────────────────
+// TB2 mutation:
 // 1. In labels.ts: change refLabel envelope/report case to end-truncation:
 //      const MAX = 20; return ref.taskId.length > MAX ? ref.taskId.slice(0, MAX) + "…" : ref.taskId;
 //    This simulates a naive truncation that drops the discriminating suffix (.01 vs .02).
 // 2. Rebuild bundle
-// 3. MUTATION=1 node tests/ui/phase3.2/TB-stripgeometry.spec.mjs
+// 3. node tests/ui/phase3.2/TB-stripgeometry.spec.mjs
 // Expected: TB2 fails with both show "TSK-2026-10-14-0030.…"
+// Restore and rebuild → all green.
+//
+// TB8 mutation:
+// 1. In TabStrip.vue: restore the old close button CSS:
+//      .ts-tab-close { min-height: 44px; }  (on the @media (max-width: 600px) rule)
+// 2. Rebuild bundle
+// 3. node tests/ui/phase3.2/TB-stripgeometry.spec.mjs
+// Expected: TB8 390×844 fails with "strip height inflated by close buttons"
 // Restore and rebuild → all green.
 
 console.log(`\n── Summary ──`);

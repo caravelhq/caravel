@@ -2,6 +2,7 @@
 import { ref, computed, watch } from "vue";
 import { useAttentionStore } from "../stores/attention";
 import { useLiveStore } from "../stores/live";
+import { useUiStore } from "../stores/ui";
 import { useResource } from "../composables/useResource";
 import DashboardHero from "../components/dashboard/DashboardHero.vue";
 import AttentionTiers from "../components/dashboard/AttentionTiers.vue";
@@ -11,6 +12,7 @@ import type { ScheduleTemplate } from "../components/dashboard/ScheduleRow.vue";
 
 const attentionStore = useAttentionStore();
 const live = useLiveStore();
+const ui = useUiStore();
 
 // ── Attention tiers ────────────────────────────────────────────────────────
 // Shared live key with TasksPage — first bind sets the spec; subsequent
@@ -100,5 +102,41 @@ function onSchedulesRefresh(): void {
       :loading="schedulesLoading"
       @refresh="onSchedulesRefresh"
     />
+    <div class="dashboard-settings-row">
+      <button
+        id="dashboard-settings-btn"
+        class="dashboard-settings-btn"
+        type="button"
+        @click="ui.settingsOpen = true"
+      >&#x2699; Settings</button>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.dashboard-settings-row {
+  padding: 12px 16px 16px;
+  border-top: 1px solid var(--border-subtle, #333);
+  margin-top: 8px;
+}
+
+.dashboard-settings-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle, #444);
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 6px 14px;
+  border-radius: 5px;
+  transition: opacity 0.1s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashboard-settings-btn:hover {
+  opacity: 1;
+  background: var(--surface-3, #303030);
+}
+</style>

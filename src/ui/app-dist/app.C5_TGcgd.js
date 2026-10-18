@@ -13788,6 +13788,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     syncWorkspaceUrl(false);
   }
   function toggleSplit() {
+    if (typeof window !== "undefined" && window.innerWidth < 1200) return;
     if (splitOn.value) {
       splitOn.value = false;
       splitIndex.value = null;
@@ -14306,14 +14307,14 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   };
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$v = ["data-size"];
+const _hoisted_1$u = ["data-size"];
 const _hoisted_2$n = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$m = { class: "base-modal-title" };
-const _hoisted_4$h = { class: "base-modal-body" };
-const _hoisted_5$e = {
+const _hoisted_3$l = { class: "base-modal-title" };
+const _hoisted_4$g = { class: "base-modal-body" };
+const _hoisted_5$d = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
 };
@@ -14410,7 +14411,7 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
             __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$n, [
-              createBaseVNode("span", _hoisted_3$m, toDisplayString(__props.title), 1),
+              createBaseVNode("span", _hoisted_3$l, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -14424,11 +14425,11 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$h, [
+          createBaseVNode("div", _hoisted_4$g, [
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
-            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$e, [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$d, [
               createBaseVNode("button", {
                 class: "base-modal-done-btn",
                 type: "button",
@@ -14437,14 +14438,14 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ], 544)
-      ], 40, _hoisted_1$v);
+      ], 40, _hoisted_1$u);
     };
   }
 });
-const _hoisted_1$u = { class: "setting-item" };
+const _hoisted_1$t = { class: "setting-item" };
 const _hoisted_2$m = { class: "setting-main" };
-const _hoisted_3$l = { class: "settings-label" };
-const _hoisted_4$g = {
+const _hoisted_3$k = { class: "settings-label" };
+const _hoisted_4$f = {
   key: 0,
   class: "settings-meta"
 };
@@ -14456,10 +14457,10 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$u, [
+      return openBlock(), createElementBlock("div", _hoisted_1$t, [
         createBaseVNode("div", _hoisted_2$m, [
-          createBaseVNode("div", _hoisted_3$l, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$g, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_3$k, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$f, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -14467,14 +14468,14 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$t = { class: "settings-stack" };
+const _hoisted_1$s = { class: "settings-stack" };
 const _hoisted_2$l = { class: "setting-actions" };
-const _hoisted_3$k = ["disabled"];
-const _hoisted_4$f = {
+const _hoisted_3$j = ["disabled"];
+const _hoisted_4$e = {
   id: "build-id",
   class: "build-id-mono"
 };
-const _hoisted_5$d = ["innerHTML"];
+const _hoisted_5$c = ["innerHTML"];
 const _sfc_main$w = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
@@ -14631,7 +14632,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
           title: "Settings"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$t, [
+            createBaseVNode("div", _hoisted_1$s, [
               createVNode(_sfc_main$x, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
@@ -14650,7 +14651,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$k)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$j)
                   ])
                 ]),
                 _: 1
@@ -14751,7 +14752,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                 meta: "Stamp for bug reports"
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("span", _hoisted_4$f, toDisplayString(buildId.value || "—"), 1)
+                  createBaseVNode("span", _hoisted_4$e, toDisplayString(buildId.value || "—"), 1)
                 ]),
                 _: 1
               }),
@@ -14786,7 +14787,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_5$d)
+              }, null, 8, _hoisted_5$c)
             ]),
             _: 1
           }, 8, ["open"])
@@ -14795,18 +14796,18 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$s = {
+const _hoisted_1$r = {
   class: "hb-field",
   for: "hb-interval-input"
 };
 const _hoisted_2$k = ["disabled"];
-const _hoisted_3$j = {
+const _hoisted_3$i = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$e = ["disabled"];
-const _hoisted_5$c = { class: "hb-actions" };
-const _hoisted_6$c = {
+const _hoisted_4$d = ["disabled"];
+const _hoisted_5$b = { class: "hb-actions" };
+const _hoisted_6$b = {
   class: "hb-status",
   id: "hb-modal-status"
 };
@@ -14890,7 +14891,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_1$s, [
+            createBaseVNode("label", _hoisted_1$r, [
               _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
@@ -14911,7 +14912,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$j, [
+            createBaseVNode("label", _hoisted_3$i, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -14920,12 +14921,12 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$e), [
+              }, null, 8, _hoisted_4$d), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$c, [
-              createBaseVNode("div", _hoisted_6$c, toDisplayString(status.value), 1),
+            createBaseVNode("div", _hoisted_5$b, [
+              createBaseVNode("div", _hoisted_6$b, toDisplayString(status.value), 1),
               createBaseVNode("div", _hoisted_7$a, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
@@ -14949,15 +14950,15 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$r = { class: "audio-action-card" };
+const _hoisted_1$q = { class: "audio-action-card" };
 const _hoisted_2$j = {
   key: 0,
   class: "audio-player-resume"
 };
-const _hoisted_3$i = { class: "audio-player-resume-msg" };
-const _hoisted_4$d = { class: "audio-player-resume-btns" };
-const _hoisted_5$b = { class: "audio-player-progress" };
-const _hoisted_6$b = { class: "audio-player-bar-wrap" };
+const _hoisted_3$h = { class: "audio-player-resume-msg" };
+const _hoisted_4$c = { class: "audio-player-resume-btns" };
+const _hoisted_5$a = { class: "audio-player-progress" };
+const _hoisted_6$a = { class: "audio-player-bar-wrap" };
 const _hoisted_7$9 = { class: "audio-player-counter" };
 const _hoisted_8$8 = { class: "audio-player-transcript" };
 const _hoisted_9$7 = ["data-idx", "onClick"];
@@ -14989,10 +14990,10 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
           ], -1)
         ])]),
         default: withCtx(() => [
-          createBaseVNode("div", _hoisted_1$r, [
+          createBaseVNode("div", _hoisted_1$q, [
             unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
-              createBaseVNode("div", _hoisted_3$i, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
-              createBaseVNode("div", _hoisted_4$d, [
+              createBaseVNode("div", _hoisted_3$h, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
+              createBaseVNode("div", _hoisted_4$c, [
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-restart",
                   type: "button",
@@ -15006,8 +15007,8 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
               ])
             ])) : createCommentVNode("", true),
             hasPlayer.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-              createBaseVNode("div", _hoisted_5$b, [
-                createBaseVNode("div", _hoisted_6$b, [
+              createBaseVNode("div", _hoisted_5$a, [
+                createBaseVNode("div", _hoisted_6$a, [
                   createBaseVNode("div", {
                     class: "audio-player-bar",
                     style: normalizeStyle({ width: progressPct.value + "%" })
@@ -15241,7 +15242,7 @@ function useDictation() {
     stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
   });
 }
-const _hoisted_1$q = ["disabled"];
+const _hoisted_1$p = ["disabled"];
 const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
@@ -15261,7 +15262,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
         onClick: triggerMic
       }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$q);
+      ])], 8, _hoisted_1$p);
     };
   }
 });
@@ -15480,18 +15481,18 @@ function useGlobalReadAloud() {
   }
   return { doReadAloud, stopReadAloud: stopPlayback };
 }
-const _hoisted_1$p = ["hidden"];
+const _hoisted_1$o = ["hidden"];
 const _hoisted_2$i = ["hidden"];
-const _hoisted_3$h = ["title", "aria-label", "hidden", "disabled"];
-const _hoisted_4$c = {
+const _hoisted_3$g = ["title", "aria-label", "hidden", "disabled"];
+const _hoisted_4$b = {
   key: 0,
   class: "fa-solid fa-spinner fa-spin"
 };
-const _hoisted_5$a = {
+const _hoisted_5$9 = {
   key: 1,
   class: "fa-solid fa-stop"
 };
-const _hoisted_6$a = {
+const _hoisted_6$9 = {
   key: 2,
   class: "fa-solid fa-headphones"
 };
@@ -15531,7 +15532,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
           onClick: openVoiceMode
         }, [..._cache[1] || (_cache[1] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$p),
+        ])], 8, _hoisted_1$o),
         createBaseVNode("button", {
           id: "global-voice-task",
           class: "global-voice-task",
@@ -15554,8 +15555,8 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
           onClick: _cache[0] || (_cache[0] = //@ts-ignore
           (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
         }, [
-          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$c)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$a)) : (openBlock(), createElementBlock("i", _hoisted_6$a))
-        ], 10, _hoisted_3$h),
+          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$b)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$9)) : (openBlock(), createElementBlock("i", _hoisted_6$9))
+        ], 10, _hoisted_3$g),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -15793,20 +15794,20 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   connect();
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
-const _hoisted_1$o = { class: "dock-shell" };
+const _hoisted_1$n = { class: "dock-shell" };
 const _hoisted_2$h = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$g = { class: "side-value" };
-const _hoisted_4$b = {
+const _hoisted_3$f = { class: "side-value" };
+const _hoisted_4$a = {
   class: "side-bubble",
   id: "tasks-bubble",
   "aria-live": "polite"
 };
-const _hoisted_5$9 = { class: "side-value" };
-const _hoisted_6$9 = {
+const _hoisted_5$8 = { class: "side-value" };
+const _hoisted_6$8 = {
   class: "dock",
   id: "dock",
   "aria-live": "polite"
@@ -15903,18 +15904,18 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
       return out;
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$o, [
+      return openBlock(), createElementBlock("div", _hoisted_1$n, [
         createBaseVNode("aside", _hoisted_2$h, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$g, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$f, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
-        createBaseVNode("aside", _hoisted_4$b, [
+        createBaseVNode("aside", _hoisted_4$a, [
           _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
-          createBaseVNode("div", _hoisted_5$9, toDisplayString(tasksCount.value), 1),
+          createBaseVNode("div", _hoisted_5$8, toDisplayString(tasksCount.value), 1),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
-        createBaseVNode("footer", _hoisted_6$9, [
+        createBaseVNode("footer", _hoisted_6$8, [
           createVNode(_sfc_main$s),
           _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
           createVNode(_sfc_main$t),
@@ -15942,15 +15943,15 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$n = {
+const _hoisted_1$m = {
   class: "voice-mode-overlay",
   role: "dialog",
   "aria-modal": "true",
   "aria-live": "polite"
 };
 const _hoisted_2$g = ["innerHTML"];
-const _hoisted_3$f = { class: "vm-controls" };
-const _hoisted_4$a = { class: "voice-mode-status" };
+const _hoisted_3$e = { class: "vm-controls" };
+const _hoisted_4$9 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
 const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
@@ -16286,13 +16287,13 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
       voice.close();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$n, [
+      return openBlock(), createElementBlock("div", _hoisted_1$m, [
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
         }, null, 8, _hoisted_2$g),
-        createBaseVNode("div", _hoisted_3$f, [
-          createBaseVNode("div", _hoisted_4$a, toDisplayString(statusText.value), 1),
+        createBaseVNode("div", _hoisted_3$e, [
+          createBaseVNode("div", _hoisted_4$9, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
             type: "button",
@@ -16444,7 +16445,7 @@ Example response:
     submitDraft
   };
 });
-const _hoisted_1$m = {
+const _hoisted_1$l = {
   key: 0,
   class: "vtc-success"
 };
@@ -16452,13 +16453,13 @@ const _hoisted_2$f = {
   key: 1,
   class: "vtc-form"
 };
-const _hoisted_3$e = {
+const _hoisted_3$d = {
   key: 0,
   class: "vtc-claude-reply"
 };
-const _hoisted_4$9 = { class: "vtc-field" };
-const _hoisted_5$8 = { class: "vtc-row" };
-const _hoisted_6$8 = { class: "vtc-field" };
+const _hoisted_4$8 = { class: "vtc-field" };
+const _hoisted_5$7 = { class: "vtc-row" };
+const _hoisted_6$7 = { class: "vtc-field" };
 const _hoisted_7$6 = ["value"];
 const _hoisted_8$6 = { class: "vtc-field" };
 const _hoisted_9$5 = ["value"];
@@ -16859,16 +16860,16 @@ User's voice request: "${userText}"`;
       }, {
         footer: withCtx(() => [..._cache[6] || (_cache[6] = [])]),
         default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$m, [..._cache[7] || (_cache[7] = [
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$l, [..._cache[7] || (_cache[7] = [
             createBaseVNode("span", { class: "vtc-success-icon" }, "✓", -1),
             createBaseVNode("div", { class: "vtc-success-label" }, "Task created!", -1),
             createBaseVNode("div", { class: "vtc-success-sub" }, "Closing in a moment…", -1)
           ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$f, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$e, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$d, [
               _cache[8] || (_cache[8] = createBaseVNode("span", { class: "vtc-claude-label" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_4$9, [
+            createBaseVNode("div", _hoisted_4$8, [
               _cache[9] || (_cache[9] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-to"
@@ -16882,8 +16883,8 @@ User's voice request: "${userText}"`;
                 [vModelText, draftTo.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$8, [
-              createBaseVNode("div", _hoisted_6$8, [
+            createBaseVNode("div", _hoisted_5$7, [
+              createBaseVNode("div", _hoisted_6$7, [
                 _cache[10] || (_cache[10] = createBaseVNode("label", {
                   class: "vtc-label",
                   for: "vtc-priority"
@@ -17121,9 +17122,9 @@ function refTitle(ref2, tasksList) {
     }
   }
 }
-const _hoisted_1$l = ["aria-expanded"];
+const _hoisted_1$k = ["aria-expanded"];
 const _hoisted_2$e = ["data-recent-key", "onClick"];
-const _hoisted_3$d = { class: "om-glyph" };
+const _hoisted_3$c = { class: "om-glyph" };
 const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "OpenMenu",
   setup(__props) {
@@ -17209,7 +17210,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
           "aria-haspopup": "true",
           "aria-expanded": isOpen.value,
           onClick: toggle
-        }, "Open ▾", 8, _hoisted_1$l),
+        }, "Open ▾", 8, _hoisted_1$k),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
             key: 0,
@@ -17277,7 +17278,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
                   "data-recent-key": unref(ws).refKey(recent),
                   onClick: ($event) => openRecent(unref(ws).refKey(recent))
                 }, [
-                  createBaseVNode("span", _hoisted_3$d, toDisplayString(unref(refGlyph)(recent)), 1),
+                  createBaseVNode("span", _hoisted_3$c, toDisplayString(unref(refGlyph)(recent)), 1),
                   createTextVNode(" " + toDisplayString(unref(refLabel)(recent)), 1)
                 ], 8, _hoisted_2$e);
               }), 128))
@@ -17316,7 +17317,7 @@ const _hoisted_1$j = {
   key: 0,
   class: "tos-group-label"
 };
-const _hoisted_2$c = { class: "tos-glyph" };
+const _hoisted_2$d = { class: "tos-glyph" };
 const _hoisted_3$b = ["title"];
 const _hoisted_4$7 = { class: "tos-row-actions" };
 const _hoisted_5$6 = ["title", "onClick"];
@@ -17373,7 +17374,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
               key: unref(refKey)(tab),
               class: normalizeClass(["tos-row", { "tos-row--active": unref(ws).active[0] === unref(refKey)(tab) || unref(ws).active[1] === unref(refKey)(tab) }])
             }, [
-              createBaseVNode("span", _hoisted_2$c, toDisplayString(unref(refGlyph)(tab)), 1),
+              createBaseVNode("span", _hoisted_2$d, toDisplayString(unref(refGlyph)(tab)), 1),
               createBaseVNode("span", {
                 class: "tos-label",
                 title: unref(refTitle)(tab, props.tasksList)
@@ -17441,9 +17442,9 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
   }
 });
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$m, [["__scopeId", "data-v-00756674"]]);
-const _hoisted_1$f = { class: "tab-strip-outer" };
-const _hoisted_2$9 = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$8 = { class: "ts-tab-glyph" };
+const _hoisted_1$i = { class: "tab-strip-outer" };
+const _hoisted_2$c = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_3$a = { class: "ts-tab-glyph" };
 const _hoisted_4$6 = { class: "ts-tab-label" };
 const _hoisted_5$5 = ["onClick"];
 const _hoisted_6$5 = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
@@ -17615,7 +17616,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     return (_ctx, _cache) => {
       var _a2;
       return openBlock(), createElementBlock(Fragment, null, [
-        createBaseVNode("div", _hoisted_1$f, [
+        createBaseVNode("div", _hoisted_1$i, [
           createBaseVNode("div", {
             class: normalizeClass(["tab-strip", { "tab-strip--overflow": isOverflowing.value }]),
             ref_key: "stripEl",
@@ -17652,7 +17653,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, i)
               }, [
-                createBaseVNode("span", _hoisted_3$8, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", _hoisted_3$a, toDisplayString(unref(refGlyph)(tab)), 1),
                 createBaseVNode("span", _hoisted_4$6, toDisplayString(tabLabel(tab)), 1),
                 !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
                   key: 0,
@@ -17662,7 +17663,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                   "aria-label": "Close tab",
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
                 }, "×", 8, _hoisted_5$5)) : createCommentVNode("", true)
-              ], 42, _hoisted_2$9);
+              ], 42, _hoisted_2$c);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
               key: 0,
@@ -17787,7 +17788,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
               })
             }, "Close to the right"),
             createBaseVNode("button", {
-              class: "ts-ctx-item",
+              class: "ts-ctx-item ts-ctx-item--wide-only",
               type: "button",
               onClick: _cache[10] || (_cache[10] = ($event) => {
                 unref(ws).moveToGroup(unref(refKey)(contextMenu.value.tab), unref(ws).tabGroup(unref(ws).tabs.findIndex((t) => unref(refKey)(t) === unref(refKey)(contextMenu.value.tab))) === 0 ? 1 : 0);
@@ -17805,7 +17806,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-e9add2d2"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-2a537042"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -17876,7 +17877,7 @@ const useDashboardStore = /* @__PURE__ */ defineStore("dashboard", () => {
   }
   return { clockFormat, collapsedSections, toggleSection, isCollapsed };
 });
-const _hoisted_1$i = ["placeholder"];
+const _hoisted_1$h = ["placeholder"];
 const _sfc_main$k = /* @__PURE__ */ defineComponent({
   __name: "SearchBox",
   props: {
@@ -17925,7 +17926,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
           onInput: _cache[1] || (_cache[1] = ($event) => openModal(draft.value)),
           onKeydown: onKeyDown,
           "aria-label": "Search knowledge base"
-        }, null, 40, _hoisted_1$i), [
+        }, null, 40, _hoisted_1$h), [
           [vModelText, draft.value]
         ]),
         _cache[3] || (_cache[3] = createBaseVNode("span", { class: "srch-box-hint" }, "⌘K", -1))
@@ -17933,9 +17934,9 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$h = { class: "hero" };
+const _hoisted_1$g = { class: "hero" };
 const _hoisted_2$b = { class: "date" };
-const _hoisted_3$a = { class: "message" };
+const _hoisted_3$9 = { class: "message" };
 const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "DashboardHero",
   setup(__props) {
@@ -18021,7 +18022,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       if (clockInterval) clearInterval(clockInterval);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("section", _hoisted_1$h, [
+      return openBlock(), createElementBlock("section", _hoisted_1$g, [
         _cache[0] || (_cache[0] = createBaseVNode("div", {
           class: "logo-art",
           role: "img",
@@ -18090,7 +18091,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
           class: "time"
         }, toDisplayString(clockTime.value), 513),
         createBaseVNode("div", _hoisted_2$b, toDisplayString(clockDate.value), 1),
-        createBaseVNode("div", _hoisted_3$a, toDisplayString(greeting.value), 1),
+        createBaseVNode("div", _hoisted_3$9, toDisplayString(greeting.value), 1),
         createVNode(_sfc_main$k, { "corpus-label": corpusLabel.value }, null, 8, ["corpus-label"]),
         _cache[2] || (_cache[2] = createBaseVNode("a", {
           class: "repo-cta",
@@ -18106,9 +18107,9 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$g = ["data-task-id"];
+const _hoisted_1$f = ["data-task-id"];
 const _hoisted_2$a = { class: "db-tier-row-headline" };
-const _hoisted_3$9 = {
+const _hoisted_3$8 = {
   key: 0,
   class: "db-tier-row-agent"
 };
@@ -18133,23 +18134,23 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
         ]
       }, [
         createBaseVNode("span", _hoisted_2$a, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
-        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$9, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
-      ], 40, _hoisted_1$g);
+        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$8, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
+      ], 40, _hoisted_1$f);
     };
   }
 });
-const _hoisted_1$8 = ["data-tier"];
-const _hoisted_2$4 = { class: "db-tier-title" };
-const _hoisted_3$3 = { class: "db-tier-count" };
-const _hoisted_4$2 = {
+const _hoisted_1$e = ["data-tier"];
+const _hoisted_2$9 = { class: "db-tier-title" };
+const _hoisted_3$7 = { class: "db-tier-count" };
+const _hoisted_4$5 = {
   key: 0,
   style: { "opacity": "0.5" }
 };
-const _hoisted_5$2 = {
+const _hoisted_5$4 = {
   key: 1,
   style: { "opacity": "0.5" }
 };
-const _hoisted_6$2 = {
+const _hoisted_6$4 = {
   key: 2,
   style: { "opacity": "0.5" }
 };
@@ -18190,11 +18191,11 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
           class: "db-tier-header",
           onClick: _cache[0] || (_cache[0] = ($event) => unref(dash).toggleSection(__props.sectionKey))
         }, [
-          createBaseVNode("span", _hoisted_2$4, toDisplayString(__props.title), 1),
-          createBaseVNode("span", _hoisted_3$3, [
+          createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.title), 1),
+          createBaseVNode("span", _hoisted_3$7, [
             createTextVNode(toDisplayString(__props.tier.count) + " ", 1),
-            __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$2, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
-            collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$2, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$2, " ▾"))
+            __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$5, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
+            collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$4, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$4, " ▾"))
           ])
         ]),
         !collapsed.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
@@ -18220,11 +18221,11 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
             onClick: withModifiers(openAllTasks, ["stop"])
           }, toDisplayString(__props.tier.count - visibleRows.value.length) + " more in Tasks → ", 1)) : createCommentVNode("", true)
         ], 64)) : createCommentVNode("", true)
-      ], 8, _hoisted_1$8);
+      ], 8, _hoisted_1$e);
     };
   }
 });
-const _hoisted_1$e = {
+const _hoisted_1$d = {
   id: "dashboard-attention-tiers",
   class: "db-tiers",
   "aria-label": "Attention tiers"
@@ -18254,7 +18255,7 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
       return ((_a2 = attention.tiers) == null ? void 0 : _a2.reports) ?? { count: 0, rows: [] };
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$e, [
+      return openBlock(), createElementBlock("div", _hoisted_1$d, [
         createVNode(_sfc_main$h, {
           "section-key": "triage",
           title: "Triage",
@@ -18281,12 +18282,12 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$d = {
+const _hoisted_1$c = {
   key: 0,
   class: "db-totals"
 };
 const _hoisted_2$8 = { class: "db-totals-done" };
-const _hoisted_3$7 = { class: "db-totals-failed" };
+const _hoisted_3$6 = { class: "db-totals-failed" };
 const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "TotalsLine",
   props: {
@@ -18295,7 +18296,7 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const workspace = useWorkspaceStore();
     return (_ctx, _cache) => {
-      return __props.totals ? (openBlock(), createElementBlock("div", _hoisted_1$d, [
+      return __props.totals ? (openBlock(), createElementBlock("div", _hoisted_1$c, [
         createBaseVNode("button", {
           class: "db-totals-btn",
           type: "button",
@@ -18307,18 +18308,18 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
           _cache[2] || (_cache[2] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
           createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.totals.done ?? 0) + " done", 1),
           _cache[3] || (_cache[3] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_3$7, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
+          createBaseVNode("span", _hoisted_3$6, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
         ])
       ])) : createCommentVNode("", true);
     };
   }
 });
-const _hoisted_1$c = ["data-sched-id"];
+const _hoisted_1$b = ["data-sched-id"];
 const _hoisted_2$7 = { class: "db-sched-row-main" };
-const _hoisted_3$6 = { class: "db-sched-row-head" };
-const _hoisted_4$5 = { class: "db-sched-headline" };
-const _hoisted_5$4 = { class: "db-sched-meta" };
-const _hoisted_6$4 = { class: "db-sched-agent" };
+const _hoisted_3$5 = { class: "db-sched-row-head" };
+const _hoisted_4$4 = { class: "db-sched-headline" };
+const _hoisted_5$3 = { class: "db-sched-meta" };
+const _hoisted_6$3 = { class: "db-sched-agent" };
 const _hoisted_7$2 = { class: "db-sched-cadence" };
 const _hoisted_8$2 = {
   key: 0,
@@ -18369,15 +18370,15 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         "data-sched-id": __props.template.id
       }, [
         createBaseVNode("div", _hoisted_2$7, [
-          createBaseVNode("div", _hoisted_3$6, [
-            createBaseVNode("span", _hoisted_4$5, toDisplayString(headline.value), 1),
+          createBaseVNode("div", _hoisted_3$5, [
+            createBaseVNode("span", _hoisted_4$4, toDisplayString(headline.value), 1),
             _cache[3] || (_cache[3] = createBaseVNode("span", {
               class: "db-sched-recur",
               title: "Recurring template"
             }, "↻", -1))
           ]),
-          createBaseVNode("div", _hoisted_5$4, [
-            createBaseVNode("span", _hoisted_6$4, toDisplayString(agent.value), 1),
+          createBaseVNode("div", _hoisted_5$3, [
+            createBaseVNode("span", _hoisted_6$3, toDisplayString(agent.value), 1),
             createBaseVNode("span", _hoisted_7$2, toDisplayString(cadenceLabel.value), 1),
             fireCount.value > 0 ? (openBlock(), createElementBlock("span", _hoisted_8$2, toDisplayString(fireCount.value) + " fired", 1)) : createCommentVNode("", true),
             createBaseVNode("span", {
@@ -18432,26 +18433,26 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
           ]),
           _: 1
         }, 8, ["open"])
-      ], 8, _hoisted_1$c);
+      ], 8, _hoisted_1$b);
     };
   }
 });
-const _hoisted_1$b = { class: "db-sched" };
+const _hoisted_1$a = { class: "db-sched" };
 const _hoisted_2$6 = { class: "db-sched-header" };
-const _hoisted_3$5 = {
+const _hoisted_3$4 = {
   key: 0,
   class: "db-sched-empty"
 };
-const _hoisted_4$4 = {
+const _hoisted_4$3 = {
   key: 1,
   class: "db-sched-empty"
 };
-const _hoisted_5$3 = {
+const _hoisted_5$2 = {
   key: 2,
   class: "db-sched-list",
   id: "dashboard-sched-list"
 };
-const _hoisted_6$3 = {
+const _hoisted_6$2 = {
   key: 3,
   style: { "font-size": "12px", "color": "var(--muted)", "margin-top": "6px" }
 };
@@ -18517,7 +18518,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("section", _hoisted_1$b, [
+      return openBlock(), createElementBlock("section", _hoisted_1$a, [
         createBaseVNode("div", _hoisted_2$6, [
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-sched-title" }, "Scheduled tasks", -1)),
           createBaseVNode("button", {
@@ -18526,7 +18527,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => unref(nt2).open())
           }, "+ New Task")
         ]),
-        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$4, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$3, [
+        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$4, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$3, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$2, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(__props.templates, (t) => {
             return openBlock(), createBlock(_sfc_main$e, {
               key: t.id,
@@ -18537,17 +18538,19 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             }, null, 8, ["template"]);
           }), 128))
         ])),
-        statusMsg.value ? (openBlock(), createElementBlock("div", _hoisted_6$3, toDisplayString(statusMsg.value), 1)) : createCommentVNode("", true)
+        statusMsg.value ? (openBlock(), createElementBlock("div", _hoisted_6$2, toDisplayString(statusMsg.value), 1)) : createCommentVNode("", true)
       ]);
     };
   }
 });
-const _hoisted_1$a = { id: "dashboard-panel" };
+const _hoisted_1$9 = { id: "dashboard-panel" };
+const _hoisted_2$5 = { class: "dashboard-settings-row" };
 const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "DashboardView",
   setup(__props) {
     const attentionStore = useAttentionStore();
     const live = useLiveStore();
+    const ui = useUiStore();
     useResource("attention", {
       topics: ["attention", "tasks"],
       fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
@@ -18610,7 +18613,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       fetchSchedules();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$a, [
+      return openBlock(), createElementBlock("div", _hoisted_1$9, [
         createVNode(_sfc_main$j),
         createVNode(_sfc_main$f, { totals: totals.value }, null, 8, ["totals"]),
         createVNode(_sfc_main$g),
@@ -18618,11 +18621,20 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
           templates: templates.value,
           loading: schedulesLoading.value,
           onRefresh: onSchedulesRefresh
-        }, null, 8, ["templates", "loading"])
+        }, null, 8, ["templates", "loading"]),
+        createBaseVNode("div", _hoisted_2$5, [
+          createBaseVNode("button", {
+            id: "dashboard-settings-btn",
+            class: "dashboard-settings-btn",
+            type: "button",
+            onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = true)
+          }, "⚙ Settings")
+        ])
       ]);
     };
   }
 });
+const DashboardView = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-0e1d2c13"]]);
 function z() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
@@ -20275,7 +20287,7 @@ function highlightVueBlockContent(content, blockName) {
   if (blockName === "style") return highlightCss(content);
   return highlightHtml(content);
 }
-function escapeHtml(s) {
+function escapeHtml$1(s) {
   return escHtml(String(s == null ? "" : s));
 }
 function isPanelNarrow(panelId, threshold) {
@@ -20338,10 +20350,10 @@ function renderNextTargetPicker(currentAgent, agentsCache) {
     if (!a || !a.name) continue;
     const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
     const selected = a.name === currentAgent ? " selected" : "";
-    options += '<option value="' + escapeHtml(a.name) + '"' + selected + ">" + escapeHtml(label) + "</option>";
+    options += '<option value="' + escapeHtml$1(a.name) + '"' + selected + ">" + escapeHtml$1(label) + "</option>";
   }
   if (!options && currentAgent) {
-    options = '<option value="' + escapeHtml(currentAgent) + '" selected>' + escapeHtml(currentAgent) + "</option>";
+    options = '<option value="' + escapeHtml$1(currentAgent) + '" selected>' + escapeHtml$1(currentAgent) + "</option>";
   }
   return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
 }
@@ -20369,7 +20381,7 @@ function countActiveDescendants(taskId, cache) {
 }
 function renderSection(title, bodyHtml, openByDefault) {
   if (!bodyHtml) return "";
-  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
+  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml$1(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
 }
 function renderPanelCard(card, isCurrent, currentTaskId, cache) {
   var _a2;
@@ -20385,20 +20397,20 @@ function renderPanelCard(card, isCurrent, currentTaskId, cache) {
   const isClosed = !!(card.closed && card.closed.status);
   const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
   const ctxLines = ctx.map((c) => {
-    const safe = escapeHtml(c);
+    const safe = escapeHtml$1(c);
     if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
     if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
-    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
+    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
   }).join("");
   const metaParts = [];
-  metaParts.push(escapeHtml(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml(card.to || "?"));
-  if (card.kind) metaParts.push(escapeHtml(card.kind));
-  if (card.priority) metaParts.push(escapeHtml(card.priority));
+  metaParts.push(escapeHtml$1(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml$1(card.to || "?"));
+  if (card.kind) metaParts.push(escapeHtml$1(card.kind));
+  if (card.priority) metaParts.push(escapeHtml$1(card.priority));
   const projectLabel = card.project ? card.project : "Unassigned";
   metaParts.push(
-    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml(card.id) + '" data-project-agent="' + escapeHtml(card.agent || card.to || "") + '" data-project-current="' + escapeHtml(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml(projectLabel) + "</span>"
+    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml$1(card.id) + '" data-project-agent="' + escapeHtml$1(card.agent || card.to || "") + '" data-project-current="' + escapeHtml$1(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml$1(projectLabel) + "</span>"
   );
-  if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
+  if (card.updated) metaParts.push(escapeHtml$1(timeAgo(card.updated)));
   const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
   let sections = "";
   if (isTerminal && !isClosed) {
@@ -20406,54 +20418,54 @@ function renderPanelCard(card, isCurrent, currentTaskId, cache) {
     const suggest = suggestChildHeadline(card.headline || card.id);
     sections += renderSection(
       "⏳ Continue",
-      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
+      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml$1(card.agent || "") + '" data-next-id="' + escapeHtml$1(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml$1(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
       true
     );
   }
-  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + "</div>", true);
-  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + "</div>", true);
+  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml$1(brief) + "</div>", true);
+  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml$1(summaryResponse) + "</div>", true);
   if (isClosed) {
     const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
-    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml(card.closed.by || "?") + (closedAt ? " · " + escapeHtml(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml(card.closed.reason) + "</div>" : "") + "</div>";
+    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml$1(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml$1(card.closed.by || "?") + (closedAt ? " · " + escapeHtml$1(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml$1(card.closed.reason) + "</div>" : "") + "</div>";
   }
   const actions = [];
-  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
-  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
+  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml$1(card.id) + '" data-followon-agent="' + escapeHtml$1(card.agent || card.to || "") + '" type="button">↳ Next</button>');
+  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml$1(card.id) + '" type="button">💬 Chat</button>');
   if (!isClaimed && !isClosed) {
     if (isTerminal) {
-      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml(card.agent || "") + '" data-done-reading-id="' + escapeHtml(card.id) + '" type="button">✓ Done reading</button>');
+      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml$1(card.agent || "") + '" data-done-reading-id="' + escapeHtml$1(card.id) + '" type="button">✓ Done reading</button>');
     } else {
-      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">✕ Cancel</button>');
+      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml$1(card.id) + '" type="button">✕ Cancel</button>');
     }
   }
-  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml(card.id) + '" type="button">✕ Abort</button>');
-  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
-  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml(card.agent || "") + '" data-resume-task="' + escapeHtml(card.id) + '" type="button">▷ Resume</button>');
+  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml$1(card.id) + '" type="button">✕ Abort</button>');
+  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml$1(card.agent || "") + '" data-reopen-task="' + escapeHtml$1(card.id) + '" type="button">↻ Reopen</button>');
+  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml$1(card.agent || "") + '" data-resume-task="' + escapeHtml$1(card.id) + '" type="button">▷ Resume</button>');
   sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
   {
     const chatPicker = renderNextTargetPicker(card.agent || "", []);
     const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
-    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
+    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml$1(card.id) + '" data-chat-parent-agent="' + escapeHtml$1(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml$1(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
   }
   if (!isClaimed && !isClosed) {
     const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
     const activeCount = countActiveDescendants(card.id, cache);
     const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
     const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
-    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
+    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml$1(card.agent || "") + '" data-close-id="' + escapeHtml$1(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml$1(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
   }
   if (isClaimed && !isClosed) {
-    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
+    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml$1(card.agent || "") + '" data-abort-id="' + escapeHtml$1(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
   }
-  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(envelopePath) + "</button></div>";
-  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(card.reportPath) + "</button></div>";
+  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(envelopePath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(envelopePath) + "</button></div>";
+  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml$1(card.reportPath) + '" data-from-task="' + escapeHtml$1(currentTaskId || "") + '" type="button">' + escapeHtml$1(card.reportPath) + "</button></div>";
   sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
   if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
   return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
 }
 function renderReportPane(card) {
   if (!card || !card.reportPath) return "";
-  const safeTaskId = escapeHtml(card.id || "");
+  const safeTaskId = escapeHtml$1(card.id || "");
   const allPaths = [card.reportPath];
   for (const d2 of card.deliverables || []) {
     if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
@@ -20461,14 +20473,14 @@ function renderReportPane(card) {
   function docNode(path, isActive, scanExtras) {
     const fname = path.split("/").pop() || path;
     const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
-    const sp = escapeHtml(path);
-    const sFolder = escapeHtml(folder);
-    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
+    const sp = escapeHtml$1(path);
+    const sFolder = escapeHtml$1(folder);
+    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
   }
   const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
   const pillsHidden = allPaths.length <= 1;
   const pillsHtml = pillsHidden ? "" : allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml$1(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
   ).join("");
   return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
 }
@@ -20529,12 +20541,12 @@ function appendReportExtras(primaryNode) {
     node.className = "task-panel-report-doc";
     node.setAttribute("data-doc-path", path);
     node.hidden = true;
-    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
+    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml$1(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml$1(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml$1(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
     docsHost.appendChild(node);
   }
   const allPaths = [primaryPath, ...paths];
   pills.innerHTML = allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + "</button>"
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml$1(p2) + '" type="button">' + escapeHtml$1(p2.split("/").pop() || p2) + "</button>"
   ).join("");
   pills.hidden = false;
   for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
@@ -20572,7 +20584,7 @@ function loadReportNode(node, onLoaded) {
       const { body } = stripFrontmatter(raw);
       rawText = body || raw;
       const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
+      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml$1(fmMatch[1]) + "</pre>" : "";
       node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
     } else {
       rawText = data.content || "";
@@ -20587,13 +20599,13 @@ function loadReportNode(node, onLoaded) {
     if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
   }).catch((err) => {
     node.setAttribute("data-loaded", "false");
-    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml(String(err.message || err)) + "</div>";
+    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
-const _hoisted_1$9 = { class: "ev-tab-bar" };
-const _hoisted_2$5 = ["hidden"];
-const _hoisted_3$4 = ["hidden"];
-const _hoisted_4$3 = { class: "ev-footer" };
+const _hoisted_1$8 = { class: "ev-tab-bar" };
+const _hoisted_2$4 = ["hidden"];
+const _hoisted_3$3 = ["hidden"];
+const _hoisted_4$2 = { class: "ev-footer" };
 const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "EnvelopeView",
   props: {
@@ -20740,7 +20752,7 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
         class: "ev-root",
         onClick: onPanelClick
       }, [
-        createBaseVNode("div", _hoisted_1$9, [
+        createBaseVNode("div", _hoisted_1$8, [
           createBaseVNode("button", {
             class: normalizeClass(["ev-tab", { "is-active": subView.value === "task" }]),
             onClick: _cache[0] || (_cache[0] = withModifiers(($event) => setSubView("task"), ["stop"])),
@@ -20757,14 +20769,14 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
           ref: taskPane,
           class: "ev-pane",
           hidden: subView.value !== "task"
-        }, null, 8, _hoisted_2$5),
+        }, null, 8, _hoisted_2$4),
         createBaseVNode("div", {
           ref_key: "reportPane",
           ref: reportPane,
           class: "ev-pane",
           hidden: subView.value !== "report"
-        }, null, 8, _hoisted_3$4),
-        createBaseVNode("div", _hoisted_4$3, [
+        }, null, 8, _hoisted_3$3),
+        createBaseVNode("div", _hoisted_4$2, [
           createBaseVNode("button", {
             class: "ev-open-tasks-btn",
             onClick: _cache[2] || (_cache[2] = withModifiers(($event) => unref(ws).open({ kind: "legacy", page: "tasks" }), ["stop"]))
@@ -22711,8 +22723,8 @@ var load_1 = load$1;
 var loader = {
   load: load_1
 };
-var load = loader.load;
-const escapeHtml$1 = (s) => String(s).replace(
+var load$2 = loader.load;
+const escapeHtml = (s) => String(s).replace(
   /[&<>"']/g,
   (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] ?? c
 );
@@ -22722,12 +22734,12 @@ function renderValue(value, depth) {
   if (typeof value === "boolean") return `<span class="yaml-bool">${value}</span>`;
   if (typeof value === "number") return `<span class="yaml-num">${value}</span>`;
   if (typeof value === "string") {
-    if (value.includes("\n")) return `<pre class="yaml-block">${escapeHtml$1(value)}</pre>`;
-    return `<span class="yaml-str">${escapeHtml$1(value)}</span>`;
+    if (value.includes("\n")) return `<pre class="yaml-block">${escapeHtml(value)}</pre>`;
+    return `<span class="yaml-str">${escapeHtml(value)}</span>`;
   }
   if (value instanceof Date) {
     if (Number.isFinite(value.getTime()))
-      return `<span class="yaml-str">${escapeHtml$1(value.toISOString())}</span>`;
+      return `<span class="yaml-str">${escapeHtml(value.toISOString())}</span>`;
     return '<span class="yaml-null">invalid date</span>';
   }
   if (Array.isArray(value)) {
@@ -22736,7 +22748,7 @@ function renderValue(value, depth) {
     return `<ul class="yaml-array">${items}</ul>`;
   }
   if (isPlainObject(value)) return renderObject(value, depth + 1);
-  return `<span class="yaml-str">${escapeHtml$1(String(value))}</span>`;
+  return `<span class="yaml-str">${escapeHtml(String(value))}</span>`;
 }
 function renderStatusPill(value) {
   const lower = value.toLowerCase();
@@ -22745,13 +22757,13 @@ function renderStatusPill(value) {
   else if (lower.startsWith("failed")) cls = "yaml-status-failed";
   else if (lower.startsWith("waiting")) cls = "yaml-status-waiting";
   else if (lower === "claimed") cls = "yaml-status-claimed";
-  return `<span class="yaml-status ${cls}">${escapeHtml$1(value)}</span>`;
+  return `<span class="yaml-status ${cls}">${escapeHtml(value)}</span>`;
 }
 function renderObject(obj, depth) {
   const entries = Object.entries(obj);
   if (entries.length === 0) return '<span class="yaml-empty">{}</span>';
   const rows = entries.map(([key, value]) => {
-    const keyHtml = `<span class="yaml-key">${escapeHtml$1(key)}</span>`;
+    const keyHtml = `<span class="yaml-key">${escapeHtml(key)}</span>`;
     const isComplex = isPlainObject(value) || Array.isArray(value) && value.length > 0 || typeof value === "string" && value.includes("\n");
     if (key === "status" && typeof value === "string" && !isComplex) {
       return `<div class="yaml-row yaml-row-simple" data-depth="${depth}">${keyHtml}<span class="yaml-colon">:</span> ${renderStatusPill(value)}</div>`;
@@ -22766,16 +22778,16 @@ function renderObject(obj, depth) {
 function yamlRender(src) {
   if (!src) return "";
   try {
-    const parsed = load(src);
+    const parsed = load$2(src);
     if (parsed === null || parsed === void 0)
       return '<div class="yaml-empty">empty document</div>';
     return `<div class="yaml-doc">${renderValue(parsed, 0)}</div>`;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return `<div class="yaml-error">YAML parse error: ${escapeHtml$1(msg)}</div><pre class="yaml-raw">${escapeHtml$1(src)}</pre>`;
+    return `<div class="yaml-error">YAML parse error: ${escapeHtml(msg)}</div><pre class="yaml-raw">${escapeHtml(src)}</pre>`;
   }
 }
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
+const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -23122,14 +23134,14 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_main$a = /* @__PURE__ */ defineComponent({
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
   __name: "FileView",
   props: {
     resource: {}
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return __props.resource.kind === "file" ? (openBlock(), createBlock(_sfc_main$9, {
+      return __props.resource.kind === "file" ? (openBlock(), createBlock(_sfc_main$a, {
         key: 0,
         path: __props.resource.path,
         branch: __props.resource.branch,
@@ -23142,11 +23154,11 @@ function shortId(id) {
   return String(id || "").replace(/^TSK-\d{4}-/, "");
 }
 function tierRow(rowCls, row, showCheckbox) {
-  const full = escapeHtml(row.id || "");
-  const shrt = escapeHtml(shortId(row.id));
-  const headline = escapeHtml(row.headline || row.id || "");
-  const label = escapeHtml(shorten(row.label || row.headline || row.id || "", 120));
-  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
+  const full = escapeHtml$1(row.id || "");
+  const shrt = escapeHtml$1(shortId(row.id));
+  const headline = escapeHtml$1(row.headline || row.id || "");
+  const label = escapeHtml$1(shorten(row.label || row.headline || row.id || "", 120));
+  const checkbox = showCheckbox ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml$1(row.agent || "") + '" aria-label="Select ' + full + '" />' : "";
   return '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' + checkbox + '<span class="tasks-tier-id">' + shrt + '</span><span class="tasks-tier-label">' + label + "</span></div>";
 }
 function renderTierSection(tier, headCls, rowCls, glyph, verb, showCheckbox) {
@@ -23288,10 +23300,10 @@ function renderTreeRow(t, depth, hasChildren, expanded, queuedCount, currentTask
     queuedBadge = '<span class="tasks-tree-queued-badge">▸ ' + queuedCount + " queued</span>";
   }
   const indent = '<span class="tasks-tree-indent" style="width:' + depth * 14 + 'px"></span>';
-  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
+  const chevron = hasChildren ? '<button class="tasks-tree-chevron' + (expanded ? " is-expanded" : "") + '" data-toggle-expand="' + escapeHtml$1(t.id) + '" type="button" aria-label="' + (expanded ? "Collapse" : "Expand") + '">' + (expanded ? "▾" : "▸") + "</button>" : '<span class="tasks-tree-chevron-spacer"></span>';
   const rawStatus = t.status || "?";
   const shortStatus = shortenStatusLabel(rawStatus);
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml(rawStatus) + '">' + escapeHtml(shortStatus) + "</span>") + "</div></div></div>";
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(t.id) + '" role="button" tabindex="0">' + indent + chevron + '<span class="tasks-tree-marker">' + marker + '</span><div class="tasks-tree-titlecol"><span class="tasks-tree-headline">' + escapeHtml$1(shorten(headline, 80)) + '</span><div class="tasks-tree-meta"><span class="tasks-tree-id">' + escapeHtml$1(t.id) + '</span><span class="tasks-tree-agent">' + escapeHtml$1(t.agent || t.to || "?") + "</span>" + (queuedBadge || '<span class="tasks-tree-status ' + rowStatus + '" title="' + escapeHtml$1(rawStatus) + '">' + escapeHtml$1(shortStatus) + "</span>") + "</div></div></div>";
 }
 function renderTreeBranch(tree, node, depth, out, expanded, byParent, currentTaskId, seen = {}) {
   if (seen[node.id] || depth > 32) return;
@@ -23361,15 +23373,15 @@ function renderCurrentRow(task, currentTaskId, currentSelected) {
   const isClaimed = task.status === "claimed";
   const headline = task.headline || task.summary && task.summary.brief || task.brief || "(no headline)";
   const meta = [
-    escapeHtml(task.agent || task.to || "?"),
-    escapeHtml(shortenStatusLabel(task.status || "?")),
-    ...task.updated ? [escapeHtml(timeAgo(task.updated))] : []
+    escapeHtml$1(task.agent || task.to || "?"),
+    escapeHtml$1(shortenStatusLabel(task.status || "?")),
+    ...task.updated ? [escapeHtml$1(timeAgo(task.updated))] : []
   ];
   let rowClass = "tasks-current-row " + sc;
   if (task.id === currentTaskId) rowClass += " is-active";
   const defaultCloseStatus = task.status === "done" ? "closed" : "cancelled";
-  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml(task.id) + '" data-task-agent="' + escapeHtml(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
-  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml(task.id) + '">' + escapeHtml(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
+  const checkbox = isClaimed ? "" : '<input type="checkbox" class="current-row-select" data-task-id="' + escapeHtml$1(task.id) + '" data-task-agent="' + escapeHtml$1(task.agent || task.to || "") + '" data-task-default-status="' + escapeHtml$1(defaultCloseStatus) + '"' + (currentSelected[task.id] ? " checked" : "") + ">";
+  return '<div class="' + rowClass + '" data-task-id="' + escapeHtml$1(task.id) + '" role="button" tabindex="0">' + checkbox + '<span class="tasks-current-row-dot" aria-hidden="true"></span><div class="tasks-current-row-body"><div class="tasks-current-row-title" title="' + escapeHtml$1(task.id) + '">' + escapeHtml$1(shorten(headline, 96)) + '</div><div class="tasks-current-row-sub"><span class="tasks-current-row-id">' + escapeHtml$1(task.id) + '</span><span class="tasks-current-row-meta">' + meta.join(" · ") + "</span></div></div></div>";
 }
 function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSelected, expanded, collapsed) {
   const filtered = cache.filter((t) => passesFilter(t, filter));
@@ -23395,10 +23407,10 @@ function renderAllTasksView(tasksTree, cache, filter, currentTaskId, currentSele
     const rows = groups[groupKey];
     const displayName = groupKey === "__unassigned" ? "Unassigned" : groupKey;
     const isCollapsed = !!collapsed[groupKey];
-    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml(groupKey) + '">';
-    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
+    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml$1(groupKey) + '">';
+    html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml$1(groupKey) + '">';
     html += '<span class="tasks-current-group-chevron"></span>';
-    html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + "</span>";
+    html += '<span class="tasks-current-group-name">' + escapeHtml$1(displayName) + "</span>";
     html += '<span class="tasks-current-group-count">' + rows.length + "</span></div>";
     html += '<div class="tasks-current-group-body">';
     const tree = buildTaskTree(rows);
@@ -23579,12 +23591,12 @@ async function loadProjectsOverview() {
 function renderProjectCard(card, currentProjectSlug) {
   const displayName = card.title || (card.slug === "" ? "(Unassigned)" : card.slug);
   const slugLine = card.slug && card.slug !== "" && card.title ? card.slug : "";
-  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml(card.jira) + "</span>" : "";
-  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml(card.status) + "</span>" : "";
+  const jiraPill = card.jira ? '<span class="tasks-project-card-jira">' + escapeHtml$1(card.jira) + "</span>" : "";
+  const statusPill = card.status ? '<span class="tasks-project-card-status">' + escapeHtml$1(card.status) + "</span>" : "";
   const counts = card.counts || { active: 0, doneNotClosed: 0, stuck: 0, closed: 0 };
   const touched = card.lastTouched ? timeAgo(card.lastTouched) : "no activity";
   const isActive = currentProjectSlug !== null && currentProjectSlug === card.slug;
-  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml(touched) + "</span></div></div>";
+  return '<div class="tasks-project-card' + (isActive ? " is-active" : "") + '" data-project-slug="' + escapeHtml$1(card.slug || "") + '" role="button" tabindex="0"><div class="tasks-project-card-head"><div class="tasks-project-card-name">' + escapeHtml$1(displayName) + "</div>" + jiraPill + statusPill + "</div>" + (slugLine ? '<div class="tasks-project-card-slug">' + escapeHtml$1(slugLine) + "</div>" : "") + '<div class="tasks-project-card-counts"><span class="count count-active" title="Active">' + counts.active + ' active</span><span class="count count-done" title="Done, not yet closed">' + counts.doneNotClosed + ' done</span><span class="count count-stuck" title="Failed or waiting on dependency">' + counts.stuck + ' stuck</span><span class="count count-closed" title="Closed">' + counts.closed + ' closed</span></div><div class="tasks-project-card-foot"><span class="tasks-project-card-touched">' + escapeHtml$1(touched) + "</span></div></div>";
 }
 function renderProjectsView(tasksTreeEl, currentProjectSlug) {
   tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Loading projects…</div>';
@@ -23606,16 +23618,16 @@ function renderProjectsView(tasksTreeEl, currentProjectSlug) {
     html += "</div>";
     tasksTreeEl.innerHTML = html;
   }).catch((err) => {
-    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml(String(err.message || err)) + "</div>";
+    tasksTreeEl.innerHTML = '<div class="tasks-current-empty">Error loading projects: ' + escapeHtml$1(String(err.message || err)) + "</div>";
   });
 }
 function renderDocCard(doc2, kind) {
   const title = doc2.title || doc2.filename || "(untitled)";
-  const desc = doc2.description ? escapeHtml(shorten(doc2.description, 140)) : "";
+  const desc = doc2.description ? escapeHtml$1(shorten(doc2.description, 140)) : "";
   const meta = [];
-  if (doc2.doc_type) meta.push(escapeHtml(doc2.doc_type));
-  if (doc2.last_updated) meta.push(escapeHtml(doc2.last_updated));
-  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml(kind || "other") + '" data-open-file="' + escapeHtml(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
+  if (doc2.doc_type) meta.push(escapeHtml$1(doc2.doc_type));
+  if (doc2.last_updated) meta.push(escapeHtml$1(doc2.last_updated));
+  return '<button type="button" class="tasks-project-doc-card kind-' + escapeHtml$1(kind || "other") + '" data-open-file="' + escapeHtml$1(doc2.path) + '"><div class="tasks-project-doc-card-title">' + escapeHtml$1(title) + "</div>" + (desc ? '<div class="tasks-project-doc-card-desc">' + desc + "</div>" : "") + (meta.length ? '<div class="tasks-project-doc-card-meta">' + meta.join(" · ") + "</div>" : "") + "</button>";
 }
 function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulkSelected) {
   var _a2, _b;
@@ -23624,23 +23636,23 @@ function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulk
   const hideClosed = getProjectHideClosed(slug);
   let headParts = '<div class="tasks-project-head">';
   headParts += '<div class="tasks-project-head-row">';
-  headParts += '<div class="tasks-project-title">' + escapeHtml(displayName) + "</div>";
-  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml(summary.jira) + "</span>";
-  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml(summary.status) + "</span>";
+  headParts += '<div class="tasks-project-title">' + escapeHtml$1(displayName) + "</div>";
+  if (summary.jira) headParts += '<span class="tasks-project-jira">' + escapeHtml$1(summary.jira) + "</span>";
+  if (summary.status) headParts += '<span class="tasks-project-status">' + escapeHtml$1(summary.status) + "</span>";
   headParts += "</div>";
   if (summary.title && slug && slug !== "") {
-    headParts += '<div class="tasks-project-slug">' + escapeHtml(slug) + "</div>";
+    headParts += '<div class="tasks-project-slug">' + escapeHtml$1(slug) + "</div>";
   }
   const medClose = fmtDaysHours(((_a2 = summary.metrics) == null ? void 0 : _a2.medianCloseTimeMs) || 0);
   const medAge = fmtDaysHours(((_b = summary.metrics) == null ? void 0 : _b.medianActiveAgeMs) || 0);
   headParts += '<div class="tasks-project-metrics">';
-  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml(medClose) + "</span></span>";
-  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml(medAge) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Median close time</span><span class="metric-value">' + escapeHtml$1(medClose) + "</span></span>";
+  headParts += '<span class="metric"><span class="metric-label">Median active age</span><span class="metric-value">' + escapeHtml$1(medAge) + "</span></span>";
   headParts += '<span class="metric"><span class="metric-label">Active leaves</span><span class="metric-value">' + summary.leaves.length + "</span></span>";
   headParts += "</div>";
   headParts += '<div class="tasks-project-actions">';
-  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml(slug) + '">+ New task here</button>';
-  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
+  if (slug && slug !== "") headParts += '<button type="button" class="task-panel-action is-primary" data-project-new-task="' + escapeHtml$1(slug) + '">+ New task here</button>';
+  headParts += '<label class="task-panel-action task-panel-close-cascade tasks-project-hide-toggle"><input type="checkbox" data-project-hide-closed="' + escapeHtml$1(slug) + '"' + (hideClosed ? " checked" : "") + " /><span>Hide closed</span></label>";
   headParts += "</div></div>";
   const docs = summary.docs || { primary: [], fdps: [], other: [] };
   let docsHtml = "";
@@ -23695,7 +23707,7 @@ function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulk
   }
   projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
 }
-function load$2(key, fallback) {
+function load(key, fallback) {
   try {
     const v2 = localStorage.getItem("files." + key);
     if (v2 === null) return fallback;
@@ -23711,9 +23723,9 @@ function save(key, value) {
   }
 }
 const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
-  const currentPath = /* @__PURE__ */ ref(load$2("currentPath", ""));
-  const currentDir = /* @__PURE__ */ ref(load$2("currentDir", "."));
-  const selectedBranch = /* @__PURE__ */ ref(load$2("selectedBranch", ""));
+  const currentPath = /* @__PURE__ */ ref(load("currentPath", ""));
+  const currentDir = /* @__PURE__ */ ref(load("currentDir", "."));
+  const selectedBranch = /* @__PURE__ */ ref(load("selectedBranch", ""));
   const loaded = /* @__PURE__ */ ref(false);
   watch(currentPath, (v2) => save("currentPath", v2));
   watch(currentDir, (v2) => save("currentDir", v2));
@@ -25982,9 +25994,9 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   }
 });
 const registry = {
-  dashboard: _sfc_main$c,
+  dashboard: DashboardView,
   envelope: EnvelopeView,
-  file: _sfc_main$a,
+  file: _sfc_main$9,
   legacy: _sfc_main$5
 };
 function getViewComponent(kind) {
@@ -31901,6 +31913,16 @@ const pageStyles = String.raw`    :root {
     }
     .files-list {
       padding: 4px;
+      /* Step 6 (WAL-115) deleted the .files-sidebar wrapper that carried
+         overflow-y: auto, so the list grew past the panel with no scroller and
+         rows below the fold became unreachable. The list is now the scroll
+         container itself: flex:1 + min-height:0 so it can shrink inside the
+         .files-panel flex column, which is what makes overflow-y effective. */
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
     }
     .files-item {
       display: flex;
