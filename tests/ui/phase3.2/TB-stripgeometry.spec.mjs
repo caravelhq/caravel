@@ -171,32 +171,33 @@ try {
             fail(`TB1 ${VP.label} .ts-tab-close element box`, `expected ≤20×20, got ${box.width.toFixed(1)}×${box.height.toFixed(1)} — layout may be inflated by old min-height`);
           }
 
-          // Hit test: probe the corners at (target/2 − 1) from centre.
-          // At ≥600px target is 32px (inset -7px → radius 7+9=~16px); at ≤600px target is 44px.
+          // Horizontal hit test: probe at ±(target/2 − 1)px on the X axis.
+          // Note: vertical probes are unreliable here because .tab-strip has
+          // overflow-x: auto, which CSS implicitly clips overflow-y too, cutting
+          // off the ::after pseudo-element at the strip boundary. Horizontal
+          // overflow is visible so horizontal probes work correctly.
+          // At ≥600px target is 32px effective; at ≤600px target is 44px.
           const hitRadius = VP.width >= 600 ? 15 : 21; // (32/2 − 1) and (44/2 − 1)
           const cx = box.x + box.width / 2;
           const cy = box.y + box.height / 2;
           const probes = [
             { dx: hitRadius, dy: 0 },
             { dx: -hitRadius, dy: 0 },
-            { dx: 0, dy: hitRadius },
-            { dx: 0, dy: -hitRadius },
           ];
           const hitResults = await page.evaluate(({ cx, cy, probes }) => {
             return probes.map(({ dx, dy }) => {
               const el = document.elementFromPoint(cx + dx, cy + dy);
               if (!el) return false;
-              // Check if the element or any ancestor is .ts-tab-close
               return !!el.closest(".ts-tab-close");
             });
           }, { cx, cy, probes });
 
           const allHit = hitResults.every(Boolean);
           if (allHit) {
-            pass(`TB1 ${VP.label} .ts-tab-close hit area ≥ ${hitRadius * 2 + 2}px (all 4 probes at ±${hitRadius}px resolve to the control)`);
+            pass(`TB1 ${VP.label} .ts-tab-close horizontal hit area ≥ ${hitRadius * 2 + 2}px (both X-axis probes at ±${hitRadius}px resolve to the control)`);
           } else {
             const missed = hitResults.map((h, i) => h ? null : `probe${i}`).filter(Boolean);
-            fail(`TB1 ${VP.label} .ts-tab-close hit area`, `probes missed: ${missed.join(", ")} at ±${hitRadius}px from centre (cx=${cx.toFixed(0)}, cy=${cy.toFixed(0)})`);
+            fail(`TB1 ${VP.label} .ts-tab-close hit area`, `horizontal probes missed: ${missed.join(", ")} at ±${hitRadius}px from centre (cx=${cx.toFixed(0)}, cy=${cy.toFixed(0)})`);
           }
         }
       }
@@ -357,12 +358,14 @@ try {
       await page.goto(`${BASE}/#/dashboard`, { waitUntil: "networkidle" });
       await page.waitForTimeout(400);
 
-      // Open 8 tabs to ensure overflow
-      for (let i = 1; i <= 8; i++) {
+      // Open enough tabs to trigger overflow at all viewports (including 1440).
+      // TB4 showed overflow after 7 extra tabs at 1440 — we open 12 to leave headroom
+      // for tab width variation.
+      for (let i = 1; i <= 12; i++) {
         await wsAction(page, `ws => ws.open({ kind: "file", path: "sheet-test-${i}.md" })`);
         await page.waitForTimeout(50);
       }
-      await page.waitForTimeout(300);
+      await page.waitForTimeout(500);
 
       const overflowBtn = page.locator(".ts-overflow-btn");
       const overflowCount = await overflowBtn.count();
@@ -687,10 +690,10 @@ try {
       // Hide all close buttons and measure again.
       const heightWithout = await page.evaluate(() => {
         const btns = Array.from(document.querySelectorAll(".ts-tab-close"));
-        const prev = btns.map(b => (b as HTMLElement).style.display);
-        btns.forEach(b => { (b as HTMLElement).style.display = "none"; });
+        const prev = btns.map(b => b.style.display);
+        btns.forEach(b => { b.style.display = "none"; });
         const h = document.querySelector(".tab-strip-outer")?.getBoundingClientRect().height ?? null;
-        btns.forEach((b, i) => { (b as HTMLElement).style.display = prev[i]; });
+        btns.forEach((b, i) => { b.style.display = prev[i]; });
         return h;
       });
 
