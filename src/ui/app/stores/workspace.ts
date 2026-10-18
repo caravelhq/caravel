@@ -596,6 +596,9 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   }
 
   function toggleSplit(): void {
+    // The split layout is inactive below the 1200px pin threshold (Workspace.vue:16).
+    // Toggling on narrow screens would set state the layout silently ignores.
+    if (typeof window !== "undefined" && window.innerWidth < 1200) return;
     if (splitOn.value) {
       splitOn.value = false;
       splitIndex.value = null;
