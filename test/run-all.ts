@@ -59,6 +59,9 @@ const SUITES: Suite[] = [
   { name: "scheduled-template guard: no consolidation for recurring parents (WAL-84)", file: "scheduler/frontier-scheduled.test.ts", timeoutMs: 120_000 },
   { name: "type-check gate: src/+test/ errors (WAL-72 v1.12)", file: "type-check.test.ts", timeoutMs: 120_000 },
   { name: "waiting-park: script/limits/generality (WAL-120)", file: "waiting-park.test.ts", timeoutMs: 120_000 },
+  { name: "envelope-write: quote rule, atomicity, round-trip (WAL-123 Phase A)", file: "envelope-write.test.ts", timeoutMs: 60_000 },
+  { name: "envelope-callback: park/done/failed/wrap CLI surface (WAL-123 Phase A)", file: "envelope-callback.test.ts", timeoutMs: 60_000 },
+  { name: "envelope-drift: behavioral + grep gate (WAL-123 Phase A)", file: "envelope-drift.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };

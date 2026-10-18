@@ -14,6 +14,7 @@ import { readdir, readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
+import { VALIDATE_BUCKETS } from "../src/envelope/schema";
 
 const args = process.argv.slice(2);
 const flagIdx = args.indexOf("--agents-dir");
@@ -24,7 +25,7 @@ if (!existsSync(AGENTS_DIR)) {
   process.exit(1);
 }
 
-const BUCKETS = ["open", "waiting", "done", "failed", "archived", "scheduled"];
+const BUCKETS = VALIDATE_BUCKETS;
 
 let total = 0;
 let failures = 0;

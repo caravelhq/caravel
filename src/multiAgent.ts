@@ -33,6 +33,15 @@ import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
 import { resolveStateDir } from "./paths";
 import { inferProjectFromContext, readParentProject } from "./projectUtils";
+import {
+  ARCHIVABLE_BUCKETS,
+  GRAPH_SCAN_BUCKETS,
+  LOCATE_ENVELOPE_BUCKETS,
+  STALE_RENDEZVOUS_BUCKETS,
+  ALLOCATION_SCAN_DIRS,
+  VALID_WAITING_SPECS,
+  REPORT_FILE_BUCKETS,
+} from "./envelope/schema";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -94,7 +103,7 @@ const AUTO_PAUSE_DAYS = 14;
 // home, and closed envelopes get folded to `archived/` once aged out.
 // `paused` is intentionally excluded — paused tasks are not archivable;
 // they stay visible until a human explicitly resumes or closes them.
-const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
+// ARCHIVABLE_BUCKETS imported from ./envelope/schema
 
 // === Persistent graph + frontier serialisation (FDP v1.19 §1) ==============
 // One module-level graph, mutated by every tick rebuild and every spawn/extend
@@ -614,8 +623,7 @@ async function readReportFile(
   taskId: string,
   unusable?: { path?: string }
 ): Promise<TaskDirective | null> {
-  const buckets: Array<"done" | "failed" | "waiting"> = ["done", "failed", "waiting"];
-  for (const bucket of buckets) {
+  for (const bucket of REPORT_FILE_BUCKETS) {
     const path = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.md`);
     if (!existsSync(path)) continue;
 
@@ -974,7 +982,7 @@ export function detectCycles(nodes: Map<string, GraphNode>): { id: string; probl
 
 // Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
 // point at a fixture directory rather than the live agents/ tree.
-const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"] as const;
+// GRAPH_SCAN_BUCKETS imported from ./envelope/schema
 
 export async function loadGraph(agentsDir: string, agents: string[]): Promise<TaskGraph> {
   const nodes = new Map<string, GraphNode>();
@@ -1296,8 +1304,7 @@ async function locateEnvelope(
     return { path: preferredPath, yaml };
   } catch {}
 
-  const buckets = ["open", "done", "failed", "waiting", "archived"];
-  for (const bucket of buckets) {
+  for (const bucket of LOCATE_ENVELOPE_BUCKETS) {
     const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.yaml`);
     if (candidate === preferredPath) continue;
     try {
@@ -1320,7 +1327,7 @@ async function locateEnvelope(
 // Add a new entry here to allow a new family; also add it to:
 //   - SWEEP_PREDICATES (the sweep loop that unblocks / terminates it)
 //   - scheduler.ts allow-list (so the scheduler counts the task as live)
-const VALID_WAITING_SPECS = new Set(["limits", "script"]);
+// VALID_WAITING_SPECS imported from ./envelope/schema
 
 async function transitionToWaiting(
   agent: string,
@@ -1434,7 +1441,7 @@ async function cleanStaleRendezvous(
   taskId: string,
   keepBucket: "open" | "waiting" | "done" | "failed" | "paused"
 ): Promise<void> {
-  const buckets: Array<"open" | "waiting" | "done" | "failed" | "paused"> = ["open", "waiting", "done", "failed", "paused"];
+  const buckets = [...STALE_RENDEZVOUS_BUCKETS];
   const keepDir = join(AGENTS_DIR, agent, "tasks", keepBucket);
   const keepPath = join(keepDir, `${taskId}.md`);
 
@@ -1670,7 +1677,7 @@ async function nextContTaskId(
   graph: TaskGraph,
   agentsDir: string
 ): Promise<string> {
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"];
+  const SCAN_DIRS = ALLOCATION_SCAN_DIRS;
 
   if (parentId) {
     const root = parentId.split(".")[0]!;

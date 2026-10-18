@@ -12,6 +12,12 @@ import { listAgentNamesSync } from "../../agents";
 import { inferProjectFromContext, readParentProject as _readParentProject } from "../../projectUtils";
 import { loadTemplate, saveTemplate } from "./templateYaml";
 import { nextCronMatch } from "../../cron";
+import {
+  BUCKETS as ALL_BUCKETS_SCHEMA,
+  GRAPH_SCAN_BUCKETS,
+  REPORT_FILE_BUCKETS,
+  LIVE_TASK_BUCKETS,
+} from "../../envelope/schema";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -80,7 +86,7 @@ async function nextTaskId(parent: string | null): Promise<string> {
   // its ids become invisible to the allocator and get REISSUED. That is how
   // TSK-2026-07-08-0001.08 was handed to jess on 2026-09-04 while alice
   // already held a paused continuation with the same id.
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "blocked", "archived", "scheduled"];
+  const SCAN_DIRS = ALL_BUCKETS_SCHEMA;
 
   if (parent) {
     const root = parent.split(".")[0]!;
@@ -366,7 +372,7 @@ export interface ClosedBlock {
   reason: string;
 }
 
-const TASK_BUCKETS = ["open", "waiting", "done", "failed", "paused"] as const;
+const TASK_BUCKETS = LIVE_TASK_BUCKETS;
 type TaskBucket = (typeof TASK_BUCKETS)[number];
 
 // Thin wrapper so callers in this module don't need to pass agentsDir/agents
@@ -886,7 +892,7 @@ export async function renameTask(input: RenameTaskInput): Promise<RenameTaskResu
 
   // Locate envelope across all active + archived buckets so closed tasks
   // (and even archived) can be renamed.
-  const buckets = ["open", "waiting", "done", "failed", "paused", "blocked", "archived"] as const;
+  const buckets = GRAPH_SCAN_BUCKETS;
   let path: string | null = null;
   let bucket: (typeof buckets)[number] | null = null;
   for (const b of buckets) {
@@ -1366,7 +1372,7 @@ export async function spawnNextTask(input: SpawnNextTaskInput): Promise<SpawnNex
   if (source !== "continue") return { ok: false, error: `source must be 'continue'` };
 
   // Locate parent envelope across the three terminal-ish buckets.
-  const buckets = ["waiting", "done", "failed"] as const;
+  const buckets = REPORT_FILE_BUCKETS;
   type Bucket = typeof buckets[number];
   let parentPath: string | null = null;
   let parentBucket: Bucket | null = null;
@@ -1565,7 +1571,7 @@ export async function setTaskProject(input: SetTaskProjectInput): Promise<SetTas
   }
 
   // Locate envelope across all buckets including archived (audit-rewrite is OK).
-  const buckets = ["open", "waiting", "done", "failed", "paused", "blocked", "archived"] as const;
+  const buckets = GRAPH_SCAN_BUCKETS;
   let path: string | null = null;
   let bucket: (typeof buckets)[number] | null = null;
   for (const b of buckets) {

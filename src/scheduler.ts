@@ -20,6 +20,7 @@ import { cronMatches } from "./cron";
 import { loadTemplate, saveTemplate } from "./ui/services/templateYaml";
 import { shiftDateToOffset } from "./timezone";
 import { createTask } from "./ui/services/multiAgentDispatch";
+import { VALID_WAITING_SPECS } from "./envelope/schema";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -141,9 +142,12 @@ async function hasActiveInstance(templateId: string): Promise<boolean> {
         if (closed && closed !== "null") continue;
         const status = (/^status:\s*(.+)$/m.exec(yaml)?.[1] ?? "").trim();
         if (status === "done" || status.startsWith("failed:") || status === "paused") continue;
-        // waiting:on:limits and waiting:on:script are live; every other waiting: spec is retired.
-        // Add new families here and in VALID_WAITING_SPECS / SWEEP_PREDICATES in multiAgent.ts.
-        if (status.startsWith("waiting:on:") && status !== "waiting:on:limits" && status !== "waiting:on:script") continue;
+        // Live waiting specs are defined in VALID_WAITING_SPECS (envelope/schema.ts).
+        // Every other waiting: spec is retired. Add new families there and in SWEEP_PREDICATES.
+        if (status.startsWith("waiting:on:")) {
+          const spec = status.slice("waiting:on:".length);
+          if (!VALID_WAITING_SPECS.has(spec)) continue;
+        }
         return true;
       }
     }
