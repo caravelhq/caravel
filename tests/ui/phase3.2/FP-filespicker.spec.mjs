@@ -5,6 +5,10 @@
 // FP3: Browsing five files produces one preview tab, not five (preview reuse)
 // FP4: ⇥ throw opens file in the other group and creates the split
 // FP5: [data-open-file] link click inside a file: tab opens a new file: tab; original stays
+// FP6: The picker scrolls — .files-list is the scroll container and rows below the
+//      fold are reachable. Regression guard for WAL-124: step 6 deleted the
+//      .files-sidebar wrapper that carried overflow-y, so the list grew past the
+//      panel with no scroller and Kelly could not pick files off the bottom.
 //
 // Mutation proof (MUTATION=1):
 //   Re-add the in-page DocViewer to FilesPage → FP2 fails.
@@ -413,6 +417,76 @@ try {
       }
 
       await page.screenshot({ path: join(SHOTS_DIR, `FP5-after-link-click-${VP.label}.png`) });
+
+      // ── FP6 — the picker scrolls (WAL-124) ──────────────────────────────
+      // Seeded rather than corpus-dependent: the workspace root has ~17 entries,
+      // which does not overflow, so a corpus-driven assertion would pass against
+      // the broken build. Cloning rows proves the mechanism deterministically —
+      // same reasoning as TB2's seeded ids.
+      {
+        await page.goto(`${BASE}/#/files`, { waitUntil: "load" });
+        await page.waitForFunction(() => document.querySelectorAll(".files-item").length > 0, { timeout: 20000 });
+
+        const geo = await page.evaluate(() => {
+          const list = document.querySelector(".files-list");
+          const proto = document.querySelector(".files-item");
+          for (let i = 0; i < 60; i++) {
+            const clone = proto.cloneNode(true);
+            clone.dataset.seeded = String(i);
+            list.appendChild(clone);
+          }
+          const panel = document.querySelector("#files-panel").getBoundingClientRect();
+          const items = [...document.querySelectorAll(".files-item")];
+          const last = items[items.length - 1].getBoundingClientRect();
+          return {
+            overflowY: getComputedStyle(list).overflowY,
+            scrollH: list.scrollHeight,
+            clientH: list.clientHeight,
+            listBottom: Math.round(list.getBoundingClientRect().bottom),
+            panelBottom: Math.round(panel.bottom),
+            lastRowBelowFold: last.bottom > panel.bottom + 1,
+          };
+        });
+
+        if (geo.overflowY === "auto" || geo.overflowY === "scroll") {
+          pass(`FP6 .files-list is the scroll container (overflow-y: ${geo.overflowY}) [${VP.label}]`);
+        } else {
+          fail(`FP6 .files-list is the scroll container [${VP.label}]`, `overflow-y: ${geo.overflowY}`);
+        }
+
+        // The bug's signature: the list grows past its panel instead of shrinking
+        // to fit, so overflow-y never engages however it is declared.
+        if (geo.listBottom <= geo.panelBottom + 1) {
+          pass(`FP6 list is bounded by the panel (${geo.listBottom} <= ${geo.panelBottom}) [${VP.label}]`);
+        } else {
+          fail(`FP6 list is bounded by the panel [${VP.label}]`, `list bottom ${geo.listBottom} overflows panel bottom ${geo.panelBottom}`);
+        }
+
+        if (geo.scrollH > geo.clientH) {
+          pass(`FP6 scroll engages with overflowing content (${geo.scrollH} > ${geo.clientH}) [${VP.label}]`);
+        } else {
+          fail(`FP6 scroll engages with overflowing content [${VP.label}]`, `scrollHeight ${geo.scrollH} vs clientHeight ${geo.clientH} — seeded rows did not overflow`);
+        }
+
+        const reach = await page.evaluate(() => {
+          const list = document.querySelector(".files-list");
+          list.scrollTop = list.scrollHeight;
+          const items = [...document.querySelectorAll(".files-item")];
+          const last = items[items.length - 1].getBoundingClientRect();
+          const panel = document.querySelector("#files-panel").getBoundingClientRect();
+          return { scrolledBy: Math.round(list.scrollTop), reachable: last.bottom <= panel.bottom + 2 };
+        });
+
+        if (geo.lastRowBelowFold && reach.scrolledBy > 0 && reach.reachable) {
+          pass(`FP6 bottom row unreachable before scroll, reachable after (scrolled ${reach.scrolledBy}px) [${VP.label}]`);
+        } else {
+          fail(`FP6 bottom row reachable by scrolling [${VP.label}]`,
+               `belowFoldBefore=${geo.lastRowBelowFold} scrolledBy=${reach.scrolledBy} reachableAfter=${reach.reachable}`);
+        }
+
+        await page.screenshot({ path: join(SHOTS_DIR, `FP6-scrolled-to-bottom-${VP.label}.png`) });
+      }
+
       await ctx.close();
     }
   }

@@ -4729,6 +4729,16 @@ export const pageStyles = String.raw`    :root {
     }
     .files-list {
       padding: 4px;
+      /* Step 6 (WAL-115) deleted the .files-sidebar wrapper that carried
+         overflow-y: auto, so the list grew past the panel with no scroller and
+         rows below the fold became unreachable. The list is now the scroll
+         container itself: flex:1 + min-height:0 so it can shrink inside the
+         .files-panel flex column, which is what makes overflow-y effective. */
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #3a5a80 transparent;
     }
     .files-item {
       display: flex;
