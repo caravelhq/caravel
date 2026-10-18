@@ -13788,6 +13788,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     syncWorkspaceUrl(false);
   }
   function toggleSplit() {
+    if (typeof window !== "undefined" && window.innerWidth < 1200) return;
     if (splitOn.value) {
       splitOn.value = false;
       splitIndex.value = null;
@@ -14307,7 +14308,7 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
 const _hoisted_1$u = ["data-size"];
-const _hoisted_2$m = {
+const _hoisted_2$n = {
   key: 0,
   class: "base-modal-head"
 };
@@ -14409,7 +14410,7 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$m, [
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$n, [
               createBaseVNode("span", _hoisted_3$l, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
@@ -14442,7 +14443,7 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$t = { class: "setting-item" };
-const _hoisted_2$l = { class: "setting-main" };
+const _hoisted_2$m = { class: "setting-main" };
 const _hoisted_3$k = { class: "settings-label" };
 const _hoisted_4$f = {
   key: 0,
@@ -14457,7 +14458,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
   setup(__props) {
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$t, [
-        createBaseVNode("div", _hoisted_2$l, [
+        createBaseVNode("div", _hoisted_2$m, [
           createBaseVNode("div", _hoisted_3$k, toDisplayString(__props.label), 1),
           __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$f, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
@@ -14468,7 +14469,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$s = { class: "settings-stack" };
-const _hoisted_2$k = { class: "setting-actions" };
+const _hoisted_2$l = { class: "setting-actions" };
 const _hoisted_3$j = ["disabled"];
 const _hoisted_4$e = {
   id: "build-id",
@@ -14637,7 +14638,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$k, [
+                  createBaseVNode("div", _hoisted_2$l, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -14799,7 +14800,7 @@ const _hoisted_1$r = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$j = ["disabled"];
+const _hoisted_2$k = ["disabled"];
 const _hoisted_3$i = {
   class: "hb-field",
   for: "hb-prompt-input"
@@ -14902,7 +14903,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$j), [
+              }, null, 8, _hoisted_2$k), [
                 [
                   vModelText,
                   interval.value,
@@ -14950,7 +14951,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$q = { class: "audio-action-card" };
-const _hoisted_2$i = {
+const _hoisted_2$j = {
   key: 0,
   class: "audio-player-resume"
 };
@@ -14990,7 +14991,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
         ])]),
         default: withCtx(() => [
           createBaseVNode("div", _hoisted_1$q, [
-            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$i, [
+            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
               createBaseVNode("div", _hoisted_3$h, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
               createBaseVNode("div", _hoisted_4$c, [
                 createBaseVNode("button", {
@@ -15481,7 +15482,7 @@ function useGlobalReadAloud() {
   return { doReadAloud, stopReadAloud: stopPlayback };
 }
 const _hoisted_1$o = ["hidden"];
-const _hoisted_2$h = ["hidden"];
+const _hoisted_2$i = ["hidden"];
 const _hoisted_3$g = ["title", "aria-label", "hidden", "disabled"];
 const _hoisted_4$b = {
   key: 0,
@@ -15542,7 +15543,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
           onClick: openTaskCreator
         }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
-        ])], 8, _hoisted_2$h),
+        ])], 8, _hoisted_2$i),
         createBaseVNode("button", {
           id: "global-read-aloud",
           class: normalizeClass(["global-read-aloud", { "is-playing": unref(ui).raState === "playing" }]),
@@ -15794,7 +15795,7 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
 const _hoisted_1$n = { class: "dock-shell" };
-const _hoisted_2$g = {
+const _hoisted_2$h = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
@@ -15904,7 +15905,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", _hoisted_1$n, [
-        createBaseVNode("aside", _hoisted_2$g, [
+        createBaseVNode("aside", _hoisted_2$h, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
           createBaseVNode("div", _hoisted_3$f, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
@@ -15948,7 +15949,7 @@ const _hoisted_1$m = {
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$f = ["innerHTML"];
+const _hoisted_2$g = ["innerHTML"];
 const _hoisted_3$e = { class: "vm-controls" };
 const _hoisted_4$9 = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
@@ -16290,7 +16291,7 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$f),
+        }, null, 8, _hoisted_2$g),
         createBaseVNode("div", _hoisted_3$e, [
           createBaseVNode("div", _hoisted_4$9, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
@@ -16448,7 +16449,7 @@ const _hoisted_1$l = {
   key: 0,
   class: "vtc-success"
 };
-const _hoisted_2$e = {
+const _hoisted_2$f = {
   key: 1,
   class: "vtc-form"
 };
@@ -16863,7 +16864,7 @@ User's voice request: "${userText}"`;
             createBaseVNode("span", { class: "vtc-success-icon" }, "✓", -1),
             createBaseVNode("div", { class: "vtc-success-label" }, "Task created!", -1),
             createBaseVNode("div", { class: "vtc-success-sub" }, "Closing in a moment…", -1)
-          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$e, [
+          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$f, [
             replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$d, [
               _cache[8] || (_cache[8] = createBaseVNode("span", { class: "vtc-claude-label" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
@@ -17122,7 +17123,7 @@ function refTitle(ref2, tasksList) {
   }
 }
 const _hoisted_1$k = ["aria-expanded"];
-const _hoisted_2$d = ["data-recent-key", "onClick"];
+const _hoisted_2$e = ["data-recent-key", "onClick"];
 const _hoisted_3$c = { class: "om-glyph" };
 const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "OpenMenu",
@@ -17279,7 +17280,7 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
                 }, [
                   createBaseVNode("span", _hoisted_3$c, toDisplayString(unref(refGlyph)(recent)), 1),
                   createTextVNode(" " + toDisplayString(unref(refLabel)(recent)), 1)
-                ], 8, _hoisted_2$d);
+                ], 8, _hoisted_2$e);
               }), 128))
             ], 64)) : createCommentVNode("", true),
             _cache[10] || (_cache[10] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
@@ -17316,7 +17317,7 @@ const _hoisted_1$j = {
   key: 0,
   class: "tos-group-label"
 };
-const _hoisted_2$c = { class: "tos-glyph" };
+const _hoisted_2$d = { class: "tos-glyph" };
 const _hoisted_3$b = ["title"];
 const _hoisted_4$7 = { class: "tos-row-actions" };
 const _hoisted_5$6 = ["title", "onClick"];
@@ -17373,7 +17374,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
               key: unref(refKey)(tab),
               class: normalizeClass(["tos-row", { "tos-row--active": unref(ws).active[0] === unref(refKey)(tab) || unref(ws).active[1] === unref(refKey)(tab) }])
             }, [
-              createBaseVNode("span", _hoisted_2$c, toDisplayString(unref(refGlyph)(tab)), 1),
+              createBaseVNode("span", _hoisted_2$d, toDisplayString(unref(refGlyph)(tab)), 1),
               createBaseVNode("span", {
                 class: "tos-label",
                 title: unref(refTitle)(tab, props.tasksList)
@@ -17442,7 +17443,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
 });
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$m, [["__scopeId", "data-v-00756674"]]);
 const _hoisted_1$i = { class: "tab-strip-outer" };
-const _hoisted_2$b = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_2$c = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_3$a = { class: "ts-tab-glyph" };
 const _hoisted_4$6 = { class: "ts-tab-label" };
 const _hoisted_5$5 = ["onClick"];
@@ -17662,7 +17663,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
                   "aria-label": "Close tab",
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
                 }, "×", 8, _hoisted_5$5)) : createCommentVNode("", true)
-              ], 42, _hoisted_2$b);
+              ], 42, _hoisted_2$c);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
               key: 0,
@@ -17787,7 +17788,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
               })
             }, "Close to the right"),
             createBaseVNode("button", {
-              class: "ts-ctx-item",
+              class: "ts-ctx-item ts-ctx-item--wide-only",
               type: "button",
               onClick: _cache[10] || (_cache[10] = ($event) => {
                 unref(ws).moveToGroup(unref(refKey)(contextMenu.value.tab), unref(ws).tabGroup(unref(ws).tabs.findIndex((t) => unref(refKey)(t) === unref(refKey)(contextMenu.value.tab))) === 0 ? 1 : 0);
@@ -17805,7 +17806,7 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-e9add2d2"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-2a537042"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -17934,7 +17935,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$g = { class: "hero" };
-const _hoisted_2$a = { class: "date" };
+const _hoisted_2$b = { class: "date" };
 const _hoisted_3$9 = { class: "message" };
 const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "DashboardHero",
@@ -18089,7 +18090,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
           ref: clockEl,
           class: "time"
         }, toDisplayString(clockTime.value), 513),
-        createBaseVNode("div", _hoisted_2$a, toDisplayString(clockDate.value), 1),
+        createBaseVNode("div", _hoisted_2$b, toDisplayString(clockDate.value), 1),
         createBaseVNode("div", _hoisted_3$9, toDisplayString(greeting.value), 1),
         createVNode(_sfc_main$k, { "corpus-label": corpusLabel.value }, null, 8, ["corpus-label"]),
         _cache[2] || (_cache[2] = createBaseVNode("a", {
@@ -18107,7 +18108,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$f = ["data-task-id"];
-const _hoisted_2$9 = { class: "db-tier-row-headline" };
+const _hoisted_2$a = { class: "db-tier-row-headline" };
 const _hoisted_3$8 = {
   key: 0,
   class: "db-tier-row-agent"
@@ -18132,14 +18133,14 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
           _cache[2] || (_cache[2] = withKeys(withModifiers(($event) => emit2("open-task", __props.row.id), ["prevent"]), ["space"]))
         ]
       }, [
-        createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
+        createBaseVNode("span", _hoisted_2$a, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
         __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$8, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
       ], 40, _hoisted_1$f);
     };
   }
 });
 const _hoisted_1$e = ["data-tier"];
-const _hoisted_2$8 = { class: "db-tier-title" };
+const _hoisted_2$9 = { class: "db-tier-title" };
 const _hoisted_3$7 = { class: "db-tier-count" };
 const _hoisted_4$5 = {
   key: 0,
@@ -18190,7 +18191,7 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
           class: "db-tier-header",
           onClick: _cache[0] || (_cache[0] = ($event) => unref(dash).toggleSection(__props.sectionKey))
         }, [
-          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.title), 1),
+          createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.title), 1),
           createBaseVNode("span", _hoisted_3$7, [
             createTextVNode(toDisplayString(__props.tier.count) + " ", 1),
             __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$5, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
@@ -18285,7 +18286,7 @@ const _hoisted_1$c = {
   key: 0,
   class: "db-totals"
 };
-const _hoisted_2$7 = { class: "db-totals-done" };
+const _hoisted_2$8 = { class: "db-totals-done" };
 const _hoisted_3$6 = { class: "db-totals-failed" };
 const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "TotalsLine",
@@ -18305,7 +18306,7 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
           createBaseVNode("span", null, toDisplayString(__props.totals.waiting ?? 0) + " waiting", 1),
           _cache[2] || (_cache[2] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_2$7, toDisplayString(__props.totals.done ?? 0) + " done", 1),
+          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.totals.done ?? 0) + " done", 1),
           _cache[3] || (_cache[3] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
           createBaseVNode("span", _hoisted_3$6, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
         ])
@@ -18314,7 +18315,7 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$b = ["data-sched-id"];
-const _hoisted_2$6 = { class: "db-sched-row-main" };
+const _hoisted_2$7 = { class: "db-sched-row-main" };
 const _hoisted_3$5 = { class: "db-sched-row-head" };
 const _hoisted_4$4 = { class: "db-sched-headline" };
 const _hoisted_5$3 = { class: "db-sched-meta" };
@@ -18368,7 +18369,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         class: "db-sched-row",
         "data-sched-id": __props.template.id
       }, [
-        createBaseVNode("div", _hoisted_2$6, [
+        createBaseVNode("div", _hoisted_2$7, [
           createBaseVNode("div", _hoisted_3$5, [
             createBaseVNode("span", _hoisted_4$4, toDisplayString(headline.value), 1),
             _cache[3] || (_cache[3] = createBaseVNode("span", {
@@ -18437,7 +18438,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$a = { class: "db-sched" };
-const _hoisted_2$5 = { class: "db-sched-header" };
+const _hoisted_2$6 = { class: "db-sched-header" };
 const _hoisted_3$4 = {
   key: 0,
   class: "db-sched-empty"
@@ -18518,7 +18519,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("section", _hoisted_1$a, [
-        createBaseVNode("div", _hoisted_2$5, [
+        createBaseVNode("div", _hoisted_2$6, [
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-sched-title" }, "Scheduled tasks", -1)),
           createBaseVNode("button", {
             class: "db-sched-act-btn",
@@ -18543,11 +18544,13 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
   }
 });
 const _hoisted_1$9 = { id: "dashboard-panel" };
+const _hoisted_2$5 = { class: "dashboard-settings-row" };
 const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "DashboardView",
   setup(__props) {
     const attentionStore = useAttentionStore();
     const live = useLiveStore();
+    const ui = useUiStore();
     useResource("attention", {
       topics: ["attention", "tasks"],
       fetch: () => attentionStore.fetch().then(() => attentionStore.tiers)
@@ -18618,11 +18621,20 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
           templates: templates.value,
           loading: schedulesLoading.value,
           onRefresh: onSchedulesRefresh
-        }, null, 8, ["templates", "loading"])
+        }, null, 8, ["templates", "loading"]),
+        createBaseVNode("div", _hoisted_2$5, [
+          createBaseVNode("button", {
+            id: "dashboard-settings-btn",
+            class: "dashboard-settings-btn",
+            type: "button",
+            onClick: _cache[0] || (_cache[0] = ($event) => unref(ui).settingsOpen = true)
+          }, "⚙ Settings")
+        ])
       ]);
     };
   }
 });
+const DashboardView = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-0e1d2c13"]]);
 function z() {
   return { async: false, breaks: false, extensions: null, gfm: true, hooks: null, pedantic: false, renderer: null, silent: false, tokenizer: null, walkTokens: null };
 }
@@ -25982,7 +25994,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   }
 });
 const registry = {
-  dashboard: _sfc_main$c,
+  dashboard: DashboardView,
   envelope: EnvelopeView,
   file: _sfc_main$9,
   legacy: _sfc_main$5
