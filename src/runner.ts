@@ -22,6 +22,7 @@ import {
   rotateIfLarge,
 } from "./journal";
 import { resolveStateDir } from "./paths";
+import type { WorkerUsage } from "./envelope/schema";
 
 const LOGS_DIR = join(resolveStateDir(), "logs");
 // Resolve prompts relative to the Caravel installation, not the project dir
@@ -584,7 +585,12 @@ async function streamClaude(
   // never reach the assistant-text stream (stderr-only messages, error
   // result events after prior output, immediate non-zero exits). Chat
   // callers omit it and behaviour is unchanged.
-  onDiagnostic?: (text: string) => void
+  onDiagnostic?: (text: string) => void,
+  // Called once with the result event's usage fields when a normal (non-error)
+  // result event is seen. Never called on abort, crash, or park paths — absent
+  // means unmeasured, not zero. Typed callback, not a string on onDiagnostic
+  // (that channel is regex-fished and must stay unambiguous).
+  onResult?: (usage: WorkerUsage) => void
 ): Promise<void> {
   await mkdir(LOGS_DIR, { recursive: true });
 
@@ -808,6 +814,26 @@ async function streamClaude(
               onDiagnostic(`[result is_error=${isError} subtype=${subtype}]`);
             }
           }
+          // Surface usage to caller if result is non-error and all fields present.
+          if (onResult && ev.is_error !== true) {
+            const numTurns = typeof ev.num_turns === "number" ? ev.num_turns : null;
+            const rawUsage = ev.usage as Record<string, unknown> | undefined;
+            const costUsd = typeof ev.total_cost_usd === "number" ? ev.total_cost_usd : null;
+            const durationMs = typeof ev.duration_ms === "number" ? ev.duration_ms : null;
+            if (numTurns !== null && rawUsage && costUsd !== null && durationMs !== null) {
+              onResult({
+                turns: numTurns,
+                tokens: {
+                  input: typeof rawUsage.input_tokens === "number" ? rawUsage.input_tokens : 0,
+                  output: typeof rawUsage.output_tokens === "number" ? rawUsage.output_tokens : 0,
+                  cache_read: typeof rawUsage.cache_read_input_tokens === "number" ? rawUsage.cache_read_input_tokens : 0,
+                  cache_creation: typeof rawUsage.cache_creation_input_tokens === "number" ? rawUsage.cache_creation_input_tokens : 0,
+                },
+                cost_usd: costUsd,
+                duration_ms: durationMs,
+              });
+            }
+          }
           maybeUnblock();
         }
       } catch {}
@@ -889,12 +915,13 @@ export async function streamUserMessage(
   abortSignal?: AbortSignal,
   threadId?: string,
   agentId?: string,
-  onDiagnostic?: (text: string) => void
+  onDiagnostic?: (text: string) => void,
+  onResult?: (usage: WorkerUsage) => void
 ): Promise<void> {
   // Per-thread queue when threadId is set (web chats run in parallel, matches
   // Discord). Falls back to the global queue for heartbeat/CLI calls.
   return enqueue(
-    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId, agentId, onDiagnostic),
+    () => streamClaude(name, prefixUserMessageWithClock(prompt), onChunk, onUnblock, abortSignal, threadId, agentId, onDiagnostic, onResult),
     threadId
   );
 }

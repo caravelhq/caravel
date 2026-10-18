@@ -14,6 +14,7 @@
 
 import { mkdirSync, renameSync, writeFileSync } from "fs";
 import { dirname } from "path";
+import type { WorkerUsage } from "./schema";
 
 /** Render one YAML frontmatter line, applying the quote rule. */
 export function yamlLine(key: string, value: string | undefined | null): string {
@@ -42,4 +43,28 @@ export function buildFrontmatter(fields: Record<string, string | undefined | nul
   }
   lines.push("---", "");
   return lines.join("\n");
+}
+
+/**
+ * Stamp a `usage:` block onto an existing envelope YAML string.
+ * Strips any pre-existing `usage:` block then appends the new one.
+ * Called only when a result event was actually seen — callers must not
+ * manufacture a zero-value usage; absent key = unmeasured, zeros = $0 run.
+ */
+export function appendUsageToEnvelopeYaml(yaml: string, usage: WorkerUsage): string {
+  // Strip block-mapping form (multi-line indented children).
+  let next = yaml.replace(/^usage:\s*\n(?:[ \t]+[^\n]*\n?)+/m, "");
+  // Then any single-line scalar form.
+  next = next.replace(/^usage:[^\n]*\n/m, "");
+  const block =
+    `usage:\n` +
+    `  turns: ${usage.turns}\n` +
+    `  tokens:\n` +
+    `    input: ${usage.tokens.input}\n` +
+    `    output: ${usage.tokens.output}\n` +
+    `    cache_read: ${usage.tokens.cache_read}\n` +
+    `    cache_creation: ${usage.tokens.cache_creation}\n` +
+    `  cost_usd: ${usage.cost_usd}\n` +
+    `  duration_ms: ${usage.duration_ms}\n`;
+  return next.trimEnd() + "\n" + block;
 }

@@ -146,6 +146,21 @@ export const VALID_FAILURE_REASONS = [
 
 export type FailureReason = (typeof VALID_FAILURE_REASONS)[number];
 
+// ── Usage recording ───────────────────────────────────────────────────────────
+
+/** Per-task usage stamped on the envelope at terminal transition (F3). */
+export interface WorkerUsage {
+  turns: number;
+  tokens: {
+    input: number;
+    output: number;
+    cache_read: number;
+    cache_creation: number;
+  };
+  cost_usd: number;
+  duration_ms: number;
+}
+
 // ── Required fields ───────────────────────────────────────────────────────────
 
 /** Minimum required top-level frontmatter fields for a valid envelope by status. */
