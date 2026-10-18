@@ -128,8 +128,17 @@ async function renderPath(filePath: string, branch?: string): Promise<void> {
   }
 }
 
-// Hydrate links in rendered markdown so alt-click throws to reading pane (Phase 2 reading pane).
-// Plain click keeps its default behaviour (navigate to Files panel in app context).
+// S5: delegate [data-open-file] clicks so relative links inside a file: tab open
+// a new file: tab rather than navigating the SPA off its hash route.
+function onDocClick(ev: MouseEvent): void {
+  const openFileEl = (ev.target as HTMLElement).closest<HTMLElement>("[data-open-file]");
+  if (!openFileEl) return;
+  ev.preventDefault();
+  const path = openFileEl.getAttribute("data-open-file") ?? "";
+  if (path) ws.open({ kind: "file", path }, { preview: true });
+}
+
+// Hydrate links in rendered markdown so they carry data-open-file for delegation.
 function hydrateLinks(container: HTMLElement): void {
   container.querySelectorAll<HTMLAnchorElement>("a[href]").forEach((a) => {
     const href = a.getAttribute("href") || "";
@@ -144,10 +153,8 @@ function updateRaText(text: string | null, filePath: string | null): void {
   const focused = ws.focusedActiveRef;
   if (!focused) return;
   const isFocusedFile = focused.kind === "file" && focused.path === props.path;
-  const isFocusedReport = focused.kind === "report" && props.kind === "report";
-  const isFocusedLegacyFiles = focused.kind === "legacy" && focused.page === "files";
   const isFocusedLegacyTasks = focused.kind === "legacy" && focused.page === "tasks";
-  if (isFocusedFile || isFocusedReport || isFocusedLegacyFiles || isFocusedLegacyTasks) {
+  if (isFocusedFile || isFocusedLegacyTasks) {
     ui.raText = text;
     ui.raFilePath = isFocusedFile && filePath ? filePath : null;
   }
@@ -361,7 +368,7 @@ function renderImageInto(filesContent: HTMLElement, filePath: string, branch?: s
 </script>
 
 <template>
-  <div ref="content" class="files-content">
+  <div ref="content" class="files-content" @click="onDocClick">
     <div class="files-empty">Select a file to view</div>
   </div>
 </template>

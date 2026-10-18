@@ -1,104 +1,23 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import DocViewer from "../components/doc/DocViewer.vue";
+import { onMounted } from "vue";
 import { escHtml, fmtSize, fileIcon } from "../lib/highlight";
-import { useUiStore } from "../stores/ui";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useFilesStore } from "../stores/files";
-import { syncWorkspaceUrl } from "../router";
 
 const filesStore = useFilesStore();
 
-// Reactive state passed to DocViewer
-const activeFilePath = ref(filesStore.currentPath);
-const activeBranch = ref(filesStore.selectedBranch);
-
 // DOM refs (via getElementById — thin port keeps imperative style)
 let filesList: HTMLElement | null = null;
-let filesContent: HTMLElement | null = null;
 let filesBreadcrumb: HTMLElement | null = null;
 let filesBranchSelect: HTMLSelectElement | null = null;
-let filesNavBack: HTMLButtonElement | null = null;
-let filesNavForward: HTMLButtonElement | null = null;
-let filesPickerToggle: HTMLButtonElement | null = null;
-let filesPickerToggleLabel: HTMLElement | null = null;
-let filesSidebar: HTMLElement | null = null;
 
 let filesCurrentDir = filesStore.currentDir;
 let filesActiveRepoRoot = ".";
 let filesHeadBranch = "";
 let filesSelectedBranch = filesStore.selectedBranch;
 let filesHasRepo = false;
-let filesHistory: Array<{ dir: string; file: string }> = [];
-let filesHistoryIdx = -1;
-let filesSkipHistoryPush = false;
 
-const ui = useUiStore();
 const ws = useWorkspaceStore();
-const router = useRouter();
-const filesBackTaskId = ref<string>("");
-
-function isPanelNarrow(panelId: string, threshold: number): boolean {
-  const el = document.getElementById(panelId);
-  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
-  return typeof window.matchMedia === "function" &&
-    window.matchMedia("(max-width: " + threshold + "px)").matches;
-}
-
-function isMobileFiles(): boolean {
-  return isPanelNarrow("files-panel", 1199);
-}
-
-function setPickerCollapsed(collapsed: boolean): void {
-  if (!filesSidebar || !filesPickerToggle) return;
-  filesSidebar.classList.toggle("files-sidebar-collapsed", collapsed);
-  filesPickerToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-}
-
-function updatePickerToggleLabel(): void {
-  if (!filesPickerToggleLabel) return;
-  if (activeFilePath.value) {
-    const parts = activeFilePath.value.split("/");
-    filesPickerToggleLabel.textContent = parts[parts.length - 1] || "Browse files";
-  } else if (filesCurrentDir && filesCurrentDir !== ".") {
-    const dParts = filesCurrentDir.split("/");
-    filesPickerToggleLabel.textContent = "Browse: " + (dParts[dParts.length - 1] || filesCurrentDir);
-  } else {
-    filesPickerToggleLabel.textContent = "Browse files";
-  }
-}
-
-function pushHistory(dir: string, file: string): void {
-  if (filesSkipHistoryPush) return;
-  const last = filesHistory[filesHistoryIdx];
-  if (last && last.dir === dir && last.file === file) return;
-  filesHistory = filesHistory.slice(0, filesHistoryIdx + 1);
-  filesHistory.push({ dir, file });
-  filesHistoryIdx = filesHistory.length - 1;
-  updateNavButtons();
-}
-
-function updateNavButtons(): void {
-  if (filesNavBack) filesNavBack.disabled = filesHistoryIdx <= 0;
-  if (filesNavForward)
-    filesNavForward.disabled = filesHistoryIdx < 0 || filesHistoryIdx >= filesHistory.length - 1;
-}
-
-async function goToHistory(delta: number): Promise<void> {
-  const next = filesHistoryIdx + delta;
-  if (next < 0 || next >= filesHistory.length) return;
-  filesHistoryIdx = next;
-  const entry = filesHistory[next];
-  filesSkipHistoryPush = true;
-  try {
-    await loadDirectory(entry.dir);
-    if (entry.file) openFile(entry.file);
-  } finally {
-    filesSkipHistoryPush = false;
-  }
-  updateNavButtons();
-}
 
 function renderBreadcrumb(dirPath: string): void {
   if (!filesBreadcrumb) return;
@@ -180,12 +99,8 @@ async function refreshBranchSelector(): Promise<void> {
 async function loadDirectory(dirPath: string): Promise<void> {
   filesCurrentDir = dirPath || ".";
   filesStore.currentDir = filesCurrentDir;
-  activeFilePath.value = "";
   filesStore.currentPath = "";
-  pushHistory(filesCurrentDir, "");
   renderBreadcrumb(filesCurrentDir);
-  updatePickerToggleLabel();
-  setPickerCollapsed(false);
 
   if (!filesList) return;
   filesList.innerHTML = '<div class="files-loading">Loading...</div>';
@@ -239,13 +154,13 @@ async function loadDirectory(dirPath: string): Promise<void> {
         item.appendChild(size);
       }
 
-      // ⇥ throw button — opens file in reading pane (touch-safe alternative to drag).
+      // ⇥ throw button — opens file in the other group.
       if (entry.type === "file") {
         const throwBtn = document.createElement("button");
         throwBtn.type = "button";
         throwBtn.className = "files-throw-btn";
         throwBtn.textContent = "⇥";
-        throwBtn.title = "Open in reading pane";
+        throwBtn.title = "Open in other group";
         throwBtn.addEventListener("click", (ev) => {
           ev.stopPropagation();
           ws.open({ kind: "file", path: entry.path }, { side: true });
@@ -267,7 +182,7 @@ async function loadDirectory(dirPath: string): Promise<void> {
         if (entry.type === "directory") {
           loadDirectory(entry.path);
         } else {
-          openFile(entry.path);
+          ws.open({ kind: "file", path: entry.path }, { preview: true });
         }
       });
 
@@ -283,76 +198,27 @@ async function loadDirectory(dirPath: string): Promise<void> {
   }
 }
 
-function openFile(filePath: string): void {
-  activeFilePath.value = filePath;
-  activeBranch.value = filesSelectedBranch;
-  filesStore.currentPath = filePath;
-  filesStore.selectedBranch = filesSelectedBranch;
-  pushHistory(filesCurrentDir, filePath);
-  syncWorkspaceUrl(false);
-  updatePickerToggleLabel();
-  if (isMobileFiles()) setPickerCollapsed(true);
-
-  // Highlight active file in sidebar
-  if (filesList) {
-    filesList.querySelectorAll<HTMLElement>(".files-item").forEach((el) => {
-      el.classList.toggle("files-item-active", el.dataset.path === filePath);
-    });
-  }
-}
-
 onMounted(() => {
   filesList = document.getElementById("files-list");
   filesBreadcrumb = document.getElementById("files-breadcrumb");
   filesBranchSelect = document.getElementById("files-branch-select") as HTMLSelectElement | null;
-  filesNavBack = document.getElementById("files-nav-back") as HTMLButtonElement | null;
-  filesNavForward = document.getElementById("files-nav-forward") as HTMLButtonElement | null;
-  filesPickerToggle = document.getElementById("files-picker-toggle") as HTMLButtonElement | null;
-  filesPickerToggleLabel = document.getElementById("files-picker-toggle-label");
-  filesSidebar = document.getElementById("files-sidebar");
-
-  if (filesNavBack) filesNavBack.addEventListener("click", () => goToHistory(-1));
-  if (filesNavForward) filesNavForward.addEventListener("click", () => goToHistory(1));
 
   if (filesBranchSelect) {
     filesBranchSelect.addEventListener("change", () => {
       filesSelectedBranch = filesBranchSelect!.value || "";
-      activeBranch.value = filesSelectedBranch;
       loadDirectory(filesCurrentDir);
-    });
-  }
-
-  if (filesPickerToggle) {
-    filesPickerToggle.addEventListener("click", () => {
-      if (!filesSidebar) return;
-      const collapsed = filesSidebar.classList.contains("files-sidebar-collapsed");
-      setPickerCollapsed(!collapsed);
     });
   }
 
   if (!filesStore.loaded) {
     filesStore.loaded = true;
-    // Consume a cross-page navigation request set by TasksPage (router push to /files).
-    const nav = ui.filesNav;
-    if (nav?.backTaskId) filesBackTaskId.value = nav.backTaskId;
-    ui.filesNav = null;
-    if (nav) {
-      refreshBranchSelector().then(() => {
-        if (nav.kind === "dir") {
-          loadDirectory(nav.path);
-        } else {
-          // Load the containing directory first so the sidebar highlights correctly.
-          const dir = nav.path.includes("/") ? nav.path.split("/").slice(0, -1).join("/") || "." : ".";
-          loadDirectory(dir).then(() => openFile(nav.path));
-        }
-      });
-    } else if (filesStore.currentPath) {
-      // Restore persisted file from previous session.
+    if (filesStore.currentPath) {
+      // Cold URL had /files/<path> — open the file as a tab and navigate the picker to its directory.
+      ws.open({ kind: "file", path: filesStore.currentPath });
       const dir = filesStore.currentPath.includes("/")
         ? filesStore.currentPath.split("/").slice(0, -1).join("/") || "."
         : ".";
-      const restorePath = filesStore.currentPath;
-      refreshBranchSelector().then(() => loadDirectory(dir).then(() => openFile(restorePath)));
+      refreshBranchSelector().then(() => loadDirectory(dir));
     } else if (filesStore.currentDir !== ".") {
       refreshBranchSelector().then(() => loadDirectory(filesStore.currentDir));
     } else {
@@ -361,29 +227,10 @@ onMounted(() => {
   } else {
     // Remount after tab switch — DOM is fresh, re-render from persisted store state.
     const restoreDir = filesStore.currentDir;
-    const restorePath = filesStore.currentPath;
     filesCurrentDir = restoreDir;
-    filesSkipHistoryPush = true;
-    refreshBranchSelector().then(async () => {
-      try {
-        await loadDirectory(restoreDir);
-        if (restorePath) openFile(restorePath);
-      } finally {
-        filesSkipHistoryPush = false;
-      }
-      // Seed history at the restored position so back/forward works from here.
-      filesHistory = [{ dir: restoreDir, file: restorePath }];
-      filesHistoryIdx = 0;
-      updateNavButtons();
-    });
+    refreshBranchSelector().then(() => loadDirectory(restoreDir));
   }
 });
-
-
-function goBackToTask(): void {
-  filesBackTaskId.value = "";
-  router.push("/tasks");
-}
 </script>
 
 <template>
@@ -391,27 +238,13 @@ function goBackToTask(): void {
     <div class="files-toolbar">
       <div class="files-toolbar-row files-toolbar-row-branch">
         <select id="files-branch-select" class="files-branch-select" title="Branch" hidden></select>
-        <div class="files-nav-group">
-          <button id="files-nav-back" class="files-nav-btn" type="button" title="Back" aria-label="Back" :disabled="true">←</button>
-          <button id="files-nav-forward" class="files-nav-btn" type="button" title="Forward" aria-label="Forward" :disabled="true">→</button>
-          <button v-if="filesBackTaskId" id="files-back-to-task" class="files-nav-btn files-back-to-task" type="button" :title="'Back to ' + filesBackTaskId" @click="goBackToTask">← Task</button>
-        </div>
       </div>
       <div class="files-toolbar-row files-toolbar-row-crumb">
         <div class="files-breadcrumb" id="files-breadcrumb"></div>
       </div>
     </div>
-    <button id="files-picker-toggle" class="files-picker-toggle" type="button" aria-expanded="true" hidden>
-      <span class="files-picker-toggle-label" id="files-picker-toggle-label">Browse files</span>
-      <span class="files-picker-toggle-caret" aria-hidden="true">▾</span>
-    </button>
-    <div class="files-split">
-      <div class="files-sidebar" id="files-sidebar">
-        <div class="files-list" id="files-list">
-          <div class="files-loading">Loading...</div>
-        </div>
-      </div>
-      <DocViewer :path="activeFilePath" :branch="activeBranch || undefined" kind="file" />
+    <div class="files-list" id="files-list">
+      <div class="files-loading">Loading...</div>
     </div>
   </div>
 </template>

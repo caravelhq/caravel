@@ -25,3 +25,4 @@ summary:
   brief: "Configuration looks good."
   response: "No issues found."
 report: ""
+reportPath: "agents/agent-beta/tasks/done/TSK-FX-0006.md"

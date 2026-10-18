@@ -127,8 +127,19 @@ function serveDist(pathname: string): Response | null {
   return new Response(Bun.file(filePath), { headers: { "Content-Type": type, "X-Caravel-Harness": "test-server" } });
 }
 
+function readManifest(): { js: string; css: string } {
+  try {
+    const raw = readFileSync(join(APP_DIST, "build-manifest.json"), "utf-8");
+    const m = JSON.parse(raw) as { js?: string; css?: string };
+    return { js: m.js ?? "app.js", css: m.css ?? "app.css" };
+  } catch {
+    return { js: "app.js", css: "app.css" };
+  }
+}
+
 function page(): Response {
-  return new Response(htmlPage(), {
+  const { js, css } = readManifest();
+  return new Response(htmlPage(js, css), {
     headers: { "Content-Type": "text/html; charset=utf-8", "X-Caravel-Harness": "test-server" },
   });
 }

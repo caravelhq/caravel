@@ -78,6 +78,7 @@ import { statusClass, isPanelNarrow } from "./tasks/helpers";
 import { useRouter } from "vue-router";
 import { useUiStore } from "../stores/ui";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useFilesStore } from "../stores/files";
 import { useNewTaskStore } from "../stores/newTask";
 import { syncWorkspaceUrl } from "../router";
 
@@ -86,6 +87,7 @@ const attentionStore = useAttentionStore();
 const live = useLiveStore();
 const ui = useUiStore();
 const ws = useWorkspaceStore();
+const filesStore = useFilesStore();
 const nt = useNewTaskStore();
 
 // ── DOM refs ──────────────────────────────────────────────────────────────
@@ -637,13 +639,11 @@ function onPanelBodyClick(ev: MouseEvent): void {
     ev.preventDefault();
     const filePath = openFileBtn.getAttribute("data-open-file");
     if (!filePath) return;
-    // Alt-click → open as side tab. Plain click → Files panel.
+    // Alt-click → side tab. Plain click → file tab.
     if ((ev as MouseEvent).altKey) {
-      const taskId = filePath.split("/").pop()?.replace(/\.md$/, "") ?? filePath;
-      ws.open({ kind: "report", taskId, path: filePath }, { side: true });
+      ws.open({ kind: "file", path: filePath }, { side: true });
     } else {
-      ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || undefined };
-      router.push("/files");
+      ws.open({ kind: "file", path: filePath }, { preview: true });
     }
     return;
   }
@@ -652,8 +652,8 @@ function onPanelBodyClick(ev: MouseEvent): void {
   if (openFolderBtn) {
     ev.preventDefault();
     const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
-    ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || undefined };
-    router.push("/files");
+    filesStore.currentDir = folderPath;
+    ws.open({ kind: "legacy", page: "files" });
     return;
   }
 
@@ -745,10 +745,7 @@ function onProjectPaneClick(ev: MouseEvent): void {
   if (docBtn) {
     ev.preventDefault();
     const path = docBtn.getAttribute("data-open-file");
-    if (path) {
-      ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || undefined };
-      router.push("/files");
-    }
+    if (path) ws.open({ kind: "file", path }, { preview: true });
     return;
   }
 

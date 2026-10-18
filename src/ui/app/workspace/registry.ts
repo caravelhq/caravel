@@ -1,17 +1,17 @@
 // Component registry: maps ResourceRef.kind → view component.
-// Phases 4–6 will add envelope, project, chat entries.
+// report: retired as a tab kind in Phase 3.2 step 5; kept in refs.ts for URL parsing only.
 
 import type { Component } from "vue";
 import DashboardView from "../views/DashboardView.vue";
+import EnvelopeView from "../views/EnvelopeView.vue";
 import FileView from "../views/FileView.vue";
-import ReportView from "../views/ReportView.vue";
 import LegacyPageView from "../views/LegacyPageView.vue";
 import type { ResourceRef } from "./refs";
 
 const registry: Partial<Record<ResourceRef["kind"], Component>> = {
   dashboard: DashboardView,
+  envelope: EnvelopeView,
   file: FileView,
-  report: ReportView,
   legacy: LegacyPageView,
 };
 

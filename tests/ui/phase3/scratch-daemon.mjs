@@ -16,6 +16,13 @@
 //
 // Stop is always by PID — never pkill, never killall.
 // See .claude/rules/daemon-restart.md.
+//
+// IMPORTANT: every gate or spec run that calls `start` must call `stop` on the
+// same port before exiting. Omitting the stop leaves a bun process running that
+// (a) holds the port until reboot, and (b) is indistinguishable from the live
+// daemon to the guard-daemon-kill hook — preventing any future exact-PID kill.
+// PIDs 1358995 (:4638) and 1361742 (:4639) were orphaned this way on 2026-10-05
+// and ran for 11 days before being cleaned up on 2026-10-16.
 
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "fs";
 import { resolve, join } from "path";

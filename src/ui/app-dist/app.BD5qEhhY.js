@@ -10977,7 +10977,7 @@ const vue = /* @__PURE__ */ Object.freeze(/* @__PURE__ */ Object.defineProperty(
  * @license MIT
  */
 let activePinia;
-const setActivePinia = (pinia) => activePinia = pinia;
+const setActivePinia = (pinia2) => activePinia = pinia2;
 const piniaSymbol = (
   /* istanbul ignore next */
   Symbol()
@@ -10996,12 +10996,12 @@ function createPinia() {
   const state = scope.run(() => /* @__PURE__ */ ref({}));
   let _p = [];
   let toBeInstalled = [];
-  const pinia = markRaw({
+  const pinia2 = markRaw({
     install(app) {
-      setActivePinia(pinia);
-      pinia._a = app;
-      app.provide(piniaSymbol, pinia);
-      app.config.globalProperties.$pinia = pinia;
+      setActivePinia(pinia2);
+      pinia2._a = app;
+      app.provide(piniaSymbol, pinia2);
+      app.config.globalProperties.$pinia = pinia2;
       toBeInstalled.forEach((plugin) => _p.push(plugin));
       toBeInstalled = [];
     },
@@ -11021,7 +11021,7 @@ function createPinia() {
     _s: /* @__PURE__ */ new Map(),
     state
   });
-  return pinia;
+  return pinia2;
 }
 const noop$1 = () => {
 };
@@ -11074,28 +11074,28 @@ const { assign: assign$1 } = Object;
 function isComputed(o) {
   return !!(/* @__PURE__ */ isRef(o) && o.effect);
 }
-function createOptionsStore(id, options, pinia, hot) {
+function createOptionsStore(id, options, pinia2, hot) {
   const { state, actions, getters } = options;
-  const initialState = pinia.state.value[id];
+  const initialState = pinia2.state.value[id];
   let store;
   function setup() {
     if (!initialState && true) {
-      pinia.state.value[id] = state ? state() : {};
+      pinia2.state.value[id] = state ? state() : {};
     }
-    const localState = /* @__PURE__ */ toRefs(pinia.state.value[id]);
+    const localState = /* @__PURE__ */ toRefs(pinia2.state.value[id]);
     return assign$1(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
       computedGetters[name] = markRaw(computed(() => {
-        setActivePinia(pinia);
-        const store2 = pinia._s.get(id);
+        setActivePinia(pinia2);
+        const store2 = pinia2._s.get(id);
         return getters[name].call(store2, store2);
       }));
       return computedGetters;
     }, {}));
   }
-  store = createSetupStore(id, setup, options, pinia, hot, true);
+  store = createSetupStore(id, setup, options, pinia2, hot, true);
   return store;
 }
-function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) {
+function createSetupStore($id, setup, options = {}, pinia2, hot, isOptionsStore) {
   let scope;
   const optionsForPlugin = assign$1({ actions: {} }, options);
   const $subscribeOptions = { deep: true };
@@ -11104,23 +11104,23 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
   let subscriptions = /* @__PURE__ */ new Set();
   let actionSubscriptions = /* @__PURE__ */ new Set();
   let debuggerEvents;
-  const initialState = pinia.state.value[$id];
+  const initialState = pinia2.state.value[$id];
   if (!isOptionsStore && !initialState && true) {
-    pinia.state.value[$id] = {};
+    pinia2.state.value[$id] = {};
   }
   let activeListener;
   function $patch(partialStateOrMutator) {
     let subscriptionMutation;
     isListening = isSyncListening = false;
     if (typeof partialStateOrMutator === "function") {
-      partialStateOrMutator(pinia.state.value[$id]);
+      partialStateOrMutator(pinia2.state.value[$id]);
       subscriptionMutation = {
         type: MutationType.patchFunction,
         storeId: $id,
         events: debuggerEvents
       };
     } else {
-      mergeReactiveObjects(pinia.state.value[$id], partialStateOrMutator);
+      mergeReactiveObjects(pinia2.state.value[$id], partialStateOrMutator);
       subscriptionMutation = {
         type: MutationType.patchObject,
         payload: partialStateOrMutator,
@@ -11135,7 +11135,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
       }
     });
     isSyncListening = true;
-    triggerSubscriptions(subscriptions, subscriptionMutation, pinia.state.value[$id]);
+    triggerSubscriptions(subscriptions, subscriptionMutation, pinia2.state.value[$id]);
   }
   const $reset = isOptionsStore ? function $reset2() {
     const { state } = options;
@@ -11151,7 +11151,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     scope.stop();
     subscriptions.clear();
     actionSubscriptions.clear();
-    pinia._s.delete($id);
+    pinia2._s.delete($id);
   }
   const action = (fn, name = "") => {
     if (ACTION_MARKER in fn) {
@@ -11159,7 +11159,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
       return fn;
     }
     const wrappedAction = function() {
-      setActivePinia(pinia);
+      setActivePinia(pinia2);
       const args = Array.from(arguments);
       const afterCallbackSet = /* @__PURE__ */ new Set();
       const onErrorCallbackSet = /* @__PURE__ */ new Set();
@@ -11200,7 +11200,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     return wrappedAction;
   };
   const partialStore = {
-    _p: pinia,
+    _p: pinia2,
     // _s: scope,
     $id,
     $onAction: addSubscription.bind(null, actionSubscriptions),
@@ -11208,7 +11208,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     $reset,
     $subscribe(callback, options2 = {}) {
       const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
-      const stopWatcher = scope.run(() => watch(() => pinia.state.value[$id], (state) => {
+      const stopWatcher = scope.run(() => watch(() => pinia2.state.value[$id], (state) => {
         if (options2.flush === "sync" ? isSyncListening : isListening) {
           callback({
             storeId: $id,
@@ -11222,9 +11222,9 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
     $dispose
   };
   const store = /* @__PURE__ */ reactive(partialStore);
-  pinia._s.set($id, store);
-  const runWithContext = pinia._a && pinia._a.runWithContext || fallbackRunWithContext;
-  const setupStore = runWithContext(() => pinia._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
+  pinia2._s.set($id, store);
+  const runWithContext = pinia2._a && pinia2._a.runWithContext || fallbackRunWithContext;
+  const setupStore = runWithContext(() => pinia2._e.run(() => (scope = effectScope()).run(() => setup({ action }))));
   for (const key in setupStore) {
     const prop = setupStore[key];
     if (/* @__PURE__ */ isRef(prop) && !isComputed(prop) || /* @__PURE__ */ isReactive(prop)) {
@@ -11236,7 +11236,7 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
             mergeReactiveObjects(prop, initialState[key]);
           }
         }
-        pinia.state.value[$id][key] = prop;
+        pinia2.state.value[$id][key] = prop;
       }
     } else if (typeof prop === "function") {
       const actionValue = action(prop, key);
@@ -11247,19 +11247,19 @@ function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) 
   assign$1(store, setupStore);
   assign$1(/* @__PURE__ */ toRaw(store), setupStore);
   Object.defineProperty(store, "$state", {
-    get: () => pinia.state.value[$id],
+    get: () => pinia2.state.value[$id],
     set: (state) => {
       $patch(($state) => {
         assign$1($state, state);
       });
     }
   });
-  pinia._p.forEach((extender) => {
+  pinia2._p.forEach((extender) => {
     {
       assign$1(store, scope.run(() => extender({
         store,
-        app: pinia._a,
-        pinia,
+        app: pinia2._a,
+        pinia: pinia2,
         options: optionsForPlugin
       })));
     }
@@ -11277,22 +11277,22 @@ function defineStore(id, setup, setupOptions) {
   let options;
   const isSetupStore = typeof setup === "function";
   options = isSetupStore ? setupOptions : setup;
-  function useStore(pinia, hot) {
+  function useStore(pinia2, hot) {
     const hasContext = hasInjectionContext();
-    pinia = // in test mode, ignore the argument provided as we can always retrieve a
+    pinia2 = // in test mode, ignore the argument provided as we can always retrieve a
     // pinia instance with getActivePinia()
-    pinia || (hasContext ? inject(piniaSymbol, null) : null);
-    if (pinia)
-      setActivePinia(pinia);
-    pinia = activePinia;
-    if (!pinia._s.has(id)) {
+    pinia2 || (hasContext ? inject(piniaSymbol, null) : null);
+    if (pinia2)
+      setActivePinia(pinia2);
+    pinia2 = activePinia;
+    if (!pinia2._s.has(id)) {
       if (isSetupStore) {
-        createSetupStore(id, setup, options, pinia);
+        createSetupStore(id, setup, options, pinia2);
       } else {
-        createOptionsStore(id, options, pinia);
+        createOptionsStore(id, options, pinia2);
       }
     }
-    const store = pinia._s.get(id);
+    const store = pinia2._s.get(id);
     return store;
   }
   useStore.$id = id;
@@ -13330,10 +13330,8 @@ function migrateFromReading() {
     const openVal = localStorage.getItem("reading.open");
     const wasOpen = openVal === "true";
     const tabs = stack2.map((r) => {
-      var _a2;
       if (r.kind === "file") return { kind: "file", path: r.path, branch: r.branch };
-      const base = ((_a2 = r.path.split("/").pop()) == null ? void 0 : _a2.replace(/\.md$/, "")) ?? r.path;
-      return { kind: "report", taskId: base, path: r.path };
+      return { kind: "file", path: r.path };
     });
     const active1 = wasOpen && tabs.length > 0 ? refKey(tabs[tabs.length - 1]) : null;
     ["open", "side", "width", "stack"].forEach((k) => {
@@ -13345,7 +13343,16 @@ function migrateFromReading() {
     return { tabs: [], active1: null, splitOn: false };
   }
 }
+function migrateReportRefs(refs) {
+  return refs.map((r) => {
+    if (r.kind !== "report") return r;
+    if (r.path) return { kind: "file", path: r.path };
+    return { kind: "envelope", taskId: r.taskId };
+  });
+}
 const DASHBOARD_REF = { kind: "dashboard" };
+const TAB_CAP = 12;
+const RECENTS_MAX = 5;
 const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
   const hasWorkspaceData = localStorage.getItem("workspace.tabs") !== null;
   let initialTabs;
@@ -13377,7 +13384,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       initialActive1 = null;
     }
   } else {
-    initialTabs = load$4("tabs", [DASHBOARD_REF]);
+    initialTabs = migrateReportRefs(load$4("tabs", [DASHBOARD_REF]));
     initialSplitIndex = load$4("splitIndex", null);
     initialSplitOn = load$4("splitOn", false);
     if (initialSplitOn && initialSplitIndex === null) {
@@ -13386,11 +13393,16 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     initialActive0 = load$4("active0", initialTabs.length > 0 ? refKey(initialTabs[0]) : null);
     initialActive1 = load$4("active1", null);
   }
+  let initialFocused = load$4("focused", 0);
+  if (initialFocused === 1) {
+    const g1Initial = initialSplitOn && initialSplitIndex !== null ? initialTabs.slice(initialSplitIndex) : [];
+    if (g1Initial.length === 0) initialFocused = 0;
+  }
   const tabs = /* @__PURE__ */ ref(initialTabs);
   const splitIndex = /* @__PURE__ */ ref(initialSplitIndex);
   const splitOn = /* @__PURE__ */ ref(initialSplitOn);
   const active = /* @__PURE__ */ ref([initialActive0, initialActive1]);
-  const focused = /* @__PURE__ */ ref(0);
+  const focused = /* @__PURE__ */ ref(initialFocused);
   function group0End() {
     return splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
   }
@@ -13408,6 +13420,13 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
   const splitRatio = /* @__PURE__ */ ref(
     Math.min(0.75, Math.max(0.25, load$4("splitRatio", 0.5)))
   );
+  const meta = /* @__PURE__ */ ref(load$4("meta", {}));
+  const recents = /* @__PURE__ */ ref(migrateReportRefs(load$4("recents", [])));
+  let touchSeq = Object.values(meta.value).reduce(
+    (max, m2) => Math.max(max, m2.touched ?? 0),
+    0
+  );
+  let _capWarnSent = false;
   function persist() {
     save$2("tabs", tabs.value);
     save$2("splitIndex", splitIndex.value);
@@ -13415,6 +13434,9 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     save$2("active0", active.value[0]);
     save$2("active1", active.value[1]);
     save$2("splitRatio", splitRatio.value);
+    save$2("meta", meta.value);
+    save$2("focused", focused.value);
+    save$2("recents", recents.value);
   }
   function fixupActive() {
     const g0 = groupTabs(0);
@@ -13430,24 +13452,112 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       active.value[1] = null;
     }
   }
+  function touchTab(key) {
+    const existing = meta.value[key] ?? { touched: 0 };
+    meta.value[key] = { ...existing, touched: ++touchSeq };
+  }
+  function pushRecent(ref2) {
+    const key = refKey(ref2);
+    const existing = recents.value.findIndex((r) => refKey(r) === key);
+    if (existing !== -1) recents.value.splice(existing, 1);
+    recents.value.unshift(ref2);
+    if (recents.value.length > RECENTS_MAX) recents.value = recents.value.slice(0, RECENTS_MAX);
+  }
+  function maybeEvict() {
+    if (tabs.value.length <= TAB_CAP) {
+      _capWarnSent = false;
+      return;
+    }
+    const activeKeys = new Set(
+      [active.value[0], active.value[1]].filter((k) => k !== null)
+    );
+    const candidates = tabs.value.filter((t) => {
+      var _a2, _b;
+      const k = refKey(t);
+      return !((_a2 = meta.value[k]) == null ? void 0 : _a2.pinned) && !((_b = meta.value[k]) == null ? void 0 : _b.preview) && !activeKeys.has(k);
+    });
+    if (candidates.length === 0) {
+      if (!_capWarnSent) {
+        console.warn("[workspace] tab cap exceeded: all tabs pinned");
+        _capWarnSent = true;
+      }
+      return;
+    }
+    _capWarnSent = false;
+    const victim = candidates.reduce(
+      (a, b2) => {
+        var _a2, _b;
+        return (((_a2 = meta.value[refKey(a)]) == null ? void 0 : _a2.touched) ?? 0) <= (((_b = meta.value[refKey(b2)]) == null ? void 0 : _b.touched) ?? 0) ? a : b2;
+      }
+    );
+    const victimKey = refKey(victim);
+    pushRecent(victim);
+    const victimIdx = keyIndex(victimKey);
+    if (victimIdx !== -1) {
+      tabs.value.splice(victimIdx, 1);
+      if (splitOn.value && splitIndex.value !== null && victimIdx < splitIndex.value) {
+        splitIndex.value--;
+      }
+      if (splitOn.value && splitIndex.value !== null) {
+        if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+          splitOn.value = false;
+          splitIndex.value = null;
+        }
+      }
+    }
+    delete meta.value[victimKey];
+    fixupActive();
+  }
   function open(ref2, opts = {}) {
+    var _a2;
     const key = refKey(ref2);
     const existingIdx = keyIndex(key);
     if (existingIdx !== -1) {
+      if (!opts.preview && ((_a2 = meta.value[key]) == null ? void 0 : _a2.preview)) {
+        const m2 = meta.value[key];
+        const result = { touched: m2.touched };
+        if (m2.pinned) result.pinned = true;
+        meta.value[key] = result;
+      }
       if (!opts.background) {
         const g2 = tabGroup(existingIdx);
         active.value[g2] = key;
         focused.value = g2;
+        touchTab(key);
         persist();
         syncWorkspaceUrl(false);
       }
       return;
     }
     const targetGroup = opts.side ? 1 : focused.value;
+    if (opts.preview) {
+      const groupT = groupTabs(targetGroup);
+      const previewTab = groupT.find((t) => {
+        var _a3;
+        return (_a3 = meta.value[refKey(t)]) == null ? void 0 : _a3.preview;
+      });
+      if (previewTab) {
+        const oldKey = refKey(previewTab);
+        const absIdx = keyIndex(oldKey);
+        delete meta.value[oldKey];
+        meta.value[key] = { preview: true, touched: ++touchSeq };
+        tabs.value.splice(absIdx, 1, ref2);
+        if (!opts.background) {
+          active.value[targetGroup] = key;
+          focused.value = targetGroup;
+          persist();
+          syncWorkspaceUrl(false);
+        }
+        return;
+      }
+    }
     if (opts.side && !(splitOn.value && splitIndex.value !== null)) {
       tabs.value.push(ref2);
       splitIndex.value = tabs.value.length - 1;
       splitOn.value = true;
+      const m2 = { touched: ++touchSeq };
+      if (opts.preview) m2.preview = true;
+      meta.value[key] = m2;
       if (!opts.background) {
         active.value[1] = key;
         focused.value = 1;
@@ -13468,18 +13578,25 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       if (splitOn.value && splitIndex.value !== null && insertIdx <= splitIndex.value) {
         splitIndex.value++;
       }
+      const m2 = { touched: ++touchSeq };
+      if (opts.preview) m2.preview = true;
+      meta.value[key] = m2;
       if (!opts.background) {
         active.value[targetGroup] = key;
         focused.value = targetGroup;
       }
     }
+    maybeEvict();
     persist();
     if (!opts.background) syncWorkspaceUrl(true);
   }
   function close(key) {
     const idx = keyIndex(key);
     if (idx === -1) return;
+    pushRecent(tabs.value[idx]);
     tabs.value.splice(idx, 1);
+    delete meta.value[key];
+    _capWarnSent = false;
     if (splitOn.value && splitIndex.value !== null) {
       if (idx < splitIndex.value) {
         splitIndex.value--;
@@ -13495,20 +13612,148 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       active.value = [null, null];
       focused.value = 0;
       persist();
-      syncWorkspaceUrl(false);
+      syncWorkspaceUrl(true);
       return;
     }
     fixupActive();
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
+  }
+  function pin(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const tabRef = tabs.value[idx];
+    const m2 = meta.value[key] ?? { touched: 0 };
+    meta.value[key] = { touched: m2.touched, pinned: true };
+    tabs.value.splice(idx, 1);
+    if (splitOn.value && splitIndex.value !== null && idx < splitIndex.value) {
+      splitIndex.value--;
+    }
+    const groupStart = g2 === 0 ? 0 : splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
+    tabs.value.splice(groupStart, 0, tabRef);
+    if (splitOn.value && splitIndex.value !== null && groupStart < splitIndex.value) {
+      splitIndex.value++;
+    }
+    persist();
+  }
+  function unpin(key) {
+    const m2 = meta.value[key];
+    if (!m2) return;
+    const result = { touched: m2.touched };
+    if (m2.preview) result.preview = true;
+    meta.value[key] = result;
+    persist();
+  }
+  function closeOthers(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const toClose = groupTabs(g2).filter((t) => {
+      var _a2;
+      return refKey(t) !== key && !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(true);
+  }
+  function closeToRight(key) {
+    const idx = keyIndex(key);
+    if (idx === -1) return;
+    const g2 = tabGroup(idx);
+    const groupT = groupTabs(g2);
+    const posInGroup = idx - (g2 === 0 ? 0 : group0End());
+    const toClose = groupT.slice(posInGroup + 1).filter((t) => {
+      var _a2;
+      return !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(true);
+  }
+  function closeAll() {
+    const toClose = tabs.value.filter((t) => {
+      var _a2;
+      return !((_a2 = meta.value[refKey(t)]) == null ? void 0 : _a2.pinned);
+    }).map((t) => refKey(t));
+    for (const k of toClose) {
+      const tab = tabs.value.find((t) => refKey(t) === k);
+      if (tab) pushRecent(tab);
+      const i = keyIndex(k);
+      if (i !== -1) {
+        tabs.value.splice(i, 1);
+        if (splitOn.value && splitIndex.value !== null && i < splitIndex.value) {
+          splitIndex.value--;
+        }
+      }
+      delete meta.value[k];
+    }
+    if (tabs.value.length === 0) {
+      active.value = [null, null];
+      focused.value = 0;
+      splitOn.value = false;
+      splitIndex.value = null;
+      _capWarnSent = false;
+      persist();
+      syncWorkspaceUrl(true);
+      return;
+    }
+    if (splitOn.value && splitIndex.value !== null) {
+      if (groupTabs(0).length === 0 || groupTabs(1).length === 0) {
+        splitOn.value = false;
+        splitIndex.value = null;
+      }
+    }
+    _capWarnSent = false;
+    fixupActive();
+    persist();
+    syncWorkspaceUrl(true);
   }
   function move(key, toIndex) {
     const fromIdx = keyIndex(key);
     if (fromIdx === -1) return;
-    const ref2 = tabs.value[fromIdx];
+    const tabRef = tabs.value[fromIdx];
     tabs.value.splice(fromIdx, 1);
     const clampedTo = Math.max(0, Math.min(tabs.value.length, toIndex));
-    tabs.value.splice(clampedTo, 0, ref2);
+    tabs.value.splice(clampedTo, 0, tabRef);
     if (splitOn.value && splitIndex.value !== null) {
       let s = splitIndex.value;
       if (fromIdx < s) s--;
@@ -13521,7 +13766,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     const fromIdx = keyIndex(key);
     if (fromIdx === -1) return;
     if (tabGroup(fromIdx) === targetGroup) return;
-    const ref2 = tabs.value[fromIdx];
+    const tabRef = tabs.value[fromIdx];
     tabs.value.splice(fromIdx, 1);
     if (splitIndex.value !== null && fromIdx < splitIndex.value) {
       splitIndex.value--;
@@ -13534,7 +13779,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     const insertAt = targetGroup === 0 ? 0 : splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
-    tabs.value.splice(insertAt, 0, ref2);
+    tabs.value.splice(insertAt, 0, tabRef);
     if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
       splitIndex.value++;
     }
@@ -13554,10 +13799,28 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
     }
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   function focus(group) {
+    if (focused.value === group) return;
     focused.value = group;
+    syncWorkspaceUrl(false);
+  }
+  function restoreSnapshot(snap) {
+    tabs.value = snap.tabs;
+    splitIndex.value = snap.splitIndex;
+    splitOn.value = snap.splitOn;
+    active.value = [snap.active[0], snap.active[1]];
+    focused.value = snap.focused;
+    meta.value = snap.meta;
+    persist();
+  }
+  function reopenFromRecents(key) {
+    const idx = recents.value.findIndex((r) => refKey(r) === key);
+    if (idx === -1) return;
+    const ref2 = recents.value[idx];
+    recents.value.splice(idx, 1);
+    open(ref2);
   }
   function activate(key) {
     const idx = keyIndex(key);
@@ -13565,8 +13828,9 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     const g2 = tabGroup(idx);
     active.value[g2] = key;
     focused.value = g2;
+    touchTab(key);
     persist();
-    syncWorkspaceUrl(false);
+    syncWorkspaceUrl(true);
   }
   const focusedActiveRef = computed(() => {
     const key = active.value[focused.value];
@@ -13580,17 +13844,26 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     splitRatio,
     active,
     focused,
+    meta,
+    recents,
     groupTabs,
     tabGroup,
     refKey,
     open,
     close,
+    pin,
+    unpin,
+    closeOthers,
+    closeToRight,
+    closeAll,
     move,
     moveToGroup,
     toggleSplit,
     focus,
     activate,
-    focusedActiveRef
+    restoreSnapshot,
+    focusedActiveRef,
+    reopenFromRecents
   };
 });
 function load$3(key, fallback) {
@@ -13649,31 +13922,6 @@ const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
     pendingTaskId
   };
 });
-function load$2(key, fallback) {
-  try {
-    const v2 = localStorage.getItem("files." + key);
-    if (v2 === null) return fallback;
-    return JSON.parse(v2);
-  } catch {
-    return fallback;
-  }
-}
-function save(key, value) {
-  try {
-    localStorage.setItem("files." + key, JSON.stringify(value));
-  } catch {
-  }
-}
-const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
-  const currentPath = /* @__PURE__ */ ref(load$2("currentPath", ""));
-  const currentDir = /* @__PURE__ */ ref(load$2("currentDir", "."));
-  const selectedBranch = /* @__PURE__ */ ref(load$2("selectedBranch", ""));
-  const loaded = /* @__PURE__ */ ref(false);
-  watch(currentPath, (v2) => save("currentPath", v2));
-  watch(currentDir, (v2) => save("currentDir", v2));
-  watch(selectedBranch, (v2) => save("selectedBranch", v2));
-  return { currentPath, currentDir, selectedBranch, loaded };
-});
 let _navigating = false;
 const Stub = /* @__PURE__ */ defineComponent({ render: () => null });
 const router = createRouter({
@@ -13689,16 +13937,55 @@ const router = createRouter({
     { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
+    { path: "/envelope/:taskId", component: Stub },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
 });
+const WS_RING_KEY = "ws.ring";
+const WS_RING_MAX = 50;
+function loadRing() {
+  try {
+    return JSON.parse(sessionStorage.getItem(WS_RING_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+function saveRing(ring) {
+  const ids = Object.keys(ring).map(Number).sort((a, b2) => a - b2);
+  if (ids.length > WS_RING_MAX) {
+    for (const id of ids.slice(0, ids.length - WS_RING_MAX)) delete ring[id];
+  }
+  try {
+    sessionStorage.setItem(WS_RING_KEY, JSON.stringify(ring));
+  } catch {
+  }
+}
+let _wsStateIdSeq = (() => {
+  const ring = loadRing();
+  const ids = Object.keys(ring).map(Number);
+  return ids.length ? Math.max(...ids) : 0;
+})();
+let _pendingSnapshot = false;
+if (typeof window !== "undefined") {
+  window.addEventListener("popstate", (ev) => {
+    var _a2;
+    const stateId = (_a2 = ev.state) == null ? void 0 : _a2.wsStateId;
+    if (stateId !== void 0) {
+      _pendingSnapshot = true;
+    }
+  });
+}
 function routeToRef(route) {
   const p2 = route.path;
   if (p2 === "/dashboard" || p2 === "/") return { kind: "dashboard" };
   if (p2 === "/tasks" || p2.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p2 === "/chat") return { kind: "legacy", page: "chat" };
-  if (p2 === "/files" || p2.startsWith("/files/")) return { kind: "legacy", page: "files" };
+  if (p2 === "/files") return { kind: "legacy", page: "files" };
+  if (p2.startsWith("/files/")) {
+    const filePath = decodeURIComponent(p2.slice("/files/".length));
+    return { kind: "file", path: filePath };
+  }
   if (p2.startsWith("/file/")) {
     const path = decodeURIComponent(p2.slice("/file/".length));
     const branch = route.query["branch"];
@@ -13706,11 +13993,33 @@ function routeToRef(route) {
   }
   if (p2.startsWith("/report/")) {
     const taskId = decodeURIComponent(p2.slice("/report/".length));
-    return { kind: "report", taskId };
+    return { kind: "envelope", taskId };
+  }
+  if (p2.startsWith("/envelope/")) {
+    const taskId = decodeURIComponent(p2.slice("/envelope/".length));
+    return { kind: "envelope", taskId };
   }
   return null;
 }
 router.afterEach((to) => {
+  var _a2;
+  if (_pendingSnapshot) {
+    _pendingSnapshot = false;
+    const currentId = (_a2 = window.history.state) == null ? void 0 : _a2.wsStateId;
+    if (currentId !== void 0) {
+      const snap = loadRing()[currentId] ?? null;
+      if (snap) {
+        const ws2 = useWorkspaceStore();
+        _navigating = true;
+        try {
+          ws2.restoreSnapshot(snap);
+        } finally {
+          _navigating = false;
+        }
+        return;
+      }
+    }
+  }
   const ref2 = routeToRef(to);
   if (!ref2) return;
   const ws = useWorkspaceStore();
@@ -13739,12 +14048,6 @@ router.afterEach((to) => {
         tasks.currentTaskId = taskId;
         tasks.pane = "view";
       }
-    } else if (p2.startsWith("/files/")) {
-      const filePath = decodeURIComponent(p2.slice("/files/".length));
-      if (filePath) {
-        const files = useFilesStore();
-        files.currentPath = filePath;
-      }
     }
   } finally {
     _navigating = false;
@@ -13759,9 +14062,6 @@ function syncWorkspaceUrl(push) {
   if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
     const tasks = useTasksStore();
     path = tasks.pane === "view" && tasks.currentTaskId ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}` : "/tasks";
-  } else if (focusedRef.kind === "legacy" && focusedRef.page === "files") {
-    const files = useFilesStore();
-    path = files.currentPath ? `/files/${encodeURIComponent(files.currentPath)}` : "/files";
   } else {
     path = refToPath(focusedRef);
   }
@@ -13769,7 +14069,18 @@ function syncWorkspaceUrl(push) {
   const otherKey = ws.active[otherGroup];
   const query = ws.splitOn && otherKey ? { side: otherKey } : {};
   if (push) {
-    router.push({ path, query });
+    const id = ++_wsStateIdSeq;
+    const ring = loadRing();
+    ring[id] = {
+      tabs: JSON.parse(JSON.stringify(ws.tabs)),
+      splitIndex: ws.splitIndex,
+      splitOn: ws.splitOn,
+      active: [ws.active[0], ws.active[1]],
+      focused: ws.focused,
+      meta: JSON.parse(JSON.stringify(ws.meta))
+    };
+    saveRing(ring);
+    router.push({ path, query, state: { wsStateId: id } });
   } else {
     router.replace({ path, query });
   }
@@ -13780,6 +14091,8 @@ function refToPath(ref2) {
       return "/dashboard";
     case "file":
       return `/file/${encodeURIComponent(ref2.path)}${ref2.branch ? `?branch=${encodeURIComponent(ref2.branch)}` : ""}`;
+    case "envelope":
+      return `/envelope/${encodeURIComponent(ref2.taskId)}`;
     case "report":
       return `/report/${encodeURIComponent(ref2.taskId)}`;
     case "legacy":
@@ -13889,7 +14202,6 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   const settingsOpen = /* @__PURE__ */ ref(false);
   const ttsEnabled = /* @__PURE__ */ ref(lsBool(LS_TTS, true));
   const micEnabled = /* @__PURE__ */ ref(lsBool(LS_MIC, false));
-  const filesNav = /* @__PURE__ */ ref(null);
   const hbModalOpen = /* @__PURE__ */ ref(false);
   const infoOpen = /* @__PURE__ */ ref(false);
   const audioModalOpen = /* @__PURE__ */ ref(false);
@@ -13972,7 +14284,6 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
     settingsOpen,
     ttsEnabled,
     micEnabled,
-    filesNav,
     hbModalOpen,
     infoOpen,
     audioModalOpen,
@@ -13995,18 +14306,18 @@ const useUiStore = /* @__PURE__ */ defineStore("ui", () => {
   };
 });
 const useModalsStore = /* @__PURE__ */ defineStore("modals", () => ({ topId: /* @__PURE__ */ ref(null) }));
-const _hoisted_1$t = ["data-size"];
-const _hoisted_2$k = {
+const _hoisted_1$v = ["data-size"];
+const _hoisted_2$n = {
   key: 0,
   class: "base-modal-head"
 };
-const _hoisted_3$j = { class: "base-modal-title" };
-const _hoisted_4$f = { class: "base-modal-body" };
-const _hoisted_5$d = {
+const _hoisted_3$m = { class: "base-modal-title" };
+const _hoisted_4$h = { class: "base-modal-body" };
+const _hoisted_5$e = {
   key: 0,
   class: "base-modal-footer base-modal-footer--done"
 };
-const _sfc_main$x = /* @__PURE__ */ defineComponent({
+const _sfc_main$y = /* @__PURE__ */ defineComponent({
   __name: "BaseModal",
   props: {
     open: { type: Boolean },
@@ -14098,8 +14409,8 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
           }, ["stop"]))
         }, [
           renderSlot(_ctx.$slots, "header", {}, () => [
-            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$k, [
-              createBaseVNode("span", _hoisted_3$j, toDisplayString(__props.title), 1),
+            __props.title ? (openBlock(), createElementBlock("div", _hoisted_2$n, [
+              createBaseVNode("span", _hoisted_3$m, toDisplayString(__props.title), 1),
               __props.dismissible ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "base-modal-close",
@@ -14113,11 +14424,11 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
               }, "×")) : createCommentVNode("", true)
             ])) : createCommentVNode("", true)
           ]),
-          createBaseVNode("div", _hoisted_4$f, [
+          createBaseVNode("div", _hoisted_4$h, [
             renderSlot(_ctx.$slots, "default")
           ]),
           renderSlot(_ctx.$slots, "footer", {}, () => [
-            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$d, [
+            __props.dismissible ? (openBlock(), createElementBlock("div", _hoisted_5$e, [
               createBaseVNode("button", {
                 class: "base-modal-done-btn",
                 type: "button",
@@ -14126,18 +14437,18 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ], 544)
-      ], 40, _hoisted_1$t);
+      ], 40, _hoisted_1$v);
     };
   }
 });
-const _hoisted_1$s = { class: "setting-item" };
-const _hoisted_2$j = { class: "setting-main" };
-const _hoisted_3$i = { class: "settings-label" };
-const _hoisted_4$e = {
+const _hoisted_1$u = { class: "setting-item" };
+const _hoisted_2$m = { class: "setting-main" };
+const _hoisted_3$l = { class: "settings-label" };
+const _hoisted_4$g = {
   key: 0,
   class: "settings-meta"
 };
-const _sfc_main$w = /* @__PURE__ */ defineComponent({
+const _sfc_main$x = /* @__PURE__ */ defineComponent({
   __name: "SettingRow",
   props: {
     label: {},
@@ -14145,10 +14456,10 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$s, [
-        createBaseVNode("div", _hoisted_2$j, [
-          createBaseVNode("div", _hoisted_3$i, toDisplayString(__props.label), 1),
-          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$e, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
+      return openBlock(), createElementBlock("div", _hoisted_1$u, [
+        createBaseVNode("div", _hoisted_2$m, [
+          createBaseVNode("div", _hoisted_3$l, toDisplayString(__props.label), 1),
+          __props.meta !== void 0 ? (openBlock(), createElementBlock("div", _hoisted_4$g, toDisplayString(__props.meta), 1)) : createCommentVNode("", true),
           renderSlot(_ctx.$slots, "extra")
         ]),
         renderSlot(_ctx.$slots, "default")
@@ -14156,15 +14467,15 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$r = { class: "settings-stack" };
-const _hoisted_2$i = { class: "setting-actions" };
-const _hoisted_3$h = ["disabled"];
-const _hoisted_4$d = {
+const _hoisted_1$t = { class: "settings-stack" };
+const _hoisted_2$l = { class: "setting-actions" };
+const _hoisted_3$k = ["disabled"];
+const _hoisted_4$f = {
   id: "build-id",
   class: "build-id-mono"
 };
-const _hoisted_5$c = ["innerHTML"];
-const _sfc_main$v = /* @__PURE__ */ defineComponent({
+const _hoisted_5$d = ["innerHTML"];
+const _sfc_main$w = /* @__PURE__ */ defineComponent({
   __name: "SettingsModal",
   setup(__props) {
     const ui = useUiStore();
@@ -14312,7 +14623,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$x, {
+        createVNode(_sfc_main$y, {
           id: "settings-modal",
           open: unref(ui).settingsOpen,
           onClose: _cache[2] || (_cache[2] = ($event) => unref(ui).settingsOpen = false),
@@ -14320,13 +14631,13 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           title: "Settings"
         }, {
           default: withCtx(() => [
-            createBaseVNode("div", _hoisted_1$r, [
-              createVNode(_sfc_main$w, {
+            createBaseVNode("div", _hoisted_1$t, [
+              createVNode(_sfc_main$x, {
                 label: "💓 Heartbeat",
                 meta: hbInfo.value
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("div", _hoisted_2$i, [
+                  createBaseVNode("div", _hoisted_2$l, [
                     createBaseVNode("button", {
                       class: "hb-config",
                       id: "hb-config",
@@ -14339,12 +14650,12 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                       type: "button",
                       disabled: hbBusy.value,
                       onClick: toggleHb
-                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$h)
+                    }, toDisplayString(hbToggleText.value), 11, _hoisted_3$k)
                   ])
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🕒 Clock",
                 meta: clockInfo.value
               }, {
@@ -14358,7 +14669,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🔗 GitHub Banner",
                 meta: "Star on GitHub header bar"
               }, {
@@ -14372,7 +14683,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🐞 Debug",
                 meta: "Show chat thread/session ids"
               }, {
@@ -14386,7 +14697,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🎙️ Voice — STT",
                 meta: sttMeta.value
               }, {
@@ -14400,7 +14711,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }, 8, ["meta"]),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🎙️ Mic (STT)",
                 meta: "Dictate and voice chat"
               }, {
@@ -14414,7 +14725,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🔊 Speaker (TTS)",
                 meta: "Read aloud and voice replies"
               }, {
@@ -14435,16 +14746,16 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🔖 Build",
                 meta: "Stamp for bug reports"
               }, {
                 default: withCtx(() => [
-                  createBaseVNode("span", _hoisted_4$d, toDisplayString(buildId.value || "—"), 1)
+                  createBaseVNode("span", _hoisted_4$f, toDisplayString(buildId.value || "—"), 1)
                 ]),
                 _: 1
               }),
-              createVNode(_sfc_main$w, {
+              createVNode(_sfc_main$x, {
                 label: "🧾 Advanced",
                 meta: "Technical runtime and JSON files"
               }, {
@@ -14463,7 +14774,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           _: 1
         }, 8, ["open"]),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
-          createVNode(_sfc_main$x, {
+          createVNode(_sfc_main$y, {
             id: "info-modal",
             open: unref(ui).infoOpen,
             onClose: _cache[3] || (_cache[3] = ($event) => unref(ui).infoOpen = false),
@@ -14475,7 +14786,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 id: "info-body",
                 class: "info-body",
                 innerHTML: infoHtml.value
-              }, null, 8, _hoisted_5$c)
+              }, null, 8, _hoisted_5$d)
             ]),
             _: 1
           }, 8, ["open"])
@@ -14484,25 +14795,25 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$q = {
+const _hoisted_1$s = {
   class: "hb-field",
   for: "hb-interval-input"
 };
-const _hoisted_2$h = ["disabled"];
-const _hoisted_3$g = {
+const _hoisted_2$k = ["disabled"];
+const _hoisted_3$j = {
   class: "hb-field",
   for: "hb-prompt-input"
 };
-const _hoisted_4$c = ["disabled"];
-const _hoisted_5$b = { class: "hb-actions" };
-const _hoisted_6$b = {
+const _hoisted_4$e = ["disabled"];
+const _hoisted_5$c = { class: "hb-actions" };
+const _hoisted_6$c = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_7$9 = { class: "hb-buttons" };
-const _hoisted_8$8 = ["disabled"];
-const _hoisted_9$7 = ["disabled"];
-const _sfc_main$u = /* @__PURE__ */ defineComponent({
+const _hoisted_7$a = { class: "hb-buttons" };
+const _hoisted_8$9 = ["disabled"];
+const _hoisted_9$8 = ["disabled"];
+const _sfc_main$v = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
     const ui = useUiStore();
@@ -14566,7 +14877,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$x, {
+      return openBlock(), createBlock(_sfc_main$y, {
         id: "hb-modal",
         open: unref(ui).hbModalOpen,
         onClose: close,
@@ -14579,7 +14890,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
             id: "hb-form",
             onSubmit: save2
           }, [
-            createBaseVNode("label", _hoisted_1$q, [
+            createBaseVNode("label", _hoisted_1$s, [
               _cache[2] || (_cache[2] = createBaseVNode("span", { class: "hb-label" }, "Interval (minutes)", -1)),
               withDirectives(createBaseVNode("input", {
                 class: "hb-input",
@@ -14591,7 +14902,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => interval.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_2$h), [
+              }, null, 8, _hoisted_2$k), [
                 [
                   vModelText,
                   interval.value,
@@ -14600,7 +14911,7 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 ]
               ])
             ]),
-            createBaseVNode("label", _hoisted_3$g, [
+            createBaseVNode("label", _hoisted_3$j, [
               _cache[3] || (_cache[3] = createBaseVNode("span", { class: "hb-label" }, "Custom prompt", -1)),
               withDirectives(createBaseVNode("textarea", {
                 class: "hb-textarea",
@@ -14609,26 +14920,26 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                 required: "",
                 "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => prompt.value = $event),
                 disabled: busy.value
-              }, null, 8, _hoisted_4$c), [
+              }, null, 8, _hoisted_4$e), [
                 [vModelText, prompt.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$b, [
-              createBaseVNode("div", _hoisted_6$b, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$9, [
+            createBaseVNode("div", _hoisted_5$c, [
+              createBaseVNode("div", _hoisted_6$c, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_7$a, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_8$8),
+                }, "Cancel", 8, _hoisted_8$9),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_9$7)
+                }, "Save", 8, _hoisted_9$8)
               ])
             ])
           ], 32)
@@ -14638,22 +14949,22 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$p = { class: "audio-action-card" };
-const _hoisted_2$g = {
+const _hoisted_1$r = { class: "audio-action-card" };
+const _hoisted_2$j = {
   key: 0,
   class: "audio-player-resume"
 };
-const _hoisted_3$f = { class: "audio-player-resume-msg" };
-const _hoisted_4$b = { class: "audio-player-resume-btns" };
-const _hoisted_5$a = { class: "audio-player-progress" };
-const _hoisted_6$a = { class: "audio-player-bar-wrap" };
-const _hoisted_7$8 = { class: "audio-player-counter" };
-const _hoisted_8$7 = { class: "audio-player-transcript" };
-const _hoisted_9$6 = ["data-idx", "onClick"];
-const _hoisted_10$5 = { class: "audio-player-controls" };
-const _hoisted_11$5 = ["disabled"];
-const _hoisted_12$5 = ["disabled"];
-const _sfc_main$t = /* @__PURE__ */ defineComponent({
+const _hoisted_3$i = { class: "audio-player-resume-msg" };
+const _hoisted_4$d = { class: "audio-player-resume-btns" };
+const _hoisted_5$b = { class: "audio-player-progress" };
+const _hoisted_6$b = { class: "audio-player-bar-wrap" };
+const _hoisted_7$9 = { class: "audio-player-counter" };
+const _hoisted_8$8 = { class: "audio-player-transcript" };
+const _hoisted_9$7 = ["data-idx", "onClick"];
+const _hoisted_10$7 = { class: "audio-player-controls" };
+const _hoisted_11$7 = ["disabled"];
+const _hoisted_12$7 = ["disabled"];
+const _sfc_main$u = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
   setup(__props) {
     const ui = useUiStore();
@@ -14666,7 +14977,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     const skipFwdDisabled = computed(() => current.value >= total.value - 1);
     const hasPlayer = computed(() => !ui.raShowResume && total.value > 0);
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$x, {
+      return openBlock(), createBlock(_sfc_main$y, {
         open: unref(ui).audioModalOpen,
         onClose: _cache[5] || (_cache[5] = ($event) => unref(ui).raStop()),
         size: "sm",
@@ -14678,10 +14989,10 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           ], -1)
         ])]),
         default: withCtx(() => [
-          createBaseVNode("div", _hoisted_1$p, [
-            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$g, [
-              createBaseVNode("div", _hoisted_3$f, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
-              createBaseVNode("div", _hoisted_4$b, [
+          createBaseVNode("div", _hoisted_1$r, [
+            unref(ui).raShowResume ? (openBlock(), createElementBlock("div", _hoisted_2$j, [
+              createBaseVNode("div", _hoisted_3$i, " Resume from chunk " + toDisplayString(unref(ui).raResumeIndex + 1) + " of " + toDisplayString(total.value) + "? ", 1),
+              createBaseVNode("div", _hoisted_4$d, [
                 createBaseVNode("button", {
                   class: "audio-player-resume-btn is-restart",
                   type: "button",
@@ -14695,27 +15006,27 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               ])
             ])) : createCommentVNode("", true),
             hasPlayer.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-              createBaseVNode("div", _hoisted_5$a, [
-                createBaseVNode("div", _hoisted_6$a, [
+              createBaseVNode("div", _hoisted_5$b, [
+                createBaseVNode("div", _hoisted_6$b, [
                   createBaseVNode("div", {
                     class: "audio-player-bar",
                     style: normalizeStyle({ width: progressPct.value + "%" })
                   }, null, 4)
                 ]),
-                createBaseVNode("div", _hoisted_7$8, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
+                createBaseVNode("div", _hoisted_7$9, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
               ]),
-              createBaseVNode("div", _hoisted_8$7, [
+              createBaseVNode("div", _hoisted_8$8, [
                 (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ui).raChunks, (chunk, i) => {
                   return openBlock(), createElementBlock("p", {
                     key: i,
                     class: normalizeClass(["audio-transcript-line", { "audio-transcript-active": i === current.value }]),
                     "data-idx": i,
                     onClick: ($event) => unref(ui).raSkipTo(i)
-                  }, toDisplayString(chunk), 11, _hoisted_9$6);
+                  }, toDisplayString(chunk), 11, _hoisted_9$7);
                 }), 128))
               ])
             ], 64)) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_10$5, [
+            createBaseVNode("div", _hoisted_10$7, [
               hasPlayer.value ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "audio-player-skip",
@@ -14725,7 +15036,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).raSkipTo(current.value - 1))
               }, [..._cache[7] || (_cache[7] = [
                 createBaseVNode("i", { class: "fa-solid fa-backward-step" }, null, -1)
-              ])], 8, _hoisted_11$5)) : createCommentVNode("", true),
+              ])], 8, _hoisted_11$7)) : createCommentVNode("", true),
               createBaseVNode("button", {
                 class: "audio-action-stop",
                 type: "button",
@@ -14744,7 +15055,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).raSkipTo(current.value + 1))
               }, [..._cache[9] || (_cache[9] = [
                 createBaseVNode("i", { class: "fa-solid fa-forward-step" }, null, -1)
-              ])], 8, _hoisted_12$5)) : createCommentVNode("", true)
+              ])], 8, _hoisted_12$7)) : createCommentVNode("", true)
             ])
           ])
         ]),
@@ -14930,8 +15241,8 @@ function useDictation() {
     stream == null ? void 0 : stream.getTracks().forEach((t) => t.stop());
   });
 }
-const _hoisted_1$o = ["disabled"];
-const _sfc_main$s = /* @__PURE__ */ defineComponent({
+const _hoisted_1$q = ["disabled"];
+const _sfc_main$t = /* @__PURE__ */ defineComponent({
   __name: "GlobalMic",
   setup(__props) {
     const ui = useUiStore();
@@ -14950,7 +15261,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
         onClick: triggerMic
       }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("i", { class: "fa-solid fa-microphone" }, null, -1)
-      ])], 8, _hoisted_1$o);
+      ])], 8, _hoisted_1$q);
     };
   }
 });
@@ -15169,23 +15480,23 @@ function useGlobalReadAloud() {
   }
   return { doReadAloud, stopReadAloud: stopPlayback };
 }
-const _hoisted_1$n = ["hidden"];
-const _hoisted_2$f = ["hidden"];
-const _hoisted_3$e = ["title", "aria-label", "hidden", "disabled"];
-const _hoisted_4$a = {
+const _hoisted_1$p = ["hidden"];
+const _hoisted_2$i = ["hidden"];
+const _hoisted_3$h = ["title", "aria-label", "hidden", "disabled"];
+const _hoisted_4$c = {
   key: 0,
   class: "fa-solid fa-spinner fa-spin"
 };
-const _hoisted_5$9 = {
+const _hoisted_5$a = {
   key: 1,
   class: "fa-solid fa-stop"
 };
-const _hoisted_6$9 = {
+const _hoisted_6$a = {
   key: 2,
   class: "fa-solid fa-headphones"
 };
-const _hoisted_7$7 = ["hidden"];
-const _sfc_main$r = /* @__PURE__ */ defineComponent({
+const _hoisted_7$8 = ["hidden"];
+const _sfc_main$s = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
     const ui = useUiStore();
@@ -15220,7 +15531,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: openVoiceMode
         }, [..._cache[1] || (_cache[1] = [
           createBaseVNode("i", { class: "fa-solid fa-walkie-talkie" }, null, -1)
-        ])], 8, _hoisted_1$n),
+        ])], 8, _hoisted_1$p),
         createBaseVNode("button", {
           id: "global-voice-task",
           class: "global-voice-task",
@@ -15231,7 +15542,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: openTaskCreator
         }, [..._cache[2] || (_cache[2] = [
           createBaseVNode("i", { class: "fa-solid fa-list-check" }, null, -1)
-        ])], 8, _hoisted_2$f),
+        ])], 8, _hoisted_2$i),
         createBaseVNode("button", {
           id: "global-read-aloud",
           class: normalizeClass(["global-read-aloud", { "is-playing": unref(ui).raState === "playing" }]),
@@ -15243,8 +15554,8 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: _cache[0] || (_cache[0] = //@ts-ignore
           (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
         }, [
-          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$a)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$9)) : (openBlock(), createElementBlock("i", _hoisted_6$9))
-        ], 10, _hoisted_3$e),
+          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$c)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$a)) : (openBlock(), createElementBlock("i", _hoisted_6$a))
+        ], 10, _hoisted_3$h),
         createBaseVNode("button", {
           id: "global-speaker",
           class: "global-speaker",
@@ -15255,7 +15566,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_7$7)
+        ])], 8, _hoisted_7$8)
       ], 64);
     };
   }
@@ -15482,35 +15793,35 @@ const useLiveStore = /* @__PURE__ */ defineStore("live", () => {
   connect();
   return { entries, bind, unbind, entry, prefetch, connect, disconnect };
 });
-const _hoisted_1$m = { class: "dock-shell" };
-const _hoisted_2$e = {
+const _hoisted_1$o = { class: "dock-shell" };
+const _hoisted_2$h = {
   class: "side-bubble",
   id: "jobs-bubble",
   "aria-live": "polite"
 };
-const _hoisted_3$d = { class: "side-value" };
-const _hoisted_4$9 = {
+const _hoisted_3$g = { class: "side-value" };
+const _hoisted_4$b = {
   class: "side-bubble",
   id: "tasks-bubble",
   "aria-live": "polite"
 };
-const _hoisted_5$8 = { class: "side-value" };
-const _hoisted_6$8 = {
+const _hoisted_5$9 = { class: "side-value" };
+const _hoisted_6$9 = {
   class: "dock",
   id: "dock",
   "aria-live": "polite"
 };
-const _hoisted_7$6 = { id: "dock-pills" };
-const _hoisted_8$6 = { class: "pill-label" };
-const _hoisted_9$5 = { class: "pill-icon" };
-const _hoisted_10$4 = { class: "pill-value" };
-const _hoisted_11$4 = {
+const _hoisted_7$7 = { id: "dock-pills" };
+const _hoisted_8$7 = { class: "pill-label" };
+const _hoisted_9$6 = { class: "pill-icon" };
+const _hoisted_10$6 = { class: "pill-value" };
+const _hoisted_11$6 = {
   class: "side-bubble",
   id: "uptime-bubble",
   "aria-live": "polite"
 };
-const _hoisted_12$4 = { class: "side-value" };
-const _sfc_main$q = /* @__PURE__ */ defineComponent({
+const _hoisted_12$6 = { class: "side-value" };
+const _sfc_main$r = /* @__PURE__ */ defineComponent({
   __name: "StatusDock",
   setup(__props) {
     const live = useLiveStore();
@@ -15592,56 +15903,56 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
       return out;
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$m, [
-        createBaseVNode("aside", _hoisted_2$e, [
+      return openBlock(), createElementBlock("div", _hoisted_1$o, [
+        createBaseVNode("aside", _hoisted_2$h, [
           _cache[0] || (_cache[0] = createBaseVNode("div", { class: "side-icon" }, "🗂️", -1)),
-          createBaseVNode("div", _hoisted_3$d, toDisplayString(jobsCount.value), 1),
+          createBaseVNode("div", _hoisted_3$g, toDisplayString(jobsCount.value), 1),
           _cache[1] || (_cache[1] = createBaseVNode("div", { class: "side-label" }, "Jobs", -1))
         ]),
-        createBaseVNode("aside", _hoisted_4$9, [
+        createBaseVNode("aside", _hoisted_4$b, [
           _cache[2] || (_cache[2] = createBaseVNode("div", { class: "side-icon" }, "📋", -1)),
-          createBaseVNode("div", _hoisted_5$8, toDisplayString(tasksCount.value), 1),
+          createBaseVNode("div", _hoisted_5$9, toDisplayString(tasksCount.value), 1),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
-        createBaseVNode("footer", _hoisted_6$8, [
-          createVNode(_sfc_main$r),
-          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+        createBaseVNode("footer", _hoisted_6$9, [
           createVNode(_sfc_main$s),
-          createBaseVNode("div", _hoisted_7$6, [
+          _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
+          createVNode(_sfc_main$t),
+          createBaseVNode("div", _hoisted_7$7, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
                 key: pill.label,
                 class: normalizeClass(["pill", pill.cls])
               }, [
-                createBaseVNode("div", _hoisted_8$6, [
-                  createBaseVNode("span", _hoisted_9$5, toDisplayString(pill.icon), 1),
+                createBaseVNode("div", _hoisted_8$7, [
+                  createBaseVNode("span", _hoisted_9$6, toDisplayString(pill.icon), 1),
                   createTextVNode(toDisplayString(pill.label), 1)
                 ]),
-                createBaseVNode("div", _hoisted_10$4, toDisplayString(pill.value), 1)
+                createBaseVNode("div", _hoisted_10$6, toDisplayString(pill.value), 1)
               ], 2);
             }), 128))
           ])
         ]),
-        createBaseVNode("aside", _hoisted_11$4, [
+        createBaseVNode("aside", _hoisted_11$6, [
           _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
-          createBaseVNode("div", _hoisted_12$4, toDisplayString(uptime.value), 1),
+          createBaseVNode("div", _hoisted_12$6, toDisplayString(uptime.value), 1),
           _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
         ])
       ]);
     };
   }
 });
-const _hoisted_1$l = {
+const _hoisted_1$n = {
   class: "voice-mode-overlay",
   role: "dialog",
   "aria-modal": "true",
   "aria-live": "polite"
 };
-const _hoisted_2$d = ["innerHTML"];
-const _hoisted_3$c = { class: "vm-controls" };
-const _hoisted_4$8 = { class: "voice-mode-status" };
+const _hoisted_2$g = ["innerHTML"];
+const _hoisted_3$f = { class: "vm-controls" };
+const _hoisted_4$a = { class: "voice-mode-status" };
 const HOLD_MS$1 = 250;
-const _sfc_main$p = /* @__PURE__ */ defineComponent({
+const _sfc_main$q = /* @__PURE__ */ defineComponent({
   __name: "VoiceModeOverlay",
   setup(__props) {
     const voice = useVoiceStore();
@@ -15975,13 +16286,13 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
       voice.close();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$l, [
+      return openBlock(), createElementBlock("div", _hoisted_1$n, [
         createBaseVNode("div", {
           class: "voice-mode-transcript",
           innerHTML: transcriptHtml.value
-        }, null, 8, _hoisted_2$d),
-        createBaseVNode("div", _hoisted_3$c, [
-          createBaseVNode("div", _hoisted_4$8, toDisplayString(statusText.value), 1),
+        }, null, 8, _hoisted_2$g),
+        createBaseVNode("div", _hoisted_3$f, [
+          createBaseVNode("div", _hoisted_4$a, toDisplayString(statusText.value), 1),
           createBaseVNode("button", {
             class: normalizeClass(["voice-mode-btn", btnClass.value]),
             type: "button",
@@ -16133,28 +16444,28 @@ Example response:
     submitDraft
   };
 });
-const _hoisted_1$k = {
+const _hoisted_1$m = {
   key: 0,
   class: "vtc-success"
 };
-const _hoisted_2$c = {
+const _hoisted_2$f = {
   key: 1,
   class: "vtc-form"
 };
-const _hoisted_3$b = {
+const _hoisted_3$e = {
   key: 0,
   class: "vtc-claude-reply"
 };
-const _hoisted_4$7 = { class: "vtc-field" };
-const _hoisted_5$7 = { class: "vtc-row" };
-const _hoisted_6$7 = { class: "vtc-field" };
-const _hoisted_7$5 = ["value"];
-const _hoisted_8$5 = { class: "vtc-field" };
-const _hoisted_9$4 = ["value"];
-const _hoisted_10$3 = { class: "vtc-field" };
-const _hoisted_11$3 = { class: "vtc-field" };
-const _hoisted_12$3 = { class: "vtc-field" };
-const _hoisted_13$2 = {
+const _hoisted_4$9 = { class: "vtc-field" };
+const _hoisted_5$8 = { class: "vtc-row" };
+const _hoisted_6$8 = { class: "vtc-field" };
+const _hoisted_7$6 = ["value"];
+const _hoisted_8$6 = { class: "vtc-field" };
+const _hoisted_9$5 = ["value"];
+const _hoisted_10$5 = { class: "vtc-field" };
+const _hoisted_11$5 = { class: "vtc-field" };
+const _hoisted_12$5 = { class: "vtc-field" };
+const _hoisted_13$4 = {
   key: 1,
   class: "vtc-error"
 };
@@ -16176,7 +16487,7 @@ const _hoisted_21$2 = {
   class: "vm-reply vm-active"
 };
 const HOLD_MS = 250;
-const _sfc_main$o = /* @__PURE__ */ defineComponent({
+const _sfc_main$p = /* @__PURE__ */ defineComponent({
   __name: "VoiceTaskCreator",
   setup(__props) {
     const voice = useVoiceStore();
@@ -16539,7 +16850,7 @@ User's voice request: "${userText}"`;
       closeMode();
     });
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$x, {
+      return openBlock(), createBlock(_sfc_main$y, {
         open: showModal.value,
         size: "lg",
         title: "Create a task from voice",
@@ -16548,16 +16859,16 @@ User's voice request: "${userText}"`;
       }, {
         footer: withCtx(() => [..._cache[6] || (_cache[6] = [])]),
         default: withCtx(() => [
-          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$k, [..._cache[7] || (_cache[7] = [
+          submitted.value ? (openBlock(), createElementBlock("div", _hoisted_1$m, [..._cache[7] || (_cache[7] = [
             createBaseVNode("span", { class: "vtc-success-icon" }, "✓", -1),
             createBaseVNode("div", { class: "vtc-success-label" }, "Task created!", -1),
             createBaseVNode("div", { class: "vtc-success-sub" }, "Closing in a moment…", -1)
-          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$c, [
-            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$b, [
+          ])])) : hasDraft.value ? (openBlock(), createElementBlock("div", _hoisted_2$f, [
+            replyText.value ? (openBlock(), createElementBlock("div", _hoisted_3$e, [
               _cache[8] || (_cache[8] = createBaseVNode("span", { class: "vtc-claude-label" }, "Claude said", -1)),
               createTextVNode(" " + toDisplayString(replyText.value.replace(/<task>[\s\S]*?<\/task>/gi, "").trim()), 1)
             ])) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_4$7, [
+            createBaseVNode("div", _hoisted_4$9, [
               _cache[9] || (_cache[9] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-to"
@@ -16571,8 +16882,8 @@ User's voice request: "${userText}"`;
                 [vModelText, draftTo.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_5$7, [
-              createBaseVNode("div", _hoisted_6$7, [
+            createBaseVNode("div", _hoisted_5$8, [
+              createBaseVNode("div", _hoisted_6$8, [
                 _cache[10] || (_cache[10] = createBaseVNode("label", {
                   class: "vtc-label",
                   for: "vtc-priority"
@@ -16586,13 +16897,13 @@ User's voice request: "${userText}"`;
                     return createBaseVNode("option", {
                       key: p2,
                       value: p2
-                    }, toDisplayString(p2), 9, _hoisted_7$5);
+                    }, toDisplayString(p2), 9, _hoisted_7$6);
                   }), 64))
                 ], 512), [
                   [vModelSelect, draftPriority.value]
                 ])
               ]),
-              createBaseVNode("div", _hoisted_8$5, [
+              createBaseVNode("div", _hoisted_8$6, [
                 _cache[11] || (_cache[11] = createBaseVNode("label", {
                   class: "vtc-label",
                   for: "vtc-kind"
@@ -16606,14 +16917,14 @@ User's voice request: "${userText}"`;
                     return createBaseVNode("option", {
                       key: k,
                       value: k
-                    }, toDisplayString(k), 9, _hoisted_9$4);
+                    }, toDisplayString(k), 9, _hoisted_9$5);
                   }), 64))
                 ], 512), [
                   [vModelSelect, draftKind.value]
                 ])
               ])
             ]),
-            createBaseVNode("div", _hoisted_10$3, [
+            createBaseVNode("div", _hoisted_10$5, [
               _cache[12] || (_cache[12] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-project"
@@ -16628,7 +16939,7 @@ User's voice request: "${userText}"`;
                 [vModelText, draftProject.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_11$3, [
+            createBaseVNode("div", _hoisted_11$5, [
               _cache[13] || (_cache[13] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-headline"
@@ -16642,7 +16953,7 @@ User's voice request: "${userText}"`;
                 [vModelText, draftHeadline.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_12$3, [
+            createBaseVNode("div", _hoisted_12$5, [
               _cache[14] || (_cache[14] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-brief"
@@ -16656,7 +16967,7 @@ User's voice request: "${userText}"`;
                 [vModelText, draftBrief.value]
               ])
             ]),
-            submitError.value ? (openBlock(), createElementBlock("div", _hoisted_13$2, toDisplayString(submitError.value), 1)) : createCommentVNode("", true),
+            submitError.value ? (openBlock(), createElementBlock("div", _hoisted_13$4, toDisplayString(submitError.value), 1)) : createCommentVNode("", true),
             createBaseVNode("div", _hoisted_14$2, [
               createBaseVNode("button", {
                 class: "vtc-btn vtc-btn--secondary",
@@ -16700,8 +17011,8 @@ const _export_sfc = (sfc, props) => {
   }
   return target;
 };
-const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$o, [["__scopeId", "data-v-8998f977"]]);
-const _sfc_main$n = /* @__PURE__ */ defineComponent({
+const VoiceTaskCreator = /* @__PURE__ */ _export_sfc(_sfc_main$p, [["__scopeId", "data-v-8998f977"]]);
+const _sfc_main$o = /* @__PURE__ */ defineComponent({
   __name: "VoiceIsland",
   setup(__props) {
     const voice = useVoiceStore();
@@ -16727,14 +17038,93 @@ const _sfc_main$n = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createBlock(Teleport, { to: "body" }, [
-        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$p, { key: 0 })) : createCommentVNode("", true),
+        unref(voice).mode === "chat" ? (openBlock(), createBlock(_sfc_main$q, { key: 0 })) : createCommentVNode("", true),
         createVNode(VoiceTaskCreator)
       ]);
     };
   }
 });
-const _hoisted_1$j = ["aria-expanded"];
-const _sfc_main$m = /* @__PURE__ */ defineComponent({
+const TASKS_LIST_KEY = "tasks:list";
+const tasksListSpec = {
+  topics: ["tasks"],
+  fetch: async () => {
+    try {
+      const r = await fetch("/api/tasks?limit=120");
+      return r.ok ? r.json() : [];
+    } catch {
+      return [];
+    }
+  }
+};
+function middleEllipsis(s, max = 13) {
+  if (s.length <= max) return s;
+  const lastDash = s.lastIndexOf("-");
+  const suffix = lastDash >= 0 ? s.slice(lastDash) : "";
+  const prefixLen = max - 1 - suffix.length;
+  if (prefixLen <= 0) return s.slice(0, max - 1) + "…";
+  return s.slice(0, prefixLen) + "…" + suffix;
+}
+function refGlyph(ref2) {
+  switch (ref2.kind) {
+    case "dashboard":
+      return "⊞";
+    case "file":
+      return "f";
+    case "report":
+      return "r";
+    case "envelope":
+      return "t";
+    case "project":
+      return "p";
+    case "legacy":
+      return "l";
+    case "chat":
+      return "c";
+  }
+}
+function refLabel(ref2, tasksList) {
+  switch (ref2.kind) {
+    case "dashboard":
+      return "Dashboard";
+    case "file":
+      return ref2.path.split("/").pop() || ref2.path;
+    case "legacy":
+      return ref2.page.charAt(0).toUpperCase() + ref2.page.slice(1);
+    case "project":
+      return ref2.slug;
+    case "chat":
+      return ref2.chatId;
+    case "envelope":
+    case "report": {
+      const row = tasksList == null ? void 0 : tasksList.find((t) => t.id === ref2.taskId);
+      if (row == null ? void 0 : row.headline) return row.headline;
+      return middleEllipsis(ref2.taskId);
+    }
+  }
+}
+function refTitle(ref2, tasksList) {
+  switch (ref2.kind) {
+    case "dashboard":
+      return "Dashboard";
+    case "file":
+      return ref2.path + (ref2.branch ? `@${ref2.branch}` : "");
+    case "legacy":
+      return ref2.page;
+    case "project":
+      return ref2.slug;
+    case "chat":
+      return ref2.chatId;
+    case "envelope":
+    case "report": {
+      const row = tasksList == null ? void 0 : tasksList.find((t) => t.id === ref2.taskId);
+      return (row == null ? void 0 : row.headline) ? `${ref2.taskId} — ${row.headline}` : ref2.taskId;
+    }
+  }
+}
+const _hoisted_1$l = ["aria-expanded"];
+const _hoisted_2$e = ["data-recent-key", "onClick"];
+const _hoisted_3$d = { class: "om-glyph" };
+const _sfc_main$n = /* @__PURE__ */ defineComponent({
   __name: "OpenMenu",
   setup(__props) {
     const ws = useWorkspaceStore();
@@ -16768,16 +17158,9 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
       ws.open({ kind: "dashboard" });
       close();
     }
-    function openTasks() {
-      ws.open({ kind: "legacy", page: "tasks" });
-      close();
-    }
-    function openChat() {
-      ws.open({ kind: "legacy", page: "chat" });
-      close();
-    }
-    function openFiles() {
-      ws.open({ kind: "legacy", page: "files" });
+    function openPicker(r) {
+      ws.open(r);
+      ws.pin(ws.refKey(r));
       close();
     }
     function openSearch() {
@@ -16786,6 +17169,10 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     }
     function openNewTask() {
       nt2.open();
+      close();
+    }
+    function openRecent(key) {
+      ws.reopenFromRecents(key);
       close();
     }
     function onDocPointerDown(ev) {
@@ -16822,7 +17209,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
           "aria-haspopup": "true",
           "aria-expanded": isOpen.value,
           onClick: toggle
-        }, "Open ▾", 8, _hoisted_1$j),
+        }, "Open ▾", 8, _hoisted_1$l),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
             key: 0,
@@ -16831,9 +17218,13 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
             class: "open-menu-list",
             style: normalizeStyle({ top: panelTop.value, left: panelLeft.value }),
             role: "menu",
-            onClick: _cache[0] || (_cache[0] = withModifiers(() => {
+            onClick: _cache[3] || (_cache[3] = withModifiers(() => {
             }, ["stop"]))
           }, [
+            _cache[8] || (_cache[8] = createBaseVNode("div", {
+              class: "om-section-label",
+              "data-section": "pickers"
+            }, "Pickers", -1)),
             createBaseVNode("button", {
               id: "tab-dashboard",
               class: "open-menu-item",
@@ -16846,29 +17237,62 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openTasks
+              onClick: _cache[0] || (_cache[0] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
             }, "Tasks"),
             createBaseVNode("button", {
               id: "tab-chat",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openChat
+              onClick: _cache[1] || (_cache[1] = ($event) => openPicker({ kind: "legacy", page: "chat" }))
             }, "Chat"),
             createBaseVNode("button", {
               id: "tab-files",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: openFiles
+              onClick: _cache[2] || (_cache[2] = ($event) => openPicker({ kind: "legacy", page: "files" }))
             }, "Files"),
-            _cache[3] || (_cache[3] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[9] || (_cache[9] = createBaseVNode("button", {
+              class: "open-menu-item om-item-disabled",
+              type: "button",
+              role: "menuitem",
+              disabled: ""
+            }, [
+              createTextVNode(" Projects "),
+              createBaseVNode("span", { class: "om-phase-tag" }, "Phase 4")
+            ], -1)),
+            unref(ws).recents.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+              _cache[4] || (_cache[4] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+              _cache[5] || (_cache[5] = createBaseVNode("div", {
+                class: "om-section-label",
+                "data-section": "recents"
+              }, "Recents", -1)),
+              (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ws).recents, (recent) => {
+                return openBlock(), createElementBlock("button", {
+                  key: unref(ws).refKey(recent),
+                  class: "open-menu-item om-item-recent",
+                  type: "button",
+                  role: "menuitem",
+                  "data-recent-key": unref(ws).refKey(recent),
+                  onClick: ($event) => openRecent(unref(ws).refKey(recent))
+                }, [
+                  createBaseVNode("span", _hoisted_3$d, toDisplayString(unref(refGlyph)(recent)), 1),
+                  createTextVNode(" " + toDisplayString(unref(refLabel)(recent)), 1)
+                ], 8, _hoisted_2$e);
+              }), 128))
+            ], 64)) : createCommentVNode("", true),
+            _cache[10] || (_cache[10] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[11] || (_cache[11] = createBaseVNode("div", {
+              class: "om-section-label",
+              "data-section": "actions"
+            }, "Actions", -1)),
             createBaseVNode("button", {
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
               onClick: openSearch
-            }, [..._cache[1] || (_cache[1] = [
+            }, [..._cache[6] || (_cache[6] = [
               createTextVNode("Search ", -1),
               createBaseVNode("kbd", null, "⌘K", -1)
             ])]),
@@ -16877,7 +17301,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openNewTask
-            }, [..._cache[2] || (_cache[2] = [
+            }, [..._cache[7] || (_cache[7] = [
               createTextVNode("New task ", -1),
               createBaseVNode("kbd", null, "N", -1)
             ])])
@@ -16887,43 +17311,258 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$i = { class: "tab-strip" };
-const _hoisted_2$b = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$a = { class: "ts-tab-label" };
-const _hoisted_4$6 = ["onClick"];
-const _hoisted_5$6 = ["data-key", "aria-selected", "onClick", "onMousedown", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_6$6 = { class: "ts-tab-label" };
-const _hoisted_7$4 = ["onClick"];
-const _hoisted_8$4 = { class: "ts-actions" };
-const _hoisted_9$3 = ["title"];
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$n, [["__scopeId", "data-v-ea32296a"]]);
+const _hoisted_1$j = {
+  key: 0,
+  class: "tos-group-label"
+};
+const _hoisted_2$c = { class: "tos-glyph" };
+const _hoisted_3$b = ["title"];
+const _hoisted_4$7 = { class: "tos-row-actions" };
+const _hoisted_5$6 = ["title", "onClick"];
+const _hoisted_6$6 = ["onClick"];
+const _hoisted_7$5 = ["onClick"];
+const _hoisted_8$5 = { class: "tos-glyph" };
+const _hoisted_9$4 = ["title"];
+const _hoisted_10$4 = { class: "tos-row-actions" };
+const _hoisted_11$4 = ["title", "onClick"];
+const _hoisted_12$4 = ["onClick"];
+const _hoisted_13$3 = ["onClick"];
+const _sfc_main$m = /* @__PURE__ */ defineComponent({
+  __name: "TabOverflowSheet",
+  props: {
+    open: { type: Boolean },
+    tasksList: {}
+  },
+  emits: ["close"],
+  setup(__props, { emit: __emit }) {
+    const props = __props;
+    const emit2 = __emit;
+    const ws = useWorkspaceStore();
+    const group0 = computed(() => ws.groupTabs(0));
+    const group1 = computed(() => ws.groupTabs(1));
+    const hasSplit = computed(() => ws.splitOn && ws.splitIndex !== null);
+    function close() {
+      emit2("close");
+    }
+    function activateAndClose(tab, group) {
+      ws.activate(refKey(tab));
+      close();
+    }
+    function togglePin(key) {
+      var _a2;
+      if ((_a2 = ws.meta[key]) == null ? void 0 : _a2.pinned) ws.unpin(key);
+      else ws.pin(key);
+    }
+    function closeTab(key) {
+      ws.close(key);
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createBlock(_sfc_main$y, {
+        size: "sheet",
+        open: __props.open,
+        title: "All tabs",
+        dismissible: true,
+        onClose: close
+      }, {
+        default: withCtx(() => [
+          hasSplit.value ? (openBlock(), createElementBlock("div", _hoisted_1$j, "Group 1")) : createCommentVNode("", true),
+          (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab) => {
+            var _a2, _b;
+            return openBlock(), createElementBlock("div", {
+              key: unref(refKey)(tab),
+              class: normalizeClass(["tos-row", { "tos-row--active": unref(ws).active[0] === unref(refKey)(tab) || unref(ws).active[1] === unref(refKey)(tab) }])
+            }, [
+              createBaseVNode("span", _hoisted_2$c, toDisplayString(unref(refGlyph)(tab)), 1),
+              createBaseVNode("span", {
+                class: "tos-label",
+                title: unref(refTitle)(tab, props.tasksList)
+              }, toDisplayString(unref(refLabel)(tab, props.tasksList)), 9, _hoisted_3$b),
+              createBaseVNode("div", _hoisted_4$7, [
+                createBaseVNode("button", {
+                  class: "tos-btn",
+                  type: "button",
+                  title: ((_a2 = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _a2.pinned) ? "Unpin" : "Pin",
+                  onClick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["stop"])
+                }, toDisplayString(((_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.pinned) ? "📌" : "⊕"), 9, _hoisted_5$6),
+                createBaseVNode("button", {
+                  class: "tos-btn tos-btn--close",
+                  type: "button",
+                  title: "Close tab",
+                  onClick: withModifiers(($event) => closeTab(unref(refKey)(tab)), ["stop"])
+                }, "×", 8, _hoisted_6$6)
+              ]),
+              createBaseVNode("button", {
+                class: "tos-row-activate",
+                type: "button",
+                onClick: ($event) => activateAndClose(tab, 0)
+              }, null, 8, _hoisted_7$5)
+            ], 2);
+          }), 128)),
+          hasSplit.value && group1.value.length ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
+            _cache[0] || (_cache[0] = createBaseVNode("div", { class: "tos-group-label" }, "Group 2", -1)),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(group1.value, (tab) => {
+              var _a2, _b;
+              return openBlock(), createElementBlock("div", {
+                key: unref(refKey)(tab),
+                class: normalizeClass(["tos-row", { "tos-row--active": unref(ws).active[0] === unref(refKey)(tab) || unref(ws).active[1] === unref(refKey)(tab) }])
+              }, [
+                createBaseVNode("span", _hoisted_8$5, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", {
+                  class: "tos-label",
+                  title: unref(refTitle)(tab, props.tasksList)
+                }, toDisplayString(unref(refLabel)(tab, props.tasksList)), 9, _hoisted_9$4),
+                createBaseVNode("div", _hoisted_10$4, [
+                  createBaseVNode("button", {
+                    class: "tos-btn",
+                    type: "button",
+                    title: ((_a2 = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _a2.pinned) ? "Unpin" : "Pin",
+                    onClick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["stop"])
+                  }, toDisplayString(((_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.pinned) ? "📌" : "⊕"), 9, _hoisted_11$4),
+                  createBaseVNode("button", {
+                    class: "tos-btn tos-btn--close",
+                    type: "button",
+                    title: "Close tab",
+                    onClick: withModifiers(($event) => closeTab(unref(refKey)(tab)), ["stop"])
+                  }, "×", 8, _hoisted_12$4)
+                ]),
+                createBaseVNode("button", {
+                  class: "tos-row-activate",
+                  type: "button",
+                  onClick: ($event) => activateAndClose(tab, 1)
+                }, null, 8, _hoisted_13$3)
+              ], 2);
+            }), 128))
+          ], 64)) : createCommentVNode("", true)
+        ]),
+        _: 1
+      }, 8, ["open"]);
+    };
+  }
+});
+const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$m, [["__scopeId", "data-v-00756674"]]);
+const _hoisted_1$f = { class: "tab-strip-outer" };
+const _hoisted_2$9 = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_3$8 = { class: "ts-tab-glyph" };
+const _hoisted_4$6 = { class: "ts-tab-label" };
+const _hoisted_5$5 = ["onClick"];
+const _hoisted_6$5 = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_7$4 = { class: "ts-tab-glyph" };
+const _hoisted_8$4 = { class: "ts-tab-label" };
+const _hoisted_9$3 = ["onClick"];
+const _hoisted_10$3 = {
+  key: 0,
+  class: "ts-overflow-fade",
+  "aria-hidden": "true"
+};
+const _hoisted_11$3 = { class: "ts-actions" };
+const _hoisted_12$3 = ["title"];
+const _hoisted_13$2 = ["title"];
 const _sfc_main$l = /* @__PURE__ */ defineComponent({
   __name: "TabStrip",
   setup(__props) {
     const ws = useWorkspaceStore();
     const ui = useUiStore();
+    const live = useLiveStore();
     const group0 = computed(() => ws.groupTabs(0));
     const group1 = computed(() => ws.groupTabs(1));
+    onMounted(() => {
+      live.bind(TASKS_LIST_KEY, tasksListSpec);
+    });
+    onBeforeUnmount(() => {
+      live.unbind(TASKS_LIST_KEY);
+    });
+    const tasksList = computed(() => {
+      const e = live.entry(TASKS_LIST_KEY);
+      if (!(e == null ? void 0 : e.data)) return null;
+      const d2 = e.data;
+      return Array.isArray(d2) ? d2 : d2.tasks ?? null;
+    });
+    function tabLabel(r) {
+      var _a2, _b;
+      if (r.kind === "envelope") {
+        const perIdEntry = live.entry("task:" + r.taskId);
+        const data = perIdEntry == null ? void 0 : perIdEntry.data;
+        const headline = (_b = (_a2 = data == null ? void 0 : data.chain) == null ? void 0 : _a2.task) == null ? void 0 : _b.headline;
+        if (headline) return headline;
+      }
+      return refLabel(r, tasksList.value);
+    }
+    const stripEl = /* @__PURE__ */ ref(null);
+    const isOverflowing = /* @__PURE__ */ ref(false);
+    const overflowOpen = /* @__PURE__ */ ref(false);
+    function checkOverflow() {
+      const el = stripEl.value;
+      if (!el) return;
+      isOverflowing.value = el.scrollWidth > el.clientWidth;
+    }
+    let ro = null;
+    onMounted(() => {
+      if (stripEl.value) {
+        ro = new ResizeObserver(checkOverflow);
+        ro.observe(stripEl.value);
+      }
+      nextTick(checkOverflow);
+    });
+    onBeforeUnmount(() => {
+      ro == null ? void 0 : ro.disconnect();
+    });
+    watch(() => ws.tabs.length, () => nextTick(checkOverflow));
+    const contextMenu = /* @__PURE__ */ ref(null);
+    function openContextMenu(e, tab) {
+      contextMenu.value = { x: e.clientX, y: e.clientY, tab };
+    }
+    function closeCtx() {
+      contextMenu.value = null;
+    }
+    function handleGlobalKeydown(e) {
+      if (contextMenu.value && e.key === "Escape") {
+        e.preventDefault();
+        closeCtx();
+      }
+    }
+    onMounted(() => document.addEventListener("keydown", handleGlobalKeydown));
+    onBeforeUnmount(() => document.removeEventListener("keydown", handleGlobalKeydown));
+    let longPressTimer = null;
+    let longPressRef = null;
+    function onTouchStart(e, tab) {
+      longPressRef = { e, tab };
+      longPressTimer = setTimeout(() => {
+        if (!longPressRef) return;
+        const touch = longPressRef.e.touches[0];
+        if (touch) openContextMenu({ clientX: touch.clientX, clientY: touch.clientY }, longPressRef.tab);
+        longPressRef = null;
+      }, 500);
+    }
+    function onTouchEnd() {
+      if (longPressTimer) clearTimeout(longPressTimer);
+      longPressTimer = null;
+      longPressRef = null;
+    }
+    function prefetchRef(ref2) {
+      if (ref2.kind !== "envelope" && ref2.kind !== "report") return;
+      const k = refKey(ref2);
+      live.prefetch(k, {
+        topics: ["tasks"],
+        fetch: async () => {
+          try {
+            const r = await fetch("/api/tasks/" + encodeURIComponent(ref2.taskId));
+            return r.ok ? r.json() : null;
+          } catch {
+            return null;
+          }
+        }
+      });
+    }
+    function onTabHover(idx, group) {
+      const prev = idx > 0 ? group[idx - 1] : null;
+      const next = idx < group.length - 1 ? group[idx + 1] : null;
+      if (prev) prefetchRef(prev);
+      if (next) prefetchRef(next);
+    }
     const draggedKey = /* @__PURE__ */ ref(null);
     const dragOverIdx = /* @__PURE__ */ ref(null);
     const dragOverDivider = /* @__PURE__ */ ref(false);
-    function tabLabel(r) {
-      switch (r.kind) {
-        case "dashboard":
-          return "Dashboard";
-        case "file":
-          return r.path.split("/").pop() || r.path;
-        case "report":
-          return r.taskId;
-        case "legacy":
-          return r.page.charAt(0).toUpperCase() + r.page.slice(1);
-        case "envelope":
-          return r.taskId;
-        case "project":
-          return r.slug;
-        case "chat":
-          return r.chatId;
-      }
-    }
     function isActive(tab) {
       const key = refKey(tab);
       return ws.active[0] === key || ws.active[1] === key;
@@ -16974,107 +17613,199 @@ const _sfc_main$l = /* @__PURE__ */ defineComponent({
       onDragEnd();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$i, [
-        createVNode(_sfc_main$m),
-        (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
-          return openBlock(), createElementBlock("button", {
-            key: unref(refKey)(tab),
-            class: normalizeClass(["ts-tab", {
-              "ts-tab--active": isActive(tab),
-              "ts-tab--focused": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
-              "ts-tab--drag-over": dragOverIdx.value === i
-            }]),
-            "data-key": unref(refKey)(tab),
-            role: "tab",
-            "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
-            draggable: "true",
-            type: "button",
-            onClick: ($event) => {
-              unref(ws).activate(unref(refKey)(tab));
-              unref(ws).focus(0);
-            },
-            onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
-            onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
-            onDragend: onDragEnd,
-            onDragover: ($event) => onTabDragOver($event, i),
-            onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
-            onDrop: ($event) => onTabDrop($event, i)
+      var _a2;
+      return openBlock(), createElementBlock(Fragment, null, [
+        createBaseVNode("div", _hoisted_1$f, [
+          createBaseVNode("div", {
+            class: normalizeClass(["tab-strip", { "tab-strip--overflow": isOverflowing.value }]),
+            ref_key: "stripEl",
+            ref: stripEl
           }, [
-            createBaseVNode("span", _hoisted_3$a, toDisplayString(tabLabel(tab)), 1),
-            createBaseVNode("span", {
-              class: "ts-tab-close",
-              role: "button",
-              tabindex: "-1",
-              "aria-label": "Close tab",
-              onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_4$6)
-          ], 42, _hoisted_2$b);
-        }), 128)),
-        unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
-          key: 0,
-          class: normalizeClass(["ts-divider", {
-            "ts-divider--split": unref(ws).splitOn,
-            "ts-divider--drag-over": dragOverDivider.value
-          }]),
-          title: "Drop here to move tab between groups",
-          onDragover: onDividerDragOver,
-          onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverDivider.value = false),
-          onDrop: onDividerDrop
-        }, null, 34)) : createCommentVNode("", true),
-        (openBlock(true), createElementBlock(Fragment, null, renderList(group1.value, (tab, i) => {
-          return openBlock(), createElementBlock("button", {
-            key: unref(refKey)(tab),
-            class: normalizeClass(["ts-tab ts-tab--g1", {
-              "ts-tab--active": isActive(tab),
-              "ts-tab--focused": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
-              "ts-tab--drag-over": dragOverIdx.value === group0.value.length + i
-            }]),
-            "data-key": unref(refKey)(tab),
-            role: "tab",
-            "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
-            draggable: "true",
-            type: "button",
-            onClick: ($event) => {
-              unref(ws).activate(unref(refKey)(tab));
-              unref(ws).focus(1);
-            },
-            onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
-            onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
-            onDragend: onDragEnd,
-            onDragover: ($event) => onTabDragOver($event, group0.value.length + i),
-            onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
-            onDrop: ($event) => onTabDrop($event, group0.value.length + i)
+            createVNode(OpenMenu),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
+              var _a3, _b, _c;
+              return openBlock(), createElementBlock("button", {
+                key: unref(refKey)(tab),
+                class: normalizeClass(["ts-tab", {
+                  "ts-tab--active": isActive(tab),
+                  "ts-tab--focused": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
+                  "ts-tab--drag-over": dragOverIdx.value === i,
+                  "ts-tab--pinned": (_a3 = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _a3.pinned,
+                  "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
+                }]),
+                "data-key": unref(refKey)(tab),
+                title: unref(refTitle)(tab, tasksList.value),
+                role: "tab",
+                "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
+                draggable: "true",
+                type: "button",
+                onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onMouseenter: ($event) => onTabHover(i, group0.value),
+                onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
+                onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
+                onTouchstartPassive: ($event) => onTouchStart($event, tab),
+                onTouchendPassive: onTouchEnd,
+                onTouchmovePassive: onTouchEnd,
+                onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
+                onDragend: onDragEnd,
+                onDragover: ($event) => onTabDragOver($event, i),
+                onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
+                onDrop: ($event) => onTabDrop($event, i)
+              }, [
+                createBaseVNode("span", _hoisted_3$8, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", _hoisted_4$6, toDisplayString(tabLabel(tab)), 1),
+                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
+                  key: 0,
+                  class: "ts-tab-close",
+                  role: "button",
+                  tabindex: "-1",
+                  "aria-label": "Close tab",
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
+                }, "×", 8, _hoisted_5$5)) : createCommentVNode("", true)
+              ], 42, _hoisted_2$9);
+            }), 128)),
+            unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
+              key: 0,
+              class: normalizeClass(["ts-divider", {
+                "ts-divider--split": unref(ws).splitOn,
+                "ts-divider--drag-over": dragOverDivider.value
+              }]),
+              title: "Drop here to move tab between groups",
+              onDragover: onDividerDragOver,
+              onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverDivider.value = false),
+              onDrop: onDividerDrop
+            }, null, 34)) : createCommentVNode("", true),
+            (openBlock(true), createElementBlock(Fragment, null, renderList(group1.value, (tab, i) => {
+              var _a3, _b, _c;
+              return openBlock(), createElementBlock("button", {
+                key: unref(refKey)(tab),
+                class: normalizeClass(["ts-tab ts-tab--g1", {
+                  "ts-tab--active": isActive(tab),
+                  "ts-tab--focused": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
+                  "ts-tab--drag-over": dragOverIdx.value === group0.value.length + i,
+                  "ts-tab--pinned": (_a3 = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _a3.pinned,
+                  "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
+                }]),
+                "data-key": unref(refKey)(tab),
+                title: unref(refTitle)(tab, tasksList.value),
+                role: "tab",
+                "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
+                draggable: "true",
+                type: "button",
+                onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onMouseenter: ($event) => onTabHover(i, group1.value),
+                onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
+                onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
+                onTouchstartPassive: ($event) => onTouchStart($event, tab),
+                onTouchendPassive: onTouchEnd,
+                onTouchmovePassive: onTouchEnd,
+                onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
+                onDragend: onDragEnd,
+                onDragover: ($event) => onTabDragOver($event, group0.value.length + i),
+                onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
+                onDrop: ($event) => onTabDrop($event, group0.value.length + i)
+              }, [
+                createBaseVNode("span", _hoisted_7$4, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", _hoisted_8$4, toDisplayString(tabLabel(tab)), 1),
+                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
+                  key: 0,
+                  class: "ts-tab-close",
+                  role: "button",
+                  tabindex: "-1",
+                  "aria-label": "Close tab",
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
+                }, "×", 8, _hoisted_9$3)) : createCommentVNode("", true)
+              ], 42, _hoisted_6$5);
+            }), 128))
+          ], 2),
+          isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_10$3)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_11$3, [
+            isOverflowing.value ? (openBlock(), createElementBlock("button", {
+              key: 0,
+              class: "ts-overflow-btn",
+              type: "button",
+              title: `${unref(ws).tabs.length} tabs — click to see all`,
+              onClick: _cache[3] || (_cache[3] = ($event) => overflowOpen.value = true)
+            }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_12$3)) : createCommentVNode("", true),
+            createBaseVNode("button", {
+              class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
+              type: "button",
+              title: unref(ws).splitOn ? "Close split" : "Open split",
+              onClick: _cache[4] || (_cache[4] = ($event) => unref(ws).toggleSplit())
+            }, "⫽", 10, _hoisted_13$2),
+            createBaseVNode("button", {
+              id: "settings-btn",
+              class: "ts-settings-btn",
+              type: "button",
+              title: "Settings",
+              onClick: _cache[5] || (_cache[5] = ($event) => unref(ui).settingsOpen = true)
+            }, "⚙")
+          ])
+        ]),
+        contextMenu.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
+          createBaseVNode("div", {
+            class: "ts-ctx-backdrop",
+            onPointerdown: closeCtx
+          }, null, 32),
+          createBaseVNode("div", {
+            class: "ts-ctx-menu",
+            style: normalizeStyle({ left: contextMenu.value.x + "px", top: contextMenu.value.y + "px" }),
+            onPointerdown: _cache[11] || (_cache[11] = withModifiers(() => {
+            }, ["stop"]))
           }, [
-            createBaseVNode("span", _hoisted_6$6, toDisplayString(tabLabel(tab)), 1),
-            createBaseVNode("span", {
-              class: "ts-tab-close",
-              role: "button",
-              tabindex: "-1",
-              "aria-label": "Close tab",
-              onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-            }, "×", 8, _hoisted_7$4)
-          ], 42, _hoisted_5$6);
-        }), 128)),
-        createBaseVNode("div", _hoisted_8$4, [
-          createBaseVNode("button", {
-            class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
-            type: "button",
-            title: unref(ws).splitOn ? "Close split" : "Open split",
-            onClick: _cache[3] || (_cache[3] = ($event) => unref(ws).toggleSplit())
-          }, "⫽", 10, _hoisted_9$3),
-          createBaseVNode("button", {
-            id: "settings-btn",
-            class: "ts-settings-btn",
-            type: "button",
-            title: "Settings",
-            onClick: _cache[4] || (_cache[4] = ($event) => unref(ui).settingsOpen = true)
-          }, "⚙")
-        ])
-      ]);
+            createBaseVNode("button", {
+              class: "ts-ctx-item",
+              type: "button",
+              onClick: _cache[6] || (_cache[6] = ($event) => {
+                var _a3;
+                ((_a3 = unref(ws).meta[unref(refKey)(contextMenu.value.tab)]) == null ? void 0 : _a3.pinned) ? unref(ws).unpin(unref(refKey)(contextMenu.value.tab)) : unref(ws).pin(unref(refKey)(contextMenu.value.tab));
+                closeCtx();
+              })
+            }, toDisplayString(((_a2 = unref(ws).meta[unref(refKey)(contextMenu.value.tab)]) == null ? void 0 : _a2.pinned) ? "Unpin" : "Pin"), 1),
+            createBaseVNode("button", {
+              class: "ts-ctx-item",
+              type: "button",
+              onClick: _cache[7] || (_cache[7] = ($event) => {
+                unref(ws).close(unref(refKey)(contextMenu.value.tab));
+                closeCtx();
+              })
+            }, "Close"),
+            createBaseVNode("button", {
+              class: "ts-ctx-item",
+              type: "button",
+              onClick: _cache[8] || (_cache[8] = ($event) => {
+                unref(ws).closeOthers(unref(refKey)(contextMenu.value.tab));
+                closeCtx();
+              })
+            }, "Close others"),
+            createBaseVNode("button", {
+              class: "ts-ctx-item",
+              type: "button",
+              onClick: _cache[9] || (_cache[9] = ($event) => {
+                unref(ws).closeToRight(unref(refKey)(contextMenu.value.tab));
+                closeCtx();
+              })
+            }, "Close to the right"),
+            createBaseVNode("button", {
+              class: "ts-ctx-item",
+              type: "button",
+              onClick: _cache[10] || (_cache[10] = ($event) => {
+                unref(ws).moveToGroup(unref(refKey)(contextMenu.value.tab), unref(ws).tabGroup(unref(ws).tabs.findIndex((t) => unref(refKey)(t) === unref(refKey)(contextMenu.value.tab))) === 0 ? 1 : 0);
+                closeCtx();
+              })
+            }, "Move to other group")
+          ], 36)
+        ], 64)) : createCommentVNode("", true),
+        createVNode(TabOverflowSheet, {
+          open: overflowOpen.value,
+          "tasks-list": tasksList.value,
+          onClose: _cache[12] || (_cache[12] = ($event) => overflowOpen.value = false)
+        }, null, 8, ["open", "tasks-list"])
+      ], 64);
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-54748e19"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$l, [["__scopeId", "data-v-e9add2d2"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -17092,15 +17823,37 @@ const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   }
   return { tiers, lastFetch, fetch: fetch2 };
 });
-function useResource(key, spec) {
+function useResource(key, spec, opts) {
   const live = useLiveStore();
   const resolvedKey = () => typeof key === "string" ? key : key.value;
-  onMounted(() => {
-    live.bind(resolvedKey(), spec);
-  });
-  onBeforeUnmount(() => {
-    live.unbind(resolvedKey());
-  });
+  if (opts == null ? void 0 : opts.keepAliveAware) {
+    let skipNextActivated = false;
+    onMounted(() => {
+      skipNextActivated = true;
+      live.bind(resolvedKey(), spec);
+    });
+    onActivated(() => {
+      if (skipNextActivated) {
+        skipNextActivated = false;
+        return;
+      }
+      live.bind(resolvedKey(), spec);
+    });
+    onDeactivated(() => {
+      skipNextActivated = false;
+      live.unbind(resolvedKey());
+    });
+    onBeforeUnmount(() => {
+      live.unbind(resolvedKey());
+    });
+  } else {
+    onMounted(() => {
+      live.bind(resolvedKey(), spec);
+    });
+    onBeforeUnmount(() => {
+      live.unbind(resolvedKey());
+    });
+  }
   if (typeof key !== "string") {
     watch(key, (newKey, oldKey) => {
       if (oldKey) live.unbind(oldKey);
@@ -17123,7 +17876,7 @@ const useDashboardStore = /* @__PURE__ */ defineStore("dashboard", () => {
   }
   return { clockFormat, collapsedSections, toggleSection, isCollapsed };
 });
-const _hoisted_1$h = ["placeholder"];
+const _hoisted_1$i = ["placeholder"];
 const _sfc_main$k = /* @__PURE__ */ defineComponent({
   __name: "SearchBox",
   props: {
@@ -17172,7 +17925,7 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
           onInput: _cache[1] || (_cache[1] = ($event) => openModal(draft.value)),
           onKeydown: onKeyDown,
           "aria-label": "Search knowledge base"
-        }, null, 40, _hoisted_1$h), [
+        }, null, 40, _hoisted_1$i), [
           [vModelText, draft.value]
         ]),
         _cache[3] || (_cache[3] = createBaseVNode("span", { class: "srch-box-hint" }, "⌘K", -1))
@@ -17180,9 +17933,9 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$g = { class: "hero" };
-const _hoisted_2$a = { class: "date" };
-const _hoisted_3$9 = { class: "message" };
+const _hoisted_1$h = { class: "hero" };
+const _hoisted_2$b = { class: "date" };
+const _hoisted_3$a = { class: "message" };
 const _sfc_main$j = /* @__PURE__ */ defineComponent({
   __name: "DashboardHero",
   setup(__props) {
@@ -17268,7 +18021,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
       if (clockInterval) clearInterval(clockInterval);
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("section", _hoisted_1$g, [
+      return openBlock(), createElementBlock("section", _hoisted_1$h, [
         _cache[0] || (_cache[0] = createBaseVNode("div", {
           class: "logo-art",
           role: "img",
@@ -17336,8 +18089,8 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
           ref: clockEl,
           class: "time"
         }, toDisplayString(clockTime.value), 513),
-        createBaseVNode("div", _hoisted_2$a, toDisplayString(clockDate.value), 1),
-        createBaseVNode("div", _hoisted_3$9, toDisplayString(greeting.value), 1),
+        createBaseVNode("div", _hoisted_2$b, toDisplayString(clockDate.value), 1),
+        createBaseVNode("div", _hoisted_3$a, toDisplayString(greeting.value), 1),
         createVNode(_sfc_main$k, { "corpus-label": corpusLabel.value }, null, 8, ["corpus-label"]),
         _cache[2] || (_cache[2] = createBaseVNode("a", {
           class: "repo-cta",
@@ -17353,9 +18106,9 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$f = ["data-task-id"];
-const _hoisted_2$9 = { class: "db-tier-row-headline" };
-const _hoisted_3$8 = {
+const _hoisted_1$g = ["data-task-id"];
+const _hoisted_2$a = { class: "db-tier-row-headline" };
+const _hoisted_3$9 = {
   key: 0,
   class: "db-tier-row-agent"
 };
@@ -17379,24 +18132,24 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
           _cache[2] || (_cache[2] = withKeys(withModifiers(($event) => emit2("open-task", __props.row.id), ["prevent"]), ["space"]))
         ]
       }, [
-        createBaseVNode("span", _hoisted_2$9, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
-        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$8, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
-      ], 40, _hoisted_1$f);
+        createBaseVNode("span", _hoisted_2$a, toDisplayString(__props.row.headline || __props.row.label || __props.row.id), 1),
+        __props.row.agent ? (openBlock(), createElementBlock("span", _hoisted_3$9, toDisplayString(__props.row.agent), 1)) : createCommentVNode("", true)
+      ], 40, _hoisted_1$g);
     };
   }
 });
-const _hoisted_1$e = ["data-tier"];
-const _hoisted_2$8 = { class: "db-tier-title" };
-const _hoisted_3$7 = { class: "db-tier-count" };
-const _hoisted_4$5 = {
+const _hoisted_1$8 = ["data-tier"];
+const _hoisted_2$4 = { class: "db-tier-title" };
+const _hoisted_3$3 = { class: "db-tier-count" };
+const _hoisted_4$2 = {
   key: 0,
   style: { "opacity": "0.5" }
 };
-const _hoisted_5$5 = {
+const _hoisted_5$2 = {
   key: 1,
   style: { "opacity": "0.5" }
 };
-const _hoisted_6$5 = {
+const _hoisted_6$2 = {
   key: 2,
   style: { "opacity": "0.5" }
 };
@@ -17418,14 +18171,12 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
     const props = __props;
     const dash = useDashboardStore();
     const workspace = useWorkspaceStore();
-    const tasksStore = useTasksStore();
     const collapsed = computed(() => dash.isCollapsed(props.sectionKey));
     const limit = computed(() => props.rowLimit ?? 8);
     const visibleRows = computed(() => props.tier.rows.slice(0, limit.value));
     const hasMore = computed(() => props.tier.count > visibleRows.value.length);
     function openTask(id) {
-      tasksStore.pendingTaskId = id;
-      workspace.open({ kind: "legacy", page: "tasks" });
+      workspace.open({ kind: "envelope", taskId: id });
     }
     function openAllTasks() {
       workspace.open({ kind: "legacy", page: "tasks" });
@@ -17439,11 +18190,11 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
           class: "db-tier-header",
           onClick: _cache[0] || (_cache[0] = ($event) => unref(dash).toggleSection(__props.sectionKey))
         }, [
-          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.title), 1),
-          createBaseVNode("span", _hoisted_3$7, [
+          createBaseVNode("span", _hoisted_2$4, toDisplayString(__props.title), 1),
+          createBaseVNode("span", _hoisted_3$3, [
             createTextVNode(toDisplayString(__props.tier.count) + " ", 1),
-            __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$5, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
-            collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$5, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$5, " ▾"))
+            __props.tier.count > limit.value && !__props.openAllLink ? (openBlock(), createElementBlock("span", _hoisted_4$2, " (showing " + toDisplayString(visibleRows.value.length) + ")", 1)) : createCommentVNode("", true),
+            collapsed.value ? (openBlock(), createElementBlock("span", _hoisted_5$2, " ▸")) : (openBlock(), createElementBlock("span", _hoisted_6$2, " ▾"))
           ])
         ]),
         !collapsed.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
@@ -17469,11 +18220,11 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
             onClick: withModifiers(openAllTasks, ["stop"])
           }, toDisplayString(__props.tier.count - visibleRows.value.length) + " more in Tasks → ", 1)) : createCommentVNode("", true)
         ], 64)) : createCommentVNode("", true)
-      ], 8, _hoisted_1$e);
+      ], 8, _hoisted_1$8);
     };
   }
 });
-const _hoisted_1$d = {
+const _hoisted_1$e = {
   id: "dashboard-attention-tiers",
   class: "db-tiers",
   "aria-label": "Attention tiers"
@@ -17503,7 +18254,7 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
       return ((_a2 = attention.tiers) == null ? void 0 : _a2.reports) ?? { count: 0, rows: [] };
     });
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$d, [
+      return openBlock(), createElementBlock("div", _hoisted_1$e, [
         createVNode(_sfc_main$h, {
           "section-key": "triage",
           title: "Triage",
@@ -17530,12 +18281,12 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$c = {
+const _hoisted_1$d = {
   key: 0,
   class: "db-totals"
 };
-const _hoisted_2$7 = { class: "db-totals-done" };
-const _hoisted_3$6 = { class: "db-totals-failed" };
+const _hoisted_2$8 = { class: "db-totals-done" };
+const _hoisted_3$7 = { class: "db-totals-failed" };
 const _sfc_main$f = /* @__PURE__ */ defineComponent({
   __name: "TotalsLine",
   props: {
@@ -17544,7 +18295,7 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
   setup(__props) {
     const workspace = useWorkspaceStore();
     return (_ctx, _cache) => {
-      return __props.totals ? (openBlock(), createElementBlock("div", _hoisted_1$c, [
+      return __props.totals ? (openBlock(), createElementBlock("div", _hoisted_1$d, [
         createBaseVNode("button", {
           class: "db-totals-btn",
           type: "button",
@@ -17554,18 +18305,18 @@ const _sfc_main$f = /* @__PURE__ */ defineComponent({
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
           createBaseVNode("span", null, toDisplayString(__props.totals.waiting ?? 0) + " waiting", 1),
           _cache[2] || (_cache[2] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_2$7, toDisplayString(__props.totals.done ?? 0) + " done", 1),
+          createBaseVNode("span", _hoisted_2$8, toDisplayString(__props.totals.done ?? 0) + " done", 1),
           _cache[3] || (_cache[3] = createBaseVNode("span", { class: "db-totals-sep" }, "·", -1)),
-          createBaseVNode("span", _hoisted_3$6, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
+          createBaseVNode("span", _hoisted_3$7, toDisplayString(__props.totals.failed ?? 0) + " failed", 1)
         ])
       ])) : createCommentVNode("", true);
     };
   }
 });
-const _hoisted_1$b = ["data-sched-id"];
-const _hoisted_2$6 = { class: "db-sched-row-main" };
-const _hoisted_3$5 = { class: "db-sched-row-head" };
-const _hoisted_4$4 = { class: "db-sched-headline" };
+const _hoisted_1$c = ["data-sched-id"];
+const _hoisted_2$7 = { class: "db-sched-row-main" };
+const _hoisted_3$6 = { class: "db-sched-row-head" };
+const _hoisted_4$5 = { class: "db-sched-headline" };
 const _hoisted_5$4 = { class: "db-sched-meta" };
 const _hoisted_6$4 = { class: "db-sched-agent" };
 const _hoisted_7$2 = { class: "db-sched-cadence" };
@@ -17617,9 +18368,9 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
         class: "db-sched-row",
         "data-sched-id": __props.template.id
       }, [
-        createBaseVNode("div", _hoisted_2$6, [
-          createBaseVNode("div", _hoisted_3$5, [
-            createBaseVNode("span", _hoisted_4$4, toDisplayString(headline.value), 1),
+        createBaseVNode("div", _hoisted_2$7, [
+          createBaseVNode("div", _hoisted_3$6, [
+            createBaseVNode("span", _hoisted_4$5, toDisplayString(headline.value), 1),
             _cache[3] || (_cache[3] = createBaseVNode("span", {
               class: "db-sched-recur",
               title: "Recurring template"
@@ -17652,7 +18403,7 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => confirmOpen.value = true)
           }, "Delete")
         ]),
-        createVNode(_sfc_main$x, {
+        createVNode(_sfc_main$y, {
           open: confirmOpen.value,
           size: "sm",
           title: "Delete schedule?",
@@ -17681,17 +18432,17 @@ const _sfc_main$e = /* @__PURE__ */ defineComponent({
           ]),
           _: 1
         }, 8, ["open"])
-      ], 8, _hoisted_1$b);
+      ], 8, _hoisted_1$c);
     };
   }
 });
-const _hoisted_1$a = { class: "db-sched" };
-const _hoisted_2$5 = { class: "db-sched-header" };
-const _hoisted_3$4 = {
+const _hoisted_1$b = { class: "db-sched" };
+const _hoisted_2$6 = { class: "db-sched-header" };
+const _hoisted_3$5 = {
   key: 0,
   class: "db-sched-empty"
 };
-const _hoisted_4$3 = {
+const _hoisted_4$4 = {
   key: 1,
   class: "db-sched-empty"
 };
@@ -17766,8 +18517,8 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("section", _hoisted_1$a, [
-        createBaseVNode("div", _hoisted_2$5, [
+      return openBlock(), createElementBlock("section", _hoisted_1$b, [
+        createBaseVNode("div", _hoisted_2$6, [
           _cache[1] || (_cache[1] = createBaseVNode("span", { class: "db-sched-title" }, "Scheduled tasks", -1)),
           createBaseVNode("button", {
             class: "db-sched-act-btn",
@@ -17775,7 +18526,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             onClick: _cache[0] || (_cache[0] = ($event) => unref(nt2).open())
           }, "+ New Task")
         ]),
-        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$4, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$3, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$3, [
+        __props.loading ? (openBlock(), createElementBlock("div", _hoisted_3$5, "Loading…")) : !__props.templates.length ? (openBlock(), createElementBlock("div", _hoisted_4$4, "No scheduled tasks yet.")) : (openBlock(), createElementBlock("div", _hoisted_5$3, [
           (openBlock(true), createElementBlock(Fragment, null, renderList(__props.templates, (t) => {
             return openBlock(), createBlock(_sfc_main$e, {
               key: t.id,
@@ -17791,7 +18542,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _hoisted_1$9 = { id: "dashboard-panel" };
+const _hoisted_1$a = { id: "dashboard-panel" };
 const _sfc_main$c = /* @__PURE__ */ defineComponent({
   __name: "DashboardView",
   setup(__props) {
@@ -17841,7 +18592,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       if (!((_a2 = tiers == null ? void 0 : tiers.reports) == null ? void 0 : _a2.rows)) return;
       for (const row of tiers.reports.rows.slice(0, 3)) {
         if (!row.id) continue;
-        live.prefetch("report:" + row.id, {
+        live.prefetch("task:" + row.id, {
           topics: ["tasks"],
           fetch: async () => {
             try {
@@ -17859,7 +18610,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
       fetchSchedules();
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$9, [
+      return openBlock(), createElementBlock("div", _hoisted_1$a, [
         createVNode(_sfc_main$j),
         createVNode(_sfc_main$f, { totals: totals.value }, null, 8, ["totals"]),
         createVNode(_sfc_main$g),
@@ -19055,6 +19806,975 @@ function stripFrontmatter(src) {
   if (!m2) return { fm: "", body: src };
   return { fm: m2[1], body: src.slice(m2[0].length) };
 }
+function escHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function fmtSize(bytes) {
+  if (bytes == null) return "";
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+function fileIcon(entry) {
+  if (entry.type === "directory") return "📁";
+  const ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
+  const lx = ext.toLowerCase();
+  if (lx === "md" || lx === "markdown" || lx === "mdx") return "📝";
+  if (lx === "ts" || lx === "js" || lx === "mjs") return "📦";
+  if (lx === "json") return "📋";
+  if (lx === "sh" || lx === "bash") return "⚙️";
+  if (lx === "yml" || lx === "yaml") return "📑";
+  if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(lx) !== -1) return "🖼️";
+  return "📄";
+}
+function detectLang(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  if (ext === "json") return "json";
+  if (["js", "mjs", "cjs", "ts", "tsx", "jsx"].indexOf(ext) !== -1) return "js";
+  if (ext === "py") return "py";
+  if (ext === "vue") return "vue";
+  if (ext === "html" || ext === "htm") return "html";
+  if (["css", "scss", "sass", "less"].indexOf(ext) !== -1) return "css";
+  return "";
+}
+function isYaml(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  return ext === "yaml" || ext === "yml";
+}
+function isImageFile(filePath) {
+  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
+  return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
+}
+function highlightCode(src, lang) {
+  if (lang === "json") return highlightJson(src);
+  if (lang === "js") return highlightJs(src);
+  if (lang === "py") return highlightPy(src);
+  if (lang === "vue") return highlightVue(src);
+  if (lang === "html") return highlightHtml(src);
+  if (lang === "css") return highlightCss(src);
+  return escHtml(src);
+}
+function highlightJson(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === '"') {
+      const start = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === '"') {
+          i++;
+          break;
+        }
+        i++;
+      }
+      const str2 = src.slice(start, i);
+      let j2 = i;
+      while (j2 < len && /\s/.test(src[j2])) j2++;
+      if (src[j2] === ":") {
+        out += '<span class="syn-key">' + escHtml(str2) + "</span>";
+      } else {
+        out += '<span class="syn-str">' + escHtml(str2) + "</span>";
+      }
+      continue;
+    }
+    if (ch === "-" || ch >= "0" && ch <= "9") {
+      const nStart = i;
+      if (ch === "-") i++;
+      while (i < len && /[0-9.eE+\-]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (src.slice(i, i + 4) === "true" || src.slice(i, i + 5) === "false") {
+      const kw = src.slice(i, i + 4) === "true" ? "true" : "false";
+      out += '<span class="syn-bool">' + kw + "</span>";
+      i += kw.length;
+      continue;
+    }
+    if (src.slice(i, i + 4) === "null") {
+      out += '<span class="syn-null">null</span>';
+      i += 4;
+      continue;
+    }
+    if ("{}[],:".indexOf(ch) >= 0) {
+      out += '<span class="syn-punct">' + escHtml(ch) + "</span>";
+      i++;
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+const JS_KEYWORDS = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|as|interface|type|enum|implements|public|private|protected|readonly|abstract)$/;
+const JS_BUILTINS = /^(true|false|null|undefined|NaN|Infinity|console|Math|JSON|Object|Array|String|Number|Boolean|Promise|Date|RegExp|Error|window|document|globalThis)$/;
+function highlightJs(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "/" && src[i + 1] === "/") {
+      const end = src.indexOf("\n", i);
+      const e = end === -1 ? len : end;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
+      i = e;
+      continue;
+    }
+    if (ch === "/" && src[i + 1] === "*") {
+      let bend = src.indexOf("*/", i + 2);
+      if (bend === -1) bend = len;
+      else bend += 2;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, bend)) + "</span>";
+      i = bend;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === quote) {
+          i++;
+          break;
+        }
+        if (quote === "`" && src[i] === "$" && src[i + 1] === "{") {
+          let depth = 1;
+          i += 2;
+          while (i < len && depth > 0) {
+            if (src[i] === "{") depth++;
+            else if (src[i] === "}") depth--;
+            i++;
+          }
+          continue;
+        }
+        i++;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (/[A-Za-z_$]/.test(ch)) {
+      const idStart = i;
+      while (i < len && /[A-Za-z0-9_$]/.test(src[i])) i++;
+      const word = src.slice(idStart, i);
+      if (JS_KEYWORDS.test(word)) {
+        out += '<span class="syn-kw">' + word + "</span>";
+      } else if (JS_BUILTINS.test(word)) {
+        out += '<span class="syn-builtin">' + word + "</span>";
+      } else if (src[i] === "(") {
+        out += '<span class="syn-fn">' + word + "</span>";
+      } else {
+        out += escHtml(word);
+      }
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+const PY_KEYWORDS = /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|match|case)$/;
+const PY_BUILTINS = /^(abs|all|any|bool|bytes|callable|chr|dict|dir|enumerate|filter|float|format|frozenset|getattr|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|map|max|min|next|object|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|str|sum|super|tuple|type|vars|zip|self|cls)$/;
+function highlightPy(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "@" && /[A-Za-z_]/.test(src[i + 1] || "")) {
+      const dStart = i;
+      i++;
+      while (i < len && /[A-Za-z0-9_.]/.test(src[i])) i++;
+      out += '<span class="syn-decor">' + escHtml(src.slice(dStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "#") {
+      const end = src.indexOf("\n", i);
+      const e = end === -1 ? len : end;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
+      i = e;
+      continue;
+    }
+    if ((ch === '"' || ch === "'") && src[i + 1] === ch && src[i + 2] === ch) {
+      const tq = ch + ch + ch;
+      const tStart = i;
+      i += 3;
+      const tEnd = src.indexOf(tq, i);
+      if (tEnd === -1) {
+        i = len;
+      } else {
+        i = tEnd + 3;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(tStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len) {
+        if (src[i] === "\\" && i + 1 < len) {
+          i += 2;
+          continue;
+        }
+        if (src[i] === quote) {
+          i++;
+          break;
+        }
+        if (src[i] === "\n") break;
+        i++;
+      }
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (/[A-Za-z_]/.test(ch)) {
+      const idStart = i;
+      while (i < len && /[A-Za-z0-9_]/.test(src[i])) i++;
+      const word = src.slice(idStart, i);
+      if (PY_KEYWORDS.test(word)) {
+        out += '<span class="syn-kw">' + word + "</span>";
+      } else if (PY_BUILTINS.test(word)) {
+        out += '<span class="syn-builtin">' + word + "</span>";
+      } else if (src[i] === "(") {
+        out += '<span class="syn-fn">' + word + "</span>";
+      } else {
+        out += escHtml(word);
+      }
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+function highlightHtmlTag(tag) {
+  let out = "";
+  const len = tag.length;
+  if (len < 2) return escHtml(tag);
+  out += '<span class="syn-punct">&lt;</span>';
+  let i = 1;
+  if (tag[i] === "/") {
+    out += '<span class="syn-punct">/</span>';
+    i++;
+  }
+  const nameStart = i;
+  while (i < len && /[a-zA-Z0-9\-]/.test(tag[i])) i++;
+  if (i > nameStart) {
+    out += '<span class="syn-tag">' + escHtml(tag.slice(nameStart, i)) + "</span>";
+  }
+  while (i < len && tag[i] !== ">") {
+    if (/\s/.test(tag[i])) {
+      out += tag[i];
+      i++;
+      continue;
+    }
+    if (tag[i] === "/") {
+      out += '<span class="syn-punct">/</span>';
+      i++;
+      continue;
+    }
+    const aStart = i;
+    while (i < len && /[a-zA-Z0-9:@\-._]/.test(tag[i])) i++;
+    if (i > aStart) {
+      out += '<span class="syn-attr">' + escHtml(tag.slice(aStart, i)) + "</span>";
+    } else {
+      out += escHtml(tag[i]);
+      i++;
+      continue;
+    }
+    if (tag[i] === "=") {
+      out += '<span class="syn-punct">=</span>';
+      i++;
+      if (tag[i] === '"' || tag[i] === "'") {
+        const quote = tag[i];
+        const vStart = i;
+        i++;
+        while (i < len && tag[i] !== quote) i++;
+        if (i < len) i++;
+        out += '<span class="syn-str">' + escHtml(tag.slice(vStart, i)) + "</span>";
+      } else {
+        const uStart = i;
+        while (i < len && !/[\s>]/.test(tag[i])) i++;
+        out += '<span class="syn-str">' + escHtml(tag.slice(uStart, i)) + "</span>";
+      }
+    }
+  }
+  if (i < len && tag[i] === ">") out += '<span class="syn-punct">&gt;</span>';
+  return out;
+}
+function highlightHtml(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  while (i < len) {
+    if (src.slice(i, i + 4) === "<!--") {
+      let end = src.indexOf("-->", i + 4);
+      end = end === -1 ? len : end + 3;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    if (src[i] === "<") {
+      const tagEnd = src.indexOf(">", i);
+      if (tagEnd === -1) {
+        out += escHtml(src.slice(i));
+        break;
+      }
+      out += highlightHtmlTag(src.slice(i, tagEnd + 1));
+      i = tagEnd + 1;
+      continue;
+    }
+    if (src[i] === "{" && src[i + 1] === "{") {
+      const iend = src.indexOf("}}", i + 2);
+      if (iend === -1) {
+        out += escHtml(src.slice(i));
+        break;
+      }
+      const end = iend + 2;
+      out += '<span class="syn-interp">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    out += escHtml(src[i]);
+    i++;
+  }
+  return out;
+}
+function highlightCss(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  let depth = 0;
+  while (i < len) {
+    const ch = src[i];
+    if (ch === "/" && src[i + 1] === "*") {
+      let end = src.indexOf("*/", i + 2);
+      end = end === -1 ? len : end + 2;
+      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
+      i = end;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const quote = ch;
+      const sStart = i;
+      i++;
+      while (i < len && src[i] !== quote) {
+        if (src[i] === "\\" && i + 1 < len) i++;
+        i++;
+      }
+      if (i < len) i++;
+      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "{") {
+      depth++;
+      out += '<span class="syn-punct">{</span>';
+      i++;
+      continue;
+    }
+    if (ch === "}") {
+      if (depth > 0) depth--;
+      out += '<span class="syn-punct">}</span>';
+      i++;
+      continue;
+    }
+    if (ch === "@" && /[a-zA-Z]/.test(src[i + 1] || "")) {
+      const aStart = i;
+      i++;
+      while (i < len && /[a-zA-Z\-]/.test(src[i])) i++;
+      out += '<span class="syn-kw">' + escHtml(src.slice(aStart, i)) + "</span>";
+      continue;
+    }
+    if (depth > 0 && /[a-zA-Z\-]/.test(ch)) {
+      const pStart = i;
+      while (i < len && /[a-zA-Z0-9\-]/.test(src[i])) i++;
+      let j2 = i;
+      while (j2 < len && /\s/.test(src[j2])) j2++;
+      if (src[j2] === ":") {
+        out += '<span class="syn-key">' + escHtml(src.slice(pStart, i)) + "</span>";
+      } else {
+        out += escHtml(src.slice(pStart, i));
+      }
+      continue;
+    }
+    if (depth > 0 && ch >= "0" && ch <= "9") {
+      const nStart = i;
+      while (i < len && /[0-9.]/.test(src[i])) i++;
+      while (i < len && /[a-zA-Z%]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
+      continue;
+    }
+    if (ch === "#" && /[0-9a-fA-F]/.test(src[i + 1] || "")) {
+      const hStart = i;
+      i++;
+      while (i < len && /[0-9a-fA-F]/.test(src[i])) i++;
+      out += '<span class="syn-num">' + escHtml(src.slice(hStart, i)) + "</span>";
+      continue;
+    }
+    out += escHtml(ch);
+    i++;
+  }
+  return out;
+}
+function highlightVue(src) {
+  let out = "";
+  let i = 0;
+  const len = src.length;
+  const blockRe = /<(template|script|style)(\s[^>]*?)?>/i;
+  while (i < len) {
+    const rest = src.slice(i);
+    const m2 = blockRe.exec(rest);
+    if (!m2) {
+      out += escHtml(rest);
+      break;
+    }
+    out += escHtml(rest.slice(0, m2.index));
+    const blockName = m2[1].toLowerCase();
+    const openTag = m2[0];
+    out += highlightHtmlTag(openTag);
+    const contentStart = m2.index + openTag.length;
+    const closeRe = new RegExp("</" + blockName + "\\s*>", "i");
+    const close = closeRe.exec(rest.slice(contentStart));
+    if (!close) {
+      const tailContent = rest.slice(contentStart);
+      out += highlightVueBlockContent(tailContent, blockName);
+      break;
+    }
+    const content = rest.slice(contentStart, contentStart + close.index);
+    out += highlightVueBlockContent(content, blockName);
+    const closeTag = close[0];
+    out += highlightHtmlTag(closeTag);
+    i += contentStart + close.index + closeTag.length;
+  }
+  return out;
+}
+function highlightVueBlockContent(content, blockName) {
+  if (blockName === "script") return highlightJs(content);
+  if (blockName === "style") return highlightCss(content);
+  return highlightHtml(content);
+}
+function escapeHtml(s) {
+  return escHtml(String(s == null ? "" : s));
+}
+function isPanelNarrow(panelId, threshold) {
+  const el = document.getElementById(panelId);
+  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
+  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
+}
+function timeAgo(iso) {
+  if (!iso) return "";
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return "";
+  const diff = Math.max(0, Date.now() - t);
+  const mins = Math.floor(diff / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return mins + "m ago";
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + "h ago";
+  return Math.floor(hrs / 24) + "d ago";
+}
+function statusClass(status) {
+  if (!status) return "is-open";
+  if (status === "open" || status === "claimed") return "is-open";
+  if (status.indexOf("waiting:") === 0) return "is-waiting";
+  if (status === "paused") return "is-paused";
+  if (status === "done") return "is-done";
+  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
+  return "is-open";
+}
+function shorten(s, n) {
+  const str2 = String(s || "");
+  if (str2.length <= n) return str2;
+  return str2.slice(0, n - 1) + "…";
+}
+function shortenStatusLabel(s) {
+  if (!s) return "?";
+  if (s === "paused") return "paused";
+  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
+  if (s.indexOf("failed:") === 0) {
+    const rest = s.slice("failed:".length);
+    return rest === "other" ? "failed" : "fail " + rest;
+  }
+  return s;
+}
+function fmtDaysHours(ms) {
+  if (!Number.isFinite(ms) || ms < 0) return "—";
+  const seconds = Math.floor(ms / 1e3);
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor(seconds % 86400 / 3600);
+  if (days > 0) return days + "d " + hours + "h";
+  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
+}
+function suggestChildHeadline(parentHeadline, source) {
+  const base = String(parentHeadline || "").slice(0, 56);
+  return base + " — rework";
+}
+function renderNextTargetPicker(currentAgent, agentsCache) {
+  let options = "";
+  const agents = Array.isArray(agentsCache) ? agentsCache : [];
+  for (const a of agents) {
+    if (!a || !a.name) continue;
+    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
+    const selected = a.name === currentAgent ? " selected" : "";
+    options += '<option value="' + escapeHtml(a.name) + '"' + selected + ">" + escapeHtml(label) + "</option>";
+  }
+  if (!options && currentAgent) {
+    options = '<option value="' + escapeHtml(currentAgent) + '" selected>' + escapeHtml(currentAgent) + "</option>";
+  }
+  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
+}
+function countActiveDescendants(taskId, cache) {
+  if (!taskId || !cache.length) return 0;
+  const byParent = {};
+  for (const t of cache) {
+    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
+    if (!p2) continue;
+    (byParent[p2] = byParent[p2] || []).push(t);
+  }
+  const queue2 = [taskId];
+  const seen = { [taskId]: true };
+  let count = 0;
+  while (queue2.length > 0) {
+    const cur = queue2.shift();
+    for (const kid of byParent[cur] || []) {
+      if (seen[kid.id]) continue;
+      seen[kid.id] = true;
+      if (!kid.closed || !kid.closed.status) count++;
+      queue2.push(kid.id);
+    }
+  }
+  return count;
+}
+function renderSection(title, bodyHtml, openByDefault) {
+  if (!bodyHtml) return "";
+  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
+}
+function renderPanelCard(card, isCurrent, currentTaskId, cache) {
+  var _a2;
+  if (!card) return "";
+  const brief = (card.brief || "").trim();
+  const summaryResponse = ((_a2 = card.summary) == null ? void 0 : _a2.response) ? String(card.summary.response).trim() : "";
+  const ctx = card.context || [];
+  const statusLower = (card.status || "").toLowerCase();
+  const isTerminal = statusLower.startsWith("done") || statusLower.startsWith("failed") || statusLower === "escalated";
+  const isClaimed = card.status === "claimed";
+  const isWaitingUser = card.status === "waiting:on:user";
+  const isPaused = card.status === "paused";
+  const isClosed = !!(card.closed && card.closed.status);
+  const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
+  const ctxLines = ctx.map((c) => {
+    const safe = escapeHtml(c);
+    if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
+    if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
+    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
+  }).join("");
+  const metaParts = [];
+  metaParts.push(escapeHtml(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml(card.to || "?"));
+  if (card.kind) metaParts.push(escapeHtml(card.kind));
+  if (card.priority) metaParts.push(escapeHtml(card.priority));
+  const projectLabel = card.project ? card.project : "Unassigned";
+  metaParts.push(
+    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml(card.id) + '" data-project-agent="' + escapeHtml(card.agent || card.to || "") + '" data-project-current="' + escapeHtml(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml(projectLabel) + "</span>"
+  );
+  if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
+  const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
+  let sections = "";
+  if (isTerminal && !isClosed) {
+    const picker = renderNextTargetPicker(card.agent || "", []);
+    const suggest = suggestChildHeadline(card.headline || card.id);
+    sections += renderSection(
+      "⏳ Continue",
+      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
+      true
+    );
+  }
+  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + "</div>", true);
+  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + "</div>", true);
+  if (isClosed) {
+    const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
+    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml(card.closed.by || "?") + (closedAt ? " · " + escapeHtml(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml(card.closed.reason) + "</div>" : "") + "</div>";
+  }
+  const actions = [];
+  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
+  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
+  if (!isClaimed && !isClosed) {
+    if (isTerminal) {
+      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml(card.agent || "") + '" data-done-reading-id="' + escapeHtml(card.id) + '" type="button">✓ Done reading</button>');
+    } else {
+      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">✕ Cancel</button>');
+    }
+  }
+  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml(card.id) + '" type="button">✕ Abort</button>');
+  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
+  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml(card.agent || "") + '" data-resume-task="' + escapeHtml(card.id) + '" type="button">▷ Resume</button>');
+  sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
+  {
+    const chatPicker = renderNextTargetPicker(card.agent || "", []);
+    const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
+    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
+  }
+  if (!isClaimed && !isClosed) {
+    const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
+    const activeCount = countActiveDescendants(card.id, cache);
+    const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
+    const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
+    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
+  }
+  if (isClaimed && !isClosed) {
+    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
+  }
+  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(envelopePath) + "</button></div>";
+  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(card.reportPath) + "</button></div>";
+  sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
+  if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
+  return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
+}
+function renderReportPane(card) {
+  if (!card || !card.reportPath) return "";
+  const safeTaskId = escapeHtml(card.id || "");
+  const allPaths = [card.reportPath];
+  for (const d2 of card.deliverables || []) {
+    if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
+  }
+  function docNode(path, isActive, scanExtras) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const sp = escapeHtml(path);
+    const sFolder = escapeHtml(folder);
+    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
+  }
+  const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
+  const pillsHidden = allPaths.length <= 1;
+  const pillsHtml = pillsHidden ? "" : allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
+  ).join("");
+  return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
+}
+const KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
+function resolveReportPath(primaryPath, href) {
+  if (!href) return null;
+  let clean = href.split("#")[0].split("?")[0];
+  if (!clean) return null;
+  if (/^https?:/i.test(clean) || clean.startsWith("mailto:")) return null;
+  if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
+  const parts = clean.split("/");
+  for (let k = parts.length - 1; k >= 0; k--) {
+    if (KNOWN_TOP_DIRS.includes(parts[k]) && k < parts.length - 1) return parts.slice(k).join("/");
+  }
+  const lead = clean.replace(/^\.\//, "");
+  const primaryDir = primaryPath.includes("/") ? primaryPath.substring(0, primaryPath.lastIndexOf("/")) : "";
+  const baseParts = primaryDir.split("/").filter(Boolean);
+  for (const p2 of lead.split("/")) {
+    if (!p2 || p2 === ".") continue;
+    if (p2 === "..") {
+      if (!baseParts.length) return null;
+      baseParts.pop();
+      continue;
+    }
+    baseParts.push(p2);
+  }
+  return baseParts.length ? baseParts.join("/") : null;
+}
+function appendReportExtras(primaryNode) {
+  const primaryPath = primaryNode.getAttribute("data-report-path") || "";
+  const doc2 = primaryNode.closest(".task-panel-report-doc");
+  if (!doc2) return;
+  const pane = doc2.closest(".task-panel-report-pane");
+  if (!pane) return;
+  const docsHost = pane.querySelector(".task-panel-report-docs");
+  const pills = pane.querySelector(".task-panel-doc-pills");
+  if (!docsHost || !pills) return;
+  const seen = { [primaryPath]: true };
+  const anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
+  const paths = [];
+  for (const a of Array.from(anchors)) {
+    const href = a.getAttribute("href") || "";
+    if (!href || href.startsWith("#")) continue;
+    const resolved = resolveReportPath(primaryPath, href);
+    if (!resolved) continue;
+    if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
+    a.setAttribute("href", "#" + resolved);
+    a.setAttribute("data-open-file", resolved);
+    if (seen[resolved]) continue;
+    seen[resolved] = true;
+    paths.push(resolved);
+  }
+  if (!paths.length) return;
+  for (const path of paths) {
+    const fname = path.split("/").pop() || path;
+    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
+    const node = document.createElement("div");
+    node.className = "task-panel-report-doc";
+    node.setAttribute("data-doc-path", path);
+    node.hidden = true;
+    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
+    docsHost.appendChild(node);
+  }
+  const allPaths = [primaryPath, ...paths];
+  pills.innerHTML = allPaths.map(
+    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + "</button>"
+  ).join("");
+  pills.hidden = false;
+  for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
+    loadReportNode(reportEl);
+  }
+}
+function setActiveReportDoc(pane, path) {
+  if (!pane || !path) return;
+  pane.querySelectorAll(".task-panel-report-doc").forEach((d2) => {
+    const match = d2.getAttribute("data-doc-path") === path;
+    d2.classList.toggle("is-active", match);
+    d2.hidden = !match;
+  });
+  pane.querySelectorAll(".task-panel-doc-pill").forEach((p2) => {
+    p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
+  });
+}
+function loadReportNode(node, onLoaded) {
+  if (!node || node.getAttribute("data-loaded") !== "false") {
+    if (onLoaded && node.getAttribute("data-loaded") === "true") {
+      const stored = node.getAttribute("data-raw-text");
+      if (stored) onLoaded(stored);
+    }
+    return;
+  }
+  node.setAttribute("data-loaded", "loading");
+  node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
+  const path = node.getAttribute("data-report-path") || "";
+  fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
+    if (!data.ok) throw new Error(data.error || "failed");
+    node.setAttribute("data-loaded", "true");
+    let rawText = "";
+    if (data.markdown) {
+      const raw = data.content || "";
+      const { body } = stripFrontmatter(raw);
+      rawText = body || raw;
+      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
+      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
+      node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
+    } else {
+      rawText = data.content || "";
+      const pre = document.createElement("pre");
+      pre.className = "task-panel-report-raw";
+      pre.textContent = data.content;
+      node.innerHTML = "";
+      node.appendChild(pre);
+    }
+    node.setAttribute("data-raw-text", rawText);
+    if (onLoaded && rawText) onLoaded(rawText);
+    if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
+  }).catch((err) => {
+    node.setAttribute("data-loaded", "false");
+    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml(String(err.message || err)) + "</div>";
+  });
+}
+const _hoisted_1$9 = { class: "ev-tab-bar" };
+const _hoisted_2$5 = ["hidden"];
+const _hoisted_3$4 = ["hidden"];
+const _hoisted_4$3 = { class: "ev-footer" };
+const _sfc_main$b = /* @__PURE__ */ defineComponent({
+  __name: "EnvelopeView",
+  props: {
+    resource: {}
+  },
+  setup(__props) {
+    const props = __props;
+    const ws = useWorkspaceStore();
+    const ui = useUiStore();
+    const taskId = computed(
+      () => props.resource.kind === "envelope" ? props.resource.taskId : ""
+    );
+    const liveKey = computed(() => `task:${taskId.value}`);
+    const { entry } = useResource(liveKey, {
+      topics: ["tasks"],
+      fetch: async () => {
+        const id = taskId.value;
+        if (!id) return null;
+        const r = await fetch(`/api/tasks/${encodeURIComponent(id)}`);
+        return r.ok ? r.json() : null;
+      }
+    }, { keepAliveAware: true });
+    const chain = computed(() => {
+      var _a2;
+      const data = (_a2 = entry.value) == null ? void 0 : _a2.data;
+      if (!(data == null ? void 0 : data.ok) || !data.chain) return null;
+      return data.chain;
+    });
+    const subView = /* @__PURE__ */ ref("task");
+    const taskPane = /* @__PURE__ */ ref(null);
+    const reportPane = /* @__PURE__ */ ref(null);
+    let reportRawText = null;
+    let hasAutoSwitched = false;
+    function stripActionForms(container) {
+      container.querySelectorAll(".task-panel-next, .task-panel-chat-form, .task-panel-close-form").forEach((el) => el.remove());
+      container.querySelectorAll(".task-panel-card-actions > button").forEach((btn) => {
+        if (!btn.hasAttribute("data-done-reading-agent") && !btn.hasAttribute("data-open-task")) {
+          btn.remove();
+        }
+      });
+      container.querySelectorAll("[data-project-edit]").forEach((chip) => {
+        chip.removeAttribute("data-project-edit");
+        chip.removeAttribute("data-project-agent");
+        chip.removeAttribute("data-project-current");
+        chip.removeAttribute("title");
+        chip.style.cursor = "default";
+      });
+    }
+    function doRenderTaskPane() {
+      const el = taskPane.value;
+      if (!el) return;
+      const c = chain.value;
+      if (!c || !c.task) {
+        el.innerHTML = '<div class="task-panel-loading">No chain data.</div>';
+        return;
+      }
+      const task = c.task;
+      const html = renderPanelCard(task, true, task.id, [task, ...c.ancestors ?? [], ...c.children ?? []]);
+      el.innerHTML = html;
+      stripActionForms(el);
+    }
+    function doRenderReportPane() {
+      const el = reportPane.value;
+      if (!el) return;
+      const c = chain.value;
+      const task = (c == null ? void 0 : c.task) ?? null;
+      if (!(task == null ? void 0 : task.reportPath)) {
+        el.innerHTML = '<div class="task-panel-loading">No report yet for this task.</div>';
+        return;
+      }
+      el.innerHTML = renderReportPane(task);
+      reportRawText = null;
+      el.querySelectorAll(".task-panel-report").forEach((rn) => {
+        loadReportNode(rn, (rawText) => {
+          reportRawText = rawText;
+          if (subView.value === "report") ui.raText = rawText;
+        });
+      });
+    }
+    function renderAll() {
+      doRenderTaskPane();
+      doRenderReportPane();
+    }
+    watch(chain, (newChain) => {
+      nextTick(() => {
+        var _a2;
+        renderAll();
+        if (!hasAutoSwitched) {
+          hasAutoSwitched = true;
+          if ((_a2 = newChain == null ? void 0 : newChain.task) == null ? void 0 : _a2.reportPath) subView.value = "report";
+        }
+      });
+    });
+    onMounted(() => nextTick(renderAll));
+    onDeactivated(() => {
+      ui.raText = null;
+    });
+    function setSubView(view) {
+      subView.value = view;
+      ui.raText = view === "report" ? reportRawText : null;
+    }
+    async function handleDoneReading(agent, id, btn) {
+      try {
+        const res = await fetch(`/api/tasks/${encodeURIComponent(id)}/close`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ agent, reason: "", status: "closed", cascade: false })
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+      } catch {
+      } finally {
+        btn.disabled = false;
+      }
+    }
+    function onPanelClick(ev) {
+      const t = ev.target;
+      const doneBtn = t.closest("[data-done-reading-id]");
+      if (doneBtn) {
+        ev.preventDefault();
+        const agent = doneBtn.getAttribute("data-done-reading-agent") ?? "";
+        const id = doneBtn.getAttribute("data-done-reading-id") ?? "";
+        doneBtn.disabled = true;
+        handleDoneReading(agent, id, doneBtn);
+        return;
+      }
+      const openTaskBtn = t.closest("[data-open-task]");
+      if (openTaskBtn) {
+        ev.preventDefault();
+        const id = openTaskBtn.getAttribute("data-open-task") ?? "";
+        if (id) ws.open({ kind: "envelope", taskId: id }, { preview: true });
+        return;
+      }
+      const openFileBtn = t.closest("[data-open-file]");
+      if (openFileBtn) {
+        ev.preventDefault();
+        const path = openFileBtn.getAttribute("data-open-file") ?? "";
+        if (path) ws.open({ kind: "file", path }, { preview: true });
+        return;
+      }
+    }
+    return (_ctx, _cache) => {
+      return openBlock(), createElementBlock("div", {
+        class: "ev-root",
+        onClick: onPanelClick
+      }, [
+        createBaseVNode("div", _hoisted_1$9, [
+          createBaseVNode("button", {
+            class: normalizeClass(["ev-tab", { "is-active": subView.value === "task" }]),
+            onClick: _cache[0] || (_cache[0] = withModifiers(($event) => setSubView("task"), ["stop"])),
+            "aria-selected": "subView === 'task' ? 'true' : 'false'"
+          }, "Task", 2),
+          createBaseVNode("button", {
+            class: normalizeClass(["ev-tab", { "is-active": subView.value === "report" }]),
+            onClick: _cache[1] || (_cache[1] = withModifiers(($event) => setSubView("report"), ["stop"])),
+            "aria-selected": "subView === 'report' ? 'true' : 'false'"
+          }, "Report", 2)
+        ]),
+        createBaseVNode("div", {
+          ref_key: "taskPane",
+          ref: taskPane,
+          class: "ev-pane",
+          hidden: subView.value !== "task"
+        }, null, 8, _hoisted_2$5),
+        createBaseVNode("div", {
+          ref_key: "reportPane",
+          ref: reportPane,
+          class: "ev-pane",
+          hidden: subView.value !== "report"
+        }, null, 8, _hoisted_3$4),
+        createBaseVNode("div", _hoisted_4$3, [
+          createBaseVNode("button", {
+            class: "ev-open-tasks-btn",
+            onClick: _cache[2] || (_cache[2] = withModifiers(($event) => unref(ws).open({ kind: "legacy", page: "tasks" }), ["stop"]))
+          }, " Open in Tasks ")
+        ])
+      ]);
+    };
+  }
+});
+const EnvelopeView = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["__scopeId", "data-v-90d70f3b"]]);
 /*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT */
 function isNothing(subject) {
   return typeof subject === "undefined" || subject === null;
@@ -21055,480 +22775,7 @@ function yamlRender(src) {
     return `<div class="yaml-error">YAML parse error: ${escapeHtml$1(msg)}</div><pre class="yaml-raw">${escapeHtml$1(src)}</pre>`;
   }
 }
-function escHtml(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
-function fmtSize(bytes) {
-  if (bytes == null) return "";
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-}
-function fileIcon(entry) {
-  if (entry.type === "directory") return "📁";
-  const ext = (entry.name.match(/\.([^.]+)$/) || [])[1] || "";
-  const lx = ext.toLowerCase();
-  if (lx === "md" || lx === "markdown" || lx === "mdx") return "📝";
-  if (lx === "ts" || lx === "js" || lx === "mjs") return "📦";
-  if (lx === "json") return "📋";
-  if (lx === "sh" || lx === "bash") return "⚙️";
-  if (lx === "yml" || lx === "yaml") return "📑";
-  if (["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(lx) !== -1) return "🖼️";
-  return "📄";
-}
-function detectLang(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  if (ext === "json") return "json";
-  if (["js", "mjs", "cjs", "ts", "tsx", "jsx"].indexOf(ext) !== -1) return "js";
-  if (ext === "py") return "py";
-  if (ext === "vue") return "vue";
-  if (ext === "html" || ext === "htm") return "html";
-  if (["css", "scss", "sass", "less"].indexOf(ext) !== -1) return "css";
-  return "";
-}
-function isYaml(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  return ext === "yaml" || ext === "yml";
-}
-function isImageFile(filePath) {
-  const ext = ((filePath.match(/\.([^./]+)$/) || [])[1] || "").toLowerCase();
-  return ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"].indexOf(ext) !== -1;
-}
-function highlightCode(src, lang) {
-  if (lang === "json") return highlightJson(src);
-  if (lang === "js") return highlightJs(src);
-  if (lang === "py") return highlightPy(src);
-  if (lang === "vue") return highlightVue(src);
-  if (lang === "html") return highlightHtml(src);
-  if (lang === "css") return highlightCss(src);
-  return escHtml(src);
-}
-function highlightJson(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === '"') {
-      const start = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === '"') {
-          i++;
-          break;
-        }
-        i++;
-      }
-      const str2 = src.slice(start, i);
-      let j2 = i;
-      while (j2 < len && /\s/.test(src[j2])) j2++;
-      if (src[j2] === ":") {
-        out += '<span class="syn-key">' + escHtml(str2) + "</span>";
-      } else {
-        out += '<span class="syn-str">' + escHtml(str2) + "</span>";
-      }
-      continue;
-    }
-    if (ch === "-" || ch >= "0" && ch <= "9") {
-      const nStart = i;
-      if (ch === "-") i++;
-      while (i < len && /[0-9.eE+\-]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (src.slice(i, i + 4) === "true" || src.slice(i, i + 5) === "false") {
-      const kw = src.slice(i, i + 4) === "true" ? "true" : "false";
-      out += '<span class="syn-bool">' + kw + "</span>";
-      i += kw.length;
-      continue;
-    }
-    if (src.slice(i, i + 4) === "null") {
-      out += '<span class="syn-null">null</span>';
-      i += 4;
-      continue;
-    }
-    if ("{}[],:".indexOf(ch) >= 0) {
-      out += '<span class="syn-punct">' + escHtml(ch) + "</span>";
-      i++;
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-const JS_KEYWORDS = /^(break|case|catch|class|const|continue|debugger|default|delete|do|else|export|extends|finally|for|from|function|if|import|in|instanceof|let|new|of|return|static|super|switch|this|throw|try|typeof|var|void|while|with|yield|async|await|as|interface|type|enum|implements|public|private|protected|readonly|abstract)$/;
-const JS_BUILTINS = /^(true|false|null|undefined|NaN|Infinity|console|Math|JSON|Object|Array|String|Number|Boolean|Promise|Date|RegExp|Error|window|document|globalThis)$/;
-function highlightJs(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "/" && src[i + 1] === "/") {
-      const end = src.indexOf("\n", i);
-      const e = end === -1 ? len : end;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
-      i = e;
-      continue;
-    }
-    if (ch === "/" && src[i + 1] === "*") {
-      let bend = src.indexOf("*/", i + 2);
-      if (bend === -1) bend = len;
-      else bend += 2;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, bend)) + "</span>";
-      i = bend;
-      continue;
-    }
-    if (ch === '"' || ch === "'" || ch === "`") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === quote) {
-          i++;
-          break;
-        }
-        if (quote === "`" && src[i] === "$" && src[i + 1] === "{") {
-          let depth = 1;
-          i += 2;
-          while (i < len && depth > 0) {
-            if (src[i] === "{") depth++;
-            else if (src[i] === "}") depth--;
-            i++;
-          }
-          continue;
-        }
-        i++;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (/[A-Za-z_$]/.test(ch)) {
-      const idStart = i;
-      while (i < len && /[A-Za-z0-9_$]/.test(src[i])) i++;
-      const word = src.slice(idStart, i);
-      if (JS_KEYWORDS.test(word)) {
-        out += '<span class="syn-kw">' + word + "</span>";
-      } else if (JS_BUILTINS.test(word)) {
-        out += '<span class="syn-builtin">' + word + "</span>";
-      } else if (src[i] === "(") {
-        out += '<span class="syn-fn">' + word + "</span>";
-      } else {
-        out += escHtml(word);
-      }
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-const PY_KEYWORDS = /^(False|None|True|and|as|assert|async|await|break|class|continue|def|del|elif|else|except|finally|for|from|global|if|import|in|is|lambda|nonlocal|not|or|pass|raise|return|try|while|with|yield|match|case)$/;
-const PY_BUILTINS = /^(abs|all|any|bool|bytes|callable|chr|dict|dir|enumerate|filter|float|format|frozenset|getattr|hasattr|hash|help|hex|id|input|int|isinstance|issubclass|iter|len|list|map|max|min|next|object|open|ord|pow|print|property|range|repr|reversed|round|set|setattr|slice|sorted|str|sum|super|tuple|type|vars|zip|self|cls)$/;
-function highlightPy(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "@" && /[A-Za-z_]/.test(src[i + 1] || "")) {
-      const dStart = i;
-      i++;
-      while (i < len && /[A-Za-z0-9_.]/.test(src[i])) i++;
-      out += '<span class="syn-decor">' + escHtml(src.slice(dStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "#") {
-      const end = src.indexOf("\n", i);
-      const e = end === -1 ? len : end;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, e)) + "</span>";
-      i = e;
-      continue;
-    }
-    if ((ch === '"' || ch === "'") && src[i + 1] === ch && src[i + 2] === ch) {
-      const tq = ch + ch + ch;
-      const tStart = i;
-      i += 3;
-      const tEnd = src.indexOf(tq, i);
-      if (tEnd === -1) {
-        i = len;
-      } else {
-        i = tEnd + 3;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(tStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len) {
-        if (src[i] === "\\" && i + 1 < len) {
-          i += 2;
-          continue;
-        }
-        if (src[i] === quote) {
-          i++;
-          break;
-        }
-        if (src[i] === "\n") break;
-        i++;
-      }
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9._xXbBoOeE+\-a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (/[A-Za-z_]/.test(ch)) {
-      const idStart = i;
-      while (i < len && /[A-Za-z0-9_]/.test(src[i])) i++;
-      const word = src.slice(idStart, i);
-      if (PY_KEYWORDS.test(word)) {
-        out += '<span class="syn-kw">' + word + "</span>";
-      } else if (PY_BUILTINS.test(word)) {
-        out += '<span class="syn-builtin">' + word + "</span>";
-      } else if (src[i] === "(") {
-        out += '<span class="syn-fn">' + word + "</span>";
-      } else {
-        out += escHtml(word);
-      }
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-function highlightHtmlTag(tag) {
-  let out = "";
-  const len = tag.length;
-  if (len < 2) return escHtml(tag);
-  out += '<span class="syn-punct">&lt;</span>';
-  let i = 1;
-  if (tag[i] === "/") {
-    out += '<span class="syn-punct">/</span>';
-    i++;
-  }
-  const nameStart = i;
-  while (i < len && /[a-zA-Z0-9\-]/.test(tag[i])) i++;
-  if (i > nameStart) {
-    out += '<span class="syn-tag">' + escHtml(tag.slice(nameStart, i)) + "</span>";
-  }
-  while (i < len && tag[i] !== ">") {
-    if (/\s/.test(tag[i])) {
-      out += tag[i];
-      i++;
-      continue;
-    }
-    if (tag[i] === "/") {
-      out += '<span class="syn-punct">/</span>';
-      i++;
-      continue;
-    }
-    const aStart = i;
-    while (i < len && /[a-zA-Z0-9:@\-._]/.test(tag[i])) i++;
-    if (i > aStart) {
-      out += '<span class="syn-attr">' + escHtml(tag.slice(aStart, i)) + "</span>";
-    } else {
-      out += escHtml(tag[i]);
-      i++;
-      continue;
-    }
-    if (tag[i] === "=") {
-      out += '<span class="syn-punct">=</span>';
-      i++;
-      if (tag[i] === '"' || tag[i] === "'") {
-        const quote = tag[i];
-        const vStart = i;
-        i++;
-        while (i < len && tag[i] !== quote) i++;
-        if (i < len) i++;
-        out += '<span class="syn-str">' + escHtml(tag.slice(vStart, i)) + "</span>";
-      } else {
-        const uStart = i;
-        while (i < len && !/[\s>]/.test(tag[i])) i++;
-        out += '<span class="syn-str">' + escHtml(tag.slice(uStart, i)) + "</span>";
-      }
-    }
-  }
-  if (i < len && tag[i] === ">") out += '<span class="syn-punct">&gt;</span>';
-  return out;
-}
-function highlightHtml(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  while (i < len) {
-    if (src.slice(i, i + 4) === "<!--") {
-      let end = src.indexOf("-->", i + 4);
-      end = end === -1 ? len : end + 3;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    if (src[i] === "<") {
-      const tagEnd = src.indexOf(">", i);
-      if (tagEnd === -1) {
-        out += escHtml(src.slice(i));
-        break;
-      }
-      out += highlightHtmlTag(src.slice(i, tagEnd + 1));
-      i = tagEnd + 1;
-      continue;
-    }
-    if (src[i] === "{" && src[i + 1] === "{") {
-      const iend = src.indexOf("}}", i + 2);
-      if (iend === -1) {
-        out += escHtml(src.slice(i));
-        break;
-      }
-      const end = iend + 2;
-      out += '<span class="syn-interp">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    out += escHtml(src[i]);
-    i++;
-  }
-  return out;
-}
-function highlightCss(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  let depth = 0;
-  while (i < len) {
-    const ch = src[i];
-    if (ch === "/" && src[i + 1] === "*") {
-      let end = src.indexOf("*/", i + 2);
-      end = end === -1 ? len : end + 2;
-      out += '<span class="syn-comment">' + escHtml(src.slice(i, end)) + "</span>";
-      i = end;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      const quote = ch;
-      const sStart = i;
-      i++;
-      while (i < len && src[i] !== quote) {
-        if (src[i] === "\\" && i + 1 < len) i++;
-        i++;
-      }
-      if (i < len) i++;
-      out += '<span class="syn-str">' + escHtml(src.slice(sStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "{") {
-      depth++;
-      out += '<span class="syn-punct">{</span>';
-      i++;
-      continue;
-    }
-    if (ch === "}") {
-      if (depth > 0) depth--;
-      out += '<span class="syn-punct">}</span>';
-      i++;
-      continue;
-    }
-    if (ch === "@" && /[a-zA-Z]/.test(src[i + 1] || "")) {
-      const aStart = i;
-      i++;
-      while (i < len && /[a-zA-Z\-]/.test(src[i])) i++;
-      out += '<span class="syn-kw">' + escHtml(src.slice(aStart, i)) + "</span>";
-      continue;
-    }
-    if (depth > 0 && /[a-zA-Z\-]/.test(ch)) {
-      const pStart = i;
-      while (i < len && /[a-zA-Z0-9\-]/.test(src[i])) i++;
-      let j2 = i;
-      while (j2 < len && /\s/.test(src[j2])) j2++;
-      if (src[j2] === ":") {
-        out += '<span class="syn-key">' + escHtml(src.slice(pStart, i)) + "</span>";
-      } else {
-        out += escHtml(src.slice(pStart, i));
-      }
-      continue;
-    }
-    if (depth > 0 && ch >= "0" && ch <= "9") {
-      const nStart = i;
-      while (i < len && /[0-9.]/.test(src[i])) i++;
-      while (i < len && /[a-zA-Z%]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(nStart, i)) + "</span>";
-      continue;
-    }
-    if (ch === "#" && /[0-9a-fA-F]/.test(src[i + 1] || "")) {
-      const hStart = i;
-      i++;
-      while (i < len && /[0-9a-fA-F]/.test(src[i])) i++;
-      out += '<span class="syn-num">' + escHtml(src.slice(hStart, i)) + "</span>";
-      continue;
-    }
-    out += escHtml(ch);
-    i++;
-  }
-  return out;
-}
-function highlightVue(src) {
-  let out = "";
-  let i = 0;
-  const len = src.length;
-  const blockRe = /<(template|script|style)(\s[^>]*?)?>/i;
-  while (i < len) {
-    const rest = src.slice(i);
-    const m2 = blockRe.exec(rest);
-    if (!m2) {
-      out += escHtml(rest);
-      break;
-    }
-    out += escHtml(rest.slice(0, m2.index));
-    const blockName = m2[1].toLowerCase();
-    const openTag = m2[0];
-    out += highlightHtmlTag(openTag);
-    const contentStart = m2.index + openTag.length;
-    const closeRe = new RegExp("</" + blockName + "\\s*>", "i");
-    const close = closeRe.exec(rest.slice(contentStart));
-    if (!close) {
-      const tailContent = rest.slice(contentStart);
-      out += highlightVueBlockContent(tailContent, blockName);
-      break;
-    }
-    const content = rest.slice(contentStart, contentStart + close.index);
-    out += highlightVueBlockContent(content, blockName);
-    const closeTag = close[0];
-    out += highlightHtmlTag(closeTag);
-    i += contentStart + close.index + closeTag.length;
-  }
-  return out;
-}
-function highlightVueBlockContent(content, blockName) {
-  if (blockName === "script") return highlightJs(content);
-  if (blockName === "style") return highlightCss(content);
-  return highlightHtml(content);
-}
-const _hoisted_1$8 = {
-  ref: "content",
-  class: "files-content"
-};
-const _sfc_main$b = /* @__PURE__ */ defineComponent({
+const _sfc_main$9 = /* @__PURE__ */ defineComponent({
   __name: "DocViewer",
   props: {
     path: {},
@@ -21628,6 +22875,13 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
         updateRaText(null, null);
       }
     }
+    function onDocClick(ev) {
+      const openFileEl = ev.target.closest("[data-open-file]");
+      if (!openFileEl) return;
+      ev.preventDefault();
+      const path = openFileEl.getAttribute("data-open-file") ?? "";
+      if (path) ws.open({ kind: "file", path }, { preview: true });
+    }
     function hydrateLinks(container) {
       container.querySelectorAll("a[href]").forEach((a) => {
         const href = a.getAttribute("href") || "";
@@ -21639,10 +22893,8 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       const focused = ws.focusedActiveRef;
       if (!focused) return;
       const isFocusedFile = focused.kind === "file" && focused.path === props.path;
-      const isFocusedReport = focused.kind === "report" && props.kind === "report";
-      const isFocusedLegacyFiles = focused.kind === "legacy" && focused.page === "files";
       const isFocusedLegacyTasks = focused.kind === "legacy" && focused.page === "tasks";
-      if (isFocusedFile || isFocusedReport || isFocusedLegacyFiles || isFocusedLegacyTasks) {
+      if (isFocusedFile || isFocusedLegacyTasks) {
         ui.raText = text;
         ui.raFilePath = isFocusedFile && filePath ? filePath : null;
       }
@@ -21860,7 +23112,11 @@ const _sfc_main$b = /* @__PURE__ */ defineComponent({
       filesContent.appendChild(wrap);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$8, [..._cache[0] || (_cache[0] = [
+      return openBlock(), createElementBlock("div", {
+        ref: "content",
+        class: "files-content",
+        onClick: onDocClick
+      }, [..._cache[0] || (_cache[0] = [
         createBaseVNode("div", { class: "files-empty" }, "Select a file to view", -1)
       ])], 512);
     };
@@ -21873,7 +23129,7 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
   },
   setup(__props) {
     return (_ctx, _cache) => {
-      return __props.resource.kind === "file" ? (openBlock(), createBlock(_sfc_main$b, {
+      return __props.resource.kind === "file" ? (openBlock(), createBlock(_sfc_main$9, {
         key: 0,
         path: __props.resource.path,
         branch: __props.resource.branch,
@@ -21882,119 +23138,6 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const _sfc_main$9 = /* @__PURE__ */ defineComponent({
-  __name: "ReportView",
-  props: {
-    resource: {}
-  },
-  setup(__props) {
-    const props = __props;
-    const reportPath = computed(() => {
-      if (props.resource.kind !== "report") return "";
-      if (props.resource.path) return props.resource.path;
-      return props.resource.taskId;
-    });
-    return (_ctx, _cache) => {
-      return __props.resource.kind === "report" && reportPath.value ? (openBlock(), createBlock(_sfc_main$b, {
-        key: 0,
-        path: reportPath.value,
-        kind: "report"
-      }, null, 8, ["path"])) : createCommentVNode("", true);
-    };
-  }
-});
-function escapeHtml(s) {
-  return escHtml(String(s == null ? "" : s));
-}
-function isPanelNarrow(panelId, threshold) {
-  const el = document.getElementById(panelId);
-  if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
-  return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
-}
-function timeAgo(iso) {
-  if (!iso) return "";
-  const t = Date.parse(iso);
-  if (!Number.isFinite(t)) return "";
-  const diff = Math.max(0, Date.now() - t);
-  const mins = Math.floor(diff / 6e4);
-  if (mins < 1) return "just now";
-  if (mins < 60) return mins + "m ago";
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return hrs + "h ago";
-  return Math.floor(hrs / 24) + "d ago";
-}
-function statusClass(status) {
-  if (!status) return "is-open";
-  if (status === "open" || status === "claimed") return "is-open";
-  if (status.indexOf("waiting:") === 0) return "is-waiting";
-  if (status === "paused") return "is-paused";
-  if (status === "done") return "is-done";
-  if (status.indexOf("failed:") === 0 || status === "escalated") return "is-failed";
-  return "is-open";
-}
-function shorten(s, n) {
-  const str2 = String(s || "");
-  if (str2.length <= n) return str2;
-  return str2.slice(0, n - 1) + "…";
-}
-function shortenStatusLabel(s) {
-  if (!s) return "?";
-  if (s === "paused") return "paused";
-  if (s.indexOf("waiting:on:") === 0) return "wait " + s.slice("waiting:on:".length);
-  if (s.indexOf("failed:") === 0) {
-    const rest = s.slice("failed:".length);
-    return rest === "other" ? "failed" : "fail " + rest;
-  }
-  return s;
-}
-function fmtDaysHours(ms) {
-  if (!Number.isFinite(ms) || ms < 0) return "—";
-  const seconds = Math.floor(ms / 1e3);
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(seconds % 86400 / 3600);
-  if (days > 0) return days + "d " + hours + "h";
-  return hours + "h " + Math.floor(seconds % 3600 / 60) + "m";
-}
-function suggestChildHeadline(parentHeadline, source) {
-  const base = String(parentHeadline || "").slice(0, 56);
-  return base + " — rework";
-}
-function renderNextTargetPicker(currentAgent, agentsCache) {
-  let options = "";
-  const agents = Array.isArray(agentsCache) ? agentsCache : [];
-  for (const a of agents) {
-    if (!a || !a.name) continue;
-    const label = (a.emoji ? a.emoji + " " : "") + (a.displayName || a.name);
-    const selected = a.name === currentAgent ? " selected" : "";
-    options += '<option value="' + escapeHtml(a.name) + '"' + selected + ">" + escapeHtml(label) + "</option>";
-  }
-  if (!options && currentAgent) {
-    options = '<option value="' + escapeHtml(currentAgent) + '" selected>' + escapeHtml(currentAgent) + "</option>";
-  }
-  return '<label class="task-panel-next-target" title="Pick a different agent to take over from here"><span class="task-panel-next-target-label">→</span><select class="task-panel-next-target-select">' + options + "</select></label>";
-}
-function countActiveDescendants(taskId, cache) {
-  if (!taskId || !cache.length) return 0;
-  const byParent = {};
-  for (const t of cache) {
-    const p2 = t.parent && t.parent !== "null" ? t.parent : null;
-    if (!p2) continue;
-    (byParent[p2] = byParent[p2] || []).push(t);
-  }
-  const queue2 = [taskId];
-  const seen = { [taskId]: true };
-  let count = 0;
-  while (queue2.length > 0) {
-    const cur = queue2.shift();
-    for (const kid of byParent[cur] || []) {
-      if (seen[kid.id]) continue;
-      seen[kid.id] = true;
-      if (!kid.closed || !kid.closed.status) count++;
-      queue2.push(kid.id);
-    }
-  }
-  return count;
-}
 function shortId(id) {
   return String(id || "").replace(/^TSK-\d{4}-/, "");
 }
@@ -22552,229 +23695,31 @@ function renderProjectPage(projectPaneEl, summary, expanded, currentTaskId, bulk
   }
   projectPaneEl.innerHTML = headParts + docsHtml + leavesHtml + familiesHtml + closedHtml;
 }
-function renderSection(title, bodyHtml, openByDefault) {
-  if (!bodyHtml) return "";
-  return '<details class="task-panel-section"' + (openByDefault ? " open" : "") + '><summary class="task-panel-section-summary">' + escapeHtml(title) + '</summary><div class="task-panel-section-body">' + bodyHtml + "</div></details>";
-}
-function renderPanelCard(card, isCurrent, currentTaskId, cache) {
-  var _a2;
-  if (!card) return "";
-  const brief = (card.brief || "").trim();
-  const summaryResponse = ((_a2 = card.summary) == null ? void 0 : _a2.response) ? String(card.summary.response).trim() : "";
-  const ctx = card.context || [];
-  const statusLower = (card.status || "").toLowerCase();
-  const isTerminal = statusLower.startsWith("done") || statusLower.startsWith("failed") || statusLower === "escalated";
-  const isClaimed = card.status === "claimed";
-  const isWaitingUser = card.status === "waiting:on:user";
-  const isPaused = card.status === "paused";
-  const isClosed = !!(card.closed && card.closed.status);
-  const envelopePath = card.envelopePath || "agents/" + card.agent + "/tasks/" + (card.bucket || "open") + "/" + card.id + ".yaml";
-  const ctxLines = ctx.map((c) => {
-    const safe = escapeHtml(c);
-    if (/^https?:/i.test(c)) return '<div class="task-panel-context-item">↗ <a href="' + safe + '" target="_blank" rel="noopener">' + safe + "</a></div>";
-    if (/^jira:/i.test(c)) return '<div class="task-panel-context-item">' + safe + "</div>";
-    return '<div class="task-panel-context-item">📄 <button data-open-file="' + safe + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + safe + "</button></div>";
-  }).join("");
-  const metaParts = [];
-  metaParts.push(escapeHtml(card.from || "?") + ' <span class="task-panel-meta-arrow">→</span> ' + escapeHtml(card.to || "?"));
-  if (card.kind) metaParts.push(escapeHtml(card.kind));
-  if (card.priority) metaParts.push(escapeHtml(card.priority));
-  const projectLabel = card.project ? card.project : "Unassigned";
-  metaParts.push(
-    '<span class="task-panel-project-chip' + (card.project ? "" : " is-unassigned") + '" data-project-edit="' + escapeHtml(card.id) + '" data-project-agent="' + escapeHtml(card.agent || card.to || "") + '" data-project-current="' + escapeHtml(card.project || "") + '" title="Click to change project">📁 ' + escapeHtml(projectLabel) + "</span>"
-  );
-  if (card.updated) metaParts.push(escapeHtml(timeAgo(card.updated)));
-  const metaHtml = '<div class="task-panel-meta">' + metaParts.join(' <span class="task-panel-meta-sep">·</span> ') + "</div>";
-  let sections = "";
-  if (isTerminal && !isClosed) {
-    const picker = renderNextTargetPicker(card.agent || "", []);
-    const suggest = suggestChildHeadline(card.headline || card.id);
-    sections += renderSection(
-      "⏳ Continue",
-      '<div class="task-panel-unblock task-panel-next" data-next-agent="' + escapeHtml(card.agent || "") + '" data-next-id="' + escapeHtml(card.id) + '" data-next-source="continue"><div class="task-panel-unblock-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</div><input type="text" class="task-panel-next-headline-input" placeholder="Child task title" value="' + escapeHtml(suggest) + '" /><textarea class="task-panel-unblock-input task-panel-next-input" rows="4" placeholder="New instructions for the worker…"></textarea><div class="task-panel-unblock-actions">' + picker + '<button type="button" class="is-primary task-panel-next-submit">↳ Continue</button><span class="task-panel-unblock-status task-panel-next-status"></span></div></div>',
-      true
-    );
-  }
-  if (brief) sections += renderSection("Brief", '<div class="task-panel-card-summary">' + escapeHtml(brief) + "</div>", true);
-  if (summaryResponse) sections += renderSection("Result", '<div class="task-panel-card-summary">' + escapeHtml(summaryResponse) + "</div>", true);
-  if (isClosed) {
-    const closedAt = card.closed.at ? timeAgo(card.closed.at) : "";
-    sections += '<div class="task-panel-closed-banner"><span class="task-panel-closed-pill">' + escapeHtml(card.closed.status) + '</span><span class="task-panel-closed-meta">by ' + escapeHtml(card.closed.by || "?") + (closedAt ? " · " + escapeHtml(closedAt) : "") + "</span>" + (card.closed.reason ? '<div class="task-panel-closed-reason">' + escapeHtml(card.closed.reason) + "</div>" : "") + "</div>";
-  }
-  const actions = [];
-  if (!isClosed) actions.push('<button class="task-panel-action" data-followon-task="' + escapeHtml(card.id) + '" data-followon-agent="' + escapeHtml(card.agent || card.to || "") + '" type="button">↳ Next</button>');
-  actions.push('<button class="task-panel-action" data-toggle-chat="' + escapeHtml(card.id) + '" type="button">💬 Chat</button>');
-  if (!isClaimed && !isClosed) {
-    if (isTerminal) {
-      actions.push('<button class="task-panel-action is-primary task-panel-done-reading" data-done-reading-agent="' + escapeHtml(card.agent || "") + '" data-done-reading-id="' + escapeHtml(card.id) + '" type="button">✓ Done reading</button>');
-    } else {
-      actions.push('<button class="task-panel-action" data-toggle-close="' + escapeHtml(card.id) + '" type="button">✕ Cancel</button>');
-    }
-  }
-  if (isClaimed && !isClosed) actions.push('<button class="task-panel-action task-panel-action-danger" data-toggle-abort="' + escapeHtml(card.id) + '" type="button">✕ Abort</button>');
-  if (isClosed) actions.push('<button class="task-panel-action is-primary" data-reopen-agent="' + escapeHtml(card.agent || "") + '" data-reopen-task="' + escapeHtml(card.id) + '" type="button">↻ Reopen</button>');
-  if (isPaused && !isClosed) actions.push('<button class="task-panel-action is-primary" data-resume-agent="' + escapeHtml(card.agent || "") + '" data-resume-task="' + escapeHtml(card.id) + '" type="button">▷ Resume</button>');
-  sections += '<div class="task-panel-card-actions">' + actions.join("") + "</div>";
-  {
-    const chatPicker = renderNextTargetPicker(card.agent || "", []);
-    const chatTitle = card.headline ? String(card.headline).slice(0, 56) : "";
-    sections += '<div class="task-panel-rework task-panel-chat-form" data-chat-task-id="' + escapeHtml(card.id) + '" data-chat-parent-agent="' + escapeHtml(card.agent || "") + `" hidden><details class="task-panel-rework-warn"><summary>Continues on the worker's session thread.</summary><p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p></details><input type="text" class="task-panel-chat-title-input" placeholder="Chat title (auto if blank)" value="` + escapeHtml(chatTitle) + '" /><textarea class="task-panel-chat-msg-input task-panel-unblock-input" rows="3" placeholder="Initial message (optional — staged into the chat input, send when ready)…"></textarea><div class="task-panel-unblock-actions">' + chatPicker + '<button type="button" class="is-primary task-panel-chat-submit">↳ Start chat</button><span class="task-panel-unblock-status task-panel-chat-status"></span></div></div>';
-  }
-  if (!isClaimed && !isClosed) {
-    const defaultStatus = statusLower === "done" ? "closed" : "cancelled";
-    const activeCount = countActiveDescendants(card.id, cache);
-    const closeWarnSum = isWaitingUser ? "Record the outcome and mark <strong>cancelled</strong>." : "Marks <strong>" + defaultStatus + "</strong> — reversible, runner state kept.";
-    const closeReasonPh = isWaitingUser ? 'What was the outcome? e.g. "decided to use approach B" — optional but helps trace decisions' : "Optional reason (e.g. 'rolled into TSK-X', 'no longer needed')…";
-    sections += '<div class="task-panel-close-form task-panel-rework" data-close-agent="' + escapeHtml(card.agent || "") + '" data-close-id="' + escapeHtml(card.id) + '" data-close-default-status="' + defaultStatus + '" hidden><details class="task-panel-rework-warn"><summary>' + closeWarnSum + '</summary></details><textarea class="task-panel-close-input task-panel-unblock-input" rows="2" placeholder="' + escapeHtml(closeReasonPh) + '"></textarea>' + (activeCount > 0 ? '<label class="task-panel-close-cascade"><input type="checkbox" class="task-panel-close-cascade-checkbox" /><span>Close family — cancel ' + activeCount + " active descendant" + (activeCount === 1 ? "" : "s") + " too</span></label>" : "") + '<div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-close-submit">Confirm close</button><button type="button" class="task-panel-close-cancel">Dismiss</button><span class="task-panel-close-status task-panel-unblock-status"></span></div></div>';
-  }
-  if (isClaimed && !isClosed) {
-    sections += '<div class="task-panel-close-form task-panel-abort-form task-panel-rework" data-abort-agent="' + escapeHtml(card.agent || "") + '" data-abort-id="' + escapeHtml(card.id) + '" hidden><details class="task-panel-rework-warn task-panel-abort-warn"><summary><strong>⚠ Kills the live process. Not reversible.</strong></summary></details><textarea class="task-panel-close-input task-panel-abort-input task-panel-unblock-input" rows="2" placeholder="Optional reason…"></textarea><div class="task-panel-unblock-actions"><button type="button" class="is-primary task-panel-action-danger task-panel-abort-submit">Kill worker &amp; cancel</button><button type="button" class="task-panel-abort-cancel">Dismiss</button><span class="task-panel-abort-status task-panel-unblock-status"></span></div></div>';
-  }
-  let fileLinks = '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(envelopePath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(envelopePath) + "</button></div>";
-  if (card.reportPath) fileLinks += '<div class="task-panel-context-item">📄 <button data-open-file="' + escapeHtml(card.reportPath) + '" data-from-task="' + escapeHtml(currentTaskId || "") + '" type="button">' + escapeHtml(card.reportPath) + "</button></div>";
-  sections += renderSection("Files", '<div class="task-panel-context-list">' + fileLinks + "</div>", false);
-  if (ctxLines) sections += renderSection("Context (" + ctx.length + ")", '<div class="task-panel-context-list">' + ctxLines + "</div>", false);
-  return '<div class="task-panel-card is-current">' + metaHtml + sections + "</div>";
-}
-function renderReportPane(card) {
-  if (!card || !card.reportPath) return "";
-  const safeTaskId = escapeHtml(card.id || "");
-  const allPaths = [card.reportPath];
-  for (const d2 of card.deliverables || []) {
-    if (d2 && !allPaths.includes(d2)) allPaths.push(d2);
-  }
-  function docNode(path, isActive, scanExtras) {
-    const fname = path.split("/").pop() || path;
-    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
-    const sp = escapeHtml(path);
-    const sFolder = escapeHtml(folder);
-    return '<div class="task-panel-report-doc' + (isActive ? " is-active" : "") + '" data-doc-path="' + sp + '"' + (isActive ? "" : " hidden") + '><div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + sFolder + '" data-from-task="' + safeTaskId + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + sp + '" data-loaded="false"' + (scanExtras ? ' data-scan-extras="true"' : "") + '><div class="task-panel-report-loading">Loading report…</div></div></div>';
-  }
-  const docsHtml = allPaths.map((p2, i) => docNode(p2, i === 0, i === 0)).join("");
-  const pillsHidden = allPaths.length <= 1;
-  const pillsHtml = pillsHidden ? "" : allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + '</button><button class="task-throw-btn" data-throw-path="' + escapeHtml(p2) + '" data-throw-kind="report" type="button" title="Open in reading pane">⇥</button>'
-  ).join("");
-  return '<div class="task-panel-report-pane" data-task-id="' + safeTaskId + '"><div class="task-panel-doc-pills"' + (pillsHidden ? " hidden" : "") + ">" + pillsHtml + '</div><div class="task-panel-report-docs">' + docsHtml + "</div></div>";
-}
-const KNOWN_TOP_DIRS = ["Notes", "agents", "repos", "setup", "memory", ".claude", "src", "scripts", "plugin-cache"];
-function resolveReportPath(primaryPath, href) {
-  if (!href) return null;
-  let clean = href.split("#")[0].split("?")[0];
-  if (!clean) return null;
-  if (/^https?:/i.test(clean) || clean.startsWith("mailto:")) return null;
-  if (clean.charAt(0) === "/") clean = clean.replace(/^\/+/, "");
-  const parts = clean.split("/");
-  for (let k = parts.length - 1; k >= 0; k--) {
-    if (KNOWN_TOP_DIRS.includes(parts[k]) && k < parts.length - 1) return parts.slice(k).join("/");
-  }
-  const lead = clean.replace(/^\.\//, "");
-  const primaryDir = primaryPath.includes("/") ? primaryPath.substring(0, primaryPath.lastIndexOf("/")) : "";
-  const baseParts = primaryDir.split("/").filter(Boolean);
-  for (const p2 of lead.split("/")) {
-    if (!p2 || p2 === ".") continue;
-    if (p2 === "..") {
-      if (!baseParts.length) return null;
-      baseParts.pop();
-      continue;
-    }
-    baseParts.push(p2);
-  }
-  return baseParts.length ? baseParts.join("/") : null;
-}
-function appendReportExtras(primaryNode) {
-  const primaryPath = primaryNode.getAttribute("data-report-path") || "";
-  const doc2 = primaryNode.closest(".task-panel-report-doc");
-  if (!doc2) return;
-  const pane = doc2.closest(".task-panel-report-pane");
-  if (!pane) return;
-  const docsHost = pane.querySelector(".task-panel-report-docs");
-  const pills = pane.querySelector(".task-panel-doc-pills");
-  if (!docsHost || !pills) return;
-  const seen = { [primaryPath]: true };
-  const anchors = primaryNode.querySelectorAll(".task-panel-report-md a[href]");
-  const paths = [];
-  for (const a of Array.from(anchors)) {
-    const href = a.getAttribute("href") || "";
-    if (!href || href.startsWith("#")) continue;
-    const resolved = resolveReportPath(primaryPath, href);
-    if (!resolved) continue;
-    if (!/\.(md|markdown|pdf|docx|csv|txt|ya?ml|json)$/i.test(resolved)) continue;
-    a.setAttribute("href", "#" + resolved);
-    a.setAttribute("data-open-file", resolved);
-    if (seen[resolved]) continue;
-    seen[resolved] = true;
-    paths.push(resolved);
-  }
-  if (!paths.length) return;
-  for (const path of paths) {
-    const fname = path.split("/").pop() || path;
-    const folder = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : ".";
-    const node = document.createElement("div");
-    node.className = "task-panel-report-doc";
-    node.setAttribute("data-doc-path", path);
-    node.hidden = true;
-    node.innerHTML = '<div class="task-panel-report-doc-head"><span class="task-panel-report-doc-title">' + escapeHtml(fname) + '</span><button class="task-panel-folder-btn" data-open-folder="' + escapeHtml(folder) + '" type="button" title="Open containing folder" aria-label="Open containing folder">📁</button></div><div class="task-panel-report" data-report-path="' + escapeHtml(path) + '" data-loaded="false"><div class="task-panel-report-loading">Loading…</div></div>';
-    docsHost.appendChild(node);
-  }
-  const allPaths = [primaryPath, ...paths];
-  pills.innerHTML = allPaths.map(
-    (p2, i) => '<button class="task-panel-doc-pill' + (i === 0 ? " is-active" : "") + '" data-doc-pill="' + escapeHtml(p2) + '" type="button">' + escapeHtml(p2.split("/").pop() || p2) + "</button>"
-  ).join("");
-  pills.hidden = false;
-  for (const reportEl of Array.from(docsHost.querySelectorAll(".task-panel-report-doc:not(.is-active) .task-panel-report"))) {
-    loadReportNode(reportEl);
+function load$2(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("files." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
   }
 }
-function setActiveReportDoc(pane, path) {
-  if (!pane || !path) return;
-  pane.querySelectorAll(".task-panel-report-doc").forEach((d2) => {
-    const match = d2.getAttribute("data-doc-path") === path;
-    d2.classList.toggle("is-active", match);
-    d2.hidden = !match;
-  });
-  pane.querySelectorAll(".task-panel-doc-pill").forEach((p2) => {
-    p2.classList.toggle("is-active", p2.getAttribute("data-doc-pill") === path);
-  });
-}
-function loadReportNode(node, onLoaded) {
-  if (!node || node.getAttribute("data-loaded") !== "false") {
-    if (onLoaded && node.getAttribute("data-loaded") === "true") {
-      const stored = node.getAttribute("data-raw-text");
-      if (stored) onLoaded(stored);
-    }
-    return;
+function save(key, value) {
+  try {
+    localStorage.setItem("files." + key, JSON.stringify(value));
+  } catch {
   }
-  node.setAttribute("data-loaded", "loading");
-  node.innerHTML = '<div class="task-panel-report-loading">Loading report…</div>';
-  const path = node.getAttribute("data-report-path") || "";
-  fetch("/api/files/read?path=" + encodeURIComponent(path), { cache: "no-store" }).then((r) => r.json()).then((data) => {
-    if (!data.ok) throw new Error(data.error || "failed");
-    node.setAttribute("data-loaded", "true");
-    let rawText = "";
-    if (data.markdown) {
-      const raw = data.content || "";
-      const { body } = stripFrontmatter(raw);
-      rawText = body || raw;
-      const fmMatch = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
-      const fmHtml = fmMatch ? '<pre class="task-panel-report-frontmatter">' + escapeHtml(fmMatch[1]) + "</pre>" : "";
-      node.innerHTML = fmHtml + '<div class="task-panel-report-md files-md">' + renderMarkdown(body) + "</div>";
-    } else {
-      rawText = data.content || "";
-      const pre = document.createElement("pre");
-      pre.className = "task-panel-report-raw";
-      pre.textContent = data.content;
-      node.innerHTML = "";
-      node.appendChild(pre);
-    }
-    node.setAttribute("data-raw-text", rawText);
-    if (onLoaded && rawText) onLoaded(rawText);
-    if (node.getAttribute("data-scan-extras") === "true") appendReportExtras(node);
-  }).catch((err) => {
-    node.setAttribute("data-loaded", "false");
-    node.innerHTML = '<div class="task-panel-report-loading is-error">Error: ' + escapeHtml(String(err.message || err)) + "</div>";
-  });
 }
+const useFilesStore = /* @__PURE__ */ defineStore("files", () => {
+  const currentPath = /* @__PURE__ */ ref(load$2("currentPath", ""));
+  const currentDir = /* @__PURE__ */ ref(load$2("currentDir", "."));
+  const selectedBranch = /* @__PURE__ */ ref(load$2("selectedBranch", ""));
+  const loaded = /* @__PURE__ */ ref(false);
+  watch(currentPath, (v2) => save("currentPath", v2));
+  watch(currentDir, (v2) => save("currentDir", v2));
+  watch(selectedBranch, (v2) => save("selectedBranch", v2));
+  return { currentPath, currentDir, selectedBranch, loaded };
+});
 const _hoisted_1$7 = {
   id: "tasks-panel",
   class: "tasks-panel"
@@ -22787,6 +23732,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
     const live = useLiveStore();
     const ui = useUiStore();
     const ws = useWorkspaceStore();
+    const filesStore = useFilesStore();
     const nt2 = useNewTaskStore();
     let tasksTreeEl = null;
     let tasksViewTabsEl = null;
@@ -23270,7 +24216,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       });
     }
     function onPanelBodyClick(ev) {
-      var _a2, _b, _c, _d, _e2, _f, _g;
+      var _a2, _b, _c, _d, _e2, _f;
       const t = ev.target;
       const nextBtn = t.closest(".task-panel-next-submit");
       if (nextBtn) {
@@ -23392,11 +24338,9 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         const filePath = openFileBtn.getAttribute("data-open-file");
         if (!filePath) return;
         if (ev.altKey) {
-          const taskId = ((_g = filePath.split("/").pop()) == null ? void 0 : _g.replace(/\.md$/, "")) ?? filePath;
-          ws.open({ kind: "report", taskId, path: filePath }, { side: true });
+          ws.open({ kind: "file", path: filePath }, { side: true });
         } else {
-          ui.filesNav = { path: filePath, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
-          router2.push("/files");
+          ws.open({ kind: "file", path: filePath }, { preview: true });
         }
         return;
       }
@@ -23404,8 +24348,8 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       if (openFolderBtn) {
         ev.preventDefault();
         const folderPath = openFolderBtn.getAttribute("data-open-folder") || ".";
-        ui.filesNav = { path: folderPath, kind: "dir", backTaskId: tasksStore.currentTaskId || void 0 };
-        router2.push("/files");
+        filesStore.currentDir = folderPath;
+        ws.open({ kind: "legacy", page: "files" });
         return;
       }
       const toggleChatBtn = t.closest("[data-toggle-chat]");
@@ -23493,10 +24437,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       if (docBtn) {
         ev.preventDefault();
         const path = docBtn.getAttribute("data-open-file");
-        if (path) {
-          ui.filesNav = { path, kind: "file", backTaskId: tasksStore.currentTaskId || void 0 };
-          router2.push("/files");
-        }
+        if (path) ws.open({ kind: "file", path }, { preview: true });
         return;
       }
       const newHere = target.closest("[data-project-new-task]");
@@ -24829,90 +25770,19 @@ const _hoisted_1$5 = {
   id: "files-panel",
   class: "files-panel"
 };
-const _hoisted_2$4 = { class: "files-toolbar" };
-const _hoisted_3$3 = { class: "files-toolbar-row files-toolbar-row-branch" };
-const _hoisted_4$2 = { class: "files-nav-group" };
-const _hoisted_5$2 = ["title"];
-const _hoisted_6$2 = { class: "files-split" };
 const _sfc_main$6 = /* @__PURE__ */ defineComponent({
   __name: "FilesPage",
   setup(__props) {
     const filesStore = useFilesStore();
-    const activeFilePath = /* @__PURE__ */ ref(filesStore.currentPath);
-    const activeBranch = /* @__PURE__ */ ref(filesStore.selectedBranch);
     let filesList = null;
     let filesBreadcrumb = null;
     let filesBranchSelect = null;
-    let filesNavBack = null;
-    let filesNavForward = null;
-    let filesPickerToggle = null;
-    let filesPickerToggleLabel = null;
-    let filesSidebar = null;
     let filesCurrentDir = filesStore.currentDir;
     let filesActiveRepoRoot = ".";
     let filesHeadBranch = "";
     let filesSelectedBranch = filesStore.selectedBranch;
     let filesHasRepo = false;
-    let filesHistory = [];
-    let filesHistoryIdx = -1;
-    let filesSkipHistoryPush = false;
-    const ui = useUiStore();
     const ws = useWorkspaceStore();
-    const router2 = useRouter();
-    const filesBackTaskId = /* @__PURE__ */ ref("");
-    function isPanelNarrow2(panelId, threshold) {
-      const el = document.getElementById(panelId);
-      if (el && el.clientWidth > 0) return el.clientWidth <= threshold;
-      return typeof window.matchMedia === "function" && window.matchMedia("(max-width: " + threshold + "px)").matches;
-    }
-    function isMobileFiles() {
-      return isPanelNarrow2("files-panel", 1199);
-    }
-    function setPickerCollapsed(collapsed) {
-      if (!filesSidebar || !filesPickerToggle) return;
-      filesSidebar.classList.toggle("files-sidebar-collapsed", collapsed);
-      filesPickerToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-    }
-    function updatePickerToggleLabel() {
-      if (!filesPickerToggleLabel) return;
-      if (activeFilePath.value) {
-        const parts = activeFilePath.value.split("/");
-        filesPickerToggleLabel.textContent = parts[parts.length - 1] || "Browse files";
-      } else if (filesCurrentDir && filesCurrentDir !== ".") {
-        const dParts = filesCurrentDir.split("/");
-        filesPickerToggleLabel.textContent = "Browse: " + (dParts[dParts.length - 1] || filesCurrentDir);
-      } else {
-        filesPickerToggleLabel.textContent = "Browse files";
-      }
-    }
-    function pushHistory(dir, file) {
-      if (filesSkipHistoryPush) return;
-      const last = filesHistory[filesHistoryIdx];
-      if (last && last.dir === dir && last.file === file) return;
-      filesHistory = filesHistory.slice(0, filesHistoryIdx + 1);
-      filesHistory.push({ dir, file });
-      filesHistoryIdx = filesHistory.length - 1;
-      updateNavButtons();
-    }
-    function updateNavButtons() {
-      if (filesNavBack) filesNavBack.disabled = filesHistoryIdx <= 0;
-      if (filesNavForward)
-        filesNavForward.disabled = filesHistoryIdx < 0 || filesHistoryIdx >= filesHistory.length - 1;
-    }
-    async function goToHistory(delta) {
-      const next = filesHistoryIdx + delta;
-      if (next < 0 || next >= filesHistory.length) return;
-      filesHistoryIdx = next;
-      const entry = filesHistory[next];
-      filesSkipHistoryPush = true;
-      try {
-        await loadDirectory(entry.dir);
-        if (entry.file) openFile(entry.file);
-      } finally {
-        filesSkipHistoryPush = false;
-      }
-      updateNavButtons();
-    }
     function renderBreadcrumb(dirPath) {
       if (!filesBreadcrumb) return;
       filesBreadcrumb.textContent = "";
@@ -24985,12 +25855,8 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
     async function loadDirectory(dirPath) {
       filesCurrentDir = dirPath || ".";
       filesStore.currentDir = filesCurrentDir;
-      activeFilePath.value = "";
       filesStore.currentPath = "";
-      pushHistory(filesCurrentDir, "");
       renderBreadcrumb(filesCurrentDir);
-      updatePickerToggleLabel();
-      setPickerCollapsed(false);
       if (!filesList) return;
       filesList.innerHTML = '<div class="files-loading">Loading...</div>';
       try {
@@ -25040,7 +25906,7 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
             throwBtn.type = "button";
             throwBtn.className = "files-throw-btn";
             throwBtn.textContent = "⇥";
-            throwBtn.title = "Open in reading pane";
+            throwBtn.title = "Open in other group";
             throwBtn.addEventListener("click", (ev) => {
               ev.stopPropagation();
               ws.open({ kind: "file", path: entry.path }, { side: true });
@@ -25059,7 +25925,7 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
             if (entry.type === "directory") {
               loadDirectory(entry.path);
             } else {
-              openFile(entry.path);
+              ws.open({ kind: "file", path: entry.path }, { preview: true });
             }
           });
           filesList.appendChild(item);
@@ -25070,64 +25936,22 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
         }
       }
     }
-    function openFile(filePath) {
-      activeFilePath.value = filePath;
-      activeBranch.value = filesSelectedBranch;
-      filesStore.currentPath = filePath;
-      filesStore.selectedBranch = filesSelectedBranch;
-      pushHistory(filesCurrentDir, filePath);
-      syncWorkspaceUrl(false);
-      updatePickerToggleLabel();
-      if (isMobileFiles()) setPickerCollapsed(true);
-      if (filesList) {
-        filesList.querySelectorAll(".files-item").forEach((el) => {
-          el.classList.toggle("files-item-active", el.dataset.path === filePath);
-        });
-      }
-    }
     onMounted(() => {
       filesList = document.getElementById("files-list");
       filesBreadcrumb = document.getElementById("files-breadcrumb");
       filesBranchSelect = document.getElementById("files-branch-select");
-      filesNavBack = document.getElementById("files-nav-back");
-      filesNavForward = document.getElementById("files-nav-forward");
-      filesPickerToggle = document.getElementById("files-picker-toggle");
-      filesPickerToggleLabel = document.getElementById("files-picker-toggle-label");
-      filesSidebar = document.getElementById("files-sidebar");
-      if (filesNavBack) filesNavBack.addEventListener("click", () => goToHistory(-1));
-      if (filesNavForward) filesNavForward.addEventListener("click", () => goToHistory(1));
       if (filesBranchSelect) {
         filesBranchSelect.addEventListener("change", () => {
           filesSelectedBranch = filesBranchSelect.value || "";
-          activeBranch.value = filesSelectedBranch;
           loadDirectory(filesCurrentDir);
-        });
-      }
-      if (filesPickerToggle) {
-        filesPickerToggle.addEventListener("click", () => {
-          if (!filesSidebar) return;
-          const collapsed = filesSidebar.classList.contains("files-sidebar-collapsed");
-          setPickerCollapsed(!collapsed);
         });
       }
       if (!filesStore.loaded) {
         filesStore.loaded = true;
-        const nav = ui.filesNav;
-        if (nav == null ? void 0 : nav.backTaskId) filesBackTaskId.value = nav.backTaskId;
-        ui.filesNav = null;
-        if (nav) {
-          refreshBranchSelector().then(() => {
-            if (nav.kind === "dir") {
-              loadDirectory(nav.path);
-            } else {
-              const dir = nav.path.includes("/") ? nav.path.split("/").slice(0, -1).join("/") || "." : ".";
-              loadDirectory(dir).then(() => openFile(nav.path));
-            }
-          });
-        } else if (filesStore.currentPath) {
+        if (filesStore.currentPath) {
+          ws.open({ kind: "file", path: filesStore.currentPath });
           const dir = filesStore.currentPath.includes("/") ? filesStore.currentPath.split("/").slice(0, -1).join("/") || "." : ".";
-          const restorePath = filesStore.currentPath;
-          refreshBranchSelector().then(() => loadDirectory(dir).then(() => openFile(restorePath)));
+          refreshBranchSelector().then(() => loadDirectory(dir));
         } else if (filesStore.currentDir !== ".") {
           refreshBranchSelector().then(() => loadDirectory(filesStore.currentDir));
         } else {
@@ -25135,105 +25959,14 @@ const _sfc_main$6 = /* @__PURE__ */ defineComponent({
         }
       } else {
         const restoreDir = filesStore.currentDir;
-        const restorePath = filesStore.currentPath;
         filesCurrentDir = restoreDir;
-        filesSkipHistoryPush = true;
-        refreshBranchSelector().then(async () => {
-          try {
-            await loadDirectory(restoreDir);
-            if (restorePath) openFile(restorePath);
-          } finally {
-            filesSkipHistoryPush = false;
-          }
-          filesHistory = [{ dir: restoreDir, file: restorePath }];
-          filesHistoryIdx = 0;
-          updateNavButtons();
-        });
+        refreshBranchSelector().then(() => loadDirectory(restoreDir));
       }
     });
-    function goBackToTask() {
-      filesBackTaskId.value = "";
-      router2.push("/tasks");
-    }
     return (_ctx, _cache) => {
-      return openBlock(), createElementBlock("div", _hoisted_1$5, [
-        createBaseVNode("div", _hoisted_2$4, [
-          createBaseVNode("div", _hoisted_3$3, [
-            _cache[2] || (_cache[2] = createBaseVNode("select", {
-              id: "files-branch-select",
-              class: "files-branch-select",
-              title: "Branch",
-              hidden: ""
-            }, null, -1)),
-            createBaseVNode("div", _hoisted_4$2, [
-              _cache[0] || (_cache[0] = createBaseVNode("button", {
-                id: "files-nav-back",
-                class: "files-nav-btn",
-                type: "button",
-                title: "Back",
-                "aria-label": "Back",
-                disabled: true
-              }, "←", -1)),
-              _cache[1] || (_cache[1] = createBaseVNode("button", {
-                id: "files-nav-forward",
-                class: "files-nav-btn",
-                type: "button",
-                title: "Forward",
-                "aria-label": "Forward",
-                disabled: true
-              }, "→", -1)),
-              filesBackTaskId.value ? (openBlock(), createElementBlock("button", {
-                key: 0,
-                id: "files-back-to-task",
-                class: "files-nav-btn files-back-to-task",
-                type: "button",
-                title: "Back to " + filesBackTaskId.value,
-                onClick: goBackToTask
-              }, "← Task", 8, _hoisted_5$2)) : createCommentVNode("", true)
-            ])
-          ]),
-          _cache[3] || (_cache[3] = createBaseVNode("div", { class: "files-toolbar-row files-toolbar-row-crumb" }, [
-            createBaseVNode("div", {
-              class: "files-breadcrumb",
-              id: "files-breadcrumb"
-            })
-          ], -1))
-        ]),
-        _cache[5] || (_cache[5] = createBaseVNode("button", {
-          id: "files-picker-toggle",
-          class: "files-picker-toggle",
-          type: "button",
-          "aria-expanded": "true",
-          hidden: ""
-        }, [
-          createBaseVNode("span", {
-            class: "files-picker-toggle-label",
-            id: "files-picker-toggle-label"
-          }, "Browse files"),
-          createBaseVNode("span", {
-            class: "files-picker-toggle-caret",
-            "aria-hidden": "true"
-          }, "▾")
-        ], -1)),
-        createBaseVNode("div", _hoisted_6$2, [
-          _cache[4] || (_cache[4] = createBaseVNode("div", {
-            class: "files-sidebar",
-            id: "files-sidebar"
-          }, [
-            createBaseVNode("div", {
-              class: "files-list",
-              id: "files-list"
-            }, [
-              createBaseVNode("div", { class: "files-loading" }, "Loading...")
-            ])
-          ], -1)),
-          createVNode(_sfc_main$b, {
-            path: activeFilePath.value,
-            branch: activeBranch.value || void 0,
-            kind: "file"
-          }, null, 8, ["path", "branch"])
-        ])
-      ]);
+      return openBlock(), createElementBlock("div", _hoisted_1$5, [..._cache[0] || (_cache[0] = [
+        createStaticVNode('<div class="files-toolbar"><div class="files-toolbar-row files-toolbar-row-branch"><select id="files-branch-select" class="files-branch-select" title="Branch" hidden></select></div><div class="files-toolbar-row files-toolbar-row-crumb"><div class="files-breadcrumb" id="files-breadcrumb"></div></div></div><div class="files-list" id="files-list"><div class="files-loading">Loading...</div></div>', 2)
+      ])]);
     };
   }
 });
@@ -25250,8 +25983,8 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
 });
 const registry = {
   dashboard: _sfc_main$c,
+  envelope: EnvelopeView,
   file: _sfc_main$a,
-  report: _sfc_main$9,
   legacy: _sfc_main$5
 };
 function getViewComponent(kind) {
@@ -25674,7 +26407,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
       }
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$x, {
+      return openBlock(), createBlock(_sfc_main$y, {
         id: "new-task-modal",
         open: unref(nt2).isOpen,
         title: modalTitle.value,
@@ -26195,7 +26928,7 @@ const _sfc_main$1 = /* @__PURE__ */ defineComponent({
       triggerSearch(draftQuery.value || ks.currentQuery);
     }
     return (_ctx, _cache) => {
-      return openBlock(), createBlock(_sfc_main$x, {
+      return openBlock(), createBlock(_sfc_main$y, {
         open: unref(ks).isOpen,
         size: "lg",
         title: "Search Knowledge",
@@ -26423,16 +27156,16 @@ const _sfc_main = /* @__PURE__ */ defineComponent({
     });
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock(Fragment, null, [
-        createVNode(_sfc_main$v),
+        createVNode(_sfc_main$w),
         createVNode(_sfc_main$2),
         createVNode(_sfc_main$1),
-        createVNode(_sfc_main$u),
+        createVNode(_sfc_main$v),
         createBaseVNode("main", _hoisted_1, [
           createVNode(Workspace)
         ]),
-        createVNode(_sfc_main$t),
-        createVNode(_sfc_main$q),
-        createVNode(_sfc_main$n)
+        createVNode(_sfc_main$u),
+        createVNode(_sfc_main$r),
+        createVNode(_sfc_main$o)
       ], 64);
     };
   }
@@ -32101,4 +32834,6 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((r) => r.unregister()))).catch(() => {
   });
 }
-createApp(_sfc_main).use(createPinia()).use(router).use(createBootstrap()).mount("#app");
+const pinia = createPinia();
+window.__pinia = pinia;
+createApp(_sfc_main).use(pinia).use(router).use(createBootstrap()).mount("#app");

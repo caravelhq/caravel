@@ -58,6 +58,7 @@ const SUITES: Suite[] = [
   { name: "continuation project tag: both writers + resolution order (WAL-84 Phase 1)", file: "scheduler/cont-project.test.ts", timeoutMs: 120_000 },
   { name: "scheduled-template guard: no consolidation for recurring parents (WAL-84)", file: "scheduler/frontier-scheduled.test.ts", timeoutMs: 120_000 },
   { name: "type-check gate: src/+test/ errors (WAL-72 v1.12)", file: "type-check.test.ts", timeoutMs: 120_000 },
+  { name: "waiting-park: script/limits/generality (WAL-120)", file: "waiting-park.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };
