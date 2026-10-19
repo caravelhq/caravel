@@ -7,6 +7,7 @@ import { existsSync } from "fs";
 import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
 import { listAgentNamesSync } from "../../agents";
+import { SUMMARY_BUCKETS, ATTENTION_SCAN_BUCKETS } from "../../envelope/schema";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -14,7 +15,7 @@ const AGENTS_DIR = join(PROJECT_DIR, "agents");
 // Example roster used only when no agent profiles exist on disk and no env
 // override is set. Real deployments derive the roster from agents/<name>/.
 const EXAMPLE_AGENTS = ["alice", "bob", "ray"];
-const BUCKETS = ["open", "waiting", "done", "failed", "archived", "scheduled", "paused"] as const;
+const BUCKETS = SUMMARY_BUCKETS;
 type Bucket = (typeof BUCKETS)[number];
 
 type Counts = { open: number; waiting: number; done: number; failed: number; archived: number; scheduled: number; paused: number };
@@ -506,8 +507,7 @@ export async function listScheduledTemplates(): Promise<ScheduledTemplateRow[]> 
 const ATTENTION_TIER_BOUND = 8; // named constant — change here to change everywhere
 
 // Buckets scanned for attention; excludes archived/ (half the corpus for zero
-// signal) and scheduled/ (templates carry no status: field).
-const ATTENTION_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "blocked"] as const;
+// signal) and scheduled/ (templates carry no status: field). See schema.ts.
 
 export interface AttentionTierEntry {
   count: number;

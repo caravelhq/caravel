@@ -7,6 +7,7 @@
 import { readFile } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import { BUCKETS } from "./envelope/schema";
 
 // WAL-63 Phase 3: infer a project tag from context entries by picking the
 // most-frequently-cited `Notes/Projects/<X>/` path. Stable on ties
@@ -42,7 +43,7 @@ export function inferProjectFromContext(context: string[]): string | null {
 //
 // Parameterised on agentsDir and agents so both the runner and the dispatch
 // layer can call it with their own values, and tests can inject a temp dir.
-const ALL_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived", "scheduled"];
+const ALL_BUCKETS = BUCKETS;
 export async function readParentProject(
   parentId: string,
   agentsDir: string,

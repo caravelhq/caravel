@@ -33,6 +33,17 @@ import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
 import { resolveStateDir } from "./paths";
 import { inferProjectFromContext, readParentProject } from "./projectUtils";
+import {
+  ARCHIVABLE_BUCKETS,
+  GRAPH_SCAN_BUCKETS,
+  LOCATE_ENVELOPE_BUCKETS,
+  STALE_RENDEZVOUS_BUCKETS,
+  ALLOCATION_SCAN_DIRS,
+  VALID_WAITING_SPECS,
+  REPORT_FILE_BUCKETS,
+  type WorkerUsage,
+} from "./envelope/schema";
+import { appendUsageToEnvelopeYaml } from "./envelope/write";
 
 const PROJECT_DIR = process.cwd();
 const AGENTS_DIR = join(PROJECT_DIR, "agents");
@@ -94,7 +105,7 @@ const AUTO_PAUSE_DAYS = 14;
 // home, and closed envelopes get folded to `archived/` once aged out.
 // `paused` is intentionally excluded — paused tasks are not archivable;
 // they stay visible until a human explicitly resumes or closes them.
-const ARCHIVABLE_BUCKETS = ["done", "failed", "waiting", "open"] as const;
+// ARCHIVABLE_BUCKETS imported from ./envelope/schema
 
 // === Persistent graph + frontier serialisation (FDP v1.19 §1) ==============
 // One module-level graph, mutated by every tick rebuild and every spawn/extend
@@ -614,8 +625,7 @@ async function readReportFile(
   taskId: string,
   unusable?: { path?: string }
 ): Promise<TaskDirective | null> {
-  const buckets: Array<"done" | "failed" | "waiting"> = ["done", "failed", "waiting"];
-  for (const bucket of buckets) {
+  for (const bucket of REPORT_FILE_BUCKETS) {
     const path = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.md`);
     if (!existsSync(path)) continue;
 
@@ -974,7 +984,7 @@ export function detectCycles(nodes: Map<string, GraphNode>): { id: string; probl
 
 // Build the task graph from disk.  Pass `agentsDir` explicitly so tests can
 // point at a fixture directory rather than the live agents/ tree.
-const GRAPH_SCAN_BUCKETS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"] as const;
+// GRAPH_SCAN_BUCKETS imported from ./envelope/schema
 
 export async function loadGraph(agentsDir: string, agents: string[]): Promise<TaskGraph> {
   const nodes = new Map<string, GraphNode>();
@@ -1296,8 +1306,7 @@ async function locateEnvelope(
     return { path: preferredPath, yaml };
   } catch {}
 
-  const buckets = ["open", "done", "failed", "waiting", "archived"];
-  for (const bucket of buckets) {
+  for (const bucket of LOCATE_ENVELOPE_BUCKETS) {
     const candidate = join(AGENTS_DIR, agent, "tasks", bucket, `${taskId}.yaml`);
     if (candidate === preferredPath) continue;
     try {
@@ -1320,7 +1329,7 @@ async function locateEnvelope(
 // Add a new entry here to allow a new family; also add it to:
 //   - SWEEP_PREDICATES (the sweep loop that unblocks / terminates it)
 //   - scheduler.ts allow-list (so the scheduler counts the task as live)
-const VALID_WAITING_SPECS = new Set(["limits", "script"]);
+// VALID_WAITING_SPECS imported from ./envelope/schema
 
 async function transitionToWaiting(
   agent: string,
@@ -1434,7 +1443,7 @@ async function cleanStaleRendezvous(
   taskId: string,
   keepBucket: "open" | "waiting" | "done" | "failed" | "paused"
 ): Promise<void> {
-  const buckets: Array<"open" | "waiting" | "done" | "failed" | "paused"> = ["open", "waiting", "done", "failed", "paused"];
+  const buckets = [...STALE_RENDEZVOUS_BUCKETS];
   const keepDir = join(AGENTS_DIR, agent, "tasks", keepBucket);
   const keepPath = join(keepDir, `${taskId}.md`);
 
@@ -1670,7 +1679,7 @@ async function nextContTaskId(
   graph: TaskGraph,
   agentsDir: string
 ): Promise<string> {
-  const SCAN_DIRS = ["open", "waiting", "done", "failed", "paused", "archived", "blocked"];
+  const SCAN_DIRS = ALLOCATION_SCAN_DIRS;
 
   if (parentId) {
     const root = parentId.split(".")[0]!;
@@ -2130,7 +2139,8 @@ async function transitionToTerminal(
   agent: string,
   taskId: string,
   openPath: string,
-  directive: TaskDirective
+  directive: TaskDirective,
+  usage?: WorkerUsage
 ): Promise<void> {
   const subdir = directive.kind === "done" ? "done" : "failed";
   const finalStatus = directive.kind === "done" ? "done" : `failed:${directive.reason ?? "other"}`;
@@ -2183,6 +2193,10 @@ async function transitionToTerminal(
       by: directive.cancelled.by || "user",
       reason: directive.cancelled.reason || "aborted mid-flight via dashboard",
     });
+  }
+
+  if (usage) {
+    next = appendUsageToEnvelopeYaml(next, usage);
   }
 
   const priorStatus = readField(yaml, "status") ?? "claimed";
@@ -2373,7 +2387,7 @@ async function sweepBlockedDependants(
 
 // === Worker invocation =====================================================
 
-async function runWorker(agent: string, taskId: string, yaml: string): Promise<TaskDirective | null> {
+async function runWorker(agent: string, taskId: string, yaml: string): Promise<{ directive: TaskDirective | null; usage: WorkerUsage | null }> {
   const prompt = buildWorkerPrompt(yaml, taskId);
   // Thread scope: rooted at the parent task and keyed by agent. All sub-tasks
   // under the same parent share one resumed Claude session per agent — the
@@ -2403,6 +2417,9 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   // output, immediate non-zero exits). Kept separate so it doesn't pollute
   // directive parsing, but fed to detectLimitsHit alongside captured.
   let diag = "";
+  // Typed callback — NOT the diagnostic channel, which is regex-fished.
+  // Set only when a non-error result event is seen; absent = unmeasured.
+  let workerUsage: WorkerUsage | null = null;
   try {
     await streamUserMessage(
       `multi-agent:${taskId}`,
@@ -2412,7 +2429,8 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       entry.controller.signal,
       threadId,
       agent,
-      (d) => { diag += d; }
+      (d) => { diag += d; },
+      (u) => { workerUsage = u; }
     );
   } catch (err) {
     if (entry.aborted) {
@@ -2420,14 +2438,17 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       // kill, not a real crash. Fall through to the cancellation directive.
       console.warn(`[multi-agent] worker ${agent}/${taskId} aborted by ${entry.by || "user"} mid-turn`);
       return {
-        kind: "failed",
-        reason: "aborted",
-        summary: entry.reason
-          ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
-          : `Aborted mid-flight by ${entry.by || "user"}.`,
-        body: "",
-        report: null,
-        cancelled: { by: entry.by || "user", reason: entry.reason },
+        directive: {
+          kind: "failed",
+          reason: "aborted",
+          summary: entry.reason
+            ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
+            : `Aborted mid-flight by ${entry.by || "user"}.`,
+          body: "",
+          report: null,
+          cancelled: { by: entry.by || "user", reason: entry.reason },
+        },
+        usage: null,
       };
     }
     const errText = err instanceof Error ? err.message : String(err);
@@ -2435,15 +2456,18 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
       await maybeSetGlobalLimitsGate(`${errText}\n${captured}\n${diag}`, agent, taskId);
       console.warn(`[multi-agent] worker ${agent}/${taskId} hit a token/rate/context limit — routing to waiting:on:limits`);
       return {
-        kind: "waiting",
-        reason: "limits",
-        summary: `worker hit an Anthropic API limit. Detail: ${errText.slice(0, 280)}`,
-        body: "",
-        report: null,
+        directive: {
+          kind: "waiting",
+          reason: "limits",
+          summary: `worker hit an Anthropic API limit. Detail: ${errText.slice(0, 280)}`,
+          body: "",
+          report: null,
+        },
+        usage: null,
       };
     }
     console.error(`[multi-agent] worker ${agent}/${taskId} threw:`, err);
-    return { kind: "failed", reason: "crash", summary: errText, body: "", report: null };
+    return { directive: { kind: "failed", reason: "crash", summary: errText, body: "", report: null }, usage: null };
   }
 
   // Abort that resolved rather than threw: proc.kill() ends the stream
@@ -2453,14 +2477,17 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   if (entry.aborted) {
     console.warn(`[multi-agent] worker ${agent}/${taskId} aborted by ${entry.by || "user"} (stream closed cleanly)`);
     return {
-      kind: "failed",
-      reason: "aborted",
-      summary: entry.reason
-        ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
-        : `Aborted mid-flight by ${entry.by || "user"}.`,
-      body: "",
-      report: null,
-      cancelled: { by: entry.by || "user", reason: entry.reason },
+      directive: {
+        kind: "failed",
+        reason: "aborted",
+        summary: entry.reason
+          ? `Aborted mid-flight by ${entry.by || "user"}: ${entry.reason}`
+          : `Aborted mid-flight by ${entry.by || "user"}.`,
+        body: "",
+        report: null,
+        cancelled: { by: entry.by || "user", reason: entry.reason },
+      },
+      usage: null,
     };
   }
 
@@ -2470,11 +2497,11 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
   const fromFile = await readReportFile(agent, taskId, unusableReport);
   if (fromFile) {
     console.log(`[multi-agent] ${agent}/${taskId}: read result from report file (status=${fromFile.kind})`);
-    return fromFile;
+    return { directive: fromFile, usage: workerUsage };
   }
 
   const parsed = parseDirective(captured);
-  if (parsed) return parsed;
+  if (parsed) return { directive: parsed, usage: workerUsage };
 
   // No file, no directive — but if the stream OR the diagnostic channel
   // (stderr / result-event / exit marker) surfaced a limit error, route to
@@ -2487,11 +2514,14 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     await maybeSetGlobalLimitsGate(`${captured}\n${diag}`, agent, taskId);
     console.warn(`[multi-agent] ${agent}/${taskId}: no directive emitted but a limit signature was found (captured or diagnostic) — routing to waiting:on:limits`);
     return {
-      kind: "waiting",
-      reason: "limits",
-      summary: "worker hit an Anthropic API limit and emitted no directive — gate set, will retry after reset",
-      body: "",
-      report: null,
+      directive: {
+        kind: "waiting",
+        reason: "limits",
+        summary: "worker hit an Anthropic API limit and emitted no directive — gate set, will retry after reset",
+        body: "",
+        report: null,
+      },
+      usage: null,
     };
   }
   // Non-zero exit with no directive and no limit signature: a genuine crash
@@ -2502,11 +2532,14 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     const tail = diag.slice(-400).trim();
     console.warn(`[multi-agent] ${agent}/${taskId}: worker exited non-zero with no directive — failed:crash`);
     return {
-      kind: "failed",
-      reason: "crash",
-      summary: `worker process exited non-zero with no directive/report. Diagnostic tail: ${tail || "(empty)"}`,
-      body: "",
-      report: null,
+      directive: {
+        kind: "failed",
+        reason: "crash",
+        summary: `worker process exited non-zero with no directive/report. Diagnostic tail: ${tail || "(empty)"}`,
+        body: "",
+        report: null,
+      },
+      usage: null,
     };
   }
   // No file, no directive, no limit signature, clean exit. Genuinely opaque:
@@ -2533,12 +2566,16 @@ async function runWorker(agent: string, taskId: string, yaml: string): Promise<T
     `  diagnostic tail: ${diagTail || "(empty)"}\n` +
     `  captured tail: ${capTail || "(empty)"}`
   );
+  // workerUsage may be set here (result event was non-error, clean exit)
   return {
-    kind: "failed",
-    reason: unusableReport.path ? "report-malformed" : "other",
-    summary: `${respondedNote}. Diagnostic tail: ${diagTail || "(none — no stderr/result/exit signal)"}`,
-    body: "",
-    report: null,
+    directive: {
+      kind: "failed",
+      reason: unusableReport.path ? "report-malformed" : "other",
+      summary: `${respondedNote}. Diagnostic tail: ${diagTail || "(none — no stderr/result/exit signal)"}`,
+      body: "",
+      report: null,
+    },
+    usage: workerUsage,
   };
   } finally {
     inflightWorkers.delete(key);
@@ -2992,7 +3029,8 @@ async function applyWorkerOutcome(
   taskId: string,
   filePath: string,
   claimedYaml: string,
-  directive: TaskDirective | null
+  directive: TaskDirective | null,
+  usage?: WorkerUsage | null
 ): Promise<void> {
   const effective: TaskDirective = directive ?? {
     kind: "failed",
@@ -3004,6 +3042,7 @@ async function applyWorkerOutcome(
   if (!directive) {
     console.warn(`[multi-agent] ${agent}/${taskId} finished without a directive — synthesising failed:other`);
   }
+  const u = usage ?? undefined;
   if (effective.kind === "waiting") {
     const onSpec = (effective.reason ?? "user").trim() || "user";
     if (!VALID_WAITING_SPECS.has(onSpec)) {
@@ -3024,14 +3063,14 @@ async function applyWorkerOutcome(
         summary: `Phase 3W straggler: converted ${stragglerSpec} to done — ${effective.summary || ""}`,
       });
       const converted: TaskDirective = { kind: "done", reason: null, summary: effective.summary, body: effective.body ?? "", report: effective.report };
-      await transitionToTerminal(agent, taskId, filePath, converted);
+      await transitionToTerminal(agent, taskId, filePath, converted, u);
       console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → done (straggler from ${stragglerSpec})`);
     } else {
       await transitionToWaiting(agent, taskId, filePath, effective);
       console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → waiting:on:${onSpec}`);
     }
   } else {
-    await transitionToTerminal(agent, taskId, filePath, effective);
+    await transitionToTerminal(agent, taskId, filePath, effective, u);
     console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
   }
 }
@@ -3146,7 +3185,7 @@ async function tickOnce(
 
       // Fire-and-forget the worker; record completion when it returns.
       runWorker(agent, taskId, claimedYaml)
-        .then((directive) => applyWorkerOutcome(agent, taskId, filePath, claimedYaml, directive))
+        .then(({ directive, usage }) => applyWorkerOutcome(agent, taskId, filePath, claimedYaml, directive, usage))
         .catch((err) => {
           console.error(`[multi-agent] ${agent}/${taskId} transition failed:`, err);
         })
