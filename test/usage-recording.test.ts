@@ -133,7 +133,6 @@ function sampleUsage(): WorkerUsage {
   return {
     turns: 37,
     tokens: { input: 412930, output: 18422, cache_read: 1204331, cache_creation: 88210 },
-    cost_usd: 4.82,
     duration_ms: 1842000,
   };
 }
@@ -162,7 +161,6 @@ console.log("\nT1 — normal worker completion stamps usage: block:");
   assert(/output:\s*18422/.test(content), "tokens.output: 18422");
   assert(/cache_read:\s*1204331/.test(content), "tokens.cache_read: 1204331");
   assert(/cache_creation:\s*88210/.test(content), "tokens.cache_creation: 88210");
-  assert(/cost_usd:\s*4\.82/.test(content), "cost_usd: 4.82");
   assert(/duration_ms:\s*1842000/.test(content), "duration_ms: 1842000");
   assert(/status:\s*done/.test(content), "status: done (other fields intact)");
 }
@@ -231,13 +229,12 @@ console.log("\nT4 — appendUsageToEnvelopeYaml: replaces pre-existing usage: bl
   const openPath = join(agentsDir, agent, "tasks", "open", `${taskId}.yaml`);
   // Pre-seed an envelope that already has a (stale) usage: block.
   const staleYaml = makeClaimedYaml(taskId) +
-    `usage:\n  turns: 1\n  tokens:\n    input: 100\n    output: 50\n    cache_read: 0\n    cache_creation: 0\n  cost_usd: 0.01\n  duration_ms: 5000\n`;
+    `usage:\n  turns: 1\n  tokens:\n    input: 100\n    output: 50\n    cache_read: 0\n    cache_creation: 0\n  duration_ms: 5000\n`;
   await writeFile(openPath, staleYaml);
 
   const freshUsage: WorkerUsage = {
     turns: 5,
     tokens: { input: 9999, output: 2222, cache_read: 0, cache_creation: 0 },
-    cost_usd: 0.12,
     duration_ms: 30000,
   };
   await transitionToTerminal(agent, taskId, openPath, { kind: "done", reason: null, summary: "fresh run", body: "", report: null }, freshUsage);
@@ -255,22 +252,21 @@ console.log("\nT4 — appendUsageToEnvelopeYaml: replaces pre-existing usage: bl
   assert((content.match(/^usage:/gm) ?? []).length === 1, "exactly one usage: key");
 }
 
-// ── T5: zero-cost usage is distinguishable from unmeasured ───────────────────
+// ── T5: zero usage is distinguishable from unmeasured ───────────────────
 
-console.log("\nT5 — zero-cost run (all zeros) is distinguishable from unmeasured:");
+console.log("\nT5 — zero run (all zeros) is distinguishable from unmeasured:");
 
 {
   const base = makeClaimedYaml("TSK-ZERO");
   const zeroUsage: WorkerUsage = {
     turns: 0,
     tokens: { input: 0, output: 0, cache_read: 0, cache_creation: 0 },
-    cost_usd: 0,
     duration_ms: 0,
   };
 
   // Zero usage stamped → usage: key present (zero-cost fact recorded).
   const withZero = appendUsageToEnvelopeYaml(base, zeroUsage);
-  assert(withZero.includes("usage:"), "usage: key present for zero-cost run");
+  assert(withZero.includes("usage:"), "usage: key present for zero run");
   assert(/turns:\s*0/.test(withZero), "turns: 0 recorded");
 
   // No usage stamped → usage: key absent (unmeasured fact).

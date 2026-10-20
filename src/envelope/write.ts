@@ -64,7 +64,6 @@ export function appendUsageToEnvelopeYaml(yaml: string, usage: WorkerUsage): str
     `    output: ${usage.tokens.output}\n` +
     `    cache_read: ${usage.tokens.cache_read}\n` +
     `    cache_creation: ${usage.tokens.cache_creation}\n` +
-    `  cost_usd: ${usage.cost_usd}\n` +
     `  duration_ms: ${usage.duration_ms}\n`;
   return next.trimEnd() + "\n" + block;
 }
