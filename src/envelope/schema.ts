@@ -157,7 +157,6 @@ export interface WorkerUsage {
     cache_read: number;
     cache_creation: number;
   };
-  cost_usd: number;
   duration_ms: number;
 }
 

@@ -815,12 +815,14 @@ async function streamClaude(
             }
           }
           // Surface usage to caller if result is non-error and all fields present.
+          // total_cost_usd is deliberately not recorded: on a --resume'd session it is a
+          // session-lifetime counter, not per-run, and it prices a subscription at API list
+          // rates. turns/tokens/duration_ms are per-run (verified WAL-123, 2026-10-21).
           if (onResult && ev.is_error !== true) {
             const numTurns = typeof ev.num_turns === "number" ? ev.num_turns : null;
             const rawUsage = ev.usage as Record<string, unknown> | undefined;
-            const costUsd = typeof ev.total_cost_usd === "number" ? ev.total_cost_usd : null;
             const durationMs = typeof ev.duration_ms === "number" ? ev.duration_ms : null;
-            if (numTurns !== null && rawUsage && costUsd !== null && durationMs !== null) {
+            if (numTurns !== null && rawUsage && durationMs !== null) {
               onResult({
                 turns: numTurns,
                 tokens: {
@@ -829,7 +831,6 @@ async function streamClaude(
                   cache_read: typeof rawUsage.cache_read_input_tokens === "number" ? rawUsage.cache_read_input_tokens : 0,
                   cache_creation: typeof rawUsage.cache_creation_input_tokens === "number" ? rawUsage.cache_creation_input_tokens : 0,
                 },
-                cost_usd: costUsd,
                 duration_ms: durationMs,
               });
             }
