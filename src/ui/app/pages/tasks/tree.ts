@@ -341,7 +341,7 @@ export function renderAllTasksView(
     const rows = groups[groupKey];
     const displayName = (groupKey === "__unassigned") ? "Unassigned" : groupKey;
     const isCollapsed = !!collapsed[groupKey];
-    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml(groupKey) + '">';
+    html += '<div class="tasks-current-group' + (isCollapsed ? " is-collapsed" : "") + '" data-project-key="' + escapeHtml(groupKey) + '" data-group-id="' + escapeHtml(groupKey) + '">';
     html += '<div class="tasks-current-group-head" data-toggle-group="' + escapeHtml(groupKey) + '">';
     html += '<span class="tasks-current-group-chevron"></span>';
     html += '<span class="tasks-current-group-name">' + escapeHtml(displayName) + "</span>";

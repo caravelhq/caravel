@@ -24,8 +24,7 @@ onBeforeUnmount(() => { live.unbind(TASKS_LIST_KEY); });
 const tasksList = computed<TaskRow[] | null>(() => {
   const e = live.entry(TASKS_LIST_KEY);
   if (!e?.data) return null;
-  const d = e.data as { ok?: boolean; tasks?: TaskRow[] } | TaskRow[];
-  return Array.isArray(d) ? d : ((d as { tasks?: TaskRow[] }).tasks ?? null);
+  return e.data as TaskRow[];
 });
 
 // Per-tab label: read headline from the per-id chain entry (task:<id>) that

@@ -925,6 +925,9 @@ onMounted(() => {
       const taskId = row.getAttribute("data-open-task");
       if (taskId) openTaskPanel(taskId);
     });
+    tasksUserBlockedEl.addEventListener("change", (ev: Event) => {
+      handleCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
+    });
   }
 
   if (tasksViewTabsEl) {

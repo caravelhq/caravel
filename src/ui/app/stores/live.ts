@@ -103,9 +103,10 @@ export const useLiveStore = defineStore("live", () => {
       entry.error = String(err);
     } finally {
       entry.inflight = false;
-      // If an event arrived while we were fetching, go again
+      // If an event arrived while we were fetching, go again — re-resolve from the map
+      // so the retry always operates on the reactive proxy, not a captured raw reference.
       if (entry.dirty && entry.refs > 0) {
-        doFetch(key, entry).catch(() => {});
+        doFetch(key, entries.get(key) ?? entry).catch(() => {});
       }
     }
   }
@@ -129,6 +130,9 @@ export const useLiveStore = defineStore("live", () => {
       };
       entries.set(key, entry);
       registerTopics(key, spec);
+      // Re-read through the reactive Map so doFetch receives the proxy, not the raw object.
+      // Writing through the raw object bypasses Vue's set trap and silently drops reactivity.
+      entry = entries.get(key)!;
     } else {
       touch(entry);
     }
@@ -174,7 +178,7 @@ export const useLiveStore = defineStore("live", () => {
     entries.set(key, e);
     registerTopics(key, spec);
     evict();
-    doFetch(key, e).catch(() => {});
+    doFetch(key, entries.get(key)!).catch(() => {});
   }
 
   // ── Event handler ──────────────────────────────────────────────────────────
