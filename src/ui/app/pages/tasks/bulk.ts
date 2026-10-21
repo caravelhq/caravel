@@ -40,12 +40,12 @@ export function handleRowCheckboxChange(
     if (cb.checked) bulkSelected[taskId] = { agent, defaultStatus };
     else delete bulkSelected[taskId];
     updateBulkBar();
-    updateGroupSelectAll(cb.closest("[data-project-key]"));
+    updateGroupSelectAll(cb.closest("[data-group-id]"));
     return;
   }
 
   if (cb.classList.contains("current-group-select-all")) {
-    const groupEl = cb.closest("[data-project-key]");
+    const groupEl = cb.closest("[data-group-id]");
     const rowCbs = groupEl ? groupEl.querySelectorAll<HTMLInputElement>(".current-row-select") : [];
     rowCbs.forEach(rCb => {
       const rId = rCb.getAttribute("data-task-id") || "";

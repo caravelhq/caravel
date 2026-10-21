@@ -8,13 +8,13 @@ function shortId(id: string): string {
   return String(id || "").replace(/^TSK-\d{4}-/, "");
 }
 
-function tierRow(rowCls: string, row: AttentionTierRow, showCheckbox: boolean): string {
+function tierRow(rowCls: string, row: AttentionTierRow, showCheckbox: boolean, defaultCloseStatus = "cancelled"): string {
   const full = escapeHtml(row.id || "");
   const shrt = escapeHtml(shortId(row.id));
   const headline = escapeHtml(row.headline || row.id || "");
   const label = escapeHtml(shorten(row.label || row.headline || row.id || "", 120));
   const checkbox = showCheckbox
-    ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml(row.agent || "") + '" aria-label="Select ' + full + '" />'
+    ? '<input type="checkbox" class="tier-report-select current-row-select" data-task-id="' + full + '" data-task-agent="' + escapeHtml(row.agent || "") + '" data-task-default-status="' + defaultCloseStatus + '" aria-label="Select ' + full + '" />'
     : "";
   return (
     '<div class="tasks-tier-row ' + rowCls + '" data-open-task="' + full + '" title="' + full + " — " + headline + '">' +
@@ -27,7 +27,8 @@ function tierRow(rowCls: string, row: AttentionTierRow, showCheckbox: boolean): 
 
 function renderTierSection(
   tier: { count: number; rows: AttentionTierRow[] } | undefined,
-  headCls: string, rowCls: string, glyph: string, verb: string, showCheckbox: boolean
+  headCls: string, rowCls: string, glyph: string, verb: string, showCheckbox: boolean,
+  groupId = ""
 ): string {
   const count = (tier && tier.count) || 0;
   const rows = (tier && tier.rows) || [];
@@ -36,11 +37,12 @@ function renderTierSection(
     : "";
   let h = '<div class="tasks-tier-head ' + headCls + '">' + selectAll + glyph + " " + verb + " (" + count + ")</div>";
   for (const row of rows) {
-    h += tierRow(rowCls, row, showCheckbox);
+    h += tierRow(rowCls, row, showCheckbox, showCheckbox ? "closed" : "cancelled");
   }
   if (count > rows.length) {
     h += '<div class="tasks-tier-more">+ ' + (count - rows.length) + " more — open Tasks to see all</div>";
   }
+  if (groupId) return '<div data-group-id="' + escapeHtml(groupId) + '">' + h + '</div>';
   return h;
 }
 
@@ -56,7 +58,7 @@ export function renderAttentionTiers(el: HTMLElement, tiers: AttentionTiers | nu
   html += renderTierSection(tiers.failed,       "tasks-tier-head-failed",       "tasks-tier-row-failed",       "✗", "Triage",       false);
   html += renderTierSection(tiers.blocked,      "tasks-tier-head-blocked",      "tasks-tier-row-blocked",      "⊘", "Unblock",      false);
   html += renderTierSection(tiers.paused,       "tasks-tier-head-paused",       "tasks-tier-row-paused",       "⏸", "Paused",       false);
-  html += renderTierSection(tiers.reports,      "tasks-tier-head-reports",      "tasks-tier-row-reports",      "▶", "Read",         true);
+  html += renderTierSection(tiers.reports,      "tasks-tier-head-reports",      "tasks-tier-row-reports",      "▶", "Read",         true,  "reports");
   el.innerHTML = html;
   el.hidden = (html === "");
 }
