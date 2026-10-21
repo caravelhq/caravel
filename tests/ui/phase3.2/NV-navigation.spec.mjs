@@ -87,8 +87,10 @@ async function resetWorkspace(page) {
       .filter((k) => k.startsWith("workspace."))
       .forEach((k) => localStorage.removeItem(k));
   });
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(400);
+  // "load" instead of "networkidle": the SSE connection is already open on a
+  // reused page, so networkidle never fires (SSE keeps 1 active connection).
+  await page.reload({ waitUntil: "load" });
+  await page.waitForTimeout(500);
 }
 
 async function openMenu(page) {
@@ -364,8 +366,8 @@ try {
       // after reload → fails here.
       {
         const st3ePre = await wsState(page);
-        await page.reload({ waitUntil: "networkidle" });
-        await page.waitForTimeout(400);
+        await page.reload({ waitUntil: "load" });
+        await page.waitForTimeout(500);
         const st3ePost = await wsState(page);
         if (JSON.stringify(st3ePre?.recents) === JSON.stringify(st3ePost?.recents) && (st3ePost?.recents?.length ?? 0) > 0) {
           pass(`NV3 Recents survives reload [${VP.label}]`);
