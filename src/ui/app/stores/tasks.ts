@@ -40,7 +40,6 @@ export interface TaskRow {
 
 export type TasksView = "projects" | "all";
 export type TasksFilter = "all" | "open" | "waiting" | "done" | "failed";
-export type RightPaneMode = "empty" | "view" | "new" | "project";
 
 export const useTasksStore = defineStore("tasks", () => {
   const view = ref<TasksView>(load<TasksView>("view", "projects"));
@@ -54,40 +53,17 @@ export const useTasksStore = defineStore("tasks", () => {
   const bulkSelected = ref<Record<string, { agent: string; defaultStatus: string }>>({});
   // Mobile long-press multi-select mode active flag.
   const multiSelectActive = ref(false);
-  // Right-pane mode (empty | view | new | project).
-  const pane = ref<RightPaneMode>(load<RightPaneMode>("pane", "empty"));
-  // Whether the sidebar picker is collapsed (mobile/narrow).
-  const pickerCollapsed = ref(false);
-  // Currently-viewed task ID.
-  const currentTaskId = ref<string | null>(load<string | null>("currentTaskId", null));
-  // Project slug of the currently-viewed task.
-  const currentTaskProject = ref<string | null>(null);
-  // Task/report view mode.
-  const currentViewMode = ref<"task" | "report">("task");
-  // Currently-viewed project slug.
-  const currentProjectSlug = ref<string | null>(load<string | null>("currentProjectSlug", null));
-  // Back-stack: project slug to return to after viewing a task from a project panel.
-  const taskFromProjectSlug = ref<string | null>(null);
   // Whether tasks have been loaded at least once.
   const loaded = ref(false);
-  // External navigation request (e.g. Dashboard tier row click) — consumed by TasksPage.
-  // Not persisted: it's a live signal, not a restore hint.
-  const pendingTaskId = ref<string | null>(null);
   // Per-taskId sub-view memory. Session-only; not persisted.
   // Precedence in EnvelopeView: intent (ws.open) > URL > remembered > default "task".
   const subViewMemory = reactive(new Map<string, "task" | "report">());
 
-  watch(currentTaskId, (v) => save("currentTaskId", v));
-  watch(pane, (v) => save("pane", v));
-  watch(currentProjectSlug, (v) => save("currentProjectSlug", v));
   watch(view, (v) => save("view", v));
   watch(filter, (v) => save("filter", v));
 
   return {
     view, filter, cache, expanded, collapsed,
-    bulkSelected, multiSelectActive, pane, pickerCollapsed,
-    currentTaskId, currentTaskProject, currentViewMode,
-    currentProjectSlug, taskFromProjectSlug, loaded, pendingTaskId,
-    subViewMemory,
+    bulkSelected, multiSelectActive, loaded, subViewMemory,
   };
 });

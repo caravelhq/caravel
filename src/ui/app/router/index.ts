@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory, type RouteLocationNormalized } from "vue-router";
 import { useWorkspaceStore, type WsSnapshot } from "../stores/workspace";
-import { useTasksStore } from "../stores/tasks";
 import type { ResourceRef } from "../workspace/refs";
 import { refKey } from "../workspace/refs";
 
@@ -160,17 +159,7 @@ router.afterEach((to) => {
       }
     }
 
-    // Hydrate legacy-page stores from URL identity segments.
-    // This runs before the page mounts, so onMounted sees the correct values.
-    const p = to.path;
-    if (p.startsWith("/tasks/")) {
-      const taskId = decodeURIComponent(p.slice("/tasks/".length));
-      if (taskId) {
-        const tasks = useTasksStore();
-        tasks.currentTaskId = taskId;
-        tasks.pane = "view";
-      }
-    }
+    // /tasks/:id deep links: viewer removed in Phase 4 step 4 — deep-link support is F15.
     // /files/<path> is handled by routeToRef returning a file: ref — ws.open above opens it.
     // files.currentPath hydration removed (step 7): the file tab is the canonical representation.
   } finally {
@@ -189,10 +178,8 @@ export function syncWorkspaceUrl(push: boolean): void {
 
   let path: string;
   if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
-    const tasks = useTasksStore();
-    path = (tasks.pane === "view" && tasks.currentTaskId)
-      ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}`
-      : "/tasks";
+    // Phase 4 step 4: tasks page is a picker-only view; task content is in envelope: tabs.
+    path = "/tasks";
   } else {
     // legacy:files always maps to /files (step 7: the path no longer tracks an open file).
     path = refToPath(focusedRef);
