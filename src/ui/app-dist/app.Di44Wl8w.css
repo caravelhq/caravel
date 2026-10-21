@@ -792,19 +792,19 @@
   padding: 8px 12px;
 }
 
-.ev-root[data-v-9fbf5c5b] {
+.ev-root[data-v-9192c9c5] {
   display: flex;
   flex-direction: column;
   height: 100%;
   overflow: hidden;
 }
-.ev-tab-bar[data-v-9fbf5c5b] {
+.ev-tab-bar[data-v-9192c9c5] {
   display: flex;
   gap: 2px;
   padding: 6px 8px 0;
   flex-shrink: 0;
 }
-.ev-tab[data-v-9fbf5c5b] {
+.ev-tab[data-v-9192c9c5] {
   padding: 4px 14px;
   border: 1px solid var(--ts-border, #3a3a3a);
   background: transparent;
@@ -814,7 +814,7 @@
   font-size: 0.85em;
   min-height: 30px;
 }
-.ev-tab.is-active[data-v-9fbf5c5b] {
+.ev-tab.is-active[data-v-9192c9c5] {
   background: var(--ts-surface-2, #2a2a2a);
   color: var(--ts-text, #eee);
   border-bottom-color: var(--ts-surface-2, #2a2a2a);
@@ -822,38 +822,21 @@
 
 /* F4: ≥44px hit area at 390px viewport */
 @media (max-width: 390px) {
-.ev-tab[data-v-9fbf5c5b] { min-height: 44px; padding: 8px 16px;
+.ev-tab[data-v-9192c9c5] { min-height: 44px; padding: 8px 16px;
 }
 }
-.ev-pane[data-v-9fbf5c5b] {
+.ev-pane[data-v-9192c9c5] {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
-.ev-loading[data-v-9fbf5c5b] {
+.ev-loading[data-v-9192c9c5] {
   justify-content: center;
   align-items: center;
   padding: 20px;
 }
-.ev-footer[data-v-9fbf5c5b] {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-top: 1px solid var(--ts-border, #3a3a3a);
-  text-align: right;
-}
-.ev-open-tasks-btn[data-v-9fbf5c5b] {
-  background: transparent;
-  border: 1px solid var(--ts-border, #3a3a3a);
-  color: var(--ts-text-secondary, #aaa);
-  cursor: pointer;
-  font-size: 0.8em;
-  padding: 3px 10px;
-  border-radius: 3px;
-}
-.ev-open-tasks-btn[data-v-9fbf5c5b]:hover {
-  color: var(--ts-text, #eee);
-}
+
 
 .pv-root[data-v-087ebdf4] {
   display: flex;
@@ -1026,15 +1009,26 @@
   margin-top: 4px;
 }
 
-.view-host[data-v-e41f6907] {
+.view-host[data-v-e03e5fc1] {
   flex: 1;
   min-height: 0;
   overflow: auto;
   display: flex;
   flex-direction: column;
 }
-.view-host-empty[data-v-e41f6907] {
+.view-host-empty[data-v-e03e5fc1] {
   flex: 1;
+}
+.view-host-unregistered[data-v-e03e5fc1] {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+}
+.view-host-unregistered-label[data-v-e03e5fc1] {
+  font-size: 0.85em;
+  font-style: italic;
 }
 
 .workspace[data-v-b15e3e55] {

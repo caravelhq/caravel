@@ -13,7 +13,7 @@
  *
  * WAL-116: action errors surface inline with retry; no wedge on transient failures.
  */
-import { ref, computed, watch, onMounted, onDeactivated, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, nextTick } from "vue";
 import { useResource } from "../composables/useResource";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
@@ -108,6 +108,11 @@ onMounted(() => {
   nextTick(() => { /* ReportPane mounts itself */ });
 });
 
+onActivated(() => {
+  // F14: restore raText when returning to a cached envelope tab (step 1 only cleared it).
+  if (subView.value === "report") ui.raText = reportRawText;
+});
+
 onDeactivated(() => {
   ui.raText = null;
 });
@@ -191,12 +196,6 @@ function onReportRawText(text: string | null): void {
       />
     </div>
 
-    <div class="ev-footer">
-      <button class="ev-open-tasks-btn" @click.stop="ws.open({ kind: 'legacy', page: 'tasks' })">
-        Open in Tasks
-      </button>
-    </div>
-
   </div>
 </template>
 
@@ -250,24 +249,4 @@ function onReportRawText(text: string | null): void {
   padding: 20px;
 }
 
-.ev-footer {
-  flex-shrink: 0;
-  padding: 6px 12px;
-  border-top: 1px solid var(--ts-border, #3a3a3a);
-  text-align: right;
-}
-
-.ev-open-tasks-btn {
-  background: transparent;
-  border: 1px solid var(--ts-border, #3a3a3a);
-  color: var(--ts-text-secondary, #aaa);
-  cursor: pointer;
-  font-size: 0.8em;
-  padding: 3px 10px;
-  border-radius: 3px;
-}
-
-.ev-open-tasks-btn:hover {
-  color: var(--ts-text, #eee);
-}
 </style>

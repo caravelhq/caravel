@@ -39,6 +39,10 @@ const cacheKey = computed(() => (props.activeRef ? refKey(props.activeRef) : "")
         />
       </KeepAlive>
     </template>
+    <!-- DEC-0035 / F6: explicit placeholder for an unregistered kind, never a blank pane. -->
+    <div v-else-if="activeRef && !viewComponent" class="view-host-unregistered" role="status" aria-live="polite">
+      <span class="view-host-unregistered-label">{{ activeRef.kind }} — not available yet</span>
+    </div>
     <div v-else class="view-host-empty" />
   </div>
 </template>
@@ -53,5 +57,18 @@ const cacheKey = computed(() => (props.activeRef ? refKey(props.activeRef) : "")
 }
 .view-host-empty {
   flex: 1;
+}
+
+.view-host-unregistered {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.45;
+}
+
+.view-host-unregistered-label {
+  font-size: 0.85em;
+  font-style: italic;
 }
 </style>
