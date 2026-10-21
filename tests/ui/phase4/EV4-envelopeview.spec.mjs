@@ -410,6 +410,124 @@ for (const VP of VIEWPORTS) {
     }
   } catch (e) { fail(`EV4-9 [${VP.label}]`, String(e)); }
 
+  // ── EV4-10: Chat form fires POST /next with instruction field ───────────────
+  try {
+    await stubTask(page, TASK_TERMINAL, makeChain({}));
+    await loadEnvelope(page, TASK_TERMINAL);
+
+    let interceptedChat = null;
+    // Override any prior /next intercept — chat distinguishes itself by having an `instruction` field.
+    await page.route(`**\/api\/tasks\/${encodeURIComponent(TASK_TERMINAL)}\/next`, async (route) => {
+      interceptedChat = { method: route.request().method(), body: route.request().postDataJSON() };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, id: "TSK-EV4-chat-child" }) });
+    });
+
+    const chatBtn = page.locator('[data-ev-action="chat"]');
+    await chatBtn.waitFor({ state: "visible", timeout: 3000 });
+    await chatBtn.click();
+    await page.waitForTimeout(200);
+
+    const chatForm = page.locator('[data-ev-form="chat"]');
+    await chatForm.waitFor({ state: "visible", timeout: 2000 });
+    pass(`EV4-10 Chat form opens [${VP.label}]`);
+
+    // Fill the instruction textarea
+    const instrTextarea = chatForm.locator("textarea");
+    await instrTextarea.fill("What is the current status?");
+
+    const chatSubmit = page.locator('[data-ev-submit="chat"]');
+    await chatSubmit.click();
+    await page.waitForTimeout(500);
+
+    if (interceptedChat) {
+      if (interceptedChat.method === "POST") pass(`EV4-10 POST /next method (chat) [${VP.label}]`);
+      else fail(`EV4-10 POST /next method (chat) [${VP.label}]`, `got ${interceptedChat.method}`);
+
+      if (interceptedChat.body?.source === "continue") pass(`EV4-10 payload source:"continue" (chat) [${VP.label}]`);
+      else fail(`EV4-10 payload source:"continue" (chat) [${VP.label}]`, `got ${JSON.stringify(interceptedChat.body?.source)}`);
+
+      if (interceptedChat.body?.instruction !== undefined) pass(`EV4-10 payload has instruction field [${VP.label}]`);
+      else fail(`EV4-10 payload instruction field [${VP.label}]`, `body: ${JSON.stringify(interceptedChat.body)}`);
+    } else {
+      fail(`EV4-10 POST /next fired (chat) [${VP.label}]`, "route was never intercepted");
+    }
+    await shot(page, `EV4-10-${VP.width}`);
+  } catch (e) { fail(`EV4-10 [${VP.label}]`, String(e)); }
+
+  // ── EV4-11: Project chip fires POST /project ────────────────────────────────
+  try {
+    await stubTask(page, TASK_TERMINAL, makeChain({}));
+    await loadEnvelope(page, TASK_TERMINAL);
+
+    let interceptedProject = null;
+    await page.route(`**\/api\/tasks\/${encodeURIComponent(TASK_TERMINAL)}\/project`, async (route) => {
+      interceptedProject = { method: route.request().method(), body: route.request().postDataJSON() };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+
+    const projectChip = page.locator(".ev-project-chip");
+    await projectChip.waitFor({ state: "visible", timeout: 3000 });
+    await projectChip.click();
+    await page.waitForTimeout(200);
+
+    const projectInput = page.locator(".ev-project-input");
+    await projectInput.waitFor({ state: "visible", timeout: 2000 });
+    pass(`EV4-11 Project edit form opens [${VP.label}]`);
+
+    await projectInput.fill("Trakk-Share");
+    const projectSave = page.locator(".ev-project-save");
+    await projectSave.click();
+    await page.waitForTimeout(500);
+
+    if (interceptedProject) {
+      if (interceptedProject.method === "POST") pass(`EV4-11 POST /project method [${VP.label}]`);
+      else fail(`EV4-11 POST /project method [${VP.label}]`, `got ${interceptedProject.method}`);
+
+      if (interceptedProject.body?.project === "Trakk-Share") pass(`EV4-11 payload project:"Trakk-Share" [${VP.label}]`);
+      else fail(`EV4-11 payload project [${VP.label}]`, `got ${JSON.stringify(interceptedProject.body?.project)}`);
+    } else {
+      fail(`EV4-11 POST /project fired [${VP.label}]`, "route was never intercepted");
+    }
+    await shot(page, `EV4-11-${VP.width}`);
+  } catch (e) { fail(`EV4-11 [${VP.label}]`, String(e)); }
+
+  // ── EV4-12: Rename headline fires POST /rename ──────────────────────────────
+  try {
+    await stubTask(page, TASK_TERMINAL, makeChain({}));
+    await loadEnvelope(page, TASK_TERMINAL);
+
+    let interceptedRename = null;
+    await page.route(`**\/api\/tasks\/${encodeURIComponent(TASK_TERMINAL)}\/rename`, async (route) => {
+      interceptedRename = { method: route.request().method(), body: route.request().postDataJSON() };
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
+    });
+
+    const renameBtn = page.locator(".ev-rename-btn");
+    await renameBtn.waitFor({ state: "visible", timeout: 3000 });
+    await renameBtn.click();
+    await page.waitForTimeout(200);
+
+    const renameInput = page.locator(".ev-rename-input");
+    await renameInput.waitFor({ state: "visible", timeout: 2000 });
+    pass(`EV4-12 Rename input visible [${VP.label}]`);
+
+    await renameInput.fill("EV4 renamed headline — Phase 4");
+    const renameSave = page.locator(".ev-rename-save");
+    await renameSave.click();
+    await page.waitForTimeout(500);
+
+    if (interceptedRename) {
+      if (interceptedRename.method === "POST") pass(`EV4-12 POST /rename method [${VP.label}]`);
+      else fail(`EV4-12 POST /rename method [${VP.label}]`, `got ${interceptedRename.method}`);
+
+      if (interceptedRename.body?.headline === "EV4 renamed headline — Phase 4") pass(`EV4-12 payload headline correct [${VP.label}]`);
+      else fail(`EV4-12 payload headline [${VP.label}]`, `got ${JSON.stringify(interceptedRename.body?.headline)}`);
+    } else {
+      fail(`EV4-12 POST /rename fired [${VP.label}]`, "route was never intercepted");
+    }
+    await shot(page, `EV4-12-${VP.width}`);
+  } catch (e) { fail(`EV4-12 [${VP.label}]`, String(e)); }
+
   await page.close();
 }
 

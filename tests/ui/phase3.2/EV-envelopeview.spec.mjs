@@ -1,5 +1,11 @@
 // EV-envelopeview.spec.mjs — Phase 3.2 step 5: EnvelopeView specs EV1–EV7
 //
+// SUPERSEDED BY: tests/ui/phase4/EV4-envelopeview.spec.mjs (Phase 4 step 5/6)
+// EV4 (the Phase 3.2 spec "Open in Tasks" footer button test) and the read-only
+// restrictions tested here were deliberately inverted in Phase 4 (DEC-0036 removes
+// the footer; F14 restores report text on re-activation). Run both suites; the phase4
+// suite is the authoritative gate for the current behaviour.
+//
 // EV1: TierSection .db-tier-row click → workspace.open({kind:"envelope"}) — NOT legacy:tasks
 // EV2: Task/Report tabs toggle; .task-panel-next stripped; 3 delegations wired in DOM
 // EV3: [data-ev-action="done-reading"] fires POST /api/tasks/<id>/close with correct body;

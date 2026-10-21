@@ -167,12 +167,13 @@ try {
       fail("LV1 — rows appeared without refresh", `only ${rowsInit} rows — tasks:list binding may be missing`);
     }
 
-    // Verify the live entry for tasks:list exists and has refs > 0.
+    // DEC-0030: TasksPage binds tasks:list (picker + TabStrip = 2 refs). Assert
+    // exactly 2 so a single-binding regression is caught at gate time.
     const liveEntry = await getLiveEntry(page, "tasks:list");
-    if (liveEntry && liveEntry.refs > 0) {
-      pass(`LV1 — tasks:list live entry has refs=${liveEntry.refs} (binding active)`);
+    if (liveEntry && liveEntry.refs === 2) {
+      pass(`LV1 — tasks:list live entry has refs=${liveEntry.refs} (picker + TabStrip both bound, DEC-0030)`);
     } else {
-      fail("LV1 — tasks:list live entry has refs > 0", liveEntry ? `refs=${liveEntry.refs}` : "entry not found");
+      fail("LV1 — tasks:list live entry refs === 2 (DEC-0030)", liveEntry ? `refs=${liveEntry.refs}` : "entry not found");
     }
 
     // ── LV1 🔬 Mutation: unbind + clear cache. Rows should vanish. ──────────

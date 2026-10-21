@@ -134,15 +134,16 @@ export const useLiveStore = defineStore("live", () => {
       // Writing through the raw object bypasses Vue's set trap and silently drops reactivity.
       entry = entries.get(key)!;
     } else {
-      touch(entry);
+      touch(entry!);
     }
-    const wasUnbound = entry.refs === 0;
-    entry.refs++;
+    const e = entry!;
+    const wasUnbound = e.refs === 0;
+    e.refs++;
     // Evict AFTER refs++ so the new entry (refs=1) is never its own eviction victim
     if (isNew) evict();
     if (wasUnbound) {
       // 0→1 transition: fetch (revalidating cache hit or fresh)
-      doFetch(key, entry).catch(() => {});
+      doFetch(key, e).catch(() => {});
     }
   }
 
