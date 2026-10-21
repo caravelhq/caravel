@@ -430,8 +430,12 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
 // Invalidated via setArchiveInvalidator when an archived/ fs.watch event fires.
 let archivedTasksCache: TaskRow[] | null = null;
 let archiveCacheInFlight: Promise<TaskRow[]> | null = null;
+// Generation counter: an invalidation during an in-flight rebuild must not let
+// the stale promise re-populate the cache with pre-invalidation reads.
+let archiveCacheGen = 0;
 
 export function invalidateArchiveCache(): void {
+  archiveCacheGen++;
   archivedTasksCache = null;
   archiveCacheInFlight = null;
 }
@@ -462,12 +466,16 @@ async function listAllTasks(includeArchived = false, includeScheduled = true): P
   if (includeArchived) {
     if (!archivedTasksCache) {
       if (!archiveCacheInFlight) {
+        const gen = archiveCacheGen;
         archiveCacheInFlight = Promise.all(
           agents.map(agent => readBucketTasks(agent, "archived"))
         ).then(parts => {
           const cached = parts.flat();
-          archivedTasksCache = cached;
-          archiveCacheInFlight = null;
+          // Only install if no invalidation happened while we were reading.
+          if (gen === archiveCacheGen) {
+            archivedTasksCache = cached;
+            archiveCacheInFlight = null;
+          }
           return cached;
         });
       }
