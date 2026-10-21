@@ -2,7 +2,7 @@
 //
 // EV1: TierSection .db-tier-row click → workspace.open({kind:"envelope"}) — NOT legacy:tasks
 // EV2: Task/Report tabs toggle; .task-panel-next stripped; 3 delegations wired in DOM
-// EV3: [data-done-reading-id] fires POST /api/tasks/<id>/close with correct body;
+// EV3: [data-ev-action="done-reading"] fires POST /api/tasks/<id>/close with correct body;
 //      fixture envelope gains closed:{} on disk; fixture restored after assertion
 // EV4: "Open in Tasks" footer button → legacy:tasks tab
 // EV5: Prefetched card visible on first paint; no loading placeholder shown
@@ -115,12 +115,13 @@ try {
 
       // Wait for the real attention API to populate the reports tier.
       // Row limit is 3; use the first visible row (TSK-FX-RECUR / TSK-FX-0001 / TSK-FX-0002).
-      await page.waitForSelector('[data-tier="reports"] .db-tier-row', { timeout: 8000 }).catch(() => {});
+      await page.waitForSelector("#dashboard-attention-tiers", { timeout: 6000 }).catch(() => {});
+      await page.waitForSelector('[data-tier="reports"] .task-tree-node', { timeout: 12000 }).catch(() => {});
 
       await page.screenshot({ path: join(SHOTS_DIR, `EV1-before-click-${VP.label}.png`) });
 
       // Read the first visible reports-tier row's task id before clicking
-      const clickedTaskId = await page.locator('[data-tier="reports"] .db-tier-row').first()
+      const clickedTaskId = await page.locator('[data-tier="reports"] .task-tree-node').first()
         .getAttribute("data-task-id").catch(() => null);
 
       if (!clickedTaskId) {
@@ -128,7 +129,7 @@ try {
         await ctx.close(); continue;
       }
 
-      await page.locator('[data-tier="reports"] .db-tier-row').first().click();
+      await page.locator('[data-tier="reports"] .task-tree-node').first().click();
       await page.waitForTimeout(300);
 
       const afterState = await wsState(page);
@@ -202,12 +203,12 @@ try {
         fail(`EV2 .task-panel-chat-form stripped [${VP.label}]`, `${chatCount} instances still present`);
       }
 
-      const doneReadingCount = await page.locator("[data-done-reading-id]").count();
+      const doneReadingCount = await page.locator("[data-ev-action='done-reading']").count();
       const openFileCount = await page.locator(".ev-root [data-open-file]").count();
       if (doneReadingCount > 0) {
-        pass(`EV2 [data-done-reading-id] delegation present [${VP.label}]`);
+        pass(`EV2 [data-ev-action="done-reading"] button present [${VP.label}]`);
       } else {
-        fail(`EV2 [data-done-reading-id] delegation present [${VP.label}]`, "none found in task pane");
+        fail(`EV2 [data-ev-action="done-reading"] button present [${VP.label}]`, "none found in task pane");
       }
       if (openFileCount > 0) {
         pass(`EV2 [data-open-file] delegation present [${VP.label}]`);
@@ -219,12 +220,13 @@ try {
       await page.waitForTimeout(400);
       await page.screenshot({ path: join(SHOTS_DIR, `EV2-report-tab-${VP.label}.png`) });
 
-      const taskPaneHidden = await page.locator(".ev-pane").first().getAttribute("hidden").catch(() => null);
-      const reportPaneHidden = await page.locator(".ev-pane").nth(1).getAttribute("hidden").catch(() => null);
-      if (taskPaneHidden !== null && reportPaneHidden === null) {
+      // EnvelopeView uses v-if/v-else-if/v-else — panes are removed from DOM, not hidden.
+      // After clicking Report tab: the task pane (v-else-if) is removed → exactly 1 .ev-pane remains.
+      const paneCountAfterReport = await page.locator(".ev-pane").count();
+      if (paneCountAfterReport === 1) {
         pass(`EV2 Report tab switches pane visibility [${VP.label}]`);
       } else {
-        fail(`EV2 Report tab switches pane visibility [${VP.label}]`, `task hidden=${taskPaneHidden} report hidden=${reportPaneHidden}`);
+        fail(`EV2 Report tab switches pane visibility [${VP.label}]`, `Expected 1 .ev-pane after report tab click, got ${paneCountAfterReport}`);
       }
 
       await ctx.close();
@@ -257,20 +259,20 @@ try {
 
       await page.screenshot({ path: join(SHOTS_DIR, `EV3-before-done-${VP.label}.png`) });
 
-      const doneBtn = page.locator("[data-done-reading-id]").first();
+      const doneBtn = page.locator("[data-ev-action='done-reading']").first();
       const doneBtnCount = await doneBtn.count();
       if (doneBtnCount === 0) {
-        fail(`EV3 [data-done-reading-id] button present [${VP.label}]`, "button not found; envelope may already be closed");
+        fail(`EV3 [data-ev-action="done-reading"] button present [${VP.label}]`, "button not found; envelope may already be closed");
         await ctx.close();
         // Restore fixture unconditionally so later runs work
         if (!yamlBefore.includes("closed:")) writeFileSync(FX_0006_PATH, yamlBefore);
         continue;
       }
-      pass(`EV3 [data-done-reading-id] button found [${VP.label}]`);
+      pass(`EV3 [data-ev-action="done-reading"] button found [${VP.label}]`);
 
-      // Fire the click via dispatchEvent (delegation handler uses ev.target.closest())
+      // Fire the click via dispatchEvent — Vue @click handler fires on DOM click
       await page.evaluate(() => {
-        const btn = document.querySelector("[data-done-reading-id]");
+        const btn = document.querySelector("[data-ev-action='done-reading']");
         if (btn) btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
       await page.waitForTimeout(600);
@@ -390,11 +392,12 @@ try {
         fail(`EV5 no "No chain data." placeholder [${VP.label}]`, "placeholder shown despite prefetch — cache miss");
       }
 
-      const cardCount = await page.locator(".ev-pane .task-panel-card, .ev-pane .task-panel-meta").count().catch(() => 0);
+      // EnvelopeView renders .ev-sections (not legacy .task-panel-card from viewer.ts)
+      const cardCount = await page.locator(".ev-pane .ev-sections, .ev-pane .ev-section, .ev-pane .ev-closed-banner").count().catch(() => 0);
       if (cardCount > 0) {
         pass(`EV5 task card rendered immediately after prefetch [${VP.label}]`);
       } else {
-        fail(`EV5 task card rendered immediately after prefetch [${VP.label}]`, "no card HTML found in task pane");
+        fail(`EV5 task card rendered immediately after prefetch [${VP.label}]`, "no .ev-sections found in task pane after prefetch");
       }
 
       await ctx.close();
@@ -444,7 +447,8 @@ try {
       await page.waitForTimeout(200);
       await page.screenshot({ path: join(SHOTS_DIR, `EV6-report-pane-no-report-${VP.label}.png`) });
 
-      const reportPaneText = await page.locator(".ev-pane").nth(1).innerText().catch(() => "");
+      // With v-if, task pane is removed from DOM when Report tab is active → .first() is the report pane
+      const reportPaneText = await page.locator(".ev-pane").first().innerText().catch(() => "");
       if (reportPaneText.includes("No report yet for this task.")) {
         pass(`EV6 Report pane shows "No report yet" for open task [${VP.label}]`);
       } else {

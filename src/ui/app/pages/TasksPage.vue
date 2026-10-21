@@ -23,7 +23,6 @@
     </div>
     <div class="tasks-split">
       <div class="tasks-sidebar" id="tasks-sidebar">
-        <div id="tasks-user-blocked" class="tasks-user-blocked" hidden></div>
         <div class="tasks-tree" id="tasks-tree">
           <div class="tasks-loading">Loading…</div>
         </div>
@@ -59,7 +58,6 @@ import { onMounted, onBeforeUnmount, watch } from "vue";
 import { useTasksStore } from "../stores/tasks";
 import { useAttentionStore } from "../stores/attention";
 import { useLiveStore } from "../stores/live";
-import { renderAttentionTiers } from "./tasks/tiers";
 import {
   buildTaskTree, renderTreeBranch, renderCurrentView, renderAllTasksView, expandAncestors,
 } from "./tasks/tree";
@@ -102,7 +100,6 @@ let tasksNewBtnEl: HTMLButtonElement | null = null;
 let tasksViewerEl: HTMLElement | null = null;
 let tasksProjectPaneEl: HTMLElement | null = null;
 let tasksEmptyEl: HTMLElement | null = null;
-let tasksUserBlockedEl: HTMLElement | null = null;
 let bulkBarEl: HTMLElement | null = null;
 
 let taskPanelBodyEl: HTMLElement | null = null;
@@ -118,11 +115,6 @@ let currentReportRawText: string | null = null;
 
 const router = useRouter();
 let currentTaskChain: { task?: Record<string, unknown>; ancestors?: Record<string, unknown>[]; children?: Record<string, unknown>[] } | null = null;
-
-// Re-render the attention-tier sidebar whenever the store updates (covers mount race + 30s re-poll).
-watch(() => attentionStore.tiers, (tiers) => {
-  if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, tiers);
-});
 
 // Watcher for pending external navigation (e.g. Dashboard tier row click).
 // Handles the already-mounted case (split-pane: Tasks active while Dashboard visible).
@@ -193,9 +185,6 @@ function renderTaskPicker(): void {
     // Default: current (leaf) view — rendered as project tree for "projects" default
     renderProjectsView(tasksTreeEl, tasksStore.currentProjectSlug);
   }
-
-  // Render attention tiers.
-  if (tasksUserBlockedEl) renderAttentionTiers(tasksUserBlockedEl, attentionStore.tiers);
 
   // Sync project button.
   if (tasksProjectBtnEl) {
@@ -812,7 +801,6 @@ onMounted(() => {
   tasksViewerEl         = document.getElementById("tasks-viewer");
   tasksProjectPaneEl    = document.getElementById("tasks-project-pane");
   tasksEmptyEl          = document.getElementById("tasks-empty");
-  tasksUserBlockedEl    = document.getElementById("tasks-user-blocked");
   taskPanelBodyEl       = document.getElementById("tasks-viewer-body");
   taskPanelHeadlineEl   = document.getElementById("tasks-viewer-headline");
   taskPanelIdEl         = document.getElementById("tasks-viewer-id");
@@ -914,20 +902,6 @@ onMounted(() => {
   if (tasksProjectPaneEl) {
     tasksProjectPaneEl.addEventListener("click", onProjectPaneClick as EventListener);
     tasksProjectPaneEl.addEventListener("change", onProjectPaneChange);
-  }
-
-  // Delegated click for attention-tier sidebar rows (opens task panel).
-  if (tasksUserBlockedEl) {
-    tasksUserBlockedEl.addEventListener("click", (ev) => {
-      const row = (ev.target as HTMLElement).closest<HTMLElement>("[data-open-task]");
-      if (!row) return;
-      ev.preventDefault();
-      const taskId = row.getAttribute("data-open-task");
-      if (taskId) openTaskPanel(taskId);
-    });
-    tasksUserBlockedEl.addEventListener("change", (ev: Event) => {
-      handleCheckboxChange(ev, tasksStore.bulkSelected, updateBulkBar);
-    });
   }
 
   if (tasksViewTabsEl) {
