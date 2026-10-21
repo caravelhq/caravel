@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, watch } from "vue";
+import { ref, reactive, watch } from "vue";
 
 function load<T>(key: string, fallback: T): T {
   try {
@@ -73,6 +73,9 @@ export const useTasksStore = defineStore("tasks", () => {
   // External navigation request (e.g. Dashboard tier row click) — consumed by TasksPage.
   // Not persisted: it's a live signal, not a restore hint.
   const pendingTaskId = ref<string | null>(null);
+  // Per-taskId sub-view memory. Session-only; not persisted.
+  // Precedence in EnvelopeView: intent (ws.open) > URL > remembered > default "task".
+  const subViewMemory = reactive(new Map<string, "task" | "report">());
 
   watch(currentTaskId, (v) => save("currentTaskId", v));
   watch(pane, (v) => save("pane", v));
@@ -85,5 +88,6 @@ export const useTasksStore = defineStore("tasks", () => {
     bulkSelected, multiSelectActive, pane, pickerCollapsed,
     currentTaskId, currentTaskProject, currentViewMode,
     currentProjectSlug, taskFromProjectSlug, loaded, pendingTaskId,
+    subViewMemory,
   };
 });

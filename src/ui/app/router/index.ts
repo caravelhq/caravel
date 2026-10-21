@@ -20,7 +20,9 @@ export const router = createRouter({
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
     { path: "/tasks", component: Stub },
-    { path: "/tasks/:taskId", component: Stub },
+    // /tasks/project/:slug must be declared before the taskId pattern to prevent shadowing
+    { path: "/tasks/project/:slug", component: Stub },
+    { path: "/tasks/:taskId(TSK-[^/]+)", component: Stub },
     { path: "/files", component: Stub },
     { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },

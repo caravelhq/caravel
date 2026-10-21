@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, computed } from "vue";
+import { ref, reactive, computed } from "vue";
 import { type ResourceRef, refKey } from "../workspace/refs";
 import { syncWorkspaceUrl } from "../router";
 
@@ -272,7 +272,18 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     fixupActive();
   }
 
-  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; background?: boolean } = {}): void {
+  // Ephemeral per-key intent: set by ws.open({ intent }), consumed once by the mounting view.
+  // Not persisted — session-only navigation signal.
+  const _intentByKey = reactive(new Map<string, { subView?: "task" | "report" }>());
+
+  function consumeIntent(key: string): { subView?: "task" | "report" } | undefined {
+    const v = _intentByKey.get(key);
+    _intentByKey.delete(key);
+    return v;
+  }
+
+  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; background?: boolean; intent?: { subView?: "task" | "report" } } = {}): void {
+    if (opts.intent) _intentByKey.set(refKey(ref), opts.intent);
     const key = refKey(ref);
     const existingIdx = keyIndex(key);
 
@@ -688,5 +699,6 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     restoreSnapshot,
     focusedActiveRef,
     reopenFromRecents,
+    consumeIntent,
   };
 });
