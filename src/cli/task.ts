@@ -8,10 +8,13 @@
  *   wrap     --task ID --agent NAME --summary S [--deadline-mins N] [--on script] -- <command...>
  *
  * Phase B step 8 (WAL-123) — dispatch surface:
- *   new      --target AGENT --yaml DRAFT.yaml [--parent TSK-...] [--project SLUG] [--headline "..."] [--from AGENT] [--reply-to AGENT] [--chat ID]
+ *   new      --target AGENT --yaml DRAFT.yaml [--parent TSK-...] [--project SLUG] [--headline "..."] [--from AGENT] [--reply-to AGENT] [--chat ID] [--force]
  *   next-id  --target AGENT [--parent TSK-...]
  *   list     --agent NAME [--status BUCKET]
  *   summary
+ *
+ * Phase B step 9 (WAL-123) — policy lint:
+ *   lint     --yaml ENVELOPE.yaml [--force]
  *
  * Phase A preserves: park-before-launch, envelope validation, temp-file-plus-rename,
  * the deadline default with a warn threshold at 6 hours.
@@ -33,10 +36,12 @@ import { join, resolve } from "path";
 import {
   VALID_FAILURE_REASONS,
   WORKER_WAITING_SPECS,
+  VALID_WAITING_SPECS,
   ASSERT_ENVELOPE_BUCKETS,
   ALLOCATION_SCAN_DIRS,
   DISPATCH_LIST_BUCKETS,
   DISPATCH_SUMMARY_COUNT_BUCKETS,
+  REQUIRED_FIELDS,
 } from "../envelope/schema.js";
 import { yamlLine, writeAtomic } from "../envelope/write.js";
 
@@ -425,6 +430,388 @@ function journalAppend(
   appendFileSync(path, JSON.stringify(entry) + "\n", { flag: "a" });
 }
 
+// ── policy lint (WAL-123 Phase B step 9) ─────────────────────────────────────
+
+/** Extract a YAML block-sequence value (list items) from raw YAML text. */
+function extractBlockList(yaml: string, key: string): string[] {
+  const re = new RegExp(`^${key}:\\s*\\n((?:[ \\t]+-[^\\n]*\\n?)*)`, "m");
+  const m = re.exec(yaml);
+  if (!m) return [];
+  const out: string[] = [];
+  for (const line of (m[1] ?? "").split("\n")) {
+    const lm = /^[ \t]+-\s*(.+)$/.exec(line);
+    if (!lm) continue;
+    let v = (lm[1] ?? "").trim();
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+      v = v.slice(1, -1);
+    }
+    out.push(v);
+  }
+  return out;
+}
+
+/** Extract a block scalar (|) or inline value for a given key. Returns null if absent. */
+function extractLargeField(yaml: string, key: string): string | null {
+  // Inline value
+  const inlineRe = new RegExp(`^${key}:\\s+([^|>\\n][^\\n]*)$`, "m");
+  const im = inlineRe.exec(yaml);
+  if (im) return (im[1] ?? "").trim() || null;
+
+  // Block scalar (|)
+  const blockRe = new RegExp(`^${key}:\\s*\\|[^\\n]*\\n`, "m");
+  const bm = blockRe.exec(yaml);
+  if (!bm) return null;
+
+  const afterKey = yaml.slice(bm.index + bm[0].length);
+  const lines = afterKey.split("\n");
+  const blockLines: string[] = [];
+  let indent = -1;
+  for (const line of lines) {
+    if (line.trim() === "") {
+      if (indent !== -1) blockLines.push("");
+      continue;
+    }
+    const leading = line.match(/^(\s*)/)?.[1]?.length ?? 0;
+    if (indent === -1) {
+      indent = leading;
+      if (indent === 0) break;
+    }
+    if (leading < indent) break;
+    blockLines.push(line.slice(indent));
+  }
+  return blockLines.join("\n").trim() || null;
+}
+
+/** Check whether any child of parentId exists anywhere in the workspace. */
+function hasSiblingChild(parentId: string, agents: string[], wsRoot: string): boolean {
+  const rootId = parentId.split(".")[0]!;
+  const childRe = new RegExp(`^${escapeRegex(rootId)}\\.\\d+\\.yaml$`);
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const dir = join(wsRoot, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      try {
+        for (const fname of readdirSync(dir)) {
+          if (childRe.test(fname)) return true;
+        }
+      } catch { continue; }
+    }
+  }
+  return false;
+}
+
+/** Load all open/waiting sibling tasks (same parent) as {id, yaml} pairs. */
+function loadSiblings(parentId: string, agents: string[], wsRoot: string): Array<{ id: string; yaml: string }> {
+  const rootId = parentId.split(".")[0]!;
+  const childRe = new RegExp(`^${escapeRegex(rootId)}\\.\\d+$`);
+  const out: Array<{ id: string; yaml: string }> = [];
+  for (const a of agents) {
+    for (const bucket of ["open", "waiting"] as const) {
+      const dir = join(wsRoot, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      try {
+        for (const fname of readdirSync(dir)) {
+          if (!fname.endsWith(".yaml")) continue;
+          const id = fname.slice(0, -5);
+          if (!childRe.test(id)) continue;
+          try {
+            const yaml = readFileSync(join(dir, fname), "utf8");
+            out.push({ id, yaml });
+          } catch { continue; }
+        }
+      } catch { continue; }
+    }
+  }
+  return out;
+}
+
+/** Load all open tasks in the named project as {id, yaml} pairs. */
+function loadOpenTasksInProject(project: string, agents: string[], wsRoot: string): Array<{ id: string; yaml: string }> {
+  const out: Array<{ id: string; yaml: string }> = [];
+  for (const a of agents) {
+    const dir = join(wsRoot, "agents", a, "tasks", "open");
+    if (!existsSync(dir)) continue;
+    try {
+      for (const fname of readdirSync(dir)) {
+        if (!fname.endsWith(".yaml")) continue;
+        try {
+          const yaml = readFileSync(join(dir, fname), "utf8");
+          const p = (extractField(yaml, "project") ?? "").trim();
+          if (p === project) out.push({ id: fname.slice(0, -5), yaml });
+        } catch { continue; }
+      }
+    } catch { continue; }
+  }
+  return out;
+}
+
+/** Check the budget against historical median (n ≥ 5 guard). Returns a warning string or null. */
+function checkBudgetWarn(body: string, agents: string[], wsRoot: string): string | null {
+  const budgetTurnsRe = /^budget:\s*\n(?:[ \t]+[^\n]*\n)*?[ \t]+max_turns:\s*(\d+)/m;
+  const bm = budgetTurnsRe.exec(body);
+  if (!bm) return null;
+  const budgetTurns = parseInt(bm[1]!, 10);
+  if (!Number.isFinite(budgetTurns) || budgetTurns <= 0) return null;
+
+  const kind = (extractField(body, "kind") ?? "other").trim();
+  const to = (extractField(body, "to") ?? "").trim();
+
+  const usages: number[] = [];
+  for (const a of agents) {
+    for (const bucket of ["done", "failed"] as const) {
+      const dir = join(wsRoot, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      try {
+        for (const fname of readdirSync(dir)) {
+          if (!fname.endsWith(".yaml")) continue;
+          try {
+            const yaml = readFileSync(join(dir, fname), "utf8");
+            if ((extractField(yaml, "kind") ?? "other").trim() !== kind) continue;
+            if ((extractField(yaml, "to") ?? "").trim() !== to) continue;
+            const usageTurnsRe = /^usage:\s*\n(?:[ \t]+[^\n]*\n)*?[ \t]+turns:\s*(\d+)/m;
+            const um = usageTurnsRe.exec(yaml);
+            if (!um) continue;
+            const turns = parseInt(um[1]!, 10);
+            if (Number.isFinite(turns) && turns > 0) usages.push(turns);
+          } catch { continue; }
+        }
+      } catch { continue; }
+    }
+  }
+
+  if (usages.length < 5) return null; // n ≥ 5 guard — dormant until data accumulates
+
+  usages.sort((a, b) => a - b);
+  const median = usages[Math.floor(usages.length / 2)]!;
+  if (budgetTurns > median * 1.5) {
+    return `budget max_turns ${budgetTurns} is more than 1.5× the median (${median}) for ${kind}/${to} over ${usages.length} recorded tasks`;
+  }
+  if (budgetTurns < median * 0.5) {
+    return `budget max_turns ${budgetTurns} is under 0.5× the median (${median}) for ${kind}/${to} over ${usages.length} recorded tasks`;
+  }
+  return null;
+}
+
+/** Extract path-like references from text that look like agent rule paths or Notes/repos paths. */
+function extractRuleAndDocPaths(text: string): string[] {
+  const paths: string[] = [];
+  const pathRe = /\b(agents\/[^\s,;`'"()[\]{}\n]+\.(?:md|ts|js|yaml|json)|Notes\/Projects\/[^\s,;`'"()[\]{}\n]+(?:\.md)?|repos\/[^\s,;`'"()[\]{}\n]+\.(?:md|ts|js|yaml|json))\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = pathRe.exec(text)) !== null) {
+    paths.push(m[1]!);
+  }
+  return [...new Set(paths)];
+}
+
+/** Return true if the repo directory has a recognisable lint configuration. */
+function repoHasLintConfig(repoPath: string): boolean {
+  const lintFiles = [
+    ".eslintrc", ".eslintrc.js", ".eslintrc.cjs", ".eslintrc.json", ".eslintrc.yaml", ".eslintrc.yml",
+    "biome.json", ".biome.json", "eslint.config.js", "eslint.config.mjs", "eslint.config.ts",
+  ];
+  if (lintFiles.some((f) => existsSync(join(repoPath, f)))) return true;
+  const pkgPath = join(repoPath, "package.json");
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as { scripts?: Record<string, string> };
+      const s = pkg.scripts ?? {};
+      if (s["lint"] || s["lint:check"] || s["lint:fix"]) return true;
+    } catch { /* ignore */ }
+  }
+  return false;
+}
+
+export type LintResult = {
+  hardFails: string[];
+  warnings: string[];
+  /** True when --force bypassed the second-retry hard-fail. Must be logged by the caller. */
+  forceBypassed: boolean;
+};
+
+/**
+ * Policy lint for a new envelope. Warn by default; four absolute hard-fails plus one
+ * escapable hard-fail (second retry, bypassable with --force).
+ *
+ * Called by doNew before writing, and available standalone as `caravel task lint`.
+ * A lint that fails *after* a partial write is worse than no lint — this always
+ * runs on the in-memory body before writeAtomic().
+ */
+export function doLintNewEnvelope(
+  body: string,
+  wsRoot: string,
+  opts?: { force?: boolean }
+): LintResult {
+  const hardFails: string[] = [];
+  const warnings: string[] = [];
+  let forceBypassed = false;
+
+  const agents = listLocalAgents(wsRoot);
+
+  // ── H1: Unknown agent (to: field) ──────────────────────────────────────────
+  const toField = (extractField(body, "to") ?? "").trim();
+  if (toField && agents.length > 0 && !agents.includes(toField)) {
+    hardFails.push(`unknown agent "${toField}". known: ${agents.join(", ")}`);
+  }
+
+  // ── H2: Missing required fields for status ──────────────────────────────────
+  const status = (extractField(body, "status") ?? "open").trim();
+  const required = (REQUIRED_FIELDS[status] ?? REQUIRED_FIELDS["open"]!) as readonly string[];
+  for (const f of required) {
+    const v = (extractField(body, f) ?? "").trim();
+    if (!v || v === "null") {
+      hardFails.push(`missing required field "${f}" for status "${status}"`);
+    }
+  }
+
+  // ── H3: Headline > 10 words ─────────────────────────────────────────────────
+  const rawHeadline = (extractField(body, "headline") ?? "").trim();
+  const headline = rawHeadline.replace(/^"|"$/g, "").trim();
+  const wordCount = headline ? headline.split(/\s+/).filter(Boolean).length : 0;
+  if (headline && wordCount > 10) {
+    hardFails.push(`headline too long (${wordCount} words; max 10): ${rawHeadline}`);
+  }
+
+  // ── H4: waiting_on not in allow-list ────────────────────────────────────────
+  const waitingOn = (extractField(body, "waiting_on") ?? "").trim();
+  if (waitingOn && !VALID_WAITING_SPECS.has(waitingOn)) {
+    hardFails.push(
+      `waiting_on "${waitingOn}" is not valid. allowed: ${[...VALID_WAITING_SPECS].join(", ")}`
+    );
+  }
+
+  // ── H5: Second retry (escapable with --force, bypass must be logged) ─────────
+  const parent = (extractField(body, "parent") ?? "").trim();
+  if (parent && parent !== "null") {
+    if (hasSiblingChild(parent, agents, wsRoot)) {
+      if (!opts?.force) {
+        hardFails.push(
+          `second retry of ${parent}: a prior child task already exists. Use --force to dispatch anyway (bypass will be logged).`
+        );
+      } else {
+        forceBypassed = true;
+        console.warn(
+          `caravel task lint: WARNING — second retry of ${parent} dispatched with --force (logged in journal)`
+        );
+      }
+    }
+  }
+
+  // ── W1: Overlapping touches: with no needs: edge (F2 row 1) ─────────────────
+  const myTouches = extractBlockList(body, "touches");
+  if (myTouches.length > 0 && parent && parent !== "null") {
+    const siblings = loadSiblings(parent, agents, wsRoot);
+    for (const { id: sibId, yaml: sibYaml } of siblings) {
+      const sibTouches = extractBlockList(sibYaml, "touches");
+      const overlap = myTouches.filter((t) => sibTouches.includes(t));
+      if (overlap.length === 0) continue;
+      const myNeeds = extractBlockList(body, "needs");
+      if (!myNeeds.includes(sibId)) {
+        const sample = overlap.slice(0, 3).join(", ") + (overlap.length > 3 ? ` (+${overlap.length - 3} more)` : "");
+        warnings.push(
+          `touches: overlaps with ${sibId} on ${sample}; chain with needs: or sequence the work`
+        );
+      }
+    }
+  }
+
+  // ── W2: ≥2 parallel siblings in same project, none declares touches: ─────────
+  // companion warn — makes the W1 silence-on-missing-touches degrade loudly
+  if (myTouches.length === 0) {
+    const project = (extractField(body, "project") ?? "").trim();
+    if (project && project !== "null") {
+      const openInProject = loadOpenTasksInProject(project, agents, wsRoot);
+      if (openInProject.length >= 1) {
+        const anyHasTouches = openInProject.some(
+          ({ yaml }) => extractBlockList(yaml, "touches").length > 0
+        );
+        if (!anyHasTouches) {
+          warnings.push(
+            `≥2 parallel tasks in project "${project}" and none declares touches: — collision check can't run; declare touches: or chain with needs:`
+          );
+        }
+      }
+    }
+  }
+
+  // ── W3: Budget outside 0.5×–1.5× median (n ≥ 5 guard — dormant until data accumulates) ──
+  const budgetWarn = checkBudgetWarn(body, agents, wsRoot);
+  if (budgetWarn) warnings.push(budgetWarn);
+
+  // ── W4: Brief references rule/doc path absent from context: (F2 row 5) ──────
+  const briefText = extractLargeField(body, "brief");
+  const contextPaths = extractBlockList(body, "context");
+  if (briefText) {
+    for (const refPath of extractRuleAndDocPaths(briefText)) {
+      const inContext = contextPaths.some((cp) => {
+        const a = cp.replace(/^["']|["']$/g, "").trim();
+        return a === refPath || a.endsWith("/" + refPath) || refPath.startsWith(a.split("/").slice(0, 3).join("/"));
+      });
+      if (!inContext) {
+        warnings.push(`brief references "${refPath}" but it's absent from context:`);
+      }
+    }
+  }
+
+  // ── W5: Brief mentions "lint" for a repo with no lint config (F2 row 4) ──────
+  if (briefText && /\blint\b/i.test(briefText)) {
+    const touchedRepos = myTouches
+      .filter((t) => t.startsWith("repos/"))
+      .map((t) => t.split("/")[1])
+      .filter((r): r is string => !!r);
+    for (const repo of [...new Set(touchedRepos)]) {
+      const repoPath = join(wsRoot, "repos", repo);
+      if (existsSync(repoPath) && !repoHasLintConfig(repoPath)) {
+        warnings.push(
+          `brief mentions "lint" but repos/${repo} has no lint config. Did you mean \`tsc --noEmit\`?`
+        );
+      }
+    }
+  }
+
+  // ── W6: No output_format or no named artefact path ───────────────────────────
+  const outputFormat = extractLargeField(body, "output_format");
+  if (!outputFormat) {
+    warnings.push(
+      "no output_format field — add one naming the artefact path (e.g. agents/bob/tasks/done/<id>.md)"
+    );
+  } else if (!outputFormat.includes("/")) {
+    warnings.push(
+      "output_format has no named artefact path — include the file the worker should produce (e.g. agents/bob/tasks/done/<id>.md)"
+    );
+  }
+
+  return { hardFails, warnings, forceBypassed };
+}
+
+// ── standalone lint subcommand ─────────────────────────────────────────────────
+
+function doLint(args: ParsedArgs, root: string): void {
+  const yamlPath = args.yaml;
+  if (!yamlPath || yamlPath === true) {
+    die("usage: task lint --yaml <envelope.yaml> [--force]");
+  }
+  const p = resolve(String(yamlPath));
+  if (!existsSync(p)) die(`file not found: ${p}`);
+  const body = readFileSync(p, "utf8");
+  const force = !!args.force;
+
+  const result = doLintNewEnvelope(body, root, { force });
+
+  const hf = result.hardFails.length;
+  const wn = result.warnings.length;
+  console.log(
+    `caravel task lint: ${hf} hard-fail${hf !== 1 ? "s" : ""}, ${wn} warning${wn !== 1 ? "s" : ""}`
+  );
+  for (const f of result.hardFails) console.error(`  ✗ ${f}`);
+  for (const w of result.warnings) console.log(`  ⚠ ${w}`);
+
+  if (hf > 0) {
+    console.error("\nFAIL");
+    process.exit(1);
+  }
+  console.log(wn > 0 ? "\nOK (with warnings)" : "\nOK");
+}
+
 // ── new ───────────────────────────────────────────────────────────────────────
 
 function doNew(args: ParsedArgs, root: string): void {
@@ -588,7 +975,21 @@ function doNew(args: ParsedArgs, root: string): void {
     body = body.trimEnd() + "\n" + dispatchBlock;
   }
 
-  // LINT_HOOK: step 9 (caravel task lint) attaches here — call doLintNewEnvelope(body, root) before writing.
+  // Policy lint: runs on the complete body before writing. Hard-fails reject before
+  // writeAtomic() so a lint failure never touches disk. --force bypasses the
+  // second-retry check only; its use is recorded in the journal entry below.
+  const force = !!args.force;
+  const lintResult = doLintNewEnvelope(body, root, { force });
+
+  for (const w of lintResult.warnings) {
+    console.warn(`caravel task lint: ⚠ ${w}`);
+  }
+  if (lintResult.hardFails.length > 0) {
+    for (const f of lintResult.hardFails) {
+      console.error(`caravel task lint: ✗ ${f}`);
+    }
+    die("lint failed — fix the issues above before dispatching");
+  }
 
   const openDir = join(root, "agents", targetStr, "tasks", "open");
   writeAtomic(join(openDir, `${id}.yaml`), body);
@@ -605,6 +1006,7 @@ function doNew(args: ParsedArgs, root: string): void {
     to: targetStr,
     parent: journalParent === "null" || journalParent === null ? null : journalParent,
     summary: "",
+    ...(lintResult.forceBypassed ? { lint_force_bypass: true } : {}),
   });
 
   console.log(id);
@@ -756,6 +1158,10 @@ export function runTaskCli(argv: string[]): void {
       doSummary(root);
       break;
 
+    case "lint":
+      doLint(args, root);
+      break;
+
     default: {
       const action = String(args.action ?? "");
       if (action) {
@@ -763,7 +1169,7 @@ export function runTaskCli(argv: string[]): void {
       } else {
         console.log(
           [
-            "caravel task park|done|failed|wrap|new|next-id|list|summary",
+            "caravel task park|done|failed|wrap|new|next-id|list|summary|lint",
             "",
             "  park     Park a task on long-running external work",
             "  done     Write a done rendezvous",
@@ -773,6 +1179,7 @@ export function runTaskCli(argv: string[]): void {
             "  next-id  Print the next available task ID (no file written)",
             "  list     List tasks for an agent as JSON",
             "  summary  Print a cross-agent summary as JSON",
+            "  lint     Run policy lint on an existing envelope file",
           ].join("\n")
         );
       }
