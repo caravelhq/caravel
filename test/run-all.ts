@@ -63,6 +63,7 @@ const SUITES: Suite[] = [
   { name: "envelope-callback: park/done/failed/wrap CLI surface (WAL-123 Phase A)", file: "envelope-callback.test.ts", timeoutMs: 60_000 },
   { name: "envelope-drift: behavioral + grep gate (WAL-123 Phase A)", file: "envelope-drift.test.ts", timeoutMs: 120_000 },
   { name: "usage-recording: stamp/absent/replace (WAL-123 Phase B step 7)", file: "usage-recording.test.ts", timeoutMs: 120_000 },
+  { name: "cli-dispatch: new/next-id/list/summary + incident regression (WAL-123 Phase B step 8)", file: "cli-dispatch.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };

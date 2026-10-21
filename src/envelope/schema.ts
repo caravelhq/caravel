@@ -108,6 +108,23 @@ export const ATTENTION_SCAN_BUCKETS = [
   "blocked",
 ] as const satisfies ReadonlyArray<Bucket>;
 
+/** Buckets scanned by `caravel task list` when no --status filter is given. */
+export const DISPATCH_LIST_BUCKETS = [
+  "open",
+  "waiting",
+  "done",
+  "failed",
+] as const satisfies ReadonlyArray<Bucket>;
+
+/** Buckets counted by `caravel task summary` per-agent. Matches task.mjs's 5-bucket summary scan. */
+export const DISPATCH_SUMMARY_COUNT_BUCKETS = [
+  "open",
+  "waiting",
+  "done",
+  "failed",
+  "archived",
+] as const satisfies ReadonlyArray<Bucket>;
+
 /** Buckets included in task summary counts (all user-visible operational buckets). */
 export const SUMMARY_BUCKETS = [
   "open",

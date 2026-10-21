@@ -40,6 +40,7 @@ const command = process.argv[2] && !process.argv[2].startsWith("--") ? process.a
 const PORT = Number(flag("port", "4636"));
 const WS_DIR = flag("ws-dir", join(__dirname, "fixture-ws"));
 const SRC = flag("src", null);
+const TTL_MIN = Number(flag("ttl", "30")); // minutes; 0 = never
 const PIDFILE = join(__dirname, `.scratch-daemon-${PORT}.pid`);
 
 async function waitReady(port, timeoutMs = 10000) {
@@ -140,6 +141,17 @@ async function start() {
   console.log(`Ready: CARAVEL_BASE=http://127.0.0.1:${PORT}`);
   console.log(`PID ${child.pid} written to ${PIDFILE}`);
   console.log(`To stop: node ${import.meta.url.replace("file://", "")} stop --port ${PORT}`);
+
+  if (TTL_MIN > 0) {
+    setTimeout(() => {
+      console.log(`[scratch-daemon] TTL of ${TTL_MIN} min reached — stopping PID ${child.pid}.`);
+      try { process.kill(child.pid, "SIGTERM"); } catch { /* already gone */ }
+      try { unlinkSync(PIDFILE); } catch { /* already removed */ }
+    }, TTL_MIN * 60_000).unref();
+    console.log(`  TTL: ${TTL_MIN} min (use --ttl 0 for no auto-stop)`);
+  } else {
+    console.log(`  TTL: ∞ (no auto-stop)`);
+  }
 }
 
 if (command === "stop") {
