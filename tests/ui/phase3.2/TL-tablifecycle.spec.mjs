@@ -568,9 +568,9 @@ try {
       const stateBefore = await wsState(page);
       await page.screenshot({ path: join(SHOTS_DIR, `${VP.label}-08-tl8-before-reload.png`) });
 
-      // Reload
-      await page.reload({ waitUntil: "networkidle" });
-      await page.waitForTimeout(500);
+      // Reload (use "load" — SSE is open, networkidle would hang)
+      await page.reload({ waitUntil: "load" });
+      await page.waitForTimeout(600);
 
       const stateAfter = await wsState(page);
       const domKeysAfter = await tabDataKeys(page);
