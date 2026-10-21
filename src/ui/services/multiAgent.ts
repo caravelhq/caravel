@@ -424,23 +424,60 @@ async function readTaskFile(agent: string, bucket: Bucket, file: string): Promis
   };
 }
 
+// WAL-117: archive-bucket cache.
+// The archived/ bucket is append-only after a task lands there, so the read+parse
+// cost (~1,600 files × serial YAML parse = ~2.1s) only needs to be paid once.
+// Invalidated via setArchiveInvalidator when an archived/ fs.watch event fires.
+let archivedTasksCache: TaskRow[] | null = null;
+let archiveCacheInFlight: Promise<TaskRow[]> | null = null;
+
+export function invalidateArchiveCache(): void {
+  archivedTasksCache = null;
+  archiveCacheInFlight = null;
+}
+
+// Read all YAML files in one agent+bucket dir in parallel.
+async function readBucketTasks(agent: string, bucket: Bucket): Promise<TaskRow[]> {
+  const dir = join(AGENTS_DIR, agent, "tasks", bucket);
+  if (!existsSync(dir)) return [];
+  const files = (await readdir(dir).catch(() => [] as string[])).filter(e => e.endsWith(".yaml"));
+  const rows = await Promise.all(files.map(f => readTaskFile(agent, bucket, f)));
+  return rows.filter((r): r is TaskRow => r !== null);
+}
+
 async function listAllTasks(includeArchived = false, includeScheduled = true): Promise<TaskRow[]> {
   if (!existsSync(AGENTS_DIR)) return [];
-  const out: TaskRow[] = [];
-  let buckets = includeArchived ? BUCKETS : BUCKETS.filter((b) => b !== "archived");
-  if (!includeScheduled) buckets = buckets.filter((b) => b !== "scheduled") as typeof buckets;
-  for (const agent of envAgents()) {
-    for (const bucket of buckets) {
-      const dir = join(AGENTS_DIR, agent, "tasks", bucket);
-      if (!existsSync(dir)) continue;
-      const files = (await readdir(dir).catch(() => [] as string[]))
-        .filter((e) => e.endsWith(".yaml"));
-      for (const f of files) {
-        const row = await readTaskFile(agent, bucket, f);
-        if (row) out.push(row);
+  const agents = envAgents();
+
+  // Live buckets: fresh parallel walk on every call (small number of files).
+  const liveBuckets = BUCKETS.filter(
+    b => b !== "archived" && (includeScheduled || b !== "scheduled")
+  ) as Bucket[];
+  const liveParts = await Promise.all(
+    agents.flatMap(agent => liveBuckets.map(bucket => readBucketTasks(agent, bucket)))
+  );
+  const out: TaskRow[] = liveParts.flat();
+
+  // Archived bucket: near-permanent cache (invalidated only by archived/ watcher events).
+  if (includeArchived) {
+    if (!archivedTasksCache) {
+      if (!archiveCacheInFlight) {
+        archiveCacheInFlight = Promise.all(
+          agents.map(agent => readBucketTasks(agent, "archived"))
+        ).then(parts => {
+          const cached = parts.flat();
+          archivedTasksCache = cached;
+          archiveCacheInFlight = null;
+          return cached;
+        });
       }
+      const archived = await archiveCacheInFlight;
+      out.push(...(archivedTasksCache ?? archived));
+    } else {
+      out.push(...archivedTasksCache);
     }
   }
+
   // Sort by `updated` desc so the most-recently-touched tasks float to the top.
   out.sort((a, b) => (b.updated ?? "").localeCompare(a.updated ?? ""));
   return out;
