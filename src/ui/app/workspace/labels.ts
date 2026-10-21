@@ -10,7 +10,9 @@ export const tasksListSpec: ResourceSpec = {
   fetch: async (): Promise<TaskRow[]> => {
     try {
       const r = await fetch("/api/tasks?limit=120");
-      return r.ok ? (r.json() as Promise<TaskRow[]>) : [];
+      if (!r.ok) return [];
+      const body = await r.json() as { ok: boolean; tasks: TaskRow[] };
+      return body.tasks ?? [];
     } catch {
       return [];
     }
