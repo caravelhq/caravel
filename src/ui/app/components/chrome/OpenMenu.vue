@@ -98,8 +98,16 @@ onBeforeUnmount(() => {
       type="button"
       aria-haspopup="true"
       :aria-expanded="isOpen"
+      aria-label="Open menu"
+      title="Open"
       @click="toggle"
-    >Open ▾</button>
+    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="22" height="18" fill="none" aria-hidden="true">
+        <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" />
+        <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" />
+        <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" />
+        <path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" />
+        <path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" />
+      </svg></button>
 
     <!-- Teleported to body so it escapes the tab-strip overflow-x:auto container -->
     <Teleport to="body">
@@ -114,7 +122,7 @@ onBeforeUnmount(() => {
         <!-- Section: Pickers -->
         <div class="om-section-label" data-section="pickers">Pickers</div>
         <button id="tab-dashboard" class="open-menu-item" type="button" role="menuitem" @click="openDashboard">Dashboard</button>
-        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Tasks</button>
+        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Open</button>
         <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
         <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
         <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Projects</button>
@@ -148,6 +156,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.open-menu-ship {
+  display: block;
+}
+.open-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .om-section-label {
   padding: 6px 14px 3px;
   font-size: 10px;

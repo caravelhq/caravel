@@ -71,7 +71,10 @@ export function refLabel(
   switch (ref.kind) {
     case "dashboard": return "Dashboard";
     case "file": return ref.path.split("/").pop() || ref.path;
-    case "legacy": return ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
+    // WAL-138: the tasks picker is the "Open" panel — it will house Chat (Phase 5)
+    // and Files (Phase 6) as sub-tabs beside Projects | Tasks. Chat and Files keep
+    // their own labels until they migrate.
+    case "legacy": return ref.page === "tasks" ? "Open" : ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
     case "project": {
       const card = projectsList?.find((p) => p.slug === ref.slug);
       return card?.title || ref.slug;
