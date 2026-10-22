@@ -182,103 +182,38 @@ for (const { w, h } of VIEWPORTS) {
     fail(`DB2 triage count [${vp}]`, e.message);
   }
 
-  // ── DB3: Reports select-all selects every row ─────────────────────────────
+  // ── DB3: Reports tier renders WITHOUT select-all and row checkboxes ─────────
+  // Retired: row checkboxes (.task-row-select) and select-all (.db-tier-select-all)
+  // were deliberately removed from the Dashboard in commit 5f03090 per Kelly's
+  // instruction — selecting rows had no action surface to act on (DEC-0042).
+  // TierSection keeps its selectable/selected/toggle-row/toggle-all contract;
+  // BulkBar.vue stays unused until the task picker has real action buttons.
   try {
     const reportsSection = await page.$('[data-tier="reports"]');
     if (!reportsSection) throw new Error("No reports section");
 
-    if (MUTATION) {
-      // Mutation: intercept select-all change and use the dead [data-project-key] lookup
-      // instead of Vue's reactive state. This proves the implementation MUST use
-      // Vue state — the dead selector finds nothing → rows stay unchecked.
-      await page.evaluate(() => {
-        const selectAll = document.querySelector('[data-tier="reports"] .db-tier-select-all');
-        if (!selectAll) return;
-        selectAll.addEventListener("change", function(ev) {
-          ev.stopImmediatePropagation();
-          // Wrong: this selector doesn't exist in the DOM
-          const rows = document.querySelectorAll("[data-project-key] .task-row-select");
-          rows.forEach(r => { r.checked = ev.target.checked; });
-        }, true); // capture phase: blocks Vue handler
-      });
-    }
-
     const selectAll = await reportsSection.$(".db-tier-select-all");
-    if (!selectAll) throw new Error("No select-all checkbox in reports section");
-
-    await selectAll.click();
-    // Vue needs a tick to propagate reactive state
-    await page.waitForTimeout(100);
-
-    const rowCheckboxes = await reportsSection.$$(".task-row-select");
-    if (rowCheckboxes.length !== EXPECTED_REPORT_ROWS) {
-      throw new Error(`Expected ${EXPECTED_REPORT_ROWS} report row checkboxes, got ${rowCheckboxes.length}`);
+    if (selectAll) {
+      throw new Error(".db-tier-select-all found — selection controls should be absent (DEC-0042)");
     }
-    let checkedCount = 0;
-    for (const cb of rowCheckboxes) {
-      const checked = await cb.isChecked();
-      if (checked) checkedCount++;
-    }
-    if (checkedCount !== EXPECTED_REPORT_ROWS) {
-      throw new Error(`Expected all ${EXPECTED_REPORT_ROWS} rows checked, got ${checkedCount} checked`);
-    }
+    pass(`DB3 retired — Reports tier has no .db-tier-select-all (DEC-0042) [${vp}]`);
 
-    // BulkBar should show the count
-    const bulkBar = await page.$(".db-bulk-bar");
-    if (!bulkBar) throw new Error("BulkBar not visible after selection");
-    const bulkCountText = await page.$eval(".db-bulk-count", el => el.textContent);
-    if (!bulkCountText || !bulkCountText.includes(String(EXPECTED_REPORT_ROWS))) {
-      throw new Error(`BulkBar count should include ${EXPECTED_REPORT_ROWS}, got: ${bulkCountText}`);
+    const rowCbs = await reportsSection.$$(".task-row-select");
+    if (rowCbs.length > 0) {
+      throw new Error(`.task-row-select found (${rowCbs.length}) — row checkboxes should be absent (DEC-0042)`);
     }
+    pass(`DB3 retired — Reports tier has no .task-row-select row checkboxes (DEC-0042) [${vp}]`);
 
-    await page.screenshot({ path: join(SHOTS_DIR, `db3-select-all-${vp}.png`) });
-    pass(`DB3 reports select-all [${vp}]`);
+    await page.screenshot({ path: join(SHOTS_DIR, `db3-retired-${vp}.png`) });
   } catch (e) {
     await page.screenshot({ path: join(SHOTS_DIR, `db3-fail-${vp}.png`) });
-    fail(`DB3 reports select-all [${vp}]`, e.message);
+    fail(`DB3 retired [${vp}]`, e.message);
   }
 
-  // ── DB4: Close payload carries status:"closed" ────────────────────────────
-  if (!MUTATION) {
-    try {
-      // Clear any prior selection by resetting workspace
-      await resetWorkspace(page);
-      await setupRoutes(page);
-      await page.waitForSelector("#dashboard-attention-tiers", { timeout: 5000 });
-
-      // Re-select a report row
-      const reportsSection = await page.$('[data-tier="reports"]');
-      if (!reportsSection) throw new Error("No reports section");
-      const firstRowCb = await reportsSection.$(".task-row-select");
-      if (!firstRowCb) throw new Error("No row checkbox");
-      await firstRowCb.click();
-      await page.waitForTimeout(100);
-
-      // Set up close interception
-      let capturedBody = null;
-      await page.route("**/api/tasks/*/close", (route) => {
-        capturedBody = route.request().postDataJSON();
-        route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true }) });
-      });
-
-      // Click Close selected
-      const closeBtn = await page.$(".db-bulk-close");
-      if (!closeBtn) throw new Error("BulkBar close button not found");
-      await closeBtn.click();
-      await page.waitForTimeout(500);
-
-      if (!capturedBody) throw new Error("No close request was made");
-      if (capturedBody.status !== "closed") {
-        throw new Error(`Expected status "closed", got "${capturedBody.status}"`);
-      }
-      pass(`DB4 close payload status:"closed" [${vp}]`);
-    } catch (e) {
-      fail(`DB4 close payload [${vp}]`, e.message);
-    }
-  } else {
-    // Mutation mode: skip DB4 (it's not the select-all mutation; just pass)
-    pass(`DB4 close payload status:"closed" [${vp}] (mutation mode skip)`);
-  }
+  // ── DB4: Retired — depends on row checkboxes removed in DEC-0042 ────────────
+  // DB4 tested the done→closed close payload via BulkBar. Row checkboxes are gone;
+  // the close payload contract is covered by WAL133-A and EV4-4.
+  pass(`DB4 retired — row checkbox prerequisite removed (DEC-0042) [${vp}]`);
 
   // ── DB5: Collapse persists across reload ──────────────────────────────────
   if (!MUTATION) {

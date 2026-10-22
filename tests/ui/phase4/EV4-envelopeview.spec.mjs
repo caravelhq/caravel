@@ -201,10 +201,11 @@ for (const VP of VIEWPORTS) {
     }
   } catch (e) { fail(`EV4-2 [${VP.label}]`, String(e)); }
 
-  // ── EV4-3: Continue form fires POST /next with correct payload ──────────────
-  // Mutation proof: commenting out `await fetch(.../next)` in submitContinue() → this fails
+  // ── EV4-3: Next sub-view (NextPrompt) fires POST /next with correct payload ──
+  // Rewritten: ↳ Next button removed in step 3; entry point is now the Next sub-tab.
+  // Mutation proof: commenting out `await fetch(.../next)` in NextPrompt.submit() → this fails
   try {
-    // Fresh load to ensure Task pane is visible
+    // Fresh load
     await stubTask(page, TASK_TERMINAL, makeChain({}));
     await loadEnvelope(page, TASK_TERMINAL);
 
@@ -215,19 +216,20 @@ for (const VP of VIEWPORTS) {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, id: "TSK-EV4-child" }) });
     });
 
-    // Continue button shows for terminal + not closed
-    const nextBtn = page.locator('[data-ev-action="next"]');
-    await nextBtn.waitFor({ state: "visible", timeout: 3000 });
-    await nextBtn.click();
-    await page.waitForTimeout(200);
+    // Click the Next sub-tab
+    const nextTab = page.locator('[data-ev-tab="next"]');
+    await nextTab.waitFor({ state: "visible", timeout: 3000 });
+    await nextTab.click();
+    await page.waitForTimeout(300);
 
-    // Form should appear
-    const continueForm = page.locator('[data-ev-form="continue"]');
-    await continueForm.waitFor({ state: "visible", timeout: 2000 });
-    pass(`EV4-3 Continue form opens [${VP.label}]`);
+    // NextPrompt textarea should be visible
+    const textarea = page.locator('[data-nx-textarea]');
+    await textarea.waitFor({ state: "visible", timeout: 2000 });
+    pass(`EV4-3 NextPrompt textarea visible on Next sub-view [${VP.label}]`);
 
-    // Submit
-    const submitBtn = page.locator('[data-ev-submit="next"]');
+    // Fill and submit
+    await textarea.fill("EV4-3 test instruction");
+    const submitBtn = page.locator('[data-nx-submit]');
     await submitBtn.click();
     await page.waitForTimeout(500);
 

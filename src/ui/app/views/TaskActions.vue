@@ -4,20 +4,20 @@
  *
  * Action-parity matrix (from renderPanelCard + /api/tasks/* endpoints):
  *
- * | # | Control              | Shown when                                        | Endpoint                       |
- * |---|----------------------|---------------------------------------------------|--------------------------------|
- * | 1 | Continue (form)      | isCurrent && isTerminal && !isClosed              | POST /api/tasks/{id}/next      |
- * | 2 | ↳ Next (button)      | isCurrent && !isClosed                            | POST /api/tasks/{id}/next      |
- * | 3 | ✓ Done reading       | isCurrent && isTerminal && !isClaimed && !isClosed | POST /api/tasks/{id}/close     |
- * | 4 | ✕ Cancel (form)      | isCurrent && !isTerminal && !isClaimed && !isClosed | POST /api/tasks/{id}/close    |
- * | 5 | ✕ Abort (form)       | isCurrent && isClaimed && !isClosed               | POST /api/tasks/{id}/abort     |
- * | 6 | ↻ Reopen             | isCurrent && isClosed                             | POST /api/tasks/{id}/reopen    |
- * | 7 | ▷ Resume             | isCurrent && isPaused && !isClosed                | POST /api/tasks/{id}/resume    |
- * | 8 | 💬 Chat (form toggle) | always (form body: isCurrent)                    | POST /api/chat (dispatch)      |
- * | 9 | 📁 Project chip      | always visible (edit: isCurrent → EnvelopeHeader)  | POST /api/tasks/{id}/project   |
- * |10 | ✎ Rename headline    | isCurrent (inline in EnvelopeHeader)              | POST /api/tasks/{id}/rename    |
+ * | # | Control              | Shown when                                         | Endpoint                      |
+ * |---|----------------------|----------------------------------------------------|-------------------------------|
+ * | 1 | Next (sub-view)      | EnvelopeView "Next" tab / NextPrompt.vue (DEC-0041)| POST /api/tasks/{id}/next     |
+ * | 2 | ✓ Done reading       | isTerminal && !isClaimed && !isClosed              | POST /api/tasks/{id}/close    |
+ * | 3 | ✕ Cancel (form)      | !isTerminal && !isClaimed && !isClosed             | POST /api/tasks/{id}/close    |
+ * | 4 | ✕ Abort (form)       | isClaimed && !isClosed                             | POST /api/tasks/{id}/abort    |
+ * | 5 | ↻ Reopen             | isClosed                                           | POST /api/tasks/{id}/reopen   |
+ * | 6 | ▷ Resume             | isPaused && !isClosed                              | POST /api/tasks/{id}/resume   |
+ * | 7 | 💬 Chat (form toggle) | always                                            | POST /api/tasks/{id}/next     |
+ * | 8 | 📁 Project chip      | always (EnvelopeHeader)                            | POST /api/tasks/{id}/project  |
+ * | 9 | ✎ Rename headline    | always (EnvelopeHeader)                            | POST /api/tasks/{id}/rename   |
  *
- * Controls 9+10 are wired in EnvelopeHeader; this component handles 1–8.
+ * Control 1 (Next) is rendered in NextPrompt.vue — DEC-0041.
+ * Controls 8+9 are wired in EnvelopeHeader; this component renders 2–7.
  *
  * WAL-116: every action has error state + retry (no wedge on transient failure).
  */
@@ -58,56 +58,9 @@ const activeDescendantCount = computed(() =>
 
 // ── Form visibility toggles ────────────────────────────────────────────────────
 
-const showContinueForm = ref(false);
 const showCloseForm = ref(false);
 const showAbortForm = ref(false);
 const showChatForm = ref(false);
-
-// ── Continue / Next (↳) form — POST /api/tasks/{id}/next ──────────────────────
-
-const continueHeadline = ref("");
-const continueInstruction = ref("");
-const continueLoading = ref(false);
-const continueError = ref<string | null>(null);
-
-function openContinueForm(): void {
-  const base = (props.task?.headline ?? id.value).slice(0, 56);
-  continueHeadline.value = base + " — rework";
-  continueInstruction.value = "";
-  continueError.value = null;
-  showContinueForm.value = true;
-}
-
-function closeContinueForm(): void {
-  showContinueForm.value = false;
-  continueError.value = null;
-}
-
-async function submitContinue(): Promise<void> {
-  if (!id.value) return;
-  continueLoading.value = true;
-  continueError.value = null;
-  try {
-    const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        agent: agent.value,
-        source: "continue",
-        headline: continueHeadline.value.trim() || undefined,
-        instruction: continueInstruction.value,
-      }),
-    });
-    const data = await r.json() as { ok?: boolean; error?: string };
-    if (!data.ok) { continueError.value = data.error ?? "spawn failed"; return; }
-    showContinueForm.value = false;
-    emit("action-done", "next", id.value);
-  } catch (err) {
-    continueError.value = String((err as Error).message ?? err);
-  } finally {
-    continueLoading.value = false;
-  }
-}
 
 // ── Done reading — POST /api/tasks/{id}/close {status:"closed"} ───────────────
 
@@ -311,26 +264,20 @@ async function submitChat(): Promise<void> {
 <template>
   <div class="ev-actions" v-if="task">
 
-    <!-- ── Action buttons row ─────────────────────────────────────────────── -->
+    <!-- ── Action buttons row (F3: visible in every sub-view) ──────────────── -->
+    <!-- F6: compact buttons sized between the 19-21px header controls and 44px sub-tabs.
+         Below 600px: icon only (text label hidden via CSS), aria-labels preserved. -->
     <div class="ev-actions-row">
-
-      <!-- ↳ Next (follow-on): isCurrent && !isClosed -->
-      <button
-        v-if="!isClosed"
-        class="ev-action-btn"
-        type="button"
-        @click="openContinueForm"
-        data-ev-action="next"
-      >↳ Next</button>
 
       <!-- 💬 Chat: always -->
       <button
         class="ev-action-btn"
         :class="{ 'is-active': showChatForm }"
         type="button"
+        aria-label="Chat: send a message to the worker"
         @click="openChatForm"
         data-ev-action="chat"
-      >💬 Chat</button>
+      ><span aria-hidden="true">💬</span><span class="ev-btn-lbl"> Chat</span></button>
 
       <!-- ✓ Done reading: isTerminal && !isClaimed && !isClosed -->
       <button
@@ -338,27 +285,30 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="doneReadingLoading"
         type="button"
+        aria-label="Done reading: close this task"
         @click="submitDoneReading"
         data-ev-action="done-reading"
-      >✓ Done reading</button>
+      ><span aria-hidden="true">✓</span><span class="ev-btn-lbl"> Done</span></button>
 
       <!-- ✕ Cancel (close): !isTerminal && !isClaimed && !isClosed -->
       <button
         v-if="!isTerminal && !isClaimed && !isClosed"
         class="ev-action-btn"
         type="button"
+        aria-label="Cancel this task"
         @click="openCloseForm"
         data-ev-action="cancel"
-      >✕ Cancel</button>
+      ><span aria-hidden="true">✕</span><span class="ev-btn-lbl"> Cancel</span></button>
 
       <!-- ✕ Abort: isClaimed && !isClosed -->
       <button
         v-if="isClaimed && !isClosed"
         class="ev-action-btn is-danger"
         type="button"
+        aria-label="Abort: kill the live worker process"
         @click="openAbortForm"
         data-ev-action="abort"
-      >✕ Abort</button>
+      ><span aria-hidden="true">✕</span><span class="ev-btn-lbl"> Abort</span></button>
 
       <!-- ↻ Reopen: isClosed -->
       <button
@@ -366,9 +316,10 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="reopenLoading"
         type="button"
+        aria-label="Reopen this task"
         @click="submitReopen"
         data-ev-action="reopen"
-      >↻ Reopen</button>
+      ><span aria-hidden="true">↻</span><span class="ev-btn-lbl"> Reopen</span></button>
 
       <!-- ▷ Resume: isPaused && !isClosed -->
       <button
@@ -376,9 +327,10 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="resumeLoading"
         type="button"
+        aria-label="Resume this paused task"
         @click="submitResume"
         data-ev-action="resume"
-      >▷ Resume</button>
+      ><span aria-hidden="true">▷</span><span class="ev-btn-lbl"> Resume</span></button>
     </div>
 
     <!-- Done-reading error -->
@@ -398,39 +350,6 @@ async function submitChat(): Promise<void> {
       {{ resumeError }}
       <button type="button" @click="submitResume">Retry</button>
     </p>
-
-    <!-- ── Continue form: isTerminal && !isClosed ─────────────────────────── -->
-    <div v-if="isTerminal && !isClosed && showContinueForm" class="ev-form" data-ev-form="continue">
-      <p class="ev-form-hint">Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.</p>
-      <input
-        class="ev-form-input"
-        v-model="continueHeadline"
-        placeholder="Child task title"
-        type="text"
-        :disabled="continueLoading"
-      />
-      <textarea
-        class="ev-form-textarea"
-        v-model="continueInstruction"
-        rows="4"
-        placeholder="New instructions for the worker…"
-        :disabled="continueLoading"
-      ></textarea>
-      <div class="ev-form-actions">
-        <button
-          type="button"
-          class="ev-action-btn is-primary"
-          :disabled="continueLoading"
-          @click="submitContinue"
-          data-ev-submit="next"
-        >↳ Continue</button>
-        <button type="button" class="ev-action-btn" @click="closeContinueForm">Dismiss</button>
-        <span v-if="continueError" class="ev-action-error" role="alert">
-          {{ continueError }}
-          <button type="button" @click="submitContinue">Retry</button>
-        </span>
-      </div>
-    </div>
 
     <!-- ── Close form: !isTerminal && !isClaimed && !isClosed ────────────────── -->
     <div v-if="!isTerminal && !isClaimed && !isClosed && showCloseForm" class="ev-form" data-ev-form="close">
@@ -535,27 +454,32 @@ async function submitChat(): Promise<void> {
 </template>
 
 <style scoped>
+/* F3: TaskActions now sits in the action slot beside the tab bar.
+   No border-bottom here; ev-top-row owns the boundary. */
 .ev-actions {
-  padding: 8px 12px 4px;
-  border-bottom: 1px solid var(--ts-border, #3a3a3a);
+  padding: 4px 8px 2px;
 }
 
 .ev-actions-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 2px;
 }
 
+/* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
+   Before: font-size 0.82em, padding 5px 12px, min-height 30px.
+   After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
 .ev-action-btn {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
   cursor: pointer;
-  font-size: 0.82em;
-  padding: 5px 12px;
+  font-size: 0.78em;
+  padding: 3px 10px;
   border-radius: 3px;
-  min-height: 30px;
+  min-height: 28px;
+  white-space: nowrap;
 }
 
 .ev-action-btn:hover:not(:disabled) {
@@ -586,8 +510,11 @@ async function submitChat(): Promise<void> {
 
 .ev-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-@media (max-width: 390px) {
-  .ev-action-btn { min-height: 44px; padding: 8px 14px; }
+/* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
+   Collapse to icons only; aria-labels carry the accessible name. */
+@media (max-width: 600px) {
+  .ev-btn-lbl { display: none; }
+  .ev-action-btn { padding: 3px 7px; min-width: 28px; }
 }
 
 .ev-form {

@@ -200,21 +200,21 @@ try {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // WAL133-B 🔬  Reports tier (Dashboard): select-all selects all report rows;
-  //              close payload carries status:"closed" (done → closed rule).
+  // WAL133-B — RETIRED
   //
-  // Phase 4 step 3 moved attention tiers from the Tasks sidebar (tiers.ts,
-  // #tasks-user-blocked) to the Dashboard (AttentionTiers.vue,
-  // #dashboard-attention-tiers). The Reports tier is rendered by TierSection.vue
-  // with data-tier="reports", select-all via .db-tier-select-all, row checkboxes
-  // via TaskRow.vue's .task-row-select, and the bulk bar via BulkBar.vue's
-  // .db-bulk-bar / .db-bulk-close.
+  // The Dashboard Reports tier previously rendered row checkboxes and a
+  // select-all for bulk-close. Those controls were deliberately removed in
+  // commit 5f03090 (DEC-0042): selecting rows had no action surface to act on.
+  // TierSection.vue and BulkBar.vue keep their contracts; the task picker will
+  // adopt them when it has real action buttons — that is a separate future piece.
+  //
+  // This block now asserts the ABSENCE of those controls (i.e. the deliberate
+  // design state) so the spec self-documents the decision and stays green.
   // ─────────────────────────────────────────────────────────────────────────
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
     await stubAll(page);
 
-    // Navigate to the Dashboard — tiers live here after Phase 4 step 3.
     await page.goto(`${BASE}/#/`, { waitUntil: "networkidle" });
     await page.evaluate(() => {
       Object.keys(localStorage)
@@ -224,118 +224,34 @@ try {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(800);
 
-    // Wait for the Dashboard attention tiers to appear.
     await page.waitForSelector("#dashboard-attention-tiers", { timeout: 5000 });
-    // Reports tier section must be present with data-tier="reports".
-    await page.waitForSelector('[data-tier="reports"]', { timeout: 3000 }).catch(() => {});
 
-    await page.screenshot({ path: join(SHOTS_DIR, "02-b-tiers.png") });
+    await page.screenshot({ path: join(SHOTS_DIR, "02-b-tiers-retired.png") });
 
-    // ── 1. DOM structure ──────────────────────────────────────────────────
-
+    // Reports tier wrapper still present (TierSection.vue is intact)
     const reportsWrapper = page.locator('[data-tier="reports"]');
     if (await reportsWrapper.count() > 0) {
-      pass("WAL133-B — Reports tier has [data-tier='reports'] wrapper (TierSection.vue)");
+      pass("WAL133-B retired — Reports tier [data-tier='reports'] wrapper still present");
     } else {
-      fail("WAL133-B — Reports tier [data-tier='reports'] wrapper", "not found — TierSection.vue :data-tier binding missing");
+      fail("WAL133-B retired — Reports tier wrapper", "[data-tier='reports'] not found — tier removed entirely?");
     }
 
-    // Row checkboxes (.task-row-select from TaskRow.vue).
-    // defaultStatus is passed as a Vue prop (not a DOM attribute) — behavioural
-    // correctness is verified via the close payload in section 3.
+    // Row checkboxes MUST be absent (deliberately removed in DEC-0042)
     const rowCbs = reportsWrapper.locator(".task-row-select");
     const cbCount = await rowCbs.count();
-    if (cbCount > 0) {
-      pass(`WAL133-B — Reports tier has ${cbCount} row checkbox(es) (.task-row-select from TaskRow.vue)`);
+    if (cbCount === 0) {
+      pass("WAL133-B retired — Reports tier has no .task-row-select checkboxes (DEC-0042)");
     } else {
-      fail("WAL133-B — Reports tier has row checkboxes", "no .task-row-select found in [data-tier='reports']");
+      fail("WAL133-B retired — .task-row-select absent", `found ${cbCount} — row checkboxes should be gone`);
     }
 
-    // ── 2. Select-all populates checked state ────────────────────────────
-
+    // Select-all MUST be absent (deliberately removed in DEC-0042)
     const selectAll = reportsWrapper.locator(".db-tier-select-all");
-    if (await selectAll.count() > 0) {
-      pass("WAL133-B — Reports tier select-all checkbox exists (.db-tier-select-all)");
+    const saCount = await selectAll.count();
+    if (saCount === 0) {
+      pass("WAL133-B retired — Reports tier has no .db-tier-select-all (DEC-0042)");
     } else {
-      fail("WAL133-B — Reports tier select-all checkbox exists", "not found — tier count > 0 but .db-tier-select-all not rendered");
-    }
-
-    // Verify no checkboxes are checked before clicking select-all.
-    const beforeChecked = await rowCbs.evaluateAll(els => els.filter(el => el.checked).length);
-    if (beforeChecked === 0) {
-      pass("WAL133-B — row checkboxes unchecked before select-all click");
-    } else {
-      fail("WAL133-B — row checkboxes unchecked before select-all click", `${beforeChecked} already checked`);
-    }
-
-    // Click the select-all checkbox.
-    await selectAll.click();
-    await page.waitForTimeout(400);
-
-    await page.screenshot({ path: join(SHOTS_DIR, "03-b-selected.png") });
-
-    // All row checkboxes should now be checked.
-    const afterChecked = await rowCbs.evaluateAll(els => els.filter(el => el.checked).length);
-    if (cbCount > 0 && afterChecked >= cbCount) {
-      pass(`WAL133-B 🔬 — all ${afterChecked} Reports row checkbox(es) checked after select-all`);
-    } else if (afterChecked > 0) {
-      fail(
-        "WAL133-B 🔬 — all Reports rows checked after select-all",
-        `only ${afterChecked}/${cbCount} checked — partial selection`
-      );
-    } else {
-      fail(
-        "WAL133-B 🔬 — Reports rows checked after select-all",
-        "0 rows checked — onToggleAll handler not wired in AttentionTiers.vue"
-      );
-    }
-
-    // ── 3. Close payload carries status:"closed" ──────────────────────────
-
-    // The BulkBar.vue appears when count > 0 (v-if="count > 0").
-    const bulkBar = page.locator(".db-bulk-bar");
-    const barVisible = await bulkBar.count().then(n => n > 0).catch(() => false);
-    if (barVisible) {
-      pass("WAL133-B — bulk bar is visible after Reports select-all (.db-bulk-bar)");
-    } else {
-      fail("WAL133-B — bulk bar visible after Reports select-all", ".db-bulk-bar not found — bulkSelected not populated?");
-    }
-
-    const closedPayloads = [];
-    await page.route("**/api/tasks/*/close", async route => {
-      const body = route.request().postDataJSON();
-      closedPayloads.push(body);
-      await route.fulfill({
-        status: 200, contentType: "application/json",
-        body: JSON.stringify({ ok: true }),
-      });
-    });
-
-    const closeBtn = page.locator(".db-bulk-close");
-    const closeBtnExists = await closeBtn.count().then(n => n > 0).catch(() => false);
-    if (closeBtnExists) {
-      await closeBtn.click();
-      await page.waitForTimeout(800);
-
-      await page.screenshot({ path: join(SHOTS_DIR, "04-b-after-close.png") });
-
-      if (closedPayloads.length > 0) {
-        pass(`WAL133-B — close API called for ${closedPayloads.length} task(s)`);
-        const payloadStatuses = closedPayloads.map(p => p.status);
-        const allClosed = payloadStatuses.every(s => s === "closed");
-        if (allClosed) {
-          pass("WAL133-B 🔬 — all close payloads carry status:'closed' (done→closed rule via row-default-status prop)");
-        } else {
-          fail(
-            "WAL133-B 🔬 — close payloads carry status:'closed'",
-            `got: [${payloadStatuses.join(", ")}] — row-default-status="closed" not propagating in AttentionTiers.vue`
-          );
-        }
-      } else {
-        fail("WAL133-B — close API was called", "no /api/tasks/*/close requests captured");
-      }
-    } else {
-      fail("WAL133-B — close button visible", ".db-bulk-close not found — 0 rows selected?");
+      fail("WAL133-B retired — .db-tier-select-all absent", `found ${saCount} — select-all should be gone`);
     }
 
     await page.close();

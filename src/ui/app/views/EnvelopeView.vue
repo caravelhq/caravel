@@ -22,6 +22,7 @@ import EnvelopeHeader from "./EnvelopeHeader.vue";
 import TaskActions from "./TaskActions.vue";
 import EnvelopeSections from "./EnvelopeSections.vue";
 import ReportPane from "./ReportPane.vue";
+import NextPrompt from "../components/tasks/NextPrompt.vue";
 import type { ResourceRef } from "../workspace/refs";
 import type { TaskRow } from "../stores/tasks";
 
@@ -66,16 +67,15 @@ const cache = computed((): TaskRow[] =>
 
 // ── S3: subView with intent > URL > remembered > default ──────────────────────
 
-const subView = ref<"task" | "report">("task");
+const subView = ref<"task" | "report" | "next">("task");
 
 function initSubView(): void {
   const id = taskId.value;
   if (!id) return;
-  // 1. Intent from ws.open call
+  // 1. Intent from ws.open call (includes URL-driven navigation for /tasks/:id/next)
   const intent = ws.consumeIntent(liveKey.value);
   if (intent?.subView) { subView.value = intent.subView; return; }
-  // 2. URL query (?subView=report) — reserved, not yet wired in router/index.ts
-  //    When wired, read route.query.subView here.
+  // 2. URL query (?subView=...) — reserved for future query-param wiring
   // 3. Remembered from previous visit
   const remembered = tasks.subViewMemory.get(id);
   if (remembered) { subView.value = remembered; return; }
@@ -84,12 +84,10 @@ function initSubView(): void {
 }
 
 let hasAutoSwitched = false;
-let reportRawText: string | null = null;
 
-function setSubView(view: "task" | "report"): void {
+function setSubView(view: "task" | "report" | "next"): void {
   subView.value = view;
   tasks.subViewMemory.set(taskId.value, view);
-  ui.raText = view === "report" ? reportRawText : null;
 }
 
 // Re-run on first chain data (auto-switch to report if reportPath and not yet switched)
@@ -109,8 +107,7 @@ onMounted(() => {
 });
 
 onActivated(() => {
-  // F14: restore raText when returning to a cached envelope tab (step 1 only cleared it).
-  if (subView.value === "report") ui.raText = reportRawText;
+  // DocViewer manages raText for file: views; envelope report raText handled by DocViewer.
 });
 
 onDeactivated(() => {
@@ -135,11 +132,6 @@ function onOpenFile(ev: MouseEvent): void {
 function onActionDone(_action: string, _taskId: string): void {
   // The live topic subscription will refresh the task data automatically.
 }
-
-function onReportRawText(text: string | null): void {
-  reportRawText = text;
-  if (subView.value === "report") ui.raText = text;
-}
 </script>
 
 <template>
@@ -152,22 +144,41 @@ function onReportRawText(text: string | null): void {
       @project-change="onActionDone('project', taskId)"
     />
 
-    <!-- F4: real role="tablist" with bound :aria-selected -->
-    <div role="tablist" class="ev-tab-bar">
-      <button
-        role="tab"
-        class="tasks-view-tab ev-tab"
-        :class="{ 'is-active': subView === 'task' }"
-        :aria-selected="subView === 'task'"
-        @click.stop="setSubView('task')"
-      >Task</button>
-      <button
-        role="tab"
-        class="tasks-view-tab ev-tab"
-        :class="{ 'is-active': subView === 'report' }"
-        :aria-selected="subView === 'report'"
-        @click.stop="setSubView('report')"
-      >Report</button>
+    <!-- F4: real role="tablist" with bound :aria-selected.
+         F3: action slot is a SIBLING to the tablist — actions render in every sub-view. -->
+    <div class="ev-top-row">
+      <div role="tablist" class="ev-tab-bar">
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'task' }"
+          :aria-selected="subView === 'task'"
+          @click.stop="setSubView('task')"
+        >Task</button>
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'report' }"
+          :aria-selected="subView === 'report'"
+          @click.stop="setSubView('report')"
+        >Report</button>
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'next' }"
+          :aria-selected="subView === 'next'"
+          @click.stop="setSubView('next')"
+          data-ev-tab="next"
+        >Next</button>
+      </div>
+      <!-- Action slot: sibling to tablist, NOT role="tablist" or role="tab" -->
+      <div class="ev-action-slot">
+        <TaskActions
+          :task="task"
+          :cache="cache"
+          @action-done="onActionDone"
+        />
+      </div>
     </div>
 
     <!-- Loading state (WAL-116) -->
@@ -177,11 +188,6 @@ function onReportRawText(text: string | null): void {
 
     <!-- Task pane -->
     <div v-else-if="subView === 'task'" class="ev-pane">
-      <TaskActions
-        :task="task"
-        :cache="cache"
-        @action-done="onActionDone"
-      />
       <EnvelopeSections
         :chain="chain"
         @open-task="onOpenTask"
@@ -189,11 +195,13 @@ function onReportRawText(text: string | null): void {
     </div>
 
     <!-- Report pane -->
-    <div v-else class="ev-pane">
-      <ReportPane
-        :task="task"
-        @raw-text="onReportRawText"
-      />
+    <div v-else-if="subView === 'report'" class="ev-pane">
+      <ReportPane :task="task" />
+    </div>
+
+    <!-- Next pane -->
+    <div v-else class="ev-pane ev-pane-next">
+      <NextPrompt :task="task" @submitted="onActionDone('next', taskId)" />
     </div>
 
   </div>
@@ -213,11 +221,25 @@ function onReportRawText(text: string | null): void {
   overflow: hidden;
 }
 
+/* ev-top-row: tablist on the left, action slot on the right — same visual row */
+.ev-top-row {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
 .ev-tab-bar {
   display: flex;
+  flex: 1;
   gap: 2px;
   padding: 6px 8px 0;
   flex-shrink: 0;
+}
+
+/* ev-action-slot: sibling to tablist, action buttons + any open forms */
+.ev-action-slot {
+  flex-shrink: 0;
+  max-width: 55%;
 }
 
 /* WAL-138: the envelope sub-tabs ARE Open sub-tabs — they carry

@@ -274,15 +274,15 @@ export const useWorkspaceStore = defineStore("workspace", () => {
 
   // Ephemeral per-key intent: set by ws.open({ intent }), consumed once by the mounting view.
   // Not persisted — session-only navigation signal.
-  const _intentByKey = reactive(new Map<string, { subView?: "task" | "report" }>());
+  const _intentByKey = reactive(new Map<string, { subView?: "task" | "report" | "next" }>());
 
-  function consumeIntent(key: string): { subView?: "task" | "report" } | undefined {
+  function consumeIntent(key: string): { subView?: "task" | "report" | "next" } | undefined {
     const v = _intentByKey.get(key);
     _intentByKey.delete(key);
     return v;
   }
 
-  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; background?: boolean; intent?: { subView?: "task" | "report" } } = {}): void {
+  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; background?: boolean; intent?: { subView?: "task" | "report" | "next" } } = {}): void {
     if (opts.intent) _intentByKey.set(refKey(ref), opts.intent);
     const key = refKey(ref);
     const existingIdx = keyIndex(key);

@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { timeAgo } from "../pages/tasks/helpers";
 import type { TaskRow } from "../stores/tasks";
+import { useProjectsStore } from "../stores/projects";
 
 const props = defineProps<{ task: TaskRow | null }>();
 const emit = defineEmits<{
   (e: "rename", headline: string): void;
   (e: "project-change", project: string | null): void;
 }>();
+
+const projects = useProjectsStore();
+onMounted(() => { projects.loadList(); });
 
 const renaming = ref(false);
 const renameInput = ref("");
@@ -131,15 +135,21 @@ async function submitProjectEdit(): Promise<void> {
         >📁 {{ metaProject ?? 'Unassigned' }}</button>
       </template>
       <template v-else>
+        <!-- F7: datalist-backed input — constrained to known projects by default,
+             but free entry still works for genuinely new project names. -->
         <input
           class="ev-project-input"
           v-model="projectInput"
           placeholder="Project name (blank to clear)"
+          list="ev-project-list"
           :disabled="projectLoading"
           @keydown.enter="submitProjectEdit"
           @keydown.escape="cancelProjectEdit"
           autofocus
         />
+        <datalist id="ev-project-list">
+          <option v-for="p in projects.list" :key="p.slug" :value="p.slug" />
+        </datalist>
         <button class="ev-project-save" type="button" :disabled="projectLoading" @click="submitProjectEdit">Set</button>
         <button class="ev-project-cancel" type="button" @click="cancelProjectEdit">×</button>
         <span v-if="projectError" class="ev-action-error" role="alert">{{ projectError }}</span>
