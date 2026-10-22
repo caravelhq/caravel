@@ -101,7 +101,7 @@ onBeforeUnmount(() => {
       aria-label="Open menu"
       title="Open"
       @click="toggle"
-    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="22" height="18" fill="none" aria-hidden="true">
+    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true">
         <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" />
         <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" />
         <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" />
@@ -159,10 +159,32 @@ onBeforeUnmount(() => {
 .open-menu-ship {
   display: block;
 }
+/* WAL-138: matches the footer dock buttons (.global-voice-task) — same green,
+   same translucent fill and blur, same lift on hover — at tab-strip scale. */
 .open-menu-btn {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #6ee7b744;
+  background: #071a1acc;
+  backdrop-filter: blur(8px);
+  color: #6ee7b7;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
+}
+.open-menu-btn:hover {
+  transform: translateY(-2px);
+  background: #0d2a2acc;
+  border-color: #6ee7b777;
+}
+.open-menu-btn[aria-expanded="true"] {
+  background: #0d2a2acc;
+  border-color: #6ee7b7aa;
 }
 .om-section-label {
   padding: 6px 14px 3px;
