@@ -642,10 +642,10 @@
 
 /* F3: TaskActions now sits in the action slot beside the tab bar.
    No border-bottom here; ev-top-row owns the boundary. */
-.ev-actions[data-v-abc0d8c7] {
+.ev-actions[data-v-fc422d3f] {
   padding: 4px 8px 2px;
 }
-.ev-actions-row[data-v-abc0d8c7] {
+.ev-actions-row[data-v-fc422d3f] {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -655,7 +655,7 @@
 /* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
    Before: font-size 0.82em, padding 5px 12px, min-height 30px.
    After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
-.ev-action-btn[data-v-abc0d8c7] {
+.ev-action-btn[data-v-fc422d3f] {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
@@ -666,60 +666,60 @@
   min-height: 28px;
   white-space: nowrap;
 }
-.ev-action-btn[data-v-abc0d8c7]:hover:not(:disabled) {
+.ev-action-btn[data-v-fc422d3f]:hover:not(:disabled) {
   color: var(--ts-text, #eee);
   border-color: var(--ts-text-secondary, #aaa);
 }
-.ev-action-btn.is-primary[data-v-abc0d8c7] {
+.ev-action-btn.is-primary[data-v-fc422d3f] {
   background: var(--ts-accent, #3a3a9a);
   color: #fff;
   border-color: var(--ts-accent, #3a3a9a);
 }
-.ev-action-btn.is-primary[data-v-abc0d8c7]:hover:not(:disabled) {
+.ev-action-btn.is-primary[data-v-fc422d3f]:hover:not(:disabled) {
   background: var(--ts-accent-hover, #4a4aaa);
 }
-.ev-action-btn.is-danger[data-v-abc0d8c7] {
+.ev-action-btn.is-danger[data-v-fc422d3f] {
   background: transparent;
   border-color: var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
 }
-.ev-action-btn.is-active[data-v-abc0d8c7] {
+.ev-action-btn.is-active[data-v-fc422d3f] {
   background: var(--ts-surface-2, #2a2a2a);
   color: var(--ts-text, #eee);
 }
-.ev-action-btn[data-v-abc0d8c7]:disabled { opacity: 0.5; cursor: not-allowed;
+.ev-action-btn[data-v-fc422d3f]:disabled { opacity: 0.5; cursor: not-allowed;
 }
 
 /* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
    Collapse to icons only; aria-labels carry the accessible name. */
 @media (max-width: 600px) {
-.ev-btn-lbl[data-v-abc0d8c7] { display: none;
+.ev-btn-lbl[data-v-fc422d3f] { display: none;
 }
-.ev-action-btn[data-v-abc0d8c7] { padding: 3px 7px; min-width: 28px;
+.ev-action-btn[data-v-fc422d3f] { padding: 3px 7px; min-width: 28px;
 }
 }
-.ev-form[data-v-abc0d8c7] {
+.ev-form[data-v-fc422d3f] {
   margin-top: 8px;
   padding: 10px;
   background: var(--ts-surface-2, #2a2a2a);
   border: 1px solid var(--ts-border, #3a3a3a);
   border-radius: 4px;
 }
-.ev-form-danger[data-v-abc0d8c7] { border-color: var(--ts-danger, #8a3a3a);
+.ev-form-danger[data-v-fc422d3f] { border-color: var(--ts-danger, #8a3a3a);
 }
-.ev-form-warn[data-v-abc0d8c7] {
+.ev-form-warn[data-v-fc422d3f] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin-bottom: 8px;
 }
-.ev-form-warn summary[data-v-abc0d8c7] { cursor: pointer;
+.ev-form-warn summary[data-v-fc422d3f] { cursor: pointer;
 }
-.ev-form-hint[data-v-abc0d8c7] {
+.ev-form-hint[data-v-fc422d3f] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin: 0 0 8px;
 }
-.ev-form-input[data-v-abc0d8c7] {
+.ev-form-input[data-v-fc422d3f] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -730,7 +730,7 @@
   border-radius: 3px;
   margin-bottom: 6px;
 }
-.ev-form-textarea[data-v-abc0d8c7] {
+.ev-form-textarea[data-v-fc422d3f] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -742,7 +742,7 @@
   resize: vertical;
   margin-bottom: 6px;
 }
-.ev-form-cascade[data-v-abc0d8c7] {
+.ev-form-cascade[data-v-fc422d3f] {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -751,20 +751,20 @@
   margin-bottom: 8px;
   cursor: pointer;
 }
-.ev-form-actions[data-v-abc0d8c7] {
+.ev-form-actions[data-v-fc422d3f] {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
-.ev-action-error[data-v-abc0d8c7] {
+.ev-action-error[data-v-fc422d3f] {
   color: var(--ts-danger, #e05a5a);
   font-size: 0.82em;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.ev-action-error button[data-v-abc0d8c7] {
+.ev-action-error button[data-v-fc422d3f] {
   background: none;
   border: 1px solid var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
@@ -885,7 +885,104 @@
   flex-direction: column;
 }
 
-.ev-root[data-v-af200dd0] {
+.nx-root[data-v-e068f162] {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  gap: 8px;
+  flex: 1;
+}
+.nx-closed-notice[data-v-e068f162] {
+  font-size: 0.82em;
+  color: var(--ts-text-secondary, #aaa);
+  background: var(--ts-surface-2, #2a2a2a);
+  border: 1px solid var(--ts-border, #3a3a3a);
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+.nx-label[data-v-e068f162] {
+  font-size: 0.85em;
+  color: var(--ts-text-secondary, #aaa);
+}
+.nx-textarea[data-v-e068f162] {
+  flex: 1;
+  min-height: 120px;
+  background: var(--ts-surface-2, #2a2a2a);
+  border: 1px solid var(--ts-border, #3a3a3a);
+  color: var(--ts-text, #eee);
+  padding: 8px 10px;
+  font-size: 0.88em;
+  border-radius: 4px;
+  resize: vertical;
+  box-sizing: border-box;
+  width: 100%;
+}
+.nx-textarea[data-v-e068f162]:focus {
+  outline: none;
+  border-color: var(--ts-accent, #5a5a9a);
+}
+.nx-actions[data-v-e068f162] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.nx-btn[data-v-e068f162] {
+  background: transparent;
+  border: 1px solid var(--ts-border, #3a3a3a);
+  color: var(--ts-text-secondary, #aaa);
+  cursor: pointer;
+  font-size: 0.82em;
+  padding: 4px 12px;
+  border-radius: 3px;
+  min-height: 28px;
+  white-space: nowrap;
+}
+.nx-btn[data-v-e068f162]:hover:not(:disabled) {
+  color: var(--ts-text, #eee);
+  border-color: var(--ts-text-secondary, #aaa);
+}
+.nx-btn.is-primary[data-v-e068f162] {
+  background: var(--ts-accent, #3a3a9a);
+  color: #fff;
+  border-color: var(--ts-accent, #3a3a9a);
+}
+.nx-btn.is-primary[data-v-e068f162]:hover:not(:disabled) {
+  background: var(--ts-accent-hover, #4a4aaa);
+}
+.nx-btn[data-v-e068f162]:disabled { opacity: 0.5; cursor: not-allowed;
+}
+.nx-error[data-v-e068f162] {
+  color: var(--ts-danger, #e05a5a);
+  font-size: 0.82em;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nx-error button[data-v-e068f162] {
+  background: none;
+  border: 1px solid var(--ts-danger, #8a3a3a);
+  color: var(--ts-danger, #e05a5a);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.nx-hint[data-v-e068f162] {
+  font-size: 0.78em;
+  color: var(--ts-text-secondary, #777);
+  margin: 0;
+}
+.nx-loading[data-v-e068f162] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: var(--ts-text-secondary, #aaa);
+  font-size: 0.88em;
+}
+
+.ev-root[data-v-8eaa618d] {
   /* WAL-138: same frame as .chat-panel / .tasks-panel so envelope tabs sit in a
      dark panel rather than directly on the page background. */
   background: var(--panel, #0f1e33);
@@ -899,12 +996,12 @@
 }
 
 /* ev-top-row: tablist on the left, action slot on the right — same visual row */
-.ev-top-row[data-v-af200dd0] {
+.ev-top-row[data-v-8eaa618d] {
   display: flex;
   align-items: flex-start;
   flex-shrink: 0;
 }
-.ev-tab-bar[data-v-af200dd0] {
+.ev-tab-bar[data-v-8eaa618d] {
   display: flex;
   flex: 1;
   gap: 2px;
@@ -913,7 +1010,7 @@
 }
 
 /* ev-action-slot: sibling to tablist, action buttons + any open forms */
-.ev-action-slot[data-v-af200dd0] {
+.ev-action-slot[data-v-8eaa618d] {
   flex-shrink: 0;
   max-width: 55%;
 }
@@ -923,16 +1020,16 @@
    underline from it. Duplicating those properties here is what let the font
    drift; only the phone hit-area override is local. */
 @media (max-width: 640px) {
-.ev-tab[data-v-af200dd0] { min-height: 44px; padding: 8px 16px 10px;
+.ev-tab[data-v-8eaa618d] { min-height: 44px; padding: 8px 16px 10px;
 }
 }
-.ev-pane[data-v-af200dd0] {
+.ev-pane[data-v-8eaa618d] {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
-.ev-loading[data-v-af200dd0] {
+.ev-loading[data-v-8eaa618d] {
   justify-content: center;
   align-items: center;
   padding: 20px;

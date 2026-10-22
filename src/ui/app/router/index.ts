@@ -19,8 +19,10 @@ export const router = createRouter({
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
     { path: "/tasks", component: Stub },
-    // /tasks/project/:slug must be declared before the taskId pattern to prevent shadowing
+    // /tasks/project/:slug and sub-views must be declared before the bare taskId pattern.
     { path: "/tasks/project/:slug", component: Stub },
+    { path: "/tasks/:taskId(TSK-[^/]+)/next", component: Stub },
+    { path: "/tasks/:taskId(TSK-[^/]+)/report", component: Stub },
     { path: "/tasks/:taskId(TSK-[^/]+)", component: Stub },
     { path: "/files", component: Stub },
     { path: "/files/:filePath(.*)", component: Stub },
@@ -80,10 +82,28 @@ if (typeof window !== "undefined") {
 // ── Routing ──────────────────────────────────────────────────────────────────
 
 // Parse a route into a ResourceRef (or null if unrecognised).
+// Extract a sub-view from a /tasks/:taskId/:subView path (e.g. "/tasks/TSK-x/next" → "next").
+function taskSubView(path: string): "next" | "report" | null {
+  const m = path.match(/^\/tasks\/TSK-[^/]+(\/next|\/report)$/);
+  if (!m) return null;
+  return m[1] === "/next" ? "next" : "report";
+}
+
 function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
   const p = route.path;
   if (p === "/dashboard" || p === "/") return { kind: "dashboard" };
-  if (p === "/tasks" || p.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
+  if (p === "/tasks" || p === "/tasks/") return { kind: "legacy", page: "tasks" };
+  // /tasks/:taskId/next and /tasks/:taskId/report — open the envelope (sub-view wired via intent)
+  if (/^\/tasks\/TSK-[^/]+\/(next|report)$/.test(p)) {
+    const parts = p.split("/");
+    return { kind: "envelope", taskId: parts[2] };
+  }
+  // /tasks/:taskId — also opens the envelope (legacy URL form)
+  if (/^\/tasks\/TSK-[^/]+$/.test(p)) {
+    const taskId = p.slice("/tasks/".length);
+    return { kind: "envelope", taskId };
+  }
+  if (p.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p === "/chat") return { kind: "legacy", page: "chat" };
   if (p === "/files") return { kind: "legacy", page: "files" };
   if (p.startsWith("/files/")) {
@@ -140,13 +160,18 @@ router.afterEach((to) => {
   // Guard: store→URL writes triggered by ws.open/activate below must not produce another navigation.
   _navigating = true;
   try {
+    // For /tasks/:taskId/next and /tasks/:taskId/report, carry the sub-view as intent.
+    const sv = taskSubView(to.path);
+    const intent = sv ? { subView: sv } : undefined;
+
     // Open the main ref (no URL write — we came from navigation).
     const key = refKey(ref);
     const existingIdx = ws.tabs.findIndex((t) => refKey(t) === key);
     if (existingIdx !== -1) {
+      if (intent) ws.open(ref, { intent }); // re-open with intent to set sub-view
       ws.activate(key);
     } else {
-      ws.open(ref);
+      ws.open(ref, intent ? { intent } : {});
     }
 
     // Handle ?side= for the other group when split.

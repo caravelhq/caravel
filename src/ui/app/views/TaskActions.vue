@@ -316,16 +316,6 @@ async function submitChat(): Promise<void> {
          Below 600px: icon only (text label hidden via CSS), aria-labels preserved. -->
     <div class="ev-actions-row">
 
-      <!-- ↳ Next (follow-on): !isClosed -->
-      <button
-        v-if="!isClosed"
-        class="ev-action-btn"
-        type="button"
-        aria-label="Continue: spawn a child task"
-        @click="openContinueForm"
-        data-ev-action="next"
-      ><span aria-hidden="true">↳</span><span class="ev-btn-lbl"> Next</span></button>
-
       <!-- 💬 Chat: always -->
       <button
         class="ev-action-btn"

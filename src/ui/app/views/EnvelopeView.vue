@@ -22,6 +22,7 @@ import EnvelopeHeader from "./EnvelopeHeader.vue";
 import TaskActions from "./TaskActions.vue";
 import EnvelopeSections from "./EnvelopeSections.vue";
 import ReportPane from "./ReportPane.vue";
+import NextPrompt from "../components/tasks/NextPrompt.vue";
 import type { ResourceRef } from "../workspace/refs";
 import type { TaskRow } from "../stores/tasks";
 
@@ -66,16 +67,15 @@ const cache = computed((): TaskRow[] =>
 
 // ── S3: subView with intent > URL > remembered > default ──────────────────────
 
-const subView = ref<"task" | "report">("task");
+const subView = ref<"task" | "report" | "next">("task");
 
 function initSubView(): void {
   const id = taskId.value;
   if (!id) return;
-  // 1. Intent from ws.open call
+  // 1. Intent from ws.open call (includes URL-driven navigation for /tasks/:id/next)
   const intent = ws.consumeIntent(liveKey.value);
   if (intent?.subView) { subView.value = intent.subView; return; }
-  // 2. URL query (?subView=report) — reserved, not yet wired in router/index.ts
-  //    When wired, read route.query.subView here.
+  // 2. URL query (?subView=...) — reserved for future query-param wiring
   // 3. Remembered from previous visit
   const remembered = tasks.subViewMemory.get(id);
   if (remembered) { subView.value = remembered; return; }
@@ -85,7 +85,7 @@ function initSubView(): void {
 
 let hasAutoSwitched = false;
 
-function setSubView(view: "task" | "report"): void {
+function setSubView(view: "task" | "report" | "next"): void {
   subView.value = view;
   tasks.subViewMemory.set(taskId.value, view);
 }
@@ -162,6 +162,14 @@ function onActionDone(_action: string, _taskId: string): void {
           :aria-selected="subView === 'report'"
           @click.stop="setSubView('report')"
         >Report</button>
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'next' }"
+          :aria-selected="subView === 'next'"
+          @click.stop="setSubView('next')"
+          data-ev-tab="next"
+        >Next</button>
       </div>
       <!-- Action slot: sibling to tablist, NOT role="tablist" or role="tab" -->
       <div class="ev-action-slot">
@@ -187,8 +195,13 @@ function onActionDone(_action: string, _taskId: string): void {
     </div>
 
     <!-- Report pane -->
-    <div v-else class="ev-pane">
+    <div v-else-if="subView === 'report'" class="ev-pane">
       <ReportPane :task="task" />
+    </div>
+
+    <!-- Next pane -->
+    <div v-else class="ev-pane ev-pane-next">
+      <NextPrompt :task="task" @submitted="onActionDone('next', taskId)" />
     </div>
 
   </div>

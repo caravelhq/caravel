@@ -57,13 +57,17 @@ export const useTasksStore = defineStore("tasks", () => {
   const loaded = ref(false);
   // Per-taskId sub-view memory. Session-only; not persisted.
   // Precedence in EnvelopeView: intent (ws.open) > URL > remembered > default "task".
-  const subViewMemory = reactive(new Map<string, "task" | "report">());
+  const subViewMemory = reactive(new Map<string, "task" | "report" | "next">());
+
+  // Per-taskId draft for the Next sub-view composer. Survives sub-view switches,
+  // tab switches, and KeepAlive eviction (8-slot cache). Cleared only on successful POST.
+  const nextDraft = reactive(new Map<string, string>());
 
   watch(view, (v) => save("view", v));
   watch(filter, (v) => save("filter", v));
 
   return {
     view, filter, cache, expanded, collapsed,
-    bulkSelected, multiSelectActive, loaded, subViewMemory,
+    bulkSelected, multiSelectActive, loaded, subViewMemory, nextDraft,
   };
 });
