@@ -17043,8 +17043,10 @@ function refGlyph(ref2) {
       return "t";
     case "project":
       return "p";
+    // WAL-138: no glyph for legacy panels. "l" rendered as a 3px sliver that read
+    // as a stray pipe beside the label; these panels are named, not kind-coded.
     case "legacy":
-      return "l";
+      return "";
     case "chat":
       return "c";
   }
@@ -17187,7 +17189,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           title: "Open",
           onClick: toggle
         }, [..._cache[5] || (_cache[5] = [
-          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="22" height="18" fill="none" aria-hidden="true" data-v-f33ea258><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-f33ea258></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-f33ea258></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-f33ea258></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-f33ea258></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-f33ea258></path></svg>', 1)
+          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-091280bd><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-091280bd></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-091280bd></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-091280bd></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-091280bd></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-091280bd></path></svg>', 1)
         ])], 8, _hoisted_1$p),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
@@ -17288,7 +17290,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-f33ea258"]]);
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-091280bd"]]);
 const _hoisted_1$o = {
   key: 0,
   class: "tos-group-label"
@@ -17421,11 +17423,17 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$s, [["__scopeId", "data-v-099f83db"]]);
 const _hoisted_1$n = { class: "tab-strip-outer" };
 const _hoisted_2$i = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$h = { class: "ts-tab-glyph" };
+const _hoisted_3$h = {
+  key: 0,
+  class: "ts-tab-glyph"
+};
 const _hoisted_4$e = { class: "ts-tab-label" };
 const _hoisted_5$d = ["onClick"];
 const _hoisted_6$d = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_7$b = { class: "ts-tab-glyph" };
+const _hoisted_7$b = {
+  key: 0,
+  class: "ts-tab-glyph"
+};
 const _hoisted_8$b = { class: "ts-tab-label" };
 const _hoisted_9$a = ["onClick"];
 const _hoisted_10$8 = { class: "ts-actions" };
@@ -17636,10 +17644,10 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, i)
               }, [
-                createBaseVNode("span", _hoisted_3$h, toDisplayString(unref(refGlyph)(tab)), 1),
+                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_3$h, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_4$e, toDisplayString(tabLabel(tab)), 1),
                 !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 0,
+                  key: 1,
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
@@ -17689,10 +17697,10 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
-                createBaseVNode("span", _hoisted_7$b, toDisplayString(unref(refGlyph)(tab)), 1),
+                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_7$b, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_8$b, toDisplayString(tabLabel(tab)), 1),
                 !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 0,
+                  key: 1,
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
@@ -17790,7 +17798,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$r, [["__scopeId", "data-v-16ee63f7"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$r, [["__scopeId", "data-v-df88df02"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);

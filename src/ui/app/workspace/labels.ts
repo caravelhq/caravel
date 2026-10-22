@@ -56,7 +56,9 @@ export function refGlyph(ref: ResourceRef): string {
     case "report": return "r";
     case "envelope": return "t";
     case "project": return "p";
-    case "legacy": return "l";
+    // WAL-138: no glyph for legacy panels. "l" rendered as a 3px sliver that read
+    // as a stray pipe beside the label; these panels are named, not kind-coded.
+    case "legacy": return "";
     case "chat": return "c";
   }
 }

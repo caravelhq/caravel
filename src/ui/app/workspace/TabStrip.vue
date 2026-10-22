@@ -228,7 +228,7 @@ function onDividerDrop(e: DragEvent): void {
         @dragleave="dragOverIdx = null"
         @drop="onTabDrop($event, i)"
       >
-        <span class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
+        <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
         <span
           v-if="!ws.meta[refKey(tab)]?.pinned"
@@ -285,7 +285,7 @@ function onDividerDrop(e: DragEvent): void {
         @dragleave="dragOverIdx = null"
         @drop="onTabDrop($event, group0.length + i)"
       >
-        <span class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
+        <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
         <span
           v-if="!ws.meta[refKey(tab)]?.pinned"
