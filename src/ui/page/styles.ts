@@ -188,7 +188,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 16px;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff1a, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       display: grid;
@@ -580,7 +580,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 16px;
       background:
         radial-gradient(120% 100% at 0% 0%, #ffd07a18, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       display: grid;
@@ -1702,7 +1702,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -2544,7 +2544,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 16px 16px 0 0;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -2565,7 +2565,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       container-type: inline-size;
@@ -3633,7 +3633,7 @@ export const pageStyles = String.raw`    :root {
       border-radius: 16px 16px 0 0;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -5085,7 +5085,10 @@ export const pageStyles = String.raw`    :root {
       .files-panel,
       .tasks-panel {
         min-width: 100%;
-        border-radius: 12px 12px 0 0;
+        /* WAL-138: 0, not 12px. This narrow-viewport rule was re-applying the
+           radius the base rules had dropped, and winning — which is why the
+           Open panel still curved away from the tab bar on a phone. */
+        border-radius: 0;
       }
       .tasks-viewer-head {
         padding: 6px 10px;
