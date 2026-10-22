@@ -404,13 +404,19 @@ function onDividerDrop(e: DragEvent): void {
 }
 
 .ts-tab {
+  /* WAL-138: tabs wear the panel frame's border (rgba(255,255,255,0.133)) at
+     1.5px, and the active tab drops its bottom edge and takes the panel's own
+     background, so it reads as an extension of the frame below rather than a
+     separate chip sitting on top of it. */
   display: inline-flex;
   align-items: center;
   gap: 4px;
   padding: 4px 8px;
-  border: none;
-  border-radius: 4px 4px 0 0;
-  background: var(--surface-2, #262626);
+  border: 1.5px solid rgba(255, 255, 255, 0.133);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -1px;
+  background: transparent;
   color: inherit;
   cursor: pointer;
   font-size: 0.85rem;
@@ -421,10 +427,15 @@ function onDividerDrop(e: DragEvent): void {
 }
 
 .ts-tab:hover { opacity: 0.88; }
-.ts-tab--active { opacity: 0.88; }
+/* WAL-138: the selected tab takes the panel's background so the two merge. */
+.ts-tab--active {
+  opacity: 1;
+  background: var(--panel, #0f1e33);
+}
 .ts-tab--focused {
   opacity: 1;
-  background: var(--surface-3, #303030);
+  background: var(--panel, #0f1e33);
+  border-color: rgba(255, 255, 255, 0.22);
 }
 .ts-tab--preview { font-style: italic; }
 .ts-tab--pinned { font-weight: 600; }

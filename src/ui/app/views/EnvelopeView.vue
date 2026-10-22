@@ -201,6 +201,12 @@ function onReportRawText(text: string | null): void {
 
 <style scoped>
 .ev-root {
+  /* WAL-138: same frame as .chat-panel / .tasks-panel so envelope tabs sit in a
+     dark panel rather than directly on the page background. */
+  background: var(--panel, #0f1e33);
+  border: 1px solid rgba(255, 255, 255, 0.133);
+  border-radius: 0;
+
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -215,25 +221,23 @@ function onReportRawText(text: string | null): void {
 }
 
 .ev-tab {
-  padding: 4px 14px;
-  border: 1px solid var(--ts-border, #3a3a3a);
+  /* WAL-138: matches .tasks-view-tab — the Open panel's Projects | Tasks pair.
+     Flat, transparent, amber underline on the active one; no chip, no radius. */
+  padding: 6px 14px 8px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
   background: transparent;
-  color: var(--ts-text-secondary, #aaa);
+  color: #8aa0bd;
+  font-size: 12px;
   cursor: pointer;
-  border-radius: 4px 4px 0 0;
-  font-size: 0.85em;
-  min-height: 30px;
 }
-
 .ev-tab.is-active {
-  background: var(--ts-surface-2, #2a2a2a);
-  color: var(--ts-text, #eee);
-  border-bottom-color: var(--ts-surface-2, #2a2a2a);
+  border-bottom-color: #ffd07a;
+  color: #ffe7b8;
 }
-
-/* F4: ≥44px hit area at 390px viewport */
-@media (max-width: 390px) {
-  .ev-tab { min-height: 44px; padding: 8px 16px; }
+@media (max-width: 640px) {
+  .ev-tab { min-height: 44px; padding: 8px 16px 10px; }
 }
 
 .ev-pane {
