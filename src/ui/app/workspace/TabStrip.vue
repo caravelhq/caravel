@@ -298,11 +298,13 @@ function onDividerDrop(e: DragEvent): void {
       </button>
     </div>
 
-    <!-- Right-edge fade when strip overflows -->
-    <div v-if="isOverflowing" class="ts-overflow-fade" aria-hidden="true"></div>
-
     <!-- Always-visible actions — outside the scrollable strip -->
     <div class="ts-actions">
+      <!-- Right-edge fade when the strip overflows. Lives inside .ts-actions and is
+           anchored with right:100% so its right edge sits exactly on the strip's
+           right edge, whatever width the actions cluster happens to be. The old
+           `right: 110px` guessed that width and was 66px out at phone size. -->
+      <div v-if="isOverflowing" class="ts-overflow-fade" aria-hidden="true"></div>
       <button
         v-if="isOverflowing"
         class="ts-overflow-btn"
@@ -393,8 +395,8 @@ function onDividerDrop(e: DragEvent): void {
 .ts-overflow-fade {
   position: absolute;
   top: 0;
-  bottom: 1px;
-  right: 110px; /* approximate width of ts-actions */
+  bottom: 0;
+  right: 100%; /* right edge == left edge of .ts-actions == right edge of the strip */
   width: 40px;
   background: linear-gradient(to right, transparent, var(--surface-1, #1a1a1a));
   pointer-events: none;
