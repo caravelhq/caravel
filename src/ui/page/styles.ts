@@ -3736,9 +3736,10 @@ export const pageStyles = String.raw`    :root {
       font-family: "JetBrains Mono", monospace;
     }
     .task-tree-node {
-      display: grid;
-      grid-template-columns: auto auto auto auto 1fr;
-      align-items: center;
+      /* WAL-137: flex, not grid. See TaskRow.vue for why — a fixed column count
+         with a variable item count spilled items into implicit rows. */
+      display: flex;
+      align-items: flex-start;
       gap: 8px;
       padding: 5px 8px;
       border-radius: 6px;
@@ -3762,16 +3763,34 @@ export const pageStyles = String.raw`    :root {
     .task-tree-indent {
       display: inline-block;
       flex-shrink: 0;
+      align-self: stretch;
     }
     .task-tree-marker {
       color: #6a7e9b;
       font-size: 11px;
       width: 14px;
+      flex-shrink: 0;
       display: inline-block;
       text-align: center;
+      line-height: 16px;
+    }
+    /* The caret occupies the same slot as the dot, so parent and leaf rows align. */
+    .task-tree-node > .tasks-tree-chevron {
+      width: 14px;
+      flex-shrink: 0;
+      text-align: center;
+      line-height: 16px;
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: none;
     }
     .task-tree-node.is-current .task-tree-marker {
       color: #ffd07a;
+    }
+    .task-row-select {
+      flex-shrink: 0;
+      margin-top: 2px;
     }
     .task-tree-id {
       color: #d6e6ff;
@@ -3791,13 +3810,22 @@ export const pageStyles = String.raw`    :root {
     .task-tree-status.is-waiting { color: #f0c674; }
     .task-tree-status.is-done { color: #93e0a8; }
     .task-tree-status.is-failed { color: #ff9a9a; }
+    /* Body column: the title's left edge is the id's left edge, because both are
+       inside it and it starts after the marker slot. */
+    .task-tree-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .task-tree-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
     .task-tree-headline {
-      /* WAL-137: the headline is the last grid item and used to land in column 1 of
-         an implicit second row, where it both sized that column (shoving the
-         marker/id/status ~150px to the right) and was itself clamped to ~144px of a
-         342px row, so the title truncated. Spanning every column puts it on its own
-         full-width line and lets column 1 collapse back to the indent. */
-      grid-column: 1 / -1;
       min-width: 0;
       color: #b8cae3;
       font-family: "Space Grotesk", system-ui, sans-serif;
@@ -3807,10 +3835,7 @@ export const pageStyles = String.raw`    :root {
       white-space: nowrap;
     }
     @media (max-width: 640px) {
-      .task-tree-node {
-        grid-template-columns: auto auto auto 1fr;
-        gap: 6px;
-      }
+      .task-tree-node { gap: 6px; }
       .task-tree-agent { display: none; }
     }
     .task-panel-card {
