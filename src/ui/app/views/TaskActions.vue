@@ -311,26 +311,30 @@ async function submitChat(): Promise<void> {
 <template>
   <div class="ev-actions" v-if="task">
 
-    <!-- ── Action buttons row ─────────────────────────────────────────────── -->
+    <!-- ── Action buttons row (F3: visible in every sub-view) ──────────────── -->
+    <!-- F6: compact buttons sized between the 19-21px header controls and 44px sub-tabs.
+         Below 600px: icon only (text label hidden via CSS), aria-labels preserved. -->
     <div class="ev-actions-row">
 
-      <!-- ↳ Next (follow-on): isCurrent && !isClosed -->
+      <!-- ↳ Next (follow-on): !isClosed -->
       <button
         v-if="!isClosed"
         class="ev-action-btn"
         type="button"
+        aria-label="Continue: spawn a child task"
         @click="openContinueForm"
         data-ev-action="next"
-      >↳ Next</button>
+      ><span aria-hidden="true">↳</span><span class="ev-btn-lbl"> Next</span></button>
 
       <!-- 💬 Chat: always -->
       <button
         class="ev-action-btn"
         :class="{ 'is-active': showChatForm }"
         type="button"
+        aria-label="Chat: send a message to the worker"
         @click="openChatForm"
         data-ev-action="chat"
-      >💬 Chat</button>
+      ><span aria-hidden="true">💬</span><span class="ev-btn-lbl"> Chat</span></button>
 
       <!-- ✓ Done reading: isTerminal && !isClaimed && !isClosed -->
       <button
@@ -338,27 +342,30 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="doneReadingLoading"
         type="button"
+        aria-label="Done reading: close this task"
         @click="submitDoneReading"
         data-ev-action="done-reading"
-      >✓ Done reading</button>
+      ><span aria-hidden="true">✓</span><span class="ev-btn-lbl"> Done</span></button>
 
       <!-- ✕ Cancel (close): !isTerminal && !isClaimed && !isClosed -->
       <button
         v-if="!isTerminal && !isClaimed && !isClosed"
         class="ev-action-btn"
         type="button"
+        aria-label="Cancel this task"
         @click="openCloseForm"
         data-ev-action="cancel"
-      >✕ Cancel</button>
+      ><span aria-hidden="true">✕</span><span class="ev-btn-lbl"> Cancel</span></button>
 
       <!-- ✕ Abort: isClaimed && !isClosed -->
       <button
         v-if="isClaimed && !isClosed"
         class="ev-action-btn is-danger"
         type="button"
+        aria-label="Abort: kill the live worker process"
         @click="openAbortForm"
         data-ev-action="abort"
-      >✕ Abort</button>
+      ><span aria-hidden="true">✕</span><span class="ev-btn-lbl"> Abort</span></button>
 
       <!-- ↻ Reopen: isClosed -->
       <button
@@ -366,9 +373,10 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="reopenLoading"
         type="button"
+        aria-label="Reopen this task"
         @click="submitReopen"
         data-ev-action="reopen"
-      >↻ Reopen</button>
+      ><span aria-hidden="true">↻</span><span class="ev-btn-lbl"> Reopen</span></button>
 
       <!-- ▷ Resume: isPaused && !isClosed -->
       <button
@@ -376,9 +384,10 @@ async function submitChat(): Promise<void> {
         class="ev-action-btn is-primary"
         :disabled="resumeLoading"
         type="button"
+        aria-label="Resume this paused task"
         @click="submitResume"
         data-ev-action="resume"
-      >▷ Resume</button>
+      ><span aria-hidden="true">▷</span><span class="ev-btn-lbl"> Resume</span></button>
     </div>
 
     <!-- Done-reading error -->
@@ -535,27 +544,32 @@ async function submitChat(): Promise<void> {
 </template>
 
 <style scoped>
+/* F3: TaskActions now sits in the action slot beside the tab bar.
+   No border-bottom here; ev-top-row owns the boundary. */
 .ev-actions {
-  padding: 8px 12px 4px;
-  border-bottom: 1px solid var(--ts-border, #3a3a3a);
+  padding: 4px 8px 2px;
 }
 
 .ev-actions-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 4px;
+  margin-bottom: 2px;
 }
 
+/* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
+   Before: font-size 0.82em, padding 5px 12px, min-height 30px.
+   After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
 .ev-action-btn {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
   cursor: pointer;
-  font-size: 0.82em;
-  padding: 5px 12px;
+  font-size: 0.78em;
+  padding: 3px 10px;
   border-radius: 3px;
-  min-height: 30px;
+  min-height: 28px;
+  white-space: nowrap;
 }
 
 .ev-action-btn:hover:not(:disabled) {
@@ -586,8 +600,11 @@ async function submitChat(): Promise<void> {
 
 .ev-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-@media (max-width: 390px) {
-  .ev-action-btn { min-height: 44px; padding: 8px 14px; }
+/* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
+   Collapse to icons only; aria-labels carry the accessible name. */
+@media (max-width: 600px) {
+  .ev-btn-lbl { display: none; }
+  .ev-action-btn { padding: 3px 7px; min-width: 28px; }
 }
 
 .ev-form {

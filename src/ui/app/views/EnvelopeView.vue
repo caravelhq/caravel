@@ -144,22 +144,33 @@ function onActionDone(_action: string, _taskId: string): void {
       @project-change="onActionDone('project', taskId)"
     />
 
-    <!-- F4: real role="tablist" with bound :aria-selected -->
-    <div role="tablist" class="ev-tab-bar">
-      <button
-        role="tab"
-        class="tasks-view-tab ev-tab"
-        :class="{ 'is-active': subView === 'task' }"
-        :aria-selected="subView === 'task'"
-        @click.stop="setSubView('task')"
-      >Task</button>
-      <button
-        role="tab"
-        class="tasks-view-tab ev-tab"
-        :class="{ 'is-active': subView === 'report' }"
-        :aria-selected="subView === 'report'"
-        @click.stop="setSubView('report')"
-      >Report</button>
+    <!-- F4: real role="tablist" with bound :aria-selected.
+         F3: action slot is a SIBLING to the tablist — actions render in every sub-view. -->
+    <div class="ev-top-row">
+      <div role="tablist" class="ev-tab-bar">
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'task' }"
+          :aria-selected="subView === 'task'"
+          @click.stop="setSubView('task')"
+        >Task</button>
+        <button
+          role="tab"
+          class="tasks-view-tab ev-tab"
+          :class="{ 'is-active': subView === 'report' }"
+          :aria-selected="subView === 'report'"
+          @click.stop="setSubView('report')"
+        >Report</button>
+      </div>
+      <!-- Action slot: sibling to tablist, NOT role="tablist" or role="tab" -->
+      <div class="ev-action-slot">
+        <TaskActions
+          :task="task"
+          :cache="cache"
+          @action-done="onActionDone"
+        />
+      </div>
     </div>
 
     <!-- Loading state (WAL-116) -->
@@ -169,11 +180,6 @@ function onActionDone(_action: string, _taskId: string): void {
 
     <!-- Task pane -->
     <div v-else-if="subView === 'task'" class="ev-pane">
-      <TaskActions
-        :task="task"
-        :cache="cache"
-        @action-done="onActionDone"
-      />
       <EnvelopeSections
         :chain="chain"
         @open-task="onOpenTask"
@@ -202,11 +208,25 @@ function onActionDone(_action: string, _taskId: string): void {
   overflow: hidden;
 }
 
+/* ev-top-row: tablist on the left, action slot on the right — same visual row */
+.ev-top-row {
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+}
+
 .ev-tab-bar {
   display: flex;
+  flex: 1;
   gap: 2px;
   padding: 6px 8px 0;
   flex-shrink: 0;
+}
+
+/* ev-action-slot: sibling to tablist, action buttons + any open forms */
+.ev-action-slot {
+  flex-shrink: 0;
+  max-width: 55%;
 }
 
 /* WAL-138: the envelope sub-tabs ARE Open sub-tabs — they carry
