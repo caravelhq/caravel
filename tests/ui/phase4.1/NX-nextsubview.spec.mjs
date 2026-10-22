@@ -406,7 +406,7 @@ try {
   await shot(page, "NX8-discard");
 } catch (e) { fail("NX8", String(e)); }
 
-// ── NX9: POST /next fires with instruction = draft content ────────────────────
+// ── NX9: POST /next fires with instruction = draft, optional headline ─────────
 
 try {
   await page.addInitScript(() => {
@@ -422,7 +422,12 @@ try {
   await page.waitForTimeout(200);
 
   const TEST_INSTRUCTION = "NX9 specific instruction text";
+  const TEST_HEADLINE = "NX9 custom child headline";
   await page.locator('[data-nx-textarea]').fill(TEST_INSTRUCTION);
+  // Also fill the optional headline field
+  const headlineInput = page.locator('[data-nx-headline]');
+  const headlinePresent = await headlineInput.count();
+  if (headlinePresent > 0) await headlineInput.fill(TEST_HEADLINE);
 
   let capturedBody = null;
   await page.route(`**\/api\/tasks\/${encodeURIComponent(TASK_A)}\/next`, (route) => {
@@ -441,6 +446,16 @@ try {
     fail("NX9 POST body has source:continue", `got source="${capturedBody.source}"`);
   } else {
     pass(`NX9 POST /next fires with instruction="${TEST_INSTRUCTION}" source="continue"`);
+    // Assert optional headline when field is present
+    if (headlinePresent > 0) {
+      if (capturedBody.headline === TEST_HEADLINE) {
+        pass(`NX9 POST body includes optional headline="${TEST_HEADLINE}"`);
+      } else {
+        fail("NX9 POST body headline", `got "${capturedBody.headline}" expected "${TEST_HEADLINE}"`);
+      }
+    } else {
+      pass("NX9 headline field absent (data-nx-headline not rendered — skip headline assertion)");
+    }
   }
 } catch (e) { fail("NX9", String(e)); }
 
@@ -470,6 +485,69 @@ try {
 
   await shot(page, "NX10-textarea-geometry");
 } catch (e) { fail("NX10", String(e)); }
+
+// ── 360px viewport pass: NX3 (persistence) + NX10 (geometry) ─────────────────
+
+const mobilePage = await browser.newPage({ viewport: { width: 360, height: 740 } });
+await stubBaseRoutes(mobilePage);
+await stubTask(mobilePage, TASK_A, makeChain({ id: TASK_A, reportPath: null }));
+await mobilePage.addInitScript(() => {
+  Object.keys(localStorage).forEach((k) => {
+    if (k.startsWith("workspace.") || k.startsWith("tasks.")) localStorage.removeItem(k);
+  });
+});
+await mobilePage.goto(`${BASE}/#/envelope/${encodeURIComponent(TASK_A)}`, { waitUntil: "domcontentloaded" });
+await mobilePage.waitForTimeout(700);
+
+// NX3 at 360px: draft survives sub-view switch
+try {
+  await mobilePage.locator('[data-ev-tab="next"]').click();
+  await mobilePage.waitForTimeout(200);
+  await mobilePage.locator('[data-nx-textarea]').fill("Draft content for NX3@360 survival test");
+  await mobilePage.waitForTimeout(100);
+
+  // Switch to Report sub-view
+  await mobilePage.locator('.ev-tab-bar [role="tab"]:has-text("Report")').click();
+  await mobilePage.waitForTimeout(300);
+
+  // Switch back to Next
+  await mobilePage.locator('[data-ev-tab="next"]').click();
+  await mobilePage.waitForTimeout(300);
+
+  const after = await mobilePage.locator('[data-nx-textarea]').inputValue();
+  if (after === "Draft content for NX3@360 survival test") {
+    pass("NX3@360 draft survives sub-view switch at 360px");
+  } else {
+    fail("NX3@360 draft survives sub-view switch", `got "${after}"`);
+  }
+  await shot(mobilePage, "NX3-360px");
+} catch (e) { fail("NX3@360", String(e)); }
+
+// NX10 at 360px: textarea ≥100px height
+try {
+  await mobilePage.addInitScript(() => {
+    Object.keys(localStorage).forEach((k) => {
+      if (k.startsWith("workspace.") || k.startsWith("tasks.")) localStorage.removeItem(k);
+    });
+  });
+  await mobilePage.goto(`${BASE}/#/envelope/${encodeURIComponent(TASK_A)}`, { waitUntil: "domcontentloaded" });
+  await mobilePage.waitForTimeout(700);
+
+  await mobilePage.locator('[data-ev-tab="next"]').click();
+  await mobilePage.waitForTimeout(300);
+
+  const box = await mobilePage.locator('[data-nx-textarea]').boundingBox();
+  if (!box) {
+    fail("NX10@360 textarea geometry", "textarea not found");
+  } else if (box.height < 100) {
+    fail("NX10@360 textarea ≥100px", `height=${box.height.toFixed(0)}px`);
+  } else {
+    pass(`NX10@360 textarea height ${box.height.toFixed(0)}px ≥ 100px`);
+  }
+  await shot(mobilePage, "NX10-360px");
+} catch (e) { fail("NX10@360", String(e)); }
+
+await mobilePage.close();
 
 // ── Teardown ──────────────────────────────────────────────────────────────────
 

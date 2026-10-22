@@ -24,6 +24,7 @@ const draft = computed({
 
 const hasDraft = computed(() => draft.value.length > 0);
 
+const headlineInput = ref("");
 const _submitLoading = ref(false);
 const submitError = ref<string | null>(null);
 
@@ -32,6 +33,7 @@ async function submit(): Promise<void> {
   _submitLoading.value = true;
   submitError.value = null;
   try {
+    const hl = headlineInput.value.trim();
     const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -39,6 +41,7 @@ async function submit(): Promise<void> {
         agent: agent.value,
         source: "continue",
         instruction: draft.value.trim(),
+        ...(hl ? { headline: hl } : {}),
       }),
     });
     const data = await r.json() as { ok?: boolean; error?: string };
@@ -55,6 +58,7 @@ async function submit(): Promise<void> {
 
 function discard(): void {
   if (id.value) tasks.nextDraft.delete(id.value);
+  headlineInput.value = "";
   submitError.value = null;
 }
 </script>
@@ -64,6 +68,16 @@ function discard(): void {
     <div v-if="isClosed" class="nx-closed-notice">
       Task is closed — spawning a follow-on will reopen the thread.
     </div>
+    <label class="nx-label" :for="`nx-headline-${id}`">Child task title (optional)</label>
+    <input
+      :id="`nx-headline-${id}`"
+      class="nx-headline-input"
+      type="text"
+      v-model="headlineInput"
+      :placeholder="task?.headline ? `${task.headline.slice(0, 50)} — continue` : 'Leave blank to use server default'"
+      :disabled="_submitLoading"
+      data-nx-headline
+    />
     <label class="nx-label" :for="`nx-draft-${id}`">Instructions for the follow-on task</label>
     <textarea
       :id="`nx-draft-${id}`"
@@ -121,6 +135,22 @@ function discard(): void {
 .nx-label {
   font-size: 0.85em;
   color: var(--ts-text-secondary, #aaa);
+}
+
+.nx-headline-input {
+  background: var(--ts-surface-2, #2a2a2a);
+  border: 1px solid var(--ts-border, #3a3a3a);
+  color: var(--ts-text, #eee);
+  padding: 6px 10px;
+  font-size: 0.88em;
+  border-radius: 4px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.nx-headline-input:focus {
+  outline: none;
+  border-color: var(--ts-accent, #5a5a9a);
 }
 
 .nx-textarea {

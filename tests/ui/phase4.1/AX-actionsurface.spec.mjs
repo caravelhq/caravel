@@ -1,13 +1,13 @@
 // AX-actionsurface.spec.mjs — Phase 4.1 node .02: actions on the sub-tab row
 //
-// AX1: Full parity matrix renders in Task sub-view
-// AX2: Full parity matrix renders in Report sub-view (F3 fix — mutation proof)
+// AX1: Parity matrix renders in Task sub-view (Next is sub-tab, not action button)
+// AX2: Parity matrix renders in Report sub-view (F3 fix — mutation proof)
 // AX3: Action buttons have no role="tab" attribute
 // AX4: Action slot is NOT inside role="tablist"
-// AX5: POST /next fires with correct method + URL + payload (source:"continue")
+// AX5: POST /next fires via Next sub-view (NextPrompt) with source:"continue"
 // AX6: POST /close fires with {status:"closed"} for Done reading
-// AX7: At 360px — sub-tabs still ≥44px, action buttons are reachable (≥28px)
-// AX8: Action buttons fit within measured width targets (F6)
+// AX7: At 360px — .ev-tab-bar sub-tabs ≥44px, action buttons ≥28px and in-viewport
+// AX8: Action buttons (Chat, Done reading) fit compact width targets (F6)
 // AX9: Project control is a datalist-backed input (F7 — picker bound to store)
 // AX10: Project POST fires with the selected project slug
 //
@@ -95,10 +95,15 @@ async function stubBaseRoutes(page) {
       ] }),
     })
   );
-  // Stub projects list for F7 picker
+  // Catch-all registered before projects stub so LIFO gives projects stub higher priority
+  await page.route("**/api/**", (route) => {
+    const url = route.request().url();
+    if (url.includes("/api/tasks/TSK-AX1") || url.includes("/api/projects")) return;
+    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, items: [] }) });
+  });
+  // Projects stub registered LAST = highest LIFO priority, fires before catch-all for /api/projects
   await page.route("**/api/projects**", (route) => {
     const url = route.request().url();
-    // counts=1 → project list
     if (url.includes("?counts=1") || url.includes("&counts=1") || url.match(/\/api\/projects\?/)) {
       return route.fulfill({
         status: 200,
@@ -106,11 +111,6 @@ async function stubBaseRoutes(page) {
         body: JSON.stringify({ ok: true, projects: PROJECTS_LIST }),
       });
     }
-    route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, items: [] }) });
-  });
-  await page.route("**/api/**", (route) => {
-    const url = route.request().url();
-    if (url.includes("/api/tasks/TSK-AX1") || url.includes("/api/projects")) return;
     route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, items: [] }) });
   });
 }
@@ -164,23 +164,34 @@ await stubBaseRoutes(page);
 await stubTask(page, TASK_NODONE, makeChain({ id: TASK_NODONE, reportPath: null }));
 await loadEnvelope(page, TASK_NODONE);
 
-// ── AX1: Full parity matrix renders in Task sub-view ─────────────────────────
+// ── AX1: Parity matrix renders in Task sub-view (Next = sub-tab, not action btn) ─
 
 try {
   // Task pane should be active (no reportPath → no auto-switch)
-  const taskTab = page.locator('[role="tab"]:has-text("Task")');
+  const taskTab = page.locator('.ev-tab-bar [role="tab"]:has-text("Task")');
   const taskActive = await taskTab.getAttribute("aria-selected");
   if (taskActive !== "true") {
-    // Try clicking the Task tab
     await taskTab.click();
     await page.waitForTimeout(200);
   }
 
-  // ↳ Next: done task, !isClosed
-  const nextBtn = page.locator('[data-ev-action="next"]');
-  const nextVisible = await nextBtn.isVisible().catch(() => false);
-  if (nextVisible) pass("AX1 Next button visible in Task sub-view");
-  else fail("AX1 Next button visible in Task sub-view", "not visible");
+  // Three sub-tabs must be present: Task, Report, Next
+  const tabs = page.locator('.ev-tab-bar [role="tab"]');
+  const tabCount = await tabs.count();
+  if (tabCount >= 3) pass(`AX1 three sub-tabs present (Task/Report/Next), count=${tabCount}`);
+  else fail("AX1 three sub-tabs present", `only ${tabCount} tab(s) found`);
+
+  // Next is a sub-tab, NOT an action button — data-ev-action="next" must be absent
+  const nextActionBtn = page.locator('[data-ev-action="next"]');
+  const nextActionPresent = await nextActionBtn.count();
+  if (nextActionPresent === 0) pass("AX1 no data-ev-action='next' button (moved to sub-tab)");
+  else fail("AX1 data-ev-action='next' absent", `found ${nextActionPresent} — button should have been removed`);
+
+  // Next sub-tab is present
+  const nextTab = page.locator('[data-ev-tab="next"]');
+  const nextTabPresent = await nextTab.count();
+  if (nextTabPresent > 0) pass("AX1 [data-ev-tab='next'] sub-tab present");
+  else fail("AX1 [data-ev-tab='next'] present", "not found");
 
   // 💬 Chat: always
   const chatBtn = page.locator('[data-ev-action="chat"]');
@@ -197,7 +208,7 @@ try {
   await shot(page, "AX1-task-pane-1440");
 } catch (e) { fail("AX1 [1440]", String(e)); }
 
-// ── AX2: Full parity matrix renders in Report sub-view (F3 fix) ──────────────
+// ── AX2: Parity matrix renders in Report sub-view (F3 fix — mutation proof) ──
 // Mutation proof: move TaskActions inside v-else-if="task" branch → this fails
 
 try {
@@ -215,23 +226,29 @@ try {
   await page.waitForTimeout(700);
 
   // Should be on Report sub-view (auto-switched)
-  const reportTab = page.locator('[role="tab"]:has-text("Report")');
+  const reportTab = page.locator('.ev-tab-bar [role="tab"]:has-text("Report")');
   const reportActive = await reportTab.getAttribute("aria-selected");
   if (reportActive !== "true") {
     await reportTab.click();
     await page.waitForTimeout(200);
   }
 
-  // Actions must still be visible — they're now in the action slot, not the Task pane
-  const nextInReport = await page.locator('[data-ev-action="next"]').isVisible().catch(() => false);
+  // Next is a sub-tab, NOT an action button — must be absent as action button
+  const nextActionInReport = await page.locator('[data-ev-action="next"]').count();
+  if (nextActionInReport === 0) pass("AX2 data-ev-action='next' absent in Report sub-view (sub-tab, not button)");
+  else fail("AX2 no data-ev-action='next' button", `found ${nextActionInReport} — button should be gone`);
+
+  // Next sub-tab is visible alongside Report sub-tab (three tabs remain)
+  const nextTabInReport = await page.locator('[data-ev-tab="next"]').count();
+  if (nextTabInReport > 0) pass("AX2 Next sub-tab present in Report sub-view");
+  else fail("AX2 Next sub-tab present", "not found");
+
+  // Chat and Done reading still present in the action slot (F3: visible in all sub-views)
   const chatInReport = await page.locator('[data-ev-action="chat"]').isVisible().catch(() => false);
   const doneInReport = await page.locator('[data-ev-action="done-reading"]').isVisible().catch(() => false);
 
-  if (nextInReport) pass("AX2 Next button visible in Report sub-view (F3)");
-  else fail("AX2 Next button visible in Report sub-view (F3)", "invisible — regression or mutation proof triggered");
-
   if (chatInReport) pass("AX2 Chat button visible in Report sub-view (F3)");
-  else fail("AX2 Chat button visible in Report sub-view (F3)", "invisible");
+  else fail("AX2 Chat button visible in Report sub-view (F3)", "invisible — regression or mutation proof triggered");
 
   if (doneInReport) pass("AX2 Done reading button visible in Report sub-view (F3)");
   else fail("AX2 Done reading button visible in Report sub-view (F3)", "invisible");
@@ -273,10 +290,10 @@ try {
   else fail("AX4 action buttons outside tablist", `${tablistDescendantActions} action button(s) found inside role="tablist"`);
 } catch (e) { fail("AX4", String(e)); }
 
-// ── AX5: POST /next fires with correct method + URL + payload ─────────────────
+// ── AX5: POST /next fires via Next sub-view (NextPrompt) ─────────────────────
 
 try {
-  // Reload on no-report task so we start fresh on Task pane
+  // Reload on no-report task so we start fresh
   await page.addInitScript(() => {
     Object.keys(localStorage).forEach((k) => {
       if (k.startsWith("workspace.") || k.startsWith("tasks.")) localStorage.removeItem(k);
@@ -291,17 +308,21 @@ try {
     await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, id: "TSK-AX1-child" }) });
   });
 
-  const nextBtn = page.locator('[data-ev-action="next"]');
-  await nextBtn.waitFor({ state: "visible", timeout: 3000 });
-  await nextBtn.click();
-  await page.waitForTimeout(200);
+  // Navigate to Next sub-view via the sub-tab
+  const nextTab = page.locator('[data-ev-tab="next"]');
+  await nextTab.waitFor({ state: "visible", timeout: 3000 });
+  await nextTab.click();
+  await page.waitForTimeout(300);
 
-  const continueForm = page.locator('[data-ev-form="continue"]');
-  const formVisible = await continueForm.isVisible().catch(() => false);
-  if (formVisible) pass("AX5 Continue form opens on action slot button click");
-  else fail("AX5 Continue form opens", "form not visible");
+  // NextPrompt textarea should be visible
+  const textarea = page.locator('[data-nx-textarea]');
+  const textareaVisible = await textarea.isVisible().catch(() => false);
+  if (textareaVisible) pass("AX5 NextPrompt textarea visible on Next sub-view");
+  else fail("AX5 NextPrompt textarea visible", "not visible");
 
-  const submitBtn = page.locator('[data-ev-submit="next"]');
+  // Fill instruction and submit
+  await textarea.fill("AX5 test instruction for POST /next");
+  const submitBtn = page.locator('[data-nx-submit]');
   await submitBtn.waitFor({ state: "visible", timeout: 2000 });
   await submitBtn.click();
   await page.waitForTimeout(500);
@@ -368,8 +389,8 @@ await mobilePage.goto(`${BASE}/#/envelope/${encodeURIComponent(TASK_NODONE)}`, {
 await mobilePage.waitForTimeout(700);
 
 try {
-  // AX7: sub-tabs keep ≥44px at 360px
-  const tabs = mobilePage.locator('[role="tab"]');
+  // AX7: envelope sub-tabs keep ≥44px at 360px (scoped to .ev-tab-bar to exclude workspace strip)
+  const tabs = mobilePage.locator('.ev-tab-bar [role="tab"]');
   const tabCount = await tabs.count();
   let tabFail = 0;
   for (let i = 0; i < tabCount; i++) {
@@ -380,7 +401,7 @@ try {
     }
   }
   if (tabFail === 0 && tabCount > 0) pass(`AX7 all ${tabCount} sub-tab(s) ≥44px at 360px`);
-  else if (tabCount === 0) fail("AX7 sub-tabs present at 360px", "no tabs found");
+  else if (tabCount === 0) fail("AX7 sub-tabs present at 360px", "no .ev-tab-bar tabs found");
 
   // AX7: action buttons are reachable (≥28px, within viewport)
   const actionBtns = mobilePage.locator('[data-ev-action]');
@@ -406,22 +427,22 @@ try {
 } catch (e) { fail("AX7", String(e)); }
 
 try {
-  // AX8: action button widths — should be compact, not full-width bars
-  // Target: max ~120px per button (well under the old 309px doc tags)
-  const nextBtn = mobilePage.locator('[data-ev-action="next"]');
-  const nextBox = await nextBtn.boundingBox().catch(() => null);
-  if (!nextBox) {
-    fail("AX8 Next button found for width measurement", "button not found");
-  } else {
-    if (nextBox.width <= 120) pass(`AX8 Next button width=${Math.round(nextBox.width)}px ≤120px at 360px`);
-    else fail("AX8 Next button compact width", `width=${Math.round(nextBox.width)}px >120px`);
-  }
-
+  // AX8: action button widths — compact, not full-width bars (F6)
+  // Target: max ~120px per button. Next moved to sub-tab; Chat and Done reading remain.
   const chatBtn = mobilePage.locator('[data-ev-action="chat"]');
   const chatBox = await chatBtn.boundingBox().catch(() => null);
-  if (chatBox) {
+  if (!chatBox) {
+    fail("AX8 Chat button found for width measurement", "button not found");
+  } else {
     if (chatBox.width <= 120) pass(`AX8 Chat button width=${Math.round(chatBox.width)}px ≤120px at 360px`);
     else fail("AX8 Chat button compact width", `width=${Math.round(chatBox.width)}px >120px`);
+  }
+
+  const doneBtn = mobilePage.locator('[data-ev-action="done-reading"]');
+  const doneBox = await doneBtn.boundingBox().catch(() => null);
+  if (doneBox) {
+    if (doneBox.width <= 120) pass(`AX8 Done reading button width=${Math.round(doneBox.width)}px ≤120px at 360px`);
+    else fail("AX8 Done reading button compact width", `width=${Math.round(doneBox.width)}px >120px`);
   }
 
   await shot(mobilePage, "AX8-widths-360px");

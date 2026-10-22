@@ -218,10 +218,8 @@ try {
   const distDir = join(REPO_ROOT, "src/ui/app-dist");
   const manifest = JSON.parse(readFileSync(join(distDir, "build-manifest.json"), "utf8"));
 
-  // Find the main JS bundle from manifest
-  const entries = Object.values(manifest);
-  const jsEntry = entries.find((e) => e.file && e.file.endsWith(".js") && e.isEntry);
-  const jsFile = jsEntry ? join(distDir, jsEntry.file) : null;
+  // build-manifest.json is {"js": "app.HASH.js", "css": "...", "buildId": "..."}
+  const jsFile = manifest.js ? join(distDir, manifest.js) : null;
 
   if (!jsFile || !existsSync(jsFile)) {
     fail("RP5 built bundle found", `bundle not found: ${jsFile}`);
@@ -260,7 +258,7 @@ try {
   await loadEnvelopeReport(page, TASK_REPORT);
 
   // Should be on report pane (auto-switched because task has reportPath)
-  const reportTab = page.locator('[role="tab"]:has-text("Report")');
+  const reportTab = page.locator('.ev-tab-bar [role="tab"]:has-text("Report")');
   const isActive = await reportTab.getAttribute("aria-selected");
   if (isActive === "true") pass("RP1 auto-switched to Report pane");
   else fail("RP1 auto-switched to Report pane", `aria-selected=${isActive}`);
@@ -401,6 +399,8 @@ try {
 // ── RP4: Doc tag click fires data-open-file; does NOT swap pane content ───────
 // The tab row (ReportDocTabs) uses data-open-file so EnvelopeView.onOpenFile opens
 // a file: tab in the workspace — it does NOT update activePath in ReportPane.
+// Probe (R20): click → file: tab appended in workspace.tabs; on reactivation the
+// envelope's report pane is intact with is-active on the primary report button.
 try {
   // Reload fresh so we have a clean state
   await page.reload({ waitUntil: "domcontentloaded" });
@@ -422,50 +422,50 @@ try {
     } else {
       pass("RP4 deliverable tab has data-open-file attribute");
 
-      // Intercept ws.open calls — check that a file: pane open was attempted
-      // We do this by watching for a /api/files/read on DELIV_PATH (DocViewer would
-      // fetch it if activePath changed), then asserting it is NOT called (tab click
-      // should open a new pane, not swap in-place).
-      let delivFetchCalled = false;
-      await page.route(
-        `**/api/files/read?path=${encodeURIComponent(DELIV_PATH)}*`,
-        (route) => {
-          delivFetchCalled = true;
-          route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ ok: true, markdown: true, content: "# Extra deliverable\n\nContent here." }),
-          });
-        }
-      );
-
-      // Record initial activePath content before click
-      const contentBefore = await page.locator(".ev-report-pane .files-content").textContent().catch(() => "");
+      // Record envelope key (currently active pane) + initial workspace tab count
+      const beforeState = await page.evaluate(() => {
+        const ws = window.__pinia?._s.get("workspace");
+        if (!ws) return { tabCount: 0, envelopeKey: null };
+        return { tabCount: ws.tabs.length, envelopeKey: ws.active[0] };
+      });
 
       await delivBtn.click();
-      await page.waitForTimeout(400);
+      await page.waitForTimeout(500);
 
-      // activePath in ReportPane must NOT have changed (still showing REPORT_PATH, not DELIV_PATH)
-      // DocViewer should NOT have fetched DELIV_PATH for the in-pane view
-      if (delivFetchCalled) {
-        fail("RP4 deliverable click does NOT swap pane content", "DocViewer fetched deliverable — activePath changed unexpectedly");
+      // A new workspace tab should have been added (the file: pane)
+      const tabCountAfter = await page.evaluate(() => {
+        const ws = window.__pinia?._s.get("workspace");
+        return ws ? ws.tabs.length : 0;
+      });
+
+      if (tabCountAfter > beforeState.tabCount) {
+        pass(`RP4 deliverable click opens a new workspace tab (was ${beforeState.tabCount}, now ${tabCountAfter})`);
       } else {
-        pass("RP4 deliverable click does not swap in-pane content (file: tab opened instead)");
+        fail("RP4 new workspace tab opened after deliverable click", `tabs: before=${beforeState.tabCount}, after=${tabCountAfter}`);
       }
 
-      // The pane should still show content from REPORT_PATH
+      // Reactivate the envelope pane via workspace store
+      if (beforeState.envelopeKey) {
+        await page.evaluate((key) => {
+          const ws = window.__pinia?._s.get("workspace");
+          if (ws?.activate) ws.activate(key);
+        }, beforeState.envelopeKey);
+        await page.waitForTimeout(400);
+      }
+
+      // Report pane should still show the primary report content
       const contentAfter = await page.locator(".ev-report-pane .files-content").textContent().catch(() => "");
       if (contentAfter && contentAfter.includes("ReportPane Fixture")) {
-        pass("RP4 pane still shows primary report after deliverable tab click");
+        pass("RP4 pane still shows primary report after reactivation");
       } else {
-        fail("RP4 pane still shows primary report", `content: ${contentAfter?.slice(0, 100)}`);
+        fail("RP4 pane intact after reactivation", `content: ${contentAfter?.slice(0, 100)}`);
       }
 
       // The is-active class stays on the report path button, not the deliverable
       const reportBtn = tabRow.locator(`[data-open-file="${REPORT_PATH}"]`);
       const reportActive = await reportBtn.evaluate((el) => el.classList.contains("is-active")).catch(() => false);
       if (reportActive) {
-        pass("RP4 report path tab remains is-active after deliverable click");
+        pass("RP4 report path tab remains is-active after reactivation");
       } else {
         fail("RP4 report path tab remains is-active", "is-active moved or missing");
       }
@@ -502,7 +502,7 @@ try {
   await page.waitForTimeout(600);
 
   // Switch to Report tab manually (no auto-switch without reportPath)
-  const reportTab = page.locator('[role="tab"]:has-text("Report")');
+  const reportTab = page.locator('.ev-tab-bar [role="tab"]:has-text("Report")');
   await reportTab.click();
   await page.waitForTimeout(300);
 
@@ -517,6 +517,106 @@ try {
 } catch (e) { fail("RP-no-report", String(e)); }
 
 await page.close();
+
+// ── 360px viewport pass: RP-geo, RP2, RP3 ────────────────────────────────────
+
+const mobilePage = await browser.newPage({ viewport: { width: 360, height: 740 } });
+await stubBaseRoutes(mobilePage);
+await stubTask(mobilePage, TASK_REPORT, makeChain({}));
+await stubFile(mobilePage, REPORT_PATH, LONG_REPORT_CONTENT);
+await stubFile(mobilePage, DELIV_PATH, "# Extra deliverable\n\nContent here.");
+await loadEnvelopeReport(mobilePage, TASK_REPORT);
+
+// RP-geo at 360px
+try {
+  const rpBox = await mobilePage.locator(".ev-report-pane").boundingBox();
+  if (!rpBox) {
+    fail("RP-geo@360 .ev-report-pane visible", "not found");
+  } else if (rpBox.height < 100) {
+    fail("RP-geo@360 .ev-report-pane substantial height", `height=${rpBox.height}`);
+  } else {
+    pass(`RP-geo@360 .ev-report-pane height=${Math.round(rpBox.height)}px`);
+  }
+  await shot(mobilePage, "RP-geo-360px");
+} catch (e) { fail("RP-geo@360", String(e)); }
+
+// RP2 at 360px: scroll position survives live tasks event
+try {
+  const filesContent = mobilePage.locator(".ev-report-pane .files-content");
+  await filesContent.waitFor({ state: "visible", timeout: 3000 });
+  await filesContent.evaluate((el) => { el.scrollTop = el.scrollHeight; });
+  await mobilePage.waitForTimeout(100);
+  const scrollBefore = await filesContent.evaluate((el) => el.scrollTop);
+
+  if (scrollBefore < 20) {
+    fail("RP2@360 pre-condition: content scrollable", `scrollTop=${scrollBefore}`);
+  } else {
+    const mutated = await mobilePage.evaluate((taskId) => {
+      const pinia = window.__pinia;
+      if (!pinia) return "no pinia";
+      const live = pinia._s.get("live");
+      if (!live) return "no live store";
+      const entry = live.entries.get(`task:${taskId}`);
+      if (!entry?.data?.chain?.task) return "no chain";
+      entry.data = { ...entry.data, chain: { ...entry.data.chain, task: { ...entry.data.chain.task, updated: new Date().toISOString() } } };
+      return "ok";
+    }, TASK_REPORT);
+
+    if (mutated !== "ok") {
+      fail("RP2@360 Pinia mutation", `could not mutate: ${mutated}`);
+    } else {
+      await mobilePage.waitForTimeout(300);
+      const scrollAfter = await filesContent.evaluate((el) => el.scrollTop);
+      const delta = Math.abs(scrollAfter - scrollBefore);
+      if (delta < 20) {
+        pass(`RP2@360 scroll preserved after live event (before=${scrollBefore}, after=${scrollAfter})`);
+      } else {
+        fail("RP2@360 scroll preserved", `jumped ${scrollBefore} → ${scrollAfter}`);
+      }
+    }
+  }
+  await shot(mobilePage, "RP2-scroll-360px");
+} catch (e) { fail("RP2@360", String(e)); }
+
+// RP3 at 360px: open <details> survives live tasks event
+try {
+  const detailsEl = mobilePage.locator(".ev-report-pane details");
+  const detailsCount = await detailsEl.count();
+  if (detailsCount === 0) {
+    fail("RP3@360 pre-condition: <details> rendered", "no details elements");
+  } else {
+    const isOpenBefore = await detailsEl.first().evaluate((el) => el.open);
+    if (!isOpenBefore) await detailsEl.first().evaluate((el) => { el.open = true; });
+    await mobilePage.waitForTimeout(100);
+
+    const mutated = await mobilePage.evaluate((taskId) => {
+      const pinia = window.__pinia;
+      if (!pinia) return "no pinia";
+      const live = pinia._s.get("live");
+      if (!live) return "no live";
+      const entry = live.entries.get(`task:${taskId}`);
+      if (!entry?.data?.chain?.task) return "no chain";
+      entry.data = { ...entry.data, chain: { ...entry.data.chain, task: { ...entry.data.chain.task, updated: new Date().toISOString() } } };
+      return "ok";
+    }, TASK_REPORT);
+
+    await mobilePage.waitForTimeout(300);
+
+    if (mutated !== "ok") {
+      fail("RP3@360 Pinia mutation", mutated);
+    } else {
+      const isOpenAfter = await detailsEl.first().evaluate((el) => el.open);
+      if (isOpenAfter) {
+        pass("RP3@360 open <details> stays open after live event");
+      } else {
+        fail("RP3@360 open <details> stays open", "details closed after mutation");
+      }
+    }
+  }
+  await shot(mobilePage, "RP3-disclosure-360px");
+} catch (e) { fail("RP3@360", String(e)); }
+
+await mobilePage.close();
 await browser.close();
 
 const total = passed + failed;

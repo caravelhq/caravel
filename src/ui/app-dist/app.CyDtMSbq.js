@@ -14929,8 +14929,8 @@ const _hoisted_6$j = { class: "audio-player-bar-wrap" };
 const _hoisted_7$i = { class: "audio-player-counter" };
 const _hoisted_8$h = { class: "audio-player-transcript" };
 const _hoisted_9$g = ["data-idx", "onClick"];
-const _hoisted_10$d = { class: "audio-player-controls" };
-const _hoisted_11$c = ["disabled"];
+const _hoisted_10$e = { class: "audio-player-controls" };
+const _hoisted_11$d = ["disabled"];
 const _hoisted_12$c = ["disabled"];
 const _sfc_main$C = /* @__PURE__ */ defineComponent({
   __name: "AudioModal",
@@ -14994,7 +14994,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
                 }), 128))
               ])
             ], 64)) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_10$d, [
+            createBaseVNode("div", _hoisted_10$e, [
               hasPlayer.value ? (openBlock(), createElementBlock("button", {
                 key: 0,
                 class: "audio-player-skip",
@@ -15004,7 +15004,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
                 onClick: _cache[2] || (_cache[2] = ($event) => unref(ui).raSkipTo(current.value - 1))
               }, [..._cache[7] || (_cache[7] = [
                 createBaseVNode("i", { class: "fa-solid fa-backward-step" }, null, -1)
-              ])], 8, _hoisted_11$c)) : createCommentVNode("", true),
+              ])], 8, _hoisted_11$d)) : createCommentVNode("", true),
               createBaseVNode("button", {
                 class: "audio-action-stop",
                 type: "button",
@@ -15784,8 +15784,8 @@ const _hoisted_6$h = {
 const _hoisted_7$g = { id: "dock-pills" };
 const _hoisted_8$g = { class: "pill-label" };
 const _hoisted_9$f = { class: "pill-icon" };
-const _hoisted_10$c = { class: "pill-value" };
-const _hoisted_11$b = {
+const _hoisted_10$d = { class: "pill-value" };
+const _hoisted_11$c = {
   class: "side-bubble",
   id: "uptime-bubble",
   "aria-live": "polite"
@@ -15898,12 +15898,12 @@ const _sfc_main$z = /* @__PURE__ */ defineComponent({
                   createBaseVNode("span", _hoisted_9$f, toDisplayString(pill.icon), 1),
                   createTextVNode(toDisplayString(pill.label), 1)
                 ]),
-                createBaseVNode("div", _hoisted_10$c, toDisplayString(pill.value), 1)
+                createBaseVNode("div", _hoisted_10$d, toDisplayString(pill.value), 1)
               ], 2);
             }), 128))
           ])
         ]),
-        createBaseVNode("aside", _hoisted_11$b, [
+        createBaseVNode("aside", _hoisted_11$c, [
           _cache[5] || (_cache[5] = createBaseVNode("div", { class: "side-icon" }, "⏱️", -1)),
           createBaseVNode("div", _hoisted_12$b, toDisplayString(uptime.value), 1),
           _cache[6] || (_cache[6] = createBaseVNode("div", { class: "side-label" }, "Uptime", -1))
@@ -16432,8 +16432,8 @@ const _hoisted_6$g = { class: "vtc-field" };
 const _hoisted_7$f = ["value"];
 const _hoisted_8$f = { class: "vtc-field" };
 const _hoisted_9$e = ["value"];
-const _hoisted_10$b = { class: "vtc-field" };
-const _hoisted_11$a = { class: "vtc-field" };
+const _hoisted_10$c = { class: "vtc-field" };
+const _hoisted_11$b = { class: "vtc-field" };
 const _hoisted_12$a = { class: "vtc-field" };
 const _hoisted_13$9 = {
   key: 1,
@@ -16894,7 +16894,7 @@ User's voice request: "${userText}"`;
                 ])
               ])
             ]),
-            createBaseVNode("div", _hoisted_10$b, [
+            createBaseVNode("div", _hoisted_10$c, [
               _cache[12] || (_cache[12] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-project"
@@ -16909,7 +16909,7 @@ User's voice request: "${userText}"`;
                 [vModelText, draftProject.value]
               ])
             ]),
-            createBaseVNode("div", _hoisted_11$a, [
+            createBaseVNode("div", _hoisted_11$b, [
               _cache[13] || (_cache[13] = createBaseVNode("label", {
                 class: "vtc-label",
                 for: "vtc-headline"
@@ -17322,8 +17322,8 @@ const _hoisted_6$f = ["onClick"];
 const _hoisted_7$e = ["onClick"];
 const _hoisted_8$e = { class: "tos-glyph" };
 const _hoisted_9$d = ["title"];
-const _hoisted_10$a = { class: "tos-row-actions" };
-const _hoisted_11$9 = ["title", "onClick"];
+const _hoisted_10$b = { class: "tos-row-actions" };
+const _hoisted_11$a = ["title", "onClick"];
 const _hoisted_12$9 = ["onClick"];
 const _hoisted_13$8 = ["onClick"];
 const _sfc_main$u = /* @__PURE__ */ defineComponent({
@@ -17411,13 +17411,13 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
                   class: "tos-label",
                   title: unref(refTitle)(tab, props.tasksList)
                 }, toDisplayString(unref(refLabel)(tab, props.tasksList)), 9, _hoisted_9$d),
-                createBaseVNode("div", _hoisted_10$a, [
+                createBaseVNode("div", _hoisted_10$b, [
                   createBaseVNode("button", {
                     class: "tos-btn",
                     type: "button",
                     title: ((_a2 = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _a2.pinned) ? "Unpin" : "Pin",
                     onClick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["stop"])
-                  }, toDisplayString(((_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.pinned) ? "📌" : "⊕"), 9, _hoisted_11$9),
+                  }, toDisplayString(((_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.pinned) ? "📌" : "⊕"), 9, _hoisted_11$a),
                   createBaseVNode("button", {
                     class: "tos-btn tos-btn--close",
                     type: "button",
@@ -17455,8 +17455,8 @@ const _hoisted_7$d = {
 };
 const _hoisted_8$d = { class: "ts-tab-label" };
 const _hoisted_9$c = ["onClick"];
-const _hoisted_10$9 = { class: "ts-actions" };
-const _hoisted_11$8 = {
+const _hoisted_10$a = { class: "ts-actions" };
+const _hoisted_11$9 = {
   key: 0,
   class: "ts-overflow-fade",
   "aria-hidden": "true"
@@ -17729,8 +17729,8 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               ], 42, _hoisted_6$e);
             }), 128))
           ], 2),
-          createBaseVNode("div", _hoisted_10$9, [
-            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_11$8)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_10$a, [
+            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_11$9)) : createCommentVNode("", true),
             isOverflowing.value ? (openBlock(), createElementBlock("button", {
               key: 1,
               class: "ts-overflow-btn",
@@ -18986,8 +18986,8 @@ const _hoisted_8$a = {
   class: "db-sched-count"
 };
 const _hoisted_9$9 = { class: "db-sched-actions" };
-const _hoisted_10$8 = ["disabled"];
-const _hoisted_11$7 = { style: { "margin": "0 0 16px", "font-size": "13px", "color": "#c8daf0" } };
+const _hoisted_10$9 = ["disabled"];
+const _hoisted_11$8 = { style: { "margin": "0 0 16px", "font-size": "13px", "color": "#c8daf0" } };
 const _hoisted_12$7 = { style: { "display": "flex", "gap": "8px", "justify-content": "flex-end" } };
 const _sfc_main$m = /* @__PURE__ */ defineComponent({
   __name: "ScheduleRow",
@@ -19057,7 +19057,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
             type: "button",
             disabled: busy.value,
             onClick: onPauseResume
-          }, toDisplayString(enabled.value ? "Pause" : "Resume"), 9, _hoisted_10$8),
+          }, toDisplayString(enabled.value ? "Pause" : "Resume"), 9, _hoisted_10$9),
           createBaseVNode("button", {
             class: "db-sched-act-btn db-sched-act-btn--danger",
             type: "button",
@@ -19085,7 +19085,7 @@ const _sfc_main$m = /* @__PURE__ */ defineComponent({
             ])
           ]),
           default: withCtx(() => [
-            createBaseVNode("p", _hoisted_11$7, [
+            createBaseVNode("p", _hoisted_11$8, [
               _cache[4] || (_cache[4] = createTextVNode(" Delete ", -1)),
               createBaseVNode("strong", null, toDisplayString(headline.value), 1),
               _cache[5] || (_cache[5] = createTextVNode("? This cannot be undone. ", -1))
@@ -19456,11 +19456,11 @@ const _hoisted_9$8 = {
   key: 0,
   class: "ev-meta-chip"
 };
-const _hoisted_10$7 = {
+const _hoisted_10$8 = {
   key: 1,
   class: "ev-meta-chip"
 };
-const _hoisted_11$6 = ["disabled"];
+const _hoisted_11$7 = ["disabled"];
 const _hoisted_12$6 = { id: "ev-project-list" };
 const _hoisted_13$6 = ["value"];
 const _hoisted_14$6 = ["disabled"];
@@ -19634,7 +19634,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
             createTextVNode(" " + toDisplayString(metaTo.value), 1)
           ]),
           metaKind.value ? (openBlock(), createElementBlock("span", _hoisted_9$8, toDisplayString(metaKind.value), 1)) : createCommentVNode("", true),
-          metaPriority.value ? (openBlock(), createElementBlock("span", _hoisted_10$7, toDisplayString(metaPriority.value), 1)) : createCommentVNode("", true),
+          metaPriority.value ? (openBlock(), createElementBlock("span", _hoisted_10$8, toDisplayString(metaPriority.value), 1)) : createCommentVNode("", true),
           !projectEditing.value ? (openBlock(), createElementBlock("button", {
             key: 2,
             class: normalizeClass(["ev-project-chip", { "is-unassigned": !metaProject.value }]),
@@ -19653,7 +19653,7 @@ const _sfc_main$j = /* @__PURE__ */ defineComponent({
                 withKeys(cancelProjectEdit, ["escape"])
               ],
               autofocus: ""
-            }, null, 40, _hoisted_11$6), [
+            }, null, 40, _hoisted_11$7), [
               [vModelText, projectInput.value]
             ]),
             createBaseVNode("datalist", _hoisted_12$6, [
@@ -19710,59 +19710,45 @@ const _hoisted_8$8 = {
 const _hoisted_9$7 = {
   key: 3,
   class: "ev-form",
-  "data-ev-form": "continue"
-};
-const _hoisted_10$6 = ["disabled"];
-const _hoisted_11$5 = ["disabled"];
-const _hoisted_12$5 = { class: "ev-form-actions" };
-const _hoisted_13$5 = ["disabled"];
-const _hoisted_14$5 = {
-  key: 0,
-  class: "ev-action-error",
-  role: "alert"
-};
-const _hoisted_15$5 = {
-  key: 4,
-  class: "ev-form",
   "data-ev-form": "close"
 };
-const _hoisted_16$5 = { class: "ev-form-warn" };
-const _hoisted_17$5 = ["placeholder", "disabled"];
-const _hoisted_18$5 = {
+const _hoisted_10$7 = { class: "ev-form-warn" };
+const _hoisted_11$6 = ["placeholder", "disabled"];
+const _hoisted_12$5 = {
   key: 0,
   class: "ev-form-cascade"
 };
-const _hoisted_19$5 = ["disabled"];
-const _hoisted_20$5 = { class: "ev-form-actions" };
-const _hoisted_21$5 = ["disabled"];
-const _hoisted_22$4 = {
+const _hoisted_13$5 = ["disabled"];
+const _hoisted_14$5 = { class: "ev-form-actions" };
+const _hoisted_15$5 = ["disabled"];
+const _hoisted_16$5 = {
   key: 0,
   class: "ev-action-error",
   role: "alert"
 };
-const _hoisted_23$4 = {
-  key: 5,
+const _hoisted_17$5 = {
+  key: 4,
   class: "ev-form ev-form-danger",
   "data-ev-form": "abort"
 };
+const _hoisted_18$5 = ["disabled"];
+const _hoisted_19$5 = { class: "ev-form-actions" };
+const _hoisted_20$5 = ["disabled"];
+const _hoisted_21$5 = {
+  key: 0,
+  class: "ev-action-error",
+  role: "alert"
+};
+const _hoisted_22$4 = {
+  key: 5,
+  class: "ev-form",
+  "data-ev-form": "chat"
+};
+const _hoisted_23$4 = ["disabled"];
 const _hoisted_24$3 = ["disabled"];
 const _hoisted_25$3 = { class: "ev-form-actions" };
 const _hoisted_26$3 = ["disabled"];
 const _hoisted_27$3 = {
-  key: 0,
-  class: "ev-action-error",
-  role: "alert"
-};
-const _hoisted_28$3 = {
-  key: 6,
-  class: "ev-form",
-  "data-ev-form": "chat"
-};
-const _hoisted_29$3 = ["disabled"];
-const _hoisted_30$3 = ["disabled"];
-const _hoisted_31$3 = { class: "ev-form-actions" };
-const _hoisted_32$3 = ["disabled"];
-const _hoisted_33$3 = {
   key: 0,
   class: "ev-action-error",
   role: "alert"
@@ -19814,46 +19800,9 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
     const activeDescendantCount = computed(
       () => id.value && props.cache.length ? countActiveDescendants(id.value, props.cache) : 0
     );
-    const showContinueForm = /* @__PURE__ */ ref(false);
     const showCloseForm = /* @__PURE__ */ ref(false);
     const showAbortForm = /* @__PURE__ */ ref(false);
     const showChatForm = /* @__PURE__ */ ref(false);
-    const continueHeadline = /* @__PURE__ */ ref("");
-    const continueInstruction = /* @__PURE__ */ ref("");
-    const continueLoading = /* @__PURE__ */ ref(false);
-    const continueError = /* @__PURE__ */ ref(null);
-    function closeContinueForm() {
-      showContinueForm.value = false;
-      continueError.value = null;
-    }
-    async function submitContinue() {
-      if (!id.value) return;
-      continueLoading.value = true;
-      continueError.value = null;
-      try {
-        const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            agent: agent.value,
-            source: "continue",
-            headline: continueHeadline.value.trim() || void 0,
-            instruction: continueInstruction.value
-          })
-        });
-        const data = await r.json();
-        if (!data.ok) {
-          continueError.value = data.error ?? "spawn failed";
-          return;
-        }
-        showContinueForm.value = false;
-        emit2("action-done", "next", id.value);
-      } catch (err) {
-        continueError.value = String(err.message ?? err);
-      } finally {
-        continueLoading.value = false;
-      }
-    }
     const doneReadingLoading = /* @__PURE__ */ ref(false);
     const doneReadingError = /* @__PURE__ */ ref(null);
     async function submitDoneReading() {
@@ -20052,7 +20001,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Chat: send a message to the worker",
             onClick: openChatForm,
             "data-ev-action": "chat"
-          }, [..._cache[8] || (_cache[8] = [
+          }, [..._cache[6] || (_cache[6] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "💬", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Chat", -1)
           ])], 2),
@@ -20064,7 +20013,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Done reading: close this task",
             onClick: submitDoneReading,
             "data-ev-action": "done-reading"
-          }, [..._cache[9] || (_cache[9] = [
+          }, [..._cache[7] || (_cache[7] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✓", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Done", -1)
           ])], 8, _hoisted_3$a)) : createCommentVNode("", true),
@@ -20075,7 +20024,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Cancel this task",
             onClick: openCloseForm,
             "data-ev-action": "cancel"
-          }, [..._cache[10] || (_cache[10] = [
+          }, [..._cache[8] || (_cache[8] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✕", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Cancel", -1)
           ])])) : createCommentVNode("", true),
@@ -20086,7 +20035,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Abort: kill the live worker process",
             onClick: openAbortForm,
             "data-ev-action": "abort"
-          }, [..._cache[11] || (_cache[11] = [
+          }, [..._cache[9] || (_cache[9] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✕", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Abort", -1)
           ])])) : createCommentVNode("", true),
@@ -20098,7 +20047,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Reopen this task",
             onClick: submitReopen,
             "data-ev-action": "reopen"
-          }, [..._cache[12] || (_cache[12] = [
+          }, [..._cache[10] || (_cache[10] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "↻", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Reopen", -1)
           ])], 8, _hoisted_4$9)) : createCommentVNode("", true),
@@ -20110,7 +20059,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Resume this paused task",
             onClick: submitResume,
             "data-ev-action": "resume"
-          }, [..._cache[13] || (_cache[13] = [
+          }, [..._cache[11] || (_cache[11] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "▷", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Resume", -1)
           ])], 8, _hoisted_5$8)) : createCommentVNode("", true)
@@ -20136,95 +20085,53 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             onClick: submitResume
           }, "Retry")
         ])) : createCommentVNode("", true),
-        isTerminal.value && !isClosed.value && showContinueForm.value ? (openBlock(), createElementBlock("div", _hoisted_9$7, [
-          _cache[14] || (_cache[14] = createBaseVNode("p", { class: "ev-form-hint" }, "Type new instructions; a child task picks up on the same session thread. The parent closes as superseded at dispatch.", -1)),
-          withDirectives(createBaseVNode("input", {
-            class: "ev-form-input",
-            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => continueHeadline.value = $event),
-            placeholder: "Child task title",
-            type: "text",
-            disabled: continueLoading.value
-          }, null, 8, _hoisted_10$6), [
-            [vModelText, continueHeadline.value]
-          ]),
-          withDirectives(createBaseVNode("textarea", {
-            class: "ev-form-textarea",
-            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => continueInstruction.value = $event),
-            rows: "4",
-            placeholder: "New instructions for the worker…",
-            disabled: continueLoading.value
-          }, null, 8, _hoisted_11$5), [
-            [vModelText, continueInstruction.value]
-          ]),
-          createBaseVNode("div", _hoisted_12$5, [
-            createBaseVNode("button", {
-              type: "button",
-              class: "ev-action-btn is-primary",
-              disabled: continueLoading.value,
-              onClick: submitContinue,
-              "data-ev-submit": "next"
-            }, "↳ Continue", 8, _hoisted_13$5),
-            createBaseVNode("button", {
-              type: "button",
-              class: "ev-action-btn",
-              onClick: closeContinueForm
-            }, "Dismiss"),
-            continueError.value ? (openBlock(), createElementBlock("span", _hoisted_14$5, [
-              createTextVNode(toDisplayString(continueError.value) + " ", 1),
-              createBaseVNode("button", {
-                type: "button",
-                onClick: submitContinue
-              }, "Retry")
-            ])) : createCommentVNode("", true)
-          ])
-        ])) : createCommentVNode("", true),
-        !isTerminal.value && !isClaimed.value && !isClosed.value && showCloseForm.value ? (openBlock(), createElementBlock("div", _hoisted_15$5, [
-          createBaseVNode("details", _hoisted_16$5, [
+        !isTerminal.value && !isClaimed.value && !isClosed.value && showCloseForm.value ? (openBlock(), createElementBlock("div", _hoisted_9$7, [
+          createBaseVNode("details", _hoisted_10$7, [
             createBaseVNode("summary", null, [
               isWaitingUser.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-                _cache[15] || (_cache[15] = createTextVNode("Record the outcome and mark ", -1)),
-                _cache[16] || (_cache[16] = createBaseVNode("strong", null, "cancelled", -1)),
-                _cache[17] || (_cache[17] = createTextVNode(".", -1))
+                _cache[12] || (_cache[12] = createTextVNode("Record the outcome and mark ", -1)),
+                _cache[13] || (_cache[13] = createBaseVNode("strong", null, "cancelled", -1)),
+                _cache[14] || (_cache[14] = createTextVNode(".", -1))
               ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-                _cache[18] || (_cache[18] = createTextVNode("Marks ", -1)),
+                _cache[15] || (_cache[15] = createTextVNode("Marks ", -1)),
                 createBaseVNode("strong", null, toDisplayString(closeDefaultStatus.value), 1),
-                _cache[19] || (_cache[19] = createTextVNode(" — reversible, runner state kept.", -1))
+                _cache[16] || (_cache[16] = createTextVNode(" — reversible, runner state kept.", -1))
               ], 64))
             ])
           ]),
           withDirectives(createBaseVNode("textarea", {
             class: "ev-form-textarea",
-            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => closeReason.value = $event),
+            "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => closeReason.value = $event),
             rows: "2",
             placeholder: isWaitingUser.value ? "What was the outcome? e.g. decided to use approach B — optional" : "Optional reason (e.g. rolled into TSK-X, no longer needed)…",
             disabled: closeLoading.value
-          }, null, 8, _hoisted_17$5), [
+          }, null, 8, _hoisted_11$6), [
             [vModelText, closeReason.value]
           ]),
-          activeDescendantCount.value > 0 ? (openBlock(), createElementBlock("label", _hoisted_18$5, [
+          activeDescendantCount.value > 0 ? (openBlock(), createElementBlock("label", _hoisted_12$5, [
             withDirectives(createBaseVNode("input", {
               type: "checkbox",
-              "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => closeCascade.value = $event),
+              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => closeCascade.value = $event),
               disabled: closeLoading.value
-            }, null, 8, _hoisted_19$5), [
+            }, null, 8, _hoisted_13$5), [
               [vModelCheckbox, closeCascade.value]
             ]),
             createBaseVNode("span", null, "Close family — cancel " + toDisplayString(activeDescendantCount.value) + " active descendant" + toDisplayString(activeDescendantCount.value === 1 ? "" : "s") + " too", 1)
           ])) : createCommentVNode("", true),
-          createBaseVNode("div", _hoisted_20$5, [
+          createBaseVNode("div", _hoisted_14$5, [
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn is-primary",
               disabled: closeLoading.value,
               onClick: submitClose,
               "data-ev-submit": "close"
-            }, "Confirm close", 8, _hoisted_21$5),
+            }, "Confirm close", 8, _hoisted_15$5),
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn",
               onClick: cancelClose
             }, "Dismiss"),
-            closeError.value ? (openBlock(), createElementBlock("span", _hoisted_22$4, [
+            closeError.value ? (openBlock(), createElementBlock("span", _hoisted_16$5, [
               createTextVNode(toDisplayString(closeError.value) + " ", 1),
               createBaseVNode("button", {
                 type: "button",
@@ -20233,35 +20140,35 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ])) : createCommentVNode("", true),
-        isClaimed.value && !isClosed.value && showAbortForm.value ? (openBlock(), createElementBlock("div", _hoisted_23$4, [
-          _cache[20] || (_cache[20] = createBaseVNode("details", { class: "ev-form-warn" }, [
+        isClaimed.value && !isClosed.value && showAbortForm.value ? (openBlock(), createElementBlock("div", _hoisted_17$5, [
+          _cache[17] || (_cache[17] = createBaseVNode("details", { class: "ev-form-warn" }, [
             createBaseVNode("summary", null, [
               createBaseVNode("strong", null, "⚠ Kills the live process. Not reversible.")
             ])
           ], -1)),
           withDirectives(createBaseVNode("textarea", {
             class: "ev-form-textarea",
-            "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => abortReason.value = $event),
+            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => abortReason.value = $event),
             rows: "2",
             placeholder: "Optional reason…",
             disabled: abortLoading.value
-          }, null, 8, _hoisted_24$3), [
+          }, null, 8, _hoisted_18$5), [
             [vModelText, abortReason.value]
           ]),
-          createBaseVNode("div", _hoisted_25$3, [
+          createBaseVNode("div", _hoisted_19$5, [
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn is-danger",
               disabled: abortLoading.value,
               onClick: submitAbort,
               "data-ev-submit": "abort"
-            }, "Kill worker & cancel", 8, _hoisted_26$3),
+            }, "Kill worker & cancel", 8, _hoisted_20$5),
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn",
               onClick: cancelAbort
             }, "Dismiss"),
-            abortError.value ? (openBlock(), createElementBlock("span", _hoisted_27$3, [
+            abortError.value ? (openBlock(), createElementBlock("span", _hoisted_21$5, [
               createTextVNode(toDisplayString(abortError.value) + " ", 1),
               createBaseVNode("button", {
                 type: "button",
@@ -20270,43 +20177,43 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true)
           ])
         ])) : createCommentVNode("", true),
-        showChatForm.value ? (openBlock(), createElementBlock("div", _hoisted_28$3, [
-          _cache[21] || (_cache[21] = createBaseVNode("details", { class: "ev-form-warn" }, [
+        showChatForm.value ? (openBlock(), createElementBlock("div", _hoisted_22$4, [
+          _cache[18] || (_cache[18] = createBaseVNode("details", { class: "ev-form-warn" }, [
             createBaseVNode("summary", null, "Continues on the worker's session thread."),
             createBaseVNode("p", null, "Chat opens on the same thread as the task worker, so the agent's prior context is in cache.")
           ], -1)),
           withDirectives(createBaseVNode("input", {
             class: "ev-form-input",
-            "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => chatTitle.value = $event),
+            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => chatTitle.value = $event),
             placeholder: "Chat title (auto if blank)",
             type: "text",
             disabled: chatLoading.value
-          }, null, 8, _hoisted_29$3), [
+          }, null, 8, _hoisted_23$4), [
             [vModelText, chatTitle.value]
           ]),
           withDirectives(createBaseVNode("textarea", {
             class: "ev-form-textarea",
-            "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => chatMessage.value = $event),
+            "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => chatMessage.value = $event),
             rows: "3",
             placeholder: "Initial message (optional)…",
             disabled: chatLoading.value
-          }, null, 8, _hoisted_30$3), [
+          }, null, 8, _hoisted_24$3), [
             [vModelText, chatMessage.value]
           ]),
-          createBaseVNode("div", _hoisted_31$3, [
+          createBaseVNode("div", _hoisted_25$3, [
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn is-primary",
               disabled: chatLoading.value,
               onClick: submitChat,
               "data-ev-submit": "chat"
-            }, "↳ Start chat", 8, _hoisted_32$3),
+            }, "↳ Start chat", 8, _hoisted_26$3),
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn",
-              onClick: _cache[7] || (_cache[7] = ($event) => showChatForm.value = false)
+              onClick: _cache[5] || (_cache[5] = ($event) => showChatForm.value = false)
             }, "Dismiss"),
-            chatError.value ? (openBlock(), createElementBlock("span", _hoisted_33$3, [
+            chatError.value ? (openBlock(), createElementBlock("span", _hoisted_27$3, [
               createTextVNode(toDisplayString(chatError.value) + " ", 1),
               createBaseVNode("button", {
                 type: "button",
@@ -20319,7 +20226,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["__scopeId", "data-v-fc422d3f"]]);
+const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["__scopeId", "data-v-ee2c4e60"]]);
 const _hoisted_1$f = {
   key: 0,
   class: "ev-sections"
@@ -20349,8 +20256,8 @@ const _hoisted_9$6 = {
   class: "ev-section",
   open: ""
 };
-const _hoisted_10$5 = { class: "ev-section-body ev-card-summary" };
-const _hoisted_11$4 = {
+const _hoisted_10$6 = { class: "ev-section-body ev-card-summary" };
+const _hoisted_11$5 = {
   key: 4,
   class: "ev-section"
 };
@@ -20463,9 +20370,9 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
         ])) : createCommentVNode("", true),
         summaryResponse.value ? (openBlock(), createElementBlock("details", _hoisted_9$6, [
           _cache[3] || (_cache[3] = createBaseVNode("summary", { class: "ev-section-summary" }, "Result", -1)),
-          createBaseVNode("div", _hoisted_10$5, toDisplayString(summaryResponse.value), 1)
+          createBaseVNode("div", _hoisted_10$6, toDisplayString(summaryResponse.value), 1)
         ])) : createCommentVNode("", true),
-        envelopePath.value ? (openBlock(), createElementBlock("details", _hoisted_11$4, [
+        envelopePath.value ? (openBlock(), createElementBlock("details", _hoisted_11$5, [
           _cache[4] || (_cache[4] = createBaseVNode("summary", { class: "ev-section-summary" }, "Files", -1)),
           createBaseVNode("div", _hoisted_12$4, [
             createBaseVNode("button", {
@@ -24121,16 +24028,18 @@ const _hoisted_2$8 = {
   class: "nx-closed-notice"
 };
 const _hoisted_3$8 = ["for"];
-const _hoisted_4$7 = ["id", "disabled"];
-const _hoisted_5$6 = { class: "nx-actions" };
-const _hoisted_6$6 = ["disabled"];
-const _hoisted_7$6 = ["disabled"];
-const _hoisted_8$6 = {
+const _hoisted_4$7 = ["id", "placeholder", "disabled"];
+const _hoisted_5$6 = ["for"];
+const _hoisted_6$6 = ["id", "disabled"];
+const _hoisted_7$6 = { class: "nx-actions" };
+const _hoisted_8$6 = ["disabled"];
+const _hoisted_9$5 = ["disabled"];
+const _hoisted_10$5 = {
   key: 1,
   class: "nx-error",
   role: "alert"
 };
-const _hoisted_9$5 = {
+const _hoisted_11$4 = {
   key: 1,
   class: "nx-loading"
 };
@@ -24163,6 +24072,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       }
     });
     const hasDraft = computed(() => draft.value.length > 0);
+    const headlineInput = /* @__PURE__ */ ref("");
     const _submitLoading = /* @__PURE__ */ ref(false);
     const submitError = /* @__PURE__ */ ref(null);
     async function submit() {
@@ -24170,13 +24080,15 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
       _submitLoading.value = true;
       submitError.value = null;
       try {
+        const hl = headlineInput.value.trim();
         const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             agent: agent.value,
             source: "continue",
-            instruction: draft.value.trim()
+            instruction: draft.value.trim(),
+            ...hl ? { headline: hl } : {}
           })
         });
         const data = await r.json();
@@ -24194,34 +24106,51 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     }
     function discard() {
       if (id.value) tasks.nextDraft.delete(id.value);
+      headlineInput.value = "";
       submitError.value = null;
     }
     return (_ctx, _cache) => {
+      var _a2;
       return __props.task ? (openBlock(), createElementBlock("div", _hoisted_1$c, [
         isClosed.value ? (openBlock(), createElementBlock("div", _hoisted_2$8, " Task is closed — spawning a follow-on will reopen the thread. ")) : createCommentVNode("", true),
         createBaseVNode("label", {
           class: "nx-label",
+          for: `nx-headline-${id.value}`
+        }, "Child task title (optional)", 8, _hoisted_3$8),
+        withDirectives(createBaseVNode("input", {
+          id: `nx-headline-${id.value}`,
+          class: "nx-headline-input",
+          type: "text",
+          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => headlineInput.value = $event),
+          placeholder: ((_a2 = __props.task) == null ? void 0 : _a2.headline) ? `${__props.task.headline.slice(0, 50)} — continue` : "Leave blank to use server default",
+          disabled: _submitLoading.value,
+          "data-nx-headline": ""
+        }, null, 8, _hoisted_4$7), [
+          [vModelText, headlineInput.value]
+        ]),
+        createBaseVNode("label", {
+          class: "nx-label",
           for: `nx-draft-${id.value}`
-        }, "Instructions for the follow-on task", 8, _hoisted_3$8),
+        }, "Instructions for the follow-on task", 8, _hoisted_5$6),
         withDirectives(createBaseVNode("textarea", {
           id: `nx-draft-${id.value}`,
           class: "nx-textarea",
-          "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => draft.value = $event),
+          "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => draft.value = $event),
           rows: "6",
           placeholder: "What should the worker do next? The current session context is inherited.",
           disabled: _submitLoading.value,
           "data-nx-textarea": ""
-        }, null, 8, _hoisted_4$7), [
+        }, null, 8, _hoisted_6$6), [
           [vModelText, draft.value]
         ]),
-        createBaseVNode("div", _hoisted_5$6, [
+        createBaseVNode("div", _hoisted_7$6, [
           createBaseVNode("button", {
             type: "button",
             class: "nx-btn is-primary",
             disabled: _submitLoading.value || !hasDraft.value,
             onClick: submit,
             "data-nx-submit": ""
-          }, "↳ Spawn follow-on", 8, _hoisted_6$6),
+          }, "↳ Spawn follow-on", 8, _hoisted_8$6),
           hasDraft.value ? (openBlock(), createElementBlock("button", {
             key: 0,
             type: "button",
@@ -24229,8 +24158,8 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             disabled: _submitLoading.value,
             onClick: discard,
             "data-nx-discard": ""
-          }, "Discard draft", 8, _hoisted_7$6)) : createCommentVNode("", true),
-          submitError.value ? (openBlock(), createElementBlock("span", _hoisted_8$6, [
+          }, "Discard draft", 8, _hoisted_9$5)) : createCommentVNode("", true),
+          submitError.value ? (openBlock(), createElementBlock("span", _hoisted_10$5, [
             createTextVNode(toDisplayString(submitError.value) + " ", 1),
             createBaseVNode("button", {
               type: "button",
@@ -24238,12 +24167,12 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
             }, "Retry")
           ])) : createCommentVNode("", true)
         ]),
-        _cache[1] || (_cache[1] = createBaseVNode("p", { class: "nx-hint" }, "Draft is saved automatically. Navigating away will not discard it.", -1))
-      ])) : (openBlock(), createElementBlock("div", _hoisted_9$5, "Loading task…"));
+        _cache[2] || (_cache[2] = createBaseVNode("p", { class: "nx-hint" }, "Draft is saved automatically. Navigating away will not discard it.", -1))
+      ])) : (openBlock(), createElementBlock("div", _hoisted_11$4, "Loading task…"));
     };
   }
 });
-const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-e068f162"]]);
+const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-59b45b2a"]]);
 const _hoisted_1$b = { class: "ev-top-row" };
 const _hoisted_2$7 = {
   role: "tablist",
