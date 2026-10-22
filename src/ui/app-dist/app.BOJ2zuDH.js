@@ -17798,7 +17798,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$r, [["__scopeId", "data-v-91cbb3a0"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$r, [["__scopeId", "data-v-9c967bdf"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -21850,13 +21850,13 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
         createBaseVNode("div", _hoisted_1$b, [
           createBaseVNode("button", {
             role: "tab",
-            class: normalizeClass(["ev-tab", { "is-active": subView.value === "task" }]),
+            class: normalizeClass(["tasks-view-tab ev-tab", { "is-active": subView.value === "task" }]),
             "aria-selected": subView.value === "task",
             onClick: _cache[2] || (_cache[2] = withModifiers(($event) => setSubView("task"), ["stop"]))
           }, "Task", 10, _hoisted_2$7),
           createBaseVNode("button", {
             role: "tab",
-            class: normalizeClass(["ev-tab", { "is-active": subView.value === "report" }]),
+            class: normalizeClass(["tasks-view-tab ev-tab", { "is-active": subView.value === "report" }]),
             "aria-selected": subView.value === "report",
             onClick: _cache[3] || (_cache[3] = withModifiers(($event) => setSubView("report"), ["stop"]))
           }, "Report", 10, _hoisted_3$7)
@@ -21883,7 +21883,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const EnvelopeView = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-aec976c4"]]);
+const EnvelopeView = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-00b700ed"]]);
 /*! js-yaml 4.1.1 https://github.com/nodeca/js-yaml @license MIT */
 function isNothing(subject) {
   return typeof subject === "undefined" || subject === null;
@@ -27831,7 +27831,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 16px;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff1a, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       display: grid;
@@ -28223,7 +28223,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 16px;
       background:
         radial-gradient(120% 100% at 0% 0%, #ffd07a18, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       display: grid;
@@ -29345,7 +29345,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -30187,7 +30187,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 16px 16px 0 0;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -30208,7 +30208,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       container-type: inline-size;
@@ -31276,7 +31276,7 @@ const pageStyles = String.raw`    :root {
       border-radius: 16px 16px 0 0;
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
-        linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
+        linear-gradient(180deg, var(--frame-top, #0e1a2a88) 0%, #0a1220a8 100%);
       backdrop-filter: blur(6px);
       box-shadow: 0 14px 34px #00000045;
       overflow: hidden;
@@ -32728,7 +32728,10 @@ const pageStyles = String.raw`    :root {
       .files-panel,
       .tasks-panel {
         min-width: 100%;
-        border-radius: 12px 12px 0 0;
+        /* WAL-138: 0, not 12px. This narrow-viewport rule was re-applying the
+           radius the base rules had dropped, and winning — which is why the
+           Open panel still curved away from the tab bar on a phone. */
+        border-radius: 0;
       }
       .tasks-viewer-head {
         padding: 6px 10px;

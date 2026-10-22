@@ -156,14 +156,14 @@ function onReportRawText(text: string | null): void {
     <div role="tablist" class="ev-tab-bar">
       <button
         role="tab"
-        class="ev-tab"
+        class="tasks-view-tab ev-tab"
         :class="{ 'is-active': subView === 'task' }"
         :aria-selected="subView === 'task'"
         @click.stop="setSubView('task')"
       >Task</button>
       <button
         role="tab"
-        class="ev-tab"
+        class="tasks-view-tab ev-tab"
         :class="{ 'is-active': subView === 'report' }"
         :aria-selected="subView === 'report'"
         @click.stop="setSubView('report')"
@@ -220,22 +220,10 @@ function onReportRawText(text: string | null): void {
   flex-shrink: 0;
 }
 
-.ev-tab {
-  /* WAL-138: matches .tasks-view-tab — the Open panel's Projects | Tasks pair.
-     Flat, transparent, amber underline on the active one; no chip, no radius. */
-  padding: 6px 14px 8px;
-  border: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: #8aa0bd;
-  font-size: 12px;
-  cursor: pointer;
-}
-.ev-tab.is-active {
-  border-bottom-color: #ffd07a;
-  color: #ffe7b8;
-}
+/* WAL-138: the envelope sub-tabs ARE Open sub-tabs — they carry
+   .tasks-view-tab and inherit font, colour, padding and the amber active
+   underline from it. Duplicating those properties here is what let the font
+   drift; only the phone hit-area override is local. */
 @media (max-width: 640px) {
   .ev-tab { min-height: 44px; padding: 8px 16px 10px; }
 }

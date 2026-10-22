@@ -427,14 +427,19 @@ function onDividerDrop(e: DragEvent): void {
 }
 
 .ts-tab:hover { opacity: 0.88; }
-/* WAL-138: the selected tab takes the panel's background so the two merge. */
+/* WAL-138: the selected tab takes the FRAME's top edge — the same
+   --frame-top token the panel's gradient starts from, with the panel's own
+   blur — so the two cannot drift. --panel (#0b1220aa) was the wrong token:
+   it is the chrome colour, not the frame's. */
 .ts-tab--active {
   opacity: 1;
-  background: var(--panel, #0f1e33);
+  background: var(--frame-top, #0e1a2a88);
+  backdrop-filter: blur(6px);
 }
 .ts-tab--focused {
   opacity: 1;
-  background: var(--panel, #0f1e33);
+  background: var(--frame-top, #0e1a2a88);
+  backdrop-filter: blur(6px);
   border-color: rgba(255, 255, 255, 0.22);
 }
 .ts-tab--preview { font-style: italic; }
