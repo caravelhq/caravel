@@ -1699,7 +1699,7 @@ export const pageStyles = String.raw`    :root {
       min-height: 0;
       text-align: left;
       border: 1px solid #ffffff22;
-      border-radius: 16px 16px 0 0;
+      border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
         linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
@@ -2562,7 +2562,7 @@ export const pageStyles = String.raw`    :root {
       min-height: 0;
       text-align: left;
       border: 1px solid #ffffff22;
-      border-radius: 16px 16px 0 0;
+      border-radius: 0;  /* WAL-138: blend into the tab bar */
       background:
         radial-gradient(120% 100% at 100% 0%, #7dc5ff12, transparent 55%),
         linear-gradient(180deg, #0e1a2a88 0%, #0a1220a8 100%);
