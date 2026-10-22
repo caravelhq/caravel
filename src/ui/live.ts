@@ -53,6 +53,13 @@ export function setAttentionInvalidator(fn: () => void): void {
   onAttentionInvalidate = fn;
 }
 
+// WAL-117: invalidate the archive-bucket read cache when archived/ watcher fires.
+let onArchiveInvalidate: (() => void) | null = null;
+
+export function setArchiveInvalidator(fn: () => void): void {
+  onArchiveInvalidate = fn;
+}
+
 // ── Debounce / coalesce per topic ────────────────────────────────────────────
 
 const debounce = new Map<string, ReturnType<typeof setTimeout>>();
@@ -71,6 +78,10 @@ function emitDebounced(topic: string, hint: Record<string, unknown>): void {
       // Invalidate attention cache when task-relevant topics fire
       if (topic === "attention" || topic === "tasks" || topic.startsWith("task:")) {
         onAttentionInvalidate?.();
+      }
+      // WAL-117: invalidate the archive-bucket read cache when archived/ files change.
+      if (topic === "archive") {
+        onArchiveInvalidate?.();
       }
       emitLive(topic, h);
     }, 150)
@@ -98,11 +109,16 @@ function pathToTopics(rel: string): Array<{ topic: string; hint: Record<string, 
     // Strip file extension(s) to get the task id
     const id = filename.replace(/\.(yaml|yml|md)$/, "");
     if (id.startsWith("TSK-")) {
-      return [
+      const base = [
         { topic: "tasks", hint: { agent, id } },
         { topic: `task:${id}`, hint: { agent, id } },
         { topic: "attention", hint: { agent, id } },
       ];
+      // WAL-117: archived/ files also emit "archive" so the read cache is invalidated.
+      if (bucket === "archived") {
+        base.push({ topic: "archive", hint: { agent, id } });
+      }
+      return base;
     }
     // Non-TSK file in a bucket dir (e.g. journal.ndjson) — skip
     return [];

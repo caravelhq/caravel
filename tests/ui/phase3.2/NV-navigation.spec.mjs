@@ -87,8 +87,10 @@ async function resetWorkspace(page) {
       .filter((k) => k.startsWith("workspace."))
       .forEach((k) => localStorage.removeItem(k));
   });
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(400);
+  // "load" instead of "networkidle": the SSE connection is already open on a
+  // reused page, so networkidle never fires (SSE keeps 1 active connection).
+  await page.reload({ waitUntil: "load" });
+  await page.waitForTimeout(500);
 }
 
 async function openMenu(page) {
@@ -150,26 +152,14 @@ try {
       }
       if (allEnabled) pass(`NV1 Dashboard/Tasks/Chat/Files all enabled [${VP.label}]`);
 
-      // Projects is the only disabled item
+      // Phase 4 shipped Projects — no disabled items in the Open menu.
+      // (Phase 3.2 had Projects disabled with a Phase 4 tag; Phase 4 removed both.)
       const disabledBtns = await page.locator(".open-menu-list button[disabled]").all();
-      if (disabledBtns.length === 1) {
-        const txt = await disabledBtns[0].innerText();
-        if (txt.includes("Projects")) {
-          pass(`NV1 Projects is the only disabled item [${VP.label}]`);
-        } else {
-          fail(`NV1 Projects is the only disabled item [${VP.label}]`, `disabled item text: "${txt}"`);
-        }
+      if (disabledBtns.length === 0) {
+        pass(`NV1 Open menu has 0 disabled items (post-Phase 4) [${VP.label}]`);
       } else {
-        fail(`NV1 Projects is the only disabled item [${VP.label}]`, `${disabledBtns.length} disabled buttons found`);
-      }
-
-      // Projects carries the phase tag
-      const projectsBtn = page.locator(".open-menu-list button[disabled]").first();
-      const projectsTxt = await projectsBtn.innerText();
-      if (projectsTxt.includes("Phase 4")) {
-        pass(`NV1 Projects carries Phase 4 tag [${VP.label}]`);
-      } else {
-        fail(`NV1 Projects carries Phase 4 tag [${VP.label}]`, `text: "${projectsTxt}"`);
+        const labels = await Promise.all(disabledBtns.map(b => b.innerText().catch(() => "?")));
+        fail(`NV1 Open menu has 0 disabled items [${VP.label}]`, `${disabledBtns.length} disabled: ${JSON.stringify(labels)}`);
       }
 
       // Close menu before iterating openers
@@ -376,8 +366,8 @@ try {
       // after reload → fails here.
       {
         const st3ePre = await wsState(page);
-        await page.reload({ waitUntil: "networkidle" });
-        await page.waitForTimeout(400);
+        await page.reload({ waitUntil: "load" });
+        await page.waitForTimeout(500);
         const st3ePost = await wsState(page);
         if (JSON.stringify(st3ePre?.recents) === JSON.stringify(st3ePost?.recents) && (st3ePost?.recents?.length ?? 0) > 0) {
           pass(`NV3 Recents survives reload [${VP.label}]`);

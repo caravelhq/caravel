@@ -1,6 +1,5 @@
 import { createRouter, createWebHashHistory, type RouteLocationNormalized } from "vue-router";
 import { useWorkspaceStore, type WsSnapshot } from "../stores/workspace";
-import { useTasksStore } from "../stores/tasks";
 import type { ResourceRef } from "../workspace/refs";
 import { refKey } from "../workspace/refs";
 
@@ -20,12 +19,15 @@ export const router = createRouter({
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
     { path: "/tasks", component: Stub },
-    { path: "/tasks/:taskId", component: Stub },
+    // /tasks/project/:slug must be declared before the taskId pattern to prevent shadowing
+    { path: "/tasks/project/:slug", component: Stub },
+    { path: "/tasks/:taskId(TSK-[^/]+)", component: Stub },
     { path: "/files", component: Stub },
     { path: "/files/:filePath(.*)", component: Stub },
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
     { path: "/envelope/:taskId", component: Stub },
+    { path: "/project/:slug", component: Stub },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],
@@ -102,6 +104,10 @@ function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
     const taskId = decodeURIComponent(p.slice("/envelope/".length));
     return { kind: "envelope", taskId };
   }
+  if (p.startsWith("/project/")) {
+    const slug = decodeURIComponent(p.slice("/project/".length));
+    return { kind: "project", slug };
+  }
   return null;
 }
 
@@ -153,17 +159,7 @@ router.afterEach((to) => {
       }
     }
 
-    // Hydrate legacy-page stores from URL identity segments.
-    // This runs before the page mounts, so onMounted sees the correct values.
-    const p = to.path;
-    if (p.startsWith("/tasks/")) {
-      const taskId = decodeURIComponent(p.slice("/tasks/".length));
-      if (taskId) {
-        const tasks = useTasksStore();
-        tasks.currentTaskId = taskId;
-        tasks.pane = "view";
-      }
-    }
+    // /tasks/:id deep links: viewer removed in Phase 4 step 4 — deep-link support is F15.
     // /files/<path> is handled by routeToRef returning a file: ref — ws.open above opens it.
     // files.currentPath hydration removed (step 7): the file tab is the canonical representation.
   } finally {
@@ -182,10 +178,8 @@ export function syncWorkspaceUrl(push: boolean): void {
 
   let path: string;
   if (focusedRef.kind === "legacy" && focusedRef.page === "tasks") {
-    const tasks = useTasksStore();
-    path = (tasks.pane === "view" && tasks.currentTaskId)
-      ? `/tasks/${encodeURIComponent(tasks.currentTaskId)}`
-      : "/tasks";
+    // Phase 4 step 4: tasks page is a picker-only view; task content is in envelope: tabs.
+    path = "/tasks";
   } else {
     // legacy:files always maps to /files (step 7: the path no longer tracks an open file).
     path = refToPath(focusedRef);
@@ -222,6 +216,7 @@ export function refToPath(ref: ResourceRef): string {
     case "file": return `/file/${encodeURIComponent(ref.path)}${ref.branch ? `?branch=${encodeURIComponent(ref.branch)}` : ""}`;
     case "envelope": return `/envelope/${encodeURIComponent(ref.taskId)}`;
     case "report": return `/report/${encodeURIComponent(ref.taskId)}`;
+    case "project": return `/project/${encodeURIComponent(ref.slug)}`;
     case "legacy": return `/${ref.page}`;
     default: return "/dashboard";
   }

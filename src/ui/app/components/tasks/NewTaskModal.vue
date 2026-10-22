@@ -2,8 +2,10 @@
 import { ref, computed, watch, onMounted } from "vue";
 import BaseModal from "../modal/BaseModal.vue";
 import { useNewTaskStore } from "../../stores/newTask";
+import { useProjectsStore } from "../../stores/projects";
 
 const nt = useNewTaskStore();
+const projectsStore = useProjectsStore();
 
 // ── Form state ────────────────────────────────────────────────────────────
 const to = ref("alice");
@@ -28,9 +30,11 @@ const status = ref("");
 const statusClass = ref("");
 const submitting = ref(false);
 
-// Agents / projects catalogs
+// Agents catalog
 const agents = ref<Array<{ name: string; emoji?: string; displayName?: string }>>([]);
-const projects = ref<Array<{ slug: string; name?: string }>>([]);
+
+// Projects come from the store (F13 / S4) — stays fresh across the phase
+const projects = computed(() => projectsStore.list.map(p => ({ slug: p.slug, name: p.title })));
 
 // Derived
 const headlineWords = computed(() => headline.value.trim().split(/\s+/).filter(Boolean).length);
@@ -123,16 +127,6 @@ async function loadAgents(): Promise<void> {
   } catch { /* best-effort */ }
 }
 
-async function loadProjects(): Promise<void> {
-  try {
-    const res = await fetch("/api/projects");
-    const data = await res.json();
-    if (data?.ok && Array.isArray(data.projects)) {
-      projects.value = data.projects;
-    }
-  } catch { /* best-effort */ }
-}
-
 // ── Reset and prefill ─────────────────────────────────────────────────────
 function reset(): void {
   headline.value = nt.prefillHeadline;
@@ -154,7 +148,8 @@ function reset(): void {
 }
 
 // Load catalogs once on mount; reset on open.
-onMounted(() => { loadAgents(); loadProjects(); });
+// Projects come from the store — load the list so it's ready when the modal opens.
+onMounted(() => { loadAgents(); projectsStore.loadList(); });
 
 watch(() => nt.isOpen, (open) => {
   if (open) reset();

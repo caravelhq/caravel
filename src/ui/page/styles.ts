@@ -5653,6 +5653,8 @@ export const pageStyles = String.raw`    :root {
     }
     .srch-chip--type { border-color: #4a6a9060; color: #7dc5ff; }
     .srch-chip--project { border-color: #6a4a9060; color: #c07bff; }
+    .srch-chip--btn { background: none; cursor: pointer; font: inherit; }
+    .srch-chip--btn:hover { opacity: 0.8; }
     .srch-chip--jira { border-color: #4a6a4060; color: #7dff9f; }
     .srch-chip--why { border-color: #5a5a3060; color: #ffd39f; }
     .srch-snippet { font-size: 12px; color: var(--muted, #5a6a80); line-height: 1.4; }

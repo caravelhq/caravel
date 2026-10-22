@@ -1,14 +1,28 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useWorkspaceStore } from "../../stores/workspace";
 import { useKnowledgeStore } from "../../stores/knowledge";
 import { useNewTaskStore } from "../../stores/newTask";
-import { refGlyph, refLabel } from "../../workspace/labels";
+import { useLiveStore } from "../../stores/live";
+import { refGlyph, refLabel, TASKS_LIST_KEY, PROJECTS_LIST_KEY } from "../../workspace/labels";
 import type { ResourceRef } from "../../workspace/refs";
+import type { TaskRow } from "../../stores/tasks";
+import type { ProjectCard } from "../../stores/projects";
 
 const ws = useWorkspaceStore();
 const kn = useKnowledgeStore();
 const nt = useNewTaskStore();
+const live = useLiveStore();
+
+// Read shared lists bound by TabStrip so recents resolve labels.
+const tasksList = computed<TaskRow[] | null>(() => {
+  const e = live.entry(TASKS_LIST_KEY);
+  return (e?.data as TaskRow[] | null) ?? null;
+});
+const projectsList = computed<ProjectCard[] | null>(() => {
+  const e = live.entry(PROJECTS_LIST_KEY);
+  return (e?.data as ProjectCard[] | null) ?? null;
+});
 
 const isOpen = ref(false);
 const anchorRef = ref<HTMLDivElement | null>(null);
@@ -103,9 +117,7 @@ onBeforeUnmount(() => {
         <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Tasks</button>
         <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
         <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
-        <button                    class="open-menu-item om-item-disabled" type="button" role="menuitem" disabled>
-          Projects <span class="om-phase-tag">Phase 4</span>
-        </button>
+        <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Projects</button>
 
         <!-- Section: Recents (only when non-empty) -->
         <template v-if="ws.recents.length > 0">

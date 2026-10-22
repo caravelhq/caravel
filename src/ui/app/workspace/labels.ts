@@ -1,8 +1,26 @@
 import type { ResourceRef } from "./refs";
 import type { TaskRow } from "../stores/tasks";
+import type { ProjectCard } from "../stores/projects";
 import type { ResourceSpec } from "../stores/live";
 
 export const TASKS_LIST_KEY = "tasks:list";
+
+export const PROJECTS_LIST_KEY = "projects:list";
+
+// Spec for the shared projects-list binding. One bind per strip mount, mirrors tasksListSpec.
+export const projectsListSpec: ResourceSpec = {
+  topics: ["tasks"],
+  fetch: async (): Promise<ProjectCard[]> => {
+    try {
+      const r = await fetch("/api/projects?counts=1");
+      if (!r.ok) return [];
+      const body = await r.json() as { ok: boolean; projects: ProjectCard[] };
+      return body.projects ?? [];
+    } catch {
+      return [];
+    }
+  },
+};
 
 // Spec for the shared tasks-list binding. One bind per strip mount, not one per tab.
 export const tasksListSpec: ResourceSpec = {
@@ -10,7 +28,9 @@ export const tasksListSpec: ResourceSpec = {
   fetch: async (): Promise<TaskRow[]> => {
     try {
       const r = await fetch("/api/tasks?limit=120");
-      return r.ok ? (r.json() as Promise<TaskRow[]>) : [];
+      if (!r.ok) return [];
+      const body = await r.json() as { ok: boolean; tasks: TaskRow[] };
+      return body.tasks ?? [];
     } catch {
       return [];
     }
@@ -41,14 +61,21 @@ export function refGlyph(ref: ResourceRef): string {
   }
 }
 
-// Human-readable tab label. For envelope/report, resolves the task headline from the shared list.
-// Falls back to middle-ellipsised id when no headline is available.
-export function refLabel(ref: ResourceRef, tasksList?: TaskRow[] | null): string {
+// Human-readable tab label. Resolves task headline from tasksList, project title from projectsList.
+// Falls back to slug / middle-ellipsised id when not resolved.
+export function refLabel(
+  ref: ResourceRef,
+  tasksList?: TaskRow[] | null,
+  projectsList?: ProjectCard[] | null,
+): string {
   switch (ref.kind) {
     case "dashboard": return "Dashboard";
     case "file": return ref.path.split("/").pop() || ref.path;
     case "legacy": return ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
-    case "project": return ref.slug;
+    case "project": {
+      const card = projectsList?.find((p) => p.slug === ref.slug);
+      return card?.title || ref.slug;
+    }
     case "chat": return ref.chatId;
     case "envelope":
     case "report": {
@@ -60,12 +87,19 @@ export function refLabel(ref: ResourceRef, tasksList?: TaskRow[] | null): string
 }
 
 // Full identity string for the title attribute (shown on hover).
-export function refTitle(ref: ResourceRef, tasksList?: TaskRow[] | null): string {
+export function refTitle(
+  ref: ResourceRef,
+  tasksList?: TaskRow[] | null,
+  projectsList?: ProjectCard[] | null,
+): string {
   switch (ref.kind) {
     case "dashboard": return "Dashboard";
     case "file": return ref.path + (ref.branch ? `@${ref.branch}` : "");
     case "legacy": return ref.page;
-    case "project": return ref.slug;
+    case "project": {
+      const card = projectsList?.find((p) => p.slug === ref.slug);
+      return card?.title ? `${ref.slug} — ${card.title}` : ref.slug;
+    }
     case "chat": return ref.chatId;
     case "envelope":
     case "report": {

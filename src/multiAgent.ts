@@ -31,6 +31,7 @@ import { join } from "path";
 import { load as yamlLoad } from "js-yaml";
 import { streamUserMessage } from "./runner";
 import { listAgentNamesSync } from "./agents";
+import { invalidateArchiveCache } from "./ui/services/multiAgent";
 import { resolveStateDir } from "./paths";
 import { inferProjectFromContext, readParentProject } from "./projectUtils";
 import {
@@ -2873,6 +2874,11 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
     readEnvNumber("CLAUDECLAW_MULTI_AGENT_ARCHIVE_DAYS", DEFAULT_ARCHIVE_DAYS));
   if (!Number.isFinite(days) || days <= 0) return;
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+  // WAL-117: a rename into archived/ fires the fs.watch event on the SOURCE
+  // path only (R09 spike), so the watcher-driven archive invalidator never
+  // sees the sweep's own moves. Invalidate directly when this sweep archived
+  // anything — the watcher path stays as belt-and-braces for direct writes.
+  let archivedAny = false;
 
   for (const agent of opts.agents) {
     for (const bucket of ARCHIVABLE_BUCKETS) {
@@ -2924,6 +2930,7 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
         const targetPath = join(archiveDir, fname);
         try {
           await rename(srcPath, targetPath);
+          archivedAny = true;
           // Move the rendezvous .md too if present so the archived row keeps
           // its deliverable. Pre-Phase-1 sweep ignored these; the new gate
           // means closed reports are valuable history, not stale debris.
@@ -2941,6 +2948,8 @@ async function sweepArchive(opts: Required<MultiAgentOptions>): Promise<void> {
       }
     }
   }
+
+  if (archivedAny) invalidateArchiveCache();
 }
 
 function readEnvNumber(key: string, fallback: number): number {

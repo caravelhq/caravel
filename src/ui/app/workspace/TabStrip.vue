@@ -4,7 +4,8 @@ import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
 import { useLiveStore } from "../stores/live";
 import { refKey, type ResourceRef } from "./refs";
-import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec } from "./labels";
+import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec, PROJECTS_LIST_KEY, projectsListSpec } from "./labels";
+import type { ProjectCard } from "../stores/projects";
 import type { TaskRow } from "../stores/tasks";
 import OpenMenu from "../components/chrome/OpenMenu.vue";
 import TabOverflowSheet from "./TabOverflowSheet.vue";
@@ -18,14 +19,25 @@ const group1 = computed(() => ws.groupTabs(1));
 
 // ── Shared tasks-list binding (ONE bind for the whole strip) ──────────────────
 
-onMounted(() => { live.bind(TASKS_LIST_KEY, tasksListSpec); });
-onBeforeUnmount(() => { live.unbind(TASKS_LIST_KEY); });
+onMounted(() => {
+  live.bind(TASKS_LIST_KEY, tasksListSpec);
+  live.bind(PROJECTS_LIST_KEY, projectsListSpec);
+});
+onBeforeUnmount(() => {
+  live.unbind(TASKS_LIST_KEY);
+  live.unbind(PROJECTS_LIST_KEY);
+});
 
 const tasksList = computed<TaskRow[] | null>(() => {
   const e = live.entry(TASKS_LIST_KEY);
   if (!e?.data) return null;
-  const d = e.data as { ok?: boolean; tasks?: TaskRow[] } | TaskRow[];
-  return Array.isArray(d) ? d : ((d as { tasks?: TaskRow[] }).tasks ?? null);
+  return e.data as TaskRow[];
+});
+
+const projectsList = computed<ProjectCard[] | null>(() => {
+  const e = live.entry(PROJECTS_LIST_KEY);
+  if (!e?.data) return null;
+  return e.data as ProjectCard[];
 });
 
 // Per-tab label: read headline from the per-id chain entry (task:<id>) that
@@ -37,7 +49,7 @@ function tabLabel(r: ResourceRef): string {
     const headline = data?.chain?.task?.headline;
     if (headline) return headline;
   }
-  return refLabel(r, tasksList.value);
+  return refLabel(r, tasksList.value, projectsList.value);
 }
 
 // ── Overflow detection ────────────────────────────────────────────────────────
@@ -198,7 +210,7 @@ function onDividerDrop(e: DragEvent): void {
           'ts-tab--preview': ws.meta[refKey(tab)]?.preview,
         }"
         :data-key="refKey(tab)"
-        :title="refTitle(tab, tasksList)"
+        :title="refTitle(tab, tasksList, projectsList)"
         role="tab"
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
@@ -255,7 +267,7 @@ function onDividerDrop(e: DragEvent): void {
           'ts-tab--preview': ws.meta[refKey(tab)]?.preview,
         }"
         :data-key="refKey(tab)"
-        :title="refTitle(tab, tasksList)"
+        :title="refTitle(tab, tasksList, projectsList)"
         role="tab"
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
@@ -339,6 +351,7 @@ function onDividerDrop(e: DragEvent): void {
   <TabOverflowSheet
     :open="overflowOpen"
     :tasks-list="tasksList"
+    :projects-list="projectsList"
     @close="overflowOpen = false"
   />
 </template>

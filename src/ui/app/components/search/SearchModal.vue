@@ -121,6 +121,13 @@ function openDoc(doc: KnowledgeDoc, side = false): void {
   if (!side) ks.close();
 }
 
+// Step 5: project chips in results open a project: tab, not the tasks page.
+function openProjectChip(slug: string, ev: MouseEvent): void {
+  ev.stopPropagation();
+  ws.open({ kind: "project", slug });
+  ks.close();
+}
+
 function onRowClick(doc: KnowledgeDoc, ev: MouseEvent): void {
   openDoc(doc, false);
   ev.stopPropagation();
@@ -267,7 +274,9 @@ function rerun(): void {
                 <span v-if="doc.doc_type" class="srch-chip srch-chip--type">{{ doc.doc_type }}</span>
                 <span v-if="doc.status" class="srch-chip">{{ doc.status }}</span>
                 <span v-if="doc.date" class="srch-chip">{{ doc.date }}</span>
-                <span v-if="doc.project" class="srch-chip srch-chip--project">{{ doc.project }}</span>
+                <button v-if="doc.project" class="srch-chip srch-chip--project srch-chip--btn"
+                  type="button" :title="`Open project: ${doc.project}`"
+                  @click.stop="openProjectChip(doc.project as string, $event)">{{ doc.project }}</button>
                 <span v-if="doc.why" class="srch-chip srch-chip--why">{{ doc.why }}</span>
               </div>
               <div v-if="doc.snippet" class="srch-snippet" v-html="highlight(doc.snippet as string, draftQuery)" />
@@ -312,7 +321,9 @@ function rerun(): void {
                 <span v-if="doc.doc_type" class="srch-chip srch-chip--type">{{ doc.doc_type }}</span>
                 <span v-if="doc.status" class="srch-chip">{{ doc.status }}</span>
                 <span v-if="doc.date" class="srch-chip">{{ doc.date }}</span>
-                <span v-if="doc.project" class="srch-chip srch-chip--project">{{ doc.project }}</span>
+                <button v-if="doc.project" class="srch-chip srch-chip--project srch-chip--btn"
+                  type="button" :title="`Open project: ${doc.project}`"
+                  @click.stop="openProjectChip(doc.project as string, $event)">{{ doc.project }}</button>
                 <span v-if="doc.why" class="srch-chip srch-chip--why">{{ doc.why }}</span>
               </div>
               <div v-if="doc.snippet" class="srch-snippet" v-html="highlight(doc.snippet as string, draftQuery)" />

@@ -96,8 +96,10 @@ async function resetWorkspace(page) {
       .filter((k) => k.startsWith("workspace."))
       .forEach((k) => localStorage.removeItem(k));
   });
-  await page.reload({ waitUntil: "networkidle" });
-  await page.waitForTimeout(400);
+  // "load" instead of "networkidle": the SSE connection is already open on a
+  // reused page, so networkidle never fires (SSE keeps 1 active connection).
+  await page.reload({ waitUntil: "load" });
+  await page.waitForTimeout(500);
 }
 
 // Open the Files legacy page and wait for the file list to populate.

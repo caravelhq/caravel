@@ -26,12 +26,12 @@ import { listDirectory, readFileContent, isMarkdown, listBranchesForPath, isImag
 import { SIDECARS_DIR } from "./constants";
 import { peekThreadSession, listThreadSessions } from "../sessionManager";
 import { listAgents } from "../agents";
-import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain, computeAttentionTiers, type AttentionTiers } from "./services/multiAgent";
+import { getMultiAgentSummary, listTasks, listScheduledTemplates, getTaskChain, computeAttentionTiers, invalidateArchiveCache, type AttentionTiers } from "./services/multiAgent";
 import { createTask, unblockTask, resumeTask, revisitTask, spawnNextTask, closeTask, reopenTask, renameTask, setTaskProject, abortTask, createScheduledTemplate, setScheduledTemplateEnabled, deleteScheduledTemplate, patchScheduledTemplate } from "./services/multiAgentDispatch";
 import { listProjects, listProjectsWithCounts, getProjectSummary, createProject } from "./services/projects";
 import { transcribeAudioToText, warmupWhisperAssets } from "../whisper";
 import { getSettings, reloadSettings } from "../config";
-import { startLive, handleLiveRoute, handleLiveConnectionsRoute, setAttentionInvalidator } from "./live";
+import { startLive, handleLiveRoute, handleLiveConnectionsRoute, setAttentionInvalidator, setArchiveInvalidator } from "./live";
 import { BridgeKnowledge, startKnowledgeReindex } from "./knowledge";
 
 type OnChatFn = NonNullable<StartWebUiOptions["onChat"]>;
@@ -299,9 +299,10 @@ async function ensureChatProcessor(chatId: string, onChat: OnChatFn): Promise<vo
 export function startWebUi(opts: StartWebUiOptions): WebServerHandle {
   if (opts.onChat) registeredOnChat = opts.onChat;
 
-  // Wire the attention-cache invalidator so fs.watch events clear stale cache
-  // before the SSE event reaches the browser.
+  // Wire cache invalidators so fs.watch events clear stale caches before the
+  // SSE event reaches the browser.
   setAttentionInvalidator(invalidateAttentionCache);
+  setArchiveInvalidator(invalidateArchiveCache);
 
   // Start filesystem watchers for the live SSE channel.
   const stopLive = startLive(process.cwd());
