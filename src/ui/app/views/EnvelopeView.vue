@@ -84,12 +84,10 @@ function initSubView(): void {
 }
 
 let hasAutoSwitched = false;
-let reportRawText: string | null = null;
 
 function setSubView(view: "task" | "report"): void {
   subView.value = view;
   tasks.subViewMemory.set(taskId.value, view);
-  ui.raText = view === "report" ? reportRawText : null;
 }
 
 // Re-run on first chain data (auto-switch to report if reportPath and not yet switched)
@@ -109,8 +107,7 @@ onMounted(() => {
 });
 
 onActivated(() => {
-  // F14: restore raText when returning to a cached envelope tab (step 1 only cleared it).
-  if (subView.value === "report") ui.raText = reportRawText;
+  // DocViewer manages raText for file: views; envelope report raText handled by DocViewer.
 });
 
 onDeactivated(() => {
@@ -134,11 +131,6 @@ function onOpenFile(ev: MouseEvent): void {
 
 function onActionDone(_action: string, _taskId: string): void {
   // The live topic subscription will refresh the task data automatically.
-}
-
-function onReportRawText(text: string | null): void {
-  reportRawText = text;
-  if (subView.value === "report") ui.raText = text;
 }
 </script>
 
@@ -190,10 +182,7 @@ function onReportRawText(text: string | null): void {
 
     <!-- Report pane -->
     <div v-else class="ev-pane">
-      <ReportPane
-        :task="task"
-        @raw-text="onReportRawText"
-      />
+      <ReportPane :task="task" />
     </div>
 
   </div>

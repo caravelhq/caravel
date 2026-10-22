@@ -75,27 +75,42 @@ export function createBulkBar(
   const bar = document.createElement("div");
   bar.className = "tasks-bulk-bar";
   bar.hidden = true;
-  bar.innerHTML =
-    '<span class="bulk-bar-count"></span>' +
-    '<input type="text" class="bulk-bar-reason" placeholder="Shared reason (optional)…">' +
-    '<button type="button" class="bulk-bar-close is-primary"></button>' +
-    '<button type="button" class="bulk-bar-clear">Clear</button>' +
-    '<button type="button" class="bulk-bar-done">Done</button>' +
-    '<span class="bulk-bar-status"></span>';
 
-  const closeBtn = bar.querySelector<HTMLButtonElement>(".bulk-bar-close");
-  const clearBtn = bar.querySelector<HTMLButtonElement>(".bulk-bar-clear");
-  const doneBtn = bar.querySelector<HTMLButtonElement>(".bulk-bar-done");
-  const statusEl = bar.querySelector<HTMLElement>(".bulk-bar-status");
-  const reasonEl = bar.querySelector<HTMLInputElement>(".bulk-bar-reason");
+  const countEl = document.createElement("span");
+  countEl.className = "bulk-bar-count";
+
+  const reasonEl = document.createElement("input");
+  reasonEl.type = "text";
+  reasonEl.className = "bulk-bar-reason";
+  reasonEl.placeholder = "Shared reason (optional)…";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.type = "button";
+  closeBtn.className = "bulk-bar-close is-primary";
+
+  const clearBtn = document.createElement("button");
+  clearBtn.type = "button";
+  clearBtn.className = "bulk-bar-clear";
+  clearBtn.textContent = "Clear";
+
+  const doneBtn = document.createElement("button");
+  doneBtn.type = "button";
+  doneBtn.className = "bulk-bar-done";
+  doneBtn.textContent = "Done";
+
+  const statusEl = document.createElement("span");
+  statusEl.className = "bulk-bar-status";
+
+  bar.append(countEl, reasonEl, closeBtn, clearBtn, doneBtn, statusEl);
 
   async function submitBulkClose() {
     const selected = getBulkSelected();
     const ids = Object.keys(selected);
     if (ids.length === 0) return;
-    const reason = (reasonEl ? reasonEl.value : "").trim();
-    if (closeBtn) closeBtn.disabled = true;
-    if (statusEl) { statusEl.textContent = "Closing…"; statusEl.className = "bulk-bar-status"; }
+    const reason = reasonEl.value.trim();
+    closeBtn.disabled = true;
+    statusEl.textContent = "Closing…";
+    statusEl.className = "bulk-bar-status";
     let closed = 0, failed = 0;
     for (const id of ids) {
       const sel = selected[id];
@@ -112,19 +127,17 @@ export function createBulkBar(
       } catch (_) { failed++; }
     }
     clearSelection();
-    if (statusEl) {
-      statusEl.textContent = failed > 0
-        ? "Closed " + closed + " · " + failed + " failed."
-        : "Closed " + closed + ".";
-      statusEl.className = "bulk-bar-status is-ok";
-    }
-    if (closeBtn) closeBtn.disabled = false;
+    statusEl.textContent = failed > 0
+      ? "Closed " + closed + " · " + failed + " failed."
+      : "Closed " + closed + ".";
+    statusEl.className = "bulk-bar-status is-ok";
+    closeBtn.disabled = false;
     fetchTasks();
   }
 
-  if (closeBtn) closeBtn.addEventListener("click", submitBulkClose);
-  if (clearBtn) clearBtn.addEventListener("click", () => { clearSelection(); rerenderPicker(); });
-  if (doneBtn) doneBtn.addEventListener("click", () => {
+  closeBtn.addEventListener("click", submitBulkClose);
+  clearBtn.addEventListener("click", () => { clearSelection(); rerenderPicker(); });
+  doneBtn.addEventListener("click", () => {
     setMultiSelectActive(false);
     clearSelection();
     tasksTreeEl.classList.remove("is-multiselect-active");
@@ -141,14 +154,11 @@ export function createBulkBar(
       return;
     }
     bar.hidden = false;
-    const countEl = bar.querySelector<HTMLElement>(".bulk-bar-count");
-    if (countEl) countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
-    if (closeBtn) {
-      closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
-      closeBtn.hidden = ids.length === 0;
-    }
-    if (clearBtn) clearBtn.hidden = ids.length === 0;
-    if (statusEl) statusEl.textContent = "";
+    countEl.textContent = ids.length > 0 ? ids.length + " selected" : "Select tasks";
+    closeBtn.textContent = ids.length > 0 ? "Close selected (" + ids.length + ")" : "";
+    closeBtn.hidden = ids.length === 0;
+    clearBtn.hidden = ids.length === 0;
+    statusEl.textContent = "";
   }
 
   (bar as unknown as HTMLElement & { update: () => void }).update = updateBar;

@@ -1,43 +1,51 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
-import { renderReportPane, loadReportNode } from "../pages/tasks/viewer";
+// ReportPane — renders a task's report as a component, no innerHTML.
+// Markdown goes through DocViewer (DEC-0033 / F1).
+// Secondary deliverables open as file: tabs via ReportDocTabs rather than swapping
+// in place (F2). The pane always shows task.reportPath; the tab row marks it active.
+
+import { computed } from "vue";
 import type { TaskRow } from "../stores/tasks";
+import DocViewer from "../components/doc/DocViewer.vue";
+import ReportDocTabs from "../components/tasks/ReportDocTabs.vue";
 
 const props = defineProps<{
   task: TaskRow | null;
 }>();
 
-const emit = defineEmits<{ (e: "raw-text", text: string | null): void }>();
+// The path currently shown in the pane — always the primary report.
+const activePath = computed((): string => props.task?.reportPath ?? "");
 
-const paneEl = ref<HTMLElement | null>(null);
-
-function render(): void {
-  const el = paneEl.value;
-  if (!el) return;
+const allPaths = computed((): string[] => {
   const t = props.task;
-  if (!t?.reportPath) {
-    el.innerHTML = '<div class="task-panel-loading">No report yet for this task.</div>';
-    emit("raw-text", null);
-    return;
+  if (!t?.reportPath) return [];
+  const paths: string[] = [t.reportPath];
+  for (const d of (t.deliverables ?? [])) {
+    if (d && !paths.includes(d)) paths.push(d);
   }
-  el.innerHTML = renderReportPane(t);
-  el.querySelectorAll<HTMLElement>(".task-panel-report").forEach((rn) => {
-    loadReportNode(rn, (rawText) => emit("raw-text", rawText));
-  });
-}
-
-watch(() => props.task?.reportPath, () => render(), { flush: "post" });
-onMounted(render);
+  return paths;
+});
 </script>
 
 <template>
-  <div ref="paneEl" class="ev-report-pane"></div>
+  <div class="ev-report-pane">
+    <div v-if="!task?.reportPath" class="task-panel-loading">No report yet for this task.</div>
+    <template v-else>
+      <ReportDocTabs
+        v-if="allPaths.length > 1"
+        :paths="allPaths"
+        :active-path="activePath"
+      />
+      <DocViewer :path="activePath" kind="report" />
+    </template>
+  </div>
 </template>
 
 <style scoped>
 .ev-report-pane {
   flex: 1;
-  overflow-y: auto;
-  padding: 8px 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 </style>
