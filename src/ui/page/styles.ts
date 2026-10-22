@@ -3792,6 +3792,13 @@ export const pageStyles = String.raw`    :root {
     .task-tree-status.is-done { color: #93e0a8; }
     .task-tree-status.is-failed { color: #ff9a9a; }
     .task-tree-headline {
+      /* WAL-137: the headline is the last grid item and used to land in column 1 of
+         an implicit second row, where it both sized that column (shoving the
+         marker/id/status ~150px to the right) and was itself clamped to ~144px of a
+         342px row, so the title truncated. Spanning every column puts it on its own
+         full-width line and lets column 1 collapse back to the indent. */
+      grid-column: 1 / -1;
+      min-width: 0;
       color: #b8cae3;
       font-family: "Space Grotesk", system-ui, sans-serif;
       font-size: 12px;
