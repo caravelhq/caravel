@@ -1,6 +1,6 @@
 <template>
   <div id="tasks-panel" class="tasks-panel">
-    <div class="tasks-view-tabs" id="tasks-view-tabs" role="tablist" aria-label="Tasks view">
+    <div class="tasks-view-tabs" id="tasks-view-tabs" role="tablist" aria-label="Open panel view">
       <button
         type="button"
         class="tasks-view-tab"
@@ -18,7 +18,7 @@
         role="tab"
         :aria-selected="tasksStore.view === 'all' ? 'true' : 'false'"
         @click="setView('all')"
-      >All</button>
+      >Tasks</button>
     </div>
     <div class="tasks-toolbar">
       <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">

@@ -17055,8 +17055,11 @@ function refLabel(ref2, tasksList, projectsList) {
       return "Dashboard";
     case "file":
       return ref2.path.split("/").pop() || ref2.path;
+    // WAL-138: the tasks picker is the "Open" panel — it will house Chat (Phase 5)
+    // and Files (Phase 6) as sub-tabs beside Projects | Tasks. Chat and Files keep
+    // their own labels until they migrate.
     case "legacy":
-      return ref2.page.charAt(0).toUpperCase() + ref2.page.slice(1);
+      return ref2.page === "tasks" ? "Open" : ref2.page.charAt(0).toUpperCase() + ref2.page.slice(1);
     case "project": {
       const card = projectsList == null ? void 0 : projectsList.find((p2) => p2.slug === ref2.slug);
       return (card == null ? void 0 : card.title) || ref2.slug;
@@ -17180,8 +17183,12 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           type: "button",
           "aria-haspopup": "true",
           "aria-expanded": isOpen.value,
+          "aria-label": "Open menu",
+          title: "Open",
           onClick: toggle
-        }, "Open ▾", 8, _hoisted_1$p),
+        }, [..._cache[5] || (_cache[5] = [
+          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="22" height="18" fill="none" aria-hidden="true" data-v-f33ea258><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-f33ea258></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-f33ea258></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-f33ea258></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-f33ea258></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-f33ea258></path></svg>', 1)
+        ])], 8, _hoisted_1$p),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
             key: 0,
@@ -17193,7 +17200,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             onClick: _cache[4] || (_cache[4] = withModifiers(() => {
             }, ["stop"]))
           }, [
-            _cache[9] || (_cache[9] = createBaseVNode("div", {
+            _cache[10] || (_cache[10] = createBaseVNode("div", {
               class: "om-section-label",
               "data-section": "pickers"
             }, "Pickers", -1)),
@@ -17210,7 +17217,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: _cache[0] || (_cache[0] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
-            }, "Tasks"),
+            }, "Open"),
             createBaseVNode("button", {
               id: "tab-chat",
               class: "open-menu-item",
@@ -17233,8 +17240,8 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               onClick: _cache[3] || (_cache[3] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
             }, "Projects"),
             unref(ws).recents.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-              _cache[5] || (_cache[5] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
-              _cache[6] || (_cache[6] = createBaseVNode("div", {
+              _cache[6] || (_cache[6] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+              _cache[7] || (_cache[7] = createBaseVNode("div", {
                 class: "om-section-label",
                 "data-section": "recents"
               }, "Recents", -1)),
@@ -17252,8 +17259,8 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 ], 8, _hoisted_2$k);
               }), 128))
             ], 64)) : createCommentVNode("", true),
-            _cache[10] || (_cache[10] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
-            _cache[11] || (_cache[11] = createBaseVNode("div", {
+            _cache[11] || (_cache[11] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[12] || (_cache[12] = createBaseVNode("div", {
               class: "om-section-label",
               "data-section": "actions"
             }, "Actions", -1)),
@@ -17262,7 +17269,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openSearch
-            }, [..._cache[7] || (_cache[7] = [
+            }, [..._cache[8] || (_cache[8] = [
               createTextVNode("Search ", -1),
               createBaseVNode("kbd", null, "⌘K", -1)
             ])]),
@@ -17271,7 +17278,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openNewTask
-            }, [..._cache[8] || (_cache[8] = [
+            }, [..._cache[9] || (_cache[9] = [
               createTextVNode("New task ", -1),
               createBaseVNode("kbd", null, "N", -1)
             ])])
@@ -17281,7 +17288,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-765dac3d"]]);
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-f33ea258"]]);
 const _hoisted_1$o = {
   key: 0,
   class: "tos-group-label"
@@ -24800,7 +24807,7 @@ const _hoisted_2$5 = {
   class: "tasks-view-tabs",
   id: "tasks-view-tabs",
   role: "tablist",
-  "aria-label": "Tasks view"
+  "aria-label": "Open panel view"
 };
 const _hoisted_3$5 = ["aria-selected"];
 const _hoisted_4$4 = ["aria-selected"];
@@ -24896,7 +24903,7 @@ const _sfc_main$9 = /* @__PURE__ */ defineComponent({
             role: "tab",
             "aria-selected": unref(tasksStore).view === "all" ? "true" : "false",
             onClick: _cache[1] || (_cache[1] = ($event) => setView("all"))
-          }, "All", 10, _hoisted_4$4)
+          }, "Tasks", 10, _hoisted_4$4)
         ]),
         createBaseVNode("div", _hoisted_5$3, [
           createBaseVNode("div", _hoisted_6$3, [
