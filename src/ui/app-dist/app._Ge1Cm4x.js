@@ -14759,9 +14759,9 @@ const _hoisted_6$j = {
   class: "hb-status",
   id: "hb-modal-status"
 };
-const _hoisted_7$g = { class: "hb-buttons" };
-const _hoisted_8$f = ["disabled"];
-const _hoisted_9$e = ["disabled"];
+const _hoisted_7$h = { class: "hb-buttons" };
+const _hoisted_8$g = ["disabled"];
+const _hoisted_9$f = ["disabled"];
 const _sfc_main$B = /* @__PURE__ */ defineComponent({
   __name: "HeartbeatBar",
   setup(__props) {
@@ -14875,20 +14875,20 @@ const _sfc_main$B = /* @__PURE__ */ defineComponent({
             ]),
             createBaseVNode("div", _hoisted_5$j, [
               createBaseVNode("div", _hoisted_6$j, toDisplayString(status.value), 1),
-              createBaseVNode("div", _hoisted_7$g, [
+              createBaseVNode("div", _hoisted_7$h, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
                   id: "hb-cancel-btn",
                   type: "button",
                   disabled: busy.value,
                   onClick: close
-                }, "Cancel", 8, _hoisted_8$f),
+                }, "Cancel", 8, _hoisted_8$g),
                 createBaseVNode("button", {
                   class: "hb-btn solid",
                   id: "hb-save-btn",
                   type: "submit",
                   disabled: busy.value
-                }, "Save", 8, _hoisted_9$e)
+                }, "Save", 8, _hoisted_9$f)
               ])
             ])
           ], 32)
@@ -14907,9 +14907,9 @@ const _hoisted_3$o = { class: "audio-player-resume-msg" };
 const _hoisted_4$k = { class: "audio-player-resume-btns" };
 const _hoisted_5$i = { class: "audio-player-progress" };
 const _hoisted_6$i = { class: "audio-player-bar-wrap" };
-const _hoisted_7$f = { class: "audio-player-counter" };
-const _hoisted_8$e = { class: "audio-player-transcript" };
-const _hoisted_9$d = ["data-idx", "onClick"];
+const _hoisted_7$g = { class: "audio-player-counter" };
+const _hoisted_8$f = { class: "audio-player-transcript" };
+const _hoisted_9$e = ["data-idx", "onClick"];
 const _hoisted_10$c = { class: "audio-player-controls" };
 const _hoisted_11$c = ["disabled"];
 const _hoisted_12$c = ["disabled"];
@@ -14962,16 +14962,16 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                     style: normalizeStyle({ width: progressPct.value + "%" })
                   }, null, 4)
                 ]),
-                createBaseVNode("div", _hoisted_7$f, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
+                createBaseVNode("div", _hoisted_7$g, toDisplayString(current.value + 1) + " / " + toDisplayString(total.value), 1)
               ]),
-              createBaseVNode("div", _hoisted_8$e, [
+              createBaseVNode("div", _hoisted_8$f, [
                 (openBlock(true), createElementBlock(Fragment, null, renderList(unref(ui).raChunks, (chunk, i) => {
                   return openBlock(), createElementBlock("p", {
                     key: i,
                     class: normalizeClass(["audio-transcript-line", { "audio-transcript-active": i === current.value }]),
                     "data-idx": i,
                     onClick: ($event) => unref(ui).raSkipTo(i)
-                  }, toDisplayString(chunk), 11, _hoisted_9$d);
+                  }, toDisplayString(chunk), 11, _hoisted_9$e);
                 }), 128))
               ])
             ], 64)) : createCommentVNode("", true),
@@ -15444,7 +15444,7 @@ const _hoisted_6$h = {
   key: 2,
   class: "fa-solid fa-headphones"
 };
-const _hoisted_7$e = ["hidden"];
+const _hoisted_7$f = ["hidden"];
 const _sfc_main$y = /* @__PURE__ */ defineComponent({
   __name: "GlobalSpeaker",
   setup(__props) {
@@ -15515,7 +15515,7 @@ const _sfc_main$y = /* @__PURE__ */ defineComponent({
           onClick: toggleSpeaker
         }, [..._cache[3] || (_cache[3] = [
           createBaseVNode("i", { class: "fa-solid fa-volume-xmark" }, null, -1)
-        ])], 8, _hoisted_7$e)
+        ])], 8, _hoisted_7$f)
       ], 64);
     };
   }
@@ -15762,9 +15762,9 @@ const _hoisted_6$g = {
   id: "dock",
   "aria-live": "polite"
 };
-const _hoisted_7$d = { id: "dock-pills" };
-const _hoisted_8$d = { class: "pill-label" };
-const _hoisted_9$c = { class: "pill-icon" };
+const _hoisted_7$e = { id: "dock-pills" };
+const _hoisted_8$e = { class: "pill-label" };
+const _hoisted_9$d = { class: "pill-icon" };
 const _hoisted_10$b = { class: "pill-value" };
 const _hoisted_11$b = {
   class: "side-bubble",
@@ -15869,14 +15869,14 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
           createVNode(_sfc_main$y),
           _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
           createVNode(_sfc_main$z),
-          createBaseVNode("div", _hoisted_7$d, [
+          createBaseVNode("div", _hoisted_7$e, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(pills.value, (pill) => {
               return openBlock(), createElementBlock("div", {
                 key: pill.label,
                 class: normalizeClass(["pill", pill.cls])
               }, [
-                createBaseVNode("div", _hoisted_8$d, [
-                  createBaseVNode("span", _hoisted_9$c, toDisplayString(pill.icon), 1),
+                createBaseVNode("div", _hoisted_8$e, [
+                  createBaseVNode("span", _hoisted_9$d, toDisplayString(pill.icon), 1),
                   createTextVNode(toDisplayString(pill.label), 1)
                 ]),
                 createBaseVNode("div", _hoisted_10$b, toDisplayString(pill.value), 1)
@@ -16410,9 +16410,9 @@ const _hoisted_3$k = {
 const _hoisted_4$g = { class: "vtc-field" };
 const _hoisted_5$f = { class: "vtc-row" };
 const _hoisted_6$f = { class: "vtc-field" };
-const _hoisted_7$c = ["value"];
-const _hoisted_8$c = { class: "vtc-field" };
-const _hoisted_9$b = ["value"];
+const _hoisted_7$d = ["value"];
+const _hoisted_8$d = { class: "vtc-field" };
+const _hoisted_9$c = ["value"];
 const _hoisted_10$a = { class: "vtc-field" };
 const _hoisted_11$a = { class: "vtc-field" };
 const _hoisted_12$a = { class: "vtc-field" };
@@ -16848,13 +16848,13 @@ User's voice request: "${userText}"`;
                     return createBaseVNode("option", {
                       key: p2,
                       value: p2
-                    }, toDisplayString(p2), 9, _hoisted_7$c);
+                    }, toDisplayString(p2), 9, _hoisted_7$d);
                   }), 64))
                 ], 512), [
                   [vModelSelect, draftPriority.value]
                 ])
               ]),
-              createBaseVNode("div", _hoisted_8$c, [
+              createBaseVNode("div", _hoisted_8$d, [
                 _cache[11] || (_cache[11] = createBaseVNode("label", {
                   class: "vtc-label",
                   for: "vtc-kind"
@@ -16868,7 +16868,7 @@ User's voice request: "${userText}"`;
                     return createBaseVNode("option", {
                       key: k,
                       value: k
-                    }, toDisplayString(k), 9, _hoisted_9$b);
+                    }, toDisplayString(k), 9, _hoisted_9$c);
                   }), 64))
                 ], 512), [
                   [vModelSelect, draftKind.value]
@@ -17291,9 +17291,9 @@ const _hoisted_3$i = ["title"];
 const _hoisted_4$f = { class: "tos-row-actions" };
 const _hoisted_5$e = ["title", "onClick"];
 const _hoisted_6$e = ["onClick"];
-const _hoisted_7$b = ["onClick"];
-const _hoisted_8$b = { class: "tos-glyph" };
-const _hoisted_9$a = ["title"];
+const _hoisted_7$c = ["onClick"];
+const _hoisted_8$c = { class: "tos-glyph" };
+const _hoisted_9$b = ["title"];
 const _hoisted_10$9 = { class: "tos-row-actions" };
 const _hoisted_11$9 = ["title", "onClick"];
 const _hoisted_12$9 = ["onClick"];
@@ -17367,7 +17367,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
                 class: "tos-row-activate",
                 type: "button",
                 onClick: ($event) => activateAndClose(tab, 0)
-              }, null, 8, _hoisted_7$b)
+              }, null, 8, _hoisted_7$c)
             ], 2);
           }), 128)),
           hasSplit.value && group1.value.length ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
@@ -17378,11 +17378,11 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
                 key: unref(refKey)(tab),
                 class: normalizeClass(["tos-row", { "tos-row--active": unref(ws).active[0] === unref(refKey)(tab) || unref(ws).active[1] === unref(refKey)(tab) }])
               }, [
-                createBaseVNode("span", _hoisted_8$b, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", _hoisted_8$c, toDisplayString(unref(refGlyph)(tab)), 1),
                 createBaseVNode("span", {
                   class: "tos-label",
                   title: unref(refTitle)(tab, props.tasksList)
-                }, toDisplayString(unref(refLabel)(tab, props.tasksList)), 9, _hoisted_9$a),
+                }, toDisplayString(unref(refLabel)(tab, props.tasksList)), 9, _hoisted_9$b),
                 createBaseVNode("div", _hoisted_10$9, [
                   createBaseVNode("button", {
                     class: "tos-btn",
@@ -17418,9 +17418,9 @@ const _hoisted_3$h = { class: "ts-tab-glyph" };
 const _hoisted_4$e = { class: "ts-tab-label" };
 const _hoisted_5$d = ["onClick"];
 const _hoisted_6$d = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_7$a = { class: "ts-tab-glyph" };
-const _hoisted_8$a = { class: "ts-tab-label" };
-const _hoisted_9$9 = ["onClick"];
+const _hoisted_7$b = { class: "ts-tab-glyph" };
+const _hoisted_8$b = { class: "ts-tab-label" };
+const _hoisted_9$a = ["onClick"];
 const _hoisted_10$8 = { class: "ts-actions" };
 const _hoisted_11$8 = {
   key: 0,
@@ -17682,8 +17682,8 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
-                createBaseVNode("span", _hoisted_7$a, toDisplayString(unref(refGlyph)(tab)), 1),
-                createBaseVNode("span", _hoisted_8$a, toDisplayString(tabLabel(tab)), 1),
+                createBaseVNode("span", _hoisted_7$b, toDisplayString(unref(refGlyph)(tab)), 1),
+                createBaseVNode("span", _hoisted_8$b, toDisplayString(tabLabel(tab)), 1),
                 !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
                   key: 0,
                   class: "ts-tab-close",
@@ -17691,7 +17691,7 @@ const _sfc_main$r = /* @__PURE__ */ defineComponent({
                   tabindex: "-1",
                   "aria-label": "Close tab",
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_9$9)) : createCommentVNode("", true)
+                }, "×", 8, _hoisted_9$a)) : createCommentVNode("", true)
               ], 42, _hoisted_6$d);
             }), 128))
           ], 2),
@@ -18624,10 +18624,16 @@ function countActiveDescendants(taskId, cache) {
 }
 const _hoisted_1$k = ["role", "tabindex", "title", "data-task-id", "onKeydown"];
 const _hoisted_2$g = ["checked", "data-task-id", "aria-label"];
-const _hoisted_3$f = { class: "task-tree-marker" };
-const _hoisted_4$d = { class: "task-tree-id" };
-const _hoisted_5$c = { class: "task-tree-agent" };
-const _hoisted_6$c = { class: "task-tree-headline" };
+const _hoisted_3$f = ["aria-label", "aria-expanded"];
+const _hoisted_4$d = {
+  key: 2,
+  class: "task-tree-marker"
+};
+const _hoisted_5$c = { class: "task-tree-body" };
+const _hoisted_6$c = { class: "task-tree-meta" };
+const _hoisted_7$a = { class: "task-tree-id" };
+const _hoisted_8$a = { class: "task-tree-agent" };
+const _hoisted_9$9 = { class: "task-tree-headline" };
 const _sfc_main$o = /* @__PURE__ */ defineComponent({
   __name: "TaskRow",
   props: {
@@ -18638,9 +18644,11 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
     selectable: { type: Boolean },
     checked: { type: Boolean },
     defaultStatus: {},
-    shortId: { type: Boolean }
+    shortId: { type: Boolean },
+    hasChildren: { type: Boolean },
+    isExpanded: { type: Boolean }
   },
-  emits: ["open", "select"],
+  emits: ["open", "select", "toggle"],
   setup(__props, { emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -18683,14 +18691,25 @@ const _sfc_main$o = /* @__PURE__ */ defineComponent({
           class: "task-tree-indent",
           style: normalizeStyle({ width: indent.value + "px" })
         }, null, 4),
-        createBaseVNode("span", _hoisted_3$f, toDisplayString(__props.marker ?? "●"), 1),
-        createBaseVNode("span", _hoisted_4$d, toDisplayString(displayId.value), 1),
-        createBaseVNode("span", _hoisted_5$c, toDisplayString(__props.task.agent ?? __props.task.to ?? "?"), 1),
-        __props.task.status ? (openBlock(), createElementBlock("span", {
+        __props.hasChildren ? (openBlock(), createElementBlock("button", {
           key: 1,
-          class: normalizeClass(["task-tree-status", unref(statusClass)(__props.task.status)])
-        }, toDisplayString(__props.task.status), 3)) : createCommentVNode("", true),
-        createBaseVNode("span", _hoisted_6$c, toDisplayString((__props.task.headline ?? __props.task.brief ?? __props.task.label ?? "").slice(0, 120)), 1)
+          type: "button",
+          class: normalizeClass(["tasks-tree-chevron", { "is-expanded": __props.isExpanded }]),
+          "aria-label": __props.isExpanded ? "Collapse" : "Expand",
+          "aria-expanded": __props.isExpanded ? "true" : "false",
+          onClick: _cache[1] || (_cache[1] = withModifiers(($event) => emit2("toggle", __props.task.id), ["stop"]))
+        }, toDisplayString(__props.isExpanded ? "▾" : "▸"), 11, _hoisted_3$f)) : (openBlock(), createElementBlock("span", _hoisted_4$d, toDisplayString(__props.marker ?? "●"), 1)),
+        createBaseVNode("div", _hoisted_5$c, [
+          createBaseVNode("div", _hoisted_6$c, [
+            createBaseVNode("span", _hoisted_7$a, toDisplayString(displayId.value), 1),
+            createBaseVNode("span", _hoisted_8$a, toDisplayString(__props.task.agent ?? __props.task.to ?? "?"), 1),
+            __props.task.status ? (openBlock(), createElementBlock("span", {
+              key: 0,
+              class: normalizeClass(["task-tree-status", unref(statusClass)(__props.task.status)])
+            }, toDisplayString(__props.task.status), 3)) : createCommentVNode("", true)
+          ]),
+          createBaseVNode("div", _hoisted_9$9, toDisplayString((__props.task.headline ?? __props.task.brief ?? __props.task.label ?? "").slice(0, 120)), 1)
+        ])
       ], 42, _hoisted_1$k);
     };
   }
@@ -19577,8 +19596,8 @@ const _hoisted_23$4 = {
   class: "ev-form ev-form-danger",
   "data-ev-form": "abort"
 };
-const _hoisted_24$4 = ["disabled"];
-const _hoisted_25$4 = { class: "ev-form-actions" };
+const _hoisted_24$3 = ["disabled"];
+const _hoisted_25$3 = { class: "ev-form-actions" };
 const _hoisted_26$3 = ["disabled"];
 const _hoisted_27$3 = {
   key: 0,
@@ -20068,10 +20087,10 @@ const _sfc_main$g = /* @__PURE__ */ defineComponent({
             rows: "2",
             placeholder: "Optional reason…",
             disabled: abortLoading.value
-          }, null, 8, _hoisted_24$4), [
+          }, null, 8, _hoisted_24$3), [
             [vModelText, abortReason.value]
           ]),
-          createBaseVNode("div", _hoisted_25$4, [
+          createBaseVNode("div", _hoisted_25$3, [
             createBaseVNode("button", {
               type: "button",
               class: "ev-action-btn is-danger",
@@ -24503,45 +24522,40 @@ const _hoisted_7$4 = {
   key: 0,
   class: "tasks-current-group-body"
 };
-const _hoisted_8$4 = ["onClick", "aria-label"];
-const _hoisted_9$3 = {
-  key: 1,
-  class: "tasks-tree-chevron-spacer"
-};
-const _hoisted_10$3 = {
+const _hoisted_8$4 = {
   key: 0,
   class: "tasks-loading"
 };
-const _hoisted_11$3 = {
+const _hoisted_9$3 = {
   key: 1,
   class: "tasks-current-empty"
 };
-const _hoisted_12$3 = {
+const _hoisted_10$3 = {
   key: 2,
   class: "tasks-projects-grid"
 };
-const _hoisted_13$3 = ["data-project-slug", "onClick", "onKeydown"];
-const _hoisted_14$3 = { class: "tasks-project-card-head" };
-const _hoisted_15$3 = { class: "tasks-project-card-name" };
-const _hoisted_16$3 = {
+const _hoisted_11$3 = ["data-project-slug", "onClick", "onKeydown"];
+const _hoisted_12$3 = { class: "tasks-project-card-head" };
+const _hoisted_13$3 = { class: "tasks-project-card-name" };
+const _hoisted_14$3 = {
   key: 0,
   class: "tasks-project-card-jira"
 };
-const _hoisted_17$3 = {
+const _hoisted_15$3 = {
   key: 1,
   class: "tasks-project-card-status"
 };
-const _hoisted_18$3 = {
+const _hoisted_16$3 = {
   key: 0,
   class: "tasks-project-card-slug"
 };
-const _hoisted_19$3 = { class: "tasks-project-card-counts" };
-const _hoisted_20$3 = { class: "count count-active" };
-const _hoisted_21$3 = { class: "count count-done" };
-const _hoisted_22$3 = { class: "count count-stuck" };
-const _hoisted_23$3 = { class: "count count-closed" };
-const _hoisted_24$3 = { class: "tasks-project-card-foot" };
-const _hoisted_25$3 = { class: "tasks-project-card-touched" };
+const _hoisted_17$3 = { class: "tasks-project-card-counts" };
+const _hoisted_18$3 = { class: "count count-active" };
+const _hoisted_19$3 = { class: "count count-done" };
+const _hoisted_20$3 = { class: "count count-stuck" };
+const _hoisted_21$3 = { class: "count count-closed" };
+const _hoisted_22$3 = { class: "tasks-project-card-foot" };
+const _hoisted_23$3 = { class: "tasks-project-card-touched" };
 const _sfc_main$a = /* @__PURE__ */ defineComponent({
   __name: "TaskPickerTree",
   setup(__props) {
@@ -24719,39 +24733,31 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
               ], 8, _hoisted_4$5),
               !group.isCollapsed ? (openBlock(), createElementBlock("div", _hoisted_7$4, [
                 (openBlock(true), createElementBlock(Fragment, null, renderList(group.rows, (flatRow) => {
-                  return openBlock(), createElementBlock("div", {
+                  return openBlock(), createBlock(_sfc_main$o, {
                     key: flatRow.task.id,
-                    class: "tasks-tree-row-wrap"
-                  }, [
-                    flatRow.hasChildren ? (openBlock(), createElementBlock("button", {
-                      key: 0,
-                      type: "button",
-                      class: normalizeClass(["tasks-tree-chevron", { "is-expanded": flatRow.isExpanded }]),
-                      onClick: withModifiers(($event) => toggleExpand(flatRow.task.id), ["stop"]),
-                      "aria-label": flatRow.isExpanded ? "Collapse" : "Expand"
-                    }, toDisplayString(flatRow.isExpanded ? "▾" : "▸"), 11, _hoisted_8$4)) : (openBlock(), createElementBlock("span", _hoisted_9$3)),
-                    createVNode(_sfc_main$o, {
-                      task: flatRow.task,
-                      depth: flatRow.depth,
-                      marker: flatRow.marker,
-                      selectable: unref(tasksStore).multiSelectActive,
-                      checked: !!unref(tasksStore).bulkSelected[flatRow.task.id],
-                      "default-status": flatRow.task.status === "done" ? "closed" : "cancelled",
-                      "short-id": false,
-                      onOpen: openTask,
-                      onSelect: handleSelect
-                    }, null, 8, ["task", "depth", "marker", "selectable", "checked", "default-status"])
-                  ]);
+                    task: flatRow.task,
+                    depth: flatRow.depth,
+                    marker: flatRow.marker,
+                    "has-children": flatRow.hasChildren,
+                    "is-expanded": flatRow.isExpanded,
+                    selectable: unref(tasksStore).multiSelectActive,
+                    checked: !!unref(tasksStore).bulkSelected[flatRow.task.id],
+                    "default-status": flatRow.task.status === "done" ? "closed" : "cancelled",
+                    "short-id": false,
+                    onOpen: openTask,
+                    onSelect: handleSelect,
+                    onToggle: toggleExpand
+                  }, null, 8, ["task", "depth", "marker", "has-children", "is-expanded", "selectable", "checked", "default-status"]);
                 }), 128))
               ])) : createCommentVNode("", true)
             ], 10, _hoisted_3$6);
           }), 128))
         ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-          !unref(projectsStore).listLoaded ? (openBlock(), createElementBlock("div", _hoisted_10$3, "Loading projects…")) : projectCards.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_11$3, [..._cache[1] || (_cache[1] = [
+          !unref(projectsStore).listLoaded ? (openBlock(), createElementBlock("div", _hoisted_8$4, "Loading projects…")) : projectCards.value.length === 0 ? (openBlock(), createElementBlock("div", _hoisted_9$3, [..._cache[1] || (_cache[1] = [
             createTextVNode(" No projects yet. Tag a task with ", -1),
             createBaseVNode("code", null, "project: <slug>", -1),
             createTextVNode(". ", -1)
-          ])])) : (openBlock(), createElementBlock("div", _hoisted_12$3, [
+          ])])) : (openBlock(), createElementBlock("div", _hoisted_10$3, [
             (openBlock(true), createElementBlock(Fragment, null, renderList(projectCards.value, (card) => {
               var _a2, _b, _c, _d;
               return openBlock(), createElementBlock("div", {
@@ -24763,22 +24769,22 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
                 onClick: ($event) => openProject(card.slug),
                 onKeydown: withKeys(withModifiers(($event) => openProject(card.slug), ["prevent"]), ["enter"])
               }, [
-                createBaseVNode("div", _hoisted_14$3, [
-                  createBaseVNode("div", _hoisted_15$3, toDisplayString(card.title || card.slug || "(Unassigned)"), 1),
-                  card.jira ? (openBlock(), createElementBlock("span", _hoisted_16$3, toDisplayString(card.jira), 1)) : createCommentVNode("", true),
-                  card.status ? (openBlock(), createElementBlock("span", _hoisted_17$3, toDisplayString(card.status), 1)) : createCommentVNode("", true)
+                createBaseVNode("div", _hoisted_12$3, [
+                  createBaseVNode("div", _hoisted_13$3, toDisplayString(card.title || card.slug || "(Unassigned)"), 1),
+                  card.jira ? (openBlock(), createElementBlock("span", _hoisted_14$3, toDisplayString(card.jira), 1)) : createCommentVNode("", true),
+                  card.status ? (openBlock(), createElementBlock("span", _hoisted_15$3, toDisplayString(card.status), 1)) : createCommentVNode("", true)
                 ]),
-                card.slug && card.title ? (openBlock(), createElementBlock("div", _hoisted_18$3, toDisplayString(card.slug), 1)) : createCommentVNode("", true),
-                createBaseVNode("div", _hoisted_19$3, [
-                  createBaseVNode("span", _hoisted_20$3, toDisplayString(((_a2 = card.counts) == null ? void 0 : _a2.active) ?? 0) + " active", 1),
-                  createBaseVNode("span", _hoisted_21$3, toDisplayString(((_b = card.counts) == null ? void 0 : _b.doneNotClosed) ?? 0) + " done", 1),
-                  createBaseVNode("span", _hoisted_22$3, toDisplayString(((_c = card.counts) == null ? void 0 : _c.stuck) ?? 0) + " stuck", 1),
-                  createBaseVNode("span", _hoisted_23$3, toDisplayString(((_d = card.counts) == null ? void 0 : _d.closed) ?? 0) + " closed", 1)
+                card.slug && card.title ? (openBlock(), createElementBlock("div", _hoisted_16$3, toDisplayString(card.slug), 1)) : createCommentVNode("", true),
+                createBaseVNode("div", _hoisted_17$3, [
+                  createBaseVNode("span", _hoisted_18$3, toDisplayString(((_a2 = card.counts) == null ? void 0 : _a2.active) ?? 0) + " active", 1),
+                  createBaseVNode("span", _hoisted_19$3, toDisplayString(((_b = card.counts) == null ? void 0 : _b.doneNotClosed) ?? 0) + " done", 1),
+                  createBaseVNode("span", _hoisted_20$3, toDisplayString(((_c = card.counts) == null ? void 0 : _c.stuck) ?? 0) + " stuck", 1),
+                  createBaseVNode("span", _hoisted_21$3, toDisplayString(((_d = card.counts) == null ? void 0 : _d.closed) ?? 0) + " closed", 1)
                 ]),
-                createBaseVNode("div", _hoisted_24$3, [
-                  createBaseVNode("span", _hoisted_25$3, toDisplayString(card.lastTouched ? unref(timeAgo)(card.lastTouched) : "no activity"), 1)
+                createBaseVNode("div", _hoisted_22$3, [
+                  createBaseVNode("span", _hoisted_23$3, toDisplayString(card.lastTouched ? unref(timeAgo)(card.lastTouched) : "no activity"), 1)
                 ])
-              ], 40, _hoisted_13$3);
+              ], 40, _hoisted_11$3);
             }), 128))
           ]))
         ], 64))
@@ -31354,9 +31360,10 @@ const pageStyles = String.raw`    :root {
       font-family: "JetBrains Mono", monospace;
     }
     .task-tree-node {
-      display: grid;
-      grid-template-columns: auto auto auto auto 1fr;
-      align-items: center;
+      /* WAL-137: flex, not grid. See TaskRow.vue for why — a fixed column count
+         with a variable item count spilled items into implicit rows. */
+      display: flex;
+      align-items: flex-start;
       gap: 8px;
       padding: 5px 8px;
       border-radius: 6px;
@@ -31380,16 +31387,34 @@ const pageStyles = String.raw`    :root {
     .task-tree-indent {
       display: inline-block;
       flex-shrink: 0;
+      align-self: stretch;
     }
     .task-tree-marker {
       color: #6a7e9b;
       font-size: 11px;
       width: 14px;
+      flex-shrink: 0;
       display: inline-block;
       text-align: center;
+      line-height: 16px;
+    }
+    /* The caret occupies the same slot as the dot, so parent and leaf rows align. */
+    .task-tree-node > .tasks-tree-chevron {
+      width: 14px;
+      flex-shrink: 0;
+      text-align: center;
+      line-height: 16px;
+      padding: 0;
+      margin: 0;
+      background: none;
+      border: none;
     }
     .task-tree-node.is-current .task-tree-marker {
       color: #ffd07a;
+    }
+    .task-row-select {
+      flex-shrink: 0;
+      margin-top: 2px;
     }
     .task-tree-id {
       color: #d6e6ff;
@@ -31409,13 +31434,22 @@ const pageStyles = String.raw`    :root {
     .task-tree-status.is-waiting { color: #f0c674; }
     .task-tree-status.is-done { color: #93e0a8; }
     .task-tree-status.is-failed { color: #ff9a9a; }
+    /* Body column: the title's left edge is the id's left edge, because both are
+       inside it and it starts after the marker slot. */
+    .task-tree-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .task-tree-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
     .task-tree-headline {
-      /* WAL-137: the headline is the last grid item and used to land in column 1 of
-         an implicit second row, where it both sized that column (shoving the
-         marker/id/status ~150px to the right) and was itself clamped to ~144px of a
-         342px row, so the title truncated. Spanning every column puts it on its own
-         full-width line and lets column 1 collapse back to the indent. */
-      grid-column: 1 / -1;
       min-width: 0;
       color: #b8cae3;
       font-family: "Space Grotesk", system-ui, sans-serif;
@@ -31425,10 +31459,7 @@ const pageStyles = String.raw`    :root {
       white-space: nowrap;
     }
     @media (max-width: 640px) {
-      .task-tree-node {
-        grid-template-columns: auto auto auto 1fr;
-        gap: 6px;
-      }
+      .task-tree-node { gap: 6px; }
       .task-tree-agent { display: none; }
     }
     .task-panel-card {

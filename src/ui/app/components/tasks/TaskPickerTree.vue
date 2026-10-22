@@ -203,32 +203,22 @@ onBeforeUnmount(() => {
             <span class="tasks-current-group-count">{{ group.rows.length }}</span>
           </div>
           <div v-if="!group.isCollapsed" class="tasks-current-group-body">
-            <div
+            <TaskRow
               v-for="flatRow in group.rows"
               :key="flatRow.task.id"
-              class="tasks-tree-row-wrap"
-            >
-              <button
-                v-if="flatRow.hasChildren"
-                type="button"
-                class="tasks-tree-chevron"
-                :class="{ 'is-expanded': flatRow.isExpanded }"
-                @click.stop="toggleExpand(flatRow.task.id)"
-                :aria-label="flatRow.isExpanded ? 'Collapse' : 'Expand'"
-              >{{ flatRow.isExpanded ? '▾' : '▸' }}</button>
-              <span v-else class="tasks-tree-chevron-spacer"></span>
-              <TaskRow
-                :task="flatRow.task"
-                :depth="flatRow.depth"
-                :marker="flatRow.marker"
-                :selectable="tasksStore.multiSelectActive"
-                :checked="!!tasksStore.bulkSelected[flatRow.task.id]"
-                :default-status="flatRow.task.status === 'done' ? 'closed' : 'cancelled'"
-                :short-id="false"
-                @open="openTask"
-                @select="handleSelect"
-              />
-            </div>
+              :task="flatRow.task"
+              :depth="flatRow.depth"
+              :marker="flatRow.marker"
+              :has-children="flatRow.hasChildren"
+              :is-expanded="flatRow.isExpanded"
+              :selectable="tasksStore.multiSelectActive"
+              :checked="!!tasksStore.bulkSelected[flatRow.task.id]"
+              :default-status="flatRow.task.status === 'done' ? 'closed' : 'cancelled'"
+              :short-id="false"
+              @open="openTask"
+              @select="handleSelect"
+              @toggle="toggleExpand"
+            />
           </div>
         </div>
       </template>
