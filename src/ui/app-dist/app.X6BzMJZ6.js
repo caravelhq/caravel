@@ -17594,14 +17594,14 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
 });
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$u, [["__scopeId", "data-v-099f83db"]]);
 const _hoisted_1$r = { class: "tab-strip-outer" };
-const _hoisted_2$l = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_2$l = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_3$i = {
   key: 0,
   class: "ts-tab-glyph"
 };
 const _hoisted_4$f = { class: "ts-tab-label" };
 const _hoisted_5$e = ["onClick"];
-const _hoisted_6$e = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_6$e = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_7$d = {
   key: 0,
   class: "ts-tab-glyph"
@@ -17724,6 +17724,17 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
       if (prev) prefetchRef(prev);
       if (next) prefetchRef(next);
     }
+    function togglePin(key) {
+      var _a2;
+      if ((_a2 = ws.meta[key]) == null ? void 0 : _a2.pinned) ws.unpin(key);
+      else ws.pin(key);
+    }
+    function tabTitle(tab) {
+      var _a2;
+      const base = refTitle(tab, tasksList.value, projectsList.value);
+      const isPinned = (_a2 = ws.meta[refKey(tab)]) == null ? void 0 : _a2.pinned;
+      return `${base} — double-click to ${isPinned ? "unpin" : "pin"}`;
+    }
     const draggedKey = /* @__PURE__ */ ref(null);
     const dragOverIdx = /* @__PURE__ */ ref(null);
     const dragOverDivider = /* @__PURE__ */ ref(false);
@@ -17787,7 +17798,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           }, [
             createVNode(OpenMenu),
             (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
-              var _a3, _b, _c;
+              var _a3, _b;
               return openBlock(), createElementBlock("button", {
                 key: unref(refKey)(tab),
                 class: normalizeClass(["ts-tab", {
@@ -17798,12 +17809,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                   "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
                 }]),
                 "data-key": unref(refKey)(tab),
-                title: unref(refTitle)(tab, tasksList.value, projectsList.value),
+                title: tabTitle(tab),
                 role: "tab",
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
                 onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onDblclick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["prevent"]),
                 onMouseenter: ($event) => onTabHover(i, group0.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17813,19 +17825,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
                 onDragend: onDragEnd,
                 onDragover: ($event) => onTabDragOver($event, i),
-                onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
+                onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, i)
               }, [
                 unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_3$i, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_4$f, toDisplayString(tabLabel(tab)), 1),
-                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 1,
+                createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
                   "aria-label": "Close tab",
-                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_5$e)) : createCommentVNode("", true)
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
+                  onDblclick: _cache[0] || (_cache[0] = withModifiers(() => {
+                  }, ["stop"]))
+                }, "×", 40, _hoisted_5$e)
               ], 42, _hoisted_2$l);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
@@ -17836,11 +17849,11 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               }]),
               title: "Drop here to move tab between groups",
               onDragover: onDividerDragOver,
-              onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverDivider.value = false),
+              onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverDivider.value = false),
               onDrop: onDividerDrop
             }, null, 34)) : createCommentVNode("", true),
             (openBlock(true), createElementBlock(Fragment, null, renderList(group1.value, (tab, i) => {
-              var _a3, _b, _c;
+              var _a3, _b;
               return openBlock(), createElementBlock("button", {
                 key: unref(refKey)(tab),
                 class: normalizeClass(["ts-tab ts-tab--g1", {
@@ -17851,12 +17864,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                   "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
                 }]),
                 "data-key": unref(refKey)(tab),
-                title: unref(refTitle)(tab, tasksList.value, projectsList.value),
+                title: tabTitle(tab),
                 role: "tab",
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
                 onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onDblclick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["prevent"]),
                 onMouseenter: ($event) => onTabHover(i, group1.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17866,19 +17880,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
                 onDragend: onDragEnd,
                 onDragover: ($event) => onTabDragOver($event, group0.value.length + i),
-                onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
+                onDragleave: _cache[4] || (_cache[4] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
                 unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_7$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_8$d, toDisplayString(tabLabel(tab)), 1),
-                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 1,
+                createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
                   "aria-label": "Close tab",
-                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_9$c)) : createCommentVNode("", true)
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
+                  onDblclick: _cache[3] || (_cache[3] = withModifiers(() => {
+                  }, ["stop"]))
+                }, "×", 40, _hoisted_9$c)
               ], 42, _hoisted_6$e);
             }), 128))
           ], 2),
@@ -17889,20 +17904,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               class: "ts-overflow-btn",
               type: "button",
               title: `${unref(ws).tabs.length} tabs — click to see all`,
-              onClick: _cache[3] || (_cache[3] = ($event) => overflowOpen.value = true)
+              onClick: _cache[5] || (_cache[5] = ($event) => overflowOpen.value = true)
             }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_12$8)) : createCommentVNode("", true),
             createBaseVNode("button", {
               class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
               type: "button",
               title: unref(ws).splitOn ? "Close split" : "Open split",
-              onClick: _cache[4] || (_cache[4] = ($event) => unref(ws).toggleSplit())
+              onClick: _cache[6] || (_cache[6] = ($event) => unref(ws).toggleSplit())
             }, "⫽", 10, _hoisted_13$7),
             createBaseVNode("button", {
               id: "settings-btn",
               class: "ts-settings-btn",
               type: "button",
               title: "Settings",
-              onClick: _cache[5] || (_cache[5] = ($event) => unref(ui).settingsOpen = true)
+              onClick: _cache[7] || (_cache[7] = ($event) => unref(ui).settingsOpen = true)
             }, "⚙")
           ])
         ]),
@@ -17914,13 +17929,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           createBaseVNode("div", {
             class: "ts-ctx-menu",
             style: normalizeStyle({ left: contextMenu.value.x + "px", top: contextMenu.value.y + "px" }),
-            onPointerdown: _cache[11] || (_cache[11] = withModifiers(() => {
+            onPointerdown: _cache[13] || (_cache[13] = withModifiers(() => {
             }, ["stop"]))
           }, [
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[6] || (_cache[6] = ($event) => {
+              onClick: _cache[8] || (_cache[8] = ($event) => {
                 var _a3;
                 ((_a3 = unref(ws).meta[unref(refKey)(contextMenu.value.tab)]) == null ? void 0 : _a3.pinned) ? unref(ws).unpin(unref(refKey)(contextMenu.value.tab)) : unref(ws).pin(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
@@ -17929,7 +17944,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[7] || (_cache[7] = ($event) => {
+              onClick: _cache[9] || (_cache[9] = ($event) => {
                 unref(ws).close(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17937,7 +17952,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[8] || (_cache[8] = ($event) => {
+              onClick: _cache[10] || (_cache[10] = ($event) => {
                 unref(ws).closeOthers(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17945,7 +17960,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[9] || (_cache[9] = ($event) => {
+              onClick: _cache[11] || (_cache[11] = ($event) => {
                 unref(ws).closeToRight(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17953,7 +17968,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item ts-ctx-item--wide-only",
               type: "button",
-              onClick: _cache[10] || (_cache[10] = ($event) => {
+              onClick: _cache[12] || (_cache[12] = ($event) => {
                 unref(ws).moveToGroup(unref(refKey)(contextMenu.value.tab), unref(ws).tabGroup(unref(ws).tabs.findIndex((t) => unref(refKey)(t) === unref(refKey)(contextMenu.value.tab))) === 0 ? 1 : 0);
                 closeCtx();
               })
@@ -17964,13 +17979,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           open: overflowOpen.value,
           "tasks-list": tasksList.value,
           "projects-list": projectsList.value,
-          onClose: _cache[12] || (_cache[12] = ($event) => overflowOpen.value = false)
+          onClose: _cache[14] || (_cache[14] = ($event) => overflowOpen.value = false)
         }, null, 8, ["open", "tasks-list", "projects-list"])
       ], 64);
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-9c967bdf"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-084ce295"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -24623,11 +24638,18 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     const ws = useWorkspaceStore();
     const attentionStore = useAttentionStore();
     const treeEl = /* @__PURE__ */ ref(null);
+    const pickerGroup = computed(() => {
+      const key = refKey({ kind: "legacy", page: "tasks" });
+      const idx = ws.tabs.findIndex((t) => refKey(t) === key);
+      return idx >= 0 ? ws.tabGroup(idx) : 0;
+    });
     function openTask(taskId) {
-      ws.open({ kind: "envelope", taskId }, { preview: true });
+      const side = ws.splitOn && ws.focused === pickerGroup.value;
+      ws.open({ kind: "envelope", taskId }, { preview: true, ...side ? { side: true } : {} });
     }
     function openProject(slug) {
-      ws.open({ kind: "project", slug });
+      const side = ws.splitOn && ws.focused === pickerGroup.value;
+      ws.open({ kind: "project", slug }, side ? { side: true } : {});
     }
     function toggleGroup(key) {
       if (tasksStore.collapsed[key]) delete tasksStore.collapsed[key];

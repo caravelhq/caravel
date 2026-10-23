@@ -9,6 +9,7 @@ import { buildTaskTree, countNonTerminalDescendants, passesFilter, buildByParent
 import { createBulkBar } from "../../pages/tasks/bulk";
 import { tasksListSpec } from "../../workspace/labels";
 import { timeAgo } from "../../pages/tasks/helpers";
+import { refKey } from "../../workspace/refs";
 import type { TaskRow as TaskRowData } from "../../stores/tasks";
 
 const tasksStore = useTasksStore();
@@ -18,12 +19,24 @@ const attentionStore = useAttentionStore();
 
 const treeEl = ref<HTMLElement | null>(null);
 
+// DEC-0043: a picker sends detail to the OTHER split group.
+// Derive which group this tasks picker is in from the workspace state.
+// When split is on and the picker's group is focused (i.e. the user just
+// clicked a row here), pass side:true so ws.open() targets group 1.
+const pickerGroup = computed((): 0 | 1 => {
+  const key = refKey({ kind: "legacy", page: "tasks" });
+  const idx = ws.tabs.findIndex((t) => refKey(t) === key);
+  return idx >= 0 ? ws.tabGroup(idx) : 0;
+});
+
 function openTask(taskId: string): void {
-  ws.open({ kind: "envelope", taskId }, { preview: true });
+  const side = ws.splitOn && ws.focused === pickerGroup.value;
+  ws.open({ kind: "envelope", taskId }, { preview: true, ...(side ? { side: true } : {}) });
 }
 
 function openProject(slug: string): void {
-  ws.open({ kind: "project", slug });
+  const side = ws.splitOn && ws.focused === pickerGroup.value;
+  ws.open({ kind: "project", slug }, side ? { side: true } : {});
 }
 
 function toggleGroup(key: string): void {
