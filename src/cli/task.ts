@@ -16,6 +16,9 @@
  * Phase B step 9 (WAL-123) — policy lint:
  *   lint     --yaml ENVELOPE.yaml [--force]
  *
+ * Phase C v2 (WAL-123) — batch dispatch:
+ *   batch    --yaml BATCH-SPEC.yaml [--force]
+ *
  * Phase A preserves: park-before-launch, envelope validation, temp-file-plus-rename,
  * the deadline default with a warn threshold at 6 hours.
  *
@@ -33,6 +36,7 @@
 import { existsSync, openSync, appendFileSync, readFileSync, readdirSync } from "fs";
 import { spawn } from "child_process";
 import { join, resolve } from "path";
+import { parse as parseYaml } from "yaml";
 import {
   VALID_FAILURE_REASONS,
   WORKER_WAITING_SPECS,
@@ -1110,6 +1114,369 @@ function doSummary(root: string): void {
   console.log(JSON.stringify(out, null, 2));
 }
 
+// ── batch dispatch (WAL-123 Phase C v2) ───────────────────────────────────────
+
+type BatchTaskSpec = {
+  headline?: unknown;
+  to?: unknown;
+  from?: unknown;
+  kind?: unknown;
+  project?: unknown;
+  deadline?: unknown;
+  priority?: unknown;
+  budget?: unknown;
+  needs?: unknown;
+  after?: unknown;
+  context?: unknown;
+  touches?: unknown;
+  brief?: unknown;
+  output_format?: unknown;
+  [key: string]: unknown;
+};
+
+type BatchSpec = {
+  from?: unknown;
+  to?: unknown;
+  project?: unknown;
+  tasks?: unknown;
+};
+
+/** Allocate N consecutive TSK IDs from the current on-disk max. Never touches disk. */
+function allocateIdBatch(count: number, wsRoot: string): string[] {
+  if (count <= 0) return [];
+  const agents = listLocalAgents(wsRoot);
+  const d = new Date();
+  const prefix =
+    `TSK-${d.getFullYear()}-` +
+    `${String(d.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(d.getDate()).padStart(2, "0")}-`;
+  const re = new RegExp(`^${escapeRegex(prefix)}(\\d+)$`);
+  let maxN = 0;
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const dir = join(wsRoot, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      for (const fname of readdirSync(dir)) {
+        if (!fname.endsWith(".yaml")) continue;
+        const id = fname.slice(0, -5);
+        const m = re.exec(id);
+        if (!m) continue;
+        const n = parseInt(m[1]!, 10);
+        if (Number.isFinite(n) && n > maxN) maxN = n;
+      }
+    }
+  }
+  return Array.from({ length: count }, (_, i) => prefix + String(maxN + 1 + i).padStart(4, "0"));
+}
+
+/**
+ * Build an envelope YAML body string from a batch task spec.
+ * Local labels in needs:/after: are substituted using labelToId.
+ */
+function buildBatchEnvelope(
+  id: string,
+  spec: BatchTaskSpec,
+  labelToId: Map<string, string>,
+  defaults: { from?: string; to?: string; project?: string },
+  now: string
+): string {
+  const headline = JSON.stringify(String(spec.headline ?? "").trim());
+  const from = String(spec.from ?? defaults.from ?? "alice").trim();
+  const to = String(spec.to ?? defaults.to ?? "alice").trim();
+  const kind = String(spec.kind ?? "code").trim();
+  const project = String(spec.project ?? defaults.project ?? "null").trim() || "null";
+  const deadline = spec.deadline != null ? String(spec.deadline) : "null";
+  const priority = spec.priority != null ? String(spec.priority) : "P3";
+
+  const rawNeeds = Array.isArray(spec.needs) ? spec.needs.map(String) : [];
+  const rawAfter = Array.isArray(spec.after) ? spec.after.map(String) : [];
+  const resolvedNeeds = rawNeeds.map((l) => labelToId.get(l) ?? l);
+  const resolvedAfter = rawAfter.map((l) => labelToId.get(l) ?? l);
+
+  const lines: string[] = [
+    `id: ${id}`,
+    `headline: ${headline}`,
+    `created: ${now}`,
+    `updated: ${now}`,
+    "",
+    `from: ${from}`,
+    `to: ${to}`,
+    "parent: null",
+    `reply_to: ${from}`,
+    "",
+    `kind: ${kind}`,
+    `project: ${project}`,
+    `deadline: ${deadline}`,
+    `priority: ${priority}`,
+    "",
+  ];
+
+  const bSpec =
+    spec.budget != null && typeof spec.budget === "object"
+      ? (spec.budget as Record<string, unknown>)
+      : {};
+  lines.push("budget:");
+  lines.push(`  max_turns: ${bSpec.max_turns ?? 50}`);
+  lines.push(`  max_subagents: ${bSpec.max_subagents ?? 0}`);
+  lines.push(`  max_usd: ${bSpec.max_usd ?? "null"}`);
+  lines.push("");
+
+  if (resolvedNeeds.length > 0) {
+    lines.push("needs:");
+    for (const dep of resolvedNeeds) lines.push(`  - ${dep}`);
+    lines.push("");
+  }
+
+  if (resolvedAfter.length > 0) {
+    lines.push("after:");
+    for (const dep of resolvedAfter) lines.push(`  - ${dep}`);
+    lines.push("");
+  }
+
+  const context = Array.isArray(spec.context) ? spec.context.map(String) : [];
+  if (context.length > 0) {
+    lines.push("context:");
+    for (const c of context) lines.push(`  - ${JSON.stringify(c)}`);
+    lines.push("");
+  }
+
+  const touches = Array.isArray(spec.touches) ? spec.touches.map(String) : [];
+  if (touches.length > 0) {
+    lines.push("touches:");
+    for (const t of touches) lines.push(`  - ${JSON.stringify(t)}`);
+    lines.push("");
+  }
+
+  const brief = String(spec.brief ?? "").trim();
+  if (brief) {
+    lines.push("brief: |");
+    for (const line of brief.split("\n")) lines.push(`  ${line}`);
+    lines.push("");
+  }
+
+  const outputFormat = String(spec.output_format ?? "").trim();
+  if (outputFormat) {
+    if (outputFormat.includes("\n")) {
+      lines.push("output_format: |");
+      for (const line of outputFormat.split("\n")) lines.push(`  ${line}`);
+    } else {
+      lines.push(`output_format: ${outputFormat}`);
+    }
+    lines.push("");
+  }
+
+  lines.push("status: open");
+  return lines.join("\n").trimEnd() + "\n";
+}
+
+/**
+ * Topological sort via Kahn's algorithm.
+ * allDeps maps label → list of labels it depends on (must complete before it).
+ * Returns the sorted order, or null if a cycle exists.
+ */
+function topoSort(labels: string[], allDeps: Map<string, string[]>): string[] | null {
+  const successors = new Map<string, string[]>();
+  const inDeg = new Map<string, number>();
+  for (const l of labels) {
+    successors.set(l, []);
+    inDeg.set(l, 0);
+  }
+  for (const [label, deps] of allDeps) {
+    for (const dep of deps) {
+      successors.get(dep)?.push(label);
+      inDeg.set(label, (inDeg.get(label) ?? 0) + 1);
+    }
+  }
+  const queue = labels.filter((l) => (inDeg.get(l) ?? 0) === 0);
+  const order: string[] = [];
+  while (queue.length > 0) {
+    const node = queue.shift()!;
+    order.push(node);
+    for (const s of successors.get(node) ?? []) {
+      const d = (inDeg.get(s) ?? 0) - 1;
+      inDeg.set(s, d);
+      if (d === 0) queue.push(s);
+    }
+  }
+  return order.length === labels.length ? order : null;
+}
+
+/**
+ * Dispatch a connected set of tasks from a batch spec YAML.
+ *
+ * The spec must have a `tasks:` map. Each task may reference sibling tasks in
+ * the batch by label in `needs:` and `after:`. The whole graph is linted and
+ * validated before any file is written — a single failure aborts the entire
+ * batch. This prevents the "first task is already running when I found the
+ * mistake in a later task" problem.
+ *
+ * Usage: caravel task batch --yaml batch-spec.yaml [--force]
+ */
+function doBatch(args: ParsedArgs, root: string): void {
+  const specPath = args.yaml && args.yaml !== true ? String(args.yaml) : null;
+  if (!specPath) {
+    die("usage: task batch --yaml <batch-spec.yaml> [--force]");
+  }
+  if (!existsSync(specPath)) {
+    die(`batch spec not found: ${specPath}`);
+  }
+
+  const raw = readFileSync(specPath, "utf8");
+  let spec: BatchSpec;
+  try {
+    spec = parseYaml(raw) as BatchSpec;
+  } catch (e: unknown) {
+    die(`batch spec YAML parse error: ${e instanceof Error ? e.message : String(e)}`);
+  }
+
+  if (!spec || typeof spec !== "object" || typeof spec.tasks !== "object" || spec.tasks === null) {
+    die("batch spec must have a `tasks:` map at the top level");
+  }
+
+  const tasksMap = spec.tasks as Record<string, unknown>;
+  const labels = Object.keys(tasksMap);
+
+  if (labels.length === 0) {
+    die("batch spec has no tasks");
+  }
+
+  const defaults = {
+    from: spec.from != null ? String(spec.from) : undefined,
+    to: spec.to != null ? String(spec.to) : undefined,
+    project: spec.project != null ? String(spec.project) : undefined,
+  };
+
+  // ── 1. validate structure and collect deps ────────────────────────────────
+  const taskSpecs = new Map<string, BatchTaskSpec>();
+  const allDeps = new Map<string, string[]>();
+  const structErrors: string[] = [];
+
+  for (const [label, raw] of Object.entries(tasksMap)) {
+    if (!raw || typeof raw !== "object") {
+      structErrors.push(`task "${label}": must be an object`);
+      continue;
+    }
+    const ts = raw as BatchTaskSpec;
+    taskSpecs.set(label, ts);
+
+    const needs = Array.isArray(ts.needs) ? ts.needs.map(String) : [];
+    const after = Array.isArray(ts.after) ? ts.after.map(String) : [];
+    const deps: string[] = [];
+
+    for (const ref of [...needs, ...after]) {
+      if (!labels.includes(ref)) {
+        structErrors.push(`task "${label}": references unknown label "${ref}" in needs:/after: — must be another task label in this batch`);
+      } else {
+        deps.push(ref);
+      }
+    }
+    allDeps.set(label, deps);
+  }
+
+  if (structErrors.length > 0) {
+    for (const e of structErrors) console.error(`caravel task batch: ✗ ${e}`);
+    die("batch aborted — fix structural errors above");
+  }
+
+  // ── 2. cycle detection ────────────────────────────────────────────────────
+  const topoOrder = topoSort(labels, allDeps);
+  if (topoOrder === null) {
+    const cyclic = labels.filter((l) => {
+      const visited = new Set<string>();
+      const stack = [...(allDeps.get(l) ?? [])];
+      while (stack.length > 0) {
+        const cur = stack.pop()!;
+        if (cur === l) return true;
+        if (visited.has(cur)) continue;
+        visited.add(cur);
+        for (const dep of allDeps.get(cur) ?? []) stack.push(dep);
+      }
+      return false;
+    });
+    die(`batch has a dependency cycle involving: ${cyclic.join(", ")}`);
+  }
+
+  // ── 3. lint each task before any file is written ──────────────────────────
+  // Local labels in needs:/after: are passed through as-is — the lint rules
+  // don't inspect those fields, so leaving them as local labels is safe here.
+  const force = !!args.force;
+  const lintErrors: Array<{ label: string; fails: string[] }> = [];
+  const lintWarnings: Array<{ label: string; warns: string[] }> = [];
+
+  // Placeholder map: local labels → themselves (substituted with real IDs later).
+  const placeholderMap = new Map<string, string>();
+  for (const l of labels) placeholderMap.set(l, l);
+
+  const now = new Date().toISOString();
+
+  for (const label of labels) {
+    const ts = taskSpecs.get(label)!;
+    const body = buildBatchEnvelope("TSK-BATCH-LINT", ts, placeholderMap, defaults, now);
+    const result = doLintNewEnvelope(body, root, { force });
+    if (result.hardFails.length > 0) lintErrors.push({ label, fails: result.hardFails });
+    if (result.warnings.length > 0) lintWarnings.push({ label, warns: result.warnings });
+  }
+
+  for (const { label, warns } of lintWarnings) {
+    for (const w of warns) console.warn(`caravel task batch lint [${label}]: ⚠ ${w}`);
+  }
+
+  if (lintErrors.length > 0) {
+    for (const { label, fails } of lintErrors) {
+      for (const f of fails) console.error(`caravel task batch lint [${label}]: ✗ ${f}`);
+    }
+    die(`batch lint failed — ${lintErrors.length} task(s) have errors. Fix them before dispatching`);
+  }
+
+  // ── 4. allocate IDs (no disk writes yet) ─────────────────────────────────
+  const ids = allocateIdBatch(labels.length, root);
+  const labelToId = new Map<string, string>();
+  for (let i = 0; i < labels.length; i++) {
+    labelToId.set(labels[i]!, ids[i]!);
+  }
+
+  // ── 5. build final envelope bodies with real IDs substituted ─────────────
+  const envelopes: Array<{ id: string; to: string; body: string }> = [];
+  for (const label of labels) {
+    const ts = taskSpecs.get(label)!;
+    const id = labelToId.get(label)!;
+    const body = buildBatchEnvelope(id, ts, labelToId, defaults, now);
+    const to = String(ts.to ?? defaults.to ?? "alice").trim();
+    envelopes.push({ id, to, body });
+  }
+
+  // ── 6. write all envelopes ────────────────────────────────────────────────
+  const agents = listLocalAgents(root);
+  for (const { id, to, body } of envelopes) {
+    if (!agents.includes(to)) {
+      die(`batch: cannot write task ${id} — unknown agent "${to}". known: ${agents.join(", ")}`);
+    }
+    const openDir = join(root, "agents", to, "tasks", "open");
+    writeAtomic(join(openDir, `${id}.yaml`), body);
+
+    const fromField = extractField(body, "from") ?? "unknown";
+    const kindField = extractField(body, "kind") ?? "other";
+    journalAppend(root, to, {
+      ts: now,
+      id,
+      status: "open",
+      kind: kindField,
+      from: fromField,
+      to,
+      parent: null,
+      summary: "",
+    });
+
+    console.log(id);
+  }
+
+  if (envelopes.length > 1) {
+    process.stderr.write(
+      `caravel task batch: dispatched ${envelopes.length} tasks (${ids[0]} – ${ids[ids.length - 1]})\n`
+    );
+  }
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 export function runTaskCli(argv: string[]): void {
@@ -1162,6 +1529,10 @@ export function runTaskCli(argv: string[]): void {
       doLint(args, root);
       break;
 
+    case "batch":
+      doBatch(args, root);
+      break;
+
     default: {
       const action = String(args.action ?? "");
       if (action) {
@@ -1169,7 +1540,7 @@ export function runTaskCli(argv: string[]): void {
       } else {
         console.log(
           [
-            "caravel task park|done|failed|wrap|new|next-id|list|summary|lint",
+            "caravel task park|done|failed|wrap|new|next-id|list|summary|lint|batch",
             "",
             "  park     Park a task on long-running external work",
             "  done     Write a done rendezvous",
@@ -1180,6 +1551,7 @@ export function runTaskCli(argv: string[]): void {
             "  list     List tasks for an agent as JSON",
             "  summary  Print a cross-agent summary as JSON",
             "  lint     Run policy lint on an existing envelope file",
+            "  batch    Lint and dispatch a connected task graph atomically",
           ].join("\n")
         );
       }
