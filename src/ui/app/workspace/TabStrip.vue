@@ -504,7 +504,9 @@ function onDividerDrop(e: DragEvent): void {
 .ts-tab-close:hover { opacity: 1; background: var(--surface-4, #3a3a3a); }
 
 @media (max-width: 600px) {
-  .ts-tab-close::after { inset: -13px; }
+  /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
+     hit-area overlapping the tab's label region (M2 fix, R21). */
+  .ts-tab-close::after { inset: -13px -13px -13px -2px; }
 }
 
 /* Divider between groups */

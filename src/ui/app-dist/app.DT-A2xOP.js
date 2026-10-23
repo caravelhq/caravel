@@ -13533,7 +13533,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
       return;
     }
-    const targetGroup = opts.side ? 1 : focused.value;
+    const targetGroup = opts.group !== void 0 ? opts.group : opts.side ? 1 : focused.value;
     if (opts.preview) {
       const groupT = groupTabs(targetGroup);
       const previewTab = groupT.find((t) => {
@@ -17985,7 +17985,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-084ce295"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-55206cc5"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -24644,12 +24644,12 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
       return idx >= 0 ? ws.tabGroup(idx) : 0;
     });
     function openTask(taskId) {
-      const side = ws.splitOn && ws.focused === pickerGroup.value;
-      ws.open({ kind: "envelope", taskId }, { preview: true, ...side ? { side: true } : {} });
+      const otherGroup = ws.splitOn ? 1 - pickerGroup.value : void 0;
+      ws.open({ kind: "envelope", taskId }, { preview: true, ...otherGroup !== void 0 ? { group: otherGroup } : {} });
     }
     function openProject(slug) {
-      const side = ws.splitOn && ws.focused === pickerGroup.value;
-      ws.open({ kind: "project", slug }, side ? { side: true } : {});
+      const otherGroup = ws.splitOn ? 1 - pickerGroup.value : void 0;
+      ws.open({ kind: "project", slug }, otherGroup !== void 0 ? { group: otherGroup } : {});
     }
     function toggleGroup(key) {
       if (tasksStore.collapsed[key]) delete tasksStore.collapsed[key];

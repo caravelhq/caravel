@@ -171,18 +171,24 @@ try {
             fail(`TB1 ${VP.label} .ts-tab-close element box`, `expected ≤20×20, got ${box.width.toFixed(1)}×${box.height.toFixed(1)} — layout may be inflated by old min-height`);
           }
 
-          // Horizontal hit test: probe at ±(target/2 − 1)px on the X axis.
+          // Horizontal hit test: probe outward from the close-button centre.
           // Note: vertical probes are unreliable here because .tab-strip has
           // overflow-x: auto, which CSS implicitly clips overflow-y too, cutting
           // off the ::after pseudo-element at the strip boundary. Horizontal
           // overflow is visible so horizontal probes work correctly.
-          // At ≥600px target is 32px effective; at ≤600px target is 44px.
-          const hitRadius = VP.width >= 600 ? 15 : 21; // (32/2 − 1) and (44/2 − 1)
+          // At ≥600px: symmetric ±15 (32px effective, inset:-7px on 18px element).
+          // At ≤600px: the halo is asymmetric (inset:-13px -13px -13px -2px, M2 R21
+          // fix) — right reach = 9+13 = 22px, left reach = 9+2 = 11px.
+          // Probe right at +15 (both viewports): well inside the 22px right reach
+          // and avoids overshooting into an adjacent narrow tab at 390px.
+          // Probe left at -8 at mobile (3px inside 11px left reach), -15 at desktop.
+          const hitRadiusRight = 15;
+          const hitRadiusLeft  = VP.width >= 600 ? 15 :  8;
           const cx = box.x + box.width / 2;
           const cy = box.y + box.height / 2;
           const probes = [
-            { dx: hitRadius, dy: 0 },
-            { dx: -hitRadius, dy: 0 },
+            { dx: hitRadiusRight, dy: 0 },
+            { dx: -hitRadiusLeft, dy: 0 },
           ];
           const hitResults = await page.evaluate(({ cx, cy, probes }) => {
             return probes.map(({ dx, dy }) => {
@@ -194,10 +200,11 @@ try {
 
           const allHit = hitResults.every(Boolean);
           if (allHit) {
-            pass(`TB1 ${VP.label} .ts-tab-close horizontal hit area ≥ ${hitRadius * 2 + 2}px (both X-axis probes at ±${hitRadius}px resolve to the control)`);
+            pass(`TB1 ${VP.label} .ts-tab-close hit area: right +${hitRadiusRight}px, left -${hitRadiusLeft}px both resolve to control`);
           } else {
-            const missed = hitResults.map((h, i) => h ? null : `probe${i}`).filter(Boolean);
-            fail(`TB1 ${VP.label} .ts-tab-close hit area`, `horizontal probes missed: ${missed.join(", ")} at ±${hitRadius}px from centre (cx=${cx.toFixed(0)}, cy=${cy.toFixed(0)})`);
+            const labels = [`right:+${hitRadiusRight}`, `left:-${hitRadiusLeft}`];
+            const missed = hitResults.map((h, i) => h ? null : labels[i]).filter(Boolean);
+            fail(`TB1 ${VP.label} .ts-tab-close hit area`, `probes missed: ${missed.join(", ")} (cx=${cx.toFixed(0)}, cy=${cy.toFixed(0)})`);
           }
         }
       }

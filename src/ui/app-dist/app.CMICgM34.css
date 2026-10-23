@@ -269,7 +269,7 @@
   z-index: 0;
 }
 
-.tab-strip-outer[data-v-084ce295] {
+.tab-strip-outer[data-v-55206cc5] {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -282,7 +282,7 @@
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
-.tab-strip[data-v-084ce295] {
+.tab-strip[data-v-55206cc5] {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -292,17 +292,17 @@
   padding: 0 8px;
   scrollbar-width: none;
 }
-.tab-strip[data-v-084ce295]::-webkit-scrollbar { display: none;
+.tab-strip[data-v-55206cc5]::-webkit-scrollbar { display: none;
 }
 
 /* F3: when overflow affordance is visible, reserve its width at the rail's right end
    so the last tab's hit target cannot slide under the overflow button. */
-.tab-strip--overflow[data-v-084ce295] {
+.tab-strip--overflow[data-v-55206cc5] {
   padding-right: 56px;
 }
 
 /* Right-edge fade indicating hidden tabs */
-.ts-overflow-fade[data-v-084ce295] {
+.ts-overflow-fade[data-v-55206cc5] {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -312,7 +312,7 @@
   pointer-events: none;
   z-index: 1;
 }
-.ts-tab[data-v-084ce295] {
+.ts-tab[data-v-55206cc5] {
   /* WAL-138: tabs wear the panel frame's border (rgba(255,255,255,0.133)) at
      1.5px, and the active tab drops its bottom edge and takes the panel's own
      background, so it reads as an extension of the frame below rather than a
@@ -334,39 +334,39 @@
   transition: opacity 0.1s;
   flex-shrink: 0;
 }
-.ts-tab[data-v-084ce295]:hover { opacity: 0.88;
+.ts-tab[data-v-55206cc5]:hover { opacity: 0.88;
 }
 /* WAL-138: the selected tab takes the FRAME's top edge — the same
    --frame-top token the panel's gradient starts from, with the panel's own
    blur — so the two cannot drift. --panel (#0b1220aa) was the wrong token:
    it is the chrome colour, not the frame's. */
-.ts-tab--active[data-v-084ce295] {
+.ts-tab--active[data-v-55206cc5] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
 }
-.ts-tab--focused[data-v-084ce295] {
+.ts-tab--focused[data-v-55206cc5] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
   border-color: rgba(255, 255, 255, 0.22);
 }
-.ts-tab--preview[data-v-084ce295] { font-style: italic;
+.ts-tab--preview[data-v-55206cc5] { font-style: italic;
 }
-.ts-tab--pinned[data-v-084ce295] { font-weight: 600;
+.ts-tab--pinned[data-v-55206cc5] { font-weight: 600;
 }
-.ts-tab--drag-over[data-v-084ce295] {
+.ts-tab--drag-over[data-v-55206cc5] {
   outline: 2px solid var(--accent, #7dc5ff);
   outline-offset: -2px;
 }
-.ts-tab-glyph[data-v-084ce295] {
+.ts-tab-glyph[data-v-55206cc5] {
   font-size: 0.75rem;
   opacity: 0.6;
   flex-shrink: 0;
 }
 
 /* Pre-truncated via middleEllipsis — no CSS ellipsis needed */
-.ts-tab-label[data-v-084ce295] {
+.ts-tab-label[data-v-55206cc5] {
   max-width: 140px;
   white-space: nowrap;
   overflow: hidden;
@@ -375,7 +375,7 @@
 /* Close button — 18×18 layout; hit area expanded via pseudo-element so it
    does not inflate the strip height. Effective target: 32px at desktop,
    44px at ≤600px. */
-.ts-tab-close[data-v-084ce295] {
+.ts-tab-close[data-v-55206cc5] {
   position: relative;
   display: flex;
   align-items: center;
@@ -388,20 +388,22 @@
   flex-shrink: 0;
   margin: -4px -4px -4px 0;
 }
-.ts-tab-close[data-v-084ce295]::after {
+.ts-tab-close[data-v-55206cc5]::after {
   content: "";
   position: absolute;
   inset: -7px;
 }
-.ts-tab-close[data-v-084ce295]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
+.ts-tab-close[data-v-55206cc5]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
 }
 @media (max-width: 600px) {
-.ts-tab-close[data-v-084ce295]::after { inset: -13px;
+  /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
+     hit-area overlapping the tab's label region (M2 fix, R21). */
+.ts-tab-close[data-v-55206cc5]::after { inset: -13px -13px -13px -2px;
 }
 }
 
 /* Divider between groups */
-.ts-divider[data-v-084ce295] {
+.ts-divider[data-v-55206cc5] {
   width: 2px;
   flex-shrink: 0;
   background: var(--border-subtle, #333);
@@ -410,17 +412,17 @@
   cursor: col-resize;
   transition: background 0.1s, width 0.1s;
 }
-.ts-divider--split[data-v-084ce295] {
+.ts-divider--split[data-v-55206cc5] {
   width: 4px;
   background: var(--accent, #7dc5ff44);
 }
-.ts-divider--drag-over[data-v-084ce295] {
+.ts-divider--drag-over[data-v-55206cc5] {
   width: 4px;
   background: var(--accent, #7dc5ff);
 }
 
 /* Actions bar — always visible, never scrolls */
-.ts-actions[data-v-084ce295] {
+.ts-actions[data-v-55206cc5] {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -430,7 +432,7 @@
   position: relative;
   z-index: 2;
 }
-.ts-overflow-btn[data-v-084ce295] {
+.ts-overflow-btn[data-v-55206cc5] {
   background: transparent;
   border: 1px solid var(--border-subtle, #444);
   color: inherit;
@@ -442,9 +444,9 @@
   white-space: nowrap;
   transition: opacity 0.1s;
 }
-.ts-overflow-btn[data-v-084ce295]:hover { opacity: 1;
+.ts-overflow-btn[data-v-55206cc5]:hover { opacity: 1;
 }
-.ts-split-btn[data-v-084ce295] {
+.ts-split-btn[data-v-55206cc5] {
   background: transparent;
   border: none;
   color: inherit;
@@ -455,15 +457,15 @@
   border-radius: 3px;
   transition: opacity 0.1s;
 }
-.ts-split-btn[data-v-084ce295]:hover { opacity: 0.8;
+.ts-split-btn[data-v-55206cc5]:hover { opacity: 0.8;
 }
-.ts-split-btn--active[data-v-084ce295] { opacity: 0.9; color: var(--accent, #7dc5ff);
+.ts-split-btn--active[data-v-55206cc5] { opacity: 0.9; color: var(--accent, #7dc5ff);
 }
 @media (max-width: 600px) {
-.ts-split-btn[data-v-084ce295] { display: none;
+.ts-split-btn[data-v-55206cc5] { display: none;
 }
 }
-.ts-settings-btn[data-v-084ce295] {
+.ts-settings-btn[data-v-55206cc5] {
   background: transparent;
   border: none;
   color: inherit;
@@ -476,20 +478,20 @@
   border-left: 1px solid var(--border-subtle, #333);
   margin-left: 2px;
 }
-.ts-settings-btn[data-v-084ce295]:hover { opacity: 0.8;
+.ts-settings-btn[data-v-55206cc5]:hover { opacity: 0.8;
 }
 @media (max-width: 600px) {
-.ts-settings-btn[data-v-084ce295] { display: none;
+.ts-settings-btn[data-v-55206cc5] { display: none;
 }
 }
 
 /* Context menu backdrop + popup */
-.ts-ctx-backdrop[data-v-084ce295] {
+.ts-ctx-backdrop[data-v-55206cc5] {
   position: fixed;
   inset: 0;
   z-index: 900;
 }
-.ts-ctx-menu[data-v-084ce295] {
+.ts-ctx-menu[data-v-55206cc5] {
   position: fixed;
   z-index: 901;
   background: var(--surface-2, #262626);
@@ -499,7 +501,7 @@
   min-width: 160px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.ts-ctx-item[data-v-084ce295] {
+.ts-ctx-item[data-v-55206cc5] {
   display: block;
   width: 100%;
   background: transparent;
@@ -512,10 +514,10 @@
   white-space: nowrap;
   transition: background 0.1s;
 }
-.ts-ctx-item[data-v-084ce295]:hover { background: var(--surface-3, #303030);
+.ts-ctx-item[data-v-55206cc5]:hover { background: var(--surface-3, #303030);
 }
 @media (max-width: 600px) {
-.ts-ctx-item--wide-only[data-v-084ce295] { display: none;
+.ts-ctx-item--wide-only[data-v-55206cc5] { display: none;
 }
 }
 

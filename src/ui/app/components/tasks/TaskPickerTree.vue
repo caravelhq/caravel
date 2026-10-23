@@ -21,8 +21,8 @@ const treeEl = ref<HTMLElement | null>(null);
 
 // DEC-0043: a picker sends detail to the OTHER split group.
 // Derive which group this tasks picker is in from the workspace state.
-// When split is on and the picker's group is focused (i.e. the user just
-// clicked a row here), pass side:true so ws.open() targets group 1.
+// Pass opts.group = the other group so open() always targets across groups,
+// regardless of which group currently has focus.
 const pickerGroup = computed((): 0 | 1 => {
   const key = refKey({ kind: "legacy", page: "tasks" });
   const idx = ws.tabs.findIndex((t) => refKey(t) === key);
@@ -30,13 +30,13 @@ const pickerGroup = computed((): 0 | 1 => {
 });
 
 function openTask(taskId: string): void {
-  const side = ws.splitOn && ws.focused === pickerGroup.value;
-  ws.open({ kind: "envelope", taskId }, { preview: true, ...(side ? { side: true } : {}) });
+  const otherGroup = ws.splitOn ? ((1 - pickerGroup.value) as 0 | 1) : undefined;
+  ws.open({ kind: "envelope", taskId }, { preview: true, ...(otherGroup !== undefined ? { group: otherGroup } : {}) });
 }
 
 function openProject(slug: string): void {
-  const side = ws.splitOn && ws.focused === pickerGroup.value;
-  ws.open({ kind: "project", slug }, side ? { side: true } : {});
+  const otherGroup = ws.splitOn ? ((1 - pickerGroup.value) as 0 | 1) : undefined;
+  ws.open({ kind: "project", slug }, otherGroup !== undefined ? { group: otherGroup } : {});
 }
 
 function toggleGroup(key: string): void {

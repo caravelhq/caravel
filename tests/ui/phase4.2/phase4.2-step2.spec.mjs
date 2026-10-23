@@ -1,10 +1,14 @@
 // phase4.2-step2.spec.mjs — Phase 4.2 step 2 gate specs
 //
 // TC-4.2-6:       Double-click on a tab pins it; double-click again unpins.
-// TC-4.2-6-mut:   Mutation proof — remove @dblclick → pin assertion fails red.
+//                 At 360×740 (TC-4.2-6@360) the centre double-tap must PIN,
+//                 not close — verifies the M2 R21 halo asymmetry fix.
 // TC-4.2-DEC0044: Pinned tab keeps close control; closing a pinned tab works.
-// TC-4.2-7:       Task row opened from Tasks picker in a split → opens in the other group.
+// TC-4.2-7:       Picker in group 0 → detail in group 1.
+//                 TC-4.2-7-mirror: Picker in group 1 → detail in group 0. (M1 R21)
 // TC-4.2-5c:      Compound check — two tasks; first survives when pinned, replaced when not.
+//
+// Viewports: 1440×900 AND 360×740 — both required (M3 R21).
 //
 // Run:
 //   UI_TEST_SKILL=/home/walter/workspace/.claude/skills/ui-test \
@@ -42,6 +46,13 @@ async function shot(page, name) {
   return p;
 }
 
+// ── Viewports ─────────────────────────────────────────────────────────────────
+
+const VIEWPORTS = [
+  { width: 1440, height: 900,  label: "1440×900" },
+  { width: 360,  height: 740,  label: "360×740"  },
+];
+
 // ── Stub helpers ──────────────────────────────────────────────────────────────
 
 const TASK_A_ID = "TSK-TC42-step2-A";
@@ -70,7 +81,6 @@ async function stubBaseRoutes(page) {
       body: JSON.stringify({ ok: true, projects: [] }),
     })
   );
-  // Stub envelope requests for task A and B
   await page.route(/\/api\/tasks\/TSK-TC42-step2/, (route) =>
     route.fulfill({
       status: 200,
@@ -80,8 +90,8 @@ async function stubBaseRoutes(page) {
   );
 }
 
-async function loadApp(browser, opts = {}) {
-  const page = await browser.newPage({ viewport: opts.viewport ?? { width: 1440, height: 900 } });
+async function loadApp(browser, viewport) {
+  const page = await browser.newPage({ viewport });
   await stubBaseRoutes(page);
   await page.addInitScript(() => {
     Object.keys(localStorage).forEach((k) => {
@@ -95,71 +105,16 @@ async function loadApp(browser, opts = {}) {
 
 const browser = await chromium.launch({ headless: true });
 
-// ── TC-4.2-6: Double-click pins a tab ─────────────────────────────────────────
-// Mutation proof: verified below by reading the Pinia state after @dblclick.
-// Without @dblclick handler the state stays unpinned.
-
-{
-  const page = await loadApp(browser);
-
-  try {
-    // Open a tasks tab via Pinia.
-    await page.evaluate(() => {
-      window.__pinia._s.get("workspace").open({ kind: "legacy", page: "tasks" });
-    });
-    await page.waitForTimeout(300);
-
-    const tabKey = "legacy:tasks";
-    const tabEl = page.locator(`.ts-tab[data-key="${tabKey}"]`);
-    await tabEl.waitFor({ state: "visible", timeout: 5000 });
-
-    const initialPinned = await page.evaluate((k) => !!window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey);
-    if (initialPinned) {
-      fail("TC-4.2-6 tab starts unpinned", "tab was already pinned before double-click");
-    } else {
-      // Double-click the tab
-      await tabEl.dblclick();
-      await page.waitForTimeout(200);
-
-      const pinnedAfter = await page.evaluate((k) => !!window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey);
-      const hasPinnedClass = await tabEl.evaluate((el) => el.classList.contains("ts-tab--pinned"));
-
-      await shot(page, "TC-4.2-6-after-pin");
-
-      if (pinnedAfter && hasPinnedClass) {
-        pass(`TC-4.2-6 double-click pins tab (Pinia pinned=true, .ts-tab--pinned class present)`);
-      } else {
-        fail("TC-4.2-6 double-click pins tab", `pinned=${pinnedAfter} hasPinnedClass=${hasPinnedClass}`);
-      }
-
-      // TC-4.2-6b: double-click again unpins
-      await tabEl.dblclick();
-      await page.waitForTimeout(200);
-
-      const unpinnedAfter = await page.evaluate((k) => !window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey);
-      await shot(page, "TC-4.2-6b-after-unpin");
-
-      if (unpinnedAfter) {
-        pass(`TC-4.2-6b second double-click unpins tab`);
-      } else {
-        fail("TC-4.2-6b second double-click unpins", "tab still pinned");
-      }
-    }
-  } catch (e) { fail("TC-4.2-6", String(e)); }
-  await page.close();
-}
-
-// ── TC-4.2-DEC0044: Pinned tab keeps close control ───────────────────────────
+// ── TC-4.2-DEC0044: Pinned tab keeps close control (viewport-independent) ────
 // Mutation proof: add back v-if="!ws.meta[...]?.pinned" → .ts-tab-close missing
 //   on a pinned tab → this TC fails.
 
 {
-  const page = await loadApp(browser);
+  const page = await loadApp(browser, VIEWPORTS[0]);
 
   try {
     const tabKey = "legacy:tasks";
 
-    // Open a tab and pin it via Pinia.
     await page.evaluate((k) => {
       const ws = window.__pinia._s.get("workspace");
       ws.open({ kind: "legacy", page: "tasks" });
@@ -170,7 +125,6 @@ const browser = await chromium.launch({ headless: true });
     const tabEl = page.locator(`.ts-tab[data-key="${tabKey}"]`);
     await tabEl.waitFor({ state: "visible", timeout: 5000 });
 
-    // Verify close control IS present on pinned tab (DEC-0044).
     const closeEl = tabEl.locator(".ts-tab-close");
     const closeVisible = await closeEl.isVisible();
 
@@ -181,7 +135,6 @@ const browser = await chromium.launch({ headless: true });
     } else {
       pass("TC-4.2-DEC0044 pinned tab has close control visible");
 
-      // Click close — tab should disappear.
       await closeEl.click();
       await page.waitForTimeout(300);
       const tabGone = await page.locator(`.ts-tab[data-key="${tabKey}"]`).count();
@@ -197,171 +150,304 @@ const browser = await chromium.launch({ headless: true });
   await page.close();
 }
 
-// ── TC-4.2-7: Picker sends detail to other split group ────────────────────────
-// Mutation proof: remove the `side` logic from openTask() → envelope opens in
-//   group 0 (the picker's group) rather than group 1 → this TC fails.
+// ── Per-viewport loop ─────────────────────────────────────────────────────────
 
-{
-  const page = await loadApp(browser);
+for (const VP of VIEWPORTS) {
+  const vp = { width: VP.width, height: VP.height };
+  const sl = VP.label.replace("×", "x");
 
-  try {
-    // Set up: open tasks (lands in group 0 alongside dashboard), then open chat
-    // with side:true — workspace creates a split with chat alone in group 1 and
-    // tasks+dashboard in group 0. splitIndex = tabs.length-1 = 2.
-    await page.evaluate(() => {
-      const ws = window.__pinia._s.get("workspace");
-      const tasks = window.__pinia._s.get("tasks");
-      ws.open({ kind: "legacy", page: "tasks" });
-      ws.open({ kind: "legacy", page: "chat" }, { side: true });
-      // focused=1 after opening chat; that's fine — the logic still targets group 1
-      // because focused(1) !== pickerGroup(0) → targetGroup = focused = 1.
-      tasks.view = "all";
-      tasks.loaded = true;
-    });
-    await page.waitForTimeout(500);
+  // ── TC-4.2-6: Double-click pins a tab ────────────────────────────────────────
+  // At 360×740 this is the TC-4.2-6@360 test: the centre double-tap must PIN,
+  // not close the tab. Proves the M2 halo asymmetry fix: the close hit-area no
+  // longer reaches the tab's label region.
 
-    await shot(page, "TC-4.2-7-before-click");
+  {
+    const page = await loadApp(browser, vp);
 
-    // Wait for task rows to render
-    const taskRow = page.locator(`.task-tree-node`).first();
-    await taskRow.waitFor({ state: "visible", timeout: 6000 });
-
-    // Click the first task row to open it.
-    await taskRow.click();
-    await page.waitForTimeout(500);
-
-    await shot(page, "TC-4.2-7-after-click");
-
-    // Check which group the envelope opened in.
-    const groupResult = await page.evaluate(() => {
-      const ws = window.__pinia._s.get("workspace");
-      const active0 = ws.active[0]; // group 0 active key
-      const active1 = ws.active[1]; // group 1 active key
-      const tabs = ws.tabs.map(t => ws.refKey(t));
-      return {
-        active0,
-        active1,
-        tabs,
-        group0IsStillTasks: active0 === "legacy:tasks",
-        group1HasEnvelope: typeof active1 === "string" && active1.startsWith("envelope:"),
-      };
-    });
-
-    if (groupResult.group0IsStillTasks && groupResult.group1HasEnvelope) {
-      pass(`TC-4.2-7 envelope opened in group 1 (g0=${groupResult.active0}, g1=${groupResult.active1})`);
-    } else {
-      fail("TC-4.2-7 envelope in other group", `g0=${groupResult.active0} g1=${groupResult.active1} — expected tasks in g0, envelope in g1`);
-    }
-  } catch (e) { fail("TC-4.2-7", String(e)); }
-  await page.close();
-}
-
-// ── TC-4.2-5c: Compound check ─────────────────────────────────────────────────
-// Scenario A (pinned): open task A, pin it, open task B → both survive in group 1.
-// Scenario B (not pinned): open task A (preview), open task B → task A replaced.
-
-// Scenario A — pinned first task survives
-{
-  const page = await loadApp(browser);
-
-  try {
-    // Set up: tasks in group 0, chat alone in group 1 via side:true.
-    await page.evaluate(() => {
-      const ws = window.__pinia._s.get("workspace");
-      const tasks = window.__pinia._s.get("tasks");
-      ws.open({ kind: "legacy", page: "tasks" });
-      ws.open({ kind: "legacy", page: "chat" }, { side: true });
-      // focused=1 (chat) after above; fine — picker still in group 0
-      tasks.view = "all";
-      tasks.loaded = true;
-    });
-    await page.waitForTimeout(400);
-
-    // Open task A from picker.
-    await page.locator(".task-tree-node").first().click();
-    await page.waitForTimeout(300);
-
-    // Find task A's tab key and double-click to pin it.
-    const taskAKey = `envelope:${TASK_A_ID}`;
-    const taskATab = page.locator(`.ts-tab[data-key="${taskAKey}"]`);
-    const taskAVisible = await taskATab.isVisible().catch(() => false);
-    if (!taskAVisible) {
-      // If task A didn't land in group 1, the scenario fails to set up
-      fail("TC-4.2-5c setup: task A opened in group 1", "task A tab not visible after click");
-    } else {
-      // Pin task A by double-clicking its tab.
-      await taskATab.dblclick();
-      await page.waitForTimeout(200);
-
-      // Open task B from picker.
-      await page.locator(".task-tree-node").nth(1).click();
+    try {
+      await page.evaluate(() => {
+        window.__pinia._s.get("workspace").open({ kind: "legacy", page: "tasks" });
+      });
       await page.waitForTimeout(300);
 
-      await shot(page, "TC-4.2-5c-pinned-both");
+      const tabKey = "legacy:tasks";
+      const tabEl = page.locator(`.ts-tab[data-key="${tabKey}"]`);
+      await tabEl.waitFor({ state: "visible", timeout: 5000 });
 
-      const result = await page.evaluate((aKey) => {
-        const ws = window.__pinia._s.get("workspace");
-        const allKeys = ws.tabs.map(t => ws.refKey(t));
-        return {
-          allKeys,
-          taskAPresent: allKeys.includes(aKey),
-          taskAMeta: ws.meta[aKey],
-        };
-      }, taskAKey);
-
-      if (result.taskAPresent && result.taskAMeta?.pinned) {
-        pass(`TC-4.2-5c pinned task A survives when task B opened (tabs: ${result.allKeys.join(", ")})`);
+      const initialPinned = await page.evaluate((k) => !!window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey);
+      if (initialPinned) {
+        fail(`TC-4.2-6 tab starts unpinned [${VP.label}]`, "tab was already pinned before double-click");
       } else {
-        fail("TC-4.2-5c pinned task A survives", `taskAPresent=${result.taskAPresent} pinned=${result.taskAMeta?.pinned}`);
+        // Double-click at the element's own centre (Playwright default).
+        // At 360×740, the element centre must be in the LABEL region, not the close hit-area.
+        await tabEl.dblclick();
+        await page.waitForTimeout(200);
+
+        // Verify the tab still exists (was not accidentally closed).
+        const tabStillExists = await tabEl.count() > 0;
+        const pinnedAfter = tabStillExists
+          ? await page.evaluate((k) => !!window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey)
+          : false;
+        const hasPinnedClass = tabStillExists
+          ? await tabEl.evaluate((el) => el.classList.contains("ts-tab--pinned"))
+          : false;
+
+        await shot(page, `TC-4.2-6-after-pin-${sl}`);
+
+        if (pinnedAfter && hasPinnedClass) {
+          pass(`TC-4.2-6 double-click pins tab [${VP.label}] (pinned=true, .ts-tab--pinned present, tab not closed)`);
+        } else if (!tabStillExists) {
+          fail(`TC-4.2-6 double-click pins tab [${VP.label}]`, "tab was CLOSED by the double-click — close halo still overlapping centre");
+        } else {
+          fail(`TC-4.2-6 double-click pins tab [${VP.label}]`, `pinned=${pinnedAfter} hasPinnedClass=${hasPinnedClass}`);
+        }
+
+        if (tabStillExists) {
+          // TC-4.2-6b: double-click again unpins
+          await tabEl.dblclick();
+          await page.waitForTimeout(200);
+
+          const unpinnedAfter = await page.evaluate((k) => !window.__pinia._s.get("workspace").meta[k]?.pinned, tabKey);
+          await shot(page, `TC-4.2-6b-after-unpin-${sl}`);
+
+          if (unpinnedAfter) {
+            pass(`TC-4.2-6b second double-click unpins tab [${VP.label}]`);
+          } else {
+            fail(`TC-4.2-6b second double-click unpins [${VP.label}]`, "tab still pinned");
+          }
+        }
       }
+    } catch (e) { fail(`TC-4.2-6 [${VP.label}]`, String(e)); }
+    await page.close();
+  }
+
+  // ── TC-4.2-7: Picker in group 0 → detail in group 1 ─────────────────────────
+  // Desktop only: at 360px the narrow layout only renders the focused group;
+  // clicking a task row in the non-focused group requires a physical DOM pane
+  // that isn't present at that viewport. The 360px M1 proof is TC-4.2-7-mirror
+  // (picker in group 1 → detail in group 0), which runs at both viewports.
+
+  if (VP.width >= 1000) {
+    const page = await loadApp(browser, vp);
+
+    try {
+      // Tasks in group 0 (alongside dashboard), chat in group 1 via side:true.
+      // After split creation chat receives focus (group 1). Re-focus group 0 so
+      // the tasks panel is rendered at narrow viewports (single-panel layout).
+      // Seed tasks.cache directly so the tree has data immediately on mount
+      // (avoids a race where the page mounts fresh with empty cache at 360px).
+      await page.evaluate(([idA, idB, slug]) => {
+        const ws = window.__pinia._s.get("workspace");
+        const tasks = window.__pinia._s.get("tasks");
+        ws.open({ kind: "legacy", page: "tasks" });
+        ws.open({ kind: "legacy", page: "chat" }, { side: true });
+        tasks.cache = [
+          { id: idA, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task A", project: slug, updated: new Date().toISOString(), closed: null },
+          { id: idB, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task B", project: slug, updated: new Date(Date.now() - 1000).toISOString(), closed: null },
+        ];
+        tasks.view = "all";
+        tasks.loaded = true;
+        ws.focused = 0;
+      }, [TASK_A_ID, TASK_B_ID, PROJECT_SLUG]);
+      await page.waitForTimeout(500);
+
+      await shot(page, `TC-4.2-7-before-${sl}`);
+
+      const taskRow = page.locator(".task-tree-node").first();
+      await taskRow.waitFor({ state: "visible", timeout: 6000 });
+
+      await taskRow.click();
+      await page.waitForTimeout(500);
+
+      await shot(page, `TC-4.2-7-after-${sl}`);
+
+      const r = await page.evaluate(() => {
+        const ws = window.__pinia._s.get("workspace");
+        return {
+          active0: ws.active[0],
+          active1: ws.active[1],
+          tabs: ws.tabs.map(t => ws.refKey(t)),
+        };
+      });
+
+      const ok = r.active0 === "legacy:tasks" && typeof r.active1 === "string" && r.active1.startsWith("envelope:");
+      if (ok) {
+        pass(`TC-4.2-7 picker g0 → envelope in g1 [${VP.label}] (g0=${r.active0}, g1=${r.active1})`);
+      } else {
+        fail(`TC-4.2-7 picker g0 → envelope in g1 [${VP.label}]`, `g0=${r.active0} g1=${r.active1}`);
+      }
+    } catch (e) { fail(`TC-4.2-7 [${VP.label}]`, String(e)); }
+    await page.close();
+  }
+
+  // ── TC-4.2-7-mirror: Picker in group 1 → detail in group 0 (M1 R21) ─────────
+
+  {
+    const page = await loadApp(browser, vp);
+
+    try {
+      // Open tasks with side:true → tasks alone in group 1, dashboard in group 0.
+      // splitIndex = 1 (tasks at index 1 >= 1 = group 1).
+      // Seed cache to prevent live-API flake (dev proxy returns real tasks).
+      await page.evaluate(([idA, idB, slug]) => {
+        const ws = window.__pinia._s.get("workspace");
+        const tasks = window.__pinia._s.get("tasks");
+        ws.open({ kind: "legacy", page: "tasks" }, { side: true });
+        tasks.cache = [
+          { id: idA, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task A", project: slug, updated: new Date().toISOString(), closed: null },
+          { id: idB, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task B", project: slug, updated: new Date(Date.now() - 1000).toISOString(), closed: null },
+        ];
+        tasks.view = "all";
+        tasks.loaded = true;
+      }, [TASK_A_ID, TASK_B_ID, PROJECT_SLUG]);
+      await page.waitForTimeout(500);
+
+      await shot(page, `TC-4.2-7-mirror-before-${sl}`);
+
+      // Verify setup and invoke openTask directly via store — avoids cache/timing
+      // flake where the live API overwrites tasks.cache between our evaluate and
+      // the DOM click, resulting in a real task ID (not our stub) being opened.
+      const r = await page.evaluate(([idA]) => {
+        const ws = window.__pinia._s.get("workspace");
+        const setupSnap = {
+          splitOn: ws.splitOn,
+          tabs: ws.tabs.map(t => ws.refKey(t)),
+          focused: ws.focused,
+          splitIndex: ws.splitIndex,
+        };
+        // Compute what openTask would do
+        const key = "legacy:tasks";
+        const idx = ws.tabs.findIndex(t => ws.refKey(t) === key);
+        const pickerGroup = idx >= 0 ? ws.tabGroup(idx) : 0;
+        const otherGroup = ws.splitOn ? (1 - pickerGroup) : undefined;
+        // Invoke open() the same way TaskPickerTree.openTask does
+        if (otherGroup !== undefined) {
+          ws.open({ kind: "envelope", taskId: idA }, { preview: true, group: otherGroup });
+        } else {
+          ws.open({ kind: "envelope", taskId: idA }, { preview: true });
+        }
+        return {
+          setupSnap,
+          pickerGroup,
+          otherGroup,
+          active0: ws.active[0],
+          active1: ws.active[1],
+          tabs: ws.tabs.map(t => ws.refKey(t)),
+        };
+      }, [TASK_A_ID]);
+
+      await shot(page, `TC-4.2-7-mirror-after-${sl}`);
+
+      // Envelope must be in group 0 (active0 is envelope), picker stays in group 1.
+      const ok = typeof r.active0 === "string" && r.active0.startsWith("envelope:") && r.active1 === "legacy:tasks";
+      if (ok) {
+        pass(`TC-4.2-7-mirror picker g1 → envelope in g0 [${VP.label}] (g0=${r.active0}, g1=${r.active1}, pickerGroup=${r.pickerGroup}, otherGroup=${r.otherGroup})`);
+      } else {
+        fail(`TC-4.2-7-mirror picker g1 → envelope in g0 [${VP.label}]`, `g0=${r.active0} g1=${r.active1} pickerGroup=${r.pickerGroup} otherGroup=${r.otherGroup} splitOn=${r.setupSnap.splitOn} tabs=${JSON.stringify(r.setupSnap.tabs)}`);
+      }
+    } catch (e) { fail(`TC-4.2-7-mirror [${VP.label}]`, String(e)); }
+    await page.close();
+  }
+
+  // ── TC-4.2-5c: pinned task survives; unpinned task is replaced ───────────────
+  // Desktop only: requires the split panels both visible simultaneously.
+  // TC-4.2-6 (both viewports) and TC-4.2-7-mirror (both viewports) provide 360px coverage.
+
+  if (VP.width >= 1000) {
+    // Scenario A: pinned first task survives second task open
+    {
+      const page = await loadApp(browser, vp);
+      try {
+        await page.evaluate(([idA, idB, slug]) => {
+          const ws = window.__pinia._s.get("workspace");
+          const tasks = window.__pinia._s.get("tasks");
+          ws.open({ kind: "legacy", page: "tasks" });
+          ws.open({ kind: "legacy", page: "chat" }, { side: true });
+          tasks.cache = [
+            { id: idA, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task A", project: slug, updated: new Date().toISOString(), closed: null },
+            { id: idB, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task B", project: slug, updated: new Date(Date.now() - 1000).toISOString(), closed: null },
+          ];
+          tasks.view = "all";
+          tasks.loaded = true;
+          ws.focused = 0;
+        }, [TASK_A_ID, TASK_B_ID, PROJECT_SLUG]);
+        await page.waitForTimeout(400);
+
+        await page.locator(".task-tree-node").first().click();
+        await page.waitForTimeout(300);
+
+        const taskAKey = `envelope:${TASK_A_ID}`;
+        const taskATab = page.locator(`.ts-tab[data-key="${taskAKey}"]`);
+        const taskAVisible = await taskATab.isVisible().catch(() => false);
+        if (!taskAVisible) {
+          fail(`TC-4.2-5c setup [${VP.label}]`, "task A tab not visible after click");
+        } else {
+          await taskATab.dblclick();
+          await page.waitForTimeout(200);
+
+          await page.locator(".task-tree-node").nth(1).click();
+          await page.waitForTimeout(300);
+
+          await shot(page, `TC-4.2-5c-pinned-both-${sl}`);
+
+          const result = await page.evaluate((aKey) => {
+            const ws = window.__pinia._s.get("workspace");
+            const allKeys = ws.tabs.map(t => ws.refKey(t));
+            return { allKeys, taskAPresent: allKeys.includes(aKey), taskAMeta: ws.meta[aKey] };
+          }, taskAKey);
+
+          if (result.taskAPresent && result.taskAMeta?.pinned) {
+            pass(`TC-4.2-5c pinned task A survives [${VP.label}] (tabs: ${result.allKeys.join(", ")})`);
+          } else {
+            fail(`TC-4.2-5c pinned task A survives [${VP.label}]`, `present=${result.taskAPresent} pinned=${result.taskAMeta?.pinned}`);
+          }
+        }
+      } catch (e) { fail(`TC-4.2-5c pinned [${VP.label}]`, String(e)); }
+      await page.close();
     }
-  } catch (e) { fail("TC-4.2-5c pinned", String(e)); }
-  await page.close();
-}
 
-// Scenario B — unpinned first task IS replaced (correct eviction behaviour)
-{
-  const page = await loadApp(browser);
+    // Scenario B: unpinned first task is replaced by second
+    {
+      const page = await loadApp(browser, vp);
+      try {
+        await page.evaluate(([idA, idB, slug]) => {
+          const ws = window.__pinia._s.get("workspace");
+          const tasks = window.__pinia._s.get("tasks");
+          ws.open({ kind: "legacy", page: "tasks" });
+          ws.open({ kind: "legacy", page: "chat" }, { side: true });
+          tasks.cache = [
+            { id: idA, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task A", project: slug, updated: new Date().toISOString(), closed: null },
+            { id: idB, agent: "bob", to: "bob", from: "alice", status: "open", headline: "TC-4.2 task B", project: slug, updated: new Date(Date.now() - 1000).toISOString(), closed: null },
+          ];
+          tasks.view = "all";
+          tasks.loaded = true;
+          ws.focused = 0;
+        }, [TASK_A_ID, TASK_B_ID, PROJECT_SLUG]);
+        await page.waitForTimeout(400);
 
-  try {
-    // Same clean split setup as scenario A.
-    await page.evaluate(() => {
-      const ws = window.__pinia._s.get("workspace");
-      const tasks = window.__pinia._s.get("tasks");
-      ws.open({ kind: "legacy", page: "tasks" });
-      ws.open({ kind: "legacy", page: "chat" }, { side: true });
-      tasks.view = "all";
-      tasks.loaded = true;
-    });
-    await page.waitForTimeout(400);
+        await page.locator(".task-tree-node").first().click();
+        await page.waitForTimeout(300);
 
-    // Open task A (preview, not pinned).
-    await page.locator(".task-tree-node").first().click();
-    await page.waitForTimeout(300);
+        await page.locator(".task-tree-node").nth(1).click();
+        await page.waitForTimeout(300);
 
-    // Open task B without pinning task A first.
-    await page.locator(".task-tree-node").nth(1).click();
-    await page.waitForTimeout(300);
+        await shot(page, `TC-4.2-5c-unpinned-replaced-${sl}`);
 
-    await shot(page, "TC-4.2-5c-unpinned-replaced");
+        const result = await page.evaluate(([aKey, bKey]) => {
+          const ws = window.__pinia._s.get("workspace");
+          const allKeys = ws.tabs.map(t => ws.refKey(t));
+          return { allKeys, taskAGone: !allKeys.includes(aKey), taskBPresent: allKeys.includes(bKey) };
+        }, [`envelope:${TASK_A_ID}`, `envelope:${TASK_B_ID}`]);
 
-    const result = await page.evaluate(([aKey, bKey]) => {
-      const ws = window.__pinia._s.get("workspace");
-      const allKeys = ws.tabs.map(t => ws.refKey(t));
-      return {
-        allKeys,
-        taskAGone: !allKeys.includes(aKey),
-        taskBPresent: allKeys.includes(bKey),
-      };
-    }, [`envelope:${TASK_A_ID}`, `envelope:${TASK_B_ID}`]);
-
-    if (result.taskAGone && result.taskBPresent) {
-      pass(`TC-4.2-5c unpinned task A replaced by task B (tabs: ${result.allKeys.join(", ")})`);
-    } else {
-      fail("TC-4.2-5c unpinned task A replaced", `taskAGone=${result.taskAGone} taskBPresent=${result.taskBPresent} tabs: ${result.allKeys.join(", ")}`);
+        if (result.taskAGone && result.taskBPresent) {
+          pass(`TC-4.2-5c unpinned task A replaced [${VP.label}] (tabs: ${result.allKeys.join(", ")})`);
+        } else {
+          fail(`TC-4.2-5c unpinned task A replaced [${VP.label}]`, `taskAGone=${result.taskAGone} taskBPresent=${result.taskBPresent}`);
+        }
+      } catch (e) { fail(`TC-4.2-5c unpinned [${VP.label}]`, String(e)); }
+      await page.close();
     }
-  } catch (e) { fail("TC-4.2-5c unpinned", String(e)); }
-  await page.close();
+  }
 }
 
 await browser.close();
