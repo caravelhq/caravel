@@ -2555,8 +2555,8 @@ export const pageStyles = String.raw`    :root {
     .tasks-panel {
       display: flex;
       flex-direction: column;
-      width: min(100%, 1300px);
-      min-width: min(680px, 100%);
+      width: min(100%, 720px);
+      min-width: min(400px, 100%);
       max-width: 100%;
       flex: 1;
       min-height: 0;
@@ -2804,11 +2804,14 @@ export const pageStyles = String.raw`    :root {
        card per Notes/Projects/<slug>/ folder (plus an Unassigned card when
        un-tagged tasks exist). Counts row mirrors the plan's legend. */
     .tasks-projects-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 8px;
       padding: 10px 12px;
-      overflow-y: auto;
+      align-content: start;
+    }
+    @container tasks-panel (max-width: 480px) {
+      .tasks-projects-grid { grid-template-columns: 1fr; }
     }
     .tasks-project-card {
       display: flex;
@@ -3760,6 +3763,8 @@ export const pageStyles = String.raw`    :root {
     .task-tree-node.is-current:hover {
       background: #1a2a44a8;
     }
+    .task-tree-node.is-done { opacity: 0.45; }
+    .task-tree-node.is-done:hover { opacity: 0.7; }
     .task-tree-indent {
       display: inline-block;
       flex-shrink: 0;

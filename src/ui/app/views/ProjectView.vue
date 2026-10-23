@@ -243,7 +243,10 @@ watch(slug, () => {});  // useResource handles rebind via key watch
               :task="root"
               :depth="0"
               :marker="familyTree.roots.length === 1 ? '●' : '◆'"
+              :hasChildren="(familyTree.childrenOf[root.id]?.length ?? 0) > 0"
+              :isExpanded="!!expanded[root.id]"
               @open="openTask"
+              @toggle="toggleExpand"
             />
             <template v-if="expanded[root.id]">
               <TaskRow
@@ -255,12 +258,6 @@ watch(slug, () => {});  // useResource handles rebind via key watch
                 @open="openTask"
               />
             </template>
-            <button
-              v-if="(familyTree.childrenOf[root.id]?.length ?? 0) > 0"
-              class="pv-tree-expand"
-              type="button"
-              @click.stop="toggleExpand(root.id)"
-            >{{ expanded[root.id] ? '▾ collapse' : '▸ expand (' + (familyTree.childrenOf[root.id]?.length ?? 0) + ')' }}</button>
           </template>
         </div>
       </div>
@@ -290,6 +287,8 @@ watch(slug, () => {});  // useResource handles rebind via key watch
   height: 100%;
   overflow-y: auto;
   padding: 12px;
+  background: var(--panel, #0f1e33);
+  border: 1px solid rgba(255, 255, 255, 0.133);
 }
 
 .pv-loading,

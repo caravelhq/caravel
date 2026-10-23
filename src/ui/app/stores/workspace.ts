@@ -597,7 +597,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       ? 0
       : (splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length);
     tabs.value.splice(insertAt, 0, tabRef);
-    if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
+    if (splitOn.value && splitIndex.value !== null && insertAt < splitIndex.value) {
       splitIndex.value++;
     }
 

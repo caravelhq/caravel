@@ -4,6 +4,8 @@ import { useWorkspaceStore } from "../../stores/workspace";
 import { useKnowledgeStore } from "../../stores/knowledge";
 import { useNewTaskStore } from "../../stores/newTask";
 import { useLiveStore } from "../../stores/live";
+import { useTasksStore } from "../../stores/tasks";
+import { useProjectsStore } from "../../stores/projects";
 import { refGlyph, refLabel, TASKS_LIST_KEY, PROJECTS_LIST_KEY } from "../../workspace/labels";
 import type { ResourceRef } from "../../workspace/refs";
 import type { TaskRow } from "../../stores/tasks";
@@ -13,6 +15,8 @@ const ws = useWorkspaceStore();
 const kn = useKnowledgeStore();
 const nt = useNewTaskStore();
 const live = useLiveStore();
+const tasksStore = useTasksStore();
+const projs = useProjectsStore();
 
 // Read shared lists bound by TabStrip so recents resolve labels.
 const tasksList = computed<TaskRow[] | null>(() => {
@@ -58,6 +62,9 @@ function openDashboard(): void { ws.open({ kind: "dashboard" }); close(); }
 
 // Pickers open pinned (DEC-0022).
 function openPicker(r: ResourceRef): void { ws.open(r); ws.pin(ws.refKey(r)); close(); }
+
+function openTasks(): void { tasksStore.view = "all"; openPicker({ kind: "legacy", page: "tasks" }); }
+function openProjects(): void { tasksStore.view = "projects"; void projs.loadList(); openPicker({ kind: "legacy", page: "tasks" }); }
 
 function openSearch(): void { kn.open(); close(); }
 function openNewTask(): void { nt.open(); close(); }
@@ -122,10 +129,10 @@ onBeforeUnmount(() => {
         <!-- Section: Pickers -->
         <div class="om-section-label" data-section="pickers">Pickers</div>
         <button id="tab-dashboard" class="open-menu-item" type="button" role="menuitem" @click="openDashboard">Dashboard</button>
-        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Open</button>
+        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openTasks">Open</button>
         <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
         <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
-        <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'tasks' })">Projects</button>
+        <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openProjects">Projects</button>
 
         <!-- Section: Recents (only when non-empty) -->
         <template v-if="ws.recents.length > 0">

@@ -133,7 +133,7 @@ function discard(): void {
 }
 
 .nx-label {
-  font-size: 0.85em;
+  font-size: 0.82rem;
   color: var(--ts-text-secondary, #aaa);
 }
 
@@ -142,7 +142,7 @@ function discard(): void {
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text, #eee);
   padding: 6px 10px;
-  font-size: 0.88em;
+  font-size: 0.9rem;
   border-radius: 4px;
   box-sizing: border-box;
   width: 100%;
@@ -160,7 +160,7 @@ function discard(): void {
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text, #eee);
   padding: 8px 10px;
-  font-size: 0.88em;
+  font-size: 0.9rem;
   border-radius: 4px;
   resize: vertical;
   box-sizing: border-box;

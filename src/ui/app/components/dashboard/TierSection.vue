@@ -59,7 +59,9 @@ function openRow(id: string): void {
 }
 
 function openAllTasks(): void {
-  workspace.open({ kind: "legacy", page: "tasks" });
+  const ref = { kind: "legacy", page: "tasks" } as const;
+  workspace.open(ref);
+  workspace.pin(workspace.refKey(ref));
 }
 
 function isChecked(row: AttentionTierRow): boolean {
