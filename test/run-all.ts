@@ -68,6 +68,7 @@ const SUITES: Suite[] = [
   { name: "cli-dispatch: new/next-id/list/summary + incident regression (WAL-123 Phase B step 8)", file: "cli-dispatch.test.ts", timeoutMs: 120_000 },
   { name: "cli-policy-lint: hard-fails + warns, F2 fixtures, n≥5 guard (WAL-123 Phase B step 9)", file: "cli-policy-lint.test.ts", timeoutMs: 120_000 },
   { name: "cli-batch-dispatch: sequential/parallel/cycle/dangling/lint-abort/defaults (WAL-123 Phase C v2)", file: "cli-batch-dispatch.test.ts", timeoutMs: 120_000 },
+  { name: "cli-worktree (WAL-123)", file: "cli-worktree.test.ts", timeoutMs: 60_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };

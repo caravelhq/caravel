@@ -6,6 +6,7 @@ import { telegram } from "./commands/telegram";
 import { discord } from "./commands/discord";
 import { send } from "./commands/send";
 import { runTaskCli } from "./cli/task";
+import { runWorktreeCli } from "./cli/worktree";
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -28,6 +29,8 @@ if (command === "--stop-all") {
   send(args.slice(1));
 } else if (command === "task") {
   runTaskCli(args.slice(1));
+} else if (command === "worktree") {
+  runWorktreeCli(args.slice(1));
 } else {
   start();
 }
