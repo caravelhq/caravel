@@ -21,7 +21,7 @@
  * destroy uncommitted work.
  */
 
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 import { spawnSync } from "child_process";
 
@@ -37,17 +37,45 @@ const LIVE_REL_PATH = "repos/caravel-live";
 const DEFAULT_BRANCH_CANDIDATES = ["local", "develop", "main", "master"];
 
 /**
- * Per-repo overrides for repos whose origin/HEAD doesn't match their actual
- * integration branch. Keyed by the repo directory's basename. For repos not
- * listed here, origin/HEAD is tried first (standard clones of app, servers,
- * and monorepo all have a correct origin/HEAD symref).
+ * Built-in per-repo default-branch overrides — applies when the workspace has
+ * no .caravel/settings.json or when the worktree.defaultBranch key is absent.
+ * Keyed by the repo directory's basename.
  *
  * caravel → local: the fork's origin/HEAD points at upstream's master; the
  * integration branch Kelly merges into is local.
  */
-const REPO_DEFAULT_BRANCH_OVERRIDE: Record<string, string> = {
+const BUILT_IN_DEFAULT_BRANCH: Record<string, string> = {
   caravel: "local",
 };
+
+/**
+ * Read worktree.defaultBranch overrides from wsRoot/.caravel/settings.json.
+ * Config wins on any key that appears; the built-in fills the rest.
+ * Any parse/read failure silently falls back to the built-in defaults, so a
+ * missing or malformed settings file never prevents the command from running.
+ *
+ * Config shape:
+ *   { "worktree": { "defaultBranch": { "reponame": "branchname" } } }
+ */
+function readDefaultBranchConfig(wsRoot: string): Record<string, string> {
+  try {
+    const raw = readFileSync(join(wsRoot, ".caravel", "settings.json"), "utf8");
+    const parsed = JSON.parse(raw);
+    const override = parsed?.worktree?.defaultBranch;
+    if (override && typeof override === "object" && !Array.isArray(override)) {
+      const fromConfig: Record<string, string> = {};
+      for (const [k, v] of Object.entries(override)) {
+        if (typeof v === "string" && v.trim()) fromConfig[k] = v.trim();
+      }
+      if (Object.keys(fromConfig).length > 0) {
+        return { ...BUILT_IN_DEFAULT_BRANCH, ...fromConfig };
+      }
+    }
+  } catch {
+    // file missing, unreadable, or malformed — fall through
+  }
+  return BUILT_IN_DEFAULT_BRANCH;
+}
 
 const MAX_DIRTY_SHOWN = 5;
 
@@ -138,9 +166,9 @@ function findMainWorktree(treePath: string): string | null {
   return resolve(normalised, "..");
 }
 
-function defaultBranchFor(repoPath: string): string | null {
+function defaultBranchFor(repoPath: string, overrides: Record<string, string>): string | null {
   const repoName = repoPath.split("/").filter(Boolean).at(-1) ?? "";
-  const override = REPO_DEFAULT_BRANCH_OVERRIDE[repoName];
+  const override = overrides[repoName];
   if (override) return override;
   const head = gitCapture(
     ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
@@ -256,6 +284,7 @@ function collectStale(wsRoot: string): StaleRegistration[] {
 
 /** Build the full read-only report. Performs no writes of any kind. */
 export function collectWorktreeReport(wsRoot: string): WorktreeListResult {
+  const defaultBranchOverrides = readDefaultBranchConfig(wsRoot);
   const worktrees: WorktreeReport[] = [];
   const wtDir = join(wsRoot, WORKTREES_SUBDIR);
 
@@ -292,7 +321,7 @@ export function collectWorktreeReport(wsRoot: string): WorktreeListResult {
 
     const mainRepo = findMainWorktree(full);
     const repoRel = mainRepo ? relToWs(wsRoot, mainRepo) : null;
-    const defaultBranch = mainRepo ? defaultBranchFor(mainRepo) : null;
+    const defaultBranch = mainRepo ? defaultBranchFor(mainRepo, defaultBranchOverrides) : null;
 
     let merged: boolean | null = null;
     if (mainRepo && branch && branch !== "HEAD" && defaultBranch && branch !== defaultBranch) {

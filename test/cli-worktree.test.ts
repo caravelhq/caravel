@@ -171,6 +171,165 @@ check("no stale reported", bareRes.stale.length === 0);
 check("summary all zero", bareRes.summary.total === 0 && bareRes.summary.reapable === 0);
 rmSync(bare, { recursive: true, force: true });
 
+// ── W9: the actual bug — origin/HEAD wrong, config override fixes it ──────────
+//
+// This is the regression for WAL-150. The caravel fork's origin/HEAD resolves
+// to origin/master (upstream's branch). A worktree merged into "local" was
+// reported as unmerged because isAncestor(branch, "master", repo) returned
+// false — master doesn't share history with local in the fork.
+//
+// Scenario:
+//   - Repo named "bugrepro" (not in built-in defaults).
+//   - origin/HEAD → master (the wrong branch, set via symbolic-ref).
+//   - Integration branch is "local".
+//   - A worktree created from "local" (so it IS merged into local).
+//
+// Without config: defaultBranch = "master" → merged = false (the bug).
+// With config (worktree.defaultBranch.bugrepro = "local"): merged = true (the fix).
+
+console.log("\nW9 — bug regression: origin/HEAD→wrong branch, config override fixes it");
+
+const bugRoot = mkdtempSync(join(tmpdir(), "caravel-wt-bug-"));
+if (resolve(bugRoot).startsWith(realWs)) {
+  console.error(`FATAL: bugRoot ${bugRoot} is inside the real workspace — aborting`);
+  process.exit(1);
+}
+
+const bugRepos = join(bugRoot, "repos");
+const bugRepo = join(bugRepos, "bugrepro");
+const bugWtDir = join(bugRepos, ".worktrees");
+mkdirSync(bugRepo, { recursive: true });
+mkdirSync(bugWtDir, { recursive: true });
+
+git(["init", "-q", "--initial-branch=local"], bugRepo);
+git(["config", "user.email", "t@t.com"], bugRepo);
+git(["config", "user.name", "T"], bugRepo);
+writeFileSync(join(bugRepo, "f"), "base");
+git(["add", "."], bugRepo);
+git(["commit", "-q", "-m", "base"], bugRepo);
+
+// Simulate the fork's wrong origin/HEAD without a real remote clone.
+git(["symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/master"], bugRepo);
+
+// A feature branch at the same commit as local — merged into local.
+git(["worktree", "add", "-q", "-b", "feature/done", join(bugWtDir, "bugrepro-done"), "local"], bugRepo);
+// A feature branch with a new commit — NOT merged into local.
+git(["worktree", "add", "-q", "-b", "feature/ahead", join(bugWtDir, "bugrepro-ahead"), "local"], bugRepo);
+writeFileSync(join(bugWtDir, "bugrepro-ahead", "new.txt"), "extra");
+git(["add", "."], join(bugWtDir, "bugrepro-ahead"));
+git(["commit", "-q", "-m", "extra"], join(bugWtDir, "bugrepro-ahead"));
+
+// ── W9a: without config — origin/HEAD (master) is used → merged=false (the bug) ──
+const bugResNoConfig = collectWorktreeReport(bugRoot);
+const bugDoneNoConfig = bugResNoConfig.worktrees.find((w) => w.name === "bugrepro-done");
+check(
+  "W9a: without config, defaultBranch resolves from origin/HEAD (master)",
+  bugDoneNoConfig?.defaultBranch === "master",
+  `got ${bugDoneNoConfig?.defaultBranch}`,
+);
+check(
+  "W9a: without config, merged=false — the bug (master != ancestor)",
+  bugDoneNoConfig?.merged === false,
+  `got ${bugDoneNoConfig?.merged}`,
+);
+check("W9a: without config, not reapable", bugDoneNoConfig?.reapable === false);
+
+// ── W9b: with config override — correct branch used → merged=true (the fix) ──
+mkdirSync(join(bugRoot, ".caravel"), { recursive: true });
+writeFileSync(
+  join(bugRoot, ".caravel", "settings.json"),
+  JSON.stringify({ worktree: { defaultBranch: { bugrepro: "local" } } }),
+);
+const bugResConfig = collectWorktreeReport(bugRoot);
+const bugDoneConfig = bugResConfig.worktrees.find((w) => w.name === "bugrepro-done");
+const bugAheadConfig = bugResConfig.worktrees.find((w) => w.name === "bugrepro-ahead");
+check(
+  "W9b: with config, defaultBranch is local (from settings.json)",
+  bugDoneConfig?.defaultBranch === "local",
+  `got ${bugDoneConfig?.defaultBranch}`,
+);
+check(
+  "W9b: with config, merged worktree reports merged=true (the fix)",
+  bugDoneConfig?.merged === true,
+  `got ${bugDoneConfig?.merged}`,
+);
+check("W9b: with config, merged+clean worktree is reapable", bugDoneConfig?.reapable === true);
+check(
+  "W9b: unmerged worktree still reports merged=false",
+  bugAheadConfig?.merged === false,
+  `got ${bugAheadConfig?.merged}`,
+);
+
+// ── W10: config absent/malformed → built-in applies, no crash ────────────────
+
+console.log("\nW10 — config absent/malformed falls back to built-in without crashing");
+
+// Malformed JSON in settings.json → fallback to built-in.
+writeFileSync(join(bugRoot, ".caravel", "settings.json"), "{not: valid json");
+const bugResMalformed = collectWorktreeReport(bugRoot);
+check("W10a: malformed JSON, no crash (worktrees still collected)", bugResMalformed.worktrees.length >= 0);
+// "bugrepro" not in built-in → falls back to origin/HEAD (master).
+const bugDoneMalformed = bugResMalformed.worktrees.find((w) => w.name === "bugrepro-done");
+check(
+  "W10a: malformed JSON → falls back to origin/HEAD (master)",
+  bugDoneMalformed?.defaultBranch === "master",
+  `got ${bugDoneMalformed?.defaultBranch}`,
+);
+
+// Missing worktree key in valid JSON → fallback to built-in.
+writeFileSync(join(bugRoot, ".caravel", "settings.json"), JSON.stringify({ model: "opus" }));
+const bugResMissingKey = collectWorktreeReport(bugRoot);
+check("W10b: missing worktree key, no crash", bugResMissingKey.worktrees.length >= 0);
+const bugDoneMissingKey = bugResMissingKey.worktrees.find((w) => w.name === "bugrepro-done");
+check(
+  "W10b: missing key → falls back to origin/HEAD (master)",
+  bugDoneMissingKey?.defaultBranch === "master",
+  `got ${bugDoneMissingKey?.defaultBranch}`,
+);
+
+// ── W11: non-override repo resolves origin/HEAD normally (no regression) ─────
+
+console.log("\nW11 — non-override repo resolves origin/HEAD correctly (app/servers shape)");
+
+// A repo named "normalrepo" with correct origin/HEAD → main.
+// Uses the settings.json with the bugrepro override — "normalrepo" is NOT in it,
+// so it falls through to origin/HEAD → main. This proves the override is an
+// exception path, not a replacement.
+writeFileSync(
+  join(bugRoot, ".caravel", "settings.json"),
+  JSON.stringify({ worktree: { defaultBranch: { bugrepro: "local" } } }),
+);
+
+const normalRepoDir = join(bugRepos, "normalrepo");
+mkdirSync(normalRepoDir, { recursive: true });
+git(["init", "-q", "--initial-branch=main"], normalRepoDir);
+git(["config", "user.email", "t@t.com"], normalRepoDir);
+git(["config", "user.name", "T"], normalRepoDir);
+writeFileSync(join(normalRepoDir, "f"), "base");
+git(["add", "."], normalRepoDir);
+git(["commit", "-q", "-m", "base"], normalRepoDir);
+// Correct origin/HEAD → main.
+git(["symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/main"], normalRepoDir);
+
+const normalWt = join(bugWtDir, "normalrepo-merged");
+git(["worktree", "add", "-q", "-b", "feature/nr", normalWt, "main"], normalRepoDir);
+
+const normalRes = collectWorktreeReport(bugRoot);
+const normalMerged = normalRes.worktrees.find((w) => w.name === "normalrepo-merged");
+check(
+  "W11: non-override repo picks up origin/HEAD correctly (main)",
+  normalMerged?.defaultBranch === "main",
+  `got ${normalMerged?.defaultBranch}`,
+);
+check(
+  "W11: merged worktree in non-override repo reports merged=true",
+  normalMerged?.merged === true,
+  `got ${normalMerged?.merged}`,
+);
+check("W11: built-in still has no effect on non-caravel, non-bugrepro repo", normalMerged?.reapable === true);
+
+rmSync(bugRoot, { recursive: true, force: true });
+
 // ── teardown ─────────────────────────────────────────────────────────────────
 
 rmSync(root, { recursive: true, force: true });
