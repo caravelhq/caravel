@@ -6,6 +6,8 @@
  * tests" and no aggregate signal. This runner executes every suite and exits
  * non-zero if any suite fails.
  *
+ * WAL-123 Phase C v2 adds cli-batch-dispatch (suite 26).
+ *
  * Why subprocess-per-suite rather than importing the files into one process:
  * every suite that touches src/multiAgent.ts must `process.chdir()` into a
  * tmpdir BEFORE the dynamic import, because the module resolves
@@ -64,6 +66,8 @@ const SUITES: Suite[] = [
   { name: "envelope-drift: behavioral + grep gate (WAL-123 Phase A)", file: "envelope-drift.test.ts", timeoutMs: 120_000 },
   { name: "usage-recording: stamp/absent/replace (WAL-123 Phase B step 7)", file: "usage-recording.test.ts", timeoutMs: 120_000 },
   { name: "cli-dispatch: new/next-id/list/summary + incident regression (WAL-123 Phase B step 8)", file: "cli-dispatch.test.ts", timeoutMs: 120_000 },
+  { name: "cli-policy-lint: hard-fails + warns, F2 fixtures, n≥5 guard (WAL-123 Phase B step 9)", file: "cli-policy-lint.test.ts", timeoutMs: 120_000 },
+  { name: "cli-batch-dispatch: sequential/parallel/cycle/dangling/lint-abort/defaults (WAL-123 Phase C v2)", file: "cli-batch-dispatch.test.ts", timeoutMs: 120_000 },
 ];
 
 type Result = { name: string; ok: boolean; ms: number; detail: string };
