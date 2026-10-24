@@ -21,7 +21,7 @@
  * destroy uncommitted work.
  */
 
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "fs";
 import { join, resolve } from "path";
 import { spawnSync } from "child_process";
 
@@ -35,6 +35,47 @@ const LIVE_REL_PATH = "repos/caravel-live";
  * is Caravel's integration branch; the Trakk repos use develop or master.
  */
 const DEFAULT_BRANCH_CANDIDATES = ["local", "develop", "main", "master"];
+
+/**
+ * Built-in per-repo default-branch overrides — applies when the workspace has
+ * no .caravel/settings.json or when the worktree.defaultBranch key is absent.
+ * Keyed by the repo directory's basename.
+ *
+ * caravel → local: the fork's origin/HEAD points at upstream's master; the
+ * integration branch Kelly merges into is local.
+ */
+const BUILT_IN_DEFAULT_BRANCH: Record<string, string> = {
+  caravel: "local",
+};
+
+/**
+ * Read worktree.defaultBranch overrides from wsRoot/.caravel/settings.json.
+ * Config wins on any key that appears; the built-in fills the rest.
+ * Any parse/read failure silently falls back to the built-in defaults, so a
+ * missing or malformed settings file never prevents the command from running.
+ *
+ * Config shape:
+ *   { "worktree": { "defaultBranch": { "reponame": "branchname" } } }
+ */
+function readDefaultBranchConfig(wsRoot: string): Record<string, string> {
+  try {
+    const raw = readFileSync(join(wsRoot, ".caravel", "settings.json"), "utf8");
+    const parsed = JSON.parse(raw);
+    const override = parsed?.worktree?.defaultBranch;
+    if (override && typeof override === "object" && !Array.isArray(override)) {
+      const fromConfig: Record<string, string> = {};
+      for (const [k, v] of Object.entries(override)) {
+        if (typeof v === "string" && v.trim()) fromConfig[k] = v.trim();
+      }
+      if (Object.keys(fromConfig).length > 0) {
+        return { ...BUILT_IN_DEFAULT_BRANCH, ...fromConfig };
+      }
+    }
+  } catch {
+    // file missing, unreadable, or malformed — fall through
+  }
+  return BUILT_IN_DEFAULT_BRANCH;
+}
 
 const MAX_DIRTY_SHOWN = 5;
 
@@ -125,7 +166,10 @@ function findMainWorktree(treePath: string): string | null {
   return resolve(normalised, "..");
 }
 
-function defaultBranchFor(repoPath: string): string | null {
+function defaultBranchFor(repoPath: string, overrides: Record<string, string>): string | null {
+  const repoName = repoPath.split("/").filter(Boolean).at(-1) ?? "";
+  const override = overrides[repoName];
+  if (override) return override;
   const head = gitCapture(
     ["symbolic-ref", "--short", "refs/remotes/origin/HEAD"],
     repoPath
@@ -240,6 +284,7 @@ function collectStale(wsRoot: string): StaleRegistration[] {
 
 /** Build the full read-only report. Performs no writes of any kind. */
 export function collectWorktreeReport(wsRoot: string): WorktreeListResult {
+  const defaultBranchOverrides = readDefaultBranchConfig(wsRoot);
   const worktrees: WorktreeReport[] = [];
   const wtDir = join(wsRoot, WORKTREES_SUBDIR);
 
@@ -276,7 +321,7 @@ export function collectWorktreeReport(wsRoot: string): WorktreeListResult {
 
     const mainRepo = findMainWorktree(full);
     const repoRel = mainRepo ? relToWs(wsRoot, mainRepo) : null;
-    const defaultBranch = mainRepo ? defaultBranchFor(mainRepo) : null;
+    const defaultBranch = mainRepo ? defaultBranchFor(mainRepo, defaultBranchOverrides) : null;
 
     let merged: boolean | null = null;
     if (mainRepo && branch && branch !== "HEAD" && defaultBranch && branch !== defaultBranch) {
@@ -329,6 +374,14 @@ function printHuman(res: WorktreeListResult): void {
     const plural = res.worktrees.length === 1 ? "" : "s";
     console.log(`${WORKTREES_SUBDIR}/ — ${res.worktrees.length} worktree${plural}\n`);
     const nameW = Math.max(...res.worktrees.map((w) => w.name.length), 4);
+    const mergedW = Math.max(
+      ...res.worktrees.map((w) => {
+        if (w.merged === null) return 1;
+        const base = w.merged ? "merged" : "unmerged";
+        return w.defaultBranch ? base.length + 1 + w.defaultBranch.length : base.length;
+      }),
+      9
+    );
     for (const w of res.worktrees) {
       if (w.unreachable) {
         console.log(`  ${pad(w.name, nameW)}  [unreachable — not a git worktree]`);
@@ -336,17 +389,23 @@ function printHuman(res: WorktreeListResult): void {
       }
       const state = w.dirtyCount > 0 ? `dirty(${w.dirtyCount})` : "clean";
       const mergedLabel =
-        w.merged === true ? "merged" : w.merged === false ? "unmerged" : "—";
+        w.merged === true
+          ? w.defaultBranch ? `merged/${w.defaultBranch}` : "merged"
+          : w.merged === false
+          ? w.defaultBranch ? `unmerged/${w.defaultBranch}` : "unmerged"
+          : "—";
       const flag = w.reapable ? "  <- reapable" : "";
       console.log(
-        `  ${pad(w.name, nameW)}  ${pad(w.sha ?? "?", 9)} ${pad(state, 11)} ${pad(mergedLabel, 9)} ${w.branch ?? "?"}${flag}`
+        `  ${pad(w.name, nameW)}  ${pad(w.sha ?? "?", 9)} ${pad(state, 11)} ${pad(mergedLabel, mergedW)} ${w.branch ?? "?"}${flag}`
       );
     }
   }
 
   const reapable = res.worktrees.filter((w) => w.reapable);
   if (reapable.length > 0) {
-    console.log(`\nReapable — clean and merged into the default branch (${reapable.length}):`);
+    const bases = [...new Set(reapable.map((w) => w.defaultBranch).filter((b): b is string => b !== null))];
+    const vsLabel = bases.length > 0 ? ` (vs ${bases.join(", ")})` : "";
+    console.log(`\nReapable — clean and merged into the default branch${vsLabel} (${reapable.length}):`);
     for (const w of reapable) console.log(`  ${w.removeCommand}`);
   }
 
@@ -380,10 +439,21 @@ function printHuman(res: WorktreeListResult): void {
   console.log("\nThis command never removes anything. Run the commands above yourself.");
 }
 
+function findWorkspaceRoot(startPath: string): string {
+  let dir = resolve(startPath);
+  while (true) {
+    if (existsSync(join(dir, ".caravel"))) return dir;
+    const parent = resolve(dir, "..");
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return startPath;
+}
+
 function doList(argv: string[]): void {
   const rootIdx = argv.indexOf("--root");
   const wsRoot =
-    rootIdx >= 0 && argv[rootIdx + 1] ? resolve(argv[rootIdx + 1]!) : process.cwd();
+    rootIdx >= 0 && argv[rootIdx + 1] ? resolve(argv[rootIdx + 1]!) : findWorkspaceRoot(process.cwd());
 
   const res = collectWorktreeReport(wsRoot);
 
