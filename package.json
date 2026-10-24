@@ -12,9 +12,8 @@
     "discord": "bun run src/index.ts discord",
     "status": "bun run src/index.ts status",
     "build": "vite build",
-    "build:island": "vite build",
     "dev": "vite build --watch",
-    "dev:island": "vite build --watch",
+    "typecheck": "vue-tsc --noEmit",
     "test:stale-claim": "bun run test/stale-claim-replay.ts",
     "test:set-field": "bun run test/set-field.test.ts",
     "test:paused-status": "bun run test/paused-status.test.ts",
@@ -26,7 +25,9 @@
   "devDependencies": {
     "@types/bun": "^1.3.9",
     "@vitejs/plugin-vue": "^5",
-    "vite": "^6"
+    "typescript": "~5.8",
+    "vite": "^6",
+    "vue-tsc": "^2"
   },
   "dependencies": {
     "@types/js-yaml": "^4.0.9",
