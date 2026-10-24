@@ -217,20 +217,20 @@ try {
         fail(`NV2 Tasks opens pinned [${VP.label}]`, `pinnedKeys: ${JSON.stringify(st1?.pinnedKeys)}`);
       }
 
-      // Tasks tab has no close button (pinned tabs don't show ×)
-      // The tab-strip data-key selector
+      // DEC-0044 (supersedes DEC-0022): pinned tabs KEEP their close button.
+      // Pinning guards against eviction, not deliberate closing.
       const tasksCloseVisible = await page.evaluate((key) => {
         const tabEl = document.querySelector(`[data-key="${key}"]`);
         if (!tabEl) return null;
         const closeBtn = tabEl.querySelector(".ts-tab-close");
         return closeBtn ? (closeBtn.offsetParent !== null) : false;
       }, tasksKey);
-      if (tasksCloseVisible === false) {
-        pass(`NV2 Tasks tab has no close button [${VP.label}]`);
+      if (tasksCloseVisible === true) {
+        pass(`NV2 Tasks tab has close button (DEC-0044: pinning guards eviction, not closing) [${VP.label}]`);
       } else if (tasksCloseVisible === null) {
-        fail(`NV2 Tasks tab has no close button [${VP.label}]`, "tab element not found in strip");
+        fail(`NV2 Tasks tab has close button [${VP.label}]`, "tab element not found in strip");
       } else {
-        fail(`NV2 Tasks tab has no close button [${VP.label}]`, `close button visible: ${tasksCloseVisible}`);
+        fail(`NV2 Tasks tab has close button [${VP.label}]`, `close button not visible: ${tasksCloseVisible}`);
       }
 
       // Click Chat

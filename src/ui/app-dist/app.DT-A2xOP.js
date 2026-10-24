@@ -13533,7 +13533,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
       }
       return;
     }
-    const targetGroup = opts.side ? 1 : focused.value;
+    const targetGroup = opts.group !== void 0 ? opts.group : opts.side ? 1 : focused.value;
     if (opts.preview) {
       const groupT = groupTabs(targetGroup);
       const previewTab = groupT.find((t) => {
@@ -13784,7 +13784,7 @@ const useWorkspaceStore = /* @__PURE__ */ defineStore("workspace", () => {
     }
     const insertAt = targetGroup === 0 ? 0 : splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length;
     tabs.value.splice(insertAt, 0, tabRef);
-    if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
+    if (splitOn.value && splitIndex.value !== null && insertAt < splitIndex.value) {
       splitIndex.value++;
     }
     fixupActive();
@@ -17116,6 +17116,148 @@ function refTitle(ref2, tasksList, projectsList) {
     }
   }
 }
+function load$3(key, fallback) {
+  try {
+    const v2 = localStorage.getItem("tasks." + key);
+    if (v2 === null) return fallback;
+    return JSON.parse(v2);
+  } catch {
+    return fallback;
+  }
+}
+function save$1(key, value) {
+  try {
+    localStorage.setItem("tasks." + key, JSON.stringify(value));
+  } catch {
+  }
+}
+const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
+  const view = /* @__PURE__ */ ref(load$3("view", "projects"));
+  const filter = /* @__PURE__ */ ref(load$3("filter", "all"));
+  const cache = /* @__PURE__ */ ref([]);
+  const expanded = /* @__PURE__ */ ref({});
+  const collapsed = /* @__PURE__ */ ref({});
+  const bulkSelected = /* @__PURE__ */ ref({});
+  const multiSelectActive = /* @__PURE__ */ ref(false);
+  const loaded = /* @__PURE__ */ ref(false);
+  const subViewMemory = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  const nextDraft = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  watch(view, (v2) => save$1("view", v2));
+  watch(filter, (v2) => save$1("filter", v2));
+  return {
+    view,
+    filter,
+    cache,
+    expanded,
+    collapsed,
+    bulkSelected,
+    multiSelectActive,
+    loaded,
+    subViewMemory,
+    nextDraft
+  };
+});
+const useProjectsStore = /* @__PURE__ */ defineStore("projects", () => {
+  const list = /* @__PURE__ */ ref([]);
+  const listLoaded = /* @__PURE__ */ ref(false);
+  const listError = /* @__PURE__ */ ref(null);
+  let listInflight = null;
+  async function loadList() {
+    if (listLoaded.value) return list.value;
+    if (listInflight) return listInflight;
+    listInflight = (async () => {
+      try {
+        const r = await fetch("/api/projects?counts=1", { cache: "no-store" });
+        const d2 = await r.json();
+        list.value = d2.ok && Array.isArray(d2.projects) ? d2.projects : [];
+        listError.value = null;
+      } catch (e) {
+        list.value = [];
+        listError.value = String(e.message || e);
+      }
+      listLoaded.value = true;
+      listInflight = null;
+      return list.value;
+    })();
+    return listInflight;
+  }
+  function invalidateList() {
+    listLoaded.value = false;
+    listInflight = null;
+  }
+  const summaries = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  const summaryErrors = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  const summaryInflights = /* @__PURE__ */ new Map();
+  async function loadSummary(slug) {
+    if (summaries.has(slug)) return summaries.get(slug) ?? null;
+    if (summaryInflights.has(slug)) return summaryInflights.get(slug) ?? null;
+    const p2 = (async () => {
+      try {
+        const r = await fetch(`/api/projects/${encodeURIComponent(slug)}`, { cache: "no-store" });
+        const d2 = await r.json();
+        const summary = d2.ok && d2.summary ? d2.summary : null;
+        if (summary) summaries.set(slug, summary);
+        summaryErrors.set(slug, null);
+        return summary;
+      } catch (e) {
+        summaryErrors.set(slug, String(e.message || e));
+        return null;
+      } finally {
+        summaryInflights.delete(slug);
+      }
+    })();
+    summaryInflights.set(slug, p2);
+    return p2;
+  }
+  function invalidateSummary(slug) {
+    summaries.delete(slug);
+    summaryErrors.delete(slug);
+    summaryInflights.delete(slug);
+  }
+  const expansionBySlug = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  function getExpansion(slug) {
+    if (!expansionBySlug.has(slug)) expansionBySlug.set(slug, {});
+    return expansionBySlug.get(slug);
+  }
+  const hideClosedBySlug = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
+  function _lcKey(slug) {
+    return "caravel.project.hideClosed." + (slug || "__unassigned__");
+  }
+  function getHideClosed(slug) {
+    var _a2;
+    if (hideClosedBySlug.has(slug)) return hideClosedBySlug.get(slug);
+    try {
+      const v2 = ((_a2 = window.localStorage) == null ? void 0 : _a2.getItem(_lcKey(slug))) === "1";
+      hideClosedBySlug.set(slug, v2);
+      return v2;
+    } catch {
+      return false;
+    }
+  }
+  function setHideClosed(slug, hide) {
+    var _a2, _b;
+    hideClosedBySlug.set(slug, hide);
+    try {
+      if (hide) (_a2 = window.localStorage) == null ? void 0 : _a2.setItem(_lcKey(slug), "1");
+      else (_b = window.localStorage) == null ? void 0 : _b.removeItem(_lcKey(slug));
+    } catch {
+    }
+  }
+  return {
+    list,
+    listLoaded,
+    listError,
+    loadList,
+    invalidateList,
+    summaries,
+    summaryErrors,
+    loadSummary,
+    invalidateSummary,
+    getExpansion,
+    getHideClosed,
+    setHideClosed
+  };
+});
 const _hoisted_1$t = ["aria-expanded"];
 const _hoisted_2$n = ["data-recent-key", "onClick"];
 const _hoisted_3$k = { class: "om-glyph" };
@@ -17126,6 +17268,8 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     const kn = useKnowledgeStore();
     const nt2 = useNewTaskStore();
     useLiveStore();
+    const tasksStore = useTasksStore();
+    const projs = useProjectsStore();
     const isOpen = /* @__PURE__ */ ref(false);
     const anchorRef = /* @__PURE__ */ ref(null);
     const panelRef = /* @__PURE__ */ ref(null);
@@ -17158,6 +17302,15 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
       ws.open(r);
       ws.pin(ws.refKey(r));
       close();
+    }
+    function openTasks() {
+      tasksStore.view = "all";
+      openPicker({ kind: "legacy", page: "tasks" });
+    }
+    function openProjects() {
+      tasksStore.view = "projects";
+      void projs.loadList();
+      openPicker({ kind: "legacy", page: "tasks" });
     }
     function openSearch() {
       kn.open();
@@ -17207,8 +17360,8 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           "aria-label": "Open menu",
           title: "Open",
           onClick: toggle
-        }, [..._cache[5] || (_cache[5] = [
-          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-091280bd><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-091280bd></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-091280bd></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-091280bd></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-091280bd></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-091280bd></path></svg>', 1)
+        }, [..._cache[3] || (_cache[3] = [
+          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-a9bc8242><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-a9bc8242></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-a9bc8242></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-a9bc8242></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-a9bc8242></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-a9bc8242></path></svg>', 1)
         ])], 8, _hoisted_1$t),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
@@ -17218,10 +17371,10 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
             class: "open-menu-list",
             style: normalizeStyle({ top: panelTop.value, left: panelLeft.value }),
             role: "menu",
-            onClick: _cache[4] || (_cache[4] = withModifiers(() => {
+            onClick: _cache[2] || (_cache[2] = withModifiers(() => {
             }, ["stop"]))
           }, [
-            _cache[10] || (_cache[10] = createBaseVNode("div", {
+            _cache[8] || (_cache[8] = createBaseVNode("div", {
               class: "om-section-label",
               "data-section": "pickers"
             }, "Pickers", -1)),
@@ -17237,32 +17390,32 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: _cache[0] || (_cache[0] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
+              onClick: openTasks
             }, "Open"),
             createBaseVNode("button", {
               id: "tab-chat",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: _cache[1] || (_cache[1] = ($event) => openPicker({ kind: "legacy", page: "chat" }))
+              onClick: _cache[0] || (_cache[0] = ($event) => openPicker({ kind: "legacy", page: "chat" }))
             }, "Chat"),
             createBaseVNode("button", {
               id: "tab-files",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: _cache[2] || (_cache[2] = ($event) => openPicker({ kind: "legacy", page: "files" }))
+              onClick: _cache[1] || (_cache[1] = ($event) => openPicker({ kind: "legacy", page: "files" }))
             }, "Files"),
             createBaseVNode("button", {
               id: "tab-projects",
               class: "open-menu-item",
               type: "button",
               role: "menuitem",
-              onClick: _cache[3] || (_cache[3] = ($event) => openPicker({ kind: "legacy", page: "tasks" }))
+              onClick: openProjects
             }, "Projects"),
             unref(ws).recents.length > 0 ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-              _cache[6] || (_cache[6] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
-              _cache[7] || (_cache[7] = createBaseVNode("div", {
+              _cache[4] || (_cache[4] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+              _cache[5] || (_cache[5] = createBaseVNode("div", {
                 class: "om-section-label",
                 "data-section": "recents"
               }, "Recents", -1)),
@@ -17280,8 +17433,8 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
                 ], 8, _hoisted_2$n);
               }), 128))
             ], 64)) : createCommentVNode("", true),
-            _cache[11] || (_cache[11] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
-            _cache[12] || (_cache[12] = createBaseVNode("div", {
+            _cache[9] || (_cache[9] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
+            _cache[10] || (_cache[10] = createBaseVNode("div", {
               class: "om-section-label",
               "data-section": "actions"
             }, "Actions", -1)),
@@ -17290,7 +17443,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openSearch
-            }, [..._cache[8] || (_cache[8] = [
+            }, [..._cache[6] || (_cache[6] = [
               createTextVNode("Search ", -1),
               createBaseVNode("kbd", null, "⌘K", -1)
             ])]),
@@ -17299,7 +17452,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
               type: "button",
               role: "menuitem",
               onClick: openNewTask
-            }, [..._cache[9] || (_cache[9] = [
+            }, [..._cache[7] || (_cache[7] = [
               createTextVNode("New task ", -1),
               createBaseVNode("kbd", null, "N", -1)
             ])])
@@ -17309,7 +17462,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$v, [["__scopeId", "data-v-091280bd"]]);
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$v, [["__scopeId", "data-v-a9bc8242"]]);
 const _hoisted_1$s = {
   key: 0,
   class: "tos-group-label"
@@ -17441,14 +17594,14 @@ const _sfc_main$u = /* @__PURE__ */ defineComponent({
 });
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$u, [["__scopeId", "data-v-099f83db"]]);
 const _hoisted_1$r = { class: "tab-strip-outer" };
-const _hoisted_2$l = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_2$l = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_3$i = {
   key: 0,
   class: "ts-tab-glyph"
 };
 const _hoisted_4$f = { class: "ts-tab-label" };
 const _hoisted_5$e = ["onClick"];
-const _hoisted_6$e = ["data-key", "title", "aria-selected", "onClick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_6$e = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_7$d = {
   key: 0,
   class: "ts-tab-glyph"
@@ -17571,6 +17724,17 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
       if (prev) prefetchRef(prev);
       if (next) prefetchRef(next);
     }
+    function togglePin(key) {
+      var _a2;
+      if ((_a2 = ws.meta[key]) == null ? void 0 : _a2.pinned) ws.unpin(key);
+      else ws.pin(key);
+    }
+    function tabTitle(tab) {
+      var _a2;
+      const base = refTitle(tab, tasksList.value, projectsList.value);
+      const isPinned = (_a2 = ws.meta[refKey(tab)]) == null ? void 0 : _a2.pinned;
+      return `${base} — double-click to ${isPinned ? "unpin" : "pin"}`;
+    }
     const draggedKey = /* @__PURE__ */ ref(null);
     const dragOverIdx = /* @__PURE__ */ ref(null);
     const dragOverDivider = /* @__PURE__ */ ref(false);
@@ -17634,7 +17798,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           }, [
             createVNode(OpenMenu),
             (openBlock(true), createElementBlock(Fragment, null, renderList(group0.value, (tab, i) => {
-              var _a3, _b, _c;
+              var _a3, _b;
               return openBlock(), createElementBlock("button", {
                 key: unref(refKey)(tab),
                 class: normalizeClass(["ts-tab", {
@@ -17645,12 +17809,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                   "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
                 }]),
                 "data-key": unref(refKey)(tab),
-                title: unref(refTitle)(tab, tasksList.value, projectsList.value),
+                title: tabTitle(tab),
                 role: "tab",
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
                 onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onDblclick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["prevent"]),
                 onMouseenter: ($event) => onTabHover(i, group0.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17660,19 +17825,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
                 onDragend: onDragEnd,
                 onDragover: ($event) => onTabDragOver($event, i),
-                onDragleave: _cache[0] || (_cache[0] = ($event) => dragOverIdx.value = null),
+                onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, i)
               }, [
                 unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_3$i, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_4$f, toDisplayString(tabLabel(tab)), 1),
-                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 1,
+                createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
                   "aria-label": "Close tab",
-                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_5$e)) : createCommentVNode("", true)
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
+                  onDblclick: _cache[0] || (_cache[0] = withModifiers(() => {
+                  }, ["stop"]))
+                }, "×", 40, _hoisted_5$e)
               ], 42, _hoisted_2$l);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
@@ -17683,11 +17849,11 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               }]),
               title: "Drop here to move tab between groups",
               onDragover: onDividerDragOver,
-              onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverDivider.value = false),
+              onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverDivider.value = false),
               onDrop: onDividerDrop
             }, null, 34)) : createCommentVNode("", true),
             (openBlock(true), createElementBlock(Fragment, null, renderList(group1.value, (tab, i) => {
-              var _a3, _b, _c;
+              var _a3, _b;
               return openBlock(), createElementBlock("button", {
                 key: unref(refKey)(tab),
                 class: normalizeClass(["ts-tab ts-tab--g1", {
@@ -17698,12 +17864,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                   "ts-tab--preview": (_b = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _b.preview
                 }]),
                 "data-key": unref(refKey)(tab),
-                title: unref(refTitle)(tab, tasksList.value, projectsList.value),
+                title: tabTitle(tab),
                 role: "tab",
                 "aria-selected": unref(ws).active[unref(ws).focused] === unref(refKey)(tab),
                 draggable: "true",
                 type: "button",
                 onClick: ($event) => unref(ws).activate(unref(refKey)(tab)),
+                onDblclick: withModifiers(($event) => togglePin(unref(refKey)(tab)), ["prevent"]),
                 onMouseenter: ($event) => onTabHover(i, group1.value),
                 onMousedown: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["middle", "prevent"]),
                 onContextmenu: withModifiers(($event) => openContextMenu($event, tab), ["prevent"]),
@@ -17713,19 +17880,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
                 onDragstart: ($event) => onDragStart($event, unref(refKey)(tab)),
                 onDragend: onDragEnd,
                 onDragover: ($event) => onTabDragOver($event, group0.value.length + i),
-                onDragleave: _cache[2] || (_cache[2] = ($event) => dragOverIdx.value = null),
+                onDragleave: _cache[4] || (_cache[4] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
                 unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_7$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_8$d, toDisplayString(tabLabel(tab)), 1),
-                !((_c = unref(ws).meta[unref(refKey)(tab)]) == null ? void 0 : _c.pinned) ? (openBlock(), createElementBlock("span", {
-                  key: 1,
+                createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
                   tabindex: "-1",
                   "aria-label": "Close tab",
-                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_9$c)) : createCommentVNode("", true)
+                  onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
+                  onDblclick: _cache[3] || (_cache[3] = withModifiers(() => {
+                  }, ["stop"]))
+                }, "×", 40, _hoisted_9$c)
               ], 42, _hoisted_6$e);
             }), 128))
           ], 2),
@@ -17736,20 +17904,20 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
               class: "ts-overflow-btn",
               type: "button",
               title: `${unref(ws).tabs.length} tabs — click to see all`,
-              onClick: _cache[3] || (_cache[3] = ($event) => overflowOpen.value = true)
+              onClick: _cache[5] || (_cache[5] = ($event) => overflowOpen.value = true)
             }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_12$8)) : createCommentVNode("", true),
             createBaseVNode("button", {
               class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
               type: "button",
               title: unref(ws).splitOn ? "Close split" : "Open split",
-              onClick: _cache[4] || (_cache[4] = ($event) => unref(ws).toggleSplit())
+              onClick: _cache[6] || (_cache[6] = ($event) => unref(ws).toggleSplit())
             }, "⫽", 10, _hoisted_13$7),
             createBaseVNode("button", {
               id: "settings-btn",
               class: "ts-settings-btn",
               type: "button",
               title: "Settings",
-              onClick: _cache[5] || (_cache[5] = ($event) => unref(ui).settingsOpen = true)
+              onClick: _cache[7] || (_cache[7] = ($event) => unref(ui).settingsOpen = true)
             }, "⚙")
           ])
         ]),
@@ -17761,13 +17929,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           createBaseVNode("div", {
             class: "ts-ctx-menu",
             style: normalizeStyle({ left: contextMenu.value.x + "px", top: contextMenu.value.y + "px" }),
-            onPointerdown: _cache[11] || (_cache[11] = withModifiers(() => {
+            onPointerdown: _cache[13] || (_cache[13] = withModifiers(() => {
             }, ["stop"]))
           }, [
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[6] || (_cache[6] = ($event) => {
+              onClick: _cache[8] || (_cache[8] = ($event) => {
                 var _a3;
                 ((_a3 = unref(ws).meta[unref(refKey)(contextMenu.value.tab)]) == null ? void 0 : _a3.pinned) ? unref(ws).unpin(unref(refKey)(contextMenu.value.tab)) : unref(ws).pin(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
@@ -17776,7 +17944,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[7] || (_cache[7] = ($event) => {
+              onClick: _cache[9] || (_cache[9] = ($event) => {
                 unref(ws).close(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17784,7 +17952,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[8] || (_cache[8] = ($event) => {
+              onClick: _cache[10] || (_cache[10] = ($event) => {
                 unref(ws).closeOthers(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17792,7 +17960,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item",
               type: "button",
-              onClick: _cache[9] || (_cache[9] = ($event) => {
+              onClick: _cache[11] || (_cache[11] = ($event) => {
                 unref(ws).closeToRight(unref(refKey)(contextMenu.value.tab));
                 closeCtx();
               })
@@ -17800,7 +17968,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             createBaseVNode("button", {
               class: "ts-ctx-item ts-ctx-item--wide-only",
               type: "button",
-              onClick: _cache[10] || (_cache[10] = ($event) => {
+              onClick: _cache[12] || (_cache[12] = ($event) => {
                 unref(ws).moveToGroup(unref(refKey)(contextMenu.value.tab), unref(ws).tabGroup(unref(ws).tabs.findIndex((t) => unref(refKey)(t) === unref(refKey)(contextMenu.value.tab))) === 0 ? 1 : 0);
                 closeCtx();
               })
@@ -17811,13 +17979,13 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
           open: overflowOpen.value,
           "tasks-list": tasksList.value,
           "projects-list": projectsList.value,
-          onClose: _cache[12] || (_cache[12] = ($event) => overflowOpen.value = false)
+          onClose: _cache[14] || (_cache[14] = ($event) => overflowOpen.value = false)
         }, null, 8, ["open", "tasks-list", "projects-list"])
       ], 64);
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-9c967bdf"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$t, [["__scopeId", "data-v-55206cc5"]]);
 const useAttentionStore = /* @__PURE__ */ defineStore("attention", () => {
   const tiers = /* @__PURE__ */ ref(null);
   const lastFetch = /* @__PURE__ */ ref(0);
@@ -18696,7 +18864,7 @@ const _sfc_main$q = /* @__PURE__ */ defineComponent({
     }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", {
-        class: normalizeClass(["task-tree-node", { "is-current": __props.isCurrent }]),
+        class: normalizeClass(["task-tree-node", { "is-current": __props.isCurrent, "is-done": __props.task.status === "done" || !!__props.task.closed }]),
         role: __props.isCurrent ? void 0 : "button",
         tabindex: __props.isCurrent ? void 0 : 0,
         title: __props.task.id,
@@ -18812,7 +18980,9 @@ const _sfc_main$p = /* @__PURE__ */ defineComponent({
       }
     }
     function openAllTasks() {
-      workspace.open({ kind: "legacy", page: "tasks" });
+      const ref2 = { kind: "legacy", page: "tasks" };
+      workspace.open(ref2);
+      workspace.pin(workspace.refKey(ref2));
     }
     function isChecked(row) {
       return !!(props.selected && props.selected[row.id]);
@@ -19295,148 +19465,6 @@ const _sfc_main$k = /* @__PURE__ */ defineComponent({
   }
 });
 const DashboardView = /* @__PURE__ */ _export_sfc(_sfc_main$k, [["__scopeId", "data-v-0e1d2c13"]]);
-function load$3(key, fallback) {
-  try {
-    const v2 = localStorage.getItem("tasks." + key);
-    if (v2 === null) return fallback;
-    return JSON.parse(v2);
-  } catch {
-    return fallback;
-  }
-}
-function save$1(key, value) {
-  try {
-    localStorage.setItem("tasks." + key, JSON.stringify(value));
-  } catch {
-  }
-}
-const useTasksStore = /* @__PURE__ */ defineStore("tasks", () => {
-  const view = /* @__PURE__ */ ref(load$3("view", "projects"));
-  const filter = /* @__PURE__ */ ref(load$3("filter", "all"));
-  const cache = /* @__PURE__ */ ref([]);
-  const expanded = /* @__PURE__ */ ref({});
-  const collapsed = /* @__PURE__ */ ref({});
-  const bulkSelected = /* @__PURE__ */ ref({});
-  const multiSelectActive = /* @__PURE__ */ ref(false);
-  const loaded = /* @__PURE__ */ ref(false);
-  const subViewMemory = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  const nextDraft = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  watch(view, (v2) => save$1("view", v2));
-  watch(filter, (v2) => save$1("filter", v2));
-  return {
-    view,
-    filter,
-    cache,
-    expanded,
-    collapsed,
-    bulkSelected,
-    multiSelectActive,
-    loaded,
-    subViewMemory,
-    nextDraft
-  };
-});
-const useProjectsStore = /* @__PURE__ */ defineStore("projects", () => {
-  const list = /* @__PURE__ */ ref([]);
-  const listLoaded = /* @__PURE__ */ ref(false);
-  const listError = /* @__PURE__ */ ref(null);
-  let listInflight = null;
-  async function loadList() {
-    if (listLoaded.value) return list.value;
-    if (listInflight) return listInflight;
-    listInflight = (async () => {
-      try {
-        const r = await fetch("/api/projects?counts=1", { cache: "no-store" });
-        const d2 = await r.json();
-        list.value = d2.ok && Array.isArray(d2.projects) ? d2.projects : [];
-        listError.value = null;
-      } catch (e) {
-        list.value = [];
-        listError.value = String(e.message || e);
-      }
-      listLoaded.value = true;
-      listInflight = null;
-      return list.value;
-    })();
-    return listInflight;
-  }
-  function invalidateList() {
-    listLoaded.value = false;
-    listInflight = null;
-  }
-  const summaries = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  const summaryErrors = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  const summaryInflights = /* @__PURE__ */ new Map();
-  async function loadSummary(slug) {
-    if (summaries.has(slug)) return summaries.get(slug) ?? null;
-    if (summaryInflights.has(slug)) return summaryInflights.get(slug) ?? null;
-    const p2 = (async () => {
-      try {
-        const r = await fetch(`/api/projects/${encodeURIComponent(slug)}`, { cache: "no-store" });
-        const d2 = await r.json();
-        const summary = d2.ok && d2.summary ? d2.summary : null;
-        if (summary) summaries.set(slug, summary);
-        summaryErrors.set(slug, null);
-        return summary;
-      } catch (e) {
-        summaryErrors.set(slug, String(e.message || e));
-        return null;
-      } finally {
-        summaryInflights.delete(slug);
-      }
-    })();
-    summaryInflights.set(slug, p2);
-    return p2;
-  }
-  function invalidateSummary(slug) {
-    summaries.delete(slug);
-    summaryErrors.delete(slug);
-    summaryInflights.delete(slug);
-  }
-  const expansionBySlug = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  function getExpansion(slug) {
-    if (!expansionBySlug.has(slug)) expansionBySlug.set(slug, {});
-    return expansionBySlug.get(slug);
-  }
-  const hideClosedBySlug = /* @__PURE__ */ reactive(/* @__PURE__ */ new Map());
-  function _lcKey(slug) {
-    return "caravel.project.hideClosed." + (slug || "__unassigned__");
-  }
-  function getHideClosed(slug) {
-    var _a2;
-    if (hideClosedBySlug.has(slug)) return hideClosedBySlug.get(slug);
-    try {
-      const v2 = ((_a2 = window.localStorage) == null ? void 0 : _a2.getItem(_lcKey(slug))) === "1";
-      hideClosedBySlug.set(slug, v2);
-      return v2;
-    } catch {
-      return false;
-    }
-  }
-  function setHideClosed(slug, hide) {
-    var _a2, _b;
-    hideClosedBySlug.set(slug, hide);
-    try {
-      if (hide) (_a2 = window.localStorage) == null ? void 0 : _a2.setItem(_lcKey(slug), "1");
-      else (_b = window.localStorage) == null ? void 0 : _b.removeItem(_lcKey(slug));
-    } catch {
-    }
-  }
-  return {
-    list,
-    listLoaded,
-    listError,
-    loadList,
-    invalidateList,
-    summaries,
-    summaryErrors,
-    loadSummary,
-    invalidateSummary,
-    getExpansion,
-    getHideClosed,
-    setHideClosed
-  };
-});
 const _hoisted_1$h = {
   key: 0,
   class: "ev-header"
@@ -24172,7 +24200,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-59b45b2a"]]);
+const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-3e53e6db"]]);
 const _hoisted_1$b = { class: "ev-top-row" };
 const _hoisted_2$7 = {
   role: "tablist",
@@ -24610,11 +24638,18 @@ const _sfc_main$a = /* @__PURE__ */ defineComponent({
     const ws = useWorkspaceStore();
     const attentionStore = useAttentionStore();
     const treeEl = /* @__PURE__ */ ref(null);
+    const pickerGroup = computed(() => {
+      const key = refKey({ kind: "legacy", page: "tasks" });
+      const idx = ws.tabs.findIndex((t) => refKey(t) === key);
+      return idx >= 0 ? ws.tabGroup(idx) : 0;
+    });
     function openTask(taskId) {
-      ws.open({ kind: "envelope", taskId }, { preview: true });
+      const otherGroup = ws.splitOn ? 1 - pickerGroup.value : void 0;
+      ws.open({ kind: "envelope", taskId }, { preview: true, ...otherGroup !== void 0 ? { group: otherGroup } : {} });
     }
     function openProject(slug) {
-      ws.open({ kind: "project", slug });
+      const otherGroup = ws.splitOn ? 1 - pickerGroup.value : void 0;
+      ws.open({ kind: "project", slug }, otherGroup !== void 0 ? { group: otherGroup } : {});
     }
     function toggleGroup(key) {
       if (tasksStore.collapsed[key]) delete tasksStore.collapsed[key];
@@ -26209,13 +26244,12 @@ const _hoisted_35$1 = {
   class: "pv-section"
 };
 const _hoisted_36$1 = { class: "pv-trees" };
-const _hoisted_37$1 = ["onClick"];
-const _hoisted_38$1 = {
+const _hoisted_37$1 = {
   key: 2,
   class: "pv-section pv-closed"
 };
-const _hoisted_39$1 = { class: "pv-section-head" };
-const _hoisted_40$1 = { class: "pv-closed-list" };
+const _hoisted_38$1 = { class: "pv-section-head" };
+const _hoisted_39$1 = { class: "pv-closed-list" };
 const _sfc_main$5 = /* @__PURE__ */ defineComponent({
   __name: "ProjectView",
   props: {
@@ -26419,7 +26453,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
             _cache[5] || (_cache[5] = createBaseVNode("div", { class: "pv-section-head" }, "Family trees", -1)),
             createBaseVNode("div", _hoisted_36$1, [
               (openBlock(true), createElementBlock(Fragment, null, renderList(familyTree.value.roots, (root) => {
-                var _a2, _b;
+                var _a2;
                 return openBlock(), createElementBlock(Fragment, {
                   key: root.id
                 }, [
@@ -26427,8 +26461,11 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
                     task: root,
                     depth: 0,
                     marker: familyTree.value.roots.length === 1 ? "●" : "◆",
-                    onOpen: openTask
-                  }, null, 8, ["task", "marker"]),
+                    hasChildren: (((_a2 = familyTree.value.childrenOf[root.id]) == null ? void 0 : _a2.length) ?? 0) > 0,
+                    isExpanded: !!expanded.value[root.id],
+                    onOpen: openTask,
+                    onToggle: toggleExpand
+                  }, null, 8, ["task", "marker", "hasChildren", "isExpanded"]),
                   expanded.value[root.id] ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(familyTree.value.childrenOf[root.id] ?? [], (child) => {
                     return openBlock(), createBlock(_sfc_main$q, {
                       key: child.id,
@@ -26437,20 +26474,14 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
                       marker: "└",
                       onOpen: openTask
                     }, null, 8, ["task"]);
-                  }), 128)) : createCommentVNode("", true),
-                  (((_a2 = familyTree.value.childrenOf[root.id]) == null ? void 0 : _a2.length) ?? 0) > 0 ? (openBlock(), createElementBlock("button", {
-                    key: 1,
-                    class: "pv-tree-expand",
-                    type: "button",
-                    onClick: withModifiers(($event) => toggleExpand(root.id), ["stop"])
-                  }, toDisplayString(expanded.value[root.id] ? "▾ collapse" : "▸ expand (" + (((_b = familyTree.value.childrenOf[root.id]) == null ? void 0 : _b.length) ?? 0) + ")"), 9, _hoisted_37$1)) : createCommentVNode("", true)
+                  }), 128)) : createCommentVNode("", true)
                 ], 64);
               }), 128))
             ])
           ])) : createCommentVNode("", true),
-          closedTasks.value.length > 0 ? (openBlock(), createElementBlock("details", _hoisted_38$1, [
-            createBaseVNode("summary", _hoisted_39$1, "Closed (" + toDisplayString(closedTasks.value.length) + ")", 1),
-            createBaseVNode("div", _hoisted_40$1, [
+          closedTasks.value.length > 0 ? (openBlock(), createElementBlock("details", _hoisted_37$1, [
+            createBaseVNode("summary", _hoisted_38$1, "Closed (" + toDisplayString(closedTasks.value.length) + ")", 1),
+            createBaseVNode("div", _hoisted_39$1, [
               (openBlock(true), createElementBlock(Fragment, null, renderList(closedTasks.value, (t) => {
                 return openBlock(), createBlock(_sfc_main$q, {
                   key: t.id,
@@ -26466,7 +26497,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const ProjectView = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-087ebdf4"]]);
+const ProjectView = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-fe2efd45"]]);
 const registry = {
   dashboard: DashboardView,
   envelope: EnvelopeView,
@@ -30225,8 +30256,8 @@ const pageStyles = String.raw`    :root {
     .tasks-panel {
       display: flex;
       flex-direction: column;
-      width: min(100%, 1300px);
-      min-width: min(680px, 100%);
+      width: min(100%, 720px);
+      min-width: min(400px, 100%);
       max-width: 100%;
       flex: 1;
       min-height: 0;
@@ -30474,11 +30505,14 @@ const pageStyles = String.raw`    :root {
        card per Notes/Projects/<slug>/ folder (plus an Unassigned card when
        un-tagged tasks exist). Counts row mirrors the plan's legend. */
     .tasks-projects-grid {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
       gap: 8px;
       padding: 10px 12px;
-      overflow-y: auto;
+      align-content: start;
+    }
+    @container tasks-panel (max-width: 480px) {
+      .tasks-projects-grid { grid-template-columns: 1fr; }
     }
     .tasks-project-card {
       display: flex;
@@ -31430,6 +31464,8 @@ const pageStyles = String.raw`    :root {
     .task-tree-node.is-current:hover {
       background: #1a2a44a8;
     }
+    .task-tree-node.is-done { opacity: 0.45; }
+    .task-tree-node.is-done:hover { opacity: 0.7; }
     .task-tree-indent {
       display: inline-block;
       flex-shrink: 0;

@@ -135,6 +135,19 @@ function onTabHover(idx: number, group: ResourceRef[]): void {
   if (next) prefetchRef(next);
 }
 
+// ── Pin / unpin ───────────────────────────────────────────────────────────────
+
+function togglePin(key: string): void {
+  if (ws.meta[key]?.pinned) ws.unpin(key);
+  else ws.pin(key);
+}
+
+function tabTitle(tab: ResourceRef): string {
+  const base = refTitle(tab, tasksList.value, projectsList.value);
+  const isPinned = ws.meta[refKey(tab)]?.pinned;
+  return `${base} — double-click to ${isPinned ? "unpin" : "pin"}`;
+}
+
 // ── Drag and drop ─────────────────────────────────────────────────────────────
 
 const draggedKey = ref<string | null>(null);
@@ -210,12 +223,13 @@ function onDividerDrop(e: DragEvent): void {
           'ts-tab--preview': ws.meta[refKey(tab)]?.preview,
         }"
         :data-key="refKey(tab)"
-        :title="refTitle(tab, tasksList, projectsList)"
+        :title="tabTitle(tab)"
         role="tab"
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
         type="button"
         @click="ws.activate(refKey(tab))"
+        @dblclick.prevent="togglePin(refKey(tab))"
         @mouseenter="onTabHover(i, group0)"
         @mousedown.middle.prevent="ws.close(refKey(tab))"
         @contextmenu.prevent="openContextMenu($event, tab)"
@@ -231,12 +245,12 @@ function onDividerDrop(e: DragEvent): void {
         <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
         <span
-          v-if="!ws.meta[refKey(tab)]?.pinned"
           class="ts-tab-close"
           role="button"
           tabindex="-1"
           aria-label="Close tab"
           @click.stop="ws.close(refKey(tab))"
+          @dblclick.stop
         >×</span>
       </button>
 
@@ -267,12 +281,13 @@ function onDividerDrop(e: DragEvent): void {
           'ts-tab--preview': ws.meta[refKey(tab)]?.preview,
         }"
         :data-key="refKey(tab)"
-        :title="refTitle(tab, tasksList, projectsList)"
+        :title="tabTitle(tab)"
         role="tab"
         :aria-selected="ws.active[ws.focused] === refKey(tab)"
         draggable="true"
         type="button"
         @click="ws.activate(refKey(tab))"
+        @dblclick.prevent="togglePin(refKey(tab))"
         @mouseenter="onTabHover(i, group1)"
         @mousedown.middle.prevent="ws.close(refKey(tab))"
         @contextmenu.prevent="openContextMenu($event, tab)"
@@ -288,12 +303,12 @@ function onDividerDrop(e: DragEvent): void {
         <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
         <span
-          v-if="!ws.meta[refKey(tab)]?.pinned"
           class="ts-tab-close"
           role="button"
           tabindex="-1"
           aria-label="Close tab"
           @click.stop="ws.close(refKey(tab))"
+          @dblclick.stop
         >×</span>
       </button>
     </div>
@@ -489,7 +504,9 @@ function onDividerDrop(e: DragEvent): void {
 .ts-tab-close:hover { opacity: 1; background: var(--surface-4, #3a3a3a); }
 
 @media (max-width: 600px) {
-  .ts-tab-close::after { inset: -13px; }
+  /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
+     hit-area overlapping the tab's label region (M2 fix, R21). */
+  .ts-tab-close::after { inset: -13px -13px -13px -2px; }
 }
 
 /* Divider between groups */

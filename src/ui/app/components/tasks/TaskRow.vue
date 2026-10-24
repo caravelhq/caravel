@@ -10,6 +10,7 @@ interface RowLike {
   headline?: string;
   brief?: string;
   label?: string;
+  closed?: { status: string } | null;
 }
 
 const props = defineProps<{
@@ -58,7 +59,7 @@ function handleCheckbox(ev: Event): void {
        slot plus a body column is deterministic whatever is present. -->
   <div
     class="task-tree-node"
-    :class="{ 'is-current': isCurrent }"
+    :class="{ 'is-current': isCurrent, 'is-done': task.status === 'done' || !!task.closed }"
     :role="isCurrent ? undefined : 'button'"
     :tabindex="isCurrent ? undefined : 0"
     :title="task.id"

@@ -282,7 +282,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
     return v;
   }
 
-  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; background?: boolean; intent?: { subView?: "task" | "report" | "next" } } = {}): void {
+  function open(ref: ResourceRef, opts: { preview?: boolean; side?: boolean; group?: 0 | 1; background?: boolean; intent?: { subView?: "task" | "report" | "next" } } = {}): void {
     if (opts.intent) _intentByKey.set(refKey(ref), opts.intent);
     const key = refKey(ref);
     const existingIdx = keyIndex(key);
@@ -306,7 +306,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       return;
     }
 
-    const targetGroup: 0 | 1 = opts.side ? 1 : focused.value;
+    const targetGroup: 0 | 1 = opts.group !== undefined ? opts.group : opts.side ? 1 : focused.value;
 
     if (opts.preview) {
       // Reuse the group's existing preview slot in place — same index, same group.
@@ -597,7 +597,7 @@ export const useWorkspaceStore = defineStore("workspace", () => {
       ? 0
       : (splitOn.value && splitIndex.value !== null ? splitIndex.value : tabs.value.length);
     tabs.value.splice(insertAt, 0, tabRef);
-    if (splitOn.value && splitIndex.value !== null && insertAt <= splitIndex.value) {
+    if (splitOn.value && splitIndex.value !== null && insertAt < splitIndex.value) {
       splitIndex.value++;
     }
 
