@@ -132,6 +132,20 @@ function onOpenFile(ev: MouseEvent): void {
 function onActionDone(_action: string, _taskId: string): void {
   // The live topic subscription will refresh the task data automatically.
 }
+
+/**
+ * WAL-149: a successful Next spawn used to go nowhere — the draft cleared and
+ * the user was left sitting on an empty form with no route to the task they had
+ * just created, even though the server returns its id.
+ *
+ * Park this envelope on Report first, so coming back here never lands on a blank
+ * Next form, then open the child. The fallback matters: if the server answers ok
+ * without an id, the sub-view switch is the whole of the feedback.
+ */
+function onNextSubmitted(_sourceId: string, childId: string | null): void {
+  setSubView("report");
+  if (childId) ws.open({ kind: "envelope", taskId: childId });
+}
 </script>
 
 <template>
@@ -201,7 +215,7 @@ function onActionDone(_action: string, _taskId: string): void {
 
     <!-- Next pane -->
     <div v-else class="ev-pane ev-pane-next">
-      <NextPrompt :task="task" @submitted="onActionDone('next', taskId)" />
+      <NextPrompt :task="task" @submitted="onNextSubmitted" />
     </div>
 
   </div>

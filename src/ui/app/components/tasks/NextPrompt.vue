@@ -6,7 +6,10 @@ import type { TaskRow } from "../../stores/tasks";
 const props = defineProps<{ task: TaskRow | null }>();
 
 const emit = defineEmits<{
-  (e: "submitted", taskId: string): void;
+  // WAL-149: `childId` is the task the server just spawned — the thing the user
+  // wants to look at. It is null only when the server answered ok without an id,
+  // in which case the parent falls back to the Report sub-view.
+  (e: "submitted", taskId: string, childId: string | null): void;
 }>();
 
 const tasks = useTasksStore();
@@ -44,11 +47,12 @@ async function submit(): Promise<void> {
         ...(hl ? { headline: hl } : {}),
       }),
     });
-    const data = await r.json() as { ok?: boolean; error?: string };
+    const data = await r.json() as { ok?: boolean; error?: string; id?: string };
     if (!data.ok) { submitError.value = data.error ?? "spawn failed"; return; }
     // Clear draft only on success — never on blur or navigation.
     tasks.nextDraft.delete(id.value);
-    emit("submitted", id.value);
+    headlineInput.value = "";
+    emit("submitted", id.value, data.id ?? null);
   } catch (err) {
     submitError.value = String((err as Error).message ?? err);
   } finally {

@@ -115,3 +115,24 @@ export function countActiveDescendants(taskId: string, cache: TaskRow[]): number
   }
   return count;
 }
+
+/**
+ * WAL-149: the chat thread that belongs to a task.
+ *
+ * Worker sessions are keyed by the ROOT task id, not the leaf — every node in a
+ * family (TSK-…-0004, TSK-…-0004.07, TSK-…-0004.07.02) resumes the same session,
+ * which is what `multiAgentDispatch` means by "Same session thread
+ * `task-<root>-<agent>` is resumed". So the envelope's Chat action has to strip
+ * the dotted suffix or it opens a thread that has never existed.
+ *
+ * Returns null when either half is missing — the caller must not navigate to a
+ * malformed thread id, which would silently create an empty chat.
+ */
+export function taskThreadId(taskId: string | null | undefined, agent: string | null | undefined): string | null {
+  const id = String(taskId ?? "").trim();
+  const who = String(agent ?? "").trim();
+  if (!id || !who) return null;
+  const root = id.split(".")[0];
+  if (!root) return null;
+  return `task-${root}-${who}`;
+}

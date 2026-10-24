@@ -12,7 +12,7 @@
  * | 4 | ✕ Abort (form)       | isClaimed && !isClosed                             | POST /api/tasks/{id}/abort    |
  * | 5 | ↻ Reopen             | isClosed                                           | POST /api/tasks/{id}/reopen   |
  * | 6 | ▷ Resume             | isPaused && !isClosed                              | POST /api/tasks/{id}/resume   |
- * | 7 | 💬 Chat (form toggle) | always                                            | POST /api/tasks/{id}/next     |
+ * | 7 | 💬 Chat (redirect)    | always                                            | opens chat on task-<root>-<agent> |
  * | 8 | 📁 Project chip      | always (EnvelopeHeader)                            | POST /api/tasks/{id}/project  |
  * | 9 | ✎ Rename headline    | always (EnvelopeHeader)                            | POST /api/tasks/{id}/rename   |
  *
@@ -22,8 +22,11 @@
  * WAL-116: every action has error state + retry (no wedge on transient failure).
  */
 import { ref, computed } from "vue";
-import { countActiveDescendants } from "../pages/tasks/helpers";
+import { countActiveDescendants, taskThreadId } from "../pages/tasks/helpers";
+import { useWorkspaceStore } from "../stores/workspace";
 import type { TaskRow } from "../stores/tasks";
+
+const ws = useWorkspaceStore();
 
 const props = defineProps<{
   task: TaskRow | null;
@@ -60,7 +63,6 @@ const activeDescendantCount = computed(() =>
 
 const showCloseForm = ref(false);
 const showAbortForm = ref(false);
-const showChatForm = ref(false);
 
 // ── Done reading — POST /api/tasks/{id}/close {status:"closed"} ───────────────
 
@@ -220,44 +222,48 @@ async function submitResume(): Promise<void> {
   }
 }
 
-// ── Chat form toggle — dispatches via /api/tasks/{id}/next as a chat task ─────
+// ── Chat: open the task's own thread in the chat interface ────────────────────
+//
+// WAL-149: this used to spawn a follow-on task through a form embedded in the
+// envelope. That model was deliberately retired — a chat about a task belongs
+// in the chat interface, on the thread the worker is already using, not in a
+// second composer with its own lifecycle. Phase 4 reintroduced the form when
+// `launchChatForTask` was deleted along with the old TasksPage (bdc0b06); this
+// restores the redirect against the workspace tab model.
 
-const chatTitle = ref("");
-const chatMessage = ref("");
-const chatLoading = ref(false);
 const chatError = ref<string | null>(null);
 
-function openChatForm(): void {
-  chatTitle.value = (props.task?.headline ?? "").slice(0, 56);
-  chatMessage.value = "";
+function openChatThread(): void {
   chatError.value = null;
-  showChatForm.value = !showChatForm.value;
-}
-
-async function submitChat(): Promise<void> {
-  if (!id.value) return;
-  chatLoading.value = true;
-  chatError.value = null;
-  try {
-    const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        agent: agent.value,
-        source: "continue",
-        headline: chatTitle.value.trim() || `Chat: ${(props.task?.headline ?? id.value).slice(0, 48)}`,
-        instruction: chatMessage.value,
-      }),
-    });
-    const data = await r.json() as { ok?: boolean; error?: string };
-    if (!data.ok) { chatError.value = data.error ?? "chat spawn failed"; return; }
-    showChatForm.value = false;
-    emit("action-done", "chat", id.value);
-  } catch (err) {
-    chatError.value = String((err as Error).message ?? err);
-  } finally {
-    chatLoading.value = false;
+  const threadId = taskThreadId(id.value, agent.value);
+  if (!threadId) {
+    chatError.value = "No agent on this task — cannot resolve its chat thread.";
+    return;
   }
+
+  // ChatPage reads these on mount; the event covers the one path that does not
+  // remount (chat already the active tab in the other split group).
+  window.__chatSessionId = threadId;
+  window.__pendingAgentId = agent.value;
+
+  ws.open({ kind: "legacy", page: "chat" });
+
+  window.dispatchEvent(new CustomEvent("caravel:chat-thread", {
+    detail: { chatId: threadId, agentId: agent.value },
+  }));
+
+  // Seed the composer, but never clobber something already half-typed.
+  const seed = `Continue after ${id.value}\n`;
+  requestAnimationFrame(() => {
+    const el = document.getElementById("chat-input") as HTMLTextAreaElement | null;
+    if (!el || el.value.trim()) return;
+    el.value = seed;
+    try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* not focusable yet */ }
+    el.focus();
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  });
+
+  emit("action-done", "chat", id.value);
 }
 </script>
 
@@ -272,10 +278,9 @@ async function submitChat(): Promise<void> {
       <!-- 💬 Chat: always -->
       <button
         class="ev-action-btn"
-        :class="{ 'is-active': showChatForm }"
         type="button"
-        aria-label="Chat: send a message to the worker"
-        @click="openChatForm"
+        aria-label="Chat: open this task's thread in the chat interface"
+        @click="openChatThread"
         data-ev-action="chat"
       ><span aria-hidden="true">💬</span><span class="ev-btn-lbl"> Chat</span></button>
 
@@ -414,41 +419,8 @@ async function submitChat(): Promise<void> {
       </div>
     </div>
 
-    <!-- ── Chat form: isCurrent (shown when showChatForm) ─────────────────── -->
-    <div v-if="showChatForm" class="ev-form" data-ev-form="chat">
-      <details class="ev-form-warn">
-        <summary>Continues on the worker's session thread.</summary>
-        <p>Chat opens on the same thread as the task worker, so the agent's prior context is in cache.</p>
-      </details>
-      <input
-        class="ev-form-input"
-        v-model="chatTitle"
-        placeholder="Chat title (auto if blank)"
-        type="text"
-        :disabled="chatLoading"
-      />
-      <textarea
-        class="ev-form-textarea"
-        v-model="chatMessage"
-        rows="3"
-        placeholder="Initial message (optional)…"
-        :disabled="chatLoading"
-      ></textarea>
-      <div class="ev-form-actions">
-        <button
-          type="button"
-          class="ev-action-btn is-primary"
-          :disabled="chatLoading"
-          @click="submitChat"
-          data-ev-submit="chat"
-        >↳ Start chat</button>
-        <button type="button" class="ev-action-btn" @click="showChatForm = false">Dismiss</button>
-        <span v-if="chatError" class="ev-action-error" role="alert">
-          {{ chatError }}
-          <button type="button" @click="submitChat">Retry</button>
-        </span>
-      </div>
-    </div>
+    <!-- WAL-149: no chat form here. The Chat action redirects to the task's
+         own thread in the chat interface. -->
 
   </div>
 </template>

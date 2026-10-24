@@ -18821,6 +18821,14 @@ function countActiveDescendants(taskId, cache) {
   }
   return count;
 }
+function taskThreadId(taskId, agent) {
+  const id = String(taskId ?? "").trim();
+  const who = String(agent ?? "").trim();
+  if (!id || !who) return null;
+  const root = id.split(".")[0];
+  if (!root) return null;
+  return `task-${root}-${who}`;
+}
 const _hoisted_1$o = ["role", "tabindex", "title", "data-task-id", "onKeydown"];
 const _hoisted_2$j = ["checked", "data-task-id", "aria-label"];
 const _hoisted_3$g = ["aria-label", "aria-expanded"];
@@ -19767,20 +19775,6 @@ const _hoisted_21$5 = {
   class: "ev-action-error",
   role: "alert"
 };
-const _hoisted_22$4 = {
-  key: 5,
-  class: "ev-form",
-  "data-ev-form": "chat"
-};
-const _hoisted_23$4 = ["disabled"];
-const _hoisted_24$3 = ["disabled"];
-const _hoisted_25$3 = { class: "ev-form-actions" };
-const _hoisted_26$3 = ["disabled"];
-const _hoisted_27$3 = {
-  key: 0,
-  class: "ev-action-error",
-  role: "alert"
-};
 const _sfc_main$i = /* @__PURE__ */ defineComponent({
   __name: "TaskActions",
   props: {
@@ -19789,6 +19783,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
   },
   emits: ["action-done"],
   setup(__props, { emit: __emit }) {
+    const ws = useWorkspaceStore();
     const props = __props;
     const emit2 = __emit;
     const id = computed(() => {
@@ -19830,7 +19825,6 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
     );
     const showCloseForm = /* @__PURE__ */ ref(false);
     const showAbortForm = /* @__PURE__ */ ref(false);
-    const showChatForm = /* @__PURE__ */ ref(false);
     const doneReadingLoading = /* @__PURE__ */ ref(false);
     const doneReadingError = /* @__PURE__ */ ref(null);
     async function submitDoneReading() {
@@ -19980,59 +19974,48 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
         resumeLoading.value = false;
       }
     }
-    const chatTitle = /* @__PURE__ */ ref("");
-    const chatMessage = /* @__PURE__ */ ref("");
-    const chatLoading = /* @__PURE__ */ ref(false);
     const chatError = /* @__PURE__ */ ref(null);
-    function openChatForm() {
-      var _a2;
-      chatTitle.value = (((_a2 = props.task) == null ? void 0 : _a2.headline) ?? "").slice(0, 56);
-      chatMessage.value = "";
+    function openChatThread() {
       chatError.value = null;
-      showChatForm.value = !showChatForm.value;
-    }
-    async function submitChat() {
-      var _a2;
-      if (!id.value) return;
-      chatLoading.value = true;
-      chatError.value = null;
-      try {
-        const r = await fetch(`/api/tasks/${encodeURIComponent(id.value)}/next`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            agent: agent.value,
-            source: "continue",
-            headline: chatTitle.value.trim() || `Chat: ${(((_a2 = props.task) == null ? void 0 : _a2.headline) ?? id.value).slice(0, 48)}`,
-            instruction: chatMessage.value
-          })
-        });
-        const data = await r.json();
-        if (!data.ok) {
-          chatError.value = data.error ?? "chat spawn failed";
-          return;
-        }
-        showChatForm.value = false;
-        emit2("action-done", "chat", id.value);
-      } catch (err) {
-        chatError.value = String(err.message ?? err);
-      } finally {
-        chatLoading.value = false;
+      const threadId = taskThreadId(id.value, agent.value);
+      if (!threadId) {
+        chatError.value = "No agent on this task — cannot resolve its chat thread.";
+        return;
       }
+      window.__chatSessionId = threadId;
+      window.__pendingAgentId = agent.value;
+      ws.open({ kind: "legacy", page: "chat" });
+      window.dispatchEvent(new CustomEvent("caravel:chat-thread", {
+        detail: { chatId: threadId, agentId: agent.value }
+      }));
+      const seed = `Continue after ${id.value}
+`;
+      requestAnimationFrame(() => {
+        const el = document.getElementById("chat-input");
+        if (!el || el.value.trim()) return;
+        el.value = seed;
+        try {
+          el.setSelectionRange(el.value.length, el.value.length);
+        } catch {
+        }
+        el.focus();
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      });
+      emit2("action-done", "chat", id.value);
     }
     return (_ctx, _cache) => {
       return __props.task ? (openBlock(), createElementBlock("div", _hoisted_1$g, [
         createBaseVNode("div", _hoisted_2$c, [
           createBaseVNode("button", {
-            class: normalizeClass(["ev-action-btn", { "is-active": showChatForm.value }]),
+            class: "ev-action-btn",
             type: "button",
-            "aria-label": "Chat: send a message to the worker",
-            onClick: openChatForm,
+            "aria-label": "Chat: open this task's thread in the chat interface",
+            onClick: openChatThread,
             "data-ev-action": "chat"
-          }, [..._cache[6] || (_cache[6] = [
+          }, [..._cache[3] || (_cache[3] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "💬", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Chat", -1)
-          ])], 2),
+          ])]),
           isTerminal.value && !isClaimed.value && !isClosed.value ? (openBlock(), createElementBlock("button", {
             key: 0,
             class: "ev-action-btn is-primary",
@@ -20041,7 +20024,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Done reading: close this task",
             onClick: submitDoneReading,
             "data-ev-action": "done-reading"
-          }, [..._cache[7] || (_cache[7] = [
+          }, [..._cache[4] || (_cache[4] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✓", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Done", -1)
           ])], 8, _hoisted_3$a)) : createCommentVNode("", true),
@@ -20052,7 +20035,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Cancel this task",
             onClick: openCloseForm,
             "data-ev-action": "cancel"
-          }, [..._cache[8] || (_cache[8] = [
+          }, [..._cache[5] || (_cache[5] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✕", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Cancel", -1)
           ])])) : createCommentVNode("", true),
@@ -20063,7 +20046,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Abort: kill the live worker process",
             onClick: openAbortForm,
             "data-ev-action": "abort"
-          }, [..._cache[9] || (_cache[9] = [
+          }, [..._cache[6] || (_cache[6] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "✕", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Abort", -1)
           ])])) : createCommentVNode("", true),
@@ -20075,7 +20058,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Reopen this task",
             onClick: submitReopen,
             "data-ev-action": "reopen"
-          }, [..._cache[10] || (_cache[10] = [
+          }, [..._cache[7] || (_cache[7] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "↻", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Reopen", -1)
           ])], 8, _hoisted_4$9)) : createCommentVNode("", true),
@@ -20087,7 +20070,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
             "aria-label": "Resume this paused task",
             onClick: submitResume,
             "data-ev-action": "resume"
-          }, [..._cache[11] || (_cache[11] = [
+          }, [..._cache[8] || (_cache[8] = [
             createBaseVNode("span", { "aria-hidden": "true" }, "▷", -1),
             createBaseVNode("span", { class: "ev-btn-lbl" }, " Resume", -1)
           ])], 8, _hoisted_5$8)) : createCommentVNode("", true)
@@ -20117,13 +20100,13 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
           createBaseVNode("details", _hoisted_10$7, [
             createBaseVNode("summary", null, [
               isWaitingUser.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
-                _cache[12] || (_cache[12] = createTextVNode("Record the outcome and mark ", -1)),
-                _cache[13] || (_cache[13] = createBaseVNode("strong", null, "cancelled", -1)),
-                _cache[14] || (_cache[14] = createTextVNode(".", -1))
+                _cache[9] || (_cache[9] = createTextVNode("Record the outcome and mark ", -1)),
+                _cache[10] || (_cache[10] = createBaseVNode("strong", null, "cancelled", -1)),
+                _cache[11] || (_cache[11] = createTextVNode(".", -1))
               ], 64)) : (openBlock(), createElementBlock(Fragment, { key: 1 }, [
-                _cache[15] || (_cache[15] = createTextVNode("Marks ", -1)),
+                _cache[12] || (_cache[12] = createTextVNode("Marks ", -1)),
                 createBaseVNode("strong", null, toDisplayString(closeDefaultStatus.value), 1),
-                _cache[16] || (_cache[16] = createTextVNode(" — reversible, runner state kept.", -1))
+                _cache[13] || (_cache[13] = createTextVNode(" — reversible, runner state kept.", -1))
               ], 64))
             ])
           ]),
@@ -20169,7 +20152,7 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
           ])
         ])) : createCommentVNode("", true),
         isClaimed.value && !isClosed.value && showAbortForm.value ? (openBlock(), createElementBlock("div", _hoisted_17$5, [
-          _cache[17] || (_cache[17] = createBaseVNode("details", { class: "ev-form-warn" }, [
+          _cache[14] || (_cache[14] = createBaseVNode("details", { class: "ev-form-warn" }, [
             createBaseVNode("summary", null, [
               createBaseVNode("strong", null, "⚠ Kills the live process. Not reversible.")
             ])
@@ -20204,57 +20187,12 @@ const _sfc_main$i = /* @__PURE__ */ defineComponent({
               }, "Retry")
             ])) : createCommentVNode("", true)
           ])
-        ])) : createCommentVNode("", true),
-        showChatForm.value ? (openBlock(), createElementBlock("div", _hoisted_22$4, [
-          _cache[18] || (_cache[18] = createBaseVNode("details", { class: "ev-form-warn" }, [
-            createBaseVNode("summary", null, "Continues on the worker's session thread."),
-            createBaseVNode("p", null, "Chat opens on the same thread as the task worker, so the agent's prior context is in cache.")
-          ], -1)),
-          withDirectives(createBaseVNode("input", {
-            class: "ev-form-input",
-            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => chatTitle.value = $event),
-            placeholder: "Chat title (auto if blank)",
-            type: "text",
-            disabled: chatLoading.value
-          }, null, 8, _hoisted_23$4), [
-            [vModelText, chatTitle.value]
-          ]),
-          withDirectives(createBaseVNode("textarea", {
-            class: "ev-form-textarea",
-            "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => chatMessage.value = $event),
-            rows: "3",
-            placeholder: "Initial message (optional)…",
-            disabled: chatLoading.value
-          }, null, 8, _hoisted_24$3), [
-            [vModelText, chatMessage.value]
-          ]),
-          createBaseVNode("div", _hoisted_25$3, [
-            createBaseVNode("button", {
-              type: "button",
-              class: "ev-action-btn is-primary",
-              disabled: chatLoading.value,
-              onClick: submitChat,
-              "data-ev-submit": "chat"
-            }, "↳ Start chat", 8, _hoisted_26$3),
-            createBaseVNode("button", {
-              type: "button",
-              class: "ev-action-btn",
-              onClick: _cache[5] || (_cache[5] = ($event) => showChatForm.value = false)
-            }, "Dismiss"),
-            chatError.value ? (openBlock(), createElementBlock("span", _hoisted_27$3, [
-              createTextVNode(toDisplayString(chatError.value) + " ", 1),
-              createBaseVNode("button", {
-                type: "button",
-                onClick: submitChat
-              }, "Retry")
-            ])) : createCommentVNode("", true)
-          ])
         ])) : createCommentVNode("", true)
       ])) : createCommentVNode("", true);
     };
   }
 });
-const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["__scopeId", "data-v-ee2c4e60"]]);
+const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["__scopeId", "data-v-13e3356e"]]);
 const _hoisted_1$f = {
   key: 0,
   class: "ev-sections"
@@ -24125,7 +24063,8 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
           return;
         }
         tasks.nextDraft.delete(id.value);
-        emit2("submitted", id.value);
+        headlineInput.value = "";
+        emit2("submitted", id.value, data.id ?? null);
       } catch (err) {
         submitError.value = String(err.message ?? err);
       } finally {
@@ -24200,7 +24139,7 @@ const _sfc_main$d = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-3e53e6db"]]);
+const NextPrompt = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["__scopeId", "data-v-f294d27a"]]);
 const _hoisted_1$b = { class: "ev-top-row" };
 const _hoisted_2$7 = {
   role: "tablist",
@@ -24320,6 +24259,10 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
     }
     function onActionDone(_action, _taskId) {
     }
+    function onNextSubmitted(_sourceId, childId) {
+      setSubView("report");
+      if (childId) ws.open({ kind: "envelope", taskId: childId });
+    }
     return (_ctx, _cache) => {
       return openBlock(), createElementBlock("div", {
         class: "ev-root",
@@ -24360,7 +24303,7 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
             }, null, 8, ["task", "cache"])
           ])
         ]),
-        !chain.value && !task.value ? (openBlock(), createElementBlock("div", _hoisted_7$5, [..._cache[6] || (_cache[6] = [
+        !chain.value && !task.value ? (openBlock(), createElementBlock("div", _hoisted_7$5, [..._cache[5] || (_cache[5] = [
           createBaseVNode("div", { class: "task-panel-loading" }, "Loading…", -1)
         ])])) : subView.value === "task" ? (openBlock(), createElementBlock("div", _hoisted_8$5, [
           createVNode(EnvelopeSections, {
@@ -24372,14 +24315,14 @@ const _sfc_main$c = /* @__PURE__ */ defineComponent({
         ])) : (openBlock(), createElementBlock("div", _hoisted_10$4, [
           createVNode(NextPrompt, {
             task: task.value,
-            onSubmitted: _cache[5] || (_cache[5] = ($event) => onActionDone("next", taskId.value))
+            onSubmitted: onNextSubmitted
           }, null, 8, ["task"])
         ]))
       ]);
     };
   }
 });
-const EnvelopeView = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-8eaa618d"]]);
+const EnvelopeView = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["__scopeId", "data-v-cc450b21"]]);
 const _hoisted_1$a = { class: "file-view-root" };
 const _sfc_main$b = /* @__PURE__ */ defineComponent({
   __name: "FileView",
@@ -25476,6 +25419,13 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       } catch (_2) {
       }
     }
+    function onChatThreadRequest(ev) {
+      const detail = ev.detail;
+      const id = detail == null ? void 0 : detail.chatId;
+      if (!id || id === chatSessionId) return;
+      if (detail.agentId) pendingAgentId = detail.agentId;
+      void switchToChat(id);
+    }
     async function switchToChat(id) {
       chatSessionId = id;
       window.__chatSessionId = id;
@@ -25821,6 +25771,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
       }
       window.__chatSessionId = chatSessionId;
       window.__chatHistory = chatHistory;
+      window.addEventListener("caravel:chat-thread", onChatThreadRequest);
       wireChatNameInput($2("chat-name-input"), "#chat-new-title-input");
       wireChatNameInput($2("chat-new-title-input"), "#chat-name-input");
       const badge = $2("chat-session-badge");
@@ -25909,6 +25860,7 @@ const _sfc_main$8 = /* @__PURE__ */ defineComponent({
         clearTimeout(chatPollTimer);
         chatPollTimer = null;
       }
+      window.removeEventListener("caravel:chat-thread", onChatThreadRequest);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
       stopReadAloud();

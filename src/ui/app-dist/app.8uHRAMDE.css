@@ -644,10 +644,10 @@
 
 /* F3: TaskActions now sits in the action slot beside the tab bar.
    No border-bottom here; ev-top-row owns the boundary. */
-.ev-actions[data-v-ee2c4e60] {
+.ev-actions[data-v-13e3356e] {
   padding: 4px 8px 2px;
 }
-.ev-actions-row[data-v-ee2c4e60] {
+.ev-actions-row[data-v-13e3356e] {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -657,7 +657,7 @@
 /* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
    Before: font-size 0.82em, padding 5px 12px, min-height 30px.
    After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
-.ev-action-btn[data-v-ee2c4e60] {
+.ev-action-btn[data-v-13e3356e] {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
@@ -668,60 +668,60 @@
   min-height: 28px;
   white-space: nowrap;
 }
-.ev-action-btn[data-v-ee2c4e60]:hover:not(:disabled) {
+.ev-action-btn[data-v-13e3356e]:hover:not(:disabled) {
   color: var(--ts-text, #eee);
   border-color: var(--ts-text-secondary, #aaa);
 }
-.ev-action-btn.is-primary[data-v-ee2c4e60] {
+.ev-action-btn.is-primary[data-v-13e3356e] {
   background: var(--ts-accent, #3a3a9a);
   color: #fff;
   border-color: var(--ts-accent, #3a3a9a);
 }
-.ev-action-btn.is-primary[data-v-ee2c4e60]:hover:not(:disabled) {
+.ev-action-btn.is-primary[data-v-13e3356e]:hover:not(:disabled) {
   background: var(--ts-accent-hover, #4a4aaa);
 }
-.ev-action-btn.is-danger[data-v-ee2c4e60] {
+.ev-action-btn.is-danger[data-v-13e3356e] {
   background: transparent;
   border-color: var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
 }
-.ev-action-btn.is-active[data-v-ee2c4e60] {
+.ev-action-btn.is-active[data-v-13e3356e] {
   background: var(--ts-surface-2, #2a2a2a);
   color: var(--ts-text, #eee);
 }
-.ev-action-btn[data-v-ee2c4e60]:disabled { opacity: 0.5; cursor: not-allowed;
+.ev-action-btn[data-v-13e3356e]:disabled { opacity: 0.5; cursor: not-allowed;
 }
 
 /* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
    Collapse to icons only; aria-labels carry the accessible name. */
 @media (max-width: 600px) {
-.ev-btn-lbl[data-v-ee2c4e60] { display: none;
+.ev-btn-lbl[data-v-13e3356e] { display: none;
 }
-.ev-action-btn[data-v-ee2c4e60] { padding: 3px 7px; min-width: 28px;
+.ev-action-btn[data-v-13e3356e] { padding: 3px 7px; min-width: 28px;
 }
 }
-.ev-form[data-v-ee2c4e60] {
+.ev-form[data-v-13e3356e] {
   margin-top: 8px;
   padding: 10px;
   background: var(--ts-surface-2, #2a2a2a);
   border: 1px solid var(--ts-border, #3a3a3a);
   border-radius: 4px;
 }
-.ev-form-danger[data-v-ee2c4e60] { border-color: var(--ts-danger, #8a3a3a);
+.ev-form-danger[data-v-13e3356e] { border-color: var(--ts-danger, #8a3a3a);
 }
-.ev-form-warn[data-v-ee2c4e60] {
+.ev-form-warn[data-v-13e3356e] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin-bottom: 8px;
 }
-.ev-form-warn summary[data-v-ee2c4e60] { cursor: pointer;
+.ev-form-warn summary[data-v-13e3356e] { cursor: pointer;
 }
-.ev-form-hint[data-v-ee2c4e60] {
+.ev-form-hint[data-v-13e3356e] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin: 0 0 8px;
 }
-.ev-form-input[data-v-ee2c4e60] {
+.ev-form-input[data-v-13e3356e] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -732,7 +732,7 @@
   border-radius: 3px;
   margin-bottom: 6px;
 }
-.ev-form-textarea[data-v-ee2c4e60] {
+.ev-form-textarea[data-v-13e3356e] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -744,7 +744,7 @@
   resize: vertical;
   margin-bottom: 6px;
 }
-.ev-form-cascade[data-v-ee2c4e60] {
+.ev-form-cascade[data-v-13e3356e] {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -753,20 +753,20 @@
   margin-bottom: 8px;
   cursor: pointer;
 }
-.ev-form-actions[data-v-ee2c4e60] {
+.ev-form-actions[data-v-13e3356e] {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
-.ev-action-error[data-v-ee2c4e60] {
+.ev-action-error[data-v-13e3356e] {
   color: var(--ts-danger, #e05a5a);
   font-size: 0.82em;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.ev-action-error button[data-v-ee2c4e60] {
+.ev-action-error button[data-v-13e3356e] {
   background: none;
   border: 1px solid var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
@@ -887,14 +887,14 @@
   flex-direction: column;
 }
 
-.nx-root[data-v-3e53e6db] {
+.nx-root[data-v-f294d27a] {
   display: flex;
   flex-direction: column;
   padding: 12px 16px;
   gap: 8px;
   flex: 1;
 }
-.nx-closed-notice[data-v-3e53e6db] {
+.nx-closed-notice[data-v-f294d27a] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   background: var(--ts-surface-2, #2a2a2a);
@@ -902,11 +902,11 @@
   border-radius: 4px;
   padding: 6px 10px;
 }
-.nx-label[data-v-3e53e6db] {
+.nx-label[data-v-f294d27a] {
   font-size: 0.82rem;
   color: var(--ts-text-secondary, #aaa);
 }
-.nx-headline-input[data-v-3e53e6db] {
+.nx-headline-input[data-v-f294d27a] {
   background: var(--ts-surface-2, #2a2a2a);
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text, #eee);
@@ -916,11 +916,11 @@
   box-sizing: border-box;
   width: 100%;
 }
-.nx-headline-input[data-v-3e53e6db]:focus {
+.nx-headline-input[data-v-f294d27a]:focus {
   outline: none;
   border-color: var(--ts-accent, #5a5a9a);
 }
-.nx-textarea[data-v-3e53e6db] {
+.nx-textarea[data-v-f294d27a] {
   flex: 1;
   min-height: 120px;
   background: var(--ts-surface-2, #2a2a2a);
@@ -933,17 +933,17 @@
   box-sizing: border-box;
   width: 100%;
 }
-.nx-textarea[data-v-3e53e6db]:focus {
+.nx-textarea[data-v-f294d27a]:focus {
   outline: none;
   border-color: var(--ts-accent, #5a5a9a);
 }
-.nx-actions[data-v-3e53e6db] {
+.nx-actions[data-v-f294d27a] {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
-.nx-btn[data-v-3e53e6db] {
+.nx-btn[data-v-f294d27a] {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
@@ -954,28 +954,28 @@
   min-height: 28px;
   white-space: nowrap;
 }
-.nx-btn[data-v-3e53e6db]:hover:not(:disabled) {
+.nx-btn[data-v-f294d27a]:hover:not(:disabled) {
   color: var(--ts-text, #eee);
   border-color: var(--ts-text-secondary, #aaa);
 }
-.nx-btn.is-primary[data-v-3e53e6db] {
+.nx-btn.is-primary[data-v-f294d27a] {
   background: var(--ts-accent, #3a3a9a);
   color: #fff;
   border-color: var(--ts-accent, #3a3a9a);
 }
-.nx-btn.is-primary[data-v-3e53e6db]:hover:not(:disabled) {
+.nx-btn.is-primary[data-v-f294d27a]:hover:not(:disabled) {
   background: var(--ts-accent-hover, #4a4aaa);
 }
-.nx-btn[data-v-3e53e6db]:disabled { opacity: 0.5; cursor: not-allowed;
+.nx-btn[data-v-f294d27a]:disabled { opacity: 0.5; cursor: not-allowed;
 }
-.nx-error[data-v-3e53e6db] {
+.nx-error[data-v-f294d27a] {
   color: var(--ts-danger, #e05a5a);
   font-size: 0.82em;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.nx-error button[data-v-3e53e6db] {
+.nx-error button[data-v-f294d27a] {
   background: none;
   border: 1px solid var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
@@ -984,12 +984,12 @@
   border-radius: 3px;
   font-size: 0.9em;
 }
-.nx-hint[data-v-3e53e6db] {
+.nx-hint[data-v-f294d27a] {
   font-size: 0.78em;
   color: var(--ts-text-secondary, #777);
   margin: 0;
 }
-.nx-loading[data-v-3e53e6db] {
+.nx-loading[data-v-f294d27a] {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -998,7 +998,7 @@
   font-size: 0.88em;
 }
 
-.ev-root[data-v-8eaa618d] {
+.ev-root[data-v-cc450b21] {
   /* WAL-138: same frame as .chat-panel / .tasks-panel so envelope tabs sit in a
      dark panel rather than directly on the page background. */
   background: var(--panel, #0f1e33);
@@ -1012,12 +1012,12 @@
 }
 
 /* ev-top-row: tablist on the left, action slot on the right — same visual row */
-.ev-top-row[data-v-8eaa618d] {
+.ev-top-row[data-v-cc450b21] {
   display: flex;
   align-items: flex-start;
   flex-shrink: 0;
 }
-.ev-tab-bar[data-v-8eaa618d] {
+.ev-tab-bar[data-v-cc450b21] {
   display: flex;
   flex: 1;
   gap: 2px;
@@ -1026,7 +1026,7 @@
 }
 
 /* ev-action-slot: sibling to tablist, action buttons + any open forms */
-.ev-action-slot[data-v-8eaa618d] {
+.ev-action-slot[data-v-cc450b21] {
   flex-shrink: 0;
   max-width: 55%;
 }
@@ -1036,16 +1036,16 @@
    underline from it. Duplicating those properties here is what let the font
    drift; only the phone hit-area override is local. */
 @media (max-width: 640px) {
-.ev-tab[data-v-8eaa618d] { min-height: 44px; padding: 8px 16px 10px;
+.ev-tab[data-v-cc450b21] { min-height: 44px; padding: 8px 16px 10px;
 }
 }
-.ev-pane[data-v-8eaa618d] {
+.ev-pane[data-v-cc450b21] {
   flex: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
 }
-.ev-loading[data-v-8eaa618d] {
+.ev-loading[data-v-cc450b21] {
   justify-content: center;
   align-items: center;
   padding: 20px;
