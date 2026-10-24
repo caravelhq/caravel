@@ -351,6 +351,20 @@ async function submitChatRename(id: string, name: string) {
 }
 
 // ── Chat navigation ───────────────────────────────────────────────────────────
+
+// WAL-149: the envelope's Chat action opens this page on a specific task thread.
+// Legacy pages are excluded from KeepAlive (see ViewHost), so the usual route is
+// a fresh mount that picks up `window.__chatSessionId` below. The one case that
+// does NOT remount is a split view where the chat tab is already the active tab
+// in the other group — there the launcher's event is the only signal we get.
+function onChatThreadRequest(ev: Event): void {
+  const detail = (ev as CustomEvent<{ chatId?: string; agentId?: string }>).detail;
+  const id = detail?.chatId;
+  if (!id || id === chatSessionId) return;
+  if (detail.agentId) pendingAgentId = detail.agentId;
+  void switchToChat(id);
+}
+
 async function switchToChat(id: string) {
   chatSessionId = id;
   window.__chatSessionId = id;
@@ -698,6 +712,9 @@ onMounted(() => {
   window.__chatSessionId = chatSessionId;
   window.__chatHistory = chatHistory;
 
+  // WAL-149: honour a thread switch requested while this page is already mounted.
+  window.addEventListener("caravel:chat-thread", onChatThreadRequest);
+
   // Wire up the name inputs
   wireChatNameInput($("chat-name-input") as HTMLInputElement | null, "#chat-new-title-input");
   wireChatNameInput($("chat-new-title-input") as HTMLInputElement | null, "#chat-name-input");
@@ -796,6 +813,7 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   if (chatPollTimer) { clearTimeout(chatPollTimer); chatPollTimer = null; }
+  window.removeEventListener("caravel:chat-thread", onChatThreadRequest);
   document.removeEventListener("visibilitychange", onVisibilityChange);
   document.removeEventListener("voice:read-aloud-toggle", onReadAloudToggle);
   stopReadAloud();
