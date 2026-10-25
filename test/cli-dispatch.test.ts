@@ -509,15 +509,12 @@ const b3ParentId = runNew(writeDraft([
   `history: []`,
 ].join("\n") + "\n"));
 
-// Plant a sibling so H5 fires.
+// Plant a failed sibling so H5 fires. (A done sibling is a legitimate follow-on
+// and does NOT trigger H5 after the WAL-153 H5 fix.)
 const b3RootId = b3ParentId.split(".")[0]!;
 writeFileSync(
-  join(root, "agents", AGENT, "tasks", "done", `${b3RootId}.01.md`),
-  `# Prior child\n`
-);
-writeFileSync(
-  join(root, "agents", AGENT, "tasks", "done", `${b3RootId}.01.yaml`),
-  `id: ${b3RootId}.01\nheadline: "Prior child"\nstatus: done\nfrom: alice\nto: ${AGENT}\n`
+  join(root, "agents", AGENT, "tasks", "failed", `${b3RootId}.01.yaml`),
+  `id: ${b3RootId}.01\nheadline: "Prior failed child"\nstatus: failed:other\nfrom: alice\nto: ${AGENT}\n`
 );
 
 const b3SpecPath = join(root, "b3-batch.yaml");

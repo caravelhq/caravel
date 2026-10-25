@@ -173,35 +173,80 @@ console.log("\n── H4: invalid waiting_on ───────────�
 // ── Hard-fail: second retry (F2-3) ────────────────────────────────────────────
 // Incident: "One automatic retry, ever" tracked in Alice's head while dispatching a second
 // (.19 → .21 in the FDP catalogue)
+//
+// WAL-153 H5 fix: H5 only fires when a sibling in failed/ exists.
+// A sibling in done/ is a legitimate follow-on (TSK-2026-10-22-0001 has .01–.12 — all follow-ons).
+// Archived siblings are deliberate closures and should not block new work.
 
 console.log("\n── H5 / F2-3: second retry ───────────────────────────────────────");
 
 {
-  const ROOT_TASK_ID = "TSK-2026-01-01-0002";
-  const FIRST_RETRY_ID = `${ROOT_TASK_ID}.01`;
+  // ── H5-FP: false positive — done sibling must NOT trigger H5 ──────────────
+  // This is the bug that made TSK-2026-10-22-0001 un-dispatchable without --force.
+  const FP_PARENT = "TSK-2026-01-01-0002";
+  const FP_DONE_CHILD = `${FP_PARENT}.01`;
 
-  // Plant a first retry child in the workspace
   writeFileSync(
-    join(root, "agents", AGENT, "tasks", "done", `${FIRST_RETRY_ID}.yaml`),
-    `id: ${FIRST_RETRY_ID}\nheadline: "first retry"\nstatus: done\nfrom: bob\nto: alice\nparent: ${ROOT_TASK_ID}\nreply_to: bob\nsummary: completed\n`
+    join(root, "agents", AGENT, "tasks", "done", `${FP_DONE_CHILD}.yaml`),
+    `id: ${FP_DONE_CHILD}\nheadline: "done follow-on"\nstatus: done\nfrom: bob\nto: alice\nparent: ${FP_PARENT}\nreply_to: bob\n`
   );
 
-  // Second retry of the same parent — should hard-fail without --force
-  const secondRetry = BASE.replace("parent: null", `parent: ${ROOT_TASK_ID}`);
-  const r = doLintNewEnvelope(secondRetry, root);
-  assert(hasHardFail(r, "second retry"), "FAIL: second retry hard-fails without --force");
-  assert(hasHardFail(r, ROOT_TASK_ID), "FAIL: error names the parent id");
+  const fpDispatch = BASE.replace("parent: null", `parent: ${FP_PARENT}`);
+  const fpResult = doLintNewEnvelope(fpDispatch, root);
+  assert(!hasHardFail(fpResult, "second retry"), "H5-FP: done sibling does NOT trigger H5 (follow-on ok)");
 
-  // First dispatch of a parent (no prior child) — no hard-fail
-  const ROOT_TASK_ID2 = "TSK-2026-01-01-0003";
-  const firstRetry = BASE.replace("parent: null", `parent: ${ROOT_TASK_ID2}`);
-  const r2 = doLintNewEnvelope(firstRetry, root);
-  assert(!hasHardFail(r2, "second retry"), "PASS: no prior child — not a second retry");
+  // ── H5-FAIL: failed sibling fires H5 ──────────────────────────────────────
+  const RETRY_PARENT = "TSK-2026-01-01-0004";
+  const FAILED_CHILD = `${RETRY_PARENT}.01`;
 
-  // --force bypasses the hard-fail and sets forceBypassed
-  const r3 = doLintNewEnvelope(secondRetry, root, { force: true });
-  assert(!hasHardFail(r3, "second retry"), "PASS (force): --force bypasses second-retry hard-fail");
-  assert(r3.forceBypassed === true, "PASS (force): forceBypassed flag is set");
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "failed", `${FAILED_CHILD}.yaml`),
+    `id: ${FAILED_CHILD}\nheadline: "failed child"\nstatus: failed\nfrom: bob\nto: alice\nparent: ${RETRY_PARENT}\nreply_to: bob\n`
+  );
+
+  const retryDispatch = BASE.replace("parent: null", `parent: ${RETRY_PARENT}`);
+  const retryResult = doLintNewEnvelope(retryDispatch, root);
+  assert(hasHardFail(retryResult, "second retry"), "H5-FAIL: failed sibling fires H5 without --force");
+  assert(hasHardFail(retryResult, RETRY_PARENT), "H5-FAIL: error message names the parent id");
+
+  // ── H5-REASON: failed:<reason> variant also fires H5 ─────────────────────
+  const REASON_PARENT = "TSK-2026-01-01-0005";
+  const REASON_CHILD = `${REASON_PARENT}.01`;
+
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "failed", `${REASON_CHILD}.yaml`),
+    `id: ${REASON_CHILD}\nheadline: "failed:other child"\nstatus: failed:other\nfrom: bob\nto: alice\nparent: ${REASON_PARENT}\nreply_to: bob\n`
+  );
+
+  const reasonDispatch = BASE.replace("parent: null", `parent: ${REASON_PARENT}`);
+  const reasonResult = doLintNewEnvelope(reasonDispatch, root);
+  assert(hasHardFail(reasonResult, "second retry"), "H5-REASON: failed:other sibling (in failed/) fires H5");
+
+  // ── H5-ARCH: archived failed sibling does NOT fire H5 ────────────────────
+  // Ruling: archived = deliberate closure. Don't block new work on a closed attempt.
+  const ARCH_PARENT = "TSK-2026-01-01-0006";
+  const ARCH_CHILD = `${ARCH_PARENT}.01`;
+
+  mkdirSync(join(root, "agents", AGENT, "tasks", "archived"), { recursive: true });
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "archived", `${ARCH_CHILD}.yaml`),
+    `id: ${ARCH_CHILD}\nheadline: "archived failed"\nstatus: failed:other\nfrom: bob\nto: alice\nparent: ${ARCH_PARENT}\nreply_to: bob\n`
+  );
+
+  const archDispatch = BASE.replace("parent: null", `parent: ${ARCH_PARENT}`);
+  const archResult = doLintNewEnvelope(archDispatch, root);
+  assert(!hasHardFail(archResult, "second retry"), "H5-ARCH: archived sibling does NOT fire H5 (deliberate closure)");
+
+  // ── H5-FORCE: --force bypasses H5 with failed sibling ────────────────────
+  const forcedResult = doLintNewEnvelope(retryDispatch, root, { force: true });
+  assert(!hasHardFail(forcedResult, "second retry"), "H5-FORCE: --force bypasses H5");
+  assert(forcedResult.forceBypassed === true, "H5-FORCE: forceBypassed flag is set");
+
+  // ── H5-NONE: no prior child at all — no H5 ───────────────────────────────
+  const FRESH_PARENT = "TSK-2026-01-01-0007";
+  const freshDispatch = BASE.replace("parent: null", `parent: ${FRESH_PARENT}`);
+  const freshResult = doLintNewEnvelope(freshDispatch, root);
+  assert(!hasHardFail(freshResult, "second retry"), "H5-NONE: no prior child — H5 does not fire");
 }
 
 // ── Warn: overlapping touches: with no needs: edge (F2-1) ────────────────────
