@@ -152,10 +152,11 @@ async function fetchAgents(): Promise<void> {
   if (!agentId.value && !pendingAgentId.value) pendingAgentId.value = defaultAgentName();
 }
 
-// ── Globals for voice overlay compatibility (R23 M2, M3) ─────────────────────
+// ── Globals for voice overlay compatibility (R23 M3) ─────────────────────────
+// __chatHistory kept alive for VoiceModeOverlay until Phase 5.2 rewrites the
+// overlay. __chatSessionId removed — overlay now reads chatStore.lastActivatedChatId.
 function syncGlobals(): void {
   if (chatId.value) {
-    (window as Window & { __chatSessionId?: string }).__chatSessionId = chatId.value;
     (window as Window & { __chatHistory?: ChatMessage[] }).__chatHistory = messages.value;
   }
 }

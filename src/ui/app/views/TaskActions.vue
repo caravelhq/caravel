@@ -24,9 +24,11 @@
 import { ref, computed } from "vue";
 import { countActiveDescendants, taskThreadId } from "../pages/tasks/helpers";
 import { useWorkspaceStore } from "../stores/workspace";
+import { useChatStore } from "../stores/chat";
 import type { TaskRow } from "../stores/tasks";
 
 const ws = useWorkspaceStore();
+const chatStore = useChatStore();
 
 const props = defineProps<{
   task: TaskRow | null;
@@ -241,27 +243,12 @@ function openChatThread(): void {
     return;
   }
 
-  // ChatPage reads these on mount; the event covers the one path that does not
-  // remount (chat already the active tab in the other split group).
-  window.__chatSessionId = threadId;
-  window.__pendingAgentId = agent.value;
-
-  ws.open({ kind: "legacy", page: "chat" });
-
-  window.dispatchEvent(new CustomEvent("caravel:chat-thread", {
-    detail: { chatId: threadId, agentId: agent.value },
-  }));
-
-  // Seed the composer, but never clobber something already half-typed.
+  // Seed the composer via the store draft — never clobber something already
+  // half-typed. ws.open picks up the draft when ChatView mounts.
   const seed = `Continue after ${id.value}\n`;
-  requestAnimationFrame(() => {
-    const el = document.getElementById("chat-input") as HTMLTextAreaElement | null;
-    if (!el || el.value.trim()) return;
-    el.value = seed;
-    try { el.setSelectionRange(el.value.length, el.value.length); } catch { /* not focusable yet */ }
-    el.focus();
-    el.dispatchEvent(new Event("input", { bubbles: true }));
-  });
+  if (!chatStore.getDraft(threadId)) chatStore.saveDraft(threadId, seed);
+
+  ws.open({ kind: "chat", chatId: threadId });
 
   emit("action-done", "chat", id.value);
 }

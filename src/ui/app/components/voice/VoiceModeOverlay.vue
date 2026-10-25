@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { useVoiceStore } from "./store/voice";
+import { useChatStore } from "../../stores/chat";
 import { stripMarkdown, esc, extractChunks, detectMimeType, speakFetch } from "./utils";
 
 const voice = useVoiceStore();
@@ -234,7 +235,7 @@ async function stopAndSubmit() {
     if (!text) { setStatus("Nothing heard — try again", ""); busy = false; return; }
     transcriptHtml.value = `<div class="vm-heard">"${esc(text)}"</div>`;
     setStatus("Sending…", "processing");
-    const chatId = (window as any).__chatSessionId;
+    const chatId = useChatStore().lastActivatedChatId ?? undefined;
     try {
       await fetch("/api/chat", {
         method: "POST",
@@ -296,8 +297,10 @@ function openMode() {
   setStatus("Press and hold to talk", "");
   isListening.value = false;
   transcriptHtml.value = "";
-  // Prime cursor to skip assistant text already in history
-  const hist = (window as any).__chatHistory;
+  // Prime cursor to skip assistant text already in history — use store for
+  // the active chat so multi-tab doesn't race on the window global.
+  const _activeChatId = useChatStore().lastActivatedChatId;
+  const hist = _activeChatId ? (useChatStore().entries[_activeChatId]?.messages ?? null) : null;
   if (Array.isArray(hist) && hist.length) {
     const last = hist[hist.length - 1];
     if (last?.role === "assistant" && last.text) turnCursor = last.text.length;

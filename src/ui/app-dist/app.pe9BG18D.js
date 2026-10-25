@@ -15919,6 +15919,158 @@ const _sfc_main$G = /* @__PURE__ */ defineComponent({
     };
   }
 });
+const STORE_KEY = "chat.store";
+function loadPersisted() {
+  const base = { drafts: {}, lastRead: {}, lastActivatedChatId: null };
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      base.drafts = typeof parsed.drafts === "object" && parsed.drafts !== null ? parsed.drafts : {};
+      base.lastRead = typeof parsed.lastRead === "object" && parsed.lastRead !== null ? parsed.lastRead : {};
+      base.lastActivatedChatId = typeof parsed.lastActivatedChatId === "string" ? parsed.lastActivatedChatId : null;
+    } else {
+      const legacyRaw = localStorage.getItem("chat.drafts");
+      if (legacyRaw) {
+        const parsed = JSON.parse(legacyRaw);
+        if (typeof parsed === "object" && parsed !== null) {
+          base.drafts = parsed;
+        }
+        localStorage.removeItem("chat.drafts");
+      }
+    }
+  } catch {
+  }
+  return base;
+}
+function persistState(drafts, lastRead, lastActivatedChatId) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ drafts, lastRead, lastActivatedChatId }));
+  } catch {
+  }
+}
+const useChatStore = /* @__PURE__ */ defineStore("chat", () => {
+  const _p = loadPersisted();
+  const entries = /* @__PURE__ */ ref({});
+  const _drafts = /* @__PURE__ */ ref(_p.drafts);
+  const lastRead = /* @__PURE__ */ ref(_p.lastRead);
+  const lastActivatedChatId = /* @__PURE__ */ ref(_p.lastActivatedChatId);
+  function _persist() {
+    persistState(_drafts.value, lastRead.value, lastActivatedChatId.value);
+  }
+  function setMessages(chatId, messages) {
+    const existing = entries.value[chatId];
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, messages, isSending: (existing == null ? void 0 : existing.isSending) ?? false, agent: (existing == null ? void 0 : existing.agent) ?? null, updatedAt: (existing == null ? void 0 : existing.updatedAt) ?? null }
+    };
+  }
+  function setMeta(chatId, meta) {
+    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, ...meta }
+    };
+  }
+  function setSending(chatId, sending) {
+    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
+    entries.value = { ...entries.value, [chatId]: { ...existing, isSending: sending } };
+  }
+  function patchMessages(chatId, incoming) {
+    var _a2;
+    const existing = entries.value[chatId];
+    if (!existing) {
+      setMessages(chatId, incoming);
+      return;
+    }
+    const current = existing.messages;
+    const len = Math.max(current.length, incoming.length);
+    const patched = [];
+    let lastChangedAssistant = null;
+    for (let i = 0; i < len; i++) {
+      const src = incoming[i];
+      const dst = current[i];
+      if (!src) {
+        patched.push(dst);
+      } else if (!dst || dst.role !== src.role || dst.text !== src.text || dst.state !== src.state) {
+        const next = { ...src };
+        patched.push(next);
+        if (src.role === "assistant") lastChangedAssistant = src;
+      } else {
+        patched.push(dst);
+      }
+    }
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, messages: patched }
+    };
+    if (lastChangedAssistant) {
+      const st = lastChangedAssistant.state;
+      const fires = !st || st === "done" || st === "streaming" || st === "background";
+      if (fires) {
+        const done = !st || st === "done";
+        (_a2 = window.__vmOnAssistantChunk) == null ? void 0 : _a2.call(window, lastChangedAssistant.text, done);
+      }
+    }
+  }
+  const hasActiveWork = computed(() => (chatId) => {
+    var _a2;
+    const msgs = ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.messages) ?? [];
+    return msgs.some(
+      (m2) => m2.state === "thinking" || m2.state === "streaming" || m2.state === "background"
+    );
+  });
+  const isSending = computed(() => (chatId) => {
+    var _a2;
+    return ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.isSending) ?? false;
+  });
+  const isAgentLocked = computed(() => (chatId) => {
+    return hasActiveWork.value(chatId) || isSending.value(chatId);
+  });
+  function saveDraft(id, text) {
+    const updated = { ..._drafts.value };
+    if (text) {
+      updated[id] = text;
+    } else {
+      delete updated[id];
+    }
+    _drafts.value = updated;
+    _persist();
+  }
+  function getDraft(id) {
+    return _drafts.value[id] ?? "";
+  }
+  function markRead(chatId, updatedAt) {
+    lastRead.value = { ...lastRead.value, [chatId]: updatedAt };
+    _persist();
+  }
+  function isUnread(chatId, updatedAt) {
+    const read = lastRead.value[chatId];
+    if (!read) return true;
+    return updatedAt > read;
+  }
+  function setLastActivatedChat(chatId) {
+    lastActivatedChatId.value = chatId;
+    _persist();
+  }
+  return {
+    entries,
+    lastRead,
+    lastActivatedChatId,
+    hasActiveWork,
+    isSending,
+    isAgentLocked,
+    setMessages,
+    setMeta,
+    setSending,
+    patchMessages,
+    saveDraft,
+    getDraft,
+    markRead,
+    isUnread,
+    setLastActivatedChat
+  };
+});
 const _hoisted_1$B = {
   class: "voice-mode-overlay",
   role: "dialog",
@@ -16170,7 +16322,7 @@ const _sfc_main$F = /* @__PURE__ */ defineComponent({
         }
         transcriptHtml.value = `<div class="vm-heard">"${esc(text)}"</div>`;
         setStatus("Sending…", "processing");
-        const chatId = window.__chatSessionId;
+        const chatId = useChatStore().lastActivatedChatId ?? void 0;
         try {
           await fetch("/api/chat", {
             method: "POST",
@@ -16219,13 +16371,15 @@ const _sfc_main$F = /* @__PURE__ */ defineComponent({
       prevVmChunk = void 0;
     }
     function openMode() {
+      var _a2;
       busy = false;
       spokenChunks = [];
       turnCursor = 0;
       setStatus("Press and hold to talk", "");
       isListening.value = false;
       transcriptHtml.value = "";
-      const hist = window.__chatHistory;
+      const _activeChatId = useChatStore().lastActivatedChatId;
+      const hist = _activeChatId ? ((_a2 = useChatStore().entries[_activeChatId]) == null ? void 0 : _a2.messages) ?? null : null;
       if (Array.isArray(hist) && hist.length) {
         const last = hist[hist.length - 1];
         if ((last == null ? void 0 : last.role) === "assistant" && last.text) turnCursor = last.text.length;
@@ -17020,158 +17174,6 @@ const _sfc_main$D = /* @__PURE__ */ defineComponent({
       ]);
     };
   }
-});
-const STORE_KEY = "chat.store";
-function loadPersisted() {
-  const base = { drafts: {}, lastRead: {}, lastActivatedChatId: null };
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      base.drafts = typeof parsed.drafts === "object" && parsed.drafts !== null ? parsed.drafts : {};
-      base.lastRead = typeof parsed.lastRead === "object" && parsed.lastRead !== null ? parsed.lastRead : {};
-      base.lastActivatedChatId = typeof parsed.lastActivatedChatId === "string" ? parsed.lastActivatedChatId : null;
-    } else {
-      const legacyRaw = localStorage.getItem("chat.drafts");
-      if (legacyRaw) {
-        const parsed = JSON.parse(legacyRaw);
-        if (typeof parsed === "object" && parsed !== null) {
-          base.drafts = parsed;
-        }
-        localStorage.removeItem("chat.drafts");
-      }
-    }
-  } catch {
-  }
-  return base;
-}
-function persistState(drafts, lastRead, lastActivatedChatId) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ drafts, lastRead, lastActivatedChatId }));
-  } catch {
-  }
-}
-const useChatStore = /* @__PURE__ */ defineStore("chat", () => {
-  const _p = loadPersisted();
-  const entries = /* @__PURE__ */ ref({});
-  const _drafts = /* @__PURE__ */ ref(_p.drafts);
-  const lastRead = /* @__PURE__ */ ref(_p.lastRead);
-  const lastActivatedChatId = /* @__PURE__ */ ref(_p.lastActivatedChatId);
-  function _persist() {
-    persistState(_drafts.value, lastRead.value, lastActivatedChatId.value);
-  }
-  function setMessages(chatId, messages) {
-    const existing = entries.value[chatId];
-    entries.value = {
-      ...entries.value,
-      [chatId]: { ...existing, messages, isSending: (existing == null ? void 0 : existing.isSending) ?? false, agent: (existing == null ? void 0 : existing.agent) ?? null, updatedAt: (existing == null ? void 0 : existing.updatedAt) ?? null }
-    };
-  }
-  function setMeta(chatId, meta) {
-    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
-    entries.value = {
-      ...entries.value,
-      [chatId]: { ...existing, ...meta }
-    };
-  }
-  function setSending(chatId, sending) {
-    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
-    entries.value = { ...entries.value, [chatId]: { ...existing, isSending: sending } };
-  }
-  function patchMessages(chatId, incoming) {
-    var _a2;
-    const existing = entries.value[chatId];
-    if (!existing) {
-      setMessages(chatId, incoming);
-      return;
-    }
-    const current = existing.messages;
-    const len = Math.max(current.length, incoming.length);
-    const patched = [];
-    let lastChangedAssistant = null;
-    for (let i = 0; i < len; i++) {
-      const src = incoming[i];
-      const dst = current[i];
-      if (!src) {
-        patched.push(dst);
-      } else if (!dst || dst.role !== src.role || dst.text !== src.text || dst.state !== src.state) {
-        const next = { ...src };
-        patched.push(next);
-        if (src.role === "assistant") lastChangedAssistant = src;
-      } else {
-        patched.push(dst);
-      }
-    }
-    entries.value = {
-      ...entries.value,
-      [chatId]: { ...existing, messages: patched }
-    };
-    if (lastChangedAssistant) {
-      const st = lastChangedAssistant.state;
-      const fires = !st || st === "done" || st === "streaming" || st === "background";
-      if (fires) {
-        const done = !st || st === "done";
-        (_a2 = window.__vmOnAssistantChunk) == null ? void 0 : _a2.call(window, lastChangedAssistant.text, done);
-      }
-    }
-  }
-  const hasActiveWork = computed(() => (chatId) => {
-    var _a2;
-    const msgs = ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.messages) ?? [];
-    return msgs.some(
-      (m2) => m2.state === "thinking" || m2.state === "streaming" || m2.state === "background"
-    );
-  });
-  const isSending = computed(() => (chatId) => {
-    var _a2;
-    return ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.isSending) ?? false;
-  });
-  const isAgentLocked = computed(() => (chatId) => {
-    return hasActiveWork.value(chatId) || isSending.value(chatId);
-  });
-  function saveDraft(id, text) {
-    const updated = { ..._drafts.value };
-    if (text) {
-      updated[id] = text;
-    } else {
-      delete updated[id];
-    }
-    _drafts.value = updated;
-    _persist();
-  }
-  function getDraft(id) {
-    return _drafts.value[id] ?? "";
-  }
-  function markRead(chatId, updatedAt) {
-    lastRead.value = { ...lastRead.value, [chatId]: updatedAt };
-    _persist();
-  }
-  function isUnread(chatId, updatedAt) {
-    const read = lastRead.value[chatId];
-    if (!read) return true;
-    return updatedAt > read;
-  }
-  function setLastActivatedChat(chatId) {
-    lastActivatedChatId.value = chatId;
-    _persist();
-  }
-  return {
-    entries,
-    lastRead,
-    lastActivatedChatId,
-    hasActiveWork,
-    isSending,
-    isAgentLocked,
-    setMessages,
-    setMeta,
-    setSending,
-    patchMessages,
-    saveDraft,
-    getDraft,
-    markRead,
-    isUnread,
-    setLastActivatedChat
-  };
 });
 const TASKS_LIST_KEY = "tasks:list";
 const PROJECTS_LIST_KEY = "projects:list";
@@ -20281,7 +20283,6 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
     }
     function syncGlobals() {
       if (chatId.value) {
-        window.__chatSessionId = chatId.value;
         window.__chatHistory = messages.value;
       }
     }
@@ -22268,6 +22269,7 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
   emits: ["action-done"],
   setup(__props, { emit: __emit }) {
     const ws = useWorkspaceStore();
+    const chatStore = useChatStore();
     const props = __props;
     const emit2 = __emit;
     const id = computed(() => {
@@ -22466,25 +22468,10 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
         chatError.value = "No agent on this task — cannot resolve its chat thread.";
         return;
       }
-      window.__chatSessionId = threadId;
-      window.__pendingAgentId = agent.value;
-      ws.open({ kind: "legacy", page: "chat" });
-      window.dispatchEvent(new CustomEvent("caravel:chat-thread", {
-        detail: { chatId: threadId, agentId: agent.value }
-      }));
       const seed = `Continue after ${id.value}
 `;
-      requestAnimationFrame(() => {
-        const el = document.getElementById("chat-input");
-        if (!el || el.value.trim()) return;
-        el.value = seed;
-        try {
-          el.setSelectionRange(el.value.length, el.value.length);
-        } catch {
-        }
-        el.focus();
-        el.dispatchEvent(new Event("input", { bubbles: true }));
-      });
+      if (!chatStore.getDraft(threadId)) chatStore.saveDraft(threadId, seed);
+      ws.open({ kind: "chat", chatId: threadId });
       emit2("action-done", "chat", id.value);
     }
     return (_ctx, _cache) => {
@@ -22676,7 +22663,7 @@ const _sfc_main$h = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$h, [["__scopeId", "data-v-13e3356e"]]);
+const TaskActions = /* @__PURE__ */ _export_sfc(_sfc_main$h, [["__scopeId", "data-v-dc8d4fe1"]]);
 const _hoisted_1$e = {
   key: 0,
   class: "ev-sections"

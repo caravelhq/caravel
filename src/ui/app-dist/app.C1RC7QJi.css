@@ -655,10 +655,10 @@
 
 /* F3: TaskActions now sits in the action slot beside the tab bar.
    No border-bottom here; ev-top-row owns the boundary. */
-.ev-actions[data-v-13e3356e] {
+.ev-actions[data-v-dc8d4fe1] {
   padding: 4px 8px 2px;
 }
-.ev-actions-row[data-v-13e3356e] {
+.ev-actions-row[data-v-dc8d4fe1] {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -668,7 +668,7 @@
 /* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
    Before: font-size 0.82em, padding 5px 12px, min-height 30px.
    After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
-.ev-action-btn[data-v-13e3356e] {
+.ev-action-btn[data-v-dc8d4fe1] {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
@@ -679,60 +679,60 @@
   min-height: 28px;
   white-space: nowrap;
 }
-.ev-action-btn[data-v-13e3356e]:hover:not(:disabled) {
+.ev-action-btn[data-v-dc8d4fe1]:hover:not(:disabled) {
   color: var(--ts-text, #eee);
   border-color: var(--ts-text-secondary, #aaa);
 }
-.ev-action-btn.is-primary[data-v-13e3356e] {
+.ev-action-btn.is-primary[data-v-dc8d4fe1] {
   background: var(--ts-accent, #3a3a9a);
   color: #fff;
   border-color: var(--ts-accent, #3a3a9a);
 }
-.ev-action-btn.is-primary[data-v-13e3356e]:hover:not(:disabled) {
+.ev-action-btn.is-primary[data-v-dc8d4fe1]:hover:not(:disabled) {
   background: var(--ts-accent-hover, #4a4aaa);
 }
-.ev-action-btn.is-danger[data-v-13e3356e] {
+.ev-action-btn.is-danger[data-v-dc8d4fe1] {
   background: transparent;
   border-color: var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
 }
-.ev-action-btn.is-active[data-v-13e3356e] {
+.ev-action-btn.is-active[data-v-dc8d4fe1] {
   background: var(--ts-surface-2, #2a2a2a);
   color: var(--ts-text, #eee);
 }
-.ev-action-btn[data-v-13e3356e]:disabled { opacity: 0.5; cursor: not-allowed;
+.ev-action-btn[data-v-dc8d4fe1]:disabled { opacity: 0.5; cursor: not-allowed;
 }
 
 /* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
    Collapse to icons only; aria-labels carry the accessible name. */
 @media (max-width: 600px) {
-.ev-btn-lbl[data-v-13e3356e] { display: none;
+.ev-btn-lbl[data-v-dc8d4fe1] { display: none;
 }
-.ev-action-btn[data-v-13e3356e] { padding: 3px 7px; min-width: 28px;
+.ev-action-btn[data-v-dc8d4fe1] { padding: 3px 7px; min-width: 28px;
 }
 }
-.ev-form[data-v-13e3356e] {
+.ev-form[data-v-dc8d4fe1] {
   margin-top: 8px;
   padding: 10px;
   background: var(--ts-surface-2, #2a2a2a);
   border: 1px solid var(--ts-border, #3a3a3a);
   border-radius: 4px;
 }
-.ev-form-danger[data-v-13e3356e] { border-color: var(--ts-danger, #8a3a3a);
+.ev-form-danger[data-v-dc8d4fe1] { border-color: var(--ts-danger, #8a3a3a);
 }
-.ev-form-warn[data-v-13e3356e] {
+.ev-form-warn[data-v-dc8d4fe1] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin-bottom: 8px;
 }
-.ev-form-warn summary[data-v-13e3356e] { cursor: pointer;
+.ev-form-warn summary[data-v-dc8d4fe1] { cursor: pointer;
 }
-.ev-form-hint[data-v-13e3356e] {
+.ev-form-hint[data-v-dc8d4fe1] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin: 0 0 8px;
 }
-.ev-form-input[data-v-13e3356e] {
+.ev-form-input[data-v-dc8d4fe1] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -743,7 +743,7 @@
   border-radius: 3px;
   margin-bottom: 6px;
 }
-.ev-form-textarea[data-v-13e3356e] {
+.ev-form-textarea[data-v-dc8d4fe1] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -755,7 +755,7 @@
   resize: vertical;
   margin-bottom: 6px;
 }
-.ev-form-cascade[data-v-13e3356e] {
+.ev-form-cascade[data-v-dc8d4fe1] {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -764,20 +764,20 @@
   margin-bottom: 8px;
   cursor: pointer;
 }
-.ev-form-actions[data-v-13e3356e] {
+.ev-form-actions[data-v-dc8d4fe1] {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
-.ev-action-error[data-v-13e3356e] {
+.ev-action-error[data-v-dc8d4fe1] {
   color: var(--ts-danger, #e05a5a);
   font-size: 0.82em;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.ev-action-error button[data-v-13e3356e] {
+.ev-action-error button[data-v-dc8d4fe1] {
   background: none;
   border: 1px solid var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
