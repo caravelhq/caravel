@@ -121,7 +121,7 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
           title="Interrupt"
           aria-label="Interrupt"
           @click="onInterrupt"
-        >stop</button>
+        >✋</button>
         <button
           v-if="hasActiveWork"
           type="button"
@@ -129,14 +129,14 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
           title="Cancel"
           aria-label="Cancel"
           @click="onCancel"
-        >cancel</button>
+        >Cancel</button>
         <button
           type="submit"
           class="chat-send"
           title="Send"
           aria-label="Send"
           :disabled="!localDraft.trim() || !agentPicked"
-        >send</button>
+        >↑</button>
       </div>
     </div>
   </form>
