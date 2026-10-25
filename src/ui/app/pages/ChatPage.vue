@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import { renderMarkdown } from "../lib/markdown";
 import { useReadAloud } from "../components/voice/useReadAloud";
 import { useChatStore } from "../stores/chat";
 import { useUiStore } from "../stores/ui";
+import ChatPicker from "../components/chat/ChatPicker.vue";
 
 const { speak: readAloud, stop: stopReadAloud, isPlaying } = useReadAloud();
 const chatStore = useChatStore();
@@ -17,13 +18,14 @@ const CHAT_ID_KEY = "caravel.chat.id";
 const CHAT_POLL_FAST_MS = 500;
 const CHAT_POLL_IDLE_MS = 10000;
 
+// ── Picker state ─────────────────────────────────────────────────────────────
+const showPicker = ref(false);
+
 // ── Module state (per-component instance) ───────────────────────────────────
 let chatHistory: Array<{ role: string; text: string; state?: string }> = [];
 let chatSessionId = "";
-let chatListCache: Array<{ id: string; name?: string; preview?: string; agentId?: string; messageCount?: number; updatedAt?: string }> = [];
 let chatServerUpdatedAt: string | null = null;
 let chatPollTimer: ReturnType<typeof setTimeout> | null = null;
-let historyClickHandler: ((e: Event) => void) | null = null;
 let agentsCache: Array<{ name: string; emoji?: string; displayName?: string; description?: string }> = [];
 let chatAgentLocked: string | null = null;
 let pendingAgentId: string | null = null;
@@ -223,17 +225,6 @@ async function loadChatFromServer() {
   } catch (_) {}
 }
 
-async function loadChatList() {
-  try {
-    const res = await fetch("/api/chats");
-    const data = await res.json();
-    if (data.ok && Array.isArray(data.chats)) {
-      chatListCache = data.chats;
-      renderChatList();
-    }
-  } catch (_) {}
-}
-
 async function loadAgents() {
   try {
     const res = await fetch("/api/agents");
@@ -246,103 +237,11 @@ async function loadAgents() {
   updateAgentBadge();
 }
 
-// ── Chat list rendering ───────────────────────────────────────────────────────
-function renderChatList() {
-  const listEl = $("chat-history-list");
-  if (!listEl) return;
-  listEl.textContent = "";
-  if (!chatListCache.length) {
-    const empty = document.createElement("div");
-    empty.className = "chat-history-empty";
-    empty.textContent = "No saved chats";
-    listEl.appendChild(empty);
-    return;
-  }
-  for (const chat of chatListCache) {
-    const isActive = chat.id === chatSessionId;
-    const row = document.createElement("div");
-    row.className = "chat-history-row" + (isActive ? " chat-history-row-active" : "");
-    row.dataset.chatId = chat.id;
+// ── Chat picker event handlers ────────────────────────────────────────────────
 
-    const item = document.createElement("button");
-    item.className = "chat-history-item" + (isActive ? " chat-history-active" : "");
-    item.type = "button";
-    item.dataset.chatId = chat.id;
-    const preview = document.createElement("span");
-    preview.className = "chat-history-preview";
-    const agentForRow = findAgent(chat.agentId || null);
-    const prefix = agentForRow && agentForRow.emoji ? agentForRow.emoji + " " : "";
-    preview.textContent = prefix + (chat.name || chat.preview || "(empty)");
-    const meta = document.createElement("span");
-    meta.className = "chat-history-meta";
-    const d = new Date(chat.updatedAt || 0);
-    meta.textContent = (chat.messageCount || 0) + " msgs · " + d.toLocaleDateString();
-    item.appendChild(preview);
-    item.appendChild(meta);
-    item.addEventListener("click", () => switchToChat(chat.id));
-    row.appendChild(item);
-
-    const renameBtn = document.createElement("button");
-    renameBtn.className = "chat-history-rename-btn";
-    renameBtn.type = "button";
-    renameBtn.title = chat.name ? "Rename chat" : "Name this chat";
-    renameBtn.setAttribute("aria-label", renameBtn.title);
-    renameBtn.textContent = "✏️";
-    renameBtn.addEventListener("click", (ev) => { ev.stopPropagation(); beginInlineRename(chat); });
-    row.appendChild(renameBtn);
-
-    if (isActive) {
-      const syncBtn = document.createElement("button");
-      syncBtn.className = "chat-history-sync-btn";
-      syncBtn.type = "button";
-      syncBtn.title = "Force resync from server";
-      syncBtn.setAttribute("aria-label", "Force resync from server");
-      syncBtn.textContent = "↻";
-      syncBtn.addEventListener("click", (ev) => { ev.stopPropagation(); pollChat({ force: true }); });
-      row.appendChild(syncBtn);
-    }
-    listEl.appendChild(row);
-  }
-}
-
-function beginInlineRename(chat: { id: string; name?: string; preview?: string }) {
-  const listEl = $("chat-history-list");
-  if (!listEl) return;
-  const row = listEl.querySelector<HTMLElement>('.chat-history-row[data-chat-id="' + chat.id + '"]');
-  if (!row || row.querySelector(".chat-history-rename-input")) return;
-  const item = row.querySelector<HTMLElement>(".chat-history-item");
-  if (!item) return;
-  item.style.display = "none";
-  const input = document.createElement("input");
-  input.type = "text";
-  input.className = "chat-history-rename-input";
-  input.value = chat.name || "";
-  input.placeholder = chat.preview || "Chat name";
-  input.maxLength = 80;
-  const commit = (save: boolean) => {
-    if (!input.parentNode) return;
-    input.disabled = true;
-    if (save) {
-      const name = input.value.trim();
-      submitChatRename(chat.id, name).then(() => loadChatList());
-    } else {
-      input.remove();
-      item.style.display = "";
-    }
-  };
-  input.addEventListener("keydown", (ev) => {
-    if (ev.key === "Enter") { ev.preventDefault(); commit(true); }
-    else if (ev.key === "Escape") { ev.preventDefault(); commit(false); }
-  });
-  input.addEventListener("blur", () => commit(true));
-  row.insertBefore(input, row.firstChild);
-  input.focus();
-  input.select();
-}
-
-async function submitChatRename(id: string, name: string) {
+async function handlePickerRename(chatId: string, name: string): Promise<void> {
   try {
-    await fetch("/api/chats/" + encodeURIComponent(id), {
+    await fetch("/api/chats/" + encodeURIComponent(chatId), {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
@@ -395,9 +294,7 @@ async function switchToChat(id: string) {
   updateSendDisabled();
   renderChatHistory();
   schedulePoll();
-  const dropdown = $("chat-history-dropdown");
-  if (dropdown) dropdown.hidden = true;
-  loadChatList();
+  showPicker.value = false;
 }
 
 function startNewChat() {
@@ -412,9 +309,7 @@ function startNewChat() {
   updateSendDisabled();
   renderChatHistory();
   schedulePoll();
-  const dropdown = $("chat-history-dropdown");
-  if (dropdown) dropdown.hidden = true;
-  loadChatList();
+  showPicker.value = false;
 }
 
 // ── Message rendering ─────────────────────────────────────────────────────────
@@ -732,26 +627,7 @@ onMounted(() => {
     });
   }
 
-  // History dropdown
-  const historyBtn = $("chat-history-btn");
-  const historyDropdown = $("chat-history-dropdown");
-  if (historyBtn && historyDropdown) {
-    historyBtn.addEventListener("click", () => {
-      const showing = !historyDropdown.hidden;
-      historyDropdown.hidden = showing;
-      if (!showing) loadChatList();
-    });
-    historyClickHandler = (e: Event) => {
-      if (!historyDropdown.hidden && !historyBtn.contains(e.target as Node) && !historyDropdown.contains(e.target as Node)) {
-        historyDropdown.hidden = true;
-      }
-    };
-    document.addEventListener("click", historyClickHandler);
-  }
-
-  // New chat button
-  const newBtn = $("chat-new-btn");
-  if (newBtn) newBtn.addEventListener("click", () => startNewChat());
+  // History picker toggle handled reactively via showPicker ref.
 
   // Delete button
   const deleteBtn = $("chat-delete");
@@ -820,10 +696,6 @@ onBeforeUnmount(() => {
   // Clear the global read-aloud text so the button disables on navigation away.
   ui.raText = null;
   ui.raFilePath = null;
-  if (historyClickHandler) {
-    document.removeEventListener("click", historyClickHandler);
-    historyClickHandler = null;
-  }
 });
 </script>
 
@@ -831,19 +703,21 @@ onBeforeUnmount(() => {
   <div id="chat-panel" class="chat-panel">
     <div class="chat-toolbar">
       <div class="chat-toolbar-left">
-        <button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats">Chats</button>
+        <button id="chat-history-btn" class="chat-toolbar-btn" type="button" title="Chats" @click="showPicker = !showPicker">Chats</button>
         <span id="chat-agent-badge" class="chat-agent-badge" hidden></span>
         <input id="chat-name-input" class="chat-name-input" type="text" title="Chat title" autocomplete="off" hidden />
       </div>
       <button id="chat-session-badge" class="chat-session-badge" type="button" hidden title="Click to copy full session id"></button>
       <button id="chat-delete" class="chat-toolbar-btn chat-delete-btn" type="button" title="Delete this chat" aria-label="Delete chat">🗑</button>
-      <div id="chat-history-dropdown" class="chat-history-dropdown" hidden>
-        <div class="chat-history-head">
-          <span>Saved Chats</span>
-          <button id="chat-new-btn" class="chat-history-new" type="button" title="Start a new chat">+ New</button>
-        </div>
-        <div id="chat-history-list" class="chat-history-list"></div>
-      </div>
+      <ChatPicker
+        v-if="showPicker"
+        :active-chat-id="chatSessionId ?? ''"
+        @open="(id) => { void switchToChat(id); }"
+        @new="startNewChat"
+        @rename="handlePickerRename"
+        @resync="() => pollChat({ force: true })"
+        @close="showPicker = false"
+      />
     </div>
     <div id="chat-messages" class="chat-messages"></div>
     <div class="chat-input-area">

@@ -1921,8 +1921,8 @@ export const pageStyles = String.raw`    :root {
     .chat-history-sync-btn {
       flex: 0 0 auto;
       align-self: center;
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
       margin-right: 4px;
       padding: 0;
       border: 1px solid #ffffff1a;
@@ -1944,8 +1944,8 @@ export const pageStyles = String.raw`    :root {
     .chat-history-rename-btn {
       flex: 0 0 auto;
       align-self: center;
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
       margin-right: 4px;
       padding: 0;
       border: 1px solid #ffffff1a;
@@ -2119,6 +2119,33 @@ export const pageStyles = String.raw`    :root {
     .chat-picker-task-btn:disabled {
       opacity: 0.45;
       cursor: not-allowed;
+    }
+    .chat-picker-bound-label {
+      font-size: 11px;
+      color: #6a7c91;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.02em;
+    }
+    .chat-picker-search-wrap {
+      padding: 4px 8px 6px;
+    }
+    .chat-picker-search {
+      width: 100%;
+      padding: 6px 10px;
+      border: 1px solid #ffffff1a;
+      border-radius: 6px;
+      background: #0d1117;
+      color: #e5eaf3;
+      font: inherit;
+      font-size: 12px;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .chat-picker-search::placeholder {
+      color: #4a5a6e;
+    }
+    .chat-picker-search:focus {
+      border-color: #4a7ab5;
     }
     .chat-agent-badge {
       display: inline-block;
