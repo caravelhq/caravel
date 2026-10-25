@@ -325,6 +325,372 @@ assert(d6NextId !== `${baseParentId}.01`, "D6: does not reissue .01 (which is in
 // (We can't run the old scan here, but we document the contrast for the record.)
 console.log(`  ℹ old 5-bucket scan would have returned ${baseParentId}.01 (visible in test log for contrast)`);
 
+// ── B1: batch with top-level parent: → decimal child ids ─────────────────────
+// WAL-123 Phase C v2 fix: batch tasks now accept a top-level parent: field.
+// When given, ids are allocated as <parent-root>.NN decimal children.
+
+console.log("\nB1 — batch with top-level parent: produces decimal child ids:");
+
+// Create a parent task to reference.
+const b1ParentId = runNew(writeDraft([
+  `headline: "B1 parent"`,
+  `from: alice`,
+  `to: ${AGENT}`,
+  `kind: code`,
+  `priority: P2`,
+  `project: null`,
+  `brief: parent`,
+  `output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  `status: open`,
+  `budget:`,
+  `  max_turns: 10`,
+  `  max_subagents: 0`,
+  `history: []`,
+].join("\n") + "\n"));
+
+const b1SpecPath = join(root, "b1-batch.yaml");
+writeFileSync(b1SpecPath, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `parent: ${b1ParentId}`,
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  step1:`,
+  `    headline: "B1 step 1"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    brief: do step 1`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  ``,
+  `  step2:`,
+  `    headline: "B1 step 2"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    needs: [step1]`,
+  `    brief: do step 2`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+// Capture stdout from doBatch (it logs the ids).
+const b1Ids: string[] = [];
+const origLog = console.log;
+console.log = (...args: unknown[]) => b1Ids.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b1SpecPath]);
+console.log = origLog;
+
+const b1RootId = b1ParentId.split(".")[0]!;
+assert(b1Ids.length === 2, `B1: dispatched 2 tasks (got ${b1Ids.length})`);
+assert(
+  b1Ids[0]!.startsWith(b1RootId + "."),
+  `B1: step1 id is a decimal child of parent root (got: ${b1Ids[0]})`
+);
+assert(
+  b1Ids[1]!.startsWith(b1RootId + "."),
+  `B1: step2 id is a decimal child of parent root (got: ${b1Ids[1]})`
+);
+assert(b1Ids[0] !== b1Ids[1], "B1: step1 and step2 got distinct ids");
+
+// Read the envelopes and confirm parent: field is set correctly.
+const b1Step1Yaml = existsSync(join(root, "agents", AGENT, "tasks", "open", `${b1Ids[0]}.yaml`))
+  ? readFileSync(join(root, "agents", AGENT, "tasks", "open", `${b1Ids[0]}.yaml`), "utf8") : "";
+assertEqual(extractFmField(b1Step1Yaml, "parent"), b1ParentId, "B1: step1 parent: field matches top-level default");
+
+const b1Step2Yaml = existsSync(join(root, "agents", AGENT, "tasks", "open", `${b1Ids[1]}.yaml`))
+  ? readFileSync(join(root, "agents", AGENT, "tasks", "open", `${b1Ids[1]}.yaml`), "utf8") : "";
+assertEqual(extractFmField(b1Step2Yaml, "parent"), b1ParentId, "B1: step2 parent: field matches top-level default");
+
+// Confirm needs: edge round-trips correctly.
+assert(
+  b1Step2Yaml.includes(b1Ids[0]!),
+  `B1: step2 needs: contains the real id of step1 (${b1Ids[0]})`
+);
+
+// ── B2: per-task parent: overrides top-level default ─────────────────────────
+
+console.log("\nB2 — per-task parent: overrides top-level default:");
+
+const b2ParentA = runNew(writeDraft([
+  `headline: "B2 parent A"`,
+  `from: alice`,
+  `to: ${AGENT}`,
+  `kind: code`,
+  `priority: P2`,
+  `project: null`,
+  `brief: parentA`,
+  `output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  `status: open`,
+  `budget:`,
+  `  max_turns: 10`,
+  `  max_subagents: 0`,
+  `history: []`,
+].join("\n") + "\n"));
+
+const b2ParentB = runNew(writeDraft([
+  `headline: "B2 parent B"`,
+  `from: alice`,
+  `to: ${AGENT}`,
+  `kind: code`,
+  `priority: P2`,
+  `project: null`,
+  `brief: parentB`,
+  `output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  `status: open`,
+  `budget:`,
+  `  max_turns: 10`,
+  `  max_subagents: 0`,
+  `history: []`,
+].join("\n") + "\n"));
+
+const b2SpecPath = join(root, "b2-batch.yaml");
+writeFileSync(b2SpecPath, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `parent: ${b2ParentA}`,  // top-level default
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  uses-default:`,
+  `    headline: "B2 uses default parent"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    brief: uses default parent`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  ``,
+  `  overrides-to-b:`,
+  `    headline: "B2 overrides to parent B"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    parent: ${b2ParentB}`,  // per-task override
+  `    brief: overrides to parent B`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+const b2Ids: string[] = [];
+const origLog2 = console.log;
+console.log = (...args: unknown[]) => b2Ids.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b2SpecPath]);
+console.log = origLog2;
+
+assert(b2Ids.length === 2, `B2: dispatched 2 tasks (got ${b2Ids.length})`);
+
+const b2RootA = b2ParentA.split(".")[0]!;
+const b2RootB = b2ParentB.split(".")[0]!;
+
+// Read envelopes
+const b2DefaultYaml = existsSync(join(root, "agents", AGENT, "tasks", "open", `${b2Ids[0]}.yaml`))
+  ? readFileSync(join(root, "agents", AGENT, "tasks", "open", `${b2Ids[0]}.yaml`), "utf8") : "";
+const b2OverrideYaml = existsSync(join(root, "agents", AGENT, "tasks", "open", `${b2Ids[1]}.yaml`))
+  ? readFileSync(join(root, "agents", AGENT, "tasks", "open", `${b2Ids[1]}.yaml`), "utf8") : "";
+
+assertEqual(extractFmField(b2DefaultYaml, "parent"), b2ParentA, "B2: uses-default task has parent A");
+assert(b2Ids[0]!.startsWith(b2RootA + "."), `B2: uses-default id is child of parent A root (got: ${b2Ids[0]})`);
+
+assertEqual(extractFmField(b2OverrideYaml, "parent"), b2ParentB, "B2: overrides-to-b task has parent B");
+assert(b2Ids[1]!.startsWith(b2RootB + "."), `B2: overrides-to-b id is child of parent B root (got: ${b2Ids[1]})`);
+
+// ── B3: H5 fires on parented batch when sibling already exists ────────────────
+
+console.log("\nB3 — H5: parented batch hard-fails when sibling already exists (--force bypasses):");
+
+const b3ParentId = runNew(writeDraft([
+  `headline: "B3 parent"`,
+  `from: alice`,
+  `to: ${AGENT}`,
+  `kind: code`,
+  `priority: P2`,
+  `project: null`,
+  `brief: b3 parent`,
+  `output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  `status: open`,
+  `budget:`,
+  `  max_turns: 10`,
+  `  max_subagents: 0`,
+  `history: []`,
+].join("\n") + "\n"));
+
+// Plant a sibling so H5 fires.
+const b3RootId = b3ParentId.split(".")[0]!;
+writeFileSync(
+  join(root, "agents", AGENT, "tasks", "done", `${b3RootId}.01.md`),
+  `# Prior child\n`
+);
+writeFileSync(
+  join(root, "agents", AGENT, "tasks", "done", `${b3RootId}.01.yaml`),
+  `id: ${b3RootId}.01\nheadline: "Prior child"\nstatus: done\nfrom: alice\nto: ${AGENT}\n`
+);
+
+const b3SpecPath = join(root, "b3-batch.yaml");
+writeFileSync(b3SpecPath, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `parent: ${b3ParentId}`,
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  retry:`,
+  `    headline: "B3 retry task"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    brief: retry`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+// Without --force: must fail (H5).
+let b3HardFailed = false;
+const origDie = process.exit;
+let b3ExitCode = 0;
+process.exit = ((code?: number) => { b3ExitCode = code ?? 0; b3HardFailed = true; throw new Error(`exit:${code}`); }) as any;
+try {
+  runTaskCli(["batch", "--yaml", b3SpecPath]);
+} catch (e: unknown) {
+  if (!(e instanceof Error && e.message.startsWith("exit:"))) throw e;
+}
+process.exit = origDie;
+assert(b3HardFailed, "B3: batch without --force hard-fails when H5 fires");
+
+// With --force: must succeed.
+const b3ForceIds: string[] = [];
+const origLog3 = console.log;
+console.log = (...args: unknown[]) => b3ForceIds.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b3SpecPath, "--force"]);
+console.log = origLog3;
+assert(b3ForceIds.length === 1, `B3: batch with --force dispatches 1 task (got ${b3ForceIds.length})`);
+assert(b3ForceIds[0]!.startsWith(b3RootId + "."), `B3: --force task has decimal child id (got: ${b3ForceIds[0]})`);
+
+// ── B4: intra-batch W1 warns on overlapping touches with no edge ──────────────
+
+console.log("\nB4 — intra-batch W1: overlapping touches without needs: edge emit warning; adding edge silences it:");
+
+const b4SpecPathConflict = join(root, "b4-conflict.yaml");
+writeFileSync(b4SpecPathConflict, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  edit-a:`,
+  `    headline: "B4 edit file A"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    touches:`,
+  `      - repos/caravel/src/cli/task.ts`,
+  `      - repos/caravel/test/cli-dispatch.test.ts`,
+  `    brief: edit a`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  ``,
+  `  edit-b:`,
+  `    headline: "B4 also edits task.ts"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    touches:`,
+  `      - repos/caravel/src/cli/task.ts`,
+  `    brief: edit b`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+const b4Warnings: string[] = [];
+const origWarn = console.warn;
+console.warn = (...args: unknown[]) => b4Warnings.push(args.join(" "));
+const b4ConflictIds: string[] = [];
+const origLog4 = console.log;
+console.log = (...args: unknown[]) => b4ConflictIds.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b4SpecPathConflict]);
+console.warn = origWarn;
+console.log = origLog4;
+
+assert(
+  b4Warnings.some((w) => w.includes("intra-batch W1") && w.includes("task.ts")),
+  `B4: W1 warning fires for overlapping touches with no edge (warnings: ${b4Warnings.join(" | ")})`
+);
+
+// Now add a needs: edge — warning must be silenced.
+const b4SpecPathEdge = join(root, "b4-edge.yaml");
+writeFileSync(b4SpecPathEdge, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  edit-a:`,
+  `    headline: "B4e edit file A"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    touches:`,
+  `      - repos/caravel/src/cli/task.ts`,
+  `    brief: edit a`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  ``,
+  `  edit-b:`,
+  `    headline: "B4e also edits task.ts"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    needs: [edit-a]`,
+  `    touches:`,
+  `      - repos/caravel/src/cli/task.ts`,
+  `    brief: edit b`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+const b4EdgeWarnings: string[] = [];
+const origWarn2 = console.warn;
+console.warn = (...args: unknown[]) => b4EdgeWarnings.push(args.join(" "));
+const b4EdgeIds: string[] = [];
+const origLog5 = console.log;
+console.log = (...args: unknown[]) => b4EdgeIds.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b4SpecPathEdge]);
+console.warn = origWarn2;
+console.log = origLog5;
+
+assert(
+  !b4EdgeWarnings.some((w) => w.includes("intra-batch W1")),
+  `B4: no W1 warning when needs: edge is present (warnings: ${b4EdgeWarnings.join(" | ")})`
+);
+
+// ── B5: batch with no parent still produces flat TSK ids (regression) ─────────
+
+console.log("\nB5 — regression: batch with no parent still produces flat TSK-<date>-NNNN ids:");
+
+const b5SpecPath = join(root, "b5-batch.yaml");
+writeFileSync(b5SpecPath, [
+  `from: alice`,
+  `to: ${AGENT}`,
+  `project: null`,
+  ``,
+  `tasks:`,
+  `  taskA:`,
+  `    headline: "B5 task A"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    brief: task A`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+  ``,
+  `  taskB:`,
+  `    headline: "B5 task B"`,
+  `    kind: code`,
+  `    priority: P2`,
+  `    needs: [taskA]`,
+  `    brief: task B`,
+  `    output_format: agents/${AGENT}/tasks/done/<id>.md`,
+].join("\n") + "\n");
+
+const b5Ids: string[] = [];
+const origLog6 = console.log;
+console.log = (...args: unknown[]) => b5Ids.push(args.join(" "));
+runTaskCli(["batch", "--yaml", b5SpecPath]);
+console.log = origLog6;
+
+const todayPrefix = (() => {
+  const d = new Date();
+  return `TSK-${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}-`;
+})();
+
+assert(b5Ids.length === 2, `B5: dispatched 2 tasks (got ${b5Ids.length})`);
+assert(b5Ids[0]!.startsWith(todayPrefix), `B5: task A id is a flat TSK-date id (got: ${b5Ids[0]})`);
+assert(b5Ids[1]!.startsWith(todayPrefix), `B5: task B id is a flat TSK-date id (got: ${b5Ids[1]})`);
+assert(!b5Ids[0]!.includes("."), `B5: task A id has no decimal component (got: ${b5Ids[0]})`);
+assert(!b5Ids[1]!.includes("."), `B5: task B id has no decimal component (got: ${b5Ids[1]})`);
+
 // ── summary ───────────────────────────────────────────────────────────────────
 
 console.log(`\n${passed + failed} tests — ${passed} passed, ${failed} failed`);

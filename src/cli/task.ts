@@ -1122,6 +1122,7 @@ type BatchTaskSpec = {
   from?: unknown;
   kind?: unknown;
   project?: unknown;
+  parent?: unknown;
   deadline?: unknown;
   priority?: unknown;
   budget?: unknown;
@@ -1138,13 +1139,42 @@ type BatchSpec = {
   from?: unknown;
   to?: unknown;
   project?: unknown;
+  parent?: unknown;
   tasks?: unknown;
 };
 
-/** Allocate N consecutive TSK IDs from the current on-disk max. Never touches disk. */
-function allocateIdBatch(count: number, wsRoot: string): string[] {
+/**
+ * Allocate N consecutive task IDs from the current on-disk max. Never touches disk.
+ *
+ * Without a parent: allocates flat TSK-<date>-NNNN ids.
+ * With a parent: allocates <parent-root>.NN decimal child ids, matching `allocateId`'s scheme
+ * and the dashboard family-tree shape that `nextContTaskId` keys off.
+ */
+function allocateIdBatch(count: number, wsRoot: string, parent?: string): string[] {
   if (count <= 0) return [];
   const agents = listLocalAgents(wsRoot);
+
+  if (parent) {
+    const rootId = parent.split(".")[0]!;
+    const childRe = new RegExp(`^${escapeRegex(rootId)}\\.(\\d+)$`);
+    let maxN = 0;
+    for (const a of agents) {
+      for (const bucket of ALLOCATION_SCAN_DIRS) {
+        const dir = join(wsRoot, "agents", a, "tasks", bucket);
+        if (!existsSync(dir)) continue;
+        for (const fname of readdirSync(dir)) {
+          if (!fname.endsWith(".yaml")) continue;
+          const id = fname.slice(0, -5);
+          const m = childRe.exec(id);
+          if (!m) continue;
+          const n = parseInt(m[1]!, 10);
+          if (Number.isFinite(n) && n > maxN) maxN = n;
+        }
+      }
+    }
+    return Array.from({ length: count }, (_, i) => `${rootId}.${String(maxN + 1 + i).padStart(2, "0")}`);
+  }
+
   const d = new Date();
   const prefix =
     `TSK-${d.getFullYear()}-` +
@@ -1177,7 +1207,7 @@ function buildBatchEnvelope(
   id: string,
   spec: BatchTaskSpec,
   labelToId: Map<string, string>,
-  defaults: { from?: string; to?: string; project?: string },
+  defaults: { from?: string; to?: string; project?: string; parent?: string },
   now: string
 ): string {
   const headline = JSON.stringify(String(spec.headline ?? "").trim());
@@ -1185,6 +1215,7 @@ function buildBatchEnvelope(
   const to = String(spec.to ?? defaults.to ?? "alice").trim();
   const kind = String(spec.kind ?? "code").trim();
   const project = String(spec.project ?? defaults.project ?? "null").trim() || "null";
+  const parent = String(spec.parent ?? defaults.parent ?? "null").trim() || "null";
   const deadline = spec.deadline != null ? String(spec.deadline) : "null";
   const priority = spec.priority != null ? String(spec.priority) : "P3";
 
@@ -1201,7 +1232,7 @@ function buildBatchEnvelope(
     "",
     `from: ${from}`,
     `to: ${to}`,
-    "parent: null",
+    `parent: ${parent}`,
     `reply_to: ${from}`,
     "",
     `kind: ${kind}`,
@@ -1344,12 +1375,20 @@ function doBatch(args: ParsedArgs, root: string): void {
     from: spec.from != null ? String(spec.from) : undefined,
     to: spec.to != null ? String(spec.to) : undefined,
     project: spec.project != null ? String(spec.project) : undefined,
+    parent: spec.parent != null ? String(spec.parent).trim() || undefined : undefined,
   };
 
   // ── 1. validate structure and collect deps ────────────────────────────────
   const taskSpecs = new Map<string, BatchTaskSpec>();
   const allDeps = new Map<string, string[]>();
   const structErrors: string[] = [];
+
+  // Validate top-level parent: is not a local batch label.
+  if (defaults.parent && labels.includes(defaults.parent)) {
+    structErrors.push(
+      `top-level parent: "${defaults.parent}" is a local batch label — use a real TSK-… id. Intra-batch parenting is not supported: allocateIdBatch assigns flat TSK-date ids while allocateId assigns <root>.NN decimals when given a parent, and reconciling those two schemes inside one batch would require a larger redesign.`
+    );
+  }
 
   for (const [label, raw] of Object.entries(tasksMap)) {
     if (!raw || typeof raw !== "object") {
@@ -1358,6 +1397,16 @@ function doBatch(args: ParsedArgs, root: string): void {
     }
     const ts = raw as BatchTaskSpec;
     taskSpecs.set(label, ts);
+
+    // Per-task parent: must not be a local batch label.
+    if (ts.parent != null) {
+      const taskParent = String(ts.parent).trim();
+      if (taskParent && taskParent !== "null" && labels.includes(taskParent)) {
+        structErrors.push(
+          `task "${label}": parent: "${taskParent}" is a local batch label — only real TSK-… ids are accepted as parent. Intra-batch parenting is not supported.`
+        );
+      }
+    }
 
     const needs = Array.isArray(ts.needs) ? ts.needs.map(String) : [];
     const after = Array.isArray(ts.after) ? ts.after.map(String) : [];
@@ -1396,6 +1445,36 @@ function doBatch(args: ParsedArgs, root: string): void {
     die(`batch has a dependency cycle involving: ${cyclic.join(", ")}`);
   }
 
+  // ── 2b. intra-batch touches: overlap check (W1 extension) ────────────────
+  // For each pair of tasks without a dependency edge between them, warn if their
+  // touches: overlap. This is strictly better than what `task new` can do: it
+  // knows the whole set up front, while `task new` only sees already-dispatched siblings.
+  const batchTouchWarnings: string[] = [];
+  for (let i = 0; i < labels.length; i++) {
+    for (let j = i + 1; j < labels.length; j++) {
+      const labelA = labels[i]!;
+      const labelB = labels[j]!;
+      const tsA = taskSpecs.get(labelA)!;
+      const tsB = taskSpecs.get(labelB)!;
+      const touchesA = Array.isArray(tsA.touches) ? tsA.touches.map(String) : [];
+      const touchesB = Array.isArray(tsB.touches) ? tsB.touches.map(String) : [];
+      if (touchesA.length === 0 || touchesB.length === 0) continue;
+      const overlap = touchesA.filter((t) => touchesB.includes(t));
+      if (overlap.length === 0) continue;
+      // Check there's no needs:/after: edge between A→B or B→A.
+      const depsA = allDeps.get(labelA) ?? [];
+      const depsB = allDeps.get(labelB) ?? [];
+      if (depsA.includes(labelB) || depsB.includes(labelA)) continue;
+      const sample = overlap.slice(0, 3).join(", ") + (overlap.length > 3 ? ` (+${overlap.length - 3} more)` : "");
+      batchTouchWarnings.push(
+        `"${labelA}" and "${labelB}" both touch ${sample} with no needs:/after: edge between them; chain them or split the work`
+      );
+    }
+  }
+  for (const w of batchTouchWarnings) {
+    console.warn(`caravel task batch lint [intra-batch W1]: ⚠ ${w}`);
+  }
+
   // ── 3. lint each task before any file is written ──────────────────────────
   // Local labels in needs:/after: are passed through as-is — the lint rules
   // don't inspect those fields, so leaving them as local labels is safe here.
@@ -1429,10 +1508,33 @@ function doBatch(args: ParsedArgs, root: string): void {
   }
 
   // ── 4. allocate IDs (no disk writes yet) ─────────────────────────────────
-  const ids = allocateIdBatch(labels.length, root);
+  // Group labels by effective parent, then allocate each group separately.
+  // Tasks sharing a parent get consecutive decimal child ids (<root>.NN);
+  // tasks with no parent get consecutive flat TSK-<date>-NNNN ids.
+  const effectiveParentOf = (label: string): string | null => {
+    const ts = taskSpecs.get(label)!;
+    const raw = ts.parent != null ? String(ts.parent).trim() : null;
+    if (raw && raw !== "null") return raw;
+    return defaults.parent ?? null;
+  };
+
+  // Build ordered group list (preserving label order within each group).
+  const groups = new Map<string | null, string[]>();
+  for (const label of labels) {
+    const p = effectiveParentOf(label);
+    const key = p ?? null;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(label);
+  }
+
   const labelToId = new Map<string, string>();
-  for (let i = 0; i < labels.length; i++) {
-    labelToId.set(labels[i]!, ids[i]!);
+  for (const [parentKey, groupLabels] of groups) {
+    const allocated = parentKey
+      ? allocateIdBatch(groupLabels.length, root, parentKey)
+      : allocateIdBatch(groupLabels.length, root);
+    for (let i = 0; i < groupLabels.length; i++) {
+      labelToId.set(groupLabels[i]!, allocated[i]!);
+    }
   }
 
   // ── 5. build final envelope bodies with real IDs substituted ─────────────
@@ -1456,6 +1558,7 @@ function doBatch(args: ParsedArgs, root: string): void {
 
     const fromField = extractField(body, "from") ?? "unknown";
     const kindField = extractField(body, "kind") ?? "other";
+    const parentField = extractField(body, "parent") ?? null;
     journalAppend(root, to, {
       ts: now,
       id,
@@ -1463,7 +1566,7 @@ function doBatch(args: ParsedArgs, root: string): void {
       kind: kindField,
       from: fromField,
       to,
-      parent: null,
+      parent: parentField === "null" ? null : parentField,
       summary: "",
     });
 
@@ -1471,8 +1574,9 @@ function doBatch(args: ParsedArgs, root: string): void {
   }
 
   if (envelopes.length > 1) {
+    const allIds = envelopes.map((e) => e.id);
     process.stderr.write(
-      `caravel task batch: dispatched ${envelopes.length} tasks (${ids[0]} – ${ids[ids.length - 1]})\n`
+      `caravel task batch: dispatched ${envelopes.length} tasks (${allIds[0]} – ${allIds[allIds.length - 1]})\n`
     );
   }
 }
