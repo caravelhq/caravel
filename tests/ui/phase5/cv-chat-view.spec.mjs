@@ -225,8 +225,17 @@ async function runSuiteAt(viewport, tag) {
   });
   const page = await context.newPage();
 
-  // Always accept (return true) for window.confirm.
-  context.on("dialog", (dialog) => dialog.accept());
+  // Single dialog handler — accepts by default; tests can override for one dialog.
+  let _dialogOverride = null;
+  context.on("dialog", (dialog) => {
+    if (_dialogOverride) {
+      const fn = _dialogOverride;
+      _dialogOverride = null;
+      fn(dialog);
+    } else {
+      dialog.accept();
+    }
+  });
 
   try {
     await page.goto(FIXTURE_BASE, { waitUntil: "load", timeout: 15000 });
@@ -308,17 +317,15 @@ async function runSuiteAt(viewport, tag) {
       // Override dialog to DISMISS (return false).
       let dialogFired = false;
       let dialogMessage = "";
-      const handler = (dialog) => {
+      _dialogOverride = (dialog) => {
         dialogFired = true;
         dialogMessage = dialog.message();
         dialog.dismiss();
       };
-      context.on("dialog", handler);
 
       await page.click(".chat-delete-btn");
       await page.waitForTimeout(500);
-
-      context.removeListener("dialog", handler);
+      _dialogOverride = null;
 
       if (dialogFired) {
         pass(`[${tag}] CV-3a: delete triggered confirm dialog: "${dialogMessage.slice(0, 60)}"`);

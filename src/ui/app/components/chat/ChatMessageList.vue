@@ -30,6 +30,9 @@ const sentinelEl = useTemplateRef<HTMLDivElement>("sentinelEl");
 // Index at which rendering starts (we render messages[renderFrom … end]).
 const renderFrom = ref(Math.max(0, props.messages.length - CHAT_MSG_RENDER_M));
 const atBottom = ref(true);
+// Guard: only load earlier once the initial scroll-to-bottom has settled.
+// Prevents the sentinel from firing during the first message population.
+const readyToLoadEarlier = ref(false);
 
 // When new messages arrive, advance renderFrom only — never collapse a load-earlier expansion.
 watch(() => props.messages.length, (n) => {
@@ -59,7 +62,7 @@ onMounted(() => {
   const scroll = scrollEl.value;
   if (!sentinel || !scroll) return;
   observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && hasMore.value) void loadEarlier();
+    if (entries[0].isIntersecting && hasMore.value && readyToLoadEarlier.value) void loadEarlier();
   }, { root: scroll, threshold: 0 });
   observer.observe(sentinel);
 });
@@ -78,6 +81,11 @@ watch(() => props.messages.length, async (newLen, oldLen) => {
     await nextTick();
     const el = scrollEl.value;
     if (el) el.scrollTop = el.scrollHeight;
+  }
+  // Allow load-earlier after the first batch of messages settles.
+  if (!readyToLoadEarlier.value && newLen > 0) {
+    await nextTick();
+    readyToLoadEarlier.value = true;
   }
 });
 

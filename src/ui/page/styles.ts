@@ -2003,6 +2003,20 @@ export const pageStyles = String.raw`    :root {
       font-size: 11px;
       color: #5a6a7e;
     }
+    .chat-view {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chat-view-main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -2023,6 +2037,11 @@ export const pageStyles = String.raw`    :root {
     .chat-messages::-webkit-scrollbar-thumb {
       background: #3a5a80;
       border-radius: 999px;
+    }
+    .chat-load-sentinel {
+      height: 1px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     .chat-empty {
       margin: auto;

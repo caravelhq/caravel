@@ -13881,6 +13881,7 @@ const router = createRouter({
   routes: [
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
+    { path: "/chat/:chatId", component: Stub },
     { path: "/tasks", component: Stub },
     // /tasks/project/:slug and sub-views must be declared before the bare taskId pattern.
     { path: "/tasks/project/:slug", component: Stub },
@@ -13950,6 +13951,10 @@ function routeToRef(route) {
   }
   if (p2.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p2 === "/chat") return { kind: "legacy", page: "chat" };
+  if (p2.startsWith("/chat/")) {
+    const chatId = decodeURIComponent(p2.slice("/chat/".length));
+    return { kind: "chat", chatId };
+  }
   if (p2 === "/files") return { kind: "legacy", page: "files" };
   if (p2.startsWith("/files/")) {
     const filePath = decodeURIComponent(p2.slice("/files/".length));
@@ -14063,6 +14068,8 @@ function refToPath(ref2) {
       return `/report/${encodeURIComponent(ref2.taskId)}`;
     case "project":
       return `/project/${encodeURIComponent(ref2.slug)}`;
+    case "chat":
+      return `/chat/${encodeURIComponent(ref2.chatId)}`;
     case "legacy":
       return `/${ref2.page}`;
     default:
@@ -19633,6 +19640,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     const sentinelEl = useTemplateRef("sentinelEl");
     const renderFrom = /* @__PURE__ */ ref(Math.max(0, props.messages.length - CHAT_MSG_RENDER_M));
     const atBottom = /* @__PURE__ */ ref(true);
+    const readyToLoadEarlier = /* @__PURE__ */ ref(false);
     watch(() => props.messages.length, (n) => {
       const desired = Math.max(0, n - CHAT_MSG_RENDER_M);
       if (desired > renderFrom.value) renderFrom.value = desired;
@@ -19654,7 +19662,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
       const scroll = scrollEl.value;
       if (!sentinel || !scroll) return;
       observer = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore.value) void loadEarlier();
+        if (entries[0].isIntersecting && hasMore.value && readyToLoadEarlier.value) void loadEarlier();
       }, { root: scroll, threshold: 0 });
       observer.observe(sentinel);
     });
@@ -19672,6 +19680,10 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
         await nextTick();
         const el = scrollEl.value;
         if (el) el.scrollTop = el.scrollHeight;
+      }
+      if (!readyToLoadEarlier.value && newLen > 0) {
+        await nextTick();
+        readyToLoadEarlier.value = true;
       }
     });
     function jumpToLatest() {
@@ -29953,6 +29965,20 @@ const pageStyles = String.raw`    :root {
       font-size: 11px;
       color: #5a6a7e;
     }
+    .chat-view {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chat-view-main {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
     .chat-messages {
       flex: 1;
       overflow-y: auto;
@@ -29973,6 +29999,11 @@ const pageStyles = String.raw`    :root {
     .chat-messages::-webkit-scrollbar-thumb {
       background: #3a5a80;
       border-radius: 999px;
+    }
+    .chat-load-sentinel {
+      height: 1px;
+      overflow: hidden;
+      flex-shrink: 0;
     }
     .chat-empty {
       margin: auto;
