@@ -487,20 +487,21 @@ function extractLargeField(yaml: string, key: string): string | null {
   return blockLines.join("\n").trim() || null;
 }
 
-/** Check whether any child of parentId exists anywhere in the workspace. */
-function hasSiblingChild(parentId: string, agents: string[], wsRoot: string): boolean {
+/** Check whether any child of parentId is in failed/ (H5 retry guard).
+ *  Only failed/ is scanned — done children are legitimate follow-ons, and
+ *  archived children are deliberate closures. All failed:<reason> variants
+ *  are covered because the bucket is the ground truth, not the status field. */
+function hasFailedSiblingChild(parentId: string, agents: string[], wsRoot: string): boolean {
   const rootId = parentId.split(".")[0]!;
   const childRe = new RegExp(`^${escapeRegex(rootId)}\\.\\d+\\.yaml$`);
   for (const a of agents) {
-    for (const bucket of ALLOCATION_SCAN_DIRS) {
-      const dir = join(wsRoot, "agents", a, "tasks", bucket);
-      if (!existsSync(dir)) continue;
-      try {
-        for (const fname of readdirSync(dir)) {
-          if (childRe.test(fname)) return true;
-        }
-      } catch { continue; }
-    }
+    const dir = join(wsRoot, "agents", a, "tasks", "failed");
+    if (!existsSync(dir)) continue;
+    try {
+      for (const fname of readdirSync(dir)) {
+        if (childRe.test(fname)) return true;
+      }
+    } catch { continue; }
   }
   return false;
 }
@@ -685,12 +686,14 @@ export function doLintNewEnvelope(
   }
 
   // ── H5: Second retry (escapable with --force, bypass must be logged) ─────────
+  // Only fires when a sibling in failed/ exists — done children are follow-ons,
+  // archived children are deliberate closures. See hasFailedSiblingChild.
   const parent = (extractField(body, "parent") ?? "").trim();
   if (parent && parent !== "null") {
-    if (hasSiblingChild(parent, agents, wsRoot)) {
+    if (hasFailedSiblingChild(parent, agents, wsRoot)) {
       if (!opts?.force) {
         hardFails.push(
-          `second retry of ${parent}: a prior child task already exists. Use --force to dispatch anyway (bypass will be logged).`
+          `second retry of ${parent}: a prior child task failed. Use --force to dispatch anyway (bypass will be logged).`
         );
       } else {
         forceBypassed = true;
