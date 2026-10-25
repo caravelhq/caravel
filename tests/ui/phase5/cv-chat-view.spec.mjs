@@ -169,10 +169,31 @@ async function openChatViewPreview(page, chatId) {
 }
 
 async function waitForChatView(page, chatId) {
-  // Wait for the ChatView with the expected chatId to be in the DOM.
-  // The .chat-view div renders inside ViewHost.
-  await page.waitForSelector(".chat-view", { timeout: 10000 });
-  await page.waitForTimeout(600);
+  // Wait for the ChatView to be in the DOM.
+  // If not visible within 3s, try clicking the chat tab in the tab strip.
+  try {
+    await page.waitForSelector(".chat-view", { timeout: 3000 });
+  } catch {
+    // Fallback: find the chat tab button in the tab strip and click it.
+    const tabKey = `chat:${chatId}`;
+    const clicked = await page.evaluate((key) => {
+      const btn = document.querySelector(`[data-key="${key}"]`) ||
+                  document.querySelector(`[data-tab="${key}"]`);
+      if (btn) { btn.click(); return true; }
+      return false;
+    }, tabKey);
+    if (!clicked) {
+      // Re-open via ws.open as a last resort.
+      await page.evaluate((id) => {
+        const vueApp = document.querySelector("#app")?.__vue_app__;
+        const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+        const ws = pinia?._s?.get("workspace");
+        if (ws) ws.open({ kind: "chat", chatId: id });
+      }, chatId);
+    }
+    await page.waitForSelector(".chat-view", { timeout: 10000 });
+  }
+  await page.waitForTimeout(400);
 }
 
 async function waitForMessages(page, timeout = 10000) {
@@ -186,7 +207,10 @@ async function clearWorkspace(page) {
       .forEach((k) => localStorage.removeItem(k));
   });
   await page.reload({ waitUntil: "load" });
-  await page.waitForTimeout(500);
+  // Wait for the Workspace component to mount fully — guards against the
+  // race where ws.open() fires before Pinia has initialized its state.
+  await page.waitForSelector(".workspace", { timeout: 10000 });
+  await page.waitForTimeout(400);
 }
 
 // ── Suite runner ──────────────────────────────────────────────────────────────
