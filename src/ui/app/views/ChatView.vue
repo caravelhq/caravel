@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onActivated, onDeactivated } from "vue";
+import { ref, computed, watch, onMounted, onActivated, onDeactivated, onBeforeUnmount } from "vue";
 import { useChatStore } from "../stores/chat";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
+import { useLiveStore } from "../stores/live";
+import type { ResourceSpec } from "../stores/live";
 import { useReadAloud } from "../components/voice/useReadAloud";
 import { refKey } from "../workspace/refs";
 import ChatHeader from "../components/chat/ChatHeader.vue";
@@ -17,6 +19,7 @@ const props = defineProps<{ resource: ResourceRef }>();
 const chatStore = useChatStore();
 const ws = useWorkspaceStore();
 const ui = useUiStore();
+const live = useLiveStore();
 const { speak: readAloud, stop: stopReadAloud } = useReadAloud();
 
 const chatId = computed((): string =>
@@ -79,29 +82,65 @@ function defaultAgentName(): string | null {
 
 const agentInfo = computed(() => findAgent(effectiveAgentId()));
 
+// ── Live binding (step 4 — replaces the poll) ─────────────────────────────────
+// Key: "chat:<id>". Topic broadcast by the server since Phase 3. The store
+// filters client-side — no server-side subscription allowlist.
+const liveChatKey = computed((): string => `chat:${chatId.value}`);
+
+function makeLiveChatSpec(): ResourceSpec {
+  const id = chatId.value;
+  return {
+    topics: [`chat:${id}`],
+    fetch: async () => {
+      const res = await fetch(`/api/chats/${encodeURIComponent(id)}`);
+      return res.json();
+    },
+  };
+}
+
 // ── One-shot fetch on open and activation (R23 S1 — no interim poll) ──────────
+
+interface ChatApiData {
+  ok?: boolean;
+  chat?: { messages?: ChatMessage[]; agentId?: string | null; updatedAt?: string | null; name?: string };
+  session?: { id?: string; turnCount?: number };
+}
+
+function applyData(raw: unknown): void {
+  const id = chatId.value;
+  if (!id) return;
+  const data = raw as ChatApiData;
+  if (data?.ok && data.chat) {
+    chatStore.patchMessages(id, data.chat.messages ?? []);
+    chatStore.setMeta(id, {
+      agent: data.chat.agentId ?? null,
+      updatedAt: data.chat.updatedAt ?? null,
+    });
+    chatName.value = data.chat.name ?? chatName.value;
+    updatedAt.value = data.chat.updatedAt ?? null;
+  }
+  if (data?.ok && data.session) {
+    sessionId.value = data.session.id ?? "";
+    sessionTurnCount.value = data.session.turnCount ?? 0;
+  }
+}
 
 async function fetchChatData(): Promise<void> {
   const id = chatId.value;
   if (!id) return;
   try {
     const res = await fetch(`/api/chats/${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (data?.ok && data.chat) {
-      chatStore.setMessages(id, data.chat.messages ?? []);
-      chatStore.setMeta(id, {
-        agent: data.chat.agentId ?? null,
-        updatedAt: data.chat.updatedAt ?? null,
-      });
-      chatName.value = data.chat.name ?? "";
-      updatedAt.value = data.chat.updatedAt ?? null;
-    }
-    if (data?.ok && data.session) {
-      sessionId.value = data.session.id ?? "";
-      sessionTurnCount.value = data.session.turnCount ?? 0;
-    }
+    applyData(await res.json());
   } catch (_) {}
 }
+
+// Watch live entry data: applies incoming updates via patchMessages (DEC-0049).
+// Background chat tabs stay bound — this is what drives the unread indicator.
+watch(
+  () => live.entry(liveChatKey.value)?.data,
+  (data) => { if (data !== undefined && data !== null) applyData(data); },
+  { deep: false },
+);
 
 async function fetchAgents(): Promise<void> {
   try {
@@ -123,33 +162,51 @@ function syncGlobals(): void {
 watch(messages, syncGlobals, { deep: false });
 
 // ── raText for footer speaker (R23 M1) ───────────────────────────────────────
+// Each active view owns ui.raText. Cleared on deactivation. Mirrors the
+// DocViewer / EnvelopeView convention (stores/ui.ts:58-61).
 function updateRaText(): void {
   const msgs = messages.value;
   const lastDone = [...msgs].reverse().find((m) =>
     m.role === "assistant" && m.text && (!m.state || m.state === "done")
   );
   ui.raText = lastDone?.text ?? null;
+  ui.raFilePath = null;
+  window.__updateSpeakerDisabled?.();
 }
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
-onMounted(() => {
-  void fetchChatData();
+onMounted(async () => {
+  // Bind live channel first — triggers a fetch. The explicit fetchChatData call
+  // below may land slightly earlier (race) but both calls use patchMessages so
+  // whichever wins, the result is correct.
+  live.bind(liveChatKey.value, makeLiveChatSpec());
+  await fetchChatData();
   void fetchAgents();
   syncGlobals();
   updateRaText();
   chatStore.setLastActivatedChat(chatId.value);
+  // Mark as read at current time — "I saw all messages in this chat as of now".
+  // Using current time rather than server updatedAt ensures the indicator clears
+  // even if chats:list carries a timestamp that hasn't landed in the per-chat fetch.
+  chatStore.markRead(chatId.value, new Date().toISOString());
 });
 
-onActivated(() => {
-  void fetchChatData();
+onBeforeUnmount(() => {
+  live.unbind(liveChatKey.value);
+});
+
+onActivated(async () => {
+  await fetchChatData();
   syncGlobals();
   updateRaText();
   chatStore.setLastActivatedChat(chatId.value);
+  chatStore.markRead(chatId.value, new Date().toISOString());
 });
 
 onDeactivated(() => {
   ui.raText = null;
+  ui.raFilePath = null;
   stopReadAloud();
 });
 

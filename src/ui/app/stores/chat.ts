@@ -104,6 +104,57 @@ export const useChatStore = defineStore("chat", () => {
     entries.value = { ...entries.value, [chatId]: { ...existing, isSending: sending } };
   }
 
+  // Patch messages by identity (DEC-0049 / step 4).
+  // Reuses same object references for unchanged messages so Vue's v-for skips
+  // re-rendering those elements — removing N3's 2-second steady-state blocks.
+  // Fires window.__vmOnAssistantChunk for the last changed assistant message
+  // (DEC-0051). Uses Math.max length to preserve optimistic messages the server
+  // hasn't echoed yet (e.g., a pending user message added by onSend).
+  function patchMessages(chatId: string, incoming: ChatMessage[]): void {
+    const existing = entries.value[chatId];
+    if (!existing) {
+      setMessages(chatId, incoming);
+      return;
+    }
+    const current = existing.messages;
+    const len = Math.max(current.length, incoming.length);
+    const patched: ChatMessage[] = [];
+    let lastChangedAssistant: ChatMessage | null = null;
+
+    for (let i = 0; i < len; i++) {
+      const src = incoming[i];
+      const dst = current[i];
+      if (!src) {
+        // Current has a message the server didn't return yet — keep it.
+        patched.push(dst);
+      } else if (!dst || dst.role !== src.role || dst.text !== src.text || dst.state !== src.state) {
+        // Changed or new — new object so Vue re-renders only this element.
+        const next: ChatMessage = { ...src };
+        patched.push(next);
+        if (src.role === "assistant") lastChangedAssistant = src;
+      } else {
+        // Unchanged — same reference, Vue skips the re-render.
+        patched.push(dst);
+      }
+    }
+
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, messages: patched },
+    };
+
+    // Fire __vmOnAssistantChunk for voice integration (DEC-0051 step 4).
+    // Contract: (text, done), fired for done/absent, streaming, background.
+    if (lastChangedAssistant) {
+      const st = lastChangedAssistant.state;
+      const fires = !st || st === "done" || st === "streaming" || st === "background";
+      if (fires) {
+        const done = !st || st === "done";
+        window.__vmOnAssistantChunk?.(lastChangedAssistant.text, done);
+      }
+    }
+  }
+
   // ── Getters ──────────────────────────────────────────────────────────────────
 
   // Narrow active-work set: thinking | streaming | background — NOT sent (N1).
@@ -172,6 +223,7 @@ export const useChatStore = defineStore("chat", () => {
     setMessages,
     setMeta,
     setSending,
+    patchMessages,
     saveDraft,
     getDraft,
     markRead,

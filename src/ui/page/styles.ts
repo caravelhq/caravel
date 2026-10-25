@@ -2038,6 +2038,26 @@ export const pageStyles = String.raw`    :root {
       background: #3a5a80;
       border-radius: 999px;
     }
+    .chat-jump-latest {
+      position: sticky;
+      bottom: 8px;
+      align-self: center;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0 16px;
+      border: 1px solid #3a5a80;
+      border-radius: 22px;
+      background: #0d1e30;
+      color: #7dc5ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .chat-jump-latest:hover {
+      background: #162840;
+    }
     .chat-load-sentinel {
       height: 1px;
       overflow: hidden;

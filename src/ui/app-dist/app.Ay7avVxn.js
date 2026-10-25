@@ -16446,8 +16446,8 @@ const _hoisted_13$9 = {
   key: 1,
   class: "vtc-error"
 };
-const _hoisted_14$7 = { class: "vtc-actions" };
-const _hoisted_15$7 = ["disabled"];
+const _hoisted_14$8 = { class: "vtc-actions" };
+const _hoisted_15$8 = ["disabled"];
 const _hoisted_16$7 = {
   key: 2,
   class: "vtc-capture"
@@ -16945,7 +16945,7 @@ User's voice request: "${userText}"`;
               ])
             ]),
             submitError.value ? (openBlock(), createElementBlock("div", _hoisted_13$9, toDisplayString(submitError.value), 1)) : createCommentVNode("", true),
-            createBaseVNode("div", _hoisted_14$7, [
+            createBaseVNode("div", _hoisted_14$8, [
               createBaseVNode("button", {
                 class: "vtc-btn vtc-btn--secondary",
                 type: "button",
@@ -16956,7 +16956,7 @@ User's voice request: "${userText}"`;
                 type: "button",
                 disabled: isSubmitting.value,
                 onClick: submitTask
-              }, toDisplayString(isSubmitting.value ? "Creating…" : "✈ Create Task"), 9, _hoisted_15$7)
+              }, toDisplayString(isSubmitting.value ? "Creating…" : "✈ Create Task"), 9, _hoisted_15$8)
             ])
           ])) : (openBlock(), createElementBlock("div", _hoisted_16$7, [
             createBaseVNode("div", _hoisted_17$6, toDisplayString(statusText.value), 1),
@@ -17020,6 +17020,158 @@ const _sfc_main$D = /* @__PURE__ */ defineComponent({
       ]);
     };
   }
+});
+const STORE_KEY = "chat.store";
+function loadPersisted() {
+  const base = { drafts: {}, lastRead: {}, lastActivatedChatId: null };
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      base.drafts = typeof parsed.drafts === "object" && parsed.drafts !== null ? parsed.drafts : {};
+      base.lastRead = typeof parsed.lastRead === "object" && parsed.lastRead !== null ? parsed.lastRead : {};
+      base.lastActivatedChatId = typeof parsed.lastActivatedChatId === "string" ? parsed.lastActivatedChatId : null;
+    } else {
+      const legacyRaw = localStorage.getItem("chat.drafts");
+      if (legacyRaw) {
+        const parsed = JSON.parse(legacyRaw);
+        if (typeof parsed === "object" && parsed !== null) {
+          base.drafts = parsed;
+        }
+        localStorage.removeItem("chat.drafts");
+      }
+    }
+  } catch {
+  }
+  return base;
+}
+function persistState(drafts, lastRead, lastActivatedChatId) {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ drafts, lastRead, lastActivatedChatId }));
+  } catch {
+  }
+}
+const useChatStore = /* @__PURE__ */ defineStore("chat", () => {
+  const _p = loadPersisted();
+  const entries = /* @__PURE__ */ ref({});
+  const _drafts = /* @__PURE__ */ ref(_p.drafts);
+  const lastRead = /* @__PURE__ */ ref(_p.lastRead);
+  const lastActivatedChatId = /* @__PURE__ */ ref(_p.lastActivatedChatId);
+  function _persist() {
+    persistState(_drafts.value, lastRead.value, lastActivatedChatId.value);
+  }
+  function setMessages(chatId, messages) {
+    const existing = entries.value[chatId];
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, messages, isSending: (existing == null ? void 0 : existing.isSending) ?? false, agent: (existing == null ? void 0 : existing.agent) ?? null, updatedAt: (existing == null ? void 0 : existing.updatedAt) ?? null }
+    };
+  }
+  function setMeta(chatId, meta) {
+    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, ...meta }
+    };
+  }
+  function setSending(chatId, sending) {
+    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
+    entries.value = { ...entries.value, [chatId]: { ...existing, isSending: sending } };
+  }
+  function patchMessages(chatId, incoming) {
+    var _a2;
+    const existing = entries.value[chatId];
+    if (!existing) {
+      setMessages(chatId, incoming);
+      return;
+    }
+    const current = existing.messages;
+    const len = Math.max(current.length, incoming.length);
+    const patched = [];
+    let lastChangedAssistant = null;
+    for (let i = 0; i < len; i++) {
+      const src = incoming[i];
+      const dst = current[i];
+      if (!src) {
+        patched.push(dst);
+      } else if (!dst || dst.role !== src.role || dst.text !== src.text || dst.state !== src.state) {
+        const next = { ...src };
+        patched.push(next);
+        if (src.role === "assistant") lastChangedAssistant = src;
+      } else {
+        patched.push(dst);
+      }
+    }
+    entries.value = {
+      ...entries.value,
+      [chatId]: { ...existing, messages: patched }
+    };
+    if (lastChangedAssistant) {
+      const st = lastChangedAssistant.state;
+      const fires = !st || st === "done" || st === "streaming" || st === "background";
+      if (fires) {
+        const done = !st || st === "done";
+        (_a2 = window.__vmOnAssistantChunk) == null ? void 0 : _a2.call(window, lastChangedAssistant.text, done);
+      }
+    }
+  }
+  const hasActiveWork = computed(() => (chatId) => {
+    var _a2;
+    const msgs = ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.messages) ?? [];
+    return msgs.some(
+      (m2) => m2.state === "thinking" || m2.state === "streaming" || m2.state === "background"
+    );
+  });
+  const isSending = computed(() => (chatId) => {
+    var _a2;
+    return ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.isSending) ?? false;
+  });
+  const isAgentLocked = computed(() => (chatId) => {
+    return hasActiveWork.value(chatId) || isSending.value(chatId);
+  });
+  function saveDraft(id, text) {
+    const updated = { ..._drafts.value };
+    if (text) {
+      updated[id] = text;
+    } else {
+      delete updated[id];
+    }
+    _drafts.value = updated;
+    _persist();
+  }
+  function getDraft(id) {
+    return _drafts.value[id] ?? "";
+  }
+  function markRead(chatId, updatedAt) {
+    lastRead.value = { ...lastRead.value, [chatId]: updatedAt };
+    _persist();
+  }
+  function isUnread(chatId, updatedAt) {
+    const read = lastRead.value[chatId];
+    if (!read) return true;
+    return updatedAt > read;
+  }
+  function setLastActivatedChat(chatId) {
+    lastActivatedChatId.value = chatId;
+    _persist();
+  }
+  return {
+    entries,
+    lastRead,
+    lastActivatedChatId,
+    hasActiveWork,
+    isSending,
+    isAgentLocked,
+    setMessages,
+    setMeta,
+    setSending,
+    patchMessages,
+    saveDraft,
+    getDraft,
+    markRead,
+    isUnread,
+    setLastActivatedChat
+  };
 });
 const TASKS_LIST_KEY = "tasks:list";
 const PROJECTS_LIST_KEY = "projects:list";
@@ -17626,28 +17778,39 @@ const _hoisted_3$o = {
   class: "ts-tab-glyph"
 };
 const _hoisted_4$l = { class: "ts-tab-label" };
-const _hoisted_5$j = ["onClick"];
-const _hoisted_6$h = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_7$d = {
+const _hoisted_5$j = {
+  key: 1,
+  class: "ts-tab-unread",
+  "aria-label": "Unread messages"
+};
+const _hoisted_6$h = ["onClick"];
+const _hoisted_7$d = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_8$d = {
   key: 0,
   class: "ts-tab-glyph"
 };
-const _hoisted_8$d = { class: "ts-tab-label" };
-const _hoisted_9$c = ["onClick"];
-const _hoisted_10$a = { class: "ts-actions" };
-const _hoisted_11$9 = {
+const _hoisted_9$c = { class: "ts-tab-label" };
+const _hoisted_10$a = {
+  key: 1,
+  class: "ts-tab-unread",
+  "aria-label": "Unread messages"
+};
+const _hoisted_11$9 = ["onClick"];
+const _hoisted_12$8 = { class: "ts-actions" };
+const _hoisted_13$7 = {
   key: 0,
   class: "ts-overflow-fade",
   "aria-hidden": "true"
 };
-const _hoisted_12$8 = ["title"];
-const _hoisted_13$7 = ["title"];
+const _hoisted_14$7 = ["title"];
+const _hoisted_15$7 = ["title"];
 const _sfc_main$A = /* @__PURE__ */ defineComponent({
   __name: "TabStrip",
   setup(__props) {
     const ws = useWorkspaceStore();
     const ui = useUiStore();
     const live = useLiveStore();
+    const chatStore = useChatStore();
     const group0 = computed(() => ws.groupTabs(0));
     const group1 = computed(() => ws.groupTabs(1));
     onMounted(() => {
@@ -17675,6 +17838,13 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
       if (!(e == null ? void 0 : e.data)) return null;
       return e.data;
     });
+    function isTabUnread(tab) {
+      var _a2;
+      if (tab.kind !== "chat") return false;
+      const row = (_a2 = chatsList.value) == null ? void 0 : _a2.find((c) => c.id === tab.chatId);
+      if (!(row == null ? void 0 : row.updatedAt)) return false;
+      return chatStore.isUnread(tab.chatId, row.updatedAt);
+    }
     function tabLabel(r) {
       var _a2, _b;
       if (r.kind === "envelope") {
@@ -17863,6 +18033,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
               }, [
                 unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_3$o, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
                 createBaseVNode("span", _hoisted_4$l, toDisplayString(tabLabel(tab)), 1),
+                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_5$j)) : createCommentVNode("", true),
                 createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
@@ -17871,7 +18042,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
                   onDblclick: _cache[0] || (_cache[0] = withModifiers(() => {
                   }, ["stop"]))
-                }, "×", 40, _hoisted_5$j)
+                }, "×", 40, _hoisted_6$h)
               ], 42, _hoisted_2$s);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
@@ -17916,8 +18087,9 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[4] || (_cache[4] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
-                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_7$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_8$d, toDisplayString(tabLabel(tab)), 1),
+                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_8$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
+                createBaseVNode("span", _hoisted_9$c, toDisplayString(tabLabel(tab)), 1),
+                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_10$a)) : createCommentVNode("", true),
                 createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
@@ -17926,25 +18098,25 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
                   onDblclick: _cache[3] || (_cache[3] = withModifiers(() => {
                   }, ["stop"]))
-                }, "×", 40, _hoisted_9$c)
-              ], 42, _hoisted_6$h);
+                }, "×", 40, _hoisted_11$9)
+              ], 42, _hoisted_7$d);
             }), 128))
           ], 2),
-          createBaseVNode("div", _hoisted_10$a, [
-            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_11$9)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_12$8, [
+            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_13$7)) : createCommentVNode("", true),
             isOverflowing.value ? (openBlock(), createElementBlock("button", {
               key: 1,
               class: "ts-overflow-btn",
               type: "button",
               title: `${unref(ws).tabs.length} tabs — click to see all`,
               onClick: _cache[5] || (_cache[5] = ($event) => overflowOpen.value = true)
-            }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_12$8)) : createCommentVNode("", true),
+            }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_14$7)) : createCommentVNode("", true),
             createBaseVNode("button", {
               class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
               type: "button",
               title: unref(ws).splitOn ? "Close split" : "Open split",
               onClick: _cache[6] || (_cache[6] = ($event) => unref(ws).toggleSplit())
-            }, "⫽", 10, _hoisted_13$7),
+            }, "⫽", 10, _hoisted_15$7),
             createBaseVNode("button", {
               id: "settings-btn",
               class: "ts-settings-btn",
@@ -18019,121 +18191,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$A, [["__scopeId", "data-v-d5663633"]]);
-const STORE_KEY = "chat.store";
-function loadPersisted() {
-  const base = { drafts: {}, lastRead: {}, lastActivatedChatId: null };
-  try {
-    const raw = localStorage.getItem(STORE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      base.drafts = typeof parsed.drafts === "object" && parsed.drafts !== null ? parsed.drafts : {};
-      base.lastRead = typeof parsed.lastRead === "object" && parsed.lastRead !== null ? parsed.lastRead : {};
-      base.lastActivatedChatId = typeof parsed.lastActivatedChatId === "string" ? parsed.lastActivatedChatId : null;
-    } else {
-      const legacyRaw = localStorage.getItem("chat.drafts");
-      if (legacyRaw) {
-        const parsed = JSON.parse(legacyRaw);
-        if (typeof parsed === "object" && parsed !== null) {
-          base.drafts = parsed;
-        }
-        localStorage.removeItem("chat.drafts");
-      }
-    }
-  } catch {
-  }
-  return base;
-}
-function persistState(drafts, lastRead, lastActivatedChatId) {
-  try {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ drafts, lastRead, lastActivatedChatId }));
-  } catch {
-  }
-}
-const useChatStore = /* @__PURE__ */ defineStore("chat", () => {
-  const _p = loadPersisted();
-  const entries = /* @__PURE__ */ ref({});
-  const _drafts = /* @__PURE__ */ ref(_p.drafts);
-  const lastRead = /* @__PURE__ */ ref(_p.lastRead);
-  const lastActivatedChatId = /* @__PURE__ */ ref(_p.lastActivatedChatId);
-  function _persist() {
-    persistState(_drafts.value, lastRead.value, lastActivatedChatId.value);
-  }
-  function setMessages(chatId, messages) {
-    const existing = entries.value[chatId];
-    entries.value = {
-      ...entries.value,
-      [chatId]: { ...existing, messages, isSending: (existing == null ? void 0 : existing.isSending) ?? false, agent: (existing == null ? void 0 : existing.agent) ?? null, updatedAt: (existing == null ? void 0 : existing.updatedAt) ?? null }
-    };
-  }
-  function setMeta(chatId, meta) {
-    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
-    entries.value = {
-      ...entries.value,
-      [chatId]: { ...existing, ...meta }
-    };
-  }
-  function setSending(chatId, sending) {
-    const existing = entries.value[chatId] ?? { messages: [], isSending: false, agent: null, updatedAt: null };
-    entries.value = { ...entries.value, [chatId]: { ...existing, isSending: sending } };
-  }
-  const hasActiveWork = computed(() => (chatId) => {
-    var _a2;
-    const msgs = ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.messages) ?? [];
-    return msgs.some(
-      (m2) => m2.state === "thinking" || m2.state === "streaming" || m2.state === "background"
-    );
-  });
-  const isSending = computed(() => (chatId) => {
-    var _a2;
-    return ((_a2 = entries.value[chatId]) == null ? void 0 : _a2.isSending) ?? false;
-  });
-  const isAgentLocked = computed(() => (chatId) => {
-    return hasActiveWork.value(chatId) || isSending.value(chatId);
-  });
-  function saveDraft(id, text) {
-    const updated = { ..._drafts.value };
-    if (text) {
-      updated[id] = text;
-    } else {
-      delete updated[id];
-    }
-    _drafts.value = updated;
-    _persist();
-  }
-  function getDraft(id) {
-    return _drafts.value[id] ?? "";
-  }
-  function markRead(chatId, updatedAt) {
-    lastRead.value = { ...lastRead.value, [chatId]: updatedAt };
-    _persist();
-  }
-  function isUnread(chatId, updatedAt) {
-    const read = lastRead.value[chatId];
-    if (!read) return true;
-    return updatedAt > read;
-  }
-  function setLastActivatedChat(chatId) {
-    lastActivatedChatId.value = chatId;
-    _persist();
-  }
-  return {
-    entries,
-    lastRead,
-    lastActivatedChatId,
-    hasActiveWork,
-    isSending,
-    isAgentLocked,
-    setMessages,
-    setMeta,
-    setSending,
-    saveDraft,
-    getDraft,
-    markRead,
-    isUnread,
-    setLastActivatedChat
-  };
-});
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$A, [["__scopeId", "data-v-1c0978ce"]]);
 function useReadAloud() {
   const queue2 = [];
   let queueRunning = false;
@@ -20112,6 +20170,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
     const chatStore = useChatStore();
     const ws = useWorkspaceStore();
     const ui = useUiStore();
+    const live = useLiveStore();
     const { speak: readAloud, stop: stopReadAloud } = useReadAloud();
     const chatId = computed(
       () => props.resource.kind === "chat" ? props.resource.chatId : ""
@@ -20162,28 +20221,54 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       return agents.value.length > 0 ? agents.value[0].name : null;
     }
     const agentInfo = computed(() => findAgent(effectiveAgentId()));
+    const liveChatKey = computed(() => `chat:${chatId.value}`);
+    function makeLiveChatSpec() {
+      const id = chatId.value;
+      return {
+        topics: [`chat:${id}`],
+        fetch: async () => {
+          const res = await fetch(`/api/chats/${encodeURIComponent(id)}`);
+          return res.json();
+        }
+      };
+    }
+    function applyData(raw) {
+      const id = chatId.value;
+      if (!id) return;
+      const data = raw;
+      if ((data == null ? void 0 : data.ok) && data.chat) {
+        chatStore.patchMessages(id, data.chat.messages ?? []);
+        chatStore.setMeta(id, {
+          agent: data.chat.agentId ?? null,
+          updatedAt: data.chat.updatedAt ?? null
+        });
+        chatName.value = data.chat.name ?? chatName.value;
+        updatedAt.value = data.chat.updatedAt ?? null;
+      }
+      if ((data == null ? void 0 : data.ok) && data.session) {
+        sessionId.value = data.session.id ?? "";
+        sessionTurnCount.value = data.session.turnCount ?? 0;
+      }
+    }
     async function fetchChatData() {
       const id = chatId.value;
       if (!id) return;
       try {
         const res = await fetch(`/api/chats/${encodeURIComponent(id)}`);
-        const data = await res.json();
-        if ((data == null ? void 0 : data.ok) && data.chat) {
-          chatStore.setMessages(id, data.chat.messages ?? []);
-          chatStore.setMeta(id, {
-            agent: data.chat.agentId ?? null,
-            updatedAt: data.chat.updatedAt ?? null
-          });
-          chatName.value = data.chat.name ?? "";
-          updatedAt.value = data.chat.updatedAt ?? null;
-        }
-        if ((data == null ? void 0 : data.ok) && data.session) {
-          sessionId.value = data.session.id ?? "";
-          sessionTurnCount.value = data.session.turnCount ?? 0;
-        }
+        applyData(await res.json());
       } catch (_2) {
       }
     }
+    watch(
+      () => {
+        var _a2;
+        return (_a2 = live.entry(liveChatKey.value)) == null ? void 0 : _a2.data;
+      },
+      (data) => {
+        if (data !== void 0 && data !== null) applyData(data);
+      },
+      { deep: false }
+    );
     async function fetchAgents() {
       try {
         const res = await fetch("/api/agents");
@@ -20202,27 +20287,37 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
     }
     watch(messages, syncGlobals, { deep: false });
     function updateRaText() {
+      var _a2;
       const msgs = messages.value;
       const lastDone = [...msgs].reverse().find(
         (m2) => m2.role === "assistant" && m2.text && (!m2.state || m2.state === "done")
       );
       ui.raText = (lastDone == null ? void 0 : lastDone.text) ?? null;
+      ui.raFilePath = null;
+      (_a2 = window.__updateSpeakerDisabled) == null ? void 0 : _a2.call(window);
     }
-    onMounted(() => {
-      void fetchChatData();
+    onMounted(async () => {
+      live.bind(liveChatKey.value, makeLiveChatSpec());
+      await fetchChatData();
       void fetchAgents();
       syncGlobals();
       updateRaText();
       chatStore.setLastActivatedChat(chatId.value);
+      chatStore.markRead(chatId.value, (/* @__PURE__ */ new Date()).toISOString());
     });
-    onActivated(() => {
-      void fetchChatData();
+    onBeforeUnmount(() => {
+      live.unbind(liveChatKey.value);
+    });
+    onActivated(async () => {
+      await fetchChatData();
       syncGlobals();
       updateRaText();
       chatStore.setLastActivatedChat(chatId.value);
+      chatStore.markRead(chatId.value, (/* @__PURE__ */ new Date()).toISOString());
     });
     onDeactivated(() => {
       ui.raText = null;
+      ui.raFilePath = null;
       stopReadAloud();
     });
     watch(messages, updateRaText, { deep: false });
@@ -29999,6 +30094,26 @@ const pageStyles = String.raw`    :root {
     .chat-messages::-webkit-scrollbar-thumb {
       background: #3a5a80;
       border-radius: 999px;
+    }
+    .chat-jump-latest {
+      position: sticky;
+      bottom: 8px;
+      align-self: center;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 0 16px;
+      border: 1px solid #3a5a80;
+      border-radius: 22px;
+      background: #0d1e30;
+      color: #7dc5ff;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      z-index: 2;
+    }
+    .chat-jump-latest:hover {
+      background: #162840;
     }
     .chat-load-sentinel {
       height: 1px;
