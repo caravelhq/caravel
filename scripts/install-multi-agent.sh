@@ -100,12 +100,25 @@ if [[ $NO_PULL -eq 0 ]]; then
   fi
 fi
 
-# Skill — .claude/skills/task/
-echo "Installing /task skill → ${DEST_SKILL#$PROJECT_DIR/}"
-run mkdir -p "$DEST_SKILL/script"
-run cp "$SRC_DIR/skills/task/SKILL.md" "$DEST_SKILL/SKILL.md"
-run cp "$SRC_DIR/skills/task/script/task.mjs" "$DEST_SKILL/script/task.mjs"
-run chmod +x "$DEST_SKILL/script/task.mjs"
+# Skills — .claude/skills/<name>/ for every skill in the template.
+# Was hardcoded to skills/task only, so any other template skill (task-tree,
+# sweep, ...) was tracked in the repo but never installed. WAL-154.
+for skill_src in "$SRC_DIR"/skills/*/; do
+  [[ -d "$skill_src" ]] || continue
+  skill_name="$(basename "$skill_src")"
+  skill_dest="${PROJECT_DIR}/.claude/skills/${skill_name}"
+  echo "Installing /${skill_name} skill → ${skill_dest#$PROJECT_DIR/}"
+  run mkdir -p "$skill_dest"
+  [[ -f "$skill_src/SKILL.md" ]] && run cp "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
+  if [[ -d "$skill_src/script" ]]; then
+    run mkdir -p "$skill_dest/script"
+    for f in "$skill_src"script/*; do
+      [[ -f "$f" ]] || continue
+      run cp "$f" "$skill_dest/script/$(basename "$f")"
+      run chmod +x "$skill_dest/script/$(basename "$f")"
+    done
+  fi
+done
 
 # Shared schema + examples — agents/_shared/
 echo "Installing shared envelope spec → ${DEST_SHARED#$PROJECT_DIR/}"
