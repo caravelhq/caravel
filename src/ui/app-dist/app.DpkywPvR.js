@@ -13893,7 +13893,7 @@ const router = createRouter({
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
     { path: "/envelope/:taskId", component: Stub },
-    { path: "/project/:slug", component: Stub },
+    { path: "/project/:slug(.*)", component: Stub },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" }
   ]
@@ -26656,8 +26656,8 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     const { entry } = useResource(liveKey, {
       topics: ["tasks"],
       fetch: async () => {
+        if (props.resource.kind !== "project") return null;
         const s = slug.value;
-        if (!s) return null;
         const r = await fetch(`/api/projects/${encodeURIComponent(s)}`);
         return r.ok ? r.json() : null;
       }
@@ -26710,9 +26710,25 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
       const fam = ((_a2 = summary.value) == null ? void 0 : _a2.families) ?? [];
       return hideClosed.value ? fam.filter((t) => !(t.closed && t.closed.status)) : fam;
     });
-    const familyTree = computed(
-      () => familiesFiltered.value.length > 0 ? buildTaskTree(familiesFiltered.value) : null
-    );
+    const familyFlat = computed(() => {
+      if (!familiesFiltered.value.length) return [];
+      const tree = buildTaskTree(familiesFiltered.value);
+      const exp = expanded.value;
+      const result = [];
+      const seen = {};
+      function walk(node, depth) {
+        if (seen[node.id] || depth > 32) return;
+        seen[node.id] = true;
+        const kids = tree.childrenOf[node.id] || [];
+        const isExpanded = !!exp[node.id];
+        result.push({ task: node, depth, hasChildren: kids.length > 0, isExpanded });
+        if (kids.length > 0 && isExpanded) {
+          for (const kid of kids) walk(kid, depth + 1);
+        }
+      }
+      for (const root of tree.roots) walk(root, 0);
+      return result;
+    });
     const closedTasks = computed(
       () => {
         var _a2;
@@ -26838,33 +26854,20 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
               ])
             ])) : createCommentVNode("", true)
           ])) : createCommentVNode("", true),
-          familyTree.value ? (openBlock(), createElementBlock("div", _hoisted_35$1, [
+          familyFlat.value.length > 0 ? (openBlock(), createElementBlock("div", _hoisted_35$1, [
             _cache[5] || (_cache[5] = createBaseVNode("div", { class: "pv-section-head" }, "Family trees", -1)),
             createBaseVNode("div", _hoisted_36$1, [
-              (openBlock(true), createElementBlock(Fragment, null, renderList(familyTree.value.roots, (root) => {
-                var _a2;
-                return openBlock(), createElementBlock(Fragment, {
-                  key: root.id
-                }, [
-                  createVNode(_sfc_main$q, {
-                    task: root,
-                    depth: 0,
-                    marker: familyTree.value.roots.length === 1 ? "●" : "◆",
-                    hasChildren: (((_a2 = familyTree.value.childrenOf[root.id]) == null ? void 0 : _a2.length) ?? 0) > 0,
-                    isExpanded: !!expanded.value[root.id],
-                    onOpen: openTask,
-                    onToggle: toggleExpand
-                  }, null, 8, ["task", "marker", "hasChildren", "isExpanded"]),
-                  expanded.value[root.id] ? (openBlock(true), createElementBlock(Fragment, { key: 0 }, renderList(familyTree.value.childrenOf[root.id] ?? [], (child) => {
-                    return openBlock(), createBlock(_sfc_main$q, {
-                      key: child.id,
-                      task: child,
-                      depth: 1,
-                      marker: "└",
-                      onOpen: openTask
-                    }, null, 8, ["task"]);
-                  }), 128)) : createCommentVNode("", true)
-                ], 64);
+              (openBlock(true), createElementBlock(Fragment, null, renderList(familyFlat.value, (flatRow) => {
+                return openBlock(), createBlock(_sfc_main$q, {
+                  key: flatRow.task.id,
+                  task: flatRow.task,
+                  depth: flatRow.depth,
+                  marker: flatRow.depth === 0 ? "●" : "└",
+                  hasChildren: flatRow.hasChildren,
+                  isExpanded: flatRow.isExpanded,
+                  onOpen: openTask,
+                  onToggle: toggleExpand
+                }, null, 8, ["task", "depth", "marker", "hasChildren", "isExpanded"]);
               }), 128))
             ])
           ])) : createCommentVNode("", true),
@@ -26886,7 +26889,7 @@ const _sfc_main$5 = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const ProjectView = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-fe2efd45"]]);
+const ProjectView = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["__scopeId", "data-v-f580ba3f"]]);
 const registry = {
   chat: _sfc_main$t,
   dashboard: DashboardView,

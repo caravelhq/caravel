@@ -30,7 +30,7 @@ export const router = createRouter({
     { path: "/file/:path(.*)", component: Stub },
     { path: "/report/:taskId", component: Stub },
     { path: "/envelope/:taskId", component: Stub },
-    { path: "/project/:slug", component: Stub },
+    { path: "/project/:slug(.*)", component: Stub },
     { path: "/", redirect: "/dashboard" },
     { path: "/:pathMatch(.*)*", redirect: "/dashboard" },
   ],

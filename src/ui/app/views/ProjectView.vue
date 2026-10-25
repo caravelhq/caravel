@@ -43,8 +43,8 @@ const liveKey = computed(() => `project:${slug.value}`);
 const { entry } = useResource(liveKey, {
   topics: ["tasks"],
   fetch: async () => {
+    if (props.resource.kind !== "project") return null;
     const s = slug.value;
-    if (!s) return null;
     const r = await fetch(`/api/projects/${encodeURIComponent(s)}`);
     return r.ok ? r.json() : null;
   },
@@ -92,9 +92,29 @@ const familiesFiltered = computed((): TaskRowData[] => {
   return hideClosed.value ? fam.filter(t => !(t.closed && t.closed.status)) : fam;
 });
 
-const familyTree = computed(() =>
-  familiesFiltered.value.length > 0 ? buildTaskTree(familiesFiltered.value) : null
-);
+interface FlatRow { task: TaskRowData; depth: number; hasChildren: boolean; isExpanded: boolean; }
+
+const familyFlat = computed((): FlatRow[] => {
+  if (!familiesFiltered.value.length) return [];
+  const tree = buildTaskTree(familiesFiltered.value);
+  const exp = expanded.value;
+  const result: FlatRow[] = [];
+  const seen: Record<string, boolean> = {};
+
+  function walk(node: TaskRowData, depth: number): void {
+    if (seen[node.id] || depth > 32) return;
+    seen[node.id] = true;
+    const kids = tree.childrenOf[node.id] || [];
+    const isExpanded = !!exp[node.id];
+    result.push({ task: node, depth, hasChildren: kids.length > 0, isExpanded });
+    if (kids.length > 0 && isExpanded) {
+      for (const kid of kids) walk(kid, depth + 1);
+    }
+  }
+
+  for (const root of tree.roots) walk(root, 0);
+  return result;
+});
 
 // Closed section
 const closedTasks = computed((): TaskRowData[] =>
@@ -235,30 +255,20 @@ watch(slug, () => {});  // useResource handles rebind via key watch
       </div>
 
       <!-- Family trees -->
-      <div v-if="familyTree" class="pv-section">
+      <div v-if="familyFlat.length > 0" class="pv-section">
         <div class="pv-section-head">Family trees</div>
         <div class="pv-trees">
-          <template v-for="root in familyTree.roots" :key="root.id">
-            <TaskRow
-              :task="root"
-              :depth="0"
-              :marker="familyTree.roots.length === 1 ? '●' : '◆'"
-              :hasChildren="(familyTree.childrenOf[root.id]?.length ?? 0) > 0"
-              :isExpanded="!!expanded[root.id]"
-              @open="openTask"
-              @toggle="toggleExpand"
-            />
-            <template v-if="expanded[root.id]">
-              <TaskRow
-                v-for="child in familyTree.childrenOf[root.id] ?? []"
-                :key="child.id"
-                :task="child"
-                :depth="1"
-                :marker="'└'"
-                @open="openTask"
-              />
-            </template>
-          </template>
+          <TaskRow
+            v-for="flatRow in familyFlat"
+            :key="flatRow.task.id"
+            :task="flatRow.task"
+            :depth="flatRow.depth"
+            :marker="flatRow.depth === 0 ? '●' : '└'"
+            :hasChildren="flatRow.hasChildren"
+            :isExpanded="flatRow.isExpanded"
+            @open="openTask"
+            @toggle="toggleExpand"
+          />
         </div>
       </div>
 
