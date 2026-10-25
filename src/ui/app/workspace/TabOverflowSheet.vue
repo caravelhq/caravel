@@ -5,12 +5,14 @@ import { refKey, type ResourceRef } from "./refs";
 import { refLabel, refGlyph, refTitle } from "./labels";
 import type { TaskRow } from "../stores/tasks";
 import type { ProjectCard } from "../stores/projects";
+import type { ChatListEntry } from "../../services/chats";
 import BaseModal from "../components/modal/BaseModal.vue";
 
 const props = defineProps<{
   open: boolean;
   tasksList?: TaskRow[] | null;
   projectsList?: ProjectCard[] | null;
+  chatsList?: ChatListEntry[] | null;
 }>();
 
 const emit = defineEmits<{ close: [] }>();
@@ -49,8 +51,8 @@ function closeTab(key: string): void {
       :class="{ 'tos-row--active': ws.active[0] === refKey(tab) || ws.active[1] === refKey(tab) }"
     >
       <span class="tos-glyph">{{ refGlyph(tab) }}</span>
-      <span class="tos-label" :title="refTitle(tab, props.tasksList, props.projectsList)">
-        {{ refLabel(tab, props.tasksList, props.projectsList) }}
+      <span class="tos-label" :title="refTitle(tab, props.tasksList, props.projectsList, props.chatsList)">
+        {{ refLabel(tab, props.tasksList, props.projectsList, props.chatsList) }}
       </span>
       <div class="tos-row-actions">
         <button
@@ -80,8 +82,8 @@ function closeTab(key: string): void {
         :class="{ 'tos-row--active': ws.active[0] === refKey(tab) || ws.active[1] === refKey(tab) }"
       >
         <span class="tos-glyph">{{ refGlyph(tab) }}</span>
-        <span class="tos-label" :title="refTitle(tab, props.tasksList)">
-          {{ refLabel(tab, props.tasksList) }}
+        <span class="tos-label" :title="refTitle(tab, props.tasksList, props.projectsList, props.chatsList)">
+          {{ refLabel(tab, props.tasksList, props.projectsList, props.chatsList) }}
         </span>
         <div class="tos-row-actions">
           <button

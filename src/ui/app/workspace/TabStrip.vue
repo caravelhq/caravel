@@ -4,7 +4,8 @@ import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
 import { useLiveStore } from "../stores/live";
 import { refKey, type ResourceRef } from "./refs";
-import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec, PROJECTS_LIST_KEY, projectsListSpec } from "./labels";
+import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec, PROJECTS_LIST_KEY, projectsListSpec, CHATS_LIST_KEY, chatsListSpec } from "./labels";
+import type { ChatListEntry } from "../../services/chats";
 import type { ProjectCard } from "../stores/projects";
 import type { TaskRow } from "../stores/tasks";
 import OpenMenu from "../components/chrome/OpenMenu.vue";
@@ -22,10 +23,12 @@ const group1 = computed(() => ws.groupTabs(1));
 onMounted(() => {
   live.bind(TASKS_LIST_KEY, tasksListSpec);
   live.bind(PROJECTS_LIST_KEY, projectsListSpec);
+  live.bind(CHATS_LIST_KEY, chatsListSpec);
 });
 onBeforeUnmount(() => {
   live.unbind(TASKS_LIST_KEY);
   live.unbind(PROJECTS_LIST_KEY);
+  live.unbind(CHATS_LIST_KEY);
 });
 
 const tasksList = computed<TaskRow[] | null>(() => {
@@ -40,6 +43,12 @@ const projectsList = computed<ProjectCard[] | null>(() => {
   return e.data as ProjectCard[];
 });
 
+const chatsList = computed<ChatListEntry[] | null>(() => {
+  const e = live.entry(CHATS_LIST_KEY);
+  if (!e?.data) return null;
+  return e.data as ChatListEntry[];
+});
+
 // Per-tab label: read headline from the per-id chain entry (task:<id>) that
 // EnvelopeView binds, falling back to the shared tasks list and then the id.
 function tabLabel(r: ResourceRef): string {
@@ -49,7 +58,7 @@ function tabLabel(r: ResourceRef): string {
     const headline = data?.chain?.task?.headline;
     if (headline) return headline;
   }
-  return refLabel(r, tasksList.value, projectsList.value);
+  return refLabel(r, tasksList.value, projectsList.value, chatsList.value);
 }
 
 // ── Overflow detection ────────────────────────────────────────────────────────
@@ -143,7 +152,7 @@ function togglePin(key: string): void {
 }
 
 function tabTitle(tab: ResourceRef): string {
-  const base = refTitle(tab, tasksList.value, projectsList.value);
+  const base = refTitle(tab, tasksList.value, projectsList.value, chatsList.value);
   const isPinned = ws.meta[refKey(tab)]?.pinned;
   return `${base} — double-click to ${isPinned ? "unpin" : "pin"}`;
 }
@@ -369,6 +378,7 @@ function onDividerDrop(e: DragEvent): void {
     :open="overflowOpen"
     :tasks-list="tasksList"
     :projects-list="projectsList"
+    :chats-list="chatsList"
     @close="overflowOpen = false"
   />
 </template>

@@ -121,8 +121,7 @@ export async function listChats(): Promise<ChatListEntry[]> {
   return entries
     .filter((x): x is ChatListEntry & { mtime: number } => Boolean(x))
     .sort((a, b) => b.mtime - a.mtime)
-    .map(({ mtime: _, ...rest }) => rest)
-    .slice(0, 50);
+    .map(({ mtime: _, ...rest }) => rest);
 }
 
 export async function getChatMeta(
