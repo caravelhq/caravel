@@ -1714,6 +1714,7 @@ export const pageStyles = String.raw`    :root {
       padding: 6px 10px;
       border-bottom: 1px solid #ffffff12;
       position: relative;
+      background: #06111e;
     }
     .chat-toolbar-left {
       display: flex;
@@ -2370,9 +2371,9 @@ export const pageStyles = String.raw`    :root {
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      border: 1px solid #ffffff2e;
+      border: 1px solid #2a4a7255;
       border-radius: 14px;
-      background: #ffffff09;
+      background: #0c1e38;
       padding: 8px 8px 8px 12px;
       transition: border-color 0.18s ease;
     }
@@ -2413,8 +2414,7 @@ export const pageStyles = String.raw`    :root {
     .chat-mic {
       flex-shrink: 0;
       flex-grow: 0;
-      height: 44px;
-      min-height: 44px;
+      height: 28px;
       padding: 0 10px;
       border-radius: 999px;
       font-family: "JetBrains Mono", monospace;
@@ -2429,10 +2429,8 @@ export const pageStyles = String.raw`    :root {
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
     }
     .chat-send {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border-radius: 50%;
       font-size: 15px;
@@ -2446,10 +2444,8 @@ export const pageStyles = String.raw`    :root {
       display: none;
     }
     .chat-interrupt {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border-radius: 50%;
       font-size: 14px;
@@ -4332,7 +4328,7 @@ export const pageStyles = String.raw`    :root {
     .multi-agent-new-parent-clear:hover { color: #fff; }
 
     /* ── NewTaskModal ── */
-    .ntm-form { display: flex; flex-direction: column; gap: 12px; }
+    .ntm-form { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
     .ntm-repeat-toggle { display: flex; align-items: center; }
     .ntm-check-label {
       display: flex;

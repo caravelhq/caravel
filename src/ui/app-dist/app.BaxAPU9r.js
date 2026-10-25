@@ -19935,7 +19935,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
               title: "Interrupt",
               "aria-label": "Interrupt",
               onClick: onInterrupt
-            }, "stop")) : createCommentVNode("", true),
+            }, "✋")) : createCommentVNode("", true),
             __props.hasActiveWork ? (openBlock(), createElementBlock("button", {
               key: 1,
               type: "button",
@@ -19943,14 +19943,14 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
               title: "Cancel",
               "aria-label": "Cancel",
               onClick: onCancel
-            }, "cancel")) : createCommentVNode("", true),
+            }, "Cancel")) : createCommentVNode("", true),
             createBaseVNode("button", {
               type: "submit",
               class: "chat-send",
               title: "Send",
               "aria-label": "Send",
               disabled: !localDraft.value.trim() || !__props.agentPicked
-            }, "send", 8, _hoisted_4$h)
+            }, "↑", 8, _hoisted_4$h)
           ])
         ])
       ], 32);
@@ -27322,6 +27322,9 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
         size: "lg",
         onClose: _cache[16] || (_cache[16] = ($event) => unref(nt2).close())
       }, {
+        footer: withCtx(() => [..._cache[17] || (_cache[17] = [
+          createBaseVNode("div", { class: "ntm-footer-suppress" }, null, -1)
+        ])]),
         default: withCtx(() => [
           createBaseVNode("form", {
             class: "ntm-form",
@@ -27329,13 +27332,13 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
           }, [
             unref(nt2).parent ? (openBlock(), createElementBlock("div", _hoisted_1$2, [
               createBaseVNode("span", null, [
-                _cache[17] || (_cache[17] = createTextVNode("↳ child of ", -1)),
+                _cache[18] || (_cache[18] = createTextVNode("↳ child of ", -1)),
                 createBaseVNode("strong", null, toDisplayString(unref(nt2).parent), 1)
               ])
             ])) : createCommentVNode("", true),
             createBaseVNode("div", _hoisted_2$1, [
               createBaseVNode("label", _hoisted_3$1, [
-                _cache[18] || (_cache[18] = createBaseVNode("span", null, "Target", -1)),
+                _cache[19] || (_cache[19] = createBaseVNode("span", null, "Target", -1)),
                 withDirectives(createBaseVNode("select", {
                   "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => to.value = $event)
                 }, [
@@ -27351,12 +27354,12 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 ])
               ]),
               createBaseVNode("label", _hoisted_6$1, [
-                _cache[21] || (_cache[21] = createBaseVNode("span", null, "Project", -1)),
+                _cache[22] || (_cache[22] = createBaseVNode("span", null, "Project", -1)),
                 withDirectives(createBaseVNode("select", {
                   "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => project.value = $event)
                 }, [
-                  _cache[19] || (_cache[19] = createBaseVNode("option", { value: "" }, "(auto from context)", -1)),
-                  _cache[20] || (_cache[20] = createBaseVNode("option", { value: "__none__" }, "(none / unassigned)", -1)),
+                  _cache[20] || (_cache[20] = createBaseVNode("option", { value: "" }, "(auto from context)", -1)),
+                  _cache[21] || (_cache[21] = createBaseVNode("option", { value: "__none__" }, "(none / unassigned)", -1)),
                   (openBlock(true), createElementBlock(Fragment, null, renderList(projects.value, (p2) => {
                     return openBlock(), createElementBlock("option", {
                       key: p2.slug,
@@ -27369,7 +27372,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
               ])
             ]),
             createBaseVNode("label", _hoisted_8$1, [
-              _cache[22] || (_cache[22] = createBaseVNode("span", null, [
+              _cache[23] || (_cache[23] = createBaseVNode("span", null, [
                 createTextVNode("Headline "),
                 createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required, ≤10 words)")
               ], -1)),
@@ -27389,7 +27392,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
               }, toDisplayString(headlineWords.value) + " / 10 words ", 3)
             ]),
             createBaseVNode("label", _hoisted_9$1, [
-              _cache[23] || (_cache[23] = createBaseVNode("span", null, [
+              _cache[24] || (_cache[24] = createBaseVNode("span", null, [
                 createTextVNode("Brief "),
                 createBaseVNode("em", { class: "multi-agent-new-hint" }, "(required)")
               ], -1)),
@@ -27404,10 +27407,10 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
               ])
             ]),
             createBaseVNode("details", _hoisted_10$1, [
-              _cache[30] || (_cache[30] = createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced", -1)),
+              _cache[31] || (_cache[31] = createBaseVNode("summary", { class: "multi-agent-new-advanced-toggle" }, "▸ Advanced", -1)),
               createBaseVNode("div", _hoisted_11$1, [
                 createBaseVNode("label", _hoisted_12$1, [
-                  _cache[24] || (_cache[24] = createBaseVNode("span", null, [
+                  _cache[25] || (_cache[25] = createBaseVNode("span", null, [
                     createTextVNode("Depends on "),
                     createBaseVNode("em", { class: "multi-agent-new-hint" }, "(task IDs, one per line)")
                   ], -1)),
@@ -27421,10 +27424,10 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 ]),
                 createBaseVNode("div", _hoisted_13$1, [
                   createBaseVNode("label", _hoisted_14$1, [
-                    _cache[26] || (_cache[26] = createBaseVNode("span", null, "Kind", -1)),
+                    _cache[27] || (_cache[27] = createBaseVNode("span", null, "Kind", -1)),
                     withDirectives(createBaseVNode("select", {
                       "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => kind.value = $event)
-                    }, [..._cache[25] || (_cache[25] = [
+                    }, [..._cache[26] || (_cache[26] = [
                       createBaseVNode("option", { value: "research" }, "research", -1),
                       createBaseVNode("option", { value: "code" }, "code", -1),
                       createBaseVNode("option", { value: "review" }, "review", -1),
@@ -27436,7 +27439,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                     ])
                   ]),
                   createBaseVNode("label", _hoisted_15$1, [
-                    _cache[27] || (_cache[27] = createBaseVNode("span", null, "From", -1)),
+                    _cache[28] || (_cache[28] = createBaseVNode("span", null, "From", -1)),
                     withDirectives(createBaseVNode("input", {
                       "onUpdate:modelValue": _cache[6] || (_cache[6] = ($event) => from.value = $event),
                       type: "text",
@@ -27447,7 +27450,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                   ])
                 ]),
                 createBaseVNode("label", _hoisted_16$1, [
-                  _cache[28] || (_cache[28] = createBaseVNode("span", null, "Output format", -1)),
+                  _cache[29] || (_cache[29] = createBaseVNode("span", null, "Output format", -1)),
                   withDirectives(createBaseVNode("textarea", {
                     "onUpdate:modelValue": _cache[7] || (_cache[7] = ($event) => outputFormat.value = $event),
                     rows: "2",
@@ -27457,7 +27460,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                   ])
                 ]),
                 createBaseVNode("label", _hoisted_17$1, [
-                  _cache[29] || (_cache[29] = createBaseVNode("span", null, [
+                  _cache[30] || (_cache[30] = createBaseVNode("span", null, [
                     createTextVNode("Context "),
                     createBaseVNode("em", { class: "multi-agent-new-hint" }, "(one per line — file path, jira:KEY, or URL)")
                   ], -1)),
@@ -27479,7 +27482,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 }, null, 512), [
                   [vModelCheckbox, repeat2.value]
                 ]),
-                _cache[31] || (_cache[31] = createTextVNode(" Repeat ", -1))
+                _cache[32] || (_cache[32] = createTextVNode(" Repeat ", -1))
               ])
             ]),
             repeat2.value ? (openBlock(), createElementBlock("section", _hoisted_20$1, [
@@ -27492,7 +27495,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                   }, null, 512), [
                     [vModelRadio, repeatMode.value]
                   ]),
-                  _cache[32] || (_cache[32] = createTextVNode(" Interval ", -1))
+                  _cache[33] || (_cache[33] = createTextVNode(" Interval ", -1))
                 ]),
                 createBaseVNode("label", _hoisted_23$1, [
                   withDirectives(createBaseVNode("input", {
@@ -27502,12 +27505,12 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                   }, null, 512), [
                     [vModelRadio, repeatMode.value]
                   ]),
-                  _cache[33] || (_cache[33] = createTextVNode(" Cron ", -1))
+                  _cache[34] || (_cache[34] = createTextVNode(" Cron ", -1))
                 ])
               ]),
               repeatMode.value === "interval" ? (openBlock(), createElementBlock("div", _hoisted_24$1, [
                 createBaseVNode("label", _hoisted_25$1, [
-                  _cache[34] || (_cache[34] = createBaseVNode("span", null, "Start time (HH:MM)", -1)),
+                  _cache[35] || (_cache[35] = createBaseVNode("span", null, "Start time (HH:MM)", -1)),
                   withDirectives(createBaseVNode("input", {
                     "onUpdate:modelValue": _cache[12] || (_cache[12] = ($event) => intervalStart.value = $event),
                     type: "text",
@@ -27517,7 +27520,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                   ])
                 ]),
                 createBaseVNode("label", _hoisted_26$1, [
-                  _cache[35] || (_cache[35] = createBaseVNode("span", null, "Every (hours)", -1)),
+                  _cache[36] || (_cache[36] = createBaseVNode("span", null, "Every (hours)", -1)),
                   withDirectives(createBaseVNode("input", {
                     "onUpdate:modelValue": _cache[13] || (_cache[13] = ($event) => intervalHours.value = $event),
                     type: "number",
@@ -27534,7 +27537,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 ])
               ])) : (openBlock(), createElementBlock("div", _hoisted_27$1, [
                 createBaseVNode("label", _hoisted_28$1, [
-                  _cache[36] || (_cache[36] = createBaseVNode("span", null, "Cron expression", -1)),
+                  _cache[37] || (_cache[37] = createBaseVNode("span", null, "Cron expression", -1)),
                   withDirectives(createBaseVNode("input", {
                     "onUpdate:modelValue": _cache[14] || (_cache[14] = ($event) => cronExpr.value = $event),
                     type: "text",
@@ -27546,7 +27549,7 @@ const _sfc_main$2 = /* @__PURE__ */ defineComponent({
                 ])
               ])),
               nextFireTimes.value.length ? (openBlock(), createElementBlock("div", _hoisted_29$1, [
-                _cache[37] || (_cache[37] = createBaseVNode("span", { class: "ntm-next-fires-label" }, "Next 3 fires:", -1)),
+                _cache[38] || (_cache[38] = createBaseVNode("span", { class: "ntm-next-fires-label" }, "Next 3 fires:", -1)),
                 createBaseVNode("ul", _hoisted_30$1, [
                   (openBlock(true), createElementBlock(Fragment, null, renderList(nextFireTimes.value, (d2, i) => {
                     return openBlock(), createElementBlock("li", { key: i }, toDisplayString(fmtDate(d2)), 1);
@@ -29805,6 +29808,7 @@ const pageStyles = String.raw`    :root {
       padding: 6px 10px;
       border-bottom: 1px solid #ffffff12;
       position: relative;
+      background: #06111e;
     }
     .chat-toolbar-left {
       display: flex;
@@ -30461,9 +30465,9 @@ const pageStyles = String.raw`    :root {
       display: flex;
       align-items: flex-end;
       gap: 8px;
-      border: 1px solid #ffffff2e;
+      border: 1px solid #2a4a7255;
       border-radius: 14px;
-      background: #ffffff09;
+      background: #0c1e38;
       padding: 8px 8px 8px 12px;
       transition: border-color 0.18s ease;
     }
@@ -30504,8 +30508,7 @@ const pageStyles = String.raw`    :root {
     .chat-mic {
       flex-shrink: 0;
       flex-grow: 0;
-      height: 44px;
-      min-height: 44px;
+      height: 28px;
       padding: 0 10px;
       border-radius: 999px;
       font-family: "JetBrains Mono", monospace;
@@ -30520,10 +30523,8 @@ const pageStyles = String.raw`    :root {
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
     }
     .chat-send {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border-radius: 50%;
       font-size: 15px;
@@ -30537,10 +30538,8 @@ const pageStyles = String.raw`    :root {
       display: none;
     }
     .chat-interrupt {
-      width: 44px;
-      height: 44px;
-      min-width: 44px;
-      min-height: 44px;
+      width: 28px;
+      height: 28px;
       padding: 0;
       border-radius: 50%;
       font-size: 14px;
@@ -32423,7 +32422,7 @@ const pageStyles = String.raw`    :root {
     .multi-agent-new-parent-clear:hover { color: #fff; }
 
     /* ── NewTaskModal ── */
-    .ntm-form { display: flex; flex-direction: column; gap: 12px; }
+    .ntm-form { display: flex; flex-direction: column; gap: 12px; padding: 16px 20px; }
     .ntm-repeat-toggle { display: flex; align-items: center; }
     .ntm-check-label {
       display: flex;

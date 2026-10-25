@@ -251,6 +251,7 @@ async function submit(): Promise<void> {
     size="lg"
     @close="nt.close()"
   >
+    <template #footer><div class="ntm-footer-suppress" /></template>
     <form class="ntm-form" @submit.prevent="submit">
       <!-- Parent chip -->
       <div v-if="nt.parent" class="multi-agent-new-parent">
