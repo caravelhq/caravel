@@ -1,13 +1,11 @@
 // globals.d.ts — window extension types for cross-page globals.
 
 declare interface Window {
-  // Chat page (prefill from task launcher)
-  __chatSessionId?: string;
-  __pendingAgentId?: string;
+  // Chat voice seam (Phase 5.2 — kept alive until VoiceModeOverlay is rewritten)
   __chatHistory?: Array<{ role: string; text: string; state?: string }>;
   // Dashboard
   __fetchSummary?: () => void;
-  // Voice integration (VoiceIsland ↔ ChatPage)
+  // Voice integration (VoiceIsland ↔ ChatView)
   __vmOnAssistantChunk?: (text: string, done: boolean) => void;
   __updateSpeakerDisabled?: () => void;
   __applyTtsButtonVisibility?: () => void;

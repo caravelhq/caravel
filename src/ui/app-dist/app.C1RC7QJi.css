@@ -199,7 +199,7 @@
   padding-left: 8px;
 }
 
-.tos-group-label[data-v-099f83db] {
+.tos-group-label[data-v-1a92f097] {
   font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -207,7 +207,7 @@
   opacity: 0.5;
   padding: 10px 16px 4px;
 }
-.tos-row[data-v-099f83db] {
+.tos-row[data-v-1a92f097] {
   position: relative;
   display: flex;
   align-items: center;
@@ -217,32 +217,32 @@
   cursor: pointer;
   transition: background 0.1s;
 }
-.tos-row[data-v-099f83db]:hover { background: var(--surface-2, #262626);
+.tos-row[data-v-1a92f097]:hover { background: var(--surface-2, #262626);
 }
-.tos-row--active[data-v-099f83db] { background: var(--surface-2, #262626); font-weight: 600;
+.tos-row--active[data-v-1a92f097] { background: var(--surface-2, #262626); font-weight: 600;
 }
-.tos-glyph[data-v-099f83db] {
+.tos-glyph[data-v-1a92f097] {
   font-size: 0.8rem;
   opacity: 0.55;
   flex-shrink: 0;
   width: 16px;
   text-align: center;
 }
-.tos-label[data-v-099f83db] {
+.tos-label[data-v-1a92f097] {
   flex: 1;
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.tos-row-actions[data-v-099f83db] {
+.tos-row-actions[data-v-1a92f097] {
   display: flex;
   align-items: center;
   gap: 4px;
   position: relative;
   z-index: 1;
 }
-.tos-btn[data-v-099f83db] {
+.tos-btn[data-v-1a92f097] {
   background: transparent;
   border: none;
   color: inherit;
@@ -254,13 +254,13 @@
   line-height: 1;
   transition: opacity 0.1s;
 }
-.tos-btn[data-v-099f83db]:hover { opacity: 1; background: var(--surface-3, #303030);
+.tos-btn[data-v-1a92f097]:hover { opacity: 1; background: var(--surface-3, #303030);
 }
-.tos-btn--close[data-v-099f83db] { font-size: 1.2rem;
+.tos-btn--close[data-v-1a92f097] { font-size: 1.2rem;
 }
 
 /* Invisible row-level tap target beneath the action buttons */
-.tos-row-activate[data-v-099f83db] {
+.tos-row-activate[data-v-1a92f097] {
   position: absolute;
   inset: 0;
   background: transparent;
@@ -269,7 +269,7 @@
   z-index: 0;
 }
 
-.tab-strip-outer[data-v-55206cc5] {
+.tab-strip-outer[data-v-1c0978ce] {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -282,7 +282,7 @@
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
-.tab-strip[data-v-55206cc5] {
+.tab-strip[data-v-1c0978ce] {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -292,17 +292,17 @@
   padding: 0 8px;
   scrollbar-width: none;
 }
-.tab-strip[data-v-55206cc5]::-webkit-scrollbar { display: none;
+.tab-strip[data-v-1c0978ce]::-webkit-scrollbar { display: none;
 }
 
 /* F3: when overflow affordance is visible, reserve its width at the rail's right end
    so the last tab's hit target cannot slide under the overflow button. */
-.tab-strip--overflow[data-v-55206cc5] {
+.tab-strip--overflow[data-v-1c0978ce] {
   padding-right: 56px;
 }
 
 /* Right-edge fade indicating hidden tabs */
-.ts-overflow-fade[data-v-55206cc5] {
+.ts-overflow-fade[data-v-1c0978ce] {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -312,7 +312,7 @@
   pointer-events: none;
   z-index: 1;
 }
-.ts-tab[data-v-55206cc5] {
+.ts-tab[data-v-1c0978ce] {
   /* WAL-138: tabs wear the panel frame's border (rgba(255,255,255,0.133)) at
      1.5px, and the active tab drops its bottom edge and takes the panel's own
      background, so it reads as an extension of the frame below rather than a
@@ -334,39 +334,39 @@
   transition: opacity 0.1s;
   flex-shrink: 0;
 }
-.ts-tab[data-v-55206cc5]:hover { opacity: 0.88;
+.ts-tab[data-v-1c0978ce]:hover { opacity: 0.88;
 }
 /* WAL-138: the selected tab takes the FRAME's top edge — the same
    --frame-top token the panel's gradient starts from, with the panel's own
    blur — so the two cannot drift. --panel (#0b1220aa) was the wrong token:
    it is the chrome colour, not the frame's. */
-.ts-tab--active[data-v-55206cc5] {
+.ts-tab--active[data-v-1c0978ce] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
 }
-.ts-tab--focused[data-v-55206cc5] {
+.ts-tab--focused[data-v-1c0978ce] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
   border-color: rgba(255, 255, 255, 0.22);
 }
-.ts-tab--preview[data-v-55206cc5] { font-style: italic;
+.ts-tab--preview[data-v-1c0978ce] { font-style: italic;
 }
-.ts-tab--pinned[data-v-55206cc5] { font-weight: 600;
+.ts-tab--pinned[data-v-1c0978ce] { font-weight: 600;
 }
-.ts-tab--drag-over[data-v-55206cc5] {
+.ts-tab--drag-over[data-v-1c0978ce] {
   outline: 2px solid var(--accent, #7dc5ff);
   outline-offset: -2px;
 }
-.ts-tab-glyph[data-v-55206cc5] {
+.ts-tab-glyph[data-v-1c0978ce] {
   font-size: 0.75rem;
   opacity: 0.6;
   flex-shrink: 0;
 }
 
 /* Pre-truncated via middleEllipsis — no CSS ellipsis needed */
-.ts-tab-label[data-v-55206cc5] {
+.ts-tab-label[data-v-1c0978ce] {
   max-width: 140px;
   white-space: nowrap;
   overflow: hidden;
@@ -375,7 +375,7 @@
 /* Close button — 18×18 layout; hit area expanded via pseudo-element so it
    does not inflate the strip height. Effective target: 32px at desktop,
    44px at ≤600px. */
-.ts-tab-close[data-v-55206cc5] {
+.ts-tab-close[data-v-1c0978ce] {
   position: relative;
   display: flex;
   align-items: center;
@@ -388,22 +388,33 @@
   flex-shrink: 0;
   margin: -4px -4px -4px 0;
 }
-.ts-tab-close[data-v-55206cc5]::after {
+.ts-tab-close[data-v-1c0978ce]::after {
   content: "";
   position: absolute;
   inset: -7px;
 }
-.ts-tab-close[data-v-55206cc5]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
+
+/* Unread indicator dot — 8×8 filled circle, accent colour (DEC-0047). */
+.ts-tab-unread[data-v-1c0978ce] {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #7dc5ff);
+  flex-shrink: 0;
+  align-self: center;
+}
+.ts-tab-close[data-v-1c0978ce]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
 }
 @media (max-width: 600px) {
   /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
      hit-area overlapping the tab's label region (M2 fix, R21). */
-.ts-tab-close[data-v-55206cc5]::after { inset: -13px -13px -13px -2px;
+.ts-tab-close[data-v-1c0978ce]::after { inset: -13px -13px -13px -2px;
 }
 }
 
 /* Divider between groups */
-.ts-divider[data-v-55206cc5] {
+.ts-divider[data-v-1c0978ce] {
   width: 2px;
   flex-shrink: 0;
   background: var(--border-subtle, #333);
@@ -412,17 +423,17 @@
   cursor: col-resize;
   transition: background 0.1s, width 0.1s;
 }
-.ts-divider--split[data-v-55206cc5] {
+.ts-divider--split[data-v-1c0978ce] {
   width: 4px;
   background: var(--accent, #7dc5ff44);
 }
-.ts-divider--drag-over[data-v-55206cc5] {
+.ts-divider--drag-over[data-v-1c0978ce] {
   width: 4px;
   background: var(--accent, #7dc5ff);
 }
 
 /* Actions bar — always visible, never scrolls */
-.ts-actions[data-v-55206cc5] {
+.ts-actions[data-v-1c0978ce] {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -432,7 +443,7 @@
   position: relative;
   z-index: 2;
 }
-.ts-overflow-btn[data-v-55206cc5] {
+.ts-overflow-btn[data-v-1c0978ce] {
   background: transparent;
   border: 1px solid var(--border-subtle, #444);
   color: inherit;
@@ -444,9 +455,9 @@
   white-space: nowrap;
   transition: opacity 0.1s;
 }
-.ts-overflow-btn[data-v-55206cc5]:hover { opacity: 1;
+.ts-overflow-btn[data-v-1c0978ce]:hover { opacity: 1;
 }
-.ts-split-btn[data-v-55206cc5] {
+.ts-split-btn[data-v-1c0978ce] {
   background: transparent;
   border: none;
   color: inherit;
@@ -457,15 +468,15 @@
   border-radius: 3px;
   transition: opacity 0.1s;
 }
-.ts-split-btn[data-v-55206cc5]:hover { opacity: 0.8;
+.ts-split-btn[data-v-1c0978ce]:hover { opacity: 0.8;
 }
-.ts-split-btn--active[data-v-55206cc5] { opacity: 0.9; color: var(--accent, #7dc5ff);
+.ts-split-btn--active[data-v-1c0978ce] { opacity: 0.9; color: var(--accent, #7dc5ff);
 }
 @media (max-width: 600px) {
-.ts-split-btn[data-v-55206cc5] { display: none;
+.ts-split-btn[data-v-1c0978ce] { display: none;
 }
 }
-.ts-settings-btn[data-v-55206cc5] {
+.ts-settings-btn[data-v-1c0978ce] {
   background: transparent;
   border: none;
   color: inherit;
@@ -478,20 +489,20 @@
   border-left: 1px solid var(--border-subtle, #333);
   margin-left: 2px;
 }
-.ts-settings-btn[data-v-55206cc5]:hover { opacity: 0.8;
+.ts-settings-btn[data-v-1c0978ce]:hover { opacity: 0.8;
 }
 @media (max-width: 600px) {
-.ts-settings-btn[data-v-55206cc5] { display: none;
+.ts-settings-btn[data-v-1c0978ce] { display: none;
 }
 }
 
 /* Context menu backdrop + popup */
-.ts-ctx-backdrop[data-v-55206cc5] {
+.ts-ctx-backdrop[data-v-1c0978ce] {
   position: fixed;
   inset: 0;
   z-index: 900;
 }
-.ts-ctx-menu[data-v-55206cc5] {
+.ts-ctx-menu[data-v-1c0978ce] {
   position: fixed;
   z-index: 901;
   background: var(--surface-2, #262626);
@@ -501,7 +512,7 @@
   min-width: 160px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.ts-ctx-item[data-v-55206cc5] {
+.ts-ctx-item[data-v-1c0978ce] {
   display: block;
   width: 100%;
   background: transparent;
@@ -514,10 +525,10 @@
   white-space: nowrap;
   transition: background 0.1s;
 }
-.ts-ctx-item[data-v-55206cc5]:hover { background: var(--surface-3, #303030);
+.ts-ctx-item[data-v-1c0978ce]:hover { background: var(--surface-3, #303030);
 }
 @media (max-width: 600px) {
-.ts-ctx-item--wide-only[data-v-55206cc5] { display: none;
+.ts-ctx-item--wide-only[data-v-1c0978ce] { display: none;
 }
 }
 
@@ -644,10 +655,10 @@
 
 /* F3: TaskActions now sits in the action slot beside the tab bar.
    No border-bottom here; ev-top-row owns the boundary. */
-.ev-actions[data-v-13e3356e] {
+.ev-actions[data-v-dc8d4fe1] {
   padding: 4px 8px 2px;
 }
-.ev-actions-row[data-v-13e3356e] {
+.ev-actions-row[data-v-dc8d4fe1] {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
@@ -657,7 +668,7 @@
 /* F6: buttons sized between header controls (19-21px) and sub-tabs (44px).
    Before: font-size 0.82em, padding 5px 12px, min-height 30px.
    After:  font-size 0.78em, padding 3px 10px, min-height 28px. */
-.ev-action-btn[data-v-13e3356e] {
+.ev-action-btn[data-v-dc8d4fe1] {
   background: transparent;
   border: 1px solid var(--ts-border, #3a3a3a);
   color: var(--ts-text-secondary, #aaa);
@@ -668,60 +679,60 @@
   min-height: 28px;
   white-space: nowrap;
 }
-.ev-action-btn[data-v-13e3356e]:hover:not(:disabled) {
+.ev-action-btn[data-v-dc8d4fe1]:hover:not(:disabled) {
   color: var(--ts-text, #eee);
   border-color: var(--ts-text-secondary, #aaa);
 }
-.ev-action-btn.is-primary[data-v-13e3356e] {
+.ev-action-btn.is-primary[data-v-dc8d4fe1] {
   background: var(--ts-accent, #3a3a9a);
   color: #fff;
   border-color: var(--ts-accent, #3a3a9a);
 }
-.ev-action-btn.is-primary[data-v-13e3356e]:hover:not(:disabled) {
+.ev-action-btn.is-primary[data-v-dc8d4fe1]:hover:not(:disabled) {
   background: var(--ts-accent-hover, #4a4aaa);
 }
-.ev-action-btn.is-danger[data-v-13e3356e] {
+.ev-action-btn.is-danger[data-v-dc8d4fe1] {
   background: transparent;
   border-color: var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);
 }
-.ev-action-btn.is-active[data-v-13e3356e] {
+.ev-action-btn.is-active[data-v-dc8d4fe1] {
   background: var(--ts-surface-2, #2a2a2a);
   color: var(--ts-text, #eee);
 }
-.ev-action-btn[data-v-13e3356e]:disabled { opacity: 0.5; cursor: not-allowed;
+.ev-action-btn[data-v-dc8d4fe1]:disabled { opacity: 0.5; cursor: not-allowed;
 }
 
 /* F6/F3: below 600px the action slot shares the row with 2 sub-tabs.
    Collapse to icons only; aria-labels carry the accessible name. */
 @media (max-width: 600px) {
-.ev-btn-lbl[data-v-13e3356e] { display: none;
+.ev-btn-lbl[data-v-dc8d4fe1] { display: none;
 }
-.ev-action-btn[data-v-13e3356e] { padding: 3px 7px; min-width: 28px;
+.ev-action-btn[data-v-dc8d4fe1] { padding: 3px 7px; min-width: 28px;
 }
 }
-.ev-form[data-v-13e3356e] {
+.ev-form[data-v-dc8d4fe1] {
   margin-top: 8px;
   padding: 10px;
   background: var(--ts-surface-2, #2a2a2a);
   border: 1px solid var(--ts-border, #3a3a3a);
   border-radius: 4px;
 }
-.ev-form-danger[data-v-13e3356e] { border-color: var(--ts-danger, #8a3a3a);
+.ev-form-danger[data-v-dc8d4fe1] { border-color: var(--ts-danger, #8a3a3a);
 }
-.ev-form-warn[data-v-13e3356e] {
+.ev-form-warn[data-v-dc8d4fe1] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin-bottom: 8px;
 }
-.ev-form-warn summary[data-v-13e3356e] { cursor: pointer;
+.ev-form-warn summary[data-v-dc8d4fe1] { cursor: pointer;
 }
-.ev-form-hint[data-v-13e3356e] {
+.ev-form-hint[data-v-dc8d4fe1] {
   font-size: 0.82em;
   color: var(--ts-text-secondary, #aaa);
   margin: 0 0 8px;
 }
-.ev-form-input[data-v-13e3356e] {
+.ev-form-input[data-v-dc8d4fe1] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -732,7 +743,7 @@
   border-radius: 3px;
   margin-bottom: 6px;
 }
-.ev-form-textarea[data-v-13e3356e] {
+.ev-form-textarea[data-v-dc8d4fe1] {
   width: 100%;
   box-sizing: border-box;
   background: var(--ts-surface-3, #1e1e1e);
@@ -744,7 +755,7 @@
   resize: vertical;
   margin-bottom: 6px;
 }
-.ev-form-cascade[data-v-13e3356e] {
+.ev-form-cascade[data-v-dc8d4fe1] {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -753,20 +764,20 @@
   margin-bottom: 8px;
   cursor: pointer;
 }
-.ev-form-actions[data-v-13e3356e] {
+.ev-form-actions[data-v-dc8d4fe1] {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
 }
-.ev-action-error[data-v-13e3356e] {
+.ev-action-error[data-v-dc8d4fe1] {
   color: var(--ts-danger, #e05a5a);
   font-size: 0.82em;
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.ev-action-error button[data-v-13e3356e] {
+.ev-action-error button[data-v-dc8d4fe1] {
   background: none;
   border: 1px solid var(--ts-danger, #8a3a3a);
   color: var(--ts-danger, #e05a5a);

@@ -3,8 +3,10 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from "vue"
 import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
 import { useLiveStore } from "../stores/live";
+import { useChatStore } from "../stores/chat";
 import { refKey, type ResourceRef } from "./refs";
-import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec, PROJECTS_LIST_KEY, projectsListSpec } from "./labels";
+import { refLabel, refGlyph, refTitle, TASKS_LIST_KEY, tasksListSpec, PROJECTS_LIST_KEY, projectsListSpec, CHATS_LIST_KEY, chatsListSpec } from "./labels";
+import type { ChatListEntry } from "../../services/chats";
 import type { ProjectCard } from "../stores/projects";
 import type { TaskRow } from "../stores/tasks";
 import OpenMenu from "../components/chrome/OpenMenu.vue";
@@ -13,6 +15,7 @@ import TabOverflowSheet from "./TabOverflowSheet.vue";
 const ws = useWorkspaceStore();
 const ui = useUiStore();
 const live = useLiveStore();
+const chatStore = useChatStore();
 
 const group0 = computed(() => ws.groupTabs(0));
 const group1 = computed(() => ws.groupTabs(1));
@@ -22,10 +25,12 @@ const group1 = computed(() => ws.groupTabs(1));
 onMounted(() => {
   live.bind(TASKS_LIST_KEY, tasksListSpec);
   live.bind(PROJECTS_LIST_KEY, projectsListSpec);
+  live.bind(CHATS_LIST_KEY, chatsListSpec);
 });
 onBeforeUnmount(() => {
   live.unbind(TASKS_LIST_KEY);
   live.unbind(PROJECTS_LIST_KEY);
+  live.unbind(CHATS_LIST_KEY);
 });
 
 const tasksList = computed<TaskRow[] | null>(() => {
@@ -40,6 +45,21 @@ const projectsList = computed<ProjectCard[] | null>(() => {
   return e.data as ProjectCard[];
 });
 
+const chatsList = computed<ChatListEntry[] | null>(() => {
+  const e = live.entry(CHATS_LIST_KEY);
+  if (!e?.data) return null;
+  return e.data as ChatListEntry[];
+});
+
+// Unread indicator (DEC-0047). Derived from the chats:list binding's updatedAt,
+// NOT from SSE hints (last-hint-wins over 150ms is lossy for rapid updates).
+function isTabUnread(tab: ResourceRef): boolean {
+  if (tab.kind !== "chat") return false;
+  const row = chatsList.value?.find((c) => c.id === tab.chatId);
+  if (!row?.updatedAt) return false;
+  return chatStore.isUnread(tab.chatId, row.updatedAt);
+}
+
 // Per-tab label: read headline from the per-id chain entry (task:<id>) that
 // EnvelopeView binds, falling back to the shared tasks list and then the id.
 function tabLabel(r: ResourceRef): string {
@@ -49,7 +69,7 @@ function tabLabel(r: ResourceRef): string {
     const headline = data?.chain?.task?.headline;
     if (headline) return headline;
   }
-  return refLabel(r, tasksList.value, projectsList.value);
+  return refLabel(r, tasksList.value, projectsList.value, chatsList.value);
 }
 
 // ── Overflow detection ────────────────────────────────────────────────────────
@@ -143,7 +163,7 @@ function togglePin(key: string): void {
 }
 
 function tabTitle(tab: ResourceRef): string {
-  const base = refTitle(tab, tasksList.value, projectsList.value);
+  const base = refTitle(tab, tasksList.value, projectsList.value, chatsList.value);
   const isPinned = ws.meta[refKey(tab)]?.pinned;
   return `${base} — double-click to ${isPinned ? "unpin" : "pin"}`;
 }
@@ -245,6 +265,11 @@ function onDividerDrop(e: DragEvent): void {
         <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
         <span
+          v-if="isTabUnread(tab)"
+          class="ts-tab-unread"
+          aria-label="Unread messages"
+        />
+        <span
           class="ts-tab-close"
           role="button"
           tabindex="-1"
@@ -302,6 +327,11 @@ function onDividerDrop(e: DragEvent): void {
       >
         <span v-if="refGlyph(tab)" class="ts-tab-glyph">{{ refGlyph(tab) }}</span>
         <span class="ts-tab-label">{{ tabLabel(tab) }}</span>
+        <span
+          v-if="isTabUnread(tab)"
+          class="ts-tab-unread"
+          aria-label="Unread messages"
+        />
         <span
           class="ts-tab-close"
           role="button"
@@ -369,6 +399,7 @@ function onDividerDrop(e: DragEvent): void {
     :open="overflowOpen"
     :tasks-list="tasksList"
     :projects-list="projectsList"
+    :chats-list="chatsList"
     @close="overflowOpen = false"
   />
 </template>
@@ -499,6 +530,17 @@ function onDividerDrop(e: DragEvent): void {
   content: "";
   position: absolute;
   inset: -7px;
+}
+
+/* Unread indicator dot — 8×8 filled circle, accent colour (DEC-0047). */
+.ts-tab-unread {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent, #7dc5ff);
+  flex-shrink: 0;
+  align-self: center;
 }
 
 .ts-tab-close:hover { opacity: 1; background: var(--surface-4, #3a3a3a); }

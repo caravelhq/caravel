@@ -412,46 +412,41 @@ for (const VP of VIEWPORTS) {
     }
   } catch (e) { fail(`EV4-9 [${VP.label}]`, String(e)); }
 
-  // ── EV4-10: Chat form fires POST /next with instruction field ───────────────
+  // ── EV4-10: Chat action opens a chat: tab (Phase 5 — in-task form deleted) ────
+  // The [data-ev-form="chat"] in-task form was deleted in Phase 5 step 3 (WAL-151).
+  // The Chat action now opens a chat: resource tab via ws.open. Assert the tab
+  // appears in the workspace store (mirrors CT-4/CT-5).
   try {
     await stubTask(page, TASK_TERMINAL, makeChain({}));
     await loadEnvelope(page, TASK_TERMINAL);
 
-    let interceptedChat = null;
-    // Override any prior /next intercept — chat distinguishes itself by having an `instruction` field.
-    await page.route(`**\/api\/tasks\/${encodeURIComponent(TASK_TERMINAL)}\/next`, async (route) => {
-      interceptedChat = { method: route.request().method(), body: route.request().postDataJSON() };
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, id: "TSK-EV4-chat-child" }) });
-    });
+    // The deleted form must not exist before or after clicking.
+    const formBefore = await page.locator('[data-ev-form="chat"]').count();
+    pass(`EV4-10 in-task chat form absent before click [${VP.label}]`);
 
     const chatBtn = page.locator('[data-ev-action="chat"]');
     await chatBtn.waitFor({ state: "visible", timeout: 3000 });
     await chatBtn.click();
-    await page.waitForTimeout(200);
-
-    const chatForm = page.locator('[data-ev-form="chat"]');
-    await chatForm.waitFor({ state: "visible", timeout: 2000 });
-    pass(`EV4-10 Chat form opens [${VP.label}]`);
-
-    // Fill the instruction textarea
-    const instrTextarea = chatForm.locator("textarea");
-    await instrTextarea.fill("What is the current status?");
-
-    const chatSubmit = page.locator('[data-ev-submit="chat"]');
-    await chatSubmit.click();
     await page.waitForTimeout(500);
 
-    if (interceptedChat) {
-      if (interceptedChat.method === "POST") pass(`EV4-10 POST /next method (chat) [${VP.label}]`);
-      else fail(`EV4-10 POST /next method (chat) [${VP.label}]`, `got ${interceptedChat.method}`);
-
-      if (interceptedChat.body?.source === "continue") pass(`EV4-10 payload source:"continue" (chat) [${VP.label}]`);
-      else fail(`EV4-10 payload source:"continue" (chat) [${VP.label}]`, `got ${JSON.stringify(interceptedChat.body?.source)}`);
-
-      if (interceptedChat.body?.instruction !== undefined) pass(`EV4-10 payload has instruction field [${VP.label}]`);
-      else fail(`EV4-10 payload instruction field [${VP.label}]`, `body: ${JSON.stringify(interceptedChat.body)}`);
+    const formAfter = await page.locator('[data-ev-form="chat"]').count();
+    if (formBefore === 0 && formAfter === 0) {
+      pass(`EV4-10 in-task chat form absent after click [${VP.label}]`);
     } else {
-      fail(`EV4-10 POST /next fired (chat) [${VP.label}]`, "route was never intercepted");
+      fail(`EV4-10 in-task chat form absent after click [${VP.label}]`, `before=${formBefore} after=${formAfter}`);
+    }
+
+    // A chat: tab must have opened in the workspace store.
+    const chatTabOpened = await page.evaluate(() => {
+      const app = document.querySelector("#app")?.__vue_app__;
+      const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+      const ws = pinia?._s?.get("workspace");
+      return (ws?.tabs ?? []).some((t) => t?.kind === "chat");
+    });
+    if (chatTabOpened) {
+      pass(`EV4-10 chat: tab opened in workspace [${VP.label}]`);
+    } else {
+      fail(`EV4-10 chat: tab opened in workspace [${VP.label}]`, "no chat: tab found in workspace tabs");
     }
     await shot(page, `EV4-10-${VP.width}`);
   } catch (e) { fail(`EV4-10 [${VP.label}]`, String(e)); }

@@ -2,6 +2,7 @@
 // report: retired as a tab kind in Phase 3.2 step 5; kept in refs.ts for URL parsing only.
 
 import type { Component } from "vue";
+import ChatView from "../views/ChatView.vue";
 import DashboardView from "../views/DashboardView.vue";
 import EnvelopeView from "../views/EnvelopeView.vue";
 import FileView from "../views/FileView.vue";
@@ -10,6 +11,7 @@ import ProjectView from "../views/ProjectView.vue";
 import type { ResourceRef } from "./refs";
 
 const registry: Partial<Record<ResourceRef["kind"], Component>> = {
+  chat: ChatView,
   dashboard: DashboardView,
   envelope: EnvelopeView,
   file: FileView,

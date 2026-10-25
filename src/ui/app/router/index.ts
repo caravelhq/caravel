@@ -18,6 +18,7 @@ export const router = createRouter({
   routes: [
     { path: "/dashboard", component: Stub },
     { path: "/chat", component: Stub },
+    { path: "/chat/:chatId", component: Stub },
     { path: "/tasks", component: Stub },
     // /tasks/project/:slug and sub-views must be declared before the bare taskId pattern.
     { path: "/tasks/project/:slug", component: Stub },
@@ -105,6 +106,10 @@ function routeToRef(route: RouteLocationNormalized): ResourceRef | null {
   }
   if (p.startsWith("/tasks/")) return { kind: "legacy", page: "tasks" };
   if (p === "/chat") return { kind: "legacy", page: "chat" };
+  if (p.startsWith("/chat/")) {
+    const chatId = decodeURIComponent(p.slice("/chat/".length));
+    return { kind: "chat", chatId };
+  }
   if (p === "/files") return { kind: "legacy", page: "files" };
   if (p.startsWith("/files/")) {
     // Step 7: /files/<path> opens the file as a file: tab (step 6 converted Files to a pure picker).
@@ -242,6 +247,7 @@ export function refToPath(ref: ResourceRef): string {
     case "envelope": return `/envelope/${encodeURIComponent(ref.taskId)}`;
     case "report": return `/report/${encodeURIComponent(ref.taskId)}`;
     case "project": return `/project/${encodeURIComponent(ref.slug)}`;
+    case "chat": return `/chat/${encodeURIComponent(ref.chatId)}`;
     case "legacy": return `/${ref.page}`;
     default: return "/dashboard";
   }
