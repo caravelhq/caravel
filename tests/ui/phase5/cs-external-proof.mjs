@@ -49,9 +49,10 @@ function runSpec(label) {
 const original = readFileSync(STORE_PATH, "utf-8");
 
 // The mutation: setMessages writes to "__single__" instead of per-chat key.
-// Anchored on the exact pattern, exactly-once enforced.
-const ANCHOR = "entries.value = {\n      ...entries.value,\n      [chatId]: {";
-const MUTANT  = 'entries.value = {\n      ...entries.value,\n      ["__single__"]: {';
+// Anchored on the setMessages-specific suffix (messages, isSending:) to avoid
+// matching setMeta and patchMessages which share the same structural prefix.
+const ANCHOR = "[chatId]: { ...existing, messages, isSending:";
+const MUTANT  = '["__single__"]: { ...existing, messages, isSending:';
 
 const occurrences = (original.match(new RegExp(ANCHOR.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) ?? []).length;
 if (occurrences !== 1) {
