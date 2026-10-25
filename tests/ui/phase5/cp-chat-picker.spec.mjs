@@ -1,28 +1,30 @@
 // cp-chat-picker.spec.mjs — Phase 5 step 2: Chat list picker (Suite CP)
 //
+// Rewrote for `.09` — spec previously drove the deleted pre-step-3 surface
+// (.chat-panel, #chat-history-btn, legacy:chat). Now drives the post-step-3
+// surface: chat: resource via ChatView, picker via .chat-toolbar-btn.
+//
 // CP-1: Bounded render — rendered rows === CHAT_LIST_RENDER_N (N=20).
-//       Bound label "Showing 20 of 26" is present. N < total asserted.
+//       Bound label "Showing 20 of 27" is present. N < total asserted.
 // CP-2: Search reaches a chat ranked below N (XRAY-FIXTURE-CORPUS-TOKEN).
 // CP-3: Displaced active chat — active chat (fx0000aa-0000bb, oldest by updatedAt,
-//       position 26 in the sorted corpus) displaces the Nth row; rendered count
+//       position 27 in the sorted corpus) displaces the Nth row; rendered count
 //       remains exactly N=20; active row present with rename and resync controls.
 // CP-4: Row controls ≥ 44×44 px at 360×740 viewport.
+// CP-5: Preview-tab semantics — a picker row click opens the chat as a preview tab.
 //
 // Preflight: asserts CARAVEL_FIXTURE_BASE is set and the known fixture sentinel
 //   (XRAY-FIXTURE-CORPUS-TOKEN) is resolvable via /api/chats. Aborts loudly
-//   if either check fails (WAL-148: the FP/NV fixture-base trap).
+//   if either check fails (WAL-148).
 //
 // Mutation proof (CP-PROOF):
-//   Restores .slice(0, 20) in listChats() → CP-2 search-reaches-outside goes red.
-//   Source mutated live, restored from memory in finally (never git checkout --).
+//   Run via MUTATION_BASE — starts a separate mutated daemon and queries /api/chats
+//   directly. Sentinel absent from the sliced list (red); present in the original (green).
 //
 // Run:
 //   UI_TEST_SKILL=/home/walter/workspace/.claude/skills/ui-test \
 //   CARAVEL_FIXTURE_BASE=http://127.0.0.1:4660 \
 //   node tests/ui/phase5/cp-chat-picker.spec.mjs
-//
-// Mutation run:
-//   MUTATION=1 [same env] node tests/ui/phase5/cp-chat-picker.spec.mjs
 //
 // Prerequisites: fixture daemon on :4659 and test server on :4660 (see run-cp.mjs).
 
@@ -49,10 +51,10 @@ mkdirSync(SHOTS_DIR, { recursive: true });
 
 const CHAT_LIST_RENDER_N = 20;
 const FIXTURE_SENTINEL = "XRAY-FIXTURE-CORPUS-TOKEN";
-// fx0000aa-0000bb is the oldest chat (daysAgo=50) — position 26 by updatedAt sort
+// fx0000aa-0000bb is the oldest chat (daysAgo=50) — position 27 in the sorted corpus
 const DISPLACED_CHAT_ID = "fx0000aa-0000bb";
-// Total chats in the fixture (26)
-const FIXTURE_TOTAL = 26;
+// Any recent fixture chat to open as the initial view (inside top N)
+const RECENT_CHAT_ID = "fx0001aa-0001bb";
 
 let passed = 0;
 let failed = 0;
@@ -73,11 +75,13 @@ console.log(`  fixture base: ${FIXTURE_BASE}`);
 
 // Verify sentinel resolves via /api/chats
 let fixtureChats;
+let FIXTURE_TOTAL;
 try {
   const r = await fetch(`${FIXTURE_BASE}/api/chats`, { signal: AbortSignal.timeout(5000) });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const body = await r.json();
   fixtureChats = body.chats ?? [];
+  FIXTURE_TOTAL = fixtureChats.length;
 } catch (e) {
   console.error(`ABORT: cannot reach ${FIXTURE_BASE}/api/chats — ${e.message}`);
   console.error("  Is the fixture daemon and test server running? See run-cp.mjs.");
@@ -93,53 +97,74 @@ if (!sentinelChat) {
   process.exit(2);
 }
 console.log(`  sentinel chat found: ${sentinelChat.id} ("${sentinelChat.name ?? sentinelChat.preview}")`);
-console.log(`  total fixture chats: ${fixtureChats.length} (want ≥ ${CHAT_LIST_RENDER_N + 1})`);
-if (fixtureChats.length <= CHAT_LIST_RENDER_N) {
-  console.error(`ABORT: fixture has only ${fixtureChats.length} chats — need > ${CHAT_LIST_RENDER_N} to test the bound.`);
+console.log(`  total fixture chats: ${FIXTURE_TOTAL} (want ≥ ${CHAT_LIST_RENDER_N + 1})`);
+if (FIXTURE_TOTAL <= CHAT_LIST_RENDER_N) {
+  console.error(`ABORT: fixture has only ${FIXTURE_TOTAL} chats — need > ${CHAT_LIST_RENDER_N} to test the bound.`);
   process.exit(2);
 }
 console.log("  preflight OK\n");
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-async function openChatPage(page) {
-  // Open the Chat legacy page via workspace store
+async function clearWorkspace(page) {
   await page.evaluate(() => {
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("workspace.") || k === "chat.store")
+      .forEach((k) => localStorage.removeItem(k));
+  });
+  await page.reload({ waitUntil: "load" });
+  await page.waitForSelector(".workspace", { timeout: 10000 });
+  await page.waitForTimeout(400);
+}
+
+async function openChatView(page, chatId) {
+  await page.evaluate((id) => {
     const vueApp = document.querySelector("#app")?.__vue_app__;
     const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
     const ws = pinia?._s?.get("workspace");
-    if (ws) ws.open({ kind: "legacy", page: "chat" });
-  });
-  await page.waitForSelector(".chat-panel", { timeout: 8000 });
-  await page.waitForTimeout(800);
+    if (ws) ws.open({ kind: "chat", chatId: id });
+  }, chatId);
+  await page.waitForSelector(".chat-view", { timeout: 10000 });
+  await page.waitForTimeout(600);
 }
 
-async function waitForChatsInStore(page) {
-  // Open the picker and wait for at least N rows to render (data from live store).
-  // Always closes the picker before returning so callers open it fresh.
-  await openPicker(page);
-  const already = await page.$$eval(".chat-history-row", (els) => els.length);
-  if (already < CHAT_LIST_RENDER_N) {
-    await page.waitForFunction(
-      (n) => document.querySelectorAll(".chat-history-row").length >= n,
-      CHAT_LIST_RENDER_N,
-      { timeout: 20000 }
-    );
-  }
-  await closePicker(page);
+async function openChatViewPreview(page, chatId) {
+  await page.evaluate((id) => {
+    const vueApp = document.querySelector("#app")?.__vue_app__;
+    const pinia = vueApp?.config?.globalProperties?.$pinia ?? window.__pinia;
+    const ws = pinia?._s?.get("workspace");
+    if (ws) ws.open({ kind: "chat", chatId: id }, { preview: true });
+  }, chatId);
+  await page.waitForTimeout(400);
+}
+
+// Wait until the chats:list store has populated enough rows for the bound test.
+async function waitForChatsList(page) {
+  await page.waitForFunction(
+    (n) => {
+      const app = document.querySelector("#app")?.__vue_app__;
+      const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+      const live = pinia?._s?.get("live");
+      if (!live) return false;
+      const entry = live.entries?.get("chats:list");
+      return Array.isArray(entry?.data) && entry.data.length >= n;
+    },
+    CHAT_LIST_RENDER_N + 1,
+    { timeout: 20000 }
+  );
 }
 
 async function openPicker(page) {
-  await page.click("#chat-history-btn");
-  await page.waitForSelector(".chat-history-dropdown", { timeout: 3000 });
+  // The "Chats" button in ChatHeader opens the picker overlay.
+  await page.click(".chat-toolbar-btn", { timeout: 5000 });
+  await page.waitForSelector(".chat-history-dropdown", { timeout: 5000 });
   await page.waitForTimeout(200);
 }
 
 async function closePicker(page) {
-  // Toggle off via the toolbar button (same button that opens it).
   const isOpen = await page.$(".chat-history-dropdown");
   if (isOpen) {
-    await page.click("#chat-history-btn");
+    await page.click(".chat-toolbar-btn");
     await page.waitForTimeout(200);
   }
 }
@@ -148,22 +173,6 @@ async function screenshot(page, name) {
   const p = join(SHOTS_DIR, `${name}.png`);
   await page.screenshot({ path: p });
   return p;
-}
-
-async function resetChatSession(page, chatId = null) {
-  await page.evaluate((id) => {
-    if (id) {
-      localStorage.setItem("caravel.chat.id", id);
-    } else {
-      localStorage.removeItem("caravel.chat.id");
-    }
-    // Clear workspace state so the chat page opens fresh
-    Object.keys(localStorage)
-      .filter((k) => k.startsWith("workspace."))
-      .forEach((k) => localStorage.removeItem(k));
-  }, chatId);
-  await page.reload({ waitUntil: "load" });
-  await page.waitForTimeout(600);
 }
 
 // ── Suite runner ──────────────────────────────────────────────────────────────
@@ -181,9 +190,9 @@ async function runSuiteAt(viewport, tag) {
     // CP-1: Bounded render
     console.log("\nCP-1: Bounded render — rendered rows === N");
     {
-      await resetChatSession(page, null);
-      await openChatPage(page);
-      await waitForChatsInStore(page);
+      await clearWorkspace(page);
+      await openChatView(page, RECENT_CHAT_ID);
+      await waitForChatsList(page);
       await openPicker(page);
 
       const rowCount = await page.$$eval(".chat-history-row", (els) => els.length);
@@ -193,16 +202,15 @@ async function runSuiteAt(viewport, tag) {
         fail(`[${tag}] CP-1a: rendered rows`, `expected ${CHAT_LIST_RENDER_N}, got ${rowCount}`);
       }
 
-      // Verify bound label is visible and says "Showing N of TOTAL"
-      const labelText = await page.$eval(".chat-picker-bound-label", (el) => el.textContent?.trim() ?? "");
-      const expectLabel = `Showing ${CHAT_LIST_RENDER_N} of ${FIXTURE_TOTAL}`;
+      // Bound label "Showing N of total"
+      const labelText = await page.$eval(".chat-picker-bound-label", (el) => el.textContent?.trim() ?? "").catch(() => "");
       if (labelText.includes(`Showing ${CHAT_LIST_RENDER_N} of `)) {
         pass(`[${tag}] CP-1b: bound label shows "${labelText}"`);
       } else {
-        fail(`[${tag}] CP-1b: bound label`, `expected "${expectLabel}", got "${labelText}"`);
+        fail(`[${tag}] CP-1b: bound label`, `expected "Showing ${CHAT_LIST_RENDER_N} of …", got "${labelText}"`);
       }
 
-      // Assert N < total (so a passing fixture cannot hide the bound)
+      // N < total
       const totalFromLabel = parseInt(labelText.match(/of (\d+)/)?.[1] ?? "0", 10);
       if (totalFromLabel > CHAT_LIST_RENDER_N) {
         pass(`[${tag}] CP-1c: total (${totalFromLabel}) > N (${CHAT_LIST_RENDER_N}) — bound is real`);
@@ -219,10 +227,9 @@ async function runSuiteAt(viewport, tag) {
     {
       await openPicker(page);
 
-      // Type in the search box
       const searchBox = await page.$(".chat-picker-search");
       if (!searchBox) {
-        fail(`[${tag}] CP-2: search input not found`);
+        fail(`[${tag}] CP-2`, "search input .chat-picker-search not found");
       } else {
         await searchBox.fill(FIXTURE_SENTINEL);
         await page.waitForTimeout(300);
@@ -234,8 +241,7 @@ async function runSuiteAt(viewport, tag) {
           fail(`[${tag}] CP-2a: search reached outside`, `no rows found for "${FIXTURE_SENTINEL}"`);
         }
 
-        // Verify the result row contains the token text
-        const rowText = await page.$eval(".chat-history-row", (el) => el.textContent ?? "");
+        const rowText = await page.$eval(".chat-history-row", (el) => el.textContent ?? "").catch(() => "");
         if (rowText.includes(FIXTURE_SENTINEL)) {
           pass(`[${tag}] CP-2b: result row contains fixture sentinel text`);
         } else {
@@ -254,10 +260,10 @@ async function runSuiteAt(viewport, tag) {
     // CP-3: Displaced active chat
     console.log("\nCP-3: Displaced active chat at slot N");
     {
-      // Set active chat to the oldest fixture chat (position 26, outside top 20)
-      await resetChatSession(page, DISPLACED_CHAT_ID);
-      await openChatPage(page);
-      await waitForChatsInStore(page);
+      // Open the oldest fixture chat — outside top N — as the active view.
+      await clearWorkspace(page);
+      await openChatView(page, DISPLACED_CHAT_ID);
+      await waitForChatsList(page);
       await openPicker(page);
 
       // Rendered rows must still be exactly N
@@ -273,10 +279,10 @@ async function runSuiteAt(viewport, tag) {
       if (activeRow) {
         pass(`[${tag}] CP-3b: active row present in picker`);
       } else {
-        fail(`[${tag}] CP-3b: active row`, `no .chat-history-row-active found`);
+        fail(`[${tag}] CP-3b: active row`, "no .chat-history-row-active found");
       }
 
-      // Active chat must be at the Nth slot (last row = index N-1)
+      // Active chat must be at the Nth slot (last row)
       const allRows = await page.$$(".chat-history-row");
       const lastRow = allRows[allRows.length - 1];
       const lastRowChatId = await lastRow?.getAttribute("data-chat-id");
@@ -287,7 +293,7 @@ async function runSuiteAt(viewport, tag) {
       }
 
       // Total count shown is still the true total (not N)
-      const labelText = await page.$eval(".chat-picker-bound-label", (el) => el.textContent?.trim() ?? "");
+      const labelText = await page.$eval(".chat-picker-bound-label", (el) => el.textContent?.trim() ?? "").catch(() => "");
       const totalFromLabel = parseInt(labelText.match(/of (\d+)/)?.[1] ?? "0", 10);
       if (totalFromLabel === FIXTURE_TOTAL) {
         pass(`[${tag}] CP-3d: total shown (${totalFromLabel}) === true fixture total (${FIXTURE_TOTAL})`);
@@ -303,7 +309,7 @@ async function runSuiteAt(viewport, tag) {
         fail(`[${tag}] CP-3e: active row rename button`, "not found");
       }
 
-      // Active row has resync button
+      // Active row has resync button (only visible on active row)
       const syncBtn = await activeRow?.$(".chat-history-sync-btn");
       if (syncBtn) {
         pass(`[${tag}] CP-3f: active row has resync button`);
@@ -318,14 +324,13 @@ async function runSuiteAt(viewport, tag) {
     // CP-4: Row controls ≥ 44×44 — 360px viewport only
     if (viewport.width <= 390) {
       console.log("\nCP-4: Row controls ≥ 44×44 px at 360px");
-      // Re-open picker (displaced active chat is still set from CP-3)
+      // Displaced active chat is still set from CP-3 — re-open picker.
       await openPicker(page);
 
       const activeRow = await page.$(".chat-history-row-active");
       if (!activeRow) {
-        fail(`[${tag}] CP-4: no active row found`);
+        fail(`[${tag}] CP-4`, "no active row found");
       } else {
-        // Rename button geometry (visible on active row)
         const renameBtn = await activeRow.$(".chat-history-rename-btn");
         if (renameBtn) {
           const box = await renameBtn.boundingBox();
@@ -338,7 +343,6 @@ async function runSuiteAt(viewport, tag) {
           fail(`[${tag}] CP-4a: rename btn not found`);
         }
 
-        // Resync button geometry (visible only on active row)
         const syncBtn = await activeRow.$(".chat-history-sync-btn");
         if (syncBtn) {
           const box = await syncBtn.boundingBox();
@@ -354,6 +358,57 @@ async function runSuiteAt(viewport, tag) {
         await screenshot(page, `${tag}-cp4-geometry`);
       }
       await closePicker(page);
+    }
+
+    // CP-5: Preview-tab semantics — picker row click opens a preview chat: tab
+    console.log("\nCP-5: Preview-tab — picker row click opens a chat: preview tab");
+    {
+      // Start fresh with a different recent chat as the active view.
+      await clearWorkspace(page);
+      await openChatView(page, RECENT_CHAT_ID);
+      await waitForChatsList(page);
+      await openPicker(page);
+
+      // Click the second row (not the active one) to open a preview.
+      // Find a row that is not the active one.
+      const rows = await page.$$(".chat-history-row");
+      const nonActiveRow = rows.find(async (r) => {
+        const cls = await r.getAttribute("class");
+        return !(cls ?? "").includes("chat-history-row-active");
+      });
+      // rows.find with async doesn't work; use a different approach.
+      let clickedChatId = null;
+      for (const row of rows) {
+        const cls = await row.getAttribute("class");
+        if (!(cls ?? "").includes("chat-history-row-active")) {
+          clickedChatId = await row.getAttribute("data-chat-id");
+          // Click the chat-history-item button inside the row.
+          const itemBtn = await row.$(".chat-history-item");
+          if (itemBtn) await itemBtn.click();
+          break;
+        }
+      }
+      await page.waitForTimeout(500);
+
+      if (clickedChatId) {
+        // A new chat: tab should be open in the workspace store.
+        const opened = await page.evaluate((cid) => {
+          const app = document.querySelector("#app")?.__vue_app__;
+          const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          const tabs = ws?.tabs ?? [];
+          return tabs.some((t) => t?.kind === "chat" && t?.chatId === cid);
+        }, clickedChatId);
+
+        if (opened) {
+          pass(`[${tag}] CP-5: picker row click opened chat:${clickedChatId} as a tab`);
+        } else {
+          fail(`[${tag}] CP-5: preview tab`, `chat:${clickedChatId} not found in workspace tabs`);
+        }
+        await screenshot(page, `${tag}-cp5-preview-tab`);
+      } else {
+        fail(`[${tag}] CP-5`, "could not find a non-active row to click");
+      }
     }
 
   } finally {

@@ -19703,7 +19703,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     const readyToLoadEarlier = /* @__PURE__ */ ref(false);
     watch(() => props.messages.length, (n) => {
       const desired = Math.max(0, n - CHAT_MSG_RENDER_M);
-      if (desired > renderFrom.value) renderFrom.value = desired;
+      if (desired > renderFrom.value && atBottom.value) renderFrom.value = desired;
     });
     const visibleMessages = computed(() => props.messages.slice(renderFrom.value));
     const hasMore = computed(() => renderFrom.value > 0);
@@ -20198,6 +20198,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       set: (v2) => chatStore.saveDraft(chatId.value, v2)
     });
     const hasActiveWork = computed(() => chatStore.hasActiveWork(chatId.value));
+    const isViewActive = /* @__PURE__ */ ref(false);
     const chatName = /* @__PURE__ */ ref("");
     const sessionId = /* @__PURE__ */ ref("");
     const sessionTurnCount = /* @__PURE__ */ ref(0);
@@ -20282,13 +20283,13 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       if (!agentId.value && !pendingAgentId.value) pendingAgentId.value = defaultAgentName();
     }
     function syncGlobals() {
-      if (chatId.value) {
-        window.__chatHistory = messages.value;
-      }
+      if (!isViewActive.value || !chatId.value) return;
+      window.__chatHistory = messages.value;
     }
     watch(messages, syncGlobals, { deep: false });
     function updateRaText() {
       var _a2;
+      if (!isViewActive.value) return;
       const msgs = messages.value;
       const lastDone = [...msgs].reverse().find(
         (m2) => m2.role === "assistant" && m2.text && (!m2.state || m2.state === "done")
@@ -20298,6 +20299,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       (_a2 = window.__updateSpeakerDisabled) == null ? void 0 : _a2.call(window);
     }
     onMounted(async () => {
+      isViewActive.value = true;
       live.bind(liveChatKey.value, makeLiveChatSpec());
       await fetchChatData();
       void fetchAgents();
@@ -20310,6 +20312,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       live.unbind(liveChatKey.value);
     });
     onActivated(async () => {
+      isViewActive.value = true;
       await fetchChatData();
       syncGlobals();
       updateRaText();
@@ -20317,6 +20320,7 @@ const _sfc_main$s = /* @__PURE__ */ defineComponent({
       chatStore.markRead(chatId.value, (/* @__PURE__ */ new Date()).toISOString());
     });
     onDeactivated(() => {
+      isViewActive.value = false;
       ui.raText = null;
       ui.raFilePath = null;
       stopReadAloud();

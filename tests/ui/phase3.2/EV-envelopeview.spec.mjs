@@ -320,41 +320,11 @@ try {
       await ctx.close();
     }
 
-    // ── EV4: "Open in Tasks" footer → legacy:tasks tab ───────────────────────
-    {
-      const ctx = await browser.newContext({ viewport: VP });
-      const page = await ctx.newPage();
-      await page.goto(BASE, { waitUntil: "networkidle" });
-      await page.waitForTimeout(400);
-      await resetWorkspace(page);
-
-      await wsAction(page, `ws => ws.open({ kind: "envelope", taskId: "TSK-FX-0006" })`);
-      await page.waitForSelector(".ev-footer", { timeout: 5000 }).catch(() => {});
-      await page.waitForTimeout(300);
-
-      const footerBtn = page.locator(".ev-open-tasks-btn");
-      const footerVisible = await footerBtn.isVisible().catch(() => false);
-      if (!footerVisible) {
-        fail(`EV4 .ev-open-tasks-btn visible [${VP.label}]`, "button not found");
-        await ctx.close(); continue;
-      }
-      pass(`EV4 .ev-open-tasks-btn visible [${VP.label}]`);
-
-      await footerBtn.click();
-      await page.waitForTimeout(300);
-
-      const afterState = await wsState(page);
-      const hasLegacyTasks = (afterState?.tabs || []).some(t => t.kind === "legacy" && t.page === "tasks");
-      if (hasLegacyTasks) {
-        pass(`EV4 "Open in Tasks" opens legacy:tasks tab [${VP.label}]`);
-      } else {
-        const kinds = (afterState?.tabs || []).map(t => `${t.kind}:${t.taskId ?? t.page ?? ""}`).join(", ");
-        fail(`EV4 "Open in Tasks" opens legacy:tasks tab [${VP.label}]`, `tabs: [${kinds}]`);
-      }
-
-      await page.screenshot({ path: join(SHOTS_DIR, `EV4-after-open-tasks-${VP.label}.png`) });
-      await ctx.close();
-    }
+    // ── EV4: "Open in Tasks" footer — .ev-open-tasks-btn removed (WAL-131, DEC-0036) ──
+    // The "Open in Tasks" button was deleted in WAL-131 Phase 4 steps 5+6 (commit 9d4d2c6).
+    // This check is skipped rather than failed — the button was a legacy navigation shortcut
+    // that predates the workspace tab model and is not coming back.
+    // (Historical: this case was previously asserting the button opens legacy:tasks.)
 
     // ── EV5: Prefetched card visible immediately — no loading placeholder ──────
     {

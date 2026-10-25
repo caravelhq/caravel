@@ -638,6 +638,84 @@ async function runSuiteAt(viewport, tag) {
       }
     }
 
+    // ── CL-e: Background landing does not clobber ui.raText (F-2 guard) ──────────
+    // Verifies the isViewActive guard in ChatView.vue: a message landing in a
+    // background chat tab must not overwrite ui.raText while another view is active.
+    console.log("\nCL-e: Background landing leaves ui.raText untouched; activation updates it");
+    {
+      await clearWorkspace(page);
+
+      // Open chat A (the large chat) as the active view.
+      await openChat(page, LARGE_CHAT_ID);
+      await waitForChatView(page);
+
+      // Plant a known raText value representing chat A's last assistant message.
+      const knownRaText = "cle-probe-chat-a";
+      await page.evaluate((text) => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        const ui = pinia?._s?.get("ui");
+        if (ui) ui.raText = text;
+      }, knownRaText);
+      await page.waitForTimeout(100);
+
+      // Open chat B (CHAT_B_ID) as a background preview tab (does not activate it).
+      await page.evaluate((id) => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        pinia?._s?.get("workspace")?.open({ kind: "chat", chatId: id }, { preview: true, background: true });
+      }, CHAT_B_ID);
+      await page.waitForTimeout(400);
+
+      // Land a message in chat B via patchMessages — B's watcher should fire
+      // but the isViewActive guard must prevent it from writing ui.raText.
+      await page.evaluate(([id]) => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        const chatStore = pinia?._s?.get("chat");
+        const msgs = chatStore?.entries[id]?.messages ?? [];
+        chatStore?.patchMessages(id, [...msgs, { role: "assistant", text: "cle-probe-chat-b", state: "done" }]);
+      }, [CHAT_B_ID]);
+      await page.waitForTimeout(300);
+
+      // ui.raText must still be the chat A value — not cle-probe-chat-b.
+      const raAfterBg = await page.evaluate(() => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        return pinia?._s?.get("ui")?.raText ?? null;
+      });
+      if (raAfterBg === knownRaText) {
+        pass(`[${tag}] CL-e1: background landing left ui.raText untouched ("${raAfterBg}")`);
+      } else {
+        fail(`[${tag}] CL-e1: background landing clobbered ui.raText`, `expected "${knownRaText}", got "${raAfterBg}"`);
+      }
+      await screenshot(page, `${tag}-cle1-ratext-bg`);
+
+      // Now activate chat B — updateRaText should fire and update raText to chat B's probe.
+      await page.evaluate((id) => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        pinia?._s?.get("workspace")?.activate(`chat:${id}`);
+      }, CHAT_B_ID);
+      await page.waitForSelector(".chat-view", { timeout: 8000 });
+      await page.waitForTimeout(600);
+
+      const raAfterActivate = await page.evaluate(() => {
+        const app = document.querySelector("#app")?.__vue_app__;
+        const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+        return pinia?._s?.get("ui")?.raText ?? null;
+      });
+      if (raAfterActivate === "cle-probe-chat-b") {
+        pass(`[${tag}] CL-e2: after activating chat B, ui.raText updated to chat B probe ("${raAfterActivate}")`);
+      } else {
+        // raText may be null if B has no previous "done" message besides the probe.
+        // Accept null only if the probe message is the newest done message and raText matches.
+        // A non-matching non-null value is a failure.
+        fail(`[${tag}] CL-e2: activation did not update ui.raText`, `expected "cle-probe-chat-b", got "${raAfterActivate}"`);
+      }
+      await screenshot(page, `${tag}-cle2-ratext-activated`);
+    }
+
   } catch (e) {
     console.error(`[${tag}] Unexpected error: ${e.message}`);
     console.error(e.stack);

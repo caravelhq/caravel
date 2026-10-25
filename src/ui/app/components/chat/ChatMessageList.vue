@@ -34,10 +34,11 @@ const atBottom = ref(true);
 // Prevents the sentinel from firing during the first message population.
 const readyToLoadEarlier = ref(false);
 
-// When new messages arrive, advance renderFrom only — never collapse a load-earlier expansion.
+// When new messages arrive, advance renderFrom only when at the bottom —
+// a scrolled-up reader must not have their expansion collapsed (F-1, DEC-0049).
 watch(() => props.messages.length, (n) => {
   const desired = Math.max(0, n - CHAT_MSG_RENDER_M);
-  if (desired > renderFrom.value) renderFrom.value = desired;
+  if (desired > renderFrom.value && atBottom.value) renderFrom.value = desired;
 });
 
 const visibleMessages = computed(() => props.messages.slice(renderFrom.value));

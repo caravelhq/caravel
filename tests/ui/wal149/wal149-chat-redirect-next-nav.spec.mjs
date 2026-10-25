@@ -36,12 +36,16 @@ const browser = await chromium.launch();
 
 for (const vp of [{ width: 1440, height: 900, label: "1440x900" }, { width: 360, height: 740, label: "360x740" }]) {
   // ───────────────────────── AC1: Chat redirects to the task thread ──────────
+  // Re-pointed for Phase 5 (WAL-151 .09): the Chat action now opens a chat: tab
+  // via ws.open (TaskActions.vue:openChatThread). The old in-task form and
+  // window.__chatSessionId were deleted. Assert the chat: tab + seeded composer
+  // (mirrors CT-4/CT-5).
   {
     const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
     const errs = []; page.on("pageerror", e => errs.push(e.message));
     await openEnvelope(page, vp);
 
-    // the retired in-task form must not exist, before OR after clicking
+    // The retired in-task form must not exist before OR after clicking.
     const formBefore = await page.locator('[data-ev-form="chat"]').count();
 
     const btn = page.locator('[data-ev-action="chat"]').first();
@@ -57,31 +61,52 @@ for (const vp of [{ width: 1440, height: 900, label: "1440x900" }, { width: 360,
     check(`${vp.label} AC1 in-task chat form gone`, formBefore === 0 && formAfter === 0,
       `before=${formBefore} after=${formAfter}`);
 
-    const thread = await page.evaluate(() => window.__chatSessionId);
-    check(`${vp.label} AC1 thread id = task-<root>-<agent>`, thread === EXPECT_THREAD,
-      `got ${thread}`);
+    // A chat: tab must have opened with the task thread id (mirrors CT-4).
+    const openedChatId = await page.evaluate(() => {
+      const app = document.querySelector("#app")?.__vue_app__;
+      const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+      const ws = pinia?._s?.get("workspace");
+      const tabs = ws?.tabs ?? [];
+      const chatTab = tabs.find((t) => t?.kind === "chat");
+      return chatTab ? chatTab.chatId : null;
+    });
+    check(`${vp.label} AC1 chat: tab opened with correct chatId`,
+      openedChatId === EXPECT_THREAD,
+      `expected ${EXPECT_THREAD}, got ${openedChatId}`);
 
+    // Wait for the chat view to become visible.
+    await page.waitForSelector(".chat-view", { timeout: 8000 }).catch(() => {});
+    await page.waitForTimeout(500);
+
+    // Composer visible: .chat-input (was #chat-input — changed from id to class in Phase 5).
     const composer = await page.evaluate(() => {
-      const el = document.getElementById("chat-input");
+      const el = document.querySelector(".chat-input");
       if (!el) return null;
       const r = el.getBoundingClientRect();
-      return { v: el.value, w: Math.round(r.width), h: Math.round(r.height) };
+      return { w: Math.round(r.width), h: Math.round(r.height) };
     });
     check(`${vp.label} AC1 chat interface is showing (composer visible)`,
       !!composer && composer.w > 100 && composer.h > 10,
-      composer ? `${composer.w}x${composer.h}` : "no #chat-input — did not navigate");
-    check(`${vp.label} AC1 composer seeded with source task`,
-      !!composer && composer.v.includes(SRC_TASK),
-      composer ? JSON.stringify(composer.v.slice(0, 40)) : "n/a");
+      composer ? `${composer.w}x${composer.h}` : "no .chat-input — did not navigate");
 
-    // Landing on the thread is only useful if its history is actually there.
-    // A 54KB thread needs ~2-3s, so poll rather than assert on a single tick.
+    // Composer seeded with source task id (mirrors CT-5 — from chatStore draft).
+    const draft = await page.evaluate((chatId) => {
+      const app = document.querySelector("#app")?.__vue_app__;
+      const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+      const cs = pinia?._s?.get("chat");
+      return cs ? cs.getDraft(chatId) : null;
+    }, EXPECT_THREAD);
+    check(`${vp.label} AC1 composer seeded with source task`,
+      typeof draft === "string" && draft.includes(SRC_TASK.split(".")[0]),
+      draft ? JSON.stringify(draft.slice(0, 40)) : "no draft");
+
+    // Thread history rendered (poll for .chat-msg nodes).
     let msgNodes = 0;
     for (let i = 0; i < 12 && msgNodes === 0; i++) {
       await page.waitForTimeout(500);
-      msgNodes = await page.evaluate(() => document.querySelectorAll("#chat-messages > *").length);
+      msgNodes = await page.evaluate(() => document.querySelectorAll(".chat-msg").length);
     }
-    check(`${vp.label} AC1 thread history rendered`, msgNodes > 0, `${msgNodes} message nodes`);
+    check(`${vp.label} AC1 thread history rendered`, msgNodes > 0, `${msgNodes} .chat-msg nodes`);
 
     check(`${vp.label} AC1 no page errors`, errs.length === 0, errs.slice(0, 2).join(" | ") || "clean");
     await page.screenshot({ path: `/tmp/smoke/wal149-ac1-${vp.label}.png` });

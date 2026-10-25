@@ -344,8 +344,9 @@ try {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // LV4  ViewHost F6/DEC-0035: unregistered kind "chat" renders an explicit
-  //       "chat — not available yet" placeholder, not a blank pane.
+  // LV4  ViewHost F6/DEC-0035: a genuinely unregistered kind renders an explicit
+  //       placeholder, not a blank pane.
+  //       "chat" was used before Phase 5 registered it — now uses "__xtest__".
   // ─────────────────────────────────────────────────────────────────────────
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -364,18 +365,17 @@ try {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(600);
 
-    // Inject a chat ref directly into the workspace store state (bypass ws.open + URL sync).
-    // ws.open({ kind: "chat" }) triggers syncWorkspaceUrl → pushes "/dashboard" (default case)
-    // → router afterEach resets active[0] back to "dashboard". Direct injection avoids this.
+    // Inject a genuinely unregistered kind directly into the workspace store state.
+    // "__xtest__" is not and will never be registered in the view registry.
+    // Direct injection bypasses ws.open URL sync, which would redirect unregistered kinds.
     await page.evaluate(() => {
       const app = document.querySelector("#app")?.__vue_app__;
       const pinia = app?.config?.globalProperties?.$pinia;
       const ws = pinia?._s?.get("workspace");
       if (!ws) return;
-      // Pinia setup stores expose ref-unwrapped values — tabs and active are reactive arrays.
-      const chatRef = { kind: "chat", chatId: "lv4-test" };
-      ws.tabs.push(chatRef);
-      ws.active[0] = "chat:lv4-test";
+      const testRef = { kind: "__xtest__", id: "lv4-test" };
+      ws.tabs.push(testRef);
+      ws.active[0] = "__xtest__:lv4-test";
       ws.focused = 0;
     });
     await page.waitForTimeout(300);
@@ -385,13 +385,13 @@ try {
     // Placeholder must be visible (not a blank pane).
     const placeholder = await page.locator(".view-host-unregistered").count();
     if (placeholder > 0) {
-      pass("LV4 — .view-host-unregistered placeholder visible for unregistered kind 'chat'");
+      pass("LV4 — .view-host-unregistered placeholder visible for unregistered kind '__xtest__'");
     } else {
       fail("LV4 — explicit placeholder for unregistered kind", ".view-host-unregistered not found — blank pane regression (F6)");
     }
 
     const placeholderText = await page.locator(".view-host-unregistered-label").textContent().catch(() => "");
-    if (placeholderText.includes("chat")) {
+    if (placeholderText.includes("__xtest__")) {
       pass(`LV4 — placeholder names the kind: "${placeholderText.trim()}"`);
     } else {
       fail("LV4 — placeholder names the kind", `text is "${placeholderText.trim()}" — kind not named`);

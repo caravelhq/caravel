@@ -478,6 +478,88 @@ async function runSuiteAt(viewport, tag) {
       }
     }
 
+    // ── CV-8: Load-earlier expansion held when a message lands (F-1 guard) ────────
+    // Verifies the fix for the DEC-0049-class defect introduced in step 4:
+    // renderFrom advance now gates on atBottom — a scrolled-up reader must not have
+    // their load-earlier expansion collapsed when a new message arrives.
+    console.log("\nCV-8: Load-earlier expansion intact after a message lands while scrolled up");
+    {
+      // Already on the large chat from CV-5/6/7. Re-use it.
+      const startCount = await page.$$eval(".chat-msg", (els) => els.length);
+
+      // Ensure we're at the bottom first (so atBottom=true), then load earlier.
+      await page.evaluate(() => {
+        const el = document.querySelector(".chat-messages");
+        if (el) { el.scrollTop = el.scrollHeight; el.dispatchEvent(new Event("scroll")); }
+      });
+      await page.waitForTimeout(200);
+
+      // Scroll to the top sentinel to trigger load-earlier.
+      await page.evaluate(() => {
+        const el = document.querySelector(".chat-messages");
+        if (el) el.scrollTop = 0;
+      });
+      await page.waitForFunction(
+        (m) => document.querySelectorAll(".chat-msg").length > m,
+        startCount,
+        { timeout: 8000 }
+      ).catch(() => null);
+      await page.waitForTimeout(300);
+
+      const afterLoadCount = await page.$$eval(".chat-msg", (els) => els.length);
+      if (afterLoadCount <= startCount) {
+        fail(`[${tag}] CV-8: setup`, `load-earlier did not add rows: before=${startCount}, after=${afterLoadCount}`);
+      } else {
+        // Record the scrollTop and count AFTER the load-earlier.
+        const beforeLand = await page.evaluate(() => {
+          const el = document.querySelector(".chat-messages");
+          return el ? { scrollTop: el.scrollTop, count: document.querySelectorAll(".chat-msg").length } : null;
+        });
+
+        if (!beforeLand) {
+          fail(`[${tag}] CV-8`, ".chat-messages not found after load-earlier");
+        } else {
+          // Land a message via patchMessages while scrolled up.
+          await page.evaluate(([id]) => {
+            const app = document.querySelector("#app")?.__vue_app__;
+            const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+            const chatStore = pinia?._s?.get("chat");
+            const msgs = chatStore?.entries[id]?.messages ?? [];
+            chatStore?.patchMessages(id, [...msgs, { role: "assistant", text: "cv8-probe-land", state: "done" }]);
+          }, [LARGE_CHAT_ID]);
+          await page.waitForTimeout(300);
+
+          const afterLand = await page.evaluate(() => {
+            const el = document.querySelector(".chat-messages");
+            return el ? { scrollTop: el.scrollTop, count: document.querySelectorAll(".chat-msg").length } : null;
+          });
+
+          if (!afterLand) {
+            fail(`[${tag}] CV-8`, ".chat-messages not found after message land");
+          } else {
+            // The expansion (afterLoadCount > startCount) must still be intact.
+            // renderFrom must not have advanced while scrolled up, so the count
+            // should be afterLoadCount (or afterLoadCount + 1 if the new msg appended).
+            const expansionLost = afterLand.count < afterLoadCount;
+            if (!expansionLost) {
+              pass(`[${tag}] CV-8a: expansion intact after landed message — rows before=${beforeLand.count} after=${afterLand.count}`);
+            } else {
+              fail(`[${tag}] CV-8a: expansion lost`, `before load=${startCount}, after load=${afterLoadCount}, after land=${afterLand.count} — rows collapsed`);
+            }
+
+            // scrollTop should not have jumped significantly (within 50px tolerance).
+            const scrollDelta = Math.abs(afterLand.scrollTop - beforeLand.scrollTop);
+            if (scrollDelta <= 50) {
+              pass(`[${tag}] CV-8b: scrollTop held within 50px after landed message (delta=${Math.round(scrollDelta)}px)`);
+            } else {
+              fail(`[${tag}] CV-8b: scrollTop jumped`, `delta=${Math.round(scrollDelta)}px — reader yanked`);
+            }
+          }
+        }
+        await screenshot(page, `${tag}-cv8-expansion-held`);
+      }
+    }
+
   } catch (e) {
     fail(`[${tag}] UNEXPECTED ERROR`, e.message);
     await screenshot(page, `${tag}-error`).catch(() => {});

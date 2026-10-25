@@ -51,6 +51,10 @@ const draft = computed({
 
 const hasActiveWork = computed(() => chatStore.hasActiveWork(chatId.value));
 
+// Guard: KeepAlive suspends rendering but not watchers, so background tabs
+// would keep writing ui.raText and __chatHistory (F-2, DEC-0047 residual).
+const isViewActive = ref(false);
+
 // ── Local chat metadata (not in store — fetched from server) ─────────────────
 const chatName = ref("");
 const sessionId = ref("");
@@ -156,9 +160,8 @@ async function fetchAgents(): Promise<void> {
 // __chatHistory kept alive for VoiceModeOverlay until Phase 5.2 rewrites the
 // overlay. __chatSessionId removed — overlay now reads chatStore.lastActivatedChatId.
 function syncGlobals(): void {
-  if (chatId.value) {
-    (window as Window & { __chatHistory?: ChatMessage[] }).__chatHistory = messages.value;
-  }
+  if (!isViewActive.value || !chatId.value) return;
+  (window as Window & { __chatHistory?: ChatMessage[] }).__chatHistory = messages.value;
 }
 watch(messages, syncGlobals, { deep: false });
 
@@ -166,6 +169,7 @@ watch(messages, syncGlobals, { deep: false });
 // Each active view owns ui.raText. Cleared on deactivation. Mirrors the
 // DocViewer / EnvelopeView convention (stores/ui.ts:58-61).
 function updateRaText(): void {
+  if (!isViewActive.value) return;
   const msgs = messages.value;
   const lastDone = [...msgs].reverse().find((m) =>
     m.role === "assistant" && m.text && (!m.state || m.state === "done")
@@ -178,6 +182,7 @@ function updateRaText(): void {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 onMounted(async () => {
+  isViewActive.value = true;
   // Bind live channel first — triggers a fetch. The explicit fetchChatData call
   // below may land slightly earlier (race) but both calls use patchMessages so
   // whichever wins, the result is correct.
@@ -198,6 +203,7 @@ onBeforeUnmount(() => {
 });
 
 onActivated(async () => {
+  isViewActive.value = true;
   await fetchChatData();
   syncGlobals();
   updateRaText();
@@ -206,6 +212,7 @@ onActivated(async () => {
 });
 
 onDeactivated(() => {
+  isViewActive.value = false;
   ui.raText = null;
   ui.raFilePath = null;
   stopReadAloud();
