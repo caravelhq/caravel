@@ -14,7 +14,7 @@
  * Exits 0 on all pass, 1 on any failure.
  */
 
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync } from "fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, renameSync, readdirSync } from "fs";
 import { tmpdir } from "os";
 import { join } from "path";
 
@@ -690,6 +690,254 @@ assert(b5Ids[0]!.startsWith(todayPrefix), `B5: task A id is a flat TSK-date id (
 assert(b5Ids[1]!.startsWith(todayPrefix), `B5: task B id is a flat TSK-date id (got: ${b5Ids[1]})`);
 assert(!b5Ids[0]!.includes("."), `B5: task A id has no decimal component (got: ${b5Ids[0]})`);
 assert(!b5Ids[1]!.includes("."), `B5: task B id has no decimal component (got: ${b5Ids[1]})`);
+// ── D7–D12: caravel task delegate ─────────────────────────────────────────────
+//
+// D7 (WAL-153): failure-recovery — failed task replaced by delegate; blocked
+//   dependant's needs: rewritten; delegate in done/ proves sweepBlocked releases.
+// D8: --add mode keeps original edge alongside delegate.
+// D9: cycle detection refuses when delegate transitively needs a dependant.
+// D10: terminal delegate refused (delegate already in done/).
+// D11: self-reference refused (--original === --to).
+// D12: original keeps terminal status; gains delegated_to: field.
+//
+
+/** Call runTaskCli for `delegate` subcommand and collect stdout. */
+function runDelegate(opts: string[]): string {
+  const lines: string[] = [];
+  const origLog = console.log;
+  console.log = (...args: unknown[]) => lines.push(args.join(" "));
+  try {
+    runTaskCli(["delegate", ...opts]);
+  } finally {
+    console.log = origLog;
+  }
+  return lines.join("\n").trim();
+}
+
+/** Read YAML from a specific agent/bucket. Returns "" when absent. */
+function readFromBucket(id: string, bucket: string): string {
+  const p = join(root, "agents", AGENT, "tasks", bucket, `${id}.yaml`);
+  return existsSync(p) ? readFileSync(p, "utf8") : "";
+}
+
+/** True when text contains id as a standalone task-id (not as a prefix of a longer id like .01). */
+function hasExactId(text: string, id: string): boolean {
+  const esc = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(esc + "(?!\\.)").test(text);
+}
+
+/** Write a minimal envelope YAML directly into a bucket for test setup. */
+function plantEnvelope(id: string, bucket: string, extra = ""): void {
+  const dir = join(root, "agents", AGENT, "tasks", bucket);
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, `${id}.yaml`),
+    `id: ${id}\nheadline: "test"\nstatus: ${bucket}\nfrom: alice\nto: ${AGENT}\nproject: null\n${extra}`
+  );
+}
+
+/**
+ * Minimal sweepBlocked simulation: scans blocked/ and moves to open/ any task
+ * whose entire needs: list is satisfied by envelopes in done/.
+ * Mirrors sweepBlocked's exact check — sufficient to verify releasability.
+ */
+function simulateSweepBlocked(): number {
+  const blockedDir = join(root, "agents", AGENT, "tasks", "blocked");
+  const openDir = join(root, "agents", AGENT, "tasks", "open");
+  mkdirSync(openDir, { recursive: true });
+  if (!existsSync(blockedDir)) return 0;
+  let released = 0;
+  for (const fname of readdirSync(blockedDir).filter((f) => f.endsWith(".yaml"))) {
+    const y = readFileSync(join(blockedDir, fname), "utf8");
+    // Parse needs: list (block form only for test simplicity)
+    const needsM = /^needs:\s*\n((?:[ \t]+-[ \t]+\S+\n?)*)/m.exec(y);
+    const needs = needsM
+      ? (needsM[1] ?? "").split("\n").map((l) => {
+          const m = /^[ \t]+-[ \t]+(\S+)$/.exec(l);
+          return m ? m[1] : "";
+        }).filter(Boolean)
+      : [];
+    if (needs.length === 0) continue;
+    const allDone = needs.every((depId) =>
+      existsSync(join(root, "agents", AGENT, "tasks", "done", `${depId}.yaml`))
+    );
+    if (!allDone) continue;
+    renameSync(join(blockedDir, fname), join(openDir, fname));
+    released++;
+  }
+  return released;
+}
+
+// ── D7: failure-recovery — incident reproduction ──────────────────────────────
+
+console.log("\nD7 — failure recovery (WAL-153 incident): failed task delegated, blocked dependant released:");
+
+// Reproduce the incident: original failed, replacement done, dependant blocked
+// with needs: [original]. After delegation, dependant's needs: → delegate,
+// and simulated sweepBlocked moves it to open/.
+
+const d7Original = `TSK-2026-10-24-0005`;
+const d7Delegate = `TSK-2026-10-24-0005.01`;
+const d7Dep      = `TSK-2026-10-24-0006`;
+
+// Plant the original in failed/, the delegate in done/, the dependant in blocked/
+plantEnvelope(d7Original, "failed", "");
+plantEnvelope(d7Delegate, "done", "");
+plantEnvelope(d7Dep, "blocked", `blocked_by: ${d7Original}\nneeds:\n  - ${d7Original}\n`);
+
+const d7Out = runDelegate([
+  "--original", d7Original,
+  "--to",       d7Delegate,
+]);
+
+assert(d7Out.includes(`delegated ${d7Original} → ${d7Delegate}`), "D7: output confirms delegation");
+
+const d7DepYaml = readFromBucket(d7Dep, "blocked");
+const d7DepNeeds = /^needs:\s*\n((?:[ \t]+-[ \t]+\S+\n?)*)/m.exec(d7DepYaml)?.[1] ?? "";
+assert(
+  hasExactId(d7DepNeeds, d7Delegate) && !hasExactId(d7DepNeeds, d7Original),
+  `D7: dependant's needs: rewritten to delegate (got: ${d7DepNeeds.trim()})`
+);
+
+// Verify delegated_to: on the original
+const d7OrigYaml = readFromBucket(d7Original, "failed");
+assertEqual(
+  extractFmField(d7OrigYaml, "delegated_to"),
+  d7Delegate,
+  "D7: original gains delegated_to: field"
+);
+assert(
+  extractFmField(d7OrigYaml, "status") === "failed",
+  "D7: original status unchanged (still failed)"
+);
+
+// sweepBlocked check: delegate is in done/, so all needs: are satisfied → release
+const d7Released = simulateSweepBlocked();
+assertEqual(d7Released, 1, "D7: simulateSweepBlocked releases 1 dependant");
+assert(
+  existsSync(join(root, "agents", AGENT, "tasks", "open", `${d7Dep}.yaml`)),
+  "D7: dependant moved to open/ (releasable by sweepBlocked)"
+);
+
+// ── D8: --add mode keeps original edge ───────────────────────────────────────
+
+console.log("\nD8 — --add mode adds delegate alongside original (both edges present):");
+
+const d8Original = `TSK-2026-10-24-0007`;
+const d8Delegate = `TSK-2026-10-24-0007.01`;
+const d8Dep      = `TSK-2026-10-24-0008`;
+
+plantEnvelope(d8Original, "failed", "");
+plantEnvelope(d8Delegate, "open", "");
+plantEnvelope(d8Dep, "blocked", `needs:\n  - ${d8Original}\n`);
+
+runDelegate(["--original", d8Original, "--to", d8Delegate, "--add"]);
+
+const d8DepYaml = readFromBucket(d8Dep, "blocked");
+const d8DepNeeds = /^needs:\s*\n((?:[ \t]+-[ \t]+\S+\n?)*)/m.exec(d8DepYaml)?.[1] ?? "";
+assert(
+  d8DepNeeds.includes(d8Original),
+  `D8: original edge kept (--add) (got: ${d8DepNeeds.trim()})`
+);
+assert(
+  d8DepNeeds.includes(d8Delegate),
+  `D8: delegate edge added (got: ${d8DepNeeds.trim()})`
+);
+
+// ── D9: cycle detection ───────────────────────────────────────────────────────
+
+console.log("\nD9 — cycle detection refuses when delegate depends on a would-be dependant:");
+
+// Setup: A depends on original; delegate depends on A → after rewriting,
+// A would depend on delegate and delegate depends on A → cycle.
+const d9Original = `TSK-2026-10-24-0009`;
+const d9Delegate = `TSK-2026-10-24-0009.01`;
+const d9A        = `TSK-2026-10-24-0010`;
+
+plantEnvelope(d9Original, "failed", "");
+plantEnvelope(d9Delegate, "open", `needs:\n  - ${d9A}\n`);
+plantEnvelope(d9A, "blocked", `needs:\n  - ${d9Original}\n`);
+
+let d9Threw = false;
+const origExit9 = process.exit;
+(process.exit as unknown as (code?: number) => void) = () => { d9Threw = true; throw new Error("exit"); };
+try {
+  runDelegate(["--original", d9Original, "--to", d9Delegate]);
+} catch { /* expected */ }
+(process.exit as unknown as (code?: number) => void) = origExit9;
+
+assert(d9Threw, "D9: cycle causes process.exit");
+// Verify the dependant was NOT rewritten (delegate command aborted before rewriting)
+const d9AYaml = readFromBucket(d9A, "blocked");
+const d9ANeeds = /^needs:\s*\n((?:[ \t]+-[ \t]+\S+\n?)*)/m.exec(d9AYaml)?.[1] ?? "";
+assert(
+  !d9ANeeds.includes(d9Delegate),
+  "D9: dependant NOT rewritten after cycle rejection"
+);
+
+// ── D10: permanently-failed delegate refused ──────────────────────────────────
+
+console.log("\nD10 — permanently-failed delegate refused (delegate in failed/):");
+
+const d10Original = `TSK-2026-10-24-0011`;
+const d10Delegate = `TSK-2026-10-24-0011.01`;
+
+plantEnvelope(d10Original, "open", "");
+plantEnvelope(d10Delegate, "failed", ""); // in failed/ — will never satisfy needs:
+
+let d10Threw = false;
+const origExit10 = process.exit;
+(process.exit as unknown as (code?: number) => void) = () => { d10Threw = true; throw new Error("exit"); };
+try {
+  runDelegate(["--original", d10Original, "--to", d10Delegate]);
+} catch { /* expected */ }
+(process.exit as unknown as (code?: number) => void) = origExit10;
+
+assert(d10Threw, "D10: permanently-failed delegate causes process.exit");
+
+// ── D11: self-reference refused ───────────────────────────────────────────────
+
+console.log("\nD11 — self-reference refused (--original === --to):");
+
+const d11Id = `TSK-2026-10-24-0012`;
+plantEnvelope(d11Id, "open", "");
+
+let d11Threw = false;
+const origExit11 = process.exit;
+(process.exit as unknown as (code?: number) => void) = () => { d11Threw = true; throw new Error("exit"); };
+try {
+  runDelegate(["--original", d11Id, "--to", d11Id]);
+} catch { /* expected */ }
+(process.exit as unknown as (code?: number) => void) = origExit11;
+
+assert(d11Threw, "D11: self-reference causes process.exit");
+
+// ── D12: inline needs: form (WAL-153 incident exact format) ──────────────────
+
+console.log("\nD12 — inline needs: [id] form is also rewritten:");
+
+const d12Original = `TSK-2026-10-24-0013`;
+const d12Delegate = `TSK-2026-10-24-0013.01`;
+const d12Dep      = `TSK-2026-10-24-0014`;
+
+plantEnvelope(d12Original, "failed", "");
+plantEnvelope(d12Delegate, "open", "");
+// Use inline form — this is the exact format Alice used in the incident
+plantEnvelope(d12Dep, "blocked", `needs: [${d12Original}]\n`);
+
+runDelegate(["--original", d12Original, "--to", d12Delegate]);
+
+const d12DepYaml = readFromBucket(d12Dep, "blocked");
+// After rewriting, needs: field should no longer reference original as a standalone id
+const d12DepNeedsLine = /^needs:.*$/m.exec(d12DepYaml)?.[0] ?? "";
+assert(
+  !hasExactId(d12DepNeedsLine, d12Original),
+  `D12: inline needs: no longer contains original as standalone id (needs line: ${d12DepNeedsLine})`
+);
+assert(
+  d12DepYaml.includes(d12Delegate),
+  `D12: inline needs: now contains delegate`
+);
 
 // ── summary ───────────────────────────────────────────────────────────────────
 

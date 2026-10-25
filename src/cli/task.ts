@@ -46,6 +46,7 @@ import {
   DISPATCH_LIST_BUCKETS,
   DISPATCH_SUMMARY_COUNT_BUCKETS,
   REQUIRED_FIELDS,
+  UNSATISFIABLE_DELEGATE_BUCKETS,
 } from "../envelope/schema.js";
 import { yamlLine, writeAtomic } from "../envelope/write.js";
 
@@ -1581,6 +1582,318 @@ function doBatch(args: ParsedArgs, root: string): void {
   }
 }
 
+// ── delegate ──────────────────────────────────────────────────────────────────
+
+/** Read a YAML list field handling both inline [a, b] and block-sequence form.
+ *  Strips surrounding quotes from items. Returns [] when absent or empty. */
+function readListFromYaml(yaml: string, key: string): string[] {
+  function stripQ(s: string) {
+    return s.length >= 2 &&
+      ((s[0] === '"' && s.endsWith('"')) || (s[0] === "'" && s.endsWith("'")))
+      ? s.slice(1, -1)
+      : s;
+  }
+  const iM = new RegExp(`^${key}:\\s*\\[([^\\]]*)\\]`, "m").exec(yaml);
+  if (iM) {
+    const inner = (iM[1] ?? "").trim();
+    return inner ? inner.split(",").map((s) => stripQ(s.trim())).filter(Boolean) : [];
+  }
+  const bM = new RegExp(`^${key}:\\s*\\n((?:[ \\t]+-[ \\t]+[^\\n]+\\n?)*)`, "m").exec(yaml);
+  if (bM) {
+    return (bM[1] ?? "")
+      .split("\n")
+      .map((l) => {
+        const m = /^[ \t]+-[ \t]+(.+)$/.exec(l);
+        return m ? stripQ(m[1]!.trim()) : "";
+      })
+      .filter(Boolean);
+  }
+  return [];
+}
+
+/**
+ * Rewrite one entry in a YAML list field (inline or block form).
+ * mode "replace": replaces oldId with newId in the list.
+ * mode "add": inserts newId after oldId, keeping oldId.
+ */
+function rewriteListEntry(
+  yaml: string,
+  fieldName: string,
+  oldId: string,
+  newId: string,
+  mode: "replace" | "add"
+): { yaml: string; changed: boolean } {
+  function stripQ(s: string) {
+    return s.length >= 2 &&
+      ((s[0] === '"' && s.endsWith('"')) || (s[0] === "'" && s.endsWith("'")))
+      ? s.slice(1, -1)
+      : s;
+  }
+  // Inline form: key: [a, b, c]
+  const inlineRe = new RegExp(`^(${fieldName}:\\s*\\[)([^\\]]*)(\\])`, "m");
+  const iM = inlineRe.exec(yaml);
+  if (iM) {
+    const items = (iM[2] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const idx = items.findIndex((i) => stripQ(i) === oldId);
+    if (idx === -1) return { yaml, changed: false };
+    if (mode === "replace") items.splice(idx, 1, newId);
+    else items.splice(idx + 1, 0, newId);
+    return {
+      yaml:
+        yaml.slice(0, iM.index) +
+        iM[1] +
+        items.join(", ") +
+        iM[3] +
+        yaml.slice(iM.index + iM[0].length),
+      changed: true,
+    };
+  }
+  // Block form: key:\n  - a\n  - b
+  const blockRe = new RegExp(`(^${fieldName}:\\s*\\n)((?:[ \\t]+-[^\\n]*\\n?)*)`, "m");
+  const bM = blockRe.exec(yaml);
+  if (!bM) return { yaml, changed: false };
+  const lines = (bM[2] ?? "").split("\n");
+  let found = false;
+  const out: string[] = [];
+  for (const line of lines) {
+    const lm = /^([ \t]+-[ \t]+)(.+)$/.exec(line);
+    if (!lm) { out.push(line); continue; }
+    if (stripQ(lm[2]!.trim()) === oldId) {
+      found = true;
+      if (mode === "replace") out.push(`${lm[1]}${newId}`);
+      else { out.push(line); out.push(`${lm[1]}${newId}`); }
+    } else {
+      out.push(line);
+    }
+  }
+  if (!found) return { yaml, changed: false };
+  return {
+    yaml:
+      yaml.slice(0, bM.index) +
+      bM[1] +
+      out.join("\n") +
+      yaml.slice(bM.index + bM[0].length),
+    changed: true,
+  };
+}
+
+/** Add or replace a top-level scalar YAML field. Appends if absent. */
+function addOrReplaceField(yaml: string, key: string, value: string): string {
+  const re = new RegExp(`^${key}:[^\\n]*(?:\\n[ \\t]+[^\\n]*)*`, "m");
+  if (re.test(yaml)) return yaml.replace(re, `${key}: ${value}`);
+  return yaml.trimEnd() + `\n${key}: ${value}\n`;
+}
+
+/**
+ * Rewrite needs:/after: edges referencing originalId across all agents and
+ * buckets. Returns the count of envelope files modified.
+ * Exported so the runner can call it from the <task-delegate> directive path.
+ */
+export function rewriteDelegationEdges(
+  root: string,
+  originalId: string,
+  delegateId: string,
+  mode: "replace" | "add"
+): number {
+  const agents = listLocalAgents(root);
+  let count = 0;
+  const now = new Date().toISOString();
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const dir = join(root, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      let fnames: string[];
+      try { fnames = readdirSync(dir); } catch { continue; }
+      for (const fname of fnames) {
+        if (!fname.endsWith(".yaml")) continue;
+        const id = fname.slice(0, -5);
+        if (id === originalId || id === delegateId) continue;
+        const p = join(dir, fname);
+        let y: string;
+        try { y = readFileSync(p, "utf8"); } catch { continue; }
+        if (
+          !readListFromYaml(y, "needs").includes(originalId) &&
+          !readListFromYaml(y, "after").includes(originalId)
+        ) continue;
+        let newY = y;
+        const r1 = rewriteListEntry(newY, "needs", originalId, delegateId, mode);
+        if (r1.changed) newY = r1.yaml;
+        const r2 = rewriteListEntry(newY, "after", originalId, delegateId, mode);
+        if (r2.changed) newY = r2.yaml;
+        newY = newY.replace(/^updated:\s*.*$/m, `updated: ${now}`);
+        writeAtomic(p, newY);
+        count++;
+      }
+    }
+  }
+  return count;
+}
+
+/**
+ * caravel task delegate --original <id> --to <id> [--add]
+ *
+ * Transfer the obligations of originalId to delegateId: rewrites all
+ * needs:/after: edges referencing originalId to point at delegateId instead
+ * (or adds delegateId alongside with --add). Records delegated_to: on the
+ * original and journals the change. Does NOT change the original's status —
+ * a failed task stays failed; the audit trail must say "X delegated to X'",
+ * never "X mysteriously succeeded".
+ *
+ * Blocked dependants are released by sweepBlocked on the next runner tick
+ * when it finds that all their needs: deps are now in done/.
+ */
+function doDelegate(args: ParsedArgs, root: string): void {
+  const originalId = args.original && args.original !== true ? String(args.original) : null;
+  const delegateId = args.to && args.to !== true ? String(args.to) : null;
+  const mode: "replace" | "add" = args.add === true ? "add" : "replace";
+
+  if (!originalId || !delegateId) {
+    die("usage: task delegate --original <id> --to <id> [--add]");
+  }
+  if (originalId === delegateId) {
+    die("delegate: --original and --to must be different ids (self-reference)");
+  }
+
+  const agents = listLocalAgents(root);
+
+  // Locate the original envelope (any agent, any bucket)
+  let originalPath: string | null = null;
+  let originalYaml: string | null = null;
+  let originalBucket: string | null = null;
+  outer1: for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const p = join(root, "agents", a, "tasks", bucket, `${originalId}.yaml`);
+      if (existsSync(p)) {
+        try {
+          originalYaml = readFileSync(p, "utf8");
+          originalPath = p;
+          originalBucket = bucket;
+        } catch { /* skip unreadable */ }
+        break outer1;
+      }
+    }
+  }
+  if (!originalPath || !originalYaml) {
+    die(`delegate: original task ${originalId} not found in any agent/bucket`);
+  }
+
+  // Locate the delegate envelope — must exist and must not be terminal
+  let delegateBucket: string | null = null;
+  outer2: for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const p = join(root, "agents", a, "tasks", bucket, `${delegateId}.yaml`);
+      if (existsSync(p)) { delegateBucket = bucket; break outer2; }
+    }
+  }
+  if (!delegateBucket) {
+    die(`delegate: delegate task ${delegateId} not found in any agent/bucket`);
+  }
+  // Refuse permanently-terminal buckets (UNSATISFIABLE_DELEGATE_BUCKETS): failed/archived
+  // can never satisfy a `needs:` edge. done/ is allowed — sweepBlocked releases blocked
+  // dependants immediately on the next tick (this is the incident-recovery case).
+  if ((UNSATISFIABLE_DELEGATE_BUCKETS as readonly string[]).includes(delegateBucket)) {
+    die(
+      `delegate: ${delegateId} is in ${delegateBucket}/ — cannot delegate to a permanently-failed task`
+    );
+  }
+
+  // Collect the set of tasks that reference originalId in needs:/after:
+  const dependantIds = new Set<string>();
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const dir = join(root, "agents", a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      try {
+        for (const fname of readdirSync(dir)) {
+          if (!fname.endsWith(".yaml")) continue;
+          const id = fname.slice(0, -5);
+          if (id === originalId || id === delegateId) continue;
+          try {
+            const y = readFileSync(join(dir, fname), "utf8");
+            if (
+              readListFromYaml(y, "needs").includes(originalId) ||
+              readListFromYaml(y, "after").includes(originalId)
+            ) dependantIds.add(id);
+          } catch { continue; }
+        }
+      } catch { continue; }
+    }
+  }
+
+  if (dependantIds.size === 0) {
+    console.warn(
+      `caravel task: delegate warning — no tasks reference ${originalId} in needs:/after: (nothing to repoint)`
+    );
+  }
+
+  // Cycle check: does delegate transitively depend on any of the dependants?
+  // If yes, after rewriting the dependants would form a cycle with delegateId.
+  const visited = new Set<string>();
+  const queue = [delegateId];
+  while (queue.length > 0) {
+    const cur = queue.shift()!;
+    if (visited.has(cur)) continue;
+    visited.add(cur);
+    let curYaml: string | null = null;
+    outer3: for (const a of agents) {
+      for (const bucket of ALLOCATION_SCAN_DIRS) {
+        const p = join(root, "agents", a, "tasks", bucket, `${cur}.yaml`);
+        if (existsSync(p)) {
+          try { curYaml = readFileSync(p, "utf8"); } catch { /* skip */ }
+          break outer3;
+        }
+      }
+    }
+    if (!curYaml) continue;
+    for (const dep of [
+      ...readListFromYaml(curYaml, "needs"),
+      ...readListFromYaml(curYaml, "after"),
+    ]) {
+      if (dependantIds.has(dep)) {
+        die(
+          `delegate: cycle — ${delegateId} transitively depends on ${dep}, ` +
+          `which would depend on ${delegateId} after rewriting`
+        );
+      }
+      queue.push(dep);
+    }
+  }
+
+  // Rewrite all edges (needs:/after: in every envelope across all agents/buckets)
+  const rewritten = rewriteDelegationEdges(root, originalId, delegateId, mode);
+
+  // Stamp delegated_to: on the original. Leave its status unchanged — a failed
+  // task stays failed; the audit trail must say "X delegated to X'", not "X
+  // mysteriously succeeded" (Alice's words, WAL-153 brief).
+  let newOrigYaml = addOrReplaceField(originalYaml, "delegated_to", delegateId);
+  newOrigYaml = newOrigYaml.replace(/^updated:\s*.*$/m, `updated: ${new Date().toISOString()}`);
+  writeAtomic(originalPath, newOrigYaml);
+
+  // Journal on the original task's owning agent
+  const originalAgent = extractField(originalYaml, "to") ?? agents[0] ?? "alice";
+  journalAppend(root, originalAgent, {
+    ts: new Date().toISOString(),
+    id: originalId,
+    bucket: originalBucket,
+    kind: "delegate",
+    delegate: delegateId,
+    mode,
+    dependants_rewritten: rewritten,
+    summary:
+      `delegate: ${originalId} obligations ${mode === "replace" ? "transferred to" : "added alongside"} ` +
+      `${delegateId} (${rewritten} edge${rewritten !== 1 ? "s" : ""} rewritten)`,
+  });
+
+  console.log(`caravel task: delegated ${originalId} → ${delegateId}`);
+  console.log(`  mode: ${mode}`);
+  console.log(`  edges rewritten: ${rewritten}`);
+  if (rewritten > 0) {
+    console.log(
+      `  blocked dependants will be released by sweepBlocked on the next runner tick`
+    );
+  }
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 
 export function runTaskCli(argv: string[]): void {
@@ -1637,6 +1950,10 @@ export function runTaskCli(argv: string[]): void {
       doBatch(args, root);
       break;
 
+    case "delegate":
+      doDelegate(args, root);
+      break;
+
     default: {
       const action = String(args.action ?? "");
       if (action) {
@@ -1644,18 +1961,19 @@ export function runTaskCli(argv: string[]): void {
       } else {
         console.log(
           [
-            "caravel task park|done|failed|wrap|new|next-id|list|summary|lint|batch",
+            "caravel task park|done|failed|wrap|new|next-id|list|summary|lint|batch|delegate",
             "",
-            "  park     Park a task on long-running external work",
-            "  done     Write a done rendezvous",
-            "  failed   Write a failed rendezvous",
-            "  wrap     Park, launch a command detached, write rendezvous on exit",
-            "  new      Dispatch a new task envelope",
-            "  next-id  Print the next available task ID (no file written)",
-            "  list     List tasks for an agent as JSON",
-            "  summary  Print a cross-agent summary as JSON",
-            "  lint     Run policy lint on an existing envelope file",
-            "  batch    Lint and dispatch a connected task graph atomically",
+            "  park      Park a task on long-running external work",
+            "  done      Write a done rendezvous",
+            "  failed    Write a failed rendezvous",
+            "  wrap      Park, launch a command detached, write rendezvous on exit",
+            "  new       Dispatch a new task envelope",
+            "  next-id   Print the next available task ID (no file written)",
+            "  list      List tasks for an agent as JSON",
+            "  summary   Print a cross-agent summary as JSON",
+            "  lint      Run policy lint on an existing envelope file",
+            "  batch     Lint and dispatch a connected task graph atomically",
+            "  delegate  Transfer needs:/after: edges from one task to another",
           ].join("\n")
         );
       }

@@ -42,6 +42,7 @@ import {
   ALLOCATION_SCAN_DIRS,
   VALID_WAITING_SPECS,
   REPORT_FILE_BUCKETS,
+  UNSATISFIABLE_DELEGATE_BUCKETS,
   type WorkerUsage,
 } from "./envelope/schema";
 import { appendUsageToEnvelopeYaml } from "./envelope/write";
@@ -603,6 +604,11 @@ interface TaskDirective {
   // readReportFile when it reads a waiting/ rendezvous file.
   deadline?: string;  // ISO timestamp after which the park becomes failed:timeout
   watch?: string;     // human-readable descriptor of what to watch for completion
+  // WAL-153: worker-driven delegation directive. When set, the runner rewrites
+  // needs:/after: edges pointing at this task to point at delegateId instead.
+  // Processed after transitionToTerminal — the original task's terminal status
+  // is NOT altered; only dependant envelopes are updated.
+  delegate?: { delegateId: string; mode: "replace" | "add" };
 }
 
 function parseAttrs(s: string): Record<string, string> {
@@ -781,27 +787,42 @@ function detectLimitsHit(text: string): boolean {
 }
 
 function parseDirective(text: string): TaskDirective | null {
+  // Helper: parse a co-located <task-delegate delegate="X" mode="..."> tag
+  // and attach to the terminal directive if found. Only attaches to done/failed.
+  function attachDelegate(result: TaskDirective): TaskDirective {
+    if (result.kind !== "done" && result.kind !== "failed") return result;
+    const dm = /<task-delegate([^>]*)>/.exec(text);
+    if (!dm) return result;
+    const da = parseAttrs(dm[1] ?? "");
+    const delegateId = (da.delegate ?? "").trim();
+    if (!delegateId) return result;
+    return {
+      ...result,
+      delegate: { delegateId, mode: da.mode === "add" ? "add" : "replace" },
+    };
+  }
+
   const doneMatch = /<task-done([^>]*)>([\s\S]*?)<\/task-done>/.exec(text);
   if (doneMatch) {
     const attrs = parseAttrs(doneMatch[1] ?? "");
-    return {
+    return attachDelegate({
       kind: "done",
       reason: null,
       summary: (attrs.summary ?? "").trim(),
       body: (doneMatch[2] ?? "").trim(),
       report: normaliseReportPath(attrs.report ?? null),
-    };
+    });
   }
   const failMatch = /<task-failed([^>]*)>([\s\S]*?)<\/task-failed>/.exec(text);
   if (failMatch) {
     const attrs = parseAttrs(failMatch[1] ?? "");
-    return {
+    return attachDelegate({
       kind: "failed",
       reason: attrs.reason ?? "other",
       summary: (attrs.summary ?? "").trim(),
       body: (failMatch[2] ?? "").trim(),
       report: null,
-    };
+    });
   }
   const waitMatch = /<task-waiting([^>]*)>([\s\S]*?)<\/task-waiting>/.exec(text);
   if (waitMatch) {
@@ -2250,6 +2271,155 @@ async function transitionToTerminal(
   }
 }
 
+// === WAL-153: task-delegate directive support ================================
+//
+// A worker emitting <task-delegate delegate="X'" mode="replace|add"> alongside
+// <task-done> or <task-failed> signals that its dependants should be re-pointed
+// at X' instead (or in addition to) itself. The runner processes this after
+// transitionToTerminal so the original task's terminal status is not affected —
+// a failed task stays failed; only the dependant edges are rewritten.
+//
+// sweepBlocked picks up the change on its next tick: after rewriting, blocked
+// dependants whose only unsatisfied `needs:` was the original will find all
+// their deps in done/ and be re-opened automatically.
+
+/** Rewrite one list entry in a YAML string (inline or block form). */
+function rewriteListInYaml(
+  yaml: string,
+  fieldName: string,
+  oldId: string,
+  newId: string,
+  mode: "replace" | "add"
+): string {
+  function stripQ(s: string) {
+    return s.length >= 2 &&
+      ((s[0] === '"' && s.endsWith('"')) || (s[0] === "'" && s.endsWith("'")))
+      ? s.slice(1, -1)
+      : s;
+  }
+  // Inline form: key: [a, b, c]
+  const inlineRe = new RegExp(`^(${fieldName}:\\s*\\[)([^\\]]*)(\\])`, "m");
+  const iM = inlineRe.exec(yaml);
+  if (iM) {
+    const items = (iM[2] ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const idx = items.findIndex((i) => stripQ(i) === oldId);
+    if (idx === -1) return yaml;
+    if (mode === "replace") items.splice(idx, 1, newId);
+    else items.splice(idx + 1, 0, newId);
+    return yaml.slice(0, iM.index) + iM[1] + items.join(", ") + iM[3] + yaml.slice(iM.index + iM[0].length);
+  }
+  // Block form: key:\n  - a\n  - b
+  const blockRe = new RegExp(`(^${fieldName}:\\s*\\n)((?:[ \\t]+-[^\\n]*\\n?)*)`, "m");
+  const bM = blockRe.exec(yaml);
+  if (!bM) return yaml;
+  const lines = (bM[2] ?? "").split("\n");
+  let found = false;
+  const out: string[] = [];
+  for (const line of lines) {
+    const lm = /^([ \t]+-[ \t]+)(.+)$/.exec(line);
+    if (!lm) { out.push(line); continue; }
+    if (stripQ(lm[2]!.trim()) === oldId) {
+      found = true;
+      if (mode === "replace") out.push(`${lm[1]}${newId}`);
+      else { out.push(line); out.push(`${lm[1]}${newId}`); }
+    } else out.push(line);
+  }
+  if (!found) return yaml;
+  return yaml.slice(0, bM.index) + bM[1] + out.join("\n") + yaml.slice(bM.index + bM[0].length);
+}
+
+async function applyDelegateDirective(
+  originalId: string,
+  delegateInfo: { delegateId: string; mode: "replace" | "add" }
+): Promise<void> {
+  const { delegateId, mode } = delegateInfo;
+
+  // Verify delegate exists and is not in an unsatisfiable bucket (failed/archived).
+  // done/ is allowed — sweepBlocked releases blocked dependants on the next tick.
+  let delegateBucket: string | null = null;
+  const agents = knownAgents();
+  outer: for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      if (existsSync(join(AGENTS_DIR, a, "tasks", bucket, `${delegateId}.yaml`))) {
+        delegateBucket = bucket;
+        break outer;
+      }
+    }
+  }
+  if (!delegateBucket) {
+    console.warn(`[task-delegate] directive skipped: delegate ${delegateId} not found`);
+    return;
+  }
+  if ((UNSATISFIABLE_DELEGATE_BUCKETS as readonly string[]).includes(delegateBucket)) {
+    console.warn(
+      `[task-delegate] directive skipped: delegate ${delegateId} is in ${delegateBucket}/ (permanently failed)`
+    );
+    return;
+  }
+
+  // Rewrite needs:/after: edges across all agents and buckets
+  let rewritten = 0;
+  const now = new Date().toISOString();
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const dir = join(AGENTS_DIR, a, "tasks", bucket);
+      if (!existsSync(dir)) continue;
+      const fnames = await readdir(dir).catch(() => [] as string[]);
+      for (const fname of fnames.filter((f) => f.endsWith(".yaml"))) {
+        const id = fname.slice(0, -5);
+        if (id === originalId || id === delegateId) continue;
+        const p = join(dir, fname);
+        let y: string;
+        try { y = await readFile(p, "utf-8"); } catch { continue; }
+        const needs = readList(y, "needs");
+        const after = readList(y, "after");
+        if (!needs.includes(originalId) && !after.includes(originalId)) continue;
+        let newY = y;
+        if (needs.includes(originalId))
+          newY = rewriteListInYaml(newY, "needs", originalId, delegateId, mode);
+        if (after.includes(originalId))
+          newY = rewriteListInYaml(newY, "after", originalId, delegateId, mode);
+        newY = setField(newY, "updated", now);
+        await writeFile(p, newY, "utf-8");
+        rewritten++;
+      }
+    }
+  }
+
+  // Stamp delegated_to: on the original (it's already in done/failed/ after transitionToTerminal)
+  let originalPath: string | null = null;
+  let originalYaml: string | null = null;
+  outer2: for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const p = join(AGENTS_DIR, a, "tasks", bucket, `${originalId}.yaml`);
+      if (existsSync(p)) {
+        try { originalYaml = await readFile(p, "utf-8"); originalPath = p; } catch { /* skip */ }
+        break outer2;
+      }
+    }
+  }
+  if (originalPath && originalYaml) {
+    await writeFile(originalPath, setField(setField(originalYaml, "delegated_to", delegateId), "updated", now));
+  }
+
+  // Journal entry
+  const originalAgent = originalYaml ? (readField(originalYaml, "to") ?? agents[0]) : agents[0];
+  if (originalAgent) {
+    await appendJournal(originalAgent, {
+      ts: now,
+      id: originalId,
+      kind: "delegate",
+      delegate: delegateId,
+      mode,
+      dependants_rewritten: rewritten,
+      summary: `directive: ${originalId} obligations ${mode === "replace" ? "transferred to" : "added alongside"} ${delegateId} (${rewritten} edge${rewritten !== 1 ? "s" : ""} rewritten)`,
+    });
+  }
+  console.log(
+    `[task-delegate] ${originalId} → ${delegateId} (${rewritten} dependant${rewritten !== 1 ? "s" : ""} rewritten, mode: ${mode})`
+  );
+}
+
 // sweepBlocked: symmetric to sweepWaiting. A task in blocked/ whose `needs`
 // deps are now all `done` is re-opened so the work can proceed. This is the
 // "retry the upstream → the continuation proceeds as planned" path (FDP v1.19
@@ -3081,6 +3251,12 @@ async function applyWorkerOutcome(
   } else {
     await transitionToTerminal(agent, taskId, filePath, effective, u);
     console.log(`[${new Date().toLocaleTimeString()}] multi-agent: ${agent}/${taskId} → ${effective.kind === "done" ? "done" : `failed:${effective.reason}`}`);
+    // WAL-153: process any co-located <task-delegate> directive after the terminal
+    // transition completes. sweepBlocked will release newly-satisfiable blocked
+    // dependants on the next tick.
+    if (effective.delegate) {
+      await applyDelegateDirective(taskId, effective.delegate);
+    }
   }
 }
 
