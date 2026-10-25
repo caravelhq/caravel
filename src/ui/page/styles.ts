@@ -1856,6 +1856,24 @@ export const pageStyles = String.raw`    :root {
       z-index: 50;
       box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
+    .chats-page {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .chats-page .chat-history-dropdown {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-height: none;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      overflow-y: auto;
+    }
     .chat-history-head {
       display: flex;
       align-items: center;

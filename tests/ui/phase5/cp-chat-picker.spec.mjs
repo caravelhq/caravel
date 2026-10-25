@@ -4,6 +4,12 @@
 // (.chat-panel, #chat-history-btn, legacy:chat). Now drives the post-step-3
 // surface: chat: resource via ChatView, picker via .chat-toolbar-btn.
 //
+// CP-6: Open menu → Chat entry — the documented entry route from the shell.
+//       Clicks .open-menu-btn then #tab-chat; asserts .chat-history-dropdown
+//       renders with rows in full-pane geometry (height > half viewport height).
+//       Asserts a picker row click opens a chat: preview tab.
+// CP-7: URL /chat route — navigates directly to /chat; asserts same surface.
+//
 // CP-1: Bounded render — rendered rows === CHAT_LIST_RENDER_N (N=20).
 //       Bound label "Showing 20 of 27" is present. N < total asserted.
 // CP-2: Search reaches a chat ranked below N (XRAY-FIXTURE-CORPUS-TOKEN).
@@ -409,6 +415,112 @@ async function runSuiteAt(viewport, tag) {
       } else {
         fail(`[${tag}] CP-5`, "could not find a non-active row to click");
       }
+    }
+
+    // CP-6: Open menu → Chat button → full-pane picker renders with rows
+    console.log("\nCP-6: Open menu → Chat → full-pane picker renders with rows");
+    {
+      await clearWorkspace(page);
+      await waitForChatsList(page);
+
+      // Open the shell's Open menu and click Chat.
+      await page.click(".open-menu-btn", { timeout: 5000 });
+      await page.waitForSelector(".open-menu-list", { timeout: 5000 });
+      await page.waitForTimeout(150);
+      await page.click("#tab-chat", { timeout: 5000 });
+      await page.waitForSelector(".chat-history-dropdown", { timeout: 10000 });
+      await page.waitForTimeout(500);
+
+      // Assert rows are present.
+      const rowCount = await page.$$eval(".chat-history-row", (els) => els.length);
+      if (rowCount >= 1) {
+        pass(`[${tag}] CP-6a: ${rowCount} rows visible via Open→Chat`);
+      } else {
+        fail(`[${tag}] CP-6a: picker rows`, `expected ≥1 rows, got ${rowCount}`);
+      }
+
+      // Assert expected geometry — picker must fill the tab content area, not render
+      // as the 300px overlay. Height must exceed half the viewport height.
+      const pickerBox = await page.$eval(".chat-history-dropdown", (el) => {
+        const r = el.getBoundingClientRect();
+        return { width: Math.round(r.width), height: Math.round(r.height) };
+      });
+      const minH = Math.round(viewport.height / 2);
+      if (pickerBox.height >= minH) {
+        pass(`[${tag}] CP-6b: picker geometry ${pickerBox.width}×${pickerBox.height} — full-pane (≥${minH}px tall)`);
+      } else {
+        fail(`[${tag}] CP-6b: picker geometry`, `height=${pickerBox.height}px — want ≥${minH}px (overlay max-height is 300px)`);
+      }
+
+      await screenshot(page, `${tag}-cp6-open-menu-entry`);
+
+      // Assert a row click opens a chat: preview tab.
+      const rows = await page.$$(".chat-history-row");
+      let clickedChatId = null;
+      for (const row of rows) {
+        const chatId = await row.getAttribute("data-chat-id");
+        if (chatId) {
+          const itemBtn = await row.$(".chat-history-item");
+          if (itemBtn) {
+            clickedChatId = chatId;
+            await itemBtn.click();
+            break;
+          }
+        }
+      }
+      await page.waitForTimeout(500);
+
+      if (clickedChatId) {
+        const opened = await page.evaluate((cid) => {
+          const app = document.querySelector("#app")?.__vue_app__;
+          const pinia = app?.config?.globalProperties?.$pinia ?? window.__pinia;
+          const ws = pinia?._s?.get("workspace");
+          const tabs = ws?.tabs ?? [];
+          return tabs.some((t) => t?.kind === "chat" && t?.chatId === cid);
+        }, clickedChatId);
+        if (opened) {
+          pass(`[${tag}] CP-6c: row click opened chat:${clickedChatId} as a tab`);
+        } else {
+          fail(`[${tag}] CP-6c: preview tab`, `chat:${clickedChatId} not found in workspace tabs`);
+        }
+        await screenshot(page, `${tag}-cp6-row-click`);
+      } else {
+        fail(`[${tag}] CP-6c`, "could not find a row to click");
+      }
+    }
+
+    // CP-7: URL /chat route → same full-pane surface
+    console.log("\nCP-7: /chat URL route → full-pane picker renders");
+    {
+      // Clear workspace state so the URL is the sole source of truth on cold load.
+      // Router uses createWebHashHistory — the hash URL is /#/chat, not /chat.
+      await clearWorkspace(page);
+      await page.goto(FIXTURE_BASE + "/#/chat", { waitUntil: "load", timeout: 15000 });
+      await page.waitForSelector(".workspace", { timeout: 10000 });
+      await page.waitForTimeout(800);
+      await waitForChatsList(page);
+      await page.waitForSelector(".chat-history-dropdown", { timeout: 15000 });
+      await page.waitForTimeout(300);
+
+      const rowCount = await page.$$eval(".chat-history-row", (els) => els.length);
+      if (rowCount >= 1) {
+        pass(`[${tag}] CP-7a: /chat URL rendered picker with ${rowCount} rows`);
+      } else {
+        fail(`[${tag}] CP-7a: /chat URL picker rows`, `expected ≥1 rows, got ${rowCount}`);
+      }
+
+      const pickerBox = await page.$eval(".chat-history-dropdown", (el) => {
+        const r = el.getBoundingClientRect();
+        return { width: Math.round(r.width), height: Math.round(r.height) };
+      });
+      const minH = Math.round(viewport.height / 2);
+      if (pickerBox.height >= minH) {
+        pass(`[${tag}] CP-7b: /chat URL picker geometry ${pickerBox.width}×${pickerBox.height} — full-pane (≥${minH}px)`);
+      } else {
+        fail(`[${tag}] CP-7b: /chat URL picker geometry`, `height=${pickerBox.height}px — want ≥${minH}px`);
+      }
+
+      await screenshot(page, `${tag}-cp7-url-route`);
     }
 
   } finally {
