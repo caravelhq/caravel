@@ -26,9 +26,12 @@
 # Args:
 #   --no-pull   Skip the git pull step.
 #   --dry-run   Show what would happen without writing.
-#   --force     Overwrite workspace files that differ from the template.
-#               Default (no --force): abort if any managed file has been
-#               locally modified rather than silently destroying the changes.
+#   --force     Overwrite managed files that have local edits since the last
+#               install. Default: abort rather than destroy local changes.
+#   --adopt-existing
+#               Keep the workspace copies of any divergent managed files and
+#               record them as the install baseline. Use once when migrating
+#               an existing workspace onto the manifest.
 #   -h|--help   Show this header.
 
 set -euo pipefail
@@ -58,11 +61,13 @@ DEST_SHARED="${PROJECT_DIR}/agents/_shared"
 NO_PULL=0
 DRY_RUN=0
 FORCE=0
+ADOPT_EXISTING=0
 for arg in "$@"; do
   case "$arg" in
     --no-pull) NO_PULL=1 ;;
     --dry-run) DRY_RUN=1 ;;
     --force)   FORCE=1 ;;
+    --adopt-existing) ADOPT_EXISTING=1 ;;
     -h|--help)
       sed -n '2,35p' "$0"
       exit 0
@@ -105,91 +110,165 @@ if [[ $NO_PULL -eq 0 ]]; then
   fi
 fi
 
-# Pre-copy conflict check — abort (or warn in dry-run) if any managed file
-# has been locally modified and --force was not passed.
+# ── Install manifest ────────────────────────────────────────────────────────
+# The gate compares each destination against WHAT THE INSTALLER LAST WROTE,
+# recorded in .caravel/install-manifest.sha256 — not against the template.
+#
+# Comparing against the template was wrong: the template is deliberately
+# generic ("the user", generic project names) while a live workspace is
+# install-specific, so the two differ permanently and the gate fired on every
+# run. That made --force mandatory to use the tool at all, which is no gate.
+#
+# Classification per managed file:
+#   new        destination absent                      -> write
+#   clean      matches last-installed hash             -> write (template may differ; fine)
+#   adopt      no manifest entry, identical to template-> write + record
+#   modified   has entry, content changed since install-> CONFLICT (locally edited)
+#   unmanaged  no entry, differs from template         -> CONFLICT (unknown provenance)
+#   pinned     adopted via --adopt-existing             -> keep workspace copy
+#
+# A pinned entry means "this workspace owns this file" and survives every
+# refresh until --force explicitly unpins it. Without pinning, --adopt-existing
+# would only defer the overwrite by one run, which is worse than no flag.
+MANIFEST="${PROJECT_DIR}/.caravel/install-manifest.sha256"
 CONFLICTS=0
-check_conflict() {
-  local src="$1" dst="$2"
-  if [[ -f "$dst" ]] && ! cmp -s "$src" "$dst"; then
-    echo "  conflict: ${dst#$PROJECT_DIR/}" >&2
-    echo "            template: $(wc -l < "$src") lines  workspace: $(wc -l < "$dst") lines" >&2
-    CONFLICTS=$((CONFLICTS + 1))
+declare -a WRITE_SRC=()    # parallel arrays of files cleared to write
+declare -a WRITE_DST=()
+declare -a KEEP_HASHES=()  # manifest lines to carry forward untouched
+
+hash_of() { sha256sum "$1" | cut -d' ' -f1; }
+rel_of()  { echo "${1#$PROJECT_DIR/}"; }
+
+manifest_lookup() {
+  [[ -f "$MANIFEST" ]] || return 0
+  local rel="$1" line
+  while IFS= read -r line; do
+    [[ "${line#*  }" == "$rel" ]] && { echo "${line%%  *}"; return 0; }
+  done < "$MANIFEST"
+}
+
+classify() {
+  local src="$1" dst="$2" rel rec cur
+  rel="$(rel_of "$dst")"
+  if [[ ! -f "$dst" ]]; then echo new; return; fi
+  rec="$(manifest_lookup "$rel")"
+  cur="$(hash_of "$dst")"
+  if [[ "$rec" == pinned:* ]]; then echo pinned; return; fi
+  if [[ -z "$rec" ]]; then
+    cmp -s "$src" "$dst" && echo adopt || echo unmanaged
+  elif [[ "$cur" == "$rec" ]]; then
+    echo clean
+  else
+    echo modified
   fi
+}
+
+plan_file() {
+  local src="$1" dst="$2" verdict
+  verdict="$(classify "$src" "$dst")"
+  case "$verdict" in
+    pinned)
+      if [[ $FORCE -eq 1 ]]; then
+        WRITE_SRC+=("$src"); WRITE_DST+=("$dst")
+        echo "  unpinning and overwriting: $(rel_of "$dst")" >&2
+      else
+        KEEP_HASHES+=("pinned:$(hash_of "$dst")  $(rel_of "$dst")")
+        echo "  pinned (keeping workspace copy): $(rel_of "$dst")"
+      fi ;;
+    new|clean|adopt)
+      WRITE_SRC+=("$src"); WRITE_DST+=("$dst") ;;
+    modified|unmanaged)
+      if [[ $ADOPT_EXISTING -eq 1 ]]; then
+        # Baseline the workspace as-is: do not overwrite, just record its hash
+        # so future runs can tell a real local edit from template movement.
+        KEEP_HASHES+=("pinned:$(hash_of "$dst")  $(rel_of "$dst")")
+        echo "  adopting existing: $(rel_of "$dst") (not overwritten)"
+      elif [[ $FORCE -eq 1 ]]; then
+        WRITE_SRC+=("$src"); WRITE_DST+=("$dst")
+        echo "  overwriting ($verdict): $(rel_of "$dst")" >&2
+      else
+        echo "  conflict ($verdict): $(rel_of "$dst")" >&2
+        [[ "$verdict" == modified ]] && \
+          echo "            locally edited since the last install" >&2 || \
+          echo "            not installed by this tool and differs from the template" >&2
+        KEEP_HASHES+=("$(manifest_lookup "$(rel_of "$dst")")  $(rel_of "$dst")")
+        CONFLICTS=$((CONFLICTS + 1))
+      fi ;;
+  esac
 }
 
 for skill_src in "$SRC_DIR"/skills/*/; do
   [[ -d "$skill_src" ]] || continue
-  skill_name="$(basename "$skill_src")"
-  skill_dest="${PROJECT_DIR}/.claude/skills/${skill_name}"
-  [[ -f "$skill_src/SKILL.md" ]] && check_conflict "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
+  skill_dest="${PROJECT_DIR}/.claude/skills/$(basename "$skill_src")"
+  [[ -f "$skill_src/SKILL.md" ]] && plan_file "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
   if [[ -d "$skill_src/script" ]]; then
     for f in "$skill_src"script/*; do
       [[ -f "$f" ]] || continue
-      check_conflict "$f" "$skill_dest/script/$(basename "$f")"
+      plan_file "$f" "$skill_dest/script/$(basename "$f")"
     done
   fi
 done
 
 [[ -f "$SRC_DIR/shared/task-envelope.md" ]] && \
-  check_conflict "$SRC_DIR/shared/task-envelope.md" "$DEST_SHARED/task-envelope.md"
+  plan_file "$SRC_DIR/shared/task-envelope.md" "$DEST_SHARED/task-envelope.md"
 
 if [[ -d "$SRC_DIR/shared/rules" ]]; then
   for f in "$SRC_DIR"/shared/rules/*.md; do
     [[ -e "$f" ]] || continue
-    check_conflict "$f" "$DEST_SHARED/rules/$(basename "$f")"
+    plan_file "$f" "$DEST_SHARED/rules/$(basename "$f")"
   done
 fi
 
 if [[ $CONFLICTS -gt 0 ]]; then
   echo >&2
-  if [[ $FORCE -eq 1 ]]; then
-    echo "WARNING: overwriting $CONFLICTS differing file(s) because --force was passed." >&2
-  elif [[ $DRY_RUN -eq 1 ]]; then
-    echo "Dry run — $CONFLICTS file(s) would conflict and NOT be written without --force." >&2
+  if [[ $DRY_RUN -eq 1 ]]; then
+    echo "Dry run — $CONFLICTS file(s) would be SKIPPED as locally modified." >&2
   else
-    echo "Error: $CONFLICTS file(s) in the project differ from the template." >&2
-    echo "       Review the diffs, merge any local improvements back into the template," >&2
-    echo "       then re-run with --force to overwrite." >&2
+    echo "Error: $CONFLICTS managed file(s) have local edits since the last install." >&2
+    echo "       Re-run with --force to overwrite them, or --adopt-existing to keep" >&2
+    echo "       the workspace copies and baseline them for future runs." >&2
     exit 1
   fi
 fi
 
-# Skills — .claude/skills/<name>/ for every skill in the template.
-# Was hardcoded to skills/task only, so any other template skill (task-tree,
-# sweep, ...) was tracked in the repo but never installed. WAL-154.
-for skill_src in "$SRC_DIR"/skills/*/; do
-  [[ -d "$skill_src" ]] || continue
-  skill_name="$(basename "$skill_src")"
-  skill_dest="${PROJECT_DIR}/.claude/skills/${skill_name}"
-  echo "Installing /${skill_name} skill → ${skill_dest#$PROJECT_DIR/}"
-  run mkdir -p "$skill_dest"
-  [[ -f "$skill_src/SKILL.md" ]] && run cp "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
-  if [[ -d "$skill_src/script" ]]; then
-    run mkdir -p "$skill_dest/script"
-    for f in "$skill_src"script/*; do
-      [[ -f "$f" ]] || continue
-      run cp "$f" "$skill_dest/script/$(basename "$f")"
-      run chmod +x "$skill_dest/script/$(basename "$f")"
-    done
-  fi
-done
-
-# Shared schema + examples — agents/_shared/
-echo "Installing shared envelope spec → ${DEST_SHARED#$PROJECT_DIR/}"
-run mkdir -p "$DEST_SHARED/task-envelope-examples"
-run cp "$SRC_DIR/shared/task-envelope.md" "$DEST_SHARED/task-envelope.md"
-for f in "$SRC_DIR"/shared/task-envelope-examples/*.yaml; do
-  run cp "$f" "$DEST_SHARED/task-envelope-examples/$(basename "$f")"
-done
-
-# Shared rules — agents/_shared/rules/
-if [[ -d "$SRC_DIR/shared/rules" ]]; then
-  echo "Installing shared rules → ${DEST_SHARED#$PROJECT_DIR/}/rules"
-  run mkdir -p "$DEST_SHARED/rules"
-  for f in "$SRC_DIR"/shared/rules/*.md; do
-    [[ -e "$f" ]] || continue
-    run cp "$f" "$DEST_SHARED/rules/$(basename "$f")"
+# ── Execute the write plan ──────────────────────────────────────────────────
+# Only files cleared by plan_file() are written. Everything written has its
+# resulting hash recorded in the manifest, so the next run can distinguish a
+# local edit from the template simply having moved on.
+NEW_HASHES=()
+if [[ ${#WRITE_SRC[@]} -gt 0 ]]; then
+  echo "Installing ${#WRITE_SRC[@]} managed file(s)..."
+  for idx in "${!WRITE_SRC[@]}"; do
+    src="${WRITE_SRC[$idx]}"; dst="${WRITE_DST[$idx]}"
+    echo "  ${dst#$PROJECT_DIR/}"
+    run mkdir -p "$(dirname "$dst")"
+    run cp "$src" "$dst"
+    [[ "$dst" == *"/script/"* ]] && run chmod +x "$dst"
+    if [[ $DRY_RUN -eq 0 ]]; then
+      NEW_HASHES+=("$(hash_of "$src")  $(rel_of "$dst")")
+    fi
   done
+else
+  echo "No managed files needed writing."
+fi
+
+# Envelope examples are additive reference material, not tracked by the manifest.
+if [[ -d "$SRC_DIR/shared/task-envelope-examples" ]]; then
+  run mkdir -p "$DEST_SHARED/task-envelope-examples"
+  for f in "$SRC_DIR"/shared/task-envelope-examples/*; do
+    [[ -f "$f" ]] || continue
+    run cp "$f" "$DEST_SHARED/task-envelope-examples/$(basename "$f")"
+  done
+fi
+
+# Write the manifest: freshly-written files plus any carried-forward entries
+# for files we deliberately left alone.
+if [[ $DRY_RUN -eq 0 ]]; then
+  mkdir -p "$(dirname "$MANIFEST")"
+  { for h in "${NEW_HASHES[@]}";  do [[ -n "$h" ]] && echo "$h"; done
+    for h in "${KEEP_HASHES[@]}"; do [[ -n "${h%%  *}" ]] && echo "$h"; done
+  } | sort -u -k2 > "${MANIFEST}.tmp" && mv "${MANIFEST}.tmp" "$MANIFEST"
+  echo "Manifest: ${MANIFEST#$PROJECT_DIR/} ($(wc -l < "$MANIFEST") entries)"
 fi
 
 # Per-agent task directories
