@@ -332,11 +332,18 @@ async function runSuiteAt(viewport, tag) {
       await patchMessagesVia(page, LARGE_CHAT_ID, [...currentMsgs, newMsg]);
 
       const stAfter = await getScrollTop(page);
-      // scrollTop should advance (scroll followed the new content).
-      if (stAfter >= stBottom) {
-        pass(`[${tag}] CL-b2: scroll followed — scrollTop ${stBottom}→${stAfter}`);
+      // scrollTop should be at the new bottom — "advance" means "at bottom," not necessarily
+      // a numerically higher scrollTop (renderFrom may advance, removing a tall old message
+      // and shrinking scrollHeight even as a short new message is appended — F-1, DEC-0049).
+      const atBottomAfter = await page.evaluate(() => {
+        const el = document.querySelector(".chat-messages");
+        if (!el) return false;
+        return el.scrollTop + el.clientHeight >= el.scrollHeight - 20;
+      });
+      if (atBottomAfter) {
+        pass(`[${tag}] CL-b2: scroll followed — at bottom after patch (scrollTop ${stBottom}→${stAfter})`);
       } else {
-        fail(`[${tag}] CL-b2`, `scrollTop did not advance: ${stBottom}→${stAfter}`);
+        fail(`[${tag}] CL-b2`, `not at bottom after message landed: scrollTop=${stAfter}`);
       }
 
       // Jump-to-latest should NOT be visible when at bottom.

@@ -9,8 +9,8 @@
 // LV3     ProjectView binding — project:<slug> refs > 0 when active,
 //          refs === 0 when deactivated.
 //
-// LV4     ViewHost F6/DEC-0035 placeholder — unregistered kind "chat" renders an
-//          explicit "chat — not available yet" label, not a blank pane.
+// LV4     ViewHost F6/DEC-0035 placeholder — retired kind "report" (no registry
+//          entry since Phase 3.2 step 5) renders "report — not available yet", not blank.
 //
 // LV5     S5 latency: p50 + p95 for /api/tasks/<id> and /api/projects/<slug>
 //          on the fixture corpus (this server, proxying to :4636) and the live
@@ -344,9 +344,14 @@ try {
   }
 
   // ─────────────────────────────────────────────────────────────────────────
-  // LV4  ViewHost F6/DEC-0035: a genuinely unregistered kind renders an explicit
+  // LV4  ViewHost F6/DEC-0035: an unregistered kind renders an explicit
   //       placeholder, not a blank pane.
-  //       "chat" was used before Phase 5 registered it — now uses "__xtest__".
+  //       "chat" was used before Phase 5 registered it; "__xtest__" was tried
+  //       but is not a valid ResourceRef kind (refKey returns undefined, no tab
+  //       found, nothing renders). Use "report" — it IS a valid ResourceRef kind
+  //       (refKey = "report:<taskId>") but was retired from the view registry in
+  //       Phase 3.2 step 5 (kept only for URL parsing). Direct injection bypasses
+  //       ws.open URL sync so it stays as a tab with no component.
   // ─────────────────────────────────────────────────────────────────────────
   {
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
@@ -365,17 +370,18 @@ try {
     await page.reload({ waitUntil: "networkidle" });
     await page.waitForTimeout(600);
 
-    // Inject a genuinely unregistered kind directly into the workspace store state.
-    // "__xtest__" is not and will never be registered in the view registry.
-    // Direct injection bypasses ws.open URL sync, which would redirect unregistered kinds.
+    // Inject a "report" kind tab directly into the workspace store state.
+    // "report" is a valid ResourceRef kind (refKey = "report:lv4-test") but was
+    // retired from the view registry in Phase 3.2 step 5, so getViewComponent
+    // returns null and ViewHost renders the .view-host-unregistered placeholder.
     await page.evaluate(() => {
       const app = document.querySelector("#app")?.__vue_app__;
       const pinia = app?.config?.globalProperties?.$pinia;
       const ws = pinia?._s?.get("workspace");
       if (!ws) return;
-      const testRef = { kind: "__xtest__", id: "lv4-test" };
+      const testRef = { kind: "report", taskId: "lv4-test" };
       ws.tabs.push(testRef);
-      ws.active[0] = "__xtest__:lv4-test";
+      ws.active[0] = "report:lv4-test";
       ws.focused = 0;
     });
     await page.waitForTimeout(300);
@@ -385,13 +391,13 @@ try {
     // Placeholder must be visible (not a blank pane).
     const placeholder = await page.locator(".view-host-unregistered").count();
     if (placeholder > 0) {
-      pass("LV4 — .view-host-unregistered placeholder visible for unregistered kind '__xtest__'");
+      pass("LV4 — .view-host-unregistered placeholder visible for retired kind 'report'");
     } else {
       fail("LV4 — explicit placeholder for unregistered kind", ".view-host-unregistered not found — blank pane regression (F6)");
     }
 
     const placeholderText = await page.locator(".view-host-unregistered-label").textContent().catch(() => "");
-    if (placeholderText.includes("__xtest__")) {
+    if (placeholderText.includes("report")) {
       pass(`LV4 — placeholder names the kind: "${placeholderText.trim()}"`);
     } else {
       fail("LV4 — placeholder names the kind", `text is "${placeholderText.trim()}" — kind not named`);
