@@ -1735,6 +1735,13 @@ export const pageStyles = String.raw`    :root {
       background: #ffffff10;
       color: #eef4ff;
     }
+    .chat-delete-btn {
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
     /* Toolbar chat-title input — sits inside
        .chat-toolbar-left, immediately after the agent badge, so the
        title reads alongside the agent. Hidden for empty chats — those
@@ -2349,7 +2356,8 @@ export const pageStyles = String.raw`    :root {
     .chat-mic {
       flex-shrink: 0;
       flex-grow: 0;
-      height: 28px;
+      height: 44px;
+      min-height: 44px;
       padding: 0 10px;
       border-radius: 999px;
       font-family: "JetBrains Mono", monospace;
@@ -2364,8 +2372,10 @@ export const pageStyles = String.raw`    :root {
       transition: transform 0.16s ease, filter 0.16s ease, opacity 0.16s ease, background 0.16s ease, border-color 0.16s ease;
     }
     .chat-send {
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
       padding: 0;
       border-radius: 50%;
       font-size: 15px;
@@ -2379,8 +2389,10 @@ export const pageStyles = String.raw`    :root {
       display: none;
     }
     .chat-interrupt {
-      width: 28px;
-      height: 28px;
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      min-height: 44px;
       padding: 0;
       border-radius: 50%;
       font-size: 14px;

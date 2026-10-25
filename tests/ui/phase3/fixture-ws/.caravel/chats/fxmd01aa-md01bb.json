@@ -1,0 +1,17 @@
+{
+  "id": "fxmd01aa-md01bb",
+  "name": "XRAY-CV-MARKDOWN-FIXTURE markdown test chat",
+  "agentId": "alice",
+  "messages": [
+    {
+      "role": "user",
+      "text": "Show me a code example",
+      "state": "sent"
+    },
+    {
+      "role": "assistant",
+      "text": "Here is a code block:\n\n```js\nconst x = 1;\nconsole.log(x);\n```\n\nDone.",
+      "state": "done"
+    }
+  ]
+}
