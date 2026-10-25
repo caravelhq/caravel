@@ -1,7 +1,6 @@
 ---
 name: task
 description: Formulate a multi-agent task envelope and dispatch it to the right agent's tasks/open/. Use when the user says "/task", asks Alice to "delegate", "send to Ray", "ask Sam", or describes work that should run in another agent's queue rather than this chat. Also use when an in-progress chat needs to spawn a follow-up task for another agent.
-topics: [multi-agent]
 ---
 
 # /task — formulate and dispatch a multi-agent task
@@ -18,7 +17,7 @@ Trigger when the user:
 - Describes work that's bigger than a single chat turn and could run while the user does something else.
 
 Don't trigger when:
-- the user wants the answer **now in this chat** — just answer.
+- The user wants the answer **now in this chat** — just answer.
 - It's a casual question, decision, or note that doesn't need delegation.
 - Alice is already mid-task and the user is steering — keep working, don't spawn.
 
@@ -43,7 +42,7 @@ The fields you need:
 - **brief** — the *why* and the shape of *what*. Specific enough that two workers wouldn't duplicate effort. Free-form prose, multi-line.
 - **output_format** — what "done" looks like. Required for `code` / `review` / `summarise`. Optional for exploratory `research`.
 - **context** — file paths (relative to repo root), Jira keys (`jira:KEY`), or URLs. References, not inlined content.
-- **priority** — P0 (the user blocked) → P3 (idle). Default P2.
+- **priority** — P0 (the user is blocked) → P3 (idle). Default P2.
 - **deadline** — optional ISO-8601. Add when there's a real constraint.
 - **budget** — `max_turns` (default 30 for research, 50 for code, 10 for decide), `max_subagents` (default 0 — sequential), `max_usd` (default null).
 - **parent** — set if this is a sub-task of an existing task envelope. Otherwise null. **Setting `parent` triggers decimal sub-task IDs** — the dispatched envelope gets `<parent>.N` (e.g. `TSK-2026-05-04-0042.1`) instead of a fresh top-level id. Recursive: a sub-of-sub becomes `<parent>.M.K`.
@@ -133,6 +132,14 @@ Example (sub-task of an existing envelope):
 
 > Queued **TSK-2026-05-04-0042.1** for Bob — implement the routing rule Sam recommended in 0042. Parent stays open until this returns.
 
+## Starting work on a received task
+
+Before reading any context entries — run `knowledge query "<headline>"` first. This surfaces the most relevant docs and prior task reports from the graph in one command, ranked by structural proximity + lexical match. See `agents/_shared/rules/context-discovery.md` for the full discovery procedure.
+
+```
+node .claude/skills/knowledge/script/knowledge.mjs query "<task headline>"
+```
+
 ## Failure modes
 
 - **Target agent doesn't exist** — the helper script rejects unknown agents. Names: `alice`, `ray`, `sam`, `bob`, `cliff`, `mark`, `adam`. Ask the user to pick one.
@@ -160,8 +167,8 @@ The summary now reports five buckets: `open`, `waiting`, `done`, `failed`, `arch
 
 ## Notes for Alice
 
-- This skill creates the envelope. The runner picks it up on a heartbeat and the worker agent claims it. the user may or may not see the result land back in his inbox depending on `reply_to`.
-- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or escalate to the user via a `<task-waiting on="user">` directive.
+- This skill creates the envelope. The runner picks it up on a heartbeat and the worker agent claims it. The user may or may not see the result land back in their inbox depending on `reply_to`.
+- If a worker escalates back to Alice (status `escalated`, target `alice`), it'll surface as a `tasks/open/` entry in Alice's queue. Handle it like any other inbound task: read, decide, either answer or surface it to the user as a `done` report with the question in the body.
 - Always restate the brief tightly in your confirmation message. If you can't restate it, you didn't understand it well enough to dispatch — go back to step 1.
 
 ## Worker directives — what your tasks should produce
@@ -171,7 +178,21 @@ Whatever workflow you brief the worker, the runner expects exactly one of these 
 ```
 <task-done summary="…">…optional report…</task-done>
 <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>
-<task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…</task-waiting>
 ```
 
-When dispatching a task whose worker is *expected* to depend on another task's output (e.g. Mark needs Ray's survey), include that explicitly in the brief: "If `<file>` doesn't exist or is incomplete, end your response with `<task-waiting on=\"task:TSK-...\">`. Do NOT use `<task-failed reason=\"dependency\">`." The runner parks waiting envelopes and re-emits them automatically when the dependency clears.
+## Dependencies are edges, not parks
+
+**`<task-waiting on="…">` no longer exists.** WAL-72 retired the whole `waiting:on:*` system: worker parks are gone, and a dependency is now an **edge you declare at dispatch time**, not something the worker discovers and parks on.
+
+When a task depends on another task's output, put it in the envelope YAML:
+
+```yaml
+needs: [TSK-2026-09-08-0001.02]    # must succeed first (done)
+after: [TSK-2026-09-08-0001.03]    # must be terminal first (done OR failed)
+```
+
+The runner computes `ready = open ∧ all needs done ∧ all after terminal` as a pure function of on-disk state, so a dependent task is **never claimed** until its dependency clears — no worker is spun up to discover the block and park. If a `needs:` dependency *fails*, the dependant moves to `blocked` and is surfaced in the dashboard rather than parked out of sight.
+
+`task.mjs new` preserves `needs:`/`after:` from the draft YAML you pass with `--yaml`; it does not have flags for them. Write them into the draft.
+
+Do **not** write "wait for X before starting" in the brief and leave it at that — that is the prose-dependency failure mode WAL-72 exists to eliminate. Declare the edge; you may of course also mention the dependency in the brief for the worker's benefit.

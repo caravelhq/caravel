@@ -72,7 +72,7 @@ Every doc in a project folder carries the frontmatter described in `frontmatter.
 title: <human-readable name>
 description: <≤140 char one-liner>
 doc_type: <readme | project_plan | fdp | gtm | decision_log | …>
-status: <draft | active | review | approved | deprecated | superseded>
+status: <draft | active | superseded | closed>
 last_updated: YYYY-MM-DD
 ---
 ```
@@ -185,3 +185,34 @@ A product workflow maps to project folders like this:
 Anywhere "project folder" appears, the same folder is used across stages. Don't
 create a new folder per agent or per stage. **Decisions surfacing in any of these
 stages get logged in `Decision_Log.md`** — see `decision-log.md`.
+
+## When a fact changes, change every instance of it
+
+A project `README.md` is a status document that many people write into over
+weeks. The failure mode is not that nobody updates it — it is that somebody
+updates **one** place the old fact appears and leaves the rest standing.
+
+That is worse than not updating it at all. A document that says a training
+session is "penciled for 28 September" in the description, "booked 29–30
+September" in the body, and "not yet confirmed formally" in the open questions
+now contradicts itself, and `last_updated` dates the whole thing as current.
+The next reader has no way to tell which line is the live one.
+
+**So: when you learn a fact has changed, grep the file for the old fact before
+you write the new one.** Search for the date, the name, the status word, the
+task id — whatever form it takes — and fix every occurrence, including:
+
+- the frontmatter `description`, which nobody scrolls back up to,
+- `last_updated`, always,
+- any "Status:" or "Where things stand" block near the top,
+- open-questions or next-steps lists further down,
+- the Files table, if the file you are describing has been superseded.
+
+If a document is genuinely superseded rather than stale, mark it
+`status: superseded` with `superseded_by:` pointing at its replacement rather
+than deleting it or silently leaving it active.
+
+This failure mode has been caught in multiple projects and by multiple agents,
+so treat it as a default habit rather than a special case.
+The `/daily` skill carries the same rule for the TaskBoard; this is the version
+that applies to every agent writing into a project folder.

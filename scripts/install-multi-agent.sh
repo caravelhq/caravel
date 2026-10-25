@@ -26,6 +26,9 @@
 # Args:
 #   --no-pull   Skip the git pull step.
 #   --dry-run   Show what would happen without writing.
+#   --force     Overwrite workspace files that differ from the template.
+#               Default (no --force): abort if any managed file has been
+#               locally modified rather than silently destroying the changes.
 #   -h|--help   Show this header.
 
 set -euo pipefail
@@ -54,12 +57,14 @@ DEST_SHARED="${PROJECT_DIR}/agents/_shared"
 
 NO_PULL=0
 DRY_RUN=0
+FORCE=0
 for arg in "$@"; do
   case "$arg" in
     --no-pull) NO_PULL=1 ;;
     --dry-run) DRY_RUN=1 ;;
+    --force)   FORCE=1 ;;
     -h|--help)
-      sed -n '2,32p' "$0"
+      sed -n '2,35p' "$0"
       exit 0
       ;;
     *)
@@ -77,7 +82,7 @@ run() {
   fi
 }
 
-if [[ ! -d "$CLAW_REPO/.git" ]]; then
+if [[ ! -e "$CLAW_REPO/.git" ]]; then
   echo "Error: caravel repo not found at $CLAW_REPO" >&2
   echo "       clone the caravel repo into that path or set CARAVEL_REPO_DIR" >&2
   exit 1
@@ -97,6 +102,55 @@ if [[ $NO_PULL -eq 0 ]]; then
     echo "Pulling latest from caravel $BRANCH branch..."
     git -C "$CLAW_REPO" pull --ff-only origin "$BRANCH" 2>/dev/null || \
       echo "  (pull skipped — may be offline or up to date)"
+  fi
+fi
+
+# Pre-copy conflict check — abort (or warn in dry-run) if any managed file
+# has been locally modified and --force was not passed.
+CONFLICTS=0
+check_conflict() {
+  local src="$1" dst="$2"
+  if [[ -f "$dst" ]] && ! cmp -s "$src" "$dst"; then
+    echo "  conflict: ${dst#$PROJECT_DIR/}" >&2
+    echo "            template: $(wc -l < "$src") lines  workspace: $(wc -l < "$dst") lines" >&2
+    CONFLICTS=$((CONFLICTS + 1))
+  fi
+}
+
+for skill_src in "$SRC_DIR"/skills/*/; do
+  [[ -d "$skill_src" ]] || continue
+  skill_name="$(basename "$skill_src")"
+  skill_dest="${PROJECT_DIR}/.claude/skills/${skill_name}"
+  [[ -f "$skill_src/SKILL.md" ]] && check_conflict "$skill_src/SKILL.md" "$skill_dest/SKILL.md"
+  if [[ -d "$skill_src/script" ]]; then
+    for f in "$skill_src"script/*; do
+      [[ -f "$f" ]] || continue
+      check_conflict "$f" "$skill_dest/script/$(basename "$f")"
+    done
+  fi
+done
+
+[[ -f "$SRC_DIR/shared/task-envelope.md" ]] && \
+  check_conflict "$SRC_DIR/shared/task-envelope.md" "$DEST_SHARED/task-envelope.md"
+
+if [[ -d "$SRC_DIR/shared/rules" ]]; then
+  for f in "$SRC_DIR"/shared/rules/*.md; do
+    [[ -e "$f" ]] || continue
+    check_conflict "$f" "$DEST_SHARED/rules/$(basename "$f")"
+  done
+fi
+
+if [[ $CONFLICTS -gt 0 ]]; then
+  echo >&2
+  if [[ $FORCE -eq 1 ]]; then
+    echo "WARNING: overwriting $CONFLICTS differing file(s) because --force was passed." >&2
+  elif [[ $DRY_RUN -eq 1 ]]; then
+    echo "Dry run — $CONFLICTS file(s) would conflict and NOT be written without --force." >&2
+  else
+    echo "Error: $CONFLICTS file(s) in the project differ from the template." >&2
+    echo "       Review the diffs, merge any local improvements back into the template," >&2
+    echo "       then re-run with --force to overwrite." >&2
+    exit 1
   fi
 fi
 

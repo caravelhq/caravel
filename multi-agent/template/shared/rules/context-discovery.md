@@ -34,7 +34,6 @@ title: TPD-148 v1.1 review (Cliff)
 description: Code-review pass on the FDP after the HMAC rewrite. Verdict: revise.
 doc_type: review
 summary: Three Should-fixes around secret storage; one Must-fix on §6.4 (hash-only vs HMAC).
-tags: [TPD-148, code-review, security]
 last_updated: 2026-05-04
 ---
 ```
@@ -74,7 +73,7 @@ Always include frontmatter per `frontmatter.md`. Minimum fields:
 title: <human-readable title>
 description: <1-line purpose — what is this doc and who's it for>
 doc_type: <readme | project_plan | fdp | gtm | decision_log | review | research | meeting_notes | …>
-status: <draft | active | review | approved | deprecated | superseded>
+status: <draft | active | superseded | closed>
 last_updated: YYYY-MM-DD
 ---
 ```
@@ -89,6 +88,7 @@ For docs you're updating, bump `last_updated` to the date of your change.
 
 When you receive a brief with `context: [...]` references:
 
+0. **Before reading anything — run `knowledge query "<term you derive from the brief>"`.** Derive the term from the **brief**: 3–8 content words naming what the task is actually about — the system, feature, ticket or concept. Use the headline only when it is descriptive; skip it when it matches a boilerplate shape ("Briefing — N tasks landed", "Continue after TSK-…", "Follow-on: …"), which describes the task's shape rather than its subject. A boilerplate seed does not merely rank worse — it stops the structural leg firing at all, because there is nothing good to traverse from. The command surfaces the most relevant docs and prior task reports in one call, ranked by structural proximity + lexical match, and finds docs the explicit `context:` list does not mention.
 1. **First pass — scan frontmatter on every entry.** One `Read(..., limit=20)` per file. Cheap. **If the brief points at a project folder, start with its `README.md`** — the file index there gives you the whole landscape in one read.
 2. **Second pass — read the body** of the 1–3 files that match your brief. Skip the rest.
 3. **Third pass — open siblings** (via project README, parent folder, related links in the body) only if step 2 surfaced a concrete need.

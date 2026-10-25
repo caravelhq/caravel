@@ -12,11 +12,33 @@ Every markdown doc the team produces carries YAML frontmatter that identifies wh
 ---
 title: <human-readable name>
 description: <one-line summary, ≤140 chars, what shows in a file index>
-doc_type: <readme | project_plan | fdp | gtm | decision_log | review_brief | review | review_response | research | meeting_notes>
-status: <draft | active | review | approved | deprecated | superseded>
+doc_type: <readme | project_plan | fdp | gtm | decision | decision_log | review_brief | review | review_response | research | work | meeting_notes | transcript | file_note | daily_brief>
+status: <draft | active | superseded | closed>
 last_updated: <YYYY-MM-DD>
 ---
 ```
+
+## Status — a fixed, closed vocabulary
+
+**These four values are the only valid ones. Do not invent a fifth.** If none fits, the document is telling you something about its own shape — say so rather than coining a new status.
+
+| Value | Meaning |
+|---|---|
+| `draft` | Being written. Not yet reliable to act on. |
+| `active` | Current and live — the version to trust. |
+| `superseded` | Replaced by a specific newer document. **Always pair with `superseded_by: <path>`.** |
+| `closed` | Finished and no longer live, and not superseded by anything. The record stands; nothing is pending on it. |
+
+`kg-gaps` validates `status` against this set exactly the way it validates `doc_type` (`.claude/skills/daily/script/daily.mjs`, `KNOWN_STATUSES`). An off-vocabulary value is a reported gap, not a silent pass.
+
+Two distinctions worth keeping straight:
+
+- **`status` describes the document, not the work.** A review whose verdict was "revise and resubmit" is not `draft` — the review itself was delivered. Use `verdict:`, `pr_status:` or the body for the work's state.
+- **`superseded` vs `closed`.** `superseded` means a *named* successor exists. A review series that simply finished — nothing replaced the last round — ends `closed`.
+
+For a series of reviews over the same artefact: each round a later round re-reviewed is `superseded` (pointing at its successor); the final round is `active` while the artefact is still in flight, `closed` once the work concluded.
+
+**Not to be confused with task-envelope status.** `agents/*/tasks/**.yaml` carry a separate runner-owned execution vocabulary (`open`, `claimed`, `in_progress`, `waiting`, `done`, `failed`, `escalated`). That is a different field on a different kind of file, and this rule does not touch it.
 
 ## Optional fields (any doc)
 
@@ -24,7 +46,6 @@ last_updated: <YYYY-MM-DD>
 - `parent: <path>` — parent doc (e.g. an FDP's parent project plan, or a review's target FDP)
 - `supersedes: <path>` / `superseded_by: <path>` — for deprecated/superseded docs
 - `summary: |` — 2–3 sentence skim summary (longer than `description`)
-- `tags: [array]` — for cross-cutting discovery
 - `author: <agent>` — who created/owns it
 - `related: [paths]` — sibling docs
 
@@ -33,8 +54,13 @@ last_updated: <YYYY-MM-DD>
 - **`project_plan`**: `appetite: <small | medium | large>`, `customer: <one-liner>`
 - **`fdp`**: `modules: [array]`, `branches: [array]`, `pr_status: <none | open | merged>`
 - **`gtm`**: `icp: <one-liner>`, `launch_target: YYYY-MM-DD`
+- **`decision`**: a standalone document that reaches one ruling — an analysis with a verdict, not a survey. Optional `verdict: <one-liner>`. Distinct from `decision_log`, which is the append-only per-project log of Y-statement entries; a `decision` doc is a single ruling that may be summarised into the log.
 - **`decision_log`**: not used at the file level — each entry has its own metadata header (see `decision-log.md`)
 - **`review_brief` / `review` / `review_response`**: `review_round: <integer>`, `target: <jira-key or doc path>`, `target_type: <fdp | project_plan | gtm | other>`, `reviewer: <agent>` (for `review` docs), `author: <agent>` (for `brief` / `response` docs)
+- **`transcript`**: `source: <pocket | whisper | manual>`, `source_id: <id in the source system>`, `recorded_at: <ISO timestamp>`, `duration_seconds: <integer>`, `speakers: [array]`. Machine-captured recordings — distinct from `meeting_notes`, which is the human-readable write-up. A Pocket recording that classifies as a meeting produces both, cross-linked via `related`. Written automatically by `/pocket`; see `.claude/skills/pocket/SKILL.md`.
+- **`work`**: the live record of work being done — detailed plans, rollout trackers, implementation records, work-session logs. Distinct from `project_plan` (the intent for an initiative) and `fdp` (the spec for one feature): a `work` doc tracks execution and is expected to change as the work moves. Optional `branch:`, `author:`.
+- **`file_note`**: no extra fields. Loose briefing notes and reference material dropped into a project folder.
+- **`daily_brief`**: no extra fields. Produced unattended by the scheduled `/daily` run at `Notes/Daily/YYYY-MM-DD_Brief.md` — what changed, what was filed, what needs Kelly. Distinct from the hand-written daily note beside it.
 
 ## Discovery pattern — frontmatter first
 

@@ -1,11 +1,12 @@
 ---
-description: Legacy — XML directive as fallback signal. The primary contract is now `task-output.md` (write a file).
-topics: [multi-agent]
+description: Legacy — XML directive as fallback signal. The primary contract is now `task-output.md` (write a file). Phase 3W (WAL-72) removes waiting:on:task/user — only done and failed are valid worker outputs.
 ---
 
 # Task directives — fallback signal (legacy)
 
 > **NOTE (2026-05-04):** The primary contract is now `task-output.md` — write `agents/<you>/tasks/<status>/<id>.md` with frontmatter. The XML directive described below is the **fallback** signal the runner uses when no report file is found. Workers can still emit a directive (and probably should during the transition), but the file is what the runner trusts first. New worker prompts should optimise for the file write; the directive becomes a defence-in-depth marker.
+>
+> **NOTE (2026-08-30, Phase 3W):** `<task-waiting>` is **removed** as a worker directive. Workers emit only `done` or `failed`. **A question for the user is a `done` report that asks it; a dependency is an edge declared at dispatch (`needs:`/`after:`), not a park.** A straggler emitting `<task-waiting on="user/task:*">` is warn-journalled by the runner and converted to `done` automatically.
 
 ## The rule (legacy form)
 
@@ -14,8 +15,9 @@ topics: [multi-agent]
 ```
 <task-done summary="..." report="path/to/file">…optional inline body…</task-done>
 <task-failed reason="budget|tool|refusal|context|crash|timeout|other" summary="…">…</task-failed>
-<task-waiting on="task:<id>|agent:<name>|user" summary="why blocked">…optional notes…</task-waiting>
 ```
+
+`<task-waiting>` is no longer a valid worker output. See "Waiting is removed" below.
 
 No directive AND no report file = the runner has no idea what happened. It marks `failed:other` and the envelope ends up in `tasks/failed/` even when your deliverable shipped fine to disk. This has bitten Bob (TSK-2026-05-04-0003), Mark (TSK-2026-05-03-0008), and Alice's continuation (TSK-2026-05-04-0006). The file-as-output contract was introduced precisely to break this pattern.
 
@@ -45,11 +47,13 @@ Silence breaks all five. The deliverable on disk doesn't matter if the envelope 
 - `summary` should explain what blocked you so the coordinator can re-route or escalate.
 - Use this when you tried and the work can't be done in this attempt — not when you forgot to close.
 
-**`<task-waiting on="…" summary="…">` — you need something before you can continue.**
-- `on="task:TSK-XYZ"` — you've dispatched a sub-task and need its result. **Orchestrators (Alice) don't use this** — when Alice dispatches a sub-task from a chat-dispatched parent, she closes with `<task-done>` and lets the runner enqueue a continuation envelope when the sub-task lands. Parking on `task:*` is for non-orchestrator agents that have no continuation system to wake them.
-- `on="agent:bob"` — you need a specific agent to finish their current work.
-- `on="user"` — you need the user's input to proceed.
-- The lease releases. The runner re-claims when the dependency resolves.
+## Waiting is removed (Phase 3W)
+
+**`<task-waiting>` is no longer a valid worker output.** The runner will warn-journal any straggler emission and convert it to done.
+
+- **A question for the user is a `<task-done>` that asks it.** Put the question in the body. The user's answer comes back as a follow-up dispatch.
+- **A dependency is an edge declared at dispatch (`needs:`/`after:`).** The orchestrator declares edges when the task is created; workers don't park on them mid-run.
+- `waiting:on:limits` is runner-owned infrastructure — workers cannot emit it.
 
 ## Procedural checklist (run this before you stop typing)
 
@@ -57,16 +61,16 @@ Before ending any worker turn, ask:
 
 1. **Did I produce the deliverable?** Wrote a file, made the change, sent the message — yes or no?
 2. **Where did it land?** Path, branch, ticket. Have it ready for `report=` and `summary=`.
-3. **Am I genuinely blocked, or did I just finish?** If finished → `<task-done>`. If blocked → `<task-waiting>` (not failed). If actually failed → `<task-failed>`.
+3. **Am I genuinely blocked, or did I just finish?** If finished (including with a question) → `<task-done>`. If actually failed → `<task-failed>`. There is no `<task-waiting>` anymore.
 4. **Did I write the closing directive in my final message?** Check before submitting. The runner reads the last message of your turn.
 
 ## Common slip patterns to watch for
 
 - **"I'll just summarise what I did and that's enough."** No. The summary IS the directive — wrap it in `<task-done summary="…">`.
 - **Writing the deliverable file, then ending with prose.** The runner won't infer success from a `git diff`. Close the envelope.
-- **Continuation envelopes feel different — they're not.** A continuation envelope is still a worker turn. Same rules. Decide → emit one of the three directives.
+- **Continuation envelopes feel different — they're not.** A continuation envelope is still a worker turn. Same rules. Decide → emit `<task-done>` or `<task-failed>`.
 - **Long reasoning chains that trail off.** If your turn ran long and you're worried about budget, that's exactly when to be deliberate about closing. `<task-failed reason="budget" summary="…">` is honest. Silence is worse.
-- **Hand-off vs. blocking.** If you're handing the next step to a human or another agent and your work is done, that's `<task-done>`, not `<task-waiting on="user">`. Only use waiting when you genuinely cannot proceed without input.
+- **Hand-off vs. "blocking".** If you need the user's input and your work is done, that's `<task-done summary="…">` with the question in the body. `<task-waiting>` no longer exists.
 
 ## Where this applies
 
