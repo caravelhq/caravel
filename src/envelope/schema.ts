@@ -85,6 +85,10 @@ export const VALIDATE_BUCKETS = [
 /** Buckets where a terminal report file (.md) may appear: done, failed, or waiting. */
 export const REPORT_FILE_BUCKETS = ["done", "failed", "waiting"] as const satisfies ReadonlyArray<Bucket>;
 
+/** Buckets that can never satisfy a `needs:` edge (WAL-153). `done` is excluded — a done delegate
+ *  immediately releases blocked dependants via sweepBlocked; only failed/archived are permanent. */
+export const UNSATISFIABLE_DELEGATE_BUCKETS = ["failed", "archived"] as const satisfies ReadonlyArray<Bucket>;
+
 /** Live buckets scanned by assertEnvelope and similar CLI guards. Excludes archived/scheduled (terminal/template). */
 export const ASSERT_ENVELOPE_BUCKETS = [
   "open",

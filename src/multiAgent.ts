@@ -42,6 +42,7 @@ import {
   ALLOCATION_SCAN_DIRS,
   VALID_WAITING_SPECS,
   REPORT_FILE_BUCKETS,
+  UNSATISFIABLE_DELEGATE_BUCKETS,
   type WorkerUsage,
 } from "./envelope/schema";
 import { appendUsageToEnvelopeYaml } from "./envelope/write";
@@ -2332,9 +2333,9 @@ async function applyDelegateDirective(
   delegateInfo: { delegateId: string; mode: "replace" | "add" }
 ): Promise<void> {
   const { delegateId, mode } = delegateInfo;
-  const TERMINAL = new Set(["done", "failed", "archived"]);
 
-  // Verify delegate exists and is not terminal
+  // Verify delegate exists and is not in an unsatisfiable bucket (failed/archived).
+  // done/ is allowed — sweepBlocked releases blocked dependants on the next tick.
   let delegateBucket: string | null = null;
   const agents = knownAgents();
   outer: for (const a of agents) {
@@ -2349,9 +2350,9 @@ async function applyDelegateDirective(
     console.warn(`[task-delegate] directive skipped: delegate ${delegateId} not found`);
     return;
   }
-  if (TERMINAL.has(delegateBucket)) {
+  if ((UNSATISFIABLE_DELEGATE_BUCKETS as readonly string[]).includes(delegateBucket)) {
     console.warn(
-      `[task-delegate] directive skipped: delegate ${delegateId} is terminal (${delegateBucket}/)`
+      `[task-delegate] directive skipped: delegate ${delegateId} is in ${delegateBucket}/ (permanently failed)`
     );
     return;
   }

@@ -46,6 +46,7 @@ import {
   DISPATCH_LIST_BUCKETS,
   DISPATCH_SUMMARY_COUNT_BUCKETS,
   REQUIRED_FIELDS,
+  UNSATISFIABLE_DELEGATE_BUCKETS,
 } from "../envelope/schema.js";
 import { yamlLine, writeAtomic } from "../envelope/write.js";
 
@@ -1683,10 +1684,10 @@ function doDelegate(args: ParsedArgs, root: string): void {
   if (!delegateBucket) {
     die(`delegate: delegate task ${delegateId} not found in any agent/bucket`);
   }
-  // Refuse permanently-terminal buckets: failed/archived mean the delegate can never
-  // satisfy a `needs:` edge. done/ is allowed — sweepBlocked will immediately release
-  // any blocked dependants after the rewrite (this is the incident-recovery case).
-  if (new Set(["failed", "archived"]).has(delegateBucket)) {
+  // Refuse permanently-terminal buckets (UNSATISFIABLE_DELEGATE_BUCKETS): failed/archived
+  // can never satisfy a `needs:` edge. done/ is allowed — sweepBlocked releases blocked
+  // dependants immediately on the next tick (this is the incident-recovery case).
+  if ((UNSATISFIABLE_DELEGATE_BUCKETS as readonly string[]).includes(delegateBucket)) {
     die(
       `delegate: ${delegateId} is in ${delegateBucket}/ — cannot delegate to a permanently-failed task`
     );
