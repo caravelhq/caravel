@@ -14781,7 +14781,7 @@ const _hoisted_3$w = {
 };
 const _hoisted_4$t = ["disabled"];
 const _hoisted_5$r = { class: "hb-actions" };
-const _hoisted_6$o = {
+const _hoisted_6$p = {
   class: "hb-status",
   id: "hb-modal-status"
 };
@@ -14900,7 +14900,7 @@ const _sfc_main$L = /* @__PURE__ */ defineComponent({
               ])
             ]),
             createBaseVNode("div", _hoisted_5$r, [
-              createBaseVNode("div", _hoisted_6$o, toDisplayString(status.value), 1),
+              createBaseVNode("div", _hoisted_6$p, toDisplayString(status.value), 1),
               createBaseVNode("div", _hoisted_7$k, [
                 createBaseVNode("button", {
                   class: "hb-btn ghost",
@@ -14932,7 +14932,7 @@ const _hoisted_2$z = {
 const _hoisted_3$v = { class: "audio-player-resume-msg" };
 const _hoisted_4$s = { class: "audio-player-resume-btns" };
 const _hoisted_5$q = { class: "audio-player-progress" };
-const _hoisted_6$n = { class: "audio-player-bar-wrap" };
+const _hoisted_6$o = { class: "audio-player-bar-wrap" };
 const _hoisted_7$j = { class: "audio-player-counter" };
 const _hoisted_8$h = { class: "audio-player-transcript" };
 const _hoisted_9$g = ["data-idx", "onClick"];
@@ -14982,7 +14982,7 @@ const _sfc_main$K = /* @__PURE__ */ defineComponent({
             ])) : createCommentVNode("", true),
             hasPlayer.value ? (openBlock(), createElementBlock(Fragment, { key: 1 }, [
               createBaseVNode("div", _hoisted_5$q, [
-                createBaseVNode("div", _hoisted_6$n, [
+                createBaseVNode("div", _hoisted_6$o, [
                   createBaseVNode("div", {
                     class: "audio-player-bar",
                     style: normalizeStyle({ width: progressPct.value + "%" })
@@ -15466,7 +15466,7 @@ const _hoisted_5$p = {
   key: 1,
   class: "fa-solid fa-stop"
 };
-const _hoisted_6$m = {
+const _hoisted_6$n = {
   key: 2,
   class: "fa-solid fa-headphones"
 };
@@ -15529,7 +15529,7 @@ const _sfc_main$I = /* @__PURE__ */ defineComponent({
           onClick: _cache[0] || (_cache[0] = //@ts-ignore
           (...args) => unref(doReadAloud) && unref(doReadAloud)(...args))
         }, [
-          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$r)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$p)) : (openBlock(), createElementBlock("i", _hoisted_6$m))
+          unref(ui).raState === "loading" ? (openBlock(), createElementBlock("i", _hoisted_4$r)) : unref(ui).raState === "playing" ? (openBlock(), createElementBlock("i", _hoisted_5$p)) : (openBlock(), createElementBlock("i", _hoisted_6$n))
         ], 10, _hoisted_3$u),
         createBaseVNode("button", {
           id: "global-speaker",
@@ -15783,7 +15783,7 @@ const _hoisted_4$q = {
   "aria-live": "polite"
 };
 const _hoisted_5$o = { class: "side-value" };
-const _hoisted_6$l = {
+const _hoisted_6$m = {
   class: "dock",
   id: "dock",
   "aria-live": "polite"
@@ -15891,7 +15891,7 @@ const _sfc_main$H = /* @__PURE__ */ defineComponent({
           createBaseVNode("div", _hoisted_5$o, toDisplayString(tasksCount.value), 1),
           _cache[3] || (_cache[3] = createBaseVNode("div", { class: "side-label" }, "Tasks", -1))
         ]),
-        createBaseVNode("footer", _hoisted_6$l, [
+        createBaseVNode("footer", _hoisted_6$m, [
           createVNode(_sfc_main$I),
           _cache[4] || (_cache[4] = createBaseVNode("div", { class: "dock-spacer" }, null, -1)),
           createVNode(_sfc_main$J),
@@ -16589,7 +16589,7 @@ const _hoisted_3$r = {
 };
 const _hoisted_4$o = { class: "vtc-field" };
 const _hoisted_5$n = { class: "vtc-row" };
-const _hoisted_6$k = { class: "vtc-field" };
+const _hoisted_6$l = { class: "vtc-field" };
 const _hoisted_7$g = ["value"];
 const _hoisted_8$f = { class: "vtc-field" };
 const _hoisted_9$e = ["value"];
@@ -17014,7 +17014,7 @@ User's voice request: "${userText}"`;
               ])
             ]),
             createBaseVNode("div", _hoisted_5$n, [
-              createBaseVNode("div", _hoisted_6$k, [
+              createBaseVNode("div", _hoisted_6$l, [
                 _cache[10] || (_cache[10] = createBaseVNode("label", {
                   class: "vtc-label",
                   for: "vtc-priority"
@@ -17447,7 +17447,7 @@ const _hoisted_4$n = {
   "aria-disabled": "true"
 };
 const _hoisted_5$m = ["onClick"];
-const _hoisted_6$j = ["data-recent-key", "onClick"];
+const _hoisted_6$k = ["data-recent-key", "onClick"];
 const _hoisted_7$f = { class: "om-glyph" };
 const CHAT_MENU_N = 5;
 const _sfc_main$D = /* @__PURE__ */ defineComponent({
@@ -17684,7 +17684,7 @@ const _sfc_main$D = /* @__PURE__ */ defineComponent({
                 }, [
                   createBaseVNode("span", _hoisted_7$f, toDisplayString(unref(refGlyph)(recent)), 1),
                   createTextVNode(" " + toDisplayString(unref(refLabel)(recent)), 1)
-                ], 8, _hoisted_6$j);
+                ], 8, _hoisted_6$k);
               }), 128))
             ], 64)) : createCommentVNode("", true),
             _cache[13] || (_cache[13] = createBaseVNode("hr", { class: "open-menu-sep" }, null, -1)),
@@ -17725,7 +17725,7 @@ const _hoisted_2$t = { class: "tos-glyph" };
 const _hoisted_3$p = ["title"];
 const _hoisted_4$m = { class: "tos-row-actions" };
 const _hoisted_5$l = ["title", "onClick"];
-const _hoisted_6$i = ["onClick"];
+const _hoisted_6$j = ["onClick"];
 const _hoisted_7$e = ["onClick"];
 const _hoisted_8$e = { class: "tos-glyph" };
 const _hoisted_9$d = ["title"];
@@ -17797,7 +17797,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
                   type: "button",
                   title: "Close tab",
                   onClick: withModifiers(($event) => closeTab(unref(refKey)(tab)), ["stop"])
-                }, "×", 8, _hoisted_6$i)
+                }, "×", 8, _hoisted_6$j)
               ]),
               createBaseVNode("button", {
                 class: "tos-row-activate",
@@ -17860,7 +17860,7 @@ const _hoisted_5$k = {
   class: "ts-tab-unread",
   "aria-label": "Unread messages"
 };
-const _hoisted_6$h = ["onClick"];
+const _hoisted_6$i = ["onClick"];
 const _hoisted_7$d = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
 const _hoisted_8$d = {
   key: 0,
@@ -18119,7 +18119,7 @@ const _sfc_main$B = /* @__PURE__ */ defineComponent({
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
                   onDblclick: _cache[0] || (_cache[0] = withModifiers(() => {
                   }, ["stop"]))
-                }, "×", 40, _hoisted_6$h)
+                }, "×", 40, _hoisted_6$i)
               ], 42, _hoisted_2$s);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
@@ -19756,7 +19756,7 @@ const _hoisted_2$p = {
 const _hoisted_3$l = { class: "chat-picker-list" };
 const _hoisted_4$i = ["onClick"];
 const _hoisted_5$h = { class: "chat-picker-item-title" };
-const _hoisted_6$g = { class: "chat-picker-item-desc" };
+const _hoisted_6$h = { class: "chat-picker-item-desc" };
 const CHAT_MSG_RENDER_M = 50;
 const _sfc_main$x = /* @__PURE__ */ defineComponent({
   __name: "ChatMessageList",
@@ -19873,7 +19873,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
                   onClick: ($event) => emit2("pick-agent", agent.name)
                 }, [
                   createBaseVNode("div", _hoisted_5$h, toDisplayString((agent.emoji ? agent.emoji + " " : "") + (agent.displayName || agent.name)), 1),
-                  createBaseVNode("div", _hoisted_6$g, toDisplayString(agent.description || ""), 1)
+                  createBaseVNode("div", _hoisted_6$h, toDisplayString(agent.description || ""), 1)
                 ], 10, _hoisted_4$i);
               }), 128))
             ])
@@ -19904,6 +19904,7 @@ const _hoisted_2$o = { class: "chat-input-row" };
 const _hoisted_3$k = ["value"];
 const _hoisted_4$h = { class: "chat-actions" };
 const _hoisted_5$g = ["disabled"];
+const _hoisted_6$g = ["disabled"];
 const _sfc_main$w = /* @__PURE__ */ defineComponent({
   __name: "ChatComposer",
   props: {
@@ -19914,12 +19915,13 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     hasActiveWork: { type: Boolean },
     isAgentLocked: { type: Boolean }
   },
-  emits: ["send", "interrupt", "cancel", "pin", "update:draft"],
+  emits: ["send", "interrupt", "interrupt-send", "cancel", "pin", "update:draft"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
     const textareaRef = useTemplateRef("textareaRef");
     const newTitleRef = useTemplateRef("newTitleRef");
+    const interruptInFlight = /* @__PURE__ */ ref(false);
     const localDraft = /* @__PURE__ */ ref(props.draft);
     watch(() => props.chatId, () => {
       localDraft.value = props.draft;
@@ -19963,8 +19965,17 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
       }
       emit2("send", text);
     }
-    function onInterrupt() {
-      emit2("interrupt");
+    function onHandInterrupt() {
+      if (interruptInFlight.value) return;
+      interruptInFlight.value = true;
+      const text = localDraft.value.trim();
+      localDraft.value = "";
+      emit2("update:draft", "");
+      if (textareaRef.value) {
+        textareaRef.value.value = "";
+        autoResize();
+      }
+      emit2("interrupt-send", text);
     }
     function onCancel() {
       emit2("cancel");
@@ -20016,10 +20027,11 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
               key: 0,
               type: "button",
               class: "chat-interrupt",
-              title: "Interrupt",
-              "aria-label": "Interrupt",
-              onClick: onInterrupt
-            }, "✋")) : createCommentVNode("", true),
+              title: "Interrupt and send",
+              "aria-label": "Interrupt and send",
+              disabled: interruptInFlight.value,
+              onClick: onHandInterrupt
+            }, "✋", 8, _hoisted_5$g)) : createCommentVNode("", true),
             __props.hasActiveWork ? (openBlock(), createElementBlock("button", {
               key: 1,
               type: "button",
@@ -20034,7 +20046,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
               title: "Send",
               "aria-label": "Send",
               disabled: !localDraft.value.trim() || !__props.agentPicked
-            }, "↑", 8, _hoisted_5$g)
+            }, "↑", 8, _hoisted_6$g)
           ])
         ])
       ], 32);
@@ -20444,6 +20456,23 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
       }
       await fetchChatData();
     }
+    async function onInterruptSend(text) {
+      const id = chatId.value;
+      if (!id) return;
+      try {
+        await fetch("/api/chat/interrupt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chatId: id })
+        });
+      } catch (_2) {
+      }
+      if (text) {
+        await onSend(text);
+      } else {
+        await fetchChatData();
+      }
+    }
     function onCancel() {
       chatStore.saveDraft(chatId.value, "");
       void onInterrupt();
@@ -20552,6 +20581,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             "is-agent-locked": storeAgentLocked.value || !!agentId.value,
             onSend,
             onInterrupt,
+            onInterruptSend,
             onCancel,
             onPin,
             "onUpdate:draft": _cache[0] || (_cache[0] = (v2) => draft.value = v2)

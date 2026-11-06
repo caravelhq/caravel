@@ -263,6 +263,25 @@ async function onInterrupt(): Promise<void> {
   await fetchChatData();
 }
 
+// Hand button: interrupt first (awaited), then post the draft if non-empty.
+// Empty draft is a plain interrupt with no follow-up send.
+async function onInterruptSend(text: string): Promise<void> {
+  const id = chatId.value;
+  if (!id) return;
+  try {
+    await fetch("/api/chat/interrupt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: id }),
+    });
+  } catch (_) {}
+  if (text) {
+    await onSend(text);
+  } else {
+    await fetchChatData();
+  }
+}
+
 function onCancel(): void {
   chatStore.saveDraft(chatId.value, "");
   void onInterrupt();
@@ -389,6 +408,7 @@ function generateChatId(): string {
         :is-agent-locked="storeAgentLocked || !!agentId"
         @send="onSend"
         @interrupt="onInterrupt"
+        @interrupt-send="onInterruptSend"
         @cancel="onCancel"
         @pin="onPin"
         @update:draft="(v) => (draft = v)"
