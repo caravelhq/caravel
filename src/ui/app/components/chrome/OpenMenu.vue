@@ -6,10 +6,11 @@ import { useNewTaskStore } from "../../stores/newTask";
 import { useLiveStore } from "../../stores/live";
 import { useTasksStore } from "../../stores/tasks";
 import { useProjectsStore } from "../../stores/projects";
-import { refGlyph, refLabel, TASKS_LIST_KEY, PROJECTS_LIST_KEY } from "../../workspace/labels";
+import { refGlyph, refLabel, TASKS_LIST_KEY, PROJECTS_LIST_KEY, CHATS_LIST_KEY } from "../../workspace/labels";
 import type { ResourceRef } from "../../workspace/refs";
 import type { TaskRow } from "../../stores/tasks";
 import type { ProjectCard } from "../../stores/projects";
+import type { ChatListEntry } from "../../../services/chats";
 
 const ws = useWorkspaceStore();
 const kn = useKnowledgeStore();
@@ -27,6 +28,40 @@ const projectsList = computed<ProjectCard[] | null>(() => {
   const e = live.entry(PROJECTS_LIST_KEY);
   return (e?.data as ProjectCard[] | null) ?? null;
 });
+
+// Chats section (DEC-0046: bounded N with true total, search full corpus).
+// N=5 for the compact Open menu — full list via the Chat picker button above.
+const CHAT_MENU_N = 5;
+const chatSearch = ref("");
+
+const chatsList = computed<ChatListEntry[]>(() => {
+  const e = live.entry(CHATS_LIST_KEY);
+  const data = (e?.data as ChatListEntry[] | null) ?? [];
+  return [...data].sort((a, b) => {
+    const ta = a.updatedAt ? Date.parse(a.updatedAt) : 0;
+    const tb = b.updatedAt ? Date.parse(b.updatedAt) : 0;
+    return tb - ta;
+  });
+});
+
+const chatsTotalCount = computed(() => chatsList.value.length);
+
+const chatsBounded = computed(() => chatsList.value.slice(0, CHAT_MENU_N));
+
+const chatsSearchResults = computed(() => {
+  const q = chatSearch.value.trim().toLowerCase();
+  if (!q) return [] as ChatListEntry[];
+  return chatsList.value.filter((c) => {
+    const name = (c.name ?? "").toLowerCase();
+    const preview = (c.preview ?? "").toLowerCase();
+    return name.includes(q) || preview.includes(q);
+  });
+});
+
+const chatsIsSearching = computed(() => chatSearch.value.trim() !== "");
+const chatsDisplay = computed(() =>
+  chatsIsSearching.value ? chatsSearchResults.value : chatsBounded.value
+);
 
 const isOpen = ref(false);
 const anchorRef = ref<HTMLDivElement | null>(null);
@@ -71,6 +106,8 @@ function openNewTask(): void { nt.open(); close(); }
 
 // Recents: remove from ring and open.
 function openRecent(key: string): void { ws.reopenFromRecents(key); close(); }
+
+function openChat(chatId: string): void { ws.open({ kind: "chat", chatId }); close(); }
 
 function onDocPointerDown(ev: PointerEvent): void {
   if (!isOpen.value) return;
@@ -133,6 +170,41 @@ onBeforeUnmount(() => {
         <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
         <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
         <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openProjects">Projects</button>
+
+        <!-- Section: Chats (DEC-0046 bounded N=5, search full corpus) -->
+        <template v-if="chatsList.length > 0">
+          <hr class="open-menu-sep" />
+          <div class="om-section-label">
+            <template v-if="!chatsIsSearching && chatsTotalCount > CHAT_MENU_N">
+              Chats — {{ CHAT_MENU_N }} of {{ chatsTotalCount }}
+            </template>
+            <template v-else>Chats</template>
+          </div>
+          <div class="om-chat-search-wrap">
+            <input
+              v-model="chatSearch"
+              class="om-chat-search"
+              type="search"
+              placeholder="Search chats…"
+              aria-label="Search chats"
+              @click.stop
+            />
+          </div>
+          <div v-if="chatsIsSearching && chatsSearchResults.length === 0" class="open-menu-item om-item-disabled" role="menuitem" aria-disabled="true">
+            No results
+          </div>
+          <button
+            v-for="chat in chatsDisplay"
+            :key="chat.id"
+            class="open-menu-item om-item-recent"
+            type="button"
+            role="menuitem"
+            @click="openChat(chat.id)"
+          >
+            <span class="om-glyph">💬</span>
+            {{ chat.name || "(unnamed)" }}
+          </button>
+        </template>
 
         <!-- Section: Recents (only when non-empty) -->
         <template v-if="ws.recents.length > 0">
@@ -226,5 +298,27 @@ onBeforeUnmount(() => {
   opacity: 0.7;
   margin-left: auto;
   padding-left: 8px;
+}
+
+.om-chat-search-wrap {
+  padding: 3px 10px 4px;
+}
+
+.om-chat-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
+  color: #c8d8ee;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 4px 8px;
+  outline: none;
+}
+
+.om-chat-search:focus {
+  border-color: rgba(255, 255, 255, 0.28);
 }
 </style>

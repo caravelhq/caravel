@@ -13,6 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "send", text: string): void;
   (e: "interrupt"): void;
+  (e: "interrupt-send", text: string): void;
   (e: "cancel"): void;
   (e: "pin"): void;
   (e: "update:draft", text: string): void;
@@ -20,6 +21,7 @@ const emit = defineEmits<{
 
 const textareaRef = useTemplateRef<HTMLTextAreaElement>("textareaRef");
 const newTitleRef = useTemplateRef<HTMLInputElement>("newTitleRef");
+const interruptInFlight = ref(false);
 
 // Local draft mirrors the store; the store is authoritative on chatId change.
 const localDraft = ref(props.draft);
@@ -57,10 +59,11 @@ function onInput(): void {
 }
 
 function onKeydown(e: KeyboardEvent): void {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
     onSend();
   }
+  // Plain Enter: browser default inserts newline in the textarea.
 }
 
 function onSend(): void {
@@ -77,6 +80,22 @@ function onSend(): void {
 
 function onInterrupt(): void {
   emit("interrupt");
+}
+
+// Hand button: interrupt the in-flight run, then send the draft as the next message.
+// Ordering matters — the interrupt must land (awaited by the parent) before the send,
+// so we emit "interrupt-send" and let ChatView sequence them.
+function onHandInterrupt(): void {
+  if (interruptInFlight.value) return;
+  interruptInFlight.value = true;
+  const text = localDraft.value.trim();
+  localDraft.value = "";
+  emit("update:draft", "");
+  if (textareaRef.value) {
+    textareaRef.value.value = "";
+    autoResize();
+  }
+  emit("interrupt-send", text);
 }
 
 function onCancel(): void {
@@ -100,6 +119,9 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
       type="text"
       placeholder="Chat title (optional)"
       autocomplete="off"
+      @keydown.enter.exact.prevent="textareaRef?.focus()"
+      @keydown.ctrl.enter.prevent="onSend"
+      @keydown.meta.enter.prevent="onSend"
     />
 
     <div class="chat-input-row">
@@ -118,18 +140,19 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
           v-if="hasActiveWork"
           type="button"
           class="chat-interrupt"
-          title="Interrupt"
-          aria-label="Interrupt"
-          @click="onInterrupt"
+          title="Interrupt and send"
+          aria-label="Interrupt and send"
+          :disabled="interruptInFlight"
+          @click="onHandInterrupt"
         >✋</button>
         <button
           v-if="hasActiveWork"
           type="button"
           class="chat-cancel"
-          title="Cancel"
-          aria-label="Cancel"
+          title="Cancel run"
+          aria-label="Cancel run"
           @click="onCancel"
-        >Cancel</button>
+        >✕</button>
         <button
           type="submit"
           class="chat-send"
