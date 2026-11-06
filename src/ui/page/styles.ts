@@ -5024,6 +5024,9 @@ export const pageStyles = String.raw`    :root {
       font-size: 14px;
       line-height: 1.7;
       color: #e4eefb;
+      max-width: 80ch;
+      margin-left: auto;
+      margin-right: auto;
     }
     .files-md h1, .files-md h2, .files-md h3,
     .files-md h4, .files-md h5, .files-md h6 {
