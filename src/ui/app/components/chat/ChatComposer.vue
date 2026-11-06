@@ -101,6 +101,9 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
       type="text"
       placeholder="Chat title (optional)"
       autocomplete="off"
+      @keydown.enter.exact.prevent="textareaRef?.focus()"
+      @keydown.ctrl.enter.prevent="onSend"
+      @keydown.meta.enter.prevent="onSend"
     />
 
     <div class="chat-input-row">

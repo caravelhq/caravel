@@ -328,6 +328,7 @@ function onSpeak(text: string): void {
 
 function onStop(): void {
   stopReadAloud();
+  void onInterrupt();
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
