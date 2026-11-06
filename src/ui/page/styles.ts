@@ -2369,7 +2369,8 @@ export const pageStyles = String.raw`    :root {
     }
     .chat-form {
       display: flex;
-      align-items: flex-end;
+      flex-direction: column;
+      align-items: stretch;
       gap: 8px;
       border: 1px solid #2a4a7255;
       border-radius: 14px;
@@ -2379,6 +2380,11 @@ export const pageStyles = String.raw`    :root {
     }
     .chat-form:focus-within {
       border-color: #7dc5ff55;
+    }
+    .chat-input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
     }
     .chat-input {
       flex: 1;
@@ -2481,6 +2487,11 @@ export const pageStyles = String.raw`    :root {
       filter: none;
     }
     .chat-cancel {
+      width: 28px;
+      height: 28px;
+      padding: 0;
+      border-radius: 50%;
+      font-size: 13px;
       border: 1px solid #ff7f7f55;
       background: #34181855;
       color: #ff9b9b;
@@ -5254,6 +5265,19 @@ export const pageStyles = String.raw`    :root {
       }
       .pill-value {
         font-size: 10px;
+      }
+      /* Chat toolbar: hide the session badge (debug metadata) so the
+         Chats/agent/title/trash controls fit at 375px without overflow.
+         Collapse the name input so it doesn't push the trash off-screen. */
+      .chat-session-badge {
+        display: none;
+      }
+      .chat-toolbar-left {
+        min-width: 0;
+        overflow: hidden;
+      }
+      .chat-name-input {
+        max-width: 140px;
       }
     }
 

@@ -265,6 +265,7 @@ async function onInterrupt(): Promise<void> {
 
 function onCancel(): void {
   chatStore.saveDraft(chatId.value, "");
+  void onInterrupt();
 }
 
 async function onRename(name: string): Promise<void> {

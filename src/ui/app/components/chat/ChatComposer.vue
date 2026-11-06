@@ -57,10 +57,11 @@ function onInput(): void {
 }
 
 function onKeydown(e: KeyboardEvent): void {
-  if (e.key === "Enter" && !e.shiftKey) {
+  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
     e.preventDefault();
     onSend();
   }
+  // Plain Enter: browser default inserts newline in the textarea.
 }
 
 function onSend(): void {
@@ -126,10 +127,10 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
           v-if="hasActiveWork"
           type="button"
           class="chat-cancel"
-          title="Cancel"
-          aria-label="Cancel"
+          title="Cancel run"
+          aria-label="Cancel run"
           @click="onCancel"
-        >Cancel</button>
+        >✕</button>
         <button
           type="submit"
           class="chat-send"
