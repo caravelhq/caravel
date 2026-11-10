@@ -38,15 +38,16 @@ const anchorRef = ref<HTMLDivElement | null>(null);
 const panelRef = ref<HTMLDivElement | null>(null);
 
 // Fixed position for the teleported panel — updated when opening.
-// Right-aligned to the button (which lives in .ts-actions at the viewport's right edge).
+// Left-aligned to the button (which lives in .ts-left-actions at the viewport's left edge).
+// max-width:280px in styles.ts keeps the panel within viewport even at 375px.
 const panelTop = ref("0px");
-const panelRight = ref("0px");
+const panelLeft = ref("0px");
 
 function updatePosition(): void {
   const r = anchorRef.value?.getBoundingClientRect();
   if (r) {
     panelTop.value = `${r.bottom + 4}px`;
-    panelRight.value = `${window.innerWidth - r.right}px`;
+    panelLeft.value = `${r.left}px`;
   }
 }
 
@@ -129,7 +130,7 @@ onBeforeUnmount(() => {
         v-if="isOpen"
         ref="panelRef"
         class="open-menu-list"
-        :style="{ top: panelTop, right: panelRight }"
+        :style="{ top: panelTop, left: panelLeft }"
         role="menu"
         @click.stop
       >

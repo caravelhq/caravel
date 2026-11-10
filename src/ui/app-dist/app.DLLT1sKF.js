@@ -16603,7 +16603,7 @@ const _hoisted_13$9 = {
 };
 const _hoisted_14$8 = { class: "vtc-actions" };
 const _hoisted_15$8 = ["disabled"];
-const _hoisted_16$7 = {
+const _hoisted_16$8 = {
   key: 2,
   class: "vtc-capture"
 };
@@ -17113,7 +17113,7 @@ User's voice request: "${userText}"`;
                 onClick: submitTask
               }, toDisplayString(isSubmitting.value ? "Creating…" : "✈ Create Task"), 9, _hoisted_15$8)
             ])
-          ])) : (openBlock(), createElementBlock("div", _hoisted_16$7, [
+          ])) : (openBlock(), createElementBlock("div", _hoisted_16$8, [
             createBaseVNode("div", _hoisted_17$6, toDisplayString(statusText.value), 1),
             createBaseVNode("button", {
               class: normalizeClass(["voice-mode-btn vtc-mic-btn", { listening: isListening.value, processing: isProcessing.value }]),
@@ -17474,13 +17474,13 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
     const anchorRef = /* @__PURE__ */ ref(null);
     const panelRef = /* @__PURE__ */ ref(null);
     const panelTop = /* @__PURE__ */ ref("0px");
-    const panelRight = /* @__PURE__ */ ref("0px");
+    const panelLeft = /* @__PURE__ */ ref("0px");
     function updatePosition() {
       var _a2;
       const r = (_a2 = anchorRef.value) == null ? void 0 : _a2.getBoundingClientRect();
       if (r) {
         panelTop.value = `${r.bottom + 4}px`;
-        panelRight.value = `${window.innerWidth - r.right}px`;
+        panelLeft.value = `${r.left}px`;
       }
     }
     function toggle() {
@@ -17565,7 +17565,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
           title: "Open",
           onClick: toggle
         }, [..._cache[2] || (_cache[2] = [
-          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-11c7a8cd><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-11c7a8cd></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-11c7a8cd></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-11c7a8cd></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-11c7a8cd></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-11c7a8cd></path></svg>', 1)
+          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-002b8458><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-002b8458></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-002b8458></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-002b8458></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-002b8458></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-002b8458></path></svg>', 1)
         ])], 8, _hoisted_1$z),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
@@ -17573,7 +17573,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
             ref_key: "panelRef",
             ref: panelRef,
             class: "open-menu-list",
-            style: normalizeStyle({ top: panelTop.value, right: panelRight.value }),
+            style: normalizeStyle({ top: panelTop.value, left: panelLeft.value }),
             role: "menu",
             onClick: _cache[1] || (_cache[1] = withModifiers(() => {
             }, ["stop"]))
@@ -17667,7 +17667,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$C, [["__scopeId", "data-v-11c7a8cd"]]);
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$C, [["__scopeId", "data-v-002b8458"]]);
 const _hoisted_1$y = {
   key: 0,
   class: "tos-group-label"
@@ -17800,38 +17800,39 @@ const _sfc_main$B = /* @__PURE__ */ defineComponent({
 });
 const TabOverflowSheet = /* @__PURE__ */ _export_sfc(_sfc_main$B, [["__scopeId", "data-v-1a92f097"]]);
 const _hoisted_1$x = { class: "tab-strip-outer" };
-const _hoisted_2$s = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_3$o = {
+const _hoisted_2$s = { class: "ts-left-actions" };
+const _hoisted_3$o = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_4$l = {
   key: 0,
   class: "ts-tab-glyph"
 };
-const _hoisted_4$l = { class: "ts-tab-label" };
-const _hoisted_5$k = {
+const _hoisted_5$k = { class: "ts-tab-label" };
+const _hoisted_6$i = {
   key: 1,
   class: "ts-tab-unread",
   "aria-label": "Unread messages"
 };
-const _hoisted_6$i = ["onClick"];
-const _hoisted_7$d = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
-const _hoisted_8$d = {
+const _hoisted_7$d = ["onClick"];
+const _hoisted_8$d = ["data-key", "title", "aria-selected", "onClick", "onDblclick", "onMouseenter", "onMousedown", "onContextmenu", "onTouchstartPassive", "onDragstart", "onDragover", "onDrop"];
+const _hoisted_9$d = {
   key: 0,
   class: "ts-tab-glyph"
 };
-const _hoisted_9$d = { class: "ts-tab-label" };
-const _hoisted_10$a = {
+const _hoisted_10$a = { class: "ts-tab-label" };
+const _hoisted_11$9 = {
   key: 1,
   class: "ts-tab-unread",
   "aria-label": "Unread messages"
 };
-const _hoisted_11$9 = ["onClick"];
-const _hoisted_12$8 = { class: "ts-actions" };
-const _hoisted_13$7 = {
+const _hoisted_12$8 = ["onClick"];
+const _hoisted_13$7 = { class: "ts-actions" };
+const _hoisted_14$7 = {
   key: 0,
   class: "ts-overflow-fade",
   "aria-hidden": "true"
 };
-const _hoisted_14$7 = ["title"];
 const _hoisted_15$7 = ["title"];
+const _hoisted_16$7 = ["title"];
 const _sfc_main$A = /* @__PURE__ */ defineComponent({
   __name: "TabStrip",
   setup(__props) {
@@ -18022,6 +18023,9 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
       var _a2;
       return openBlock(), createElementBlock(Fragment, null, [
         createBaseVNode("div", _hoisted_1$x, [
+          createBaseVNode("div", _hoisted_2$s, [
+            createVNode(OpenMenu)
+          ]),
           createBaseVNode("div", {
             class: normalizeClass(["tab-strip", { "tab-strip--overflow": isOverflowing.value }]),
             ref_key: "stripEl",
@@ -18058,9 +18062,9 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[1] || (_cache[1] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, i)
               }, [
-                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_3$o, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_4$l, toDisplayString(tabLabel(tab)), 1),
-                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_5$k)) : createCommentVNode("", true),
+                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_4$l, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
+                createBaseVNode("span", _hoisted_5$k, toDisplayString(tabLabel(tab)), 1),
+                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_6$i)) : createCommentVNode("", true),
                 createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
@@ -18069,8 +18073,8 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
                   onDblclick: _cache[0] || (_cache[0] = withModifiers(() => {
                   }, ["stop"]))
-                }, "×", 40, _hoisted_6$i)
-              ], 42, _hoisted_2$s);
+                }, "×", 40, _hoisted_7$d)
+              ], 42, _hoisted_3$o);
             }), 128)),
             unref(ws).splitIndex !== null ? (openBlock(), createElementBlock("div", {
               key: 0,
@@ -18114,9 +18118,9 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                 onDragleave: _cache[4] || (_cache[4] = ($event) => dragOverIdx.value = null),
                 onDrop: ($event) => onTabDrop($event, group0.value.length + i)
               }, [
-                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_8$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
-                createBaseVNode("span", _hoisted_9$d, toDisplayString(tabLabel(tab)), 1),
-                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_10$a)) : createCommentVNode("", true),
+                unref(refGlyph)(tab) ? (openBlock(), createElementBlock("span", _hoisted_9$d, toDisplayString(unref(refGlyph)(tab)), 1)) : createCommentVNode("", true),
+                createBaseVNode("span", _hoisted_10$a, toDisplayString(tabLabel(tab)), 1),
+                isTabUnread(tab) ? (openBlock(), createElementBlock("span", _hoisted_11$9)) : createCommentVNode("", true),
                 createBaseVNode("span", {
                   class: "ts-tab-close",
                   role: "button",
@@ -18125,33 +18129,32 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
                   onClick: withModifiers(($event) => unref(ws).close(unref(refKey)(tab)), ["stop"]),
                   onDblclick: _cache[3] || (_cache[3] = withModifiers(() => {
                   }, ["stop"]))
-                }, "×", 40, _hoisted_11$9)
-              ], 42, _hoisted_7$d);
+                }, "×", 40, _hoisted_12$8)
+              ], 42, _hoisted_8$d);
             }), 128))
           ], 2),
-          createBaseVNode("div", _hoisted_12$8, [
-            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_13$7)) : createCommentVNode("", true),
+          createBaseVNode("div", _hoisted_13$7, [
+            isOverflowing.value ? (openBlock(), createElementBlock("div", _hoisted_14$7)) : createCommentVNode("", true),
             isOverflowing.value ? (openBlock(), createElementBlock("button", {
               key: 1,
               class: "ts-overflow-btn",
               type: "button",
               title: `${unref(ws).tabs.length} tabs — click to see all`,
               onClick: _cache[5] || (_cache[5] = ($event) => overflowOpen.value = true)
-            }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_14$7)) : createCommentVNode("", true),
+            }, "⋯ " + toDisplayString(unref(ws).tabs.length), 9, _hoisted_15$7)) : createCommentVNode("", true),
             createBaseVNode("button", {
               class: normalizeClass(["ts-split-btn", { "ts-split-btn--active": unref(ws).splitOn }]),
               type: "button",
               title: unref(ws).splitOn ? "Close split" : "Open split",
               onClick: _cache[6] || (_cache[6] = ($event) => unref(ws).toggleSplit())
-            }, "⫽", 10, _hoisted_15$7),
+            }, "⫽", 10, _hoisted_16$7),
             createBaseVNode("button", {
               id: "settings-btn",
               class: "ts-settings-btn",
               type: "button",
               title: "Settings",
               onClick: _cache[7] || (_cache[7] = ($event) => unref(ui).settingsOpen = true)
-            }, "⚙"),
-            createVNode(OpenMenu)
+            }, "⚙")
           ])
         ]),
         contextMenu.value ? (openBlock(), createElementBlock(Fragment, { key: 0 }, [
@@ -18219,7 +18222,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$A, [["__scopeId", "data-v-537f6643"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$A, [["__scopeId", "data-v-69fa2d6c"]]);
 function useReadAloud() {
   const queue2 = [];
   let queueRunning = false;
