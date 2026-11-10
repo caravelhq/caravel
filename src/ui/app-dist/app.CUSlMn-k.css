@@ -138,12 +138,12 @@
   margin-top: 0.5rem;
 }
 
-.open-menu-ship[data-v-002b8458] {
+.open-menu-ship[data-v-371de017] {
   display: block;
 }
 /* WAL-138: matches the footer dock buttons (.global-voice-task) — same green,
    same translucent fill and blur, same lift on hover — at tab-strip scale. */
-.open-menu-btn[data-v-002b8458] {
+.open-menu-btn[data-v-371de017] {
   flex: 0 0 auto;
   width: 28px;
   height: 28px;
@@ -159,16 +159,17 @@
   justify-content: center;
   transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
-.open-menu-btn[data-v-002b8458]:hover {
+.open-menu-btn[data-v-371de017]:hover {
   transform: translateY(-2px);
   background: #0d2a2acc;
   border-color: #6ee7b777;
 }
-.open-menu-btn[aria-expanded="true"][data-v-002b8458] {
+.open-menu-btn[aria-expanded="true"][data-v-371de017] {
   background: #0d2a2acc;
   border-color: #6ee7b7aa;
+  transform: translateY(-2px);
 }
-.om-section-label[data-v-002b8458] {
+.om-section-label[data-v-371de017] {
   padding: 6px 14px 3px;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -177,29 +178,29 @@
   pointer-events: none;
   user-select: none;
 }
-.om-item-disabled[data-v-002b8458] {
+.om-item-disabled[data-v-371de017] {
   opacity: 0.35;
   cursor: default;
 }
-.om-item-recent[data-v-002b8458] {
+.om-item-recent[data-v-371de017] {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.om-item-label[data-v-002b8458] {
+.om-item-label[data-v-371de017] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
   flex: 1;
 }
-.om-glyph[data-v-002b8458] {
+.om-glyph[data-v-371de017] {
   font-size: 11px;
   opacity: 0.7;
   min-width: 14px;
   text-align: center;
 }
-.om-phase-tag[data-v-002b8458] {
+.om-phase-tag[data-v-371de017] {
   font-size: 10px;
   opacity: 0.7;
   margin-left: auto;

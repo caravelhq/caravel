@@ -17565,7 +17565,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
           title: "Open",
           onClick: toggle
         }, [..._cache[2] || (_cache[2] = [
-          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-002b8458><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-002b8458></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-002b8458></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-002b8458></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-002b8458></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-002b8458></path></svg>', 1)
+          createStaticVNode('<svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true" data-v-371de017><path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" data-v-371de017></path><path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" data-v-371de017></path><path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" data-v-371de017></path><path d="M14 58 L50 26 Q58 46 48 66 Q30 64 14 58 Z" fill="currentColor" opacity="0.74" data-v-371de017></path><path d="M16 70 H104 L95 84 Q90 89 82 89 H38 Q30 89 25 84 Z" fill="currentColor" data-v-371de017></path></svg>', 1)
         ])], 8, _hoisted_1$z),
         (openBlock(), createBlock(Teleport, { to: "body" }, [
           isOpen.value ? (openBlock(), createElementBlock("div", {
@@ -17667,7 +17667,7 @@ const _sfc_main$C = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$C, [["__scopeId", "data-v-002b8458"]]);
+const OpenMenu = /* @__PURE__ */ _export_sfc(_sfc_main$C, [["__scopeId", "data-v-371de017"]]);
 const _hoisted_1$y = {
   key: 0,
   class: "tos-group-label"
@@ -19733,6 +19733,15 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     watch(() => props.messages.length, (n) => {
       const desired = Math.max(0, n - CHAT_MSG_RENDER_M);
       if (desired > renderFrom.value && atBottom.value) renderFrom.value = desired;
+    });
+    watch(() => props.chatId, () => {
+      renderFrom.value = Math.max(0, props.messages.length - CHAT_MSG_RENDER_M);
+      atBottom.value = true;
+      readyToLoadEarlier.value = false;
+      void nextTick().then(() => {
+        jumpToLatest();
+        readyToLoadEarlier.value = true;
+      });
     });
     const visibleMessages = computed(() => props.messages.slice(renderFrom.value));
     const hasMore = computed(() => renderFrom.value > 0);
@@ -30601,6 +30610,7 @@ const pageStyles = String.raw`    :root {
       gap: 6px;
       flex-shrink: 0;
       align-items: stretch;
+      align-self: flex-end;
     }
     .chat-send,
     .chat-interrupt,

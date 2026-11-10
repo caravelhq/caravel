@@ -201,6 +201,7 @@ onBeforeUnmount(() => {
 .open-menu-btn[aria-expanded="true"] {
   background: #0d2a2acc;
   border-color: #6ee7b7aa;
+  transform: translateY(-2px);
 }
 .om-section-label {
   padding: 6px 14px 3px;

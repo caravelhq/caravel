@@ -41,6 +41,19 @@ watch(() => props.messages.length, (n) => {
   if (desired > renderFrom.value && atBottom.value) renderFrom.value = desired;
 });
 
+// When the chat tab is reused (chatId changes without unmounting), reset all per-chat
+// state and scroll to the new chat's bottom. Without this, the previous chat's render
+// window, sentinel-ready flag, and atBottom value bleed into the new chat.
+watch(() => props.chatId, () => {
+  renderFrom.value = Math.max(0, props.messages.length - CHAT_MSG_RENDER_M);
+  atBottom.value = true;
+  readyToLoadEarlier.value = false;
+  void nextTick().then(() => {
+    jumpToLatest();
+    readyToLoadEarlier.value = true;
+  });
+});
+
 const visibleMessages = computed(() => props.messages.slice(renderFrom.value));
 const hasMore = computed(() => renderFrom.value > 0);
 

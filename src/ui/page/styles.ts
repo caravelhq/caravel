@@ -2424,6 +2424,7 @@ export const pageStyles = String.raw`    :root {
       gap: 6px;
       flex-shrink: 0;
       align-items: stretch;
+      align-self: flex-end;
     }
     .chat-send,
     .chat-interrupt,
