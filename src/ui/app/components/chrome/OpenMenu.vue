@@ -172,13 +172,19 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* 9a: Wrapper is absolutely centred in .ts-left-actions so the 42px button
-   is out of flex flow — bar height stays driven by the tabs, not the button. */
+/* 9a: Wrapper is absolutely positioned in .ts-left-actions so the 42px button
+   is out of flex flow — bar height stays driven by the tabs, not the button.
+   9c: Changed from vertically centred (top:50%) to top-offset (top:2px) so the
+   button protrudes DOWNWARD rather than upward. The 2px offset absorbs the
+   2px hover/open lift: at rest button top = bar top + 2px (inside .workspace);
+   lifted button top = bar top (flush with .workspace — no clip). The companion
+   z-index:1 on .tab-strip-outer ensures the button paints above workspace-body
+   content when it overflows downward. */
 .open-menu {
   position: absolute;
-  top: 50%;
+  top: 2px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
 }
 .open-menu-ship {
   display: block;

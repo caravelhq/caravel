@@ -414,6 +414,9 @@ function onDividerDrop(e: DragEvent): void {
   align-items: stretch;
   flex-shrink: 0;
   position: relative;
+  /* 9c: z-index:1 creates a stacking context so the Open button's downward
+     protrusion paints above .workspace-body (which has no z-index / auto). */
+  z-index: 1;
   background: var(--surface-1, #1a1a1a);
   border-bottom: 1px solid var(--border-subtle, #333);
   padding: 4px 0 0;
