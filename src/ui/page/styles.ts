@@ -3227,6 +3227,16 @@ export const pageStyles = String.raw`    :root {
       scrollbar-width: thin;
       scrollbar-color: #3a5a80 transparent;
     }
+    /* When ChatPicker sits inside the tasks sidebar, override its dropdown
+       positioning so it fills the sidebar naturally as a block element. */
+    .tasks-sidebar .chat-history-dropdown {
+      position: static;
+      max-height: none;
+      border-radius: 0;
+      border: none;
+      box-shadow: none;
+      overflow-y: visible;
+    }
     /* ── Four attention tiers (Measure A′, WAL-72 Phase 3W) ────────────────
        Replaces the single "Awaiting your input" widget. Each tier has its
        own accent colour and glyph; counts are never summed. The container

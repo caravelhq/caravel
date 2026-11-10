@@ -38,7 +38,7 @@ export interface TaskRow {
   context?: string[];
 }
 
-export type TasksView = "projects" | "all";
+export type TasksView = "projects" | "all" | "chats";
 export type TasksFilter = "all" | "open" | "waiting" | "done" | "failed";
 
 export const useTasksStore = defineStore("tasks", () => {
