@@ -417,7 +417,7 @@ function onDividerDrop(e: DragEvent): void {
   background: var(--surface-1, #1a1a1a);
   border-bottom: 1px solid var(--border-subtle, #333);
   padding: 4px 0 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
@@ -586,7 +586,9 @@ function onDividerDrop(e: DragEvent): void {
   flex-shrink: 0;
   padding: 0 2px;
   background: var(--surface-1, #1a1a1a);
+  position: relative;
   z-index: 2;
+  width: 46px;
 }
 
 /* Right actions bar — always visible, never scrolls */

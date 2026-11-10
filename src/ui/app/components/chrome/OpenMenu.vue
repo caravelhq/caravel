@@ -116,7 +116,7 @@ onBeforeUnmount(() => {
       aria-label="Open menu"
       title="Open"
       @click="toggle"
-    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true">
+    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="25" height="21" fill="none" aria-hidden="true">
         <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" />
         <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" />
         <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" />
@@ -172,6 +172,14 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* 9a: Wrapper is absolutely centred in .ts-left-actions so the 42px button
+   is out of flex flow — bar height stays driven by the tabs, not the button. */
+.open-menu {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .open-menu-ship {
   display: block;
 }
@@ -179,8 +187,8 @@ onBeforeUnmount(() => {
    same translucent fill and blur, same lift on hover — at tab-strip scale. */
 .open-menu-btn {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   border: 1px solid #6ee7b744;
