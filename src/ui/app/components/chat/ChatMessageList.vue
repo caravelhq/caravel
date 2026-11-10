@@ -66,6 +66,16 @@ onMounted(() => {
     if (entries[0].isIntersecting && hasMore.value && readyToLoadEarlier.value) void loadEarlier();
   }, { root: scroll, threshold: 0 });
   observer.observe(sentinel);
+
+  // Initial scroll-to-bottom: if messages are already populated at mount time
+  // (e.g. the store has them from a prior fetch), scroll and arm the sentinel now.
+  // When the list is empty here, the messages.length watcher handles both on first arrival.
+  if (props.messages.length > 0) {
+    void nextTick().then(() => {
+      jumpToLatest();
+      readyToLoadEarlier.value = true;
+    });
+  }
 });
 onBeforeUnmount(() => { observer?.disconnect(); observer = null; });
 
@@ -96,6 +106,8 @@ function jumpToLatest(): void {
   el.scrollTop = el.scrollHeight;
   atBottom.value = true;
 }
+
+defineExpose({ jumpToLatest });
 
 function orderedAgents() {
   let coord: (typeof props.agents)[0] | null = null;

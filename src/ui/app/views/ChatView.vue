@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onActivated, onDeactivated, onBeforeUnmount } from "vue";
+import { ref, computed, watch, nextTick, onMounted, onActivated, onDeactivated, onBeforeUnmount } from "vue";
 import { useChatStore } from "../stores/chat";
 import { useWorkspaceStore } from "../stores/workspace";
 import { useUiStore } from "../stores/ui";
@@ -21,6 +21,8 @@ const ws = useWorkspaceStore();
 const ui = useUiStore();
 const live = useLiveStore();
 const { speak: readAloud, stop: stopReadAloud } = useReadAloud();
+
+const msgListRef = ref<{ jumpToLatest: () => void } | null>(null);
 
 const chatId = computed((): string =>
   props.resource.kind === "chat" ? props.resource.chatId : ""
@@ -229,6 +231,11 @@ async function onSend(text: string): Promise<void> {
   // Optimistic: push the user message.
   chatStore.setMessages(id, [...messages.value, { role: "user", text, state: "pending" }]);
 
+  // Sender's own message always scrolls to bottom — unconditional.
+  // (The atBottom gate in ChatMessageList stays in place for incoming messages per DEC-0049.)
+  await nextTick();
+  msgListRef.value?.jumpToLatest();
+
   if (!agentId.value && pendingAgentId.value) {
     chatStore.setMeta(id, { agent: pendingAgentId.value, updatedAt: updatedAt.value });
   }
@@ -384,6 +391,7 @@ function generateChatId(): string {
       />
 
       <ChatMessageList
+        ref="msgListRef"
         :chat-id="chatId"
         :messages="messages"
         :agents-fetched="agentsFetched"

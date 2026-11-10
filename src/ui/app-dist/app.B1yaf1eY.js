@@ -19699,7 +19699,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
     pendingAgentId: {}
   },
   emits: ["speak", "stop", "pick-agent"],
-  setup(__props, { emit: __emit }) {
+  setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
     const scrollEl = useTemplateRef("scrollEl");
@@ -19731,6 +19731,12 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
         if (entries[0].isIntersecting && hasMore.value && readyToLoadEarlier.value) void loadEarlier();
       }, { root: scroll, threshold: 0 });
       observer.observe(sentinel);
+      if (props.messages.length > 0) {
+        void nextTick().then(() => {
+          jumpToLatest();
+          readyToLoadEarlier.value = true;
+        });
+      }
     });
     onBeforeUnmount(() => {
       observer == null ? void 0 : observer.disconnect();
@@ -19758,6 +19764,7 @@ const _sfc_main$x = /* @__PURE__ */ defineComponent({
       el.scrollTop = el.scrollHeight;
       atBottom.value = true;
     }
+    __expose({ jumpToLatest });
     function orderedAgents() {
       let coord = null;
       const rest = [];
@@ -20190,6 +20197,7 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     const ui = useUiStore();
     const live = useLiveStore();
     const { speak: readAloud, stop: stopReadAloud } = useReadAloud();
+    const msgListRef = /* @__PURE__ */ ref(null);
     const chatId = computed(
       () => props.resource.kind === "chat" ? props.resource.chatId : ""
     );
@@ -20343,9 +20351,12 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
     });
     watch(messages, updateRaText, { deep: false });
     async function onSend(text) {
+      var _a2;
       const id = chatId.value;
       if (!id || !text.trim()) return;
       chatStore.setMessages(id, [...messages.value, { role: "user", text, state: "pending" }]);
+      await nextTick();
+      (_a2 = msgListRef.value) == null ? void 0 : _a2.jumpToLatest();
       if (!agentId.value && pendingAgentId.value) {
         chatStore.setMeta(id, { agent: pendingAgentId.value, updatedAt: updatedAt.value });
       }
@@ -20479,6 +20490,8 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             onDelete
           }, null, 8, ["chat-id", "chat-name", "agent-display-name", "agent-emoji", "agent-description", "is-agent-locked", "session-id", "session-turn-count", "picker-open", "has-messages"]),
           createVNode(_sfc_main$x, {
+            ref_key: "msgListRef",
+            ref: msgListRef,
             "chat-id": chatId.value,
             messages: messages.value,
             "agents-fetched": agentsFetched.value,
