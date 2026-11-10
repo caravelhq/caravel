@@ -450,6 +450,46 @@ console.log("\n── W6: output_format missing or path-free ──────�
   assert(!hasWarning(r3, "output_format"), "PASS: output_format with path clears warning");
 }
 
+// ── Warn: missing parent (W7) ─────────────────────────────────────────────────
+// Incident: nine WAL-156 round-3/4 envelopes dispatched with parent: null, each
+// spawning a cold worker with a fresh thread and no warm prompt cache.
+//
+// W7 fires for open/waiting/paused/blocked envelopes; skips done/failed/archived
+// (settled envelopes don't need a dispatch-time nudge).
+
+console.log("\n── W7: missing parent ────────────────────────────────────────────");
+
+{
+  // BASE has parent: null — should warn
+  const r = doLintNewEnvelope(BASE, root);
+  assert(hasWarning(r, "parent: null"), "WARN: parent: null triggers W7");
+  assert(hasWarning(r, "starts cold"), "WARN: message explains the cold-agent consequence");
+  assert(hasWarning(r, "--force"), "WARN: message nudges toward --force rather than parent removal");
+
+  // Explicit parent set — no W7
+  const withParent = BASE.replace("parent: null", "parent: TSK-2026-01-01-0099");
+  const r2 = doLintNewEnvelope(withParent, root);
+  assert(!hasWarning(r2, "parent: null"), "PASS: explicit parent clears W7");
+
+  // status: done envelope with parent: null — W7 must NOT fire (settled envelope)
+  const doneNoParent = BASE
+    .replace("status: open", "status: done")
+    .replace("parent: null", "parent: null")
+    + "\nreason: budget\nsummary: done\n";
+  const r3 = doLintNewEnvelope(doneNoParent, root);
+  assert(!hasWarning(r3, "parent: null"), "PASS: done envelope with parent: null skips W7");
+
+  // status: failed envelope with parent: null — W7 must NOT fire
+  const failedNoParent = BASE
+    .replace("status: open", "status: failed")
+    + "\nreason: budget\nsummary: failed\n";
+  const r4 = doLintNewEnvelope(failedNoParent, root);
+  assert(!hasWarning(r4, "parent: null"), "PASS: failed envelope with parent: null skips W7");
+
+  // W7 must remain a warning, never a hard fail — dispatch still succeeds
+  assert(noHardFails(r), "PASS: W7 is a warning, not a hard fail — dispatch proceeds");
+}
+
 // ── Summary ───────────────────────────────────────────────────────────────────
 
 console.log(`\n${"─".repeat(60)}`);

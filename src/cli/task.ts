@@ -788,6 +788,18 @@ export function doLintNewEnvelope(
     );
   }
 
+  // ── W7: No parent — task threads on its own id (cold agent, cold cache) ─────
+  // Skipped for terminal statuses (done/failed/archived) where the envelope is
+  // already settled; only meaningful at dispatch time (open, paused, blocked, waiting).
+  const terminalStatuses = new Set(["done", "failed", "archived"]);
+  if (!terminalStatuses.has(status) && (!parent || parent === "null")) {
+    warnings.push(
+      "parent: null — this task threads on its own id, so the agent starts cold. " +
+        "If this continues existing work, declare a parent; " +
+        "if you removed the parent to bypass an H5 error, use --force instead."
+    );
+  }
+
   return { hardFails, warnings, forceBypassed };
 }
 
@@ -1500,8 +1512,17 @@ function doBatch(args: ParsedArgs, root: string): void {
     if (result.warnings.length > 0) lintWarnings.push({ label, warns: result.warnings });
   }
 
+  // Deduplicate: collapse identical warnings shared across multiple nodes into one line.
+  const warnByText = new Map<string, string[]>();
   for (const { label, warns } of lintWarnings) {
-    for (const w of warns) console.warn(`caravel task batch lint [${label}]: ⚠ ${w}`);
+    for (const w of warns) {
+      if (!warnByText.has(w)) warnByText.set(w, []);
+      warnByText.get(w)!.push(label);
+    }
+  }
+  for (const [w, lbls] of warnByText) {
+    const tag = lbls.length === 1 ? lbls[0]! : lbls.join(", ");
+    console.warn(`caravel task batch lint [${tag}]: ⚠ ${w}`);
   }
 
   if (lintErrors.length > 0) {
