@@ -138,12 +138,12 @@
   margin-top: 0.5rem;
 }
 
-.open-menu-ship[data-v-c72cc716] {
+.open-menu-ship[data-v-93d41fbe] {
   display: block;
 }
 /* WAL-138: matches the footer dock buttons (.global-voice-task) — same green,
    same translucent fill and blur, same lift on hover — at tab-strip scale. */
-.open-menu-btn[data-v-c72cc716] {
+.open-menu-btn[data-v-93d41fbe] {
   flex: 0 0 auto;
   width: 28px;
   height: 28px;
@@ -159,16 +159,16 @@
   justify-content: center;
   transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
-.open-menu-btn[data-v-c72cc716]:hover {
+.open-menu-btn[data-v-93d41fbe]:hover {
   transform: translateY(-2px);
   background: #0d2a2acc;
   border-color: #6ee7b777;
 }
-.open-menu-btn[aria-expanded="true"][data-v-c72cc716] {
+.open-menu-btn[aria-expanded="true"][data-v-93d41fbe] {
   background: #0d2a2acc;
   border-color: #6ee7b7aa;
 }
-.om-section-label[data-v-c72cc716] {
+.om-section-label[data-v-93d41fbe] {
   padding: 6px 14px 3px;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -177,46 +177,28 @@
   pointer-events: none;
   user-select: none;
 }
-.om-item-disabled[data-v-c72cc716] {
+.om-item-disabled[data-v-93d41fbe] {
   opacity: 0.35;
   cursor: default;
 }
-.om-item-recent[data-v-c72cc716] {
+.om-item-recent[data-v-93d41fbe] {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.om-glyph[data-v-c72cc716] {
+.om-glyph[data-v-93d41fbe] {
   font-size: 11px;
   opacity: 0.7;
   min-width: 14px;
   text-align: center;
 }
-.om-phase-tag[data-v-c72cc716] {
+.om-phase-tag[data-v-93d41fbe] {
   font-size: 10px;
   opacity: 0.7;
   margin-left: auto;
   padding-left: 8px;
 }
-.om-chat-search-wrap[data-v-c72cc716] {
-  padding: 3px 10px 4px;
-}
-.om-chat-search[data-v-c72cc716] {
-  width: 100%;
-  box-sizing: border-box;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 4px;
-  color: #c8d8ee;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  padding: 4px 8px;
-  outline: none;
-}
-.om-chat-search[data-v-c72cc716]:focus {
-  border-color: rgba(255, 255, 255, 0.28);
-}
+
 
 .tos-group-label[data-v-1a92f097] {
   font-size: 0.75rem;
@@ -288,7 +270,7 @@
   z-index: 0;
 }
 
-.tab-strip-outer[data-v-1c0978ce] {
+.tab-strip-outer[data-v-cbc45c76] {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
@@ -301,27 +283,31 @@
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
-.tab-strip[data-v-1c0978ce] {
+/* overflow-x: auto forces overflow-y to compute to auto (not visible), so this
+   container clips on both axes. The 3px top / 1px bottom padding gives the
+   Open button's 2px hover lift room inside the scroll container's padding-box
+   (CSS clips at the padding edge, not the content edge). */
+.tab-strip[data-v-cbc45c76] {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
   flex: 1;
   align-items: stretch;
   gap: 2px;
-  padding: 0 8px;
+  padding: 3px 8px 1px;
   scrollbar-width: none;
 }
-.tab-strip[data-v-1c0978ce]::-webkit-scrollbar { display: none;
+.tab-strip[data-v-cbc45c76]::-webkit-scrollbar { display: none;
 }
 
 /* F3: when overflow affordance is visible, reserve its width at the rail's right end
    so the last tab's hit target cannot slide under the overflow button. */
-.tab-strip--overflow[data-v-1c0978ce] {
+.tab-strip--overflow[data-v-cbc45c76] {
   padding-right: 56px;
 }
 
 /* Right-edge fade indicating hidden tabs */
-.ts-overflow-fade[data-v-1c0978ce] {
+.ts-overflow-fade[data-v-cbc45c76] {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -331,7 +317,7 @@
   pointer-events: none;
   z-index: 1;
 }
-.ts-tab[data-v-1c0978ce] {
+.ts-tab[data-v-cbc45c76] {
   /* WAL-138: tabs wear the panel frame's border (rgba(255,255,255,0.133)) at
      1.5px, and the active tab drops its bottom edge and takes the panel's own
      background, so it reads as an extension of the frame below rather than a
@@ -353,39 +339,39 @@
   transition: opacity 0.1s;
   flex-shrink: 0;
 }
-.ts-tab[data-v-1c0978ce]:hover { opacity: 0.88;
+.ts-tab[data-v-cbc45c76]:hover { opacity: 0.88;
 }
 /* WAL-138: the selected tab takes the FRAME's top edge — the same
    --frame-top token the panel's gradient starts from, with the panel's own
    blur — so the two cannot drift. --panel (#0b1220aa) was the wrong token:
    it is the chrome colour, not the frame's. */
-.ts-tab--active[data-v-1c0978ce] {
+.ts-tab--active[data-v-cbc45c76] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
 }
-.ts-tab--focused[data-v-1c0978ce] {
+.ts-tab--focused[data-v-cbc45c76] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
   border-color: rgba(255, 255, 255, 0.22);
 }
-.ts-tab--preview[data-v-1c0978ce] { font-style: italic;
+.ts-tab--preview[data-v-cbc45c76] { font-style: italic;
 }
-.ts-tab--pinned[data-v-1c0978ce] { font-weight: 600;
+.ts-tab--pinned[data-v-cbc45c76] { font-weight: 600;
 }
-.ts-tab--drag-over[data-v-1c0978ce] {
+.ts-tab--drag-over[data-v-cbc45c76] {
   outline: 2px solid var(--accent, #7dc5ff);
   outline-offset: -2px;
 }
-.ts-tab-glyph[data-v-1c0978ce] {
+.ts-tab-glyph[data-v-cbc45c76] {
   font-size: 0.75rem;
   opacity: 0.6;
   flex-shrink: 0;
 }
 
 /* Pre-truncated via middleEllipsis — no CSS ellipsis needed */
-.ts-tab-label[data-v-1c0978ce] {
+.ts-tab-label[data-v-cbc45c76] {
   max-width: 140px;
   white-space: nowrap;
   overflow: hidden;
@@ -394,7 +380,7 @@
 /* Close button — 18×18 layout; hit area expanded via pseudo-element so it
    does not inflate the strip height. Effective target: 32px at desktop,
    44px at ≤600px. */
-.ts-tab-close[data-v-1c0978ce] {
+.ts-tab-close[data-v-cbc45c76] {
   position: relative;
   display: flex;
   align-items: center;
@@ -407,14 +393,14 @@
   flex-shrink: 0;
   margin: -4px -4px -4px 0;
 }
-.ts-tab-close[data-v-1c0978ce]::after {
+.ts-tab-close[data-v-cbc45c76]::after {
   content: "";
   position: absolute;
   inset: -7px;
 }
 
 /* Unread indicator dot — 8×8 filled circle, accent colour (DEC-0047). */
-.ts-tab-unread[data-v-1c0978ce] {
+.ts-tab-unread[data-v-cbc45c76] {
   display: inline-block;
   width: 8px;
   height: 8px;
@@ -423,17 +409,17 @@
   flex-shrink: 0;
   align-self: center;
 }
-.ts-tab-close[data-v-1c0978ce]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
+.ts-tab-close[data-v-cbc45c76]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
 }
 @media (max-width: 600px) {
   /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
      hit-area overlapping the tab's label region (M2 fix, R21). */
-.ts-tab-close[data-v-1c0978ce]::after { inset: -13px -13px -13px -2px;
+.ts-tab-close[data-v-cbc45c76]::after { inset: -13px -13px -13px -2px;
 }
 }
 
 /* Divider between groups */
-.ts-divider[data-v-1c0978ce] {
+.ts-divider[data-v-cbc45c76] {
   width: 2px;
   flex-shrink: 0;
   background: var(--border-subtle, #333);
@@ -442,17 +428,17 @@
   cursor: col-resize;
   transition: background 0.1s, width 0.1s;
 }
-.ts-divider--split[data-v-1c0978ce] {
+.ts-divider--split[data-v-cbc45c76] {
   width: 4px;
   background: var(--accent, #7dc5ff44);
 }
-.ts-divider--drag-over[data-v-1c0978ce] {
+.ts-divider--drag-over[data-v-cbc45c76] {
   width: 4px;
   background: var(--accent, #7dc5ff);
 }
 
 /* Actions bar — always visible, never scrolls */
-.ts-actions[data-v-1c0978ce] {
+.ts-actions[data-v-cbc45c76] {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -462,7 +448,7 @@
   position: relative;
   z-index: 2;
 }
-.ts-overflow-btn[data-v-1c0978ce] {
+.ts-overflow-btn[data-v-cbc45c76] {
   background: transparent;
   border: 1px solid var(--border-subtle, #444);
   color: inherit;
@@ -474,9 +460,9 @@
   white-space: nowrap;
   transition: opacity 0.1s;
 }
-.ts-overflow-btn[data-v-1c0978ce]:hover { opacity: 1;
+.ts-overflow-btn[data-v-cbc45c76]:hover { opacity: 1;
 }
-.ts-split-btn[data-v-1c0978ce] {
+.ts-split-btn[data-v-cbc45c76] {
   background: transparent;
   border: none;
   color: inherit;
@@ -487,15 +473,15 @@
   border-radius: 3px;
   transition: opacity 0.1s;
 }
-.ts-split-btn[data-v-1c0978ce]:hover { opacity: 0.8;
+.ts-split-btn[data-v-cbc45c76]:hover { opacity: 0.8;
 }
-.ts-split-btn--active[data-v-1c0978ce] { opacity: 0.9; color: var(--accent, #7dc5ff);
+.ts-split-btn--active[data-v-cbc45c76] { opacity: 0.9; color: var(--accent, #7dc5ff);
 }
 @media (max-width: 600px) {
-.ts-split-btn[data-v-1c0978ce] { display: none;
+.ts-split-btn[data-v-cbc45c76] { display: none;
 }
 }
-.ts-settings-btn[data-v-1c0978ce] {
+.ts-settings-btn[data-v-cbc45c76] {
   background: transparent;
   border: none;
   color: inherit;
@@ -508,20 +494,20 @@
   border-left: 1px solid var(--border-subtle, #333);
   margin-left: 2px;
 }
-.ts-settings-btn[data-v-1c0978ce]:hover { opacity: 0.8;
+.ts-settings-btn[data-v-cbc45c76]:hover { opacity: 0.8;
 }
 @media (max-width: 600px) {
-.ts-settings-btn[data-v-1c0978ce] { display: none;
+.ts-settings-btn[data-v-cbc45c76] { display: none;
 }
 }
 
 /* Context menu backdrop + popup */
-.ts-ctx-backdrop[data-v-1c0978ce] {
+.ts-ctx-backdrop[data-v-cbc45c76] {
   position: fixed;
   inset: 0;
   z-index: 900;
 }
-.ts-ctx-menu[data-v-1c0978ce] {
+.ts-ctx-menu[data-v-cbc45c76] {
   position: fixed;
   z-index: 901;
   background: var(--surface-2, #262626);
@@ -531,7 +517,7 @@
   min-width: 160px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.ts-ctx-item[data-v-1c0978ce] {
+.ts-ctx-item[data-v-cbc45c76] {
   display: block;
   width: 100%;
   background: transparent;
@@ -544,10 +530,10 @@
   white-space: nowrap;
   transition: background 0.1s;
 }
-.ts-ctx-item[data-v-1c0978ce]:hover { background: var(--surface-3, #303030);
+.ts-ctx-item[data-v-cbc45c76]:hover { background: var(--surface-3, #303030);
 }
 @media (max-width: 600px) {
-.ts-ctx-item--wide-only[data-v-1c0978ce] { display: none;
+.ts-ctx-item--wide-only[data-v-cbc45c76] { display: none;
 }
 }
 

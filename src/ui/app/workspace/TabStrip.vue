@@ -418,6 +418,10 @@ function onDividerDrop(e: DragEvent): void {
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
+/* overflow-x: auto forces overflow-y to compute to auto (not visible), so this
+   container clips on both axes. The 3px top / 1px bottom padding gives the
+   Open button's 2px hover lift room inside the scroll container's padding-box
+   (CSS clips at the padding edge, not the content edge). */
 .tab-strip {
   display: flex;
   flex-wrap: nowrap;
@@ -425,7 +429,7 @@ function onDividerDrop(e: DragEvent): void {
   flex: 1;
   align-items: stretch;
   gap: 2px;
-  padding: 0 8px;
+  padding: 3px 8px 1px;
   scrollbar-width: none;
 }
 

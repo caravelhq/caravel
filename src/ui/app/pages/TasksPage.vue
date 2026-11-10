@@ -19,8 +19,17 @@
         :aria-selected="tasksStore.view === 'all' ? 'true' : 'false'"
         @click="setView('all')"
       >Tasks</button>
+      <button
+        type="button"
+        class="tasks-view-tab"
+        :class="{ 'is-active': tasksStore.view === 'chats' }"
+        data-view="chats"
+        role="tab"
+        :aria-selected="tasksStore.view === 'chats' ? 'true' : 'false'"
+        @click="setView('chats')"
+      >Chats</button>
     </div>
-    <div class="tasks-toolbar">
+    <div v-if="tasksStore.view !== 'chats'" class="tasks-toolbar">
       <div class="tasks-filter-chips" id="tasks-filter-chips" role="tablist" aria-label="Filter tasks by status">
         <button type="button" class="tasks-filter-chip" :class="{ 'is-active': tasksStore.filter === 'all' }" data-filter="all" @click="tasksStore.filter = 'all'">All</button>
         <button type="button" class="tasks-filter-chip" :class="{ 'is-active': tasksStore.filter === 'open' }" data-filter="open" @click="tasksStore.filter = 'open'">Open</button>
@@ -34,7 +43,15 @@
       </div>
     </div>
     <div class="tasks-sidebar" id="tasks-sidebar">
-      <TaskPickerTree />
+      <TaskPickerTree v-if="tasksStore.view !== 'chats'" />
+      <ChatPicker
+        v-else
+        active-chat-id=""
+        @open="onChatOpen"
+        @new="onChatNew"
+        @rename="onChatRename"
+        @resync="onChatResync"
+      />
     </div>
   </div>
 </template>
@@ -46,8 +63,10 @@ import { useProjectsStore } from "../stores/projects";
 import { useAttentionStore } from "../stores/attention";
 import { useLiveStore } from "../stores/live";
 import { useNewTaskStore } from "../stores/newTask";
+import { useWorkspaceStore } from "../stores/workspace";
 import { tasksListSpec } from "../workspace/labels";
 import TaskPickerTree from "../components/tasks/TaskPickerTree.vue";
+import ChatPicker from "../components/chat/ChatPicker.vue";
 import type { TaskRow } from "../stores/tasks";
 
 const tasksStore = useTasksStore();
@@ -55,12 +74,38 @@ const projectsStore = useProjectsStore();
 const attentionStore = useAttentionStore();
 const live = useLiveStore();
 const nt = useNewTaskStore();
+const ws = useWorkspaceStore();
 
 let unwatchLive: (() => void) | null = null;
 
-function setView(v: "projects" | "all"): void {
+function setView(v: "projects" | "all" | "chats"): void {
   tasksStore.view = v;
   if (v === "projects") projectsStore.loadList();
+}
+
+function onChatOpen(chatId: string): void {
+  ws.open({ kind: "chat", chatId });
+}
+
+function onChatNew(): void {
+  const arr = new Uint8Array(12);
+  crypto.getRandomValues(arr);
+  const chatId = Array.from(arr).map((b) => b.toString(16).padStart(2, "0")).join("");
+  ws.open({ kind: "chat", chatId });
+}
+
+async function onChatRename(chatId: string, name: string): Promise<void> {
+  try {
+    await fetch(`/api/chats/${encodeURIComponent(chatId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  } catch (_) {}
+}
+
+async function onChatResync(chatId: string): Promise<void> {
+  try { await fetch(`/api/chats/${encodeURIComponent(chatId)}`); } catch (_) {}
 }
 
 function refresh(): void {

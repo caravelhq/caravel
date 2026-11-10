@@ -14,7 +14,6 @@ const emit = defineEmits<{
   (e: "send", text: string): void;
   (e: "interrupt"): void;
   (e: "interrupt-send", text: string): void;
-  (e: "cancel"): void;
   (e: "pin"): void;
   (e: "update:draft", text: string): void;
 }>();
@@ -98,10 +97,6 @@ function onHandInterrupt(): void {
   emit("interrupt-send", text);
 }
 
-function onCancel(): void {
-  emit("cancel");
-}
-
 function newTitleValue(): string {
   return newTitleRef.value?.value.trim() ?? "";
 }
@@ -145,14 +140,6 @@ defineExpose({ focus: () => textareaRef.value?.focus(), newTitleValue });
           :disabled="interruptInFlight"
           @click="onHandInterrupt"
         >✋</button>
-        <button
-          v-if="hasActiveWork"
-          type="button"
-          class="chat-cancel"
-          title="Cancel run"
-          aria-label="Cancel run"
-          @click="onCancel"
-        >✕</button>
         <button
           type="submit"
           class="chat-send"

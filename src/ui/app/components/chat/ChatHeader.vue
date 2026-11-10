@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, useTemplateRef } from "vue";
+import { deriveChatName } from "../../lib/chat-name";
 
 const props = defineProps<{
   chatId: string;
@@ -108,7 +109,7 @@ function onSessionBadgeClick(): void {
         autocomplete="off"
         :hidden="!hasMessages"
         :value="chatName"
-        :placeholder="chatName || 'Untitled chat'"
+        :placeholder="chatName || deriveChatName(chatId) || 'Untitled chat'"
         @blur="onNameBlur"
         @keydown="onNameKeydown"
       />
