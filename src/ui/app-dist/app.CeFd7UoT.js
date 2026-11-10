@@ -18268,7 +18268,7 @@ const _sfc_main$B = /* @__PURE__ */ defineComponent({
     };
   }
 });
-const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$B, [["__scopeId", "data-v-1c0978ce"]]);
+const TabStrip = /* @__PURE__ */ _export_sfc(_sfc_main$B, [["__scopeId", "data-v-cbc45c76"]]);
 function useReadAloud() {
   const queue2 = [];
   let queueRunning = false;
