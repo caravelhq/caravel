@@ -227,8 +227,6 @@ function onDividerDrop(e: DragEvent): void {
   <div class="tab-strip-outer">
     <!-- Scrollable tab area -->
     <div class="tab-strip" ref="stripEl" :class="{ 'tab-strip--overflow': isOverflowing }">
-      <!-- Open menu — first element in the strip -->
-      <OpenMenu />
 
       <!-- Group 0 tabs -->
       <button
@@ -371,6 +369,8 @@ function onDividerDrop(e: DragEvent): void {
         title="Settings"
         @click="ui.settingsOpen = true"
       >&#x2699;</button>
+      <!-- Open menu — fixed right edge, outside the scrollable strip (6d) -->
+      <OpenMenu />
     </div>
   </div>
 
@@ -419,9 +419,8 @@ function onDividerDrop(e: DragEvent): void {
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
 /* overflow-x: auto forces overflow-y to compute to auto (not visible), so this
-   container clips on both axes. The 3px top / 1px bottom padding gives the
-   Open button's 2px hover lift room inside the scroll container's padding-box
-   (CSS clips at the padding edge, not the content edge). */
+   container clips on both axes. The 3px top padding is cosmetic spacing for tabs;
+   the Open button moved to .ts-actions (6d) so its hover lift no longer clips here. */
 .tab-strip {
   display: flex;
   flex-wrap: nowrap;

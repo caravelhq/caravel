@@ -212,6 +212,10 @@ export const useWorkspaceStore = defineStore("workspace", () => {
   }
 
   function pushRecent(ref: ResourceRef): void {
+    // Don't record picker/nav panels — they're always reachable from the Open
+    // menu directly and would pollute the ring with ephemeral navigation rather
+    // than recently-visited content. Dashboard is similarly excluded.
+    if (ref.kind === "legacy" || ref.kind === "dashboard") return;
     const key = refKey(ref);
     const existing = recents.value.findIndex((r) => refKey(r) === key);
     if (existing !== -1) recents.value.splice(existing, 1);

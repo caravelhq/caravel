@@ -1652,6 +1652,8 @@ export const pageStyles = String.raw`    :root {
     .open-menu-list {
       position: fixed;
       min-width: 160px;
+      max-width: 280px;
+      overflow: hidden;
       background: var(--surface-2, #111b2e);
       border: 1px solid var(--border-strong, #d8e4ff3d);
       border-radius: var(--radius-md, 8px);
@@ -1674,6 +1676,7 @@ export const pageStyles = String.raw`    :root {
       cursor: pointer;
       text-align: left;
       gap: 10px;
+      overflow: hidden;
     }
     .open-menu-item:hover { background: var(--surface-3, #1a2640); color: #eef4ff; }
     .open-menu-item kbd {
