@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import type { ChatListEntry } from "../../../services/chats";
+import { deriveChatName } from "../../lib/chat-name";
 
 const props = defineProps<{
   chat: ChatListEntry;
@@ -17,7 +18,7 @@ const renaming = ref(false);
 const renameValue = ref("");
 
 const displayName = computed(() =>
-  props.chat.name || props.chat.preview || "(empty)"
+  props.chat.name || deriveChatName(props.chat.id) || props.chat.preview || "(empty)"
 );
 
 const displayDate = computed(() => {
@@ -57,7 +58,7 @@ function handleRenameKey(ev: KeyboardEvent): void {
       class="chat-history-rename-input"
       type="text"
       :value="renameValue"
-      :placeholder="chat.preview || 'Chat name'"
+      :placeholder="chat.name ?? (deriveChatName(chat.id) || chat.preview || 'Chat name')"
       maxlength="80"
       @input="renameValue = ($event.target as HTMLInputElement).value"
       @keydown="handleRenameKey"

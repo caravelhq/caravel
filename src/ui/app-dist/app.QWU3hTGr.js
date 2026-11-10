@@ -18340,6 +18340,12 @@ function useReadAloud() {
   }
   return { speak, stop: stop2, isPlaying: () => playing };
 }
+function deriveChatName(chatId) {
+  const m2 = chatId.match(/^task-(TSK-\d{4}-\d{2}-\d{2}-\d{4})-([a-z]+)$/i);
+  if (!m2) return "";
+  const agent = m2[2].charAt(0).toUpperCase() + m2[2].slice(1);
+  return `${m2[1]} · ${agent}`;
+}
 const _hoisted_1$x = { class: "chat-toolbar" };
 const _hoisted_2$r = { class: "chat-toolbar-left" };
 const _hoisted_3$n = ["hidden", "data-locked", "title"];
@@ -18440,7 +18446,7 @@ const _sfc_main$A = /* @__PURE__ */ defineComponent({
             autocomplete: "off",
             hidden: !__props.hasMessages,
             value: __props.chatName,
-            placeholder: __props.chatName || "Untitled chat",
+            placeholder: __props.chatName || unref(deriveChatName)(__props.chatId) || "Untitled chat",
             onBlur: onNameBlur,
             onKeydown: onNameKeydown
           }, null, 40, _hoisted_4$k)
@@ -19915,7 +19921,7 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
     hasActiveWork: { type: Boolean },
     isAgentLocked: { type: Boolean }
   },
-  emits: ["send", "interrupt", "interrupt-send", "cancel", "pin", "update:draft"],
+  emits: ["send", "interrupt", "interrupt-send", "pin", "update:draft"],
   setup(__props, { expose: __expose, emit: __emit }) {
     const props = __props;
     const emit2 = __emit;
@@ -19977,9 +19983,6 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
       }
       emit2("interrupt-send", text);
     }
-    function onCancel() {
-      emit2("cancel");
-    }
     function newTitleValue() {
       var _a2;
       return ((_a2 = newTitleRef.value) == null ? void 0 : _a2.value.trim()) ?? "";
@@ -20032,14 +20035,6 @@ const _sfc_main$w = /* @__PURE__ */ defineComponent({
               disabled: interruptInFlight.value,
               onClick: onHandInterrupt
             }, "✋", 8, _hoisted_5$g)) : createCommentVNode("", true),
-            __props.hasActiveWork ? (openBlock(), createElementBlock("button", {
-              key: 1,
-              type: "button",
-              class: "chat-cancel",
-              title: "Cancel run",
-              "aria-label": "Cancel run",
-              onClick: onCancel
-            }, "✕")) : createCommentVNode("", true),
             createBaseVNode("button", {
               type: "submit",
               class: "chat-send",
@@ -20072,7 +20067,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
     const renaming = /* @__PURE__ */ ref(false);
     const renameValue = /* @__PURE__ */ ref("");
     const displayName = computed(
-      () => props.chat.name || props.chat.preview || "(empty)"
+      () => props.chat.name || deriveChatName(props.chat.id) || props.chat.preview || "(empty)"
     );
     const displayDate = computed(() => {
       const d2 = new Date(props.chat.updatedAt || 0);
@@ -20109,7 +20104,7 @@ const _sfc_main$v = /* @__PURE__ */ defineComponent({
           class: "chat-history-rename-input",
           type: "text",
           value: renameValue.value,
-          placeholder: __props.chat.preview || "Chat name",
+          placeholder: __props.chat.name ?? (unref(deriveChatName)(__props.chat.id) || __props.chat.preview || "Chat name"),
           maxlength: "80",
           onInput: _cache[0] || (_cache[0] = ($event) => renameValue.value = $event.target.value),
           onKeydown: handleRenameKey,
@@ -20473,10 +20468,6 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
         await fetchChatData();
       }
     }
-    function onCancel() {
-      chatStore.saveDraft(chatId.value, "");
-      void onInterrupt();
-    }
     async function onRename(name) {
       const id = chatId.value;
       if (!id) return;
@@ -20582,7 +20573,6 @@ const _sfc_main$t = /* @__PURE__ */ defineComponent({
             onSend,
             onInterrupt,
             onInterruptSend,
-            onCancel,
             onPin,
             "onUpdate:draft": _cache[0] || (_cache[0] = (v2) => draft.value = v2)
           }, null, 8, ["chat-id", "draft", "has-messages", "agent-picked", "has-active-work", "is-agent-locked"])
@@ -29950,11 +29940,19 @@ const pageStyles = String.raw`    :root {
       color: #eef4ff;
     }
     .chat-delete-btn {
-      min-width: 44px;
-      min-height: 44px;
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+    }
+    .chat-delete-btn::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
     }
     /* Toolbar chat-title input — sits inside
        .chat-toolbar-left, immediately after the agent badge, so the
@@ -30596,7 +30594,7 @@ const pageStyles = String.raw`    :root {
     }
     .chat-input-row {
       display: flex;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 8px;
     }
     .chat-input {
@@ -30628,7 +30626,6 @@ const pageStyles = String.raw`    :root {
       align-items: stretch;
     }
     .chat-send,
-    .chat-cancel,
     .chat-interrupt,
     .chat-mic {
       flex-shrink: 0;
@@ -30657,7 +30654,6 @@ const pageStyles = String.raw`    :root {
       font-weight: 700;
     }
     .chat-send[hidden],
-    .chat-cancel[hidden],
     .chat-interrupt[hidden],
     .chat-mic[hidden] {
       display: none;
@@ -30698,21 +30694,6 @@ const pageStyles = String.raw`    :root {
       cursor: not-allowed;
       transform: none;
       filter: none;
-    }
-    .chat-cancel {
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      border-radius: 50%;
-      font-size: 13px;
-      border: 1px solid #ff7f7f55;
-      background: #34181855;
-      color: #ff9b9b;
-    }
-    .chat-cancel:hover {
-      transform: translateY(-1px);
-      background: #4d191970;
-      border-color: #ff9b9b66;
     }
     .chat-mic {
       width: 28px;

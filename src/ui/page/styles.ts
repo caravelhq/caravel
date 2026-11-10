@@ -1737,11 +1737,19 @@ export const pageStyles = String.raw`    :root {
       color: #eef4ff;
     }
     .chat-delete-btn {
-      min-width: 44px;
-      min-height: 44px;
+      position: relative;
       display: inline-flex;
       align-items: center;
       justify-content: center;
+    }
+    .chat-delete-btn::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
     }
     /* Toolbar chat-title input — sits inside
        .chat-toolbar-left, immediately after the agent badge, so the
@@ -2383,7 +2391,7 @@ export const pageStyles = String.raw`    :root {
     }
     .chat-input-row {
       display: flex;
-      align-items: flex-end;
+      align-items: flex-start;
       gap: 8px;
     }
     .chat-input {
@@ -2415,7 +2423,6 @@ export const pageStyles = String.raw`    :root {
       align-items: stretch;
     }
     .chat-send,
-    .chat-cancel,
     .chat-interrupt,
     .chat-mic {
       flex-shrink: 0;
@@ -2444,7 +2451,6 @@ export const pageStyles = String.raw`    :root {
       font-weight: 700;
     }
     .chat-send[hidden],
-    .chat-cancel[hidden],
     .chat-interrupt[hidden],
     .chat-mic[hidden] {
       display: none;
@@ -2485,21 +2491,6 @@ export const pageStyles = String.raw`    :root {
       cursor: not-allowed;
       transform: none;
       filter: none;
-    }
-    .chat-cancel {
-      width: 28px;
-      height: 28px;
-      padding: 0;
-      border-radius: 50%;
-      font-size: 13px;
-      border: 1px solid #ff7f7f55;
-      background: #34181855;
-      color: #ff9b9b;
-    }
-    .chat-cancel:hover {
-      transform: translateY(-1px);
-      background: #4d191970;
-      border-color: #ff9b9b66;
     }
     .chat-mic {
       width: 28px;

@@ -282,11 +282,6 @@ async function onInterruptSend(text: string): Promise<void> {
   }
 }
 
-function onCancel(): void {
-  chatStore.saveDraft(chatId.value, "");
-  void onInterrupt();
-}
-
 async function onRename(name: string): Promise<void> {
   const id = chatId.value;
   if (!id) return;
@@ -409,7 +404,6 @@ function generateChatId(): string {
         @send="onSend"
         @interrupt="onInterrupt"
         @interrupt-send="onInterruptSend"
-        @cancel="onCancel"
         @pin="onPin"
         @update:draft="(v) => (draft = v)"
       />
