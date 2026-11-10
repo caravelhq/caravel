@@ -3,6 +3,7 @@ import type { TaskRow } from "../stores/tasks";
 import type { ProjectCard } from "../stores/projects";
 import type { ChatListEntry } from "../../services/chats";
 import type { ResourceSpec } from "../stores/live";
+import { deriveChatName } from "../lib/chat-name";
 
 export const TASKS_LIST_KEY = "tasks:list";
 
@@ -94,17 +95,17 @@ export function refLabel(
   switch (ref.kind) {
     case "dashboard": return "Dashboard";
     case "file": return ref.path.split("/").pop() || ref.path;
-    // WAL-138: the tasks picker is the "Open" panel — it will house Chat (Phase 5)
-    // and Files (Phase 6) as sub-tabs beside Projects | Tasks. Chat and Files keep
-    // their own labels until they migrate.
-    case "legacy": return ref.page === "tasks" ? "Open" : ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
+    // WAL-138 originally named this "Open" (the picker was to house Chat and Files
+    // as sub-tabs). Chat migrated in round 4. Kelly renamed the label to "Tasks"
+    // in WAL-156 round 6 (6e) now that the sub-tab plan is no longer pending.
+    case "legacy": return ref.page === "tasks" ? "Tasks" : ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
     case "project": {
       const card = projectsList?.find((p) => p.slug === ref.slug);
       return card?.title || ref.slug;
     }
     case "chat": {
       const entry = chatsList?.find((c) => c.id === ref.chatId);
-      return entry?.name || middleEllipsis(ref.chatId, 20);
+      return entry?.name || deriveChatName(ref.chatId) || middleEllipsis(ref.chatId, 20);
     }
     case "envelope":
     case "report": {
@@ -132,7 +133,8 @@ export function refTitle(
     }
     case "chat": {
       const entry = chatsList?.find((c) => c.id === ref.chatId);
-      return entry?.name ? `${ref.chatId} — ${entry.name}` : ref.chatId;
+      const name = entry?.name || deriveChatName(ref.chatId);
+      return name ? `${ref.chatId} — ${name}` : ref.chatId;
     }
     case "envelope":
     case "report": {

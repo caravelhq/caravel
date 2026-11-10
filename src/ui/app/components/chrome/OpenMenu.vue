@@ -6,10 +6,11 @@ import { useNewTaskStore } from "../../stores/newTask";
 import { useLiveStore } from "../../stores/live";
 import { useTasksStore } from "../../stores/tasks";
 import { useProjectsStore } from "../../stores/projects";
-import { refGlyph, refLabel, TASKS_LIST_KEY, PROJECTS_LIST_KEY } from "../../workspace/labels";
+import { refGlyph, refLabel, refTitle, TASKS_LIST_KEY, PROJECTS_LIST_KEY, CHATS_LIST_KEY } from "../../workspace/labels";
 import type { ResourceRef } from "../../workspace/refs";
 import type { TaskRow } from "../../stores/tasks";
 import type { ProjectCard } from "../../stores/projects";
+import type { ChatListEntry } from "../../../services/chats";
 
 const ws = useWorkspaceStore();
 const kn = useKnowledgeStore();
@@ -27,20 +28,25 @@ const projectsList = computed<ProjectCard[] | null>(() => {
   const e = live.entry(PROJECTS_LIST_KEY);
   return (e?.data as ProjectCard[] | null) ?? null;
 });
+const chatsList = computed<ChatListEntry[] | null>(() => {
+  const e = live.entry(CHATS_LIST_KEY);
+  return (e?.data as ChatListEntry[] | null) ?? null;
+});
 
 const isOpen = ref(false);
 const anchorRef = ref<HTMLDivElement | null>(null);
 const panelRef = ref<HTMLDivElement | null>(null);
 
 // Fixed position for the teleported panel — updated when opening.
+// Right-aligned to the button (which lives in .ts-actions at the viewport's right edge).
 const panelTop = ref("0px");
-const panelLeft = ref("0px");
+const panelRight = ref("0px");
 
 function updatePosition(): void {
   const r = anchorRef.value?.getBoundingClientRect();
   if (r) {
     panelTop.value = `${r.bottom + 4}px`;
-    panelLeft.value = `${r.left}px`;
+    panelRight.value = `${window.innerWidth - r.right}px`;
   }
 }
 
@@ -65,6 +71,7 @@ function openPicker(r: ResourceRef): void { ws.open(r); ws.pin(ws.refKey(r)); cl
 
 function openTasks(): void { tasksStore.view = "all"; openPicker({ kind: "legacy", page: "tasks" }); }
 function openProjects(): void { tasksStore.view = "projects"; void projs.loadList(); openPicker({ kind: "legacy", page: "tasks" }); }
+function openChats(): void { tasksStore.view = "chats"; openPicker({ kind: "legacy", page: "tasks" }); }
 
 function openSearch(): void { kn.open(); close(); }
 function openNewTask(): void { nt.open(); close(); }
@@ -122,15 +129,15 @@ onBeforeUnmount(() => {
         v-if="isOpen"
         ref="panelRef"
         class="open-menu-list"
-        :style="{ top: panelTop, left: panelLeft }"
+        :style="{ top: panelTop, right: panelRight }"
         role="menu"
         @click.stop
       >
         <!-- Section: Pickers -->
         <div class="om-section-label" data-section="pickers">Pickers</div>
         <button id="tab-dashboard" class="open-menu-item" type="button" role="menuitem" @click="openDashboard">Dashboard</button>
-        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openTasks">Open</button>
-        <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'chat' })">Chat</button>
+        <button id="tab-tasks"     class="open-menu-item" type="button" role="menuitem" @click="openTasks">Tasks</button>
+        <button id="tab-chat"      class="open-menu-item" type="button" role="menuitem" @click="openChats">Chat</button>
         <button id="tab-files"     class="open-menu-item" type="button" role="menuitem" @click="openPicker({ kind: 'legacy', page: 'files' })">Files</button>
         <button id="tab-projects"  class="open-menu-item" type="button" role="menuitem" @click="openProjects">Projects</button>
 
@@ -145,10 +152,11 @@ onBeforeUnmount(() => {
             type="button"
             role="menuitem"
             :data-recent-key="ws.refKey(recent)"
+            :title="refTitle(recent, tasksList, projectsList, chatsList)"
             @click="openRecent(ws.refKey(recent))"
           >
             <span class="om-glyph">{{ refGlyph(recent) }}</span>
-            {{ refLabel(recent) }}
+            <span class="om-item-label">{{ refLabel(recent, tasksList, projectsList, chatsList) }}</span>
           </button>
         </template>
 
@@ -212,6 +220,14 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.om-item-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 .om-glyph {
