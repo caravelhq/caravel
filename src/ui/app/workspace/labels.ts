@@ -95,10 +95,12 @@ export function refLabel(
   switch (ref.kind) {
     case "dashboard": return "Dashboard";
     case "file": return ref.path.split("/").pop() || ref.path;
-    // WAL-138 originally named this "Open" (the picker was to house Chat and Files
-    // as sub-tabs). Chat migrated in round 4. Kelly renamed the label to "Tasks"
-    // in WAL-156 round 6 (6e) now that the sub-tab plan is no longer pending.
-    case "legacy": return ref.page === "tasks" ? "Tasks" : ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
+    // The picker that houses Tasks/Chats/Projects/Files sub-tabs is called "Open"
+    // — that is what the tab, the page title, and recents all say. The menu button
+    // that launches it (OpenMenu.vue) contains a "Tasks" item that names the
+    // sub-tab the user lands on, not the picker itself. Keep the two distinct:
+    // menu item → sub-tab name; tab/page/recents → "Open".
+    case "legacy": return ref.page === "tasks" ? "Open" : ref.page.charAt(0).toUpperCase() + ref.page.slice(1);
     case "project": {
       const card = projectsList?.find((p) => p.slug === ref.slug);
       return card?.title || ref.slug;
