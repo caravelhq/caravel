@@ -225,6 +225,11 @@ function onDividerDrop(e: DragEvent): void {
 
 <template>
   <div class="tab-strip-outer">
+    <!-- Open menu — pinned at the left edge, outside the scrolling rail (7a) -->
+    <div class="ts-left-actions">
+      <OpenMenu />
+    </div>
+
     <!-- Scrollable tab area -->
     <div class="tab-strip" ref="stripEl" :class="{ 'tab-strip--overflow': isOverflowing }">
 
@@ -369,8 +374,6 @@ function onDividerDrop(e: DragEvent): void {
         title="Settings"
         @click="ui.settingsOpen = true"
       >&#x2699;</button>
-      <!-- Open menu — fixed right edge, outside the scrollable strip (6d) -->
-      <OpenMenu />
     </div>
   </div>
 
@@ -411,16 +414,20 @@ function onDividerDrop(e: DragEvent): void {
   align-items: stretch;
   flex-shrink: 0;
   position: relative;
+  /* 9c: z-index:1 creates a stacking context so the Open button's downward
+     protrusion paints above .workspace-body (which has no z-index / auto). */
+  z-index: 1;
   background: var(--surface-1, #1a1a1a);
   border-bottom: 1px solid var(--border-subtle, #333);
   padding: 4px 0 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
 /* overflow-x: auto forces overflow-y to compute to auto (not visible), so this
-   container clips on both axes. The 3px top padding is cosmetic spacing for tabs;
-   the Open button moved to .ts-actions (6d) so its hover lift no longer clips here. */
+   container clips on both axes. The 3px top / 1px bottom padding is cosmetic
+   spacing for tabs. The Open button lives in .ts-left-actions outside this
+   container (7a), so there is no clip concern here. */
 .tab-strip {
   display: flex;
   flex-wrap: nowrap;
@@ -575,7 +582,19 @@ function onDividerDrop(e: DragEvent): void {
   background: var(--accent, #7dc5ff);
 }
 
-/* Actions bar — always visible, never scrolls */
+/* Left-pinned cluster — holds the Open button at the left edge of the strip */
+.ts-left-actions {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 2px;
+  background: var(--surface-1, #1a1a1a);
+  position: relative;
+  z-index: 2;
+  width: 46px;
+}
+
+/* Right actions bar — always visible, never scrolls */
 .ts-actions {
   display: flex;
   align-items: center;

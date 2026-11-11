@@ -138,15 +138,29 @@
   margin-top: 0.5rem;
 }
 
-.open-menu-ship[data-v-11c7a8cd] {
+/* 9a: Wrapper is absolutely positioned in .ts-left-actions so the 42px button
+   is out of flex flow — bar height stays driven by the tabs, not the button.
+   9c: Changed from vertically centred (top:50%) to top-offset (top:2px) so the
+   button protrudes DOWNWARD rather than upward. The 2px offset absorbs the
+   2px hover/open lift: at rest button top = bar top + 2px (inside .workspace);
+   lifted button top = bar top (flush with .workspace — no clip). The companion
+   z-index:1 on .tab-strip-outer ensures the button paints above workspace-body
+   content when it overflows downward. */
+.open-menu[data-v-c0b112e3] {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.open-menu-ship[data-v-c0b112e3] {
   display: block;
 }
 /* WAL-138: matches the footer dock buttons (.global-voice-task) — same green,
    same translucent fill and blur, same lift on hover — at tab-strip scale. */
-.open-menu-btn[data-v-11c7a8cd] {
+.open-menu-btn[data-v-c0b112e3] {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   border: 1px solid #6ee7b744;
@@ -159,16 +173,17 @@
   justify-content: center;
   transition: transform 0.14s ease, border-color 0.14s ease, background 0.14s ease;
 }
-.open-menu-btn[data-v-11c7a8cd]:hover {
+.open-menu-btn[data-v-c0b112e3]:hover {
   transform: translateY(-2px);
   background: #0d2a2acc;
   border-color: #6ee7b777;
 }
-.open-menu-btn[aria-expanded="true"][data-v-11c7a8cd] {
+.open-menu-btn[aria-expanded="true"][data-v-c0b112e3] {
   background: #0d2a2acc;
   border-color: #6ee7b7aa;
+  transform: translateY(-2px);
 }
-.om-section-label[data-v-11c7a8cd] {
+.om-section-label[data-v-c0b112e3] {
   padding: 6px 14px 3px;
   font-size: 10px;
   letter-spacing: 0.08em;
@@ -177,29 +192,29 @@
   pointer-events: none;
   user-select: none;
 }
-.om-item-disabled[data-v-11c7a8cd] {
+.om-item-disabled[data-v-c0b112e3] {
   opacity: 0.35;
   cursor: default;
 }
-.om-item-recent[data-v-11c7a8cd] {
+.om-item-recent[data-v-c0b112e3] {
   display: flex;
   align-items: center;
   gap: 6px;
 }
-.om-item-label[data-v-11c7a8cd] {
+.om-item-label[data-v-c0b112e3] {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
   flex: 1;
 }
-.om-glyph[data-v-11c7a8cd] {
+.om-glyph[data-v-c0b112e3] {
   font-size: 11px;
   opacity: 0.7;
   min-width: 14px;
   text-align: center;
 }
-.om-phase-tag[data-v-11c7a8cd] {
+.om-phase-tag[data-v-c0b112e3] {
   font-size: 10px;
   opacity: 0.7;
   margin-left: auto;
@@ -277,23 +292,27 @@
   z-index: 0;
 }
 
-.tab-strip-outer[data-v-537f6643] {
+.tab-strip-outer[data-v-f3f94212] {
   display: flex;
   flex-wrap: nowrap;
   align-items: stretch;
   flex-shrink: 0;
   position: relative;
+  /* 9c: z-index:1 creates a stacking context so the Open button's downward
+     protrusion paints above .workspace-body (which has no z-index / auto). */
+  z-index: 1;
   background: var(--surface-1, #1a1a1a);
   border-bottom: 1px solid var(--border-subtle, #333);
   padding: 4px 0 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Scrollable tab rail — overflows horizontally with no scrollbar */
 /* overflow-x: auto forces overflow-y to compute to auto (not visible), so this
-   container clips on both axes. The 3px top padding is cosmetic spacing for tabs;
-   the Open button moved to .ts-actions (6d) so its hover lift no longer clips here. */
-.tab-strip[data-v-537f6643] {
+   container clips on both axes. The 3px top / 1px bottom padding is cosmetic
+   spacing for tabs. The Open button lives in .ts-left-actions outside this
+   container (7a), so there is no clip concern here. */
+.tab-strip[data-v-f3f94212] {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -303,17 +322,17 @@
   padding: 3px 8px 1px;
   scrollbar-width: none;
 }
-.tab-strip[data-v-537f6643]::-webkit-scrollbar { display: none;
+.tab-strip[data-v-f3f94212]::-webkit-scrollbar { display: none;
 }
 
 /* F3: when overflow affordance is visible, reserve its width at the rail's right end
    so the last tab's hit target cannot slide under the overflow button. */
-.tab-strip--overflow[data-v-537f6643] {
+.tab-strip--overflow[data-v-f3f94212] {
   padding-right: 56px;
 }
 
 /* Right-edge fade indicating hidden tabs */
-.ts-overflow-fade[data-v-537f6643] {
+.ts-overflow-fade[data-v-f3f94212] {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -323,7 +342,7 @@
   pointer-events: none;
   z-index: 1;
 }
-.ts-tab[data-v-537f6643] {
+.ts-tab[data-v-f3f94212] {
   /* WAL-138: tabs wear the panel frame's border (rgba(255,255,255,0.133)) at
      1.5px, and the active tab drops its bottom edge and takes the panel's own
      background, so it reads as an extension of the frame below rather than a
@@ -345,39 +364,39 @@
   transition: opacity 0.1s;
   flex-shrink: 0;
 }
-.ts-tab[data-v-537f6643]:hover { opacity: 0.88;
+.ts-tab[data-v-f3f94212]:hover { opacity: 0.88;
 }
 /* WAL-138: the selected tab takes the FRAME's top edge — the same
    --frame-top token the panel's gradient starts from, with the panel's own
    blur — so the two cannot drift. --panel (#0b1220aa) was the wrong token:
    it is the chrome colour, not the frame's. */
-.ts-tab--active[data-v-537f6643] {
+.ts-tab--active[data-v-f3f94212] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
 }
-.ts-tab--focused[data-v-537f6643] {
+.ts-tab--focused[data-v-f3f94212] {
   opacity: 1;
   background: var(--frame-top, #0e1a2a88);
   backdrop-filter: blur(6px);
   border-color: rgba(255, 255, 255, 0.22);
 }
-.ts-tab--preview[data-v-537f6643] { font-style: italic;
+.ts-tab--preview[data-v-f3f94212] { font-style: italic;
 }
-.ts-tab--pinned[data-v-537f6643] { font-weight: 600;
+.ts-tab--pinned[data-v-f3f94212] { font-weight: 600;
 }
-.ts-tab--drag-over[data-v-537f6643] {
+.ts-tab--drag-over[data-v-f3f94212] {
   outline: 2px solid var(--accent, #7dc5ff);
   outline-offset: -2px;
 }
-.ts-tab-glyph[data-v-537f6643] {
+.ts-tab-glyph[data-v-f3f94212] {
   font-size: 0.75rem;
   opacity: 0.6;
   flex-shrink: 0;
 }
 
 /* Pre-truncated via middleEllipsis — no CSS ellipsis needed */
-.ts-tab-label[data-v-537f6643] {
+.ts-tab-label[data-v-f3f94212] {
   max-width: 140px;
   white-space: nowrap;
   overflow: hidden;
@@ -386,7 +405,7 @@
 /* Close button — 18×18 layout; hit area expanded via pseudo-element so it
    does not inflate the strip height. Effective target: 32px at desktop,
    44px at ≤600px. */
-.ts-tab-close[data-v-537f6643] {
+.ts-tab-close[data-v-f3f94212] {
   position: relative;
   display: flex;
   align-items: center;
@@ -399,14 +418,14 @@
   flex-shrink: 0;
   margin: -4px -4px -4px 0;
 }
-.ts-tab-close[data-v-537f6643]::after {
+.ts-tab-close[data-v-f3f94212]::after {
   content: "";
   position: absolute;
   inset: -7px;
 }
 
 /* Unread indicator dot — 8×8 filled circle, accent colour (DEC-0047). */
-.ts-tab-unread[data-v-537f6643] {
+.ts-tab-unread[data-v-f3f94212] {
   display: inline-block;
   width: 8px;
   height: 8px;
@@ -415,17 +434,17 @@
   flex-shrink: 0;
   align-self: center;
 }
-.ts-tab-close[data-v-537f6643]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
+.ts-tab-close[data-v-f3f94212]:hover { opacity: 1; background: var(--surface-4, #3a3a3a);
 }
 @media (max-width: 600px) {
   /* Asymmetric: right/top/bottom stay generous; left trimmed to prevent close
      hit-area overlapping the tab's label region (M2 fix, R21). */
-.ts-tab-close[data-v-537f6643]::after { inset: -13px -13px -13px -2px;
+.ts-tab-close[data-v-f3f94212]::after { inset: -13px -13px -13px -2px;
 }
 }
 
 /* Divider between groups */
-.ts-divider[data-v-537f6643] {
+.ts-divider[data-v-f3f94212] {
   width: 2px;
   flex-shrink: 0;
   background: var(--border-subtle, #333);
@@ -434,17 +453,29 @@
   cursor: col-resize;
   transition: background 0.1s, width 0.1s;
 }
-.ts-divider--split[data-v-537f6643] {
+.ts-divider--split[data-v-f3f94212] {
   width: 4px;
   background: var(--accent, #7dc5ff44);
 }
-.ts-divider--drag-over[data-v-537f6643] {
+.ts-divider--drag-over[data-v-f3f94212] {
   width: 4px;
   background: var(--accent, #7dc5ff);
 }
 
-/* Actions bar — always visible, never scrolls */
-.ts-actions[data-v-537f6643] {
+/* Left-pinned cluster — holds the Open button at the left edge of the strip */
+.ts-left-actions[data-v-f3f94212] {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 0 2px;
+  background: var(--surface-1, #1a1a1a);
+  position: relative;
+  z-index: 2;
+  width: 46px;
+}
+
+/* Right actions bar — always visible, never scrolls */
+.ts-actions[data-v-f3f94212] {
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -454,7 +485,7 @@
   position: relative;
   z-index: 2;
 }
-.ts-overflow-btn[data-v-537f6643] {
+.ts-overflow-btn[data-v-f3f94212] {
   background: transparent;
   border: 1px solid var(--border-subtle, #444);
   color: inherit;
@@ -466,9 +497,9 @@
   white-space: nowrap;
   transition: opacity 0.1s;
 }
-.ts-overflow-btn[data-v-537f6643]:hover { opacity: 1;
+.ts-overflow-btn[data-v-f3f94212]:hover { opacity: 1;
 }
-.ts-split-btn[data-v-537f6643] {
+.ts-split-btn[data-v-f3f94212] {
   background: transparent;
   border: none;
   color: inherit;
@@ -479,15 +510,15 @@
   border-radius: 3px;
   transition: opacity 0.1s;
 }
-.ts-split-btn[data-v-537f6643]:hover { opacity: 0.8;
+.ts-split-btn[data-v-f3f94212]:hover { opacity: 0.8;
 }
-.ts-split-btn--active[data-v-537f6643] { opacity: 0.9; color: var(--accent, #7dc5ff);
+.ts-split-btn--active[data-v-f3f94212] { opacity: 0.9; color: var(--accent, #7dc5ff);
 }
 @media (max-width: 600px) {
-.ts-split-btn[data-v-537f6643] { display: none;
+.ts-split-btn[data-v-f3f94212] { display: none;
 }
 }
-.ts-settings-btn[data-v-537f6643] {
+.ts-settings-btn[data-v-f3f94212] {
   background: transparent;
   border: none;
   color: inherit;
@@ -500,20 +531,20 @@
   border-left: 1px solid var(--border-subtle, #333);
   margin-left: 2px;
 }
-.ts-settings-btn[data-v-537f6643]:hover { opacity: 0.8;
+.ts-settings-btn[data-v-f3f94212]:hover { opacity: 0.8;
 }
 @media (max-width: 600px) {
-.ts-settings-btn[data-v-537f6643] { display: none;
+.ts-settings-btn[data-v-f3f94212] { display: none;
 }
 }
 
 /* Context menu backdrop + popup */
-.ts-ctx-backdrop[data-v-537f6643] {
+.ts-ctx-backdrop[data-v-f3f94212] {
   position: fixed;
   inset: 0;
   z-index: 900;
 }
-.ts-ctx-menu[data-v-537f6643] {
+.ts-ctx-menu[data-v-f3f94212] {
   position: fixed;
   z-index: 901;
   background: var(--surface-2, #262626);
@@ -523,7 +554,7 @@
   min-width: 160px;
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
-.ts-ctx-item[data-v-537f6643] {
+.ts-ctx-item[data-v-f3f94212] {
   display: block;
   width: 100%;
   background: transparent;
@@ -536,10 +567,10 @@
   white-space: nowrap;
   transition: background 0.1s;
 }
-.ts-ctx-item[data-v-537f6643]:hover { background: var(--surface-3, #303030);
+.ts-ctx-item[data-v-f3f94212]:hover { background: var(--surface-3, #303030);
 }
 @media (max-width: 600px) {
-.ts-ctx-item--wide-only[data-v-537f6643] { display: none;
+.ts-ctx-item--wide-only[data-v-f3f94212] { display: none;
 }
 }
 

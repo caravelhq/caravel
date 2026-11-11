@@ -38,15 +38,16 @@ const anchorRef = ref<HTMLDivElement | null>(null);
 const panelRef = ref<HTMLDivElement | null>(null);
 
 // Fixed position for the teleported panel — updated when opening.
-// Right-aligned to the button (which lives in .ts-actions at the viewport's right edge).
+// Left-aligned to the button (which lives in .ts-left-actions at the viewport's left edge).
+// max-width:280px in styles.ts keeps the panel within viewport even at 375px.
 const panelTop = ref("0px");
-const panelRight = ref("0px");
+const panelLeft = ref("0px");
 
 function updatePosition(): void {
   const r = anchorRef.value?.getBoundingClientRect();
   if (r) {
     panelTop.value = `${r.bottom + 4}px`;
-    panelRight.value = `${window.innerWidth - r.right}px`;
+    panelLeft.value = `${r.left}px`;
   }
 }
 
@@ -115,7 +116,7 @@ onBeforeUnmount(() => {
       aria-label="Open menu"
       title="Open"
       @click="toggle"
-    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="17" height="14" fill="none" aria-hidden="true">
+    ><svg class="open-menu-ship" viewBox="0 0 120 96" width="25" height="21" fill="none" aria-hidden="true">
         <path d="M34 70 V30 M58 70 V14 M84 60 V28" stroke="currentColor" stroke-width="3" stroke-linecap="round" opacity="0.55" />
         <path d="M66 52 L100 24 Q106 40 98 60 Q82 58 66 52 Z" fill="currentColor" opacity="0.6" />
         <path d="M30 44 L78 8 Q88 36 74 64 Q52 60 30 44 Z" fill="currentColor" opacity="0.92" />
@@ -129,7 +130,7 @@ onBeforeUnmount(() => {
         v-if="isOpen"
         ref="panelRef"
         class="open-menu-list"
-        :style="{ top: panelTop, right: panelRight }"
+        :style="{ top: panelTop, left: panelLeft }"
         role="menu"
         @click.stop
       >
@@ -171,6 +172,20 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* 9a: Wrapper is absolutely positioned in .ts-left-actions so the 42px button
+   is out of flex flow — bar height stays driven by the tabs, not the button.
+   9c: Changed from vertically centred (top:50%) to top-offset (top:2px) so the
+   button protrudes DOWNWARD rather than upward. The 2px offset absorbs the
+   2px hover/open lift: at rest button top = bar top + 2px (inside .workspace);
+   lifted button top = bar top (flush with .workspace — no clip). The companion
+   z-index:1 on .tab-strip-outer ensures the button paints above workspace-body
+   content when it overflows downward. */
+.open-menu {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+}
 .open-menu-ship {
   display: block;
 }
@@ -178,8 +193,8 @@ onBeforeUnmount(() => {
    same translucent fill and blur, same lift on hover — at tab-strip scale. */
 .open-menu-btn {
   flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   border-radius: 50%;
   border: 1px solid #6ee7b744;
@@ -200,6 +215,7 @@ onBeforeUnmount(() => {
 .open-menu-btn[aria-expanded="true"] {
   background: #0d2a2acc;
   border-color: #6ee7b7aa;
+  transform: translateY(-2px);
 }
 .om-section-label {
   padding: 6px 14px 3px;
