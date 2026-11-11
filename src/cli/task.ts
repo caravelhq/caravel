@@ -377,7 +377,11 @@ function findEnvelopeByIdSync(id: string, agents: string[], wsRoot: string): str
 
 /** Allocate the next available task ID using the seven-bucket scan (ALLOCATION_SCAN_DIRS).
  *  Deliberate improvement over task.mjs's five-bucket scan: prevents id reuse when the
- *  highest sibling sits in paused/ or blocked/ — both populated today. (F6) */
+ *  highest sibling sits in paused/ or blocked/ — both populated today. (F6)
+ *
+ *  WAL-168: also scans .md report files so a report without its envelope does not
+ *  cause the id to be reissued. A backstop check rejects the computed id if a report
+ *  already exists on disk, catching races the scan cannot see. */
 function allocateId(target: string, parent: string | null, wsRoot: string): string {
   const agents = listLocalAgents(wsRoot);
 
@@ -390,8 +394,11 @@ function allocateId(target: string, parent: string | null, wsRoot: string): stri
         const dir = join(wsRoot, "agents", a, "tasks", bucket);
         if (!existsSync(dir)) continue;
         for (const fname of readdirSync(dir)) {
-          if (!fname.endsWith(".yaml")) continue;
-          const id = fname.slice(0, -5);
+          // Match both .yaml envelope and .md report (WAL-168)
+          const isYaml = fname.endsWith(".yaml");
+          const isMd   = fname.endsWith(".md");
+          if (!isYaml && !isMd) continue;
+          const id = fname.slice(0, isYaml ? -5 : -3);
           const m = childRe.exec(id);
           if (!m) continue;
           const n = parseInt(m[1]!, 10);
@@ -399,7 +406,20 @@ function allocateId(target: string, parent: string | null, wsRoot: string): stri
         }
       }
     }
-    return `${rootId}.${String(maxN + 1).padStart(2, "0")}`;
+    const candidateParented = `${rootId}.${String(maxN + 1).padStart(2, "0")}`;
+    // Backstop: refuse to issue an id whose report already exists on disk.
+    for (const a of agents) {
+      for (const bucket of ALLOCATION_SCAN_DIRS) {
+        const reportPath = join(wsRoot, "agents", a, "tasks", bucket, `${candidateParented}.md`);
+        if (existsSync(reportPath)) {
+          throw new Error(
+            `[allocator] id ${candidateParented} already has a report at ${reportPath} — ` +
+            `refusing to reissue (envelope missing; rename the report before retrying)`
+          );
+        }
+      }
+    }
+    return candidateParented;
   }
 
   const d = new Date();
@@ -414,8 +434,11 @@ function allocateId(target: string, parent: string | null, wsRoot: string): stri
       const dir = join(wsRoot, "agents", a, "tasks", bucket);
       if (!existsSync(dir)) continue;
       for (const fname of readdirSync(dir)) {
-        if (!fname.endsWith(".yaml")) continue;
-        const id = fname.slice(0, -5);
+        // Match both .yaml envelope and .md report (WAL-168)
+        const isYaml = fname.endsWith(".yaml");
+        const isMd   = fname.endsWith(".md");
+        if (!isYaml && !isMd) continue;
+        const id = fname.slice(0, isYaml ? -5 : -3);
         const m = re.exec(id);
         if (!m) continue;
         const n = parseInt(m[1]!, 10);
@@ -423,7 +446,20 @@ function allocateId(target: string, parent: string | null, wsRoot: string): stri
       }
     }
   }
-  return prefix + String(maxN + 1).padStart(4, "0");
+  const candidateTopLevel = prefix + String(maxN + 1).padStart(4, "0");
+  // Backstop: refuse to issue an id whose report already exists on disk.
+  for (const a of agents) {
+    for (const bucket of ALLOCATION_SCAN_DIRS) {
+      const reportPath = join(wsRoot, "agents", a, "tasks", bucket, `${candidateTopLevel}.md`);
+      if (existsSync(reportPath)) {
+        throw new Error(
+          `[allocator] id ${candidateTopLevel} already has a report at ${reportPath} — ` +
+          `refusing to reissue (envelope missing; rename the report before retrying)`
+        );
+      }
+    }
+  }
+  return candidateTopLevel;
 }
 
 function journalAppend(

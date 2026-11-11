@@ -1714,18 +1714,33 @@ async function nextContTaskId(
       const n = Number.parseInt(m[1] ?? "", 10);
       if (Number.isFinite(n) && n > maxN) maxN = n;
     }
-    // Then: filesystem scan for files written after the graph was loaded
+    // Then: filesystem scan for files written after the graph was loaded.
+    // Matches both .yaml envelopes and .md reports — a report without its
+    // envelope (WAL-168) is equally strong evidence the id has been used.
     for (const sub of SCAN_DIRS) {
       const dir = join(agentsDir, targetAgent, "tasks", sub);
       const entries = await readdir(dir).catch(() => [] as string[]);
       for (const fname of entries) {
-        const m = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.yaml$`).exec(fname);
+        const m = new RegExp(`^${escapeRegex(root)}\\.(\\d+)\\.(?:yaml|md)$`).exec(fname);
         if (!m) continue;
         const n = Number.parseInt(m[1] ?? "", 10);
         if (Number.isFinite(n) && n > maxN) maxN = n;
       }
     }
-    return `${root}.${String(maxN + 1).padStart(2, "0")}`;
+    const candidateParented = `${root}.${String(maxN + 1).padStart(2, "0")}`;
+    // Backstop: refuse to issue an id whose report already exists on disk.
+    // This fires independently of the scan above and catches races the graph
+    // or scan might miss (e.g. a second concurrent allocation tick).
+    for (const sub of SCAN_DIRS) {
+      const reportPath = join(agentsDir, targetAgent, "tasks", sub, `${candidateParented}.md`);
+      if (existsSync(reportPath)) {
+        throw new Error(
+          `[allocator] id ${candidateParented} already has a report at ${reportPath} — ` +
+          `refusing to reissue (envelope missing; rename the report before retrying)`
+        );
+      }
+    }
+    return candidateParented;
   }
 
   // Top-level id: TSK-YYYY-MM-DD-NNNN, scoped across all agents
@@ -1743,7 +1758,9 @@ async function nextContTaskId(
     const n = Number.parseInt(tail, 10);
     if (Number.isFinite(n) && n > maxN) maxN = n;
   }
-  // Filesystem scan across all agents for files written after graph load
+  // Filesystem scan across all agents for files written after graph load.
+  // Matches both .yaml envelopes and .md reports (WAL-168: report without
+  // envelope must not cause id reuse).
   const agentDirs = (await readdir(agentsDir).catch(() => [] as string[])).filter((a) => {
     return !a.startsWith(".");
   });
@@ -1752,15 +1769,30 @@ async function nextContTaskId(
       const dir = join(agentsDir, a, "tasks", sub);
       const entries = await readdir(dir).catch(() => [] as string[]);
       for (const fname of entries) {
-        if (!fname.startsWith(prefix) || !fname.endsWith(".yaml")) continue;
-        const tail = fname.slice(prefix.length, -5);
+        const isYaml = fname.startsWith(prefix) && fname.endsWith(".yaml");
+        const isMd   = fname.startsWith(prefix) && fname.endsWith(".md");
+        if (!isYaml && !isMd) continue;
+        const tail = fname.slice(prefix.length, isYaml ? -5 : -3);
         if (tail.includes(".")) continue;
         const n = Number.parseInt(tail, 10);
         if (Number.isFinite(n) && n > maxN) maxN = n;
       }
     }
   }
-  return `${prefix}${String(maxN + 1).padStart(4, "0")}`;
+  const candidateTopLevel = `${prefix}${String(maxN + 1).padStart(4, "0")}`;
+  // Backstop: refuse to issue an id whose report already exists on disk.
+  for (const a of agentDirs) {
+    for (const sub of SCAN_DIRS) {
+      const reportPath = join(agentsDir, a, "tasks", sub, `${candidateTopLevel}.md`);
+      if (existsSync(reportPath)) {
+        throw new Error(
+          `[allocator] id ${candidateTopLevel} already has a report at ${reportPath} — ` +
+          `refusing to reissue (envelope missing; rename the report before retrying)`
+        );
+      }
+    }
+  }
+  return candidateTopLevel;
 }
 
 // Continuation model — FDP v1.19 (Kelly, 2026-08-29). Supersedes v1.15–v1.18.
