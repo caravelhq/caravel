@@ -936,6 +936,77 @@ assert(
   `D12: inline needs: now contains delegate`
 );
 
+// ── D13 (WAL-168): .md report without .yaml envelope must not cause id reuse ──
+//
+// Incident: TSK-2026-10-25-0004.20's .yaml went missing; the allocator saw only
+// .01–.19 yaml files and reissued .20 to an unrelated task. The fix makes the
+// allocator scan .md report files in addition to .yaml envelopes.
+
+console.log("\nD13 — WAL-168: orphaned .md report (no .yaml) blocks id reuse (child case):");
+
+{
+  const today13 = new Date();
+  const dateStr13 =
+    `${today13.getFullYear()}-` +
+    `${String(today13.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(today13.getDate()).padStart(2, "0")}`;
+  const d13ParentId = `TSK-${dateStr13}-9168`;
+
+  // Plant normal yaml envelopes for .01 and .02
+  for (const suffix of ["01", "02"]) {
+    writeFileSync(
+      join(root, "agents", AGENT, "tasks", "done", `${d13ParentId}.${suffix}.yaml`),
+      `id: ${d13ParentId}.${suffix}\nheadline: "done"\nstatus: done\nfrom: alice\nto: ${AGENT}\n`
+    );
+  }
+  // Plant an orphaned .md report for .03 (no .yaml — simulating the WAL-168 incident)
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "done", `${d13ParentId}.03.md`),
+    `---\nstatus: done\nsummary: orphaned report\n---\n`
+  );
+
+  // next-id must skip .03 (has a report) and return .04, not .03
+  const d13NextId = runNextId(["--parent", d13ParentId]);
+  assertEqual(d13NextId, `${d13ParentId}.04`, "D13: orphaned .md prevents .03 from being reissued");
+  assert(d13NextId !== `${d13ParentId}.03`, "D13: .03 not reissued despite missing .yaml");
+}
+
+// ── D14 (WAL-168): orphaned .md report prevents id reuse (top-level case) ────
+
+console.log("\nD14 — WAL-168: orphaned .md report (no .yaml) blocks id reuse (top-level case):");
+
+{
+  const today14 = new Date();
+  const prefix14 =
+    `TSK-${today14.getFullYear()}-` +
+    `${String(today14.getMonth() + 1).padStart(2, "0")}-` +
+    `${String(today14.getDate()).padStart(2, "0")}-`;
+  const base14 = 9269;
+
+  // Plant a yaml envelope for base14 and an orphaned .md report for base14+1
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "done", `${prefix14}${base14}.yaml`),
+    `id: ${prefix14}${base14}\nheadline: "done"\nstatus: done\nfrom: alice\nto: ${AGENT}\n`
+  );
+  writeFileSync(
+    join(root, "agents", AGENT, "tasks", "done", `${prefix14}${base14 + 1}.md`),
+    `---\nstatus: done\nsummary: orphaned top-level report\n---\n`
+  );
+
+  // next-id must skip base14+1 (orphaned .md) and return base14+2
+  const d14NextId = runNextId([]);
+  // We only know the returned id must be HIGHER than base14+1 (the orphaned report)
+  const d14N = parseInt(d14NextId.slice(prefix14.length), 10);
+  assert(
+    Number.isFinite(d14N) && d14N > base14 + 1,
+    `D14: top-level next-id (${d14NextId}) is higher than orphaned .md number (${base14 + 1})`
+  );
+  assert(
+    d14NextId !== `${prefix14}${String(base14 + 1).padStart(4, "0")}`,
+    "D14: orphaned top-level .md not reissued"
+  );
+}
+
 // ── summary ───────────────────────────────────────────────────────────────────
 
 console.log(`\n${passed + failed} tests — ${passed} passed, ${failed} failed`);
